@@ -1,0 +1,35 @@
+[run]
+source = src
+omit = 
+    */tests/*
+    */venv/*
+    */virtualenv/*
+    */__pycache__/*
+    */site-packages/*
+    setup.py
+    */migrations/*
+    */node_modules/*
+
+[report]
+exclude_lines =
+    pragma: no cover
+    def __repr__
+    if self.debug:
+    if settings.DEBUG
+    raise AssertionError
+    raise NotImplementedError
+    if 0:
+    if __name__ == .__main__.:
+    class .*\bProtocol\):
+    @(abc\.)?abstractmethod
+
+ignore_errors = True
+show_missing = True
+precision = 2
+
+[html]
+directory = htmlcov
+title = ForeFlight Dashboard Coverage Report
+
+[xml]
+output = coverage.xml

@@ -1,0 +1,222 @@
+name: Deploy Documentation to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+# Sets permissions of the GITHUB_TOKEN to allow deployment to GitHub Pages
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Allow only one concurrent deployment
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
+jobs:
+  build-docs:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+
+    - name: Install dependencies
+      run: |
+        pip install fastapi uvicorn pydantic
+        pip install mkdocs mkdocs-material
+
+    - name: Create docs directory
+      run: |
+        mkdir -p docs
+        mkdir -p docs/assets
+        mkdir -p docs/api
+
+    - name: Copy documentation files
+      run: |
+        # Copy main documentation
+        cp README.md docs/index.md
+        cp DEPLOYMENT.md docs/deployment.md
+        if [ -f AUDIT_REPORT.md ]; then
+          cp AUDIT_REPORT.md docs/audit-report.md
+        else
+          cat > docs/audit-report.md << 'EOF'
+        # Audit Report
+
+        No `AUDIT_REPORT.md` was found in the repository at build time.
+        EOF
+        fi
+        cp LICENSE docs/license.md
+        
+        # Copy test documentation if it exists
+        if [ -f tests/README.md ]; then
+          cp tests/README.md docs/testing.md
+        else
+          cat > docs/testing.md << 'EOF'
+        # Testing
+
+        No testing documentation file (`tests/README.md`) was found in the repository at build time.
+        EOF
+        fi
+
+    - name: Generate API documentation
+      run: |
+        # Create API documentation page
+        cat > docs/api/index.md << 'EOF'
+        # API Documentation
+        
+        The ForeFlight Dashboard provides a comprehensive REST API built with FastAPI.
+        
+        ## Interactive Documentation
+        
+        When running the application locally, you can access:
+        
+        - **Swagger UI**: [http://localhost:5051/api/docs](http://localhost:5051/api/docs)
+        - **ReDoc**: [http://localhost:5051/api/redoc](http://localhost:5051/api/redoc)
+        
+        ## Key Endpoints
+        
+        ### Health Check
+        ```
+        GET /health
+        ```
+        Returns the health status of the application.
+        
+        ### Process Logbook
+        ```
+        POST /api/process-logbook
+        ```
+        Upload and process a ForeFlight CSV logbook file.
+        
+        **Parameters:**
+        - `file` (file): CSV file to upload
+        - `student_pilot` (boolean): Whether to apply student pilot validation rules
+        
+        **Rate Limit:** 10 requests per minute per IP
+        
+        **Response:**
+        ```json
+        {
+          "entries": [...],
+          "statistics": {...},
+          "aircraft": [...],
+          "all_time": {...},
+          "recent_experience": {...}
+        }
+        ```
+        
+        ## Security
+        
+        The API implements:
+        - Rate limiting on upload endpoints
+        - Security headers (CSP, HSTS, X-Frame-Options)
+        - Input sanitization
+        - CORS protection
+        
+        ## Data Models
+        
+        ### LogbookEntry
+        Represents a single flight entry with:
+        - Date, departure/arrival times
+        - Aircraft information (registration, type, ICAO code)
+        - Flight conditions (day/night, cross-country, instrument)
+        - Pilot times (PIC, dual received, solo)
+        - Landings (day/night)
+        - Running totals
+        
+        ### Aircraft
+        Aircraft information including:
+        - Registration (N-number)
+        - Type and ICAO type code
+        - Category/class (ASEL, AMEL, etc.)
+        - Gear type
+        - Complex/high-performance flags
+        
+        ## Error Handling
+        
+        The API returns standard HTTP status codes:
+        - `200 OK`: Successful operation
+        - `400 Bad Request`: Invalid input data
+        - `422 Unprocessable Entity`: Validation errors
+        - `429 Too Many Requests`: Rate limit exceeded
+        - `500 Internal Server Error`: Server error
+        EOF
+
+    - name: Create mkdocs configuration
+      run: |
+        cat > mkdocs.yml << 'EOF'
+        site_name: ForeFlight Dashboard Documentation
+        site_description: Comprehensive documentation for ForeFlight Dashboard
+        site_author: Jordan Hubbard
+        site_url: https://jordanhubbard.github.io/foreflight-dashboard/
+        
+        theme:
+          name: material
+          palette:
+            primary: blue
+            accent: orange
+          features:
+            - navigation.tabs
+            - navigation.sections
+            - navigation.top
+            - search.suggest
+            - search.highlight
+            - content.code.copy
+        
+        nav:
+          - Home: index.md
+          - Deployment Guide: deployment.md
+          - Audit Report: audit-report.md
+          - API Documentation: api/index.md
+          - Testing: testing.md
+          - License: license.md
+        
+        markdown_extensions:
+          - admonition
+          - codehilite
+          - toc:
+              permalink: true
+          - pymdownx.highlight
+          - pymdownx.superfences
+          - pymdownx.tabbed
+          - pymdownx.details
+        
+        plugins:
+          - search
+        
+        extra:
+          social:
+            - icon: fontawesome/brands/github
+              link: https://github.com/jordanhubbard/foreflight-dashboard
+        EOF
+
+    - name: Build documentation site
+      run: |
+        mkdocs build
+
+    - name: Upload artifact
+      uses: actions/upload-pages-artifact@v3
+      with:
+        path: ./site
+
+  deploy:
+    needs: build-docs
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    
+    steps:
+    - name: Deploy to GitHub Pages
+      id: deployment
+      continue-on-error: true
+      uses: actions/deploy-pages@v4

@@ -1,0 +1,54 @@
+# Container-First Development Rules
+
+## 🐳 CONTAINER-ONLY OPERATIONS
+This project is designed for **containerized deployment** and follows strict container-first development practices.
+
+### Core Principle
+**ALL operations MUST run inside containers** - no host dependencies allowed.
+
+### Build & Test Commands
+- `make start` - Build and start the application in containers
+- `make test` - Run ALL tests inside containers (Python + API integration)  
+- `make stop` - Stop all running containers
+- `make clean` - Clean up containers and images
+
+### Docker Configuration
+- **Local Development**: Uses `Dockerfile.local` with cache mounts for speed
+- **Cloud Deployment**: Uses `Dockerfile` (Railway.com, DigitalOcean, etc.)
+- **GitHub Actions**: Uses cloud-compatible `Dockerfile` for CI/CD
+
+### Deployment Compatibility
+This application can be deployed on any platform supporting Docker containers:
+- ✅ Railway.com (primary)
+- ✅ DigitalOcean App Platform
+- ✅ Heroku Container Registry
+- ✅ AWS ECS/Fargate
+- ✅ Google Cloud Run
+- ✅ Azure Container Instances
+
+### Testing Philosophy
+- Tests run in isolated containers matching production environment
+- No mocking of core business logic or realistic scenarios
+- API endpoint tests run against actual running application
+- Coverage reports generated inside containers
+
+### Build Optimization
+- Local builds use BuildKit cache mounts for faster iteration
+- Cloud builds avoid cache mounts for compatibility
+- Multi-platform production builds with registry caching
+- Parallel build processes where possible
+
+### AI Assistant Guidelines
+When working on this project:
+1. **NEVER** suggest running commands outside containers
+2. **ALWAYS** use `make` targets for operations
+3. **PREFER** editing existing files over creating new ones
+4. **TEST** changes using `make test` before committing
+5. **VERIFY** cloud deployment compatibility (no cache mounts in main Dockerfile)
+
+### Architecture
+- **Backend**: FastAPI (Flask eliminated)
+- **Frontend**: React with TypeScript + Vite
+- **Database**: SQLAlchemy with SQLite
+- **Authentication**: JWT tokens
+- **Deployment**: Single container with built frontend assets

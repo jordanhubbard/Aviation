@@ -1,0 +1,39 @@
+services:
+  foreflight-dashboard:
+    image: foreflight-dashboard:dev
+    build:
+      context: .
+      dockerfile: ${DOCKERFILE:-Dockerfile}
+      target: development
+      args:
+        PYTHON_VERSION: ${PYTHON_VERSION:-3.11}
+        BUILDKIT_INLINE_CACHE: 1
+      # BuildKit optimizations for faster builds
+      cache_from:
+        - foreflight-dashboard:dev
+    ports:
+      - "${REACT_DEV_PORT:-3001}:3001"  # React dev server (PRIMARY UI - use this port!)
+      - "${FASTAPI_PORT:-5051}:5051"  # FastAPI backend (internal - proxied by React dev server)
+    volumes:
+      - ./src:/app/src  # Mount source code for hot reloading
+      - ./frontend:/app/frontend  # Mount frontend for hot reloading
+      - ./uploads:/app/uploads
+      - ./logs:/app/logs
+      - ./data:/app/data  # Mount data directory for database
+      - ./tests:/app/tests  # Mount tests directory
+    restart: unless-stopped
+    environment:
+      - PYTHONPATH=/app
+      - ENVIRONMENT=development
+      - BUILDKIT_PROGRESS=plain
+      - DOCKER_BUILDKIT=1
+    # Use tty and stdin_open for interactive debugging if needed
+    tty: true
+    stdin_open: true
+    # Set healthcheck to ensure container is running properly
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:5051/health')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s

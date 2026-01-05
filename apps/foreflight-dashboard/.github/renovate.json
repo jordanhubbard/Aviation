@@ -1,0 +1,72 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": [
+    "config:base",
+    "security:openssf-scorecard",
+    ":dependencyDashboard",
+    ":semanticCommits",
+    ":separatePatchReleases"
+  ],
+  "timezone": "UTC",
+  "schedule": ["before 6am on Monday"],
+  "labels": ["dependencies"],
+  "assignees": [],
+  "reviewers": [],
+  "packageRules": [
+    {
+      "description": "Group Python dependencies",
+      "matchManagers": ["pip_requirements"],
+      "groupName": "Python dependencies",
+      "schedule": ["before 6am on Monday"]
+    },
+    {
+      "description": "Group Node.js dependencies",
+      "matchManagers": ["npm"],
+      "groupName": "Node.js dependencies",
+      "schedule": ["before 6am on Monday"]
+    },
+    {
+      "description": "Group GitHub Actions",
+      "matchManagers": ["github-actions"],
+      "groupName": "GitHub Actions",
+      "schedule": ["before 6am on Monday"]
+    },
+    {
+      "description": "Group Docker dependencies",
+      "matchManagers": ["dockerfile"],
+      "groupName": "Docker dependencies",
+      "schedule": ["before 6am on Monday"]
+    },
+    {
+      "description": "Auto-merge security updates",
+      "matchUpdateTypes": ["patch"],
+      "matchPackagePatterns": ["*"],
+      "automerge": true,
+      "automergeType": "pr",
+      "platformAutomerge": true,
+      "requiredStatusChecks": null
+    },
+    {
+      "description": "High priority security updates",
+      "matchDatasources": ["npm", "pypi"],
+      "vulnerabilityAlerts": true,
+      "labels": ["security", "priority-high"],
+      "reviewers": [],
+      "assignees": []
+    }
+  ],
+  "vulnerabilityAlerts": {
+    "labels": ["security"],
+    "assignees": [],
+    "reviewers": []
+  },
+  "osvVulnerabilityAlerts": true,
+  "separateMinorPatch": true,
+  "separateMajorMinor": true,
+  "rangeStrategy": "bump",
+  "semanticCommitType": "chore",
+  "semanticCommitScope": "deps",
+  "commitMessagePrefix": "chore(deps): ",
+  "prTitle": "chore(deps): {{#if isPinDigest}}{{{newDigestShort}}}{{else}}{{#if isMajor}}{{prettyNewMajor}}{{else}}{{#if isSingleVersion}}{{prettyNewVersion}}{{else}}{{#if newValue}}{{{newValue}}}{{else}}{{{newDigestShort}}}{{/if}}{{/if}}{{/if}}{{/if}}",
+  "prBodyTemplate": "This PR contains the following updates:\n\n| Package | Change | Age | Adoption | Passing | Confidence |\n|---|---|---|---|---|---|\n{{#each upgrades as |upgrade|}}\n| {{upgrade.depName}} | {{#if upgrade.displayFrom}}`{{{upgrade.displayFrom}}}` -> {{/if}}{{#if upgrade.displayTo}}`{{{upgrade.displayTo}}}`{{else}}`{{{upgrade.newValue}}}`{{/if}} | [![age](https://badges.renovateapi.com/packages/{{upgrade.datasource}}/{{upgrade.depName}}/{{{upgrade.newVersion}}}/age-slim)](https://docs.renovatebot.com/merge-confidence/) | [![adoption](https://badges.renovateapi.com/packages/{{upgrade.datasource}}/{{upgrade.depName}}/{{{upgrade.newVersion}}}/adoption-slim)](https://docs.renovatebot.com/merge-confidence/) | [![passing](https://badges.renovateapi.com/packages/{{upgrade.datasource}}/{{upgrade.depName}}/{{{upgrade.newVersion}}}/compatibility-slim/{{{upgrade.currentVersion}}})](https://docs.renovatebot.com/merge-confidence/) | [![confidence](https://badges.renovateapi.com/packages/{{upgrade.datasource}}/{{upgrade.depName}}/{{{upgrade.newVersion}}}/confidence-slim/{{{upgrade.currentVersion}}})](https://docs.renovatebot.com/merge-confidence/) |\n{{/each}}\n\n---\n\n### Configuration\n\n📅 **Schedule**: {{{schedule}}}\n\n🚦 **Automerge**: {{automerge}}\n\n♻ **Rebasing**: {{rebaseWhen}}\n\n🔕 **Ignore**: Close this PR and you won't be reminded about {{#if isSingleVersion}}this update{{else}}these updates{{/if}} again.\n\n---\n\n{{#if hasReleaseNotes}}\n{{#each upgrades as |upgrade|}}\n{{#if upgrade.hasReleaseNotes}}\n### Release Notes\n\n{{#each upgrade.releases as |release|}}\n{{#if release.version}}\n#### {{release.version}}\n{{/if}}\n{{#if release.date}}\n*{{moment release.date \"YYYY-MM-DD\"}}*\n{{/if}}\n{{#if release.compare}}\n[Compare Source]({{release.compare}})\n{{/if}}\n{{#if release.body}}\n{{{release.body}}}\n{{/if}}\n{{/each}}\n{{/if}}\n{{/each}}\n{{/if}}"
+}

@@ -1,0 +1,134 @@
+# Beads Configuration for ForeFlight Dashboard
+# 
+# This file defines the independent work units (beads) that compose the
+# ForeFlight Dashboard application. Beads enable parallel development,
+# testing, and execution of different application components.
+
+version: "1.0"
+
+beads:
+  # CSV Import and Parsing
+  - name: csv-import
+    description: Import and parse ForeFlight CSV logbook files
+    path: src/services/importer.py
+    dependencies: []
+    parallel: true
+    test_path: tests/test_services/test_importer.py
+    
+  # ICAO Aircraft Validation
+  - name: icao-validation
+    description: Validate ICAO aircraft codes with fuzzy matching
+    path: src/core/icao_validator.py
+    dependencies: []
+    parallel: true
+    test_path: tests/test_core/test_icao_validator.py
+    
+  # Data Validation
+  - name: data-validation
+    description: Validate flight data for completeness and accuracy
+    path: src/core/validation.py
+    dependencies: [csv-import]
+    parallel: true
+    test_path: tests/test_core/test_validation.py
+    
+  # Flight Data Processing
+  - name: flight-processing
+    description: Process and enrich flight data
+    path: src/services/foreflight_client.py
+    dependencies: [csv-import, data-validation, icao-validation]
+    parallel: false
+    test_path: tests/test_services/test_foreflight_client.py
+    
+  # API Layer
+  - name: api
+    description: FastAPI endpoints for data upload and retrieval
+    path: src/api/
+    dependencies: [flight-processing]
+    parallel: false
+    test_path: tests/test_fastapi/
+    
+  # Frontend Components
+  - name: frontend-ui
+    description: React UI components for data visualization
+    path: frontend/src/components/
+    dependencies: []
+    parallel: true
+    test_path: frontend/src/components/__tests__/
+    
+  # Frontend Services
+  - name: frontend-services
+    description: Frontend API client and data services
+    path: frontend/src/services/
+    dependencies: [api]
+    parallel: true
+    test_path: frontend/src/services/__tests__/
+
+# Bead execution groups for parallel processing
+execution_groups:
+  # Group 1: Can run in parallel (no dependencies)
+  - name: initial
+    beads: [csv-import, icao-validation, frontend-ui]
+    
+  # Group 2: Depends on Group 1
+  - name: validation
+    beads: [data-validation]
+    depends_on: [initial]
+    
+  # Group 3: Core processing
+  - name: processing
+    beads: [flight-processing, frontend-services]
+    depends_on: [validation]
+    
+  # Group 4: API layer
+  - name: api-layer
+    beads: [api]
+    depends_on: [processing]
+
+# Development workflow
+workflows:
+  # Full test suite
+  - name: test-all
+    description: Run all tests in optimal order
+    steps:
+      - group: initial
+        parallel: true
+      - group: validation
+        parallel: true
+      - group: processing
+        parallel: true
+      - group: api-layer
+        parallel: false
+        
+  # Quick validation workflow
+  - name: quick-check
+    description: Fast validation for rapid iteration
+    steps:
+      - bead: data-validation
+      - bead: flight-processing
+      
+  # Frontend-only workflow
+  - name: frontend-dev
+    description: Frontend development workflow
+    steps:
+      - group: initial
+        beads: [frontend-ui]
+        parallel: false
+      - bead: frontend-services
+
+# CI/CD integration
+ci:
+  # Parallel test execution strategy
+  test_strategy: parallel
+  max_parallel: 4
+  
+  # Test groups for CI pipeline
+  test_groups:
+    - name: unit-tests-python
+      beads: [csv-import, icao-validation, data-validation, flight-processing]
+      
+    - name: unit-tests-frontend
+      beads: [frontend-ui, frontend-services]
+      
+    - name: integration-tests
+      beads: [api]
+      depends_on: [unit-tests-python, unit-tests-frontend]

@@ -1,0 +1,80 @@
+# DigitalOcean App Platform Configuration
+# This file enables one-click deployment to DigitalOcean App Platform
+# Place this file in .do/app.yaml in your repository root
+
+name: foreflight-dashboard
+services:
+- name: web
+  source_dir: /
+  github:
+    repo: your-username/foreflight-dashboard  # Update with your GitHub username
+    branch: main
+    deploy_on_push: true
+  dockerfile_path: Dockerfile
+  http_port: 3001
+  instance_count: 1
+  instance_size_slug: basic-xxs  # $5/month - upgrade to basic-xs ($12/month) for better performance
+  environment_slug: docker
+  
+  # Environment Variables
+  envs:
+  - key: ENVIRONMENT
+    value: production
+  - key: FASTAPI_PORT
+    value: "5051"
+  - key: REACT_DEV_PORT
+    value: "3001"
+  - key: SECRET_KEY
+    value: "your-secret-key-change-this-in-production"  # IMPORTANT: Change this!
+    type: SECRET
+  - key: ALLOWED_HOSTS
+    value: "*.ondigitalocean.app,yourdomain.com"  # Update with your custom domain
+  - key: CORS_ORIGINS
+    value: "https://yourdomain.com"  # Update with your custom domain
+    
+  # Health Check Configuration
+  health_check:
+    http_path: /health
+    initial_delay_seconds: 30
+    period_seconds: 10
+    timeout_seconds: 5
+    success_threshold: 1
+    failure_threshold: 3
+
+  # Resource Limits
+  cpu_kind: shared
+  
+# Optional: Add a database service for PostgreSQL
+# databases:
+# - name: foreflight-db
+#   engine: PG
+#   version: "14"
+#   size: db-s-dev-database  # $7/month development database
+
+# Optional: Add static file hosting
+# static_sites:
+# - name: assets
+#   source_dir: /static
+#   github:
+#     repo: your-username/foreflight-dashboard
+#     branch: main
+#   output_dir: /
+
+# Alerts and Monitoring
+alerts:
+- rule: CPU_UTILIZATION
+  disabled: false
+  value: 80
+- rule: MEM_UTILIZATION
+  disabled: false
+  value: 80
+- rule: RESTART_COUNT
+  disabled: false
+  value: 5
+
+# Domain Configuration (optional)
+# domains:
+# - domain: yourdomain.com
+#   type: PRIMARY
+# - domain: www.yourdomain.com
+#   type: ALIAS
