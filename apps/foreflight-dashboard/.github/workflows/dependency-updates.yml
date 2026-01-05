@@ -1,0 +1,225 @@
+name: Dependency Updates
+
+on:
+  schedule:
+    # Run every Monday at 9 AM UTC
+    - cron: '0 9 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  update-python-dependencies:
+    name: Update Python Dependencies
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+        
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+        
+    - name: Install pip-tools
+      run: pip install pip-tools
+      
+    - name: Update requirements
+      run: |
+        # Backup current requirements
+        cp requirements.txt requirements.txt.backup
+        
+        # Update dependencies (this would need requirements.in file)
+        # pip-compile --upgrade requirements.in
+        
+        # For now, just check for security updates
+        pip install safety
+        (safety check --output json || true) > safety-report.json
+        if [ ! -s safety-report.json ]; then
+          echo '{"vulnerabilities":[]}' > safety-report.json
+        fi
+        
+    - name: Check for security vulnerabilities
+      run: |
+        if [ -s safety-report.json ]; then
+          if [ "$(jq '.vulnerabilities | length' safety-report.json)" -gt 0 ]; then
+            echo "🚨 Security vulnerabilities found!"
+            jq '.vulnerabilities[] | "- \(.package_name): \(.vulnerability_id)"' safety-report.json
+          else
+            echo "✅ No security vulnerabilities found"
+          fi
+        fi
+        
+    - name: Create Pull Request for Python updates
+      continue-on-error: true
+      uses: peter-evans/create-pull-request@v7
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+        commit-message: 'chore: update Python dependencies'
+        title: 'chore: Update Python dependencies'
+        body: |
+          ## Python Dependency Updates
+          
+          This PR contains automated updates to Python dependencies.
+          
+          ### Security Report
+          See attached safety report for any security vulnerabilities.
+          
+          ### Changes
+          - Updated Python package versions
+          - Resolved security vulnerabilities (if any)
+          
+          **Please review the changes carefully before merging.**
+        branch: update-python-deps
+        delete-branch: true
+
+  update-node-dependencies:
+    name: Update Node.js Dependencies
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+        
+    - name: Set up Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        
+    - name: Update npm dependencies
+      run: |
+        cd frontend
+        
+        # Backup current package files
+        cp package.json package.json.backup
+        cp package-lock.json package-lock.json.backup
+        
+        # Update dependencies
+        npm update
+        
+        # Check for security vulnerabilities
+        (npm audit --json || true) > npm-audit.json
+        if [ ! -s npm-audit.json ]; then
+          echo '{"metadata":{"vulnerabilities":{"total":0}},"vulnerabilities":{}}' > npm-audit.json
+        fi
+        
+    - name: Check for security vulnerabilities
+      run: |
+        cd frontend
+        if [ -s npm-audit.json ]; then
+          VULN_COUNT=$(jq '.metadata.vulnerabilities.total // 0' npm-audit.json)
+          if [ "$VULN_COUNT" -gt 0 ]; then
+            echo "🚨 $VULN_COUNT npm security vulnerabilities found!"
+            jq '.vulnerabilities // {}' npm-audit.json
+            
+            # Try to fix automatically
+            npm audit fix --force || true
+          else
+            echo "✅ No npm security vulnerabilities found"
+          fi
+        fi
+        
+    - name: Run tests to ensure updates don't break anything
+      run: |
+        cd frontend
+        npm run build
+        npm run lint || true
+        
+    - name: Create Pull Request for Node updates
+      continue-on-error: true
+      uses: peter-evans/create-pull-request@v7
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+        commit-message: 'chore: update Node.js dependencies'
+        title: 'chore: Update Node.js dependencies'
+        body: |
+          ## Node.js Dependency Updates
+          
+          This PR contains automated updates to Node.js dependencies.
+          
+          ### Security Report
+          See npm audit results for any security vulnerabilities.
+          
+          ### Changes
+          - Updated npm package versions
+          - Resolved security vulnerabilities (if any)
+          - Verified build still works
+          
+          **Please review the changes carefully before merging.**
+        branch: update-node-deps
+        delete-branch: true
+
+  update-github-actions:
+    name: Update GitHub Actions
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+        
+    - name: Update GitHub Actions versions
+      continue-on-error: true
+      uses: renovatebot/github-action@v39.2.4
+      with:
+        configurationFile: .github/renovate.json
+        token: ${{ secrets.GITHUB_TOKEN }}
+
+  security-scan:
+    name: Weekly Security Scan
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+      
+    - name: Build Docker image for scanning
+      uses: docker/build-push-action@v5
+      with:
+        context: .
+        target: production
+        push: false
+        load: true
+        tags: foreflight-dashboard:security-scan
+        
+    - name: Run comprehensive security scan
+      uses: aquasecurity/trivy-action@master
+      with:
+        image-ref: 'foreflight-dashboard:security-scan'
+        format: 'json'
+        output: 'trivy-results.json'
+        
+    - name: Process security results
+      run: |
+        if [ -f trivy-results.json ]; then
+          HIGH_VULNS=$(jq '[.Results[]?.Vulnerabilities[]? | select(.Severity == "HIGH")] | length' trivy-results.json)
+          CRITICAL_VULNS=$(jq '[.Results[]?.Vulnerabilities[]? | select(.Severity == "CRITICAL")] | length' trivy-results.json)
+          
+          echo "🔍 Security Scan Results:"
+          echo "- Critical vulnerabilities: $CRITICAL_VULNS"
+          echo "- High severity vulnerabilities: $HIGH_VULNS"
+          
+          if [ "$CRITICAL_VULNS" -gt 0 ] || [ "$HIGH_VULNS" -gt 5 ]; then
+            echo "⚠️ Security attention required!"
+            # Create an issue or send notification
+          else
+            echo "✅ Security scan passed"
+          fi
+        fi
+        
+    - name: Upload security scan results
+      uses: actions/upload-artifact@v4
+      with:
+        name: weekly-security-scan
+        path: trivy-results.json

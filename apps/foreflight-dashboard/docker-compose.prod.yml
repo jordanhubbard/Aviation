@@ -1,0 +1,25 @@
+# Production Docker Compose Configuration
+# Use: docker-compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+
+services:
+  foreflight-dashboard:
+    build:
+      dockerfile: Dockerfile  # Use production Dockerfile
+      target: production
+    environment:
+      - PYTHONPATH=/app
+      - ENVIRONMENT=production
+      - PORT=${PORT:-5051}
+      - SECRET_KEY=${SECRET_KEY:-change-this-in-production}
+      - DATABASE_URL=${DATABASE_URL:-sqlite:///./data/app.db}
+    ports:
+      - "${PORT:-5051}:${PORT:-5051}"  # Single port for production
+    volumes:
+      # Only mount data directories in production, not source code
+      - ./data:/app/data
+      - ./uploads:/app/uploads
+      - ./logs:/app/logs
+    restart: unless-stopped
+    # Remove development-specific settings
+    tty: false
+    stdin_open: false
