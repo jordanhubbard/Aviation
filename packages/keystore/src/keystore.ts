@@ -35,7 +35,11 @@ export class SecureKeyStore {
     // In production, this should come from a secure source like environment variables
     // or a hardware security module (HSM)
     const key = config.encryptionKey || process.env.KEYSTORE_ENCRYPTION_KEY || 'default-key-change-in-production';
-    this.encryptionKey = crypto.scryptSync(key, 'salt', 32);
+    
+    // Use a unique salt per installation for better security
+    // In production, consider storing this salt separately or deriving from system ID
+    const salt = crypto.createHash('sha256').update(this.storePath).digest();
+    this.encryptionKey = crypto.scryptSync(key, salt, 32);
     
     this.secrets = new Map();
     this.loadSecrets();
