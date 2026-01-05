@@ -1,0 +1,27 @@
+{
+  "name": "@aviation/keystore",
+  "version": "0.1.0",
+  "description": "Secure key store for aviation applications to manage API keys and secrets",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "clean": "rm -rf dist"
+  },
+  "keywords": [
+    "aviation",
+    "keystore",
+    "security",
+    "secrets"
+  ],
+  "author": "Jordan Hubbard",
+  "license": "MIT",
+  "dependencies": {
+    "@aviation/shared-sdk": "*"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "typescript": "^5.0.0"
+  }
+}
