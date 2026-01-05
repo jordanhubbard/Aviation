@@ -1,109 +1,144 @@
-# Aviation
+# Aviation Monorepo
 
-A monorepo for aviation-related applications and SDKs, organized for efficient parallel development using the beads pattern.
+A monorepo for aviation-themed applications running as background services with shared SDK and secure key management.
 
-## 🚀 Applications
+## Architecture
 
-### [ForeFlight Dashboard](apps/foreflight-dashboard/)
-A modern, stateless web application for analyzing ForeFlight logbook data. Upload your ForeFlight CSV exports for comprehensive analysis with advanced validation rules and beautiful visualizations.
+This monorepo contains multiple aviation applications that share common infrastructure:
 
-**Features:**
-- Import & analyze ForeFlight CSV exports
-- Smart validation for cross-country flights and time accountability
-- Visual distinctions for ground training and night flights
-- ICAO aircraft code validation
-- Real-time statistics and currency tracking
-- Completely stateless - no accounts, no tracking, no data persistence
+### Core Features
 
-**Tech Stack:** Python 3.11, FastAPI, React 18, TypeScript, Material-UI, Docker
+- **Background Services**: Each application runs as a background service
+- **Secure Key Store**: Centralized, encrypted storage for API keys and secrets
+- **Multi-Modal UI**: Applications can run as:
+  - Self-contained mobile applications
+  - Multi-tab web interface with distinct panes
+  - Standalone web applications
+- **Shared AI SDK**: Common AI methodology and patterns across all applications
 
-[📖 Full Documentation](apps/foreflight-dashboard/README.md) | [🚀 Quick Start](apps/foreflight-dashboard/README.md#quick-start)
-
-## 📦 Packages
-
-*Coming soon - shared libraries and SDKs*
-
-## 🏗️ Monorepo Structure
+## Structure
 
 ```
 Aviation/
-├── apps/                          # Applications
-│   └── foreflight-dashboard/     # ForeFlight logbook analyzer
-├── packages/                      # Shared packages (future)
-├── AGENTS.md                     # LLM-friendly guidelines
-├── CONTRIBUTING.md               # Development guidelines
-└── README.md                     # This file
+├── packages/              # Shared packages
+│   ├── shared-sdk/       # Common SDK with AI methodology and service base classes
+│   ├── keystore/         # Secure key store for API keys
+│   └── ui-framework/     # UI framework supporting multiple modalities
+├── apps/                 # Aviation applications
+│   ├── flight-tracker/   # Real-time flight tracking service
+│   └── weather-briefing/ # Aviation weather briefing with AI analysis
+└── package.json          # Monorepo root configuration
 ```
 
-## 🔷 Work Organization with Beads
-
-This monorepo uses the **beads pattern** for organizing work into independent, composable units that can be:
-
-- **Executed in parallel** - Multiple beads can run simultaneously
-- **Tested independently** - Each bead has its own test suite
-- **Developed separately** - Teams can work on different beads without conflicts
-- **Composed together** - Beads combine to create complete workflows
-
-Each application includes a `beads.yaml` file that defines its beads and their dependencies. This enables:
-- Optimal parallel execution during development
-- Faster CI/CD pipelines
-- Clear separation of concerns
-- Better scalability as the codebase grows
-
-See [AGENTS.md](AGENTS.md) for detailed information about the beads pattern.
-
-## 🛠️ Development
+## Getting Started
 
 ### Prerequisites
 
-- Docker and Docker Compose (for containerized apps)
-- Python 3.11+ (for Python applications)
-- Node.js 18+ (for JavaScript/TypeScript applications)
-- Git
+- Node.js 20+ 
+- npm 9+ (or pnpm for better workspace support)
 
-### Getting Started
-
-Each application is self-contained with its own development environment:
+### Installation
 
 ```bash
-# Navigate to an application
-cd apps/foreflight-dashboard
+# Install dependencies for all packages
+npm install
 
-# Follow the app's README for setup instructions
-# Most apps use Docker for easy setup
-make start
+# Build all packages
+npm run build
 ```
 
-### Repository Guidelines
+### Running Applications
 
-- **Applications** (`apps/`) - Complete, standalone applications
-- **Packages** (`packages/`) - Shared code and libraries
-- **Beads** - Independent work units defined in each app's `beads.yaml`
+Each application can be run independently:
 
-See [CONTRIBUTING.md](CONTRIBUTING.md) for detailed development guidelines.
+```bash
+# Flight Tracker
+cd apps/flight-tracker
+npm run build
+npm start
 
-## 📚 Documentation
+# Weather Briefing
+cd apps/weather-briefing
+npm run build
+npm start
+```
 
-- [AGENTS.md](AGENTS.md) - Guidelines for LLM agents and automated tools
-- [CONTRIBUTING.md](CONTRIBUTING.md) - How to contribute to this repository
-- Individual app READMEs in `apps/*/README.md`
+## Packages
 
-## 📜 License
+### @aviation/shared-sdk
 
-MIT License - See [LICENSE](LICENSE) file for details
+Core SDK providing:
+- `BackgroundService`: Base class for background services
+- `AIService`: Base class for AI-powered services
+- `AIProvider`: Interface for AI provider implementations
+- `SecureKeyStore`: Encrypted key/secret storage
 
-## 🤝 Contributing
+### @aviation/keystore
 
-Contributions are welcome! Please read [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines on:
-- Code style and conventions
-- The beads pattern for work organization
-- Testing requirements
-- Pull request process
+Secure key management system for storing and retrieving API keys across services.
 
-## ✈️ About
+### @aviation/ui-framework
 
-This monorepo consolidates aviation-related tools and applications to enable:
-- Shared code and dependencies
-- Consistent development practices
-- Efficient parallel development with beads
-- Simplified deployment and maintenance
+UI framework supporting multiple modalities:
+- `MultiTabWebUI`: Container for multi-tab web interfaces
+- `MobileUI`: Base class for mobile applications
+- `StandaloneWebUI`: Base class for standalone web applications
+
+## Security
+
+### Key Store
+
+API keys and secrets are stored in an encrypted keystore (`.keystore` file) using AES-256-CBC encryption.
+
+**Important**: In production, set the `KEYSTORE_ENCRYPTION_KEY` environment variable to a secure value.
+
+```bash
+export KEYSTORE_ENCRYPTION_KEY="your-secure-key-here"
+```
+
+### Setting API Keys
+
+```typescript
+import { SecureKeyStore } from '@aviation/keystore';
+
+const keystore = new SecureKeyStore();
+keystore.setSecret('service-name', 'api-key-name', 'your-api-key');
+```
+
+## Creating New Applications
+
+1. Create a new directory under `apps/`:
+```bash
+mkdir -p apps/my-aviation-app/src
+```
+
+2. Create `package.json` with dependencies on shared packages:
+```json
+{
+  "name": "@aviation/my-aviation-app",
+  "dependencies": {
+    "@aviation/shared-sdk": "workspace:*",
+    "@aviation/keystore": "workspace:*"
+  }
+}
+```
+
+3. Extend `BackgroundService` in your application:
+```typescript
+import { BackgroundService, ServiceConfig } from '@aviation/shared-sdk';
+import { SecureKeyStore } from '@aviation/keystore';
+
+export class MyService extends BackgroundService {
+  protected async onStart(): Promise<void> {
+    // Initialization logic
+  }
+
+  protected async onStop(): Promise<void> {
+    // Cleanup logic
+  }
+}
+```
+
+## License
+
+MIT

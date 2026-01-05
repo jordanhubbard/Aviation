@@ -1,0 +1,29 @@
+{
+  "name": "@aviation/weather-briefing",
+  "version": "0.1.0",
+  "description": "Aviation weather briefing service with AI-powered analysis",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "start": "node dist/index.js",
+    "clean": "rm -rf dist"
+  },
+  "keywords": [
+    "aviation",
+    "weather",
+    "briefing"
+  ],
+  "author": "Jordan Hubbard",
+  "license": "MIT",
+  "dependencies": {
+    "@aviation/shared-sdk": "*",
+    "@aviation/keystore": "*",
+    "@aviation/ui-framework": "*"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "typescript": "^5.0.0"
+  }
+}
