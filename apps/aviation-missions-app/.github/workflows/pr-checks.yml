@@ -1,0 +1,110 @@
+name: Pull Request Checks
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, edited]
+
+jobs:
+  pr-validation:
+    name: PR Validation
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      
+      - name: Check PR title
+        run: |
+          PR_TITLE="${{ github.event.pull_request.title }}"
+          
+          # Check for conventional commit format
+          if echo "$PR_TITLE" | grep -qE "^(feat|fix|docs|style|refactor|perf|test|chore|ci|build)(\(.+\))?:"; then
+            echo "✅ PR title follows conventional commits"
+          else
+            echo "⚠️ PR title should follow conventional commits format"
+            echo "Examples: feat: add feature, fix: bug fix, docs: update docs"
+          fi
+      
+      - name: Check PR description
+        run: |
+          if [ -z "${{ github.event.pull_request.body }}" ]; then
+            echo "⚠️ PR description is empty. Please add a description."
+          else
+            echo "✅ PR has description"
+          fi
+      
+      - name: Check for linked issues
+        run: |
+          PR_BODY="${{ github.event.pull_request.body }}"
+          
+          if echo "$PR_BODY" | grep -qE "(closes|fixes|resolves) #[0-9]+"; then
+            echo "✅ PR links to an issue"
+          else
+            echo "ℹ️ Consider linking this PR to an issue"
+          fi
+      
+      - name: Check changed files
+        run: |
+          echo "## Changed Files" >> $GITHUB_STEP_SUMMARY
+          git diff --name-only origin/${{ github.base_ref }}...HEAD >> $GITHUB_STEP_SUMMARY
+      
+      - name: Check for breaking changes
+        run: |
+          COMMIT_MSG=$(git log --format=%B -n 1 ${{ github.event.pull_request.head.sha }})
+          
+          if echo "$COMMIT_MSG" | grep -q "BREAKING CHANGE"; then
+            echo "⚠️ This PR contains BREAKING CHANGES"
+            echo "## ⚠️ Breaking Changes Detected" >> $GITHUB_STEP_SUMMARY
+          fi
+      
+      - name: Check code size
+        run: |
+          additions=$(git diff --numstat origin/${{ github.base_ref }}...HEAD | awk '{sum+=$1} END {print sum}')
+          deletions=$(git diff --numstat origin/${{ github.base_ref }}...HEAD | awk '{sum+=$2} END {print sum}')
+          
+          echo "## Code Changes" >> $GITHUB_STEP_SUMMARY
+          echo "- Lines added: $additions" >> $GITHUB_STEP_SUMMARY
+          echo "- Lines deleted: $deletions" >> $GITHUB_STEP_SUMMARY
+          
+          if [ "$additions" -gt 500 ]; then
+            echo "ℹ️ Large PR detected ($additions lines). Consider breaking into smaller PRs." >> $GITHUB_STEP_SUMMARY
+          fi
+
+  label-pr:
+    name: Auto-label PR
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+      contents: read
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Label based on changed files
+        uses: actions/labeler@v6
+        with:
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+
+  size-label:
+    name: PR Size Label
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+    
+    steps:
+      - uses: codelytv/pr-size-labeler@v1
+        with:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          xs_label: 'size/XS'
+          xs_max_size: 10
+          s_label: 'size/S'
+          s_max_size: 100
+          m_label: 'size/M'
+          m_max_size: 500
+          l_label: 'size/L'
+          l_max_size: 1000
+          xl_label: 'size/XL'

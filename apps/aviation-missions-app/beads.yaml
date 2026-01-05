@@ -1,0 +1,131 @@
+# Beads Configuration for Aviation Missions App
+# 
+# This file defines the independent work units (beads) that compose the
+# Aviation Missions App. Beads enable parallel development, testing, and
+# execution of different application components.
+
+version: "1.0"
+
+beads:
+  # Database Layer
+  - name: database
+    description: H2 database management and persistence
+    path: backend/src/aviation_missions/db.clj
+    dependencies: []
+    parallel: true
+    test_path: backend/test/aviation_missions/db_test.clj
+    
+  # Mission Parser
+  - name: mission-parser
+    description: Parse mission definitions from text files
+    path: backend/src/aviation_missions/mission_parser.clj
+    dependencies: []
+    parallel: true
+    test_path: backend/test/aviation_missions/validation_test.clj
+    
+  # Admin Authentication
+  - name: admin-auth
+    description: Admin authentication and session management
+    path: backend/src/aviation_missions/admin_auth.clj
+    dependencies: []
+    parallel: true
+    test_path: backend/test/aviation_missions/admin_auth_test.clj
+    
+  # API Handlers
+  - name: api-handlers
+    description: Ring/Compojure HTTP request handlers
+    path: backend/src/aviation_missions/handlers.clj
+    dependencies: [database, mission-parser, admin-auth]
+    parallel: false
+    test_path: backend/test/aviation_missions/handlers_test.clj
+    
+  # API Documentation
+  - name: swagger-docs
+    description: OpenAPI/Swagger documentation
+    path: backend/src/aviation_missions/swagger.clj
+    dependencies: [api-handlers]
+    parallel: true
+    
+  # Core Application
+  - name: core
+    description: Main application entry point and server
+    path: backend/src/aviation_missions/core.clj
+    dependencies: [api-handlers, swagger-docs]
+    parallel: false
+    test_path: backend/test/aviation_missions/core_test.clj
+    
+  # Frontend UI
+  - name: frontend
+    description: Pure JavaScript frontend application
+    path: frontend/resources/public/js/app.js
+    dependencies: []
+    parallel: true
+    
+  # Styles
+  - name: styles
+    description: CSS styling for the application
+    path: frontend/resources/public/css/
+    dependencies: []
+    parallel: true
+
+# Bead execution groups for parallel processing
+execution_groups:
+  # Group 1: Can run in parallel (no dependencies)
+  - name: initial
+    beads: [database, mission-parser, admin-auth, frontend, styles]
+    
+  # Group 2: Core handlers
+  - name: handlers
+    beads: [api-handlers]
+    depends_on: [initial]
+    
+  # Group 3: Documentation and core
+  - name: application
+    beads: [swagger-docs, core]
+    depends_on: [handlers]
+
+# Development workflow
+workflows:
+  # Full test suite
+  - name: test-all
+    description: Run all tests in optimal order
+    steps:
+      - group: initial
+        parallel: true
+      - group: handlers
+        parallel: false
+      - group: application
+        parallel: true
+        
+  # Backend-only workflow
+  - name: backend-dev
+    description: Backend development workflow
+    steps:
+      - group: initial
+        beads: [database, mission-parser, admin-auth]
+        parallel: true
+      - bead: api-handlers
+      - bead: core
+      
+  # Frontend-only workflow
+  - name: frontend-dev
+    description: Frontend development workflow
+    steps:
+      - group: initial
+        beads: [frontend, styles]
+        parallel: true
+
+# CI/CD integration
+ci:
+  # Parallel test execution strategy
+  test_strategy: parallel
+  max_parallel: 3
+  
+  # Test groups for CI pipeline
+  test_groups:
+    - name: unit-tests-backend
+      beads: [database, mission-parser, admin-auth, api-handlers, core]
+      
+    - name: integration-tests
+      beads: [core]
+      depends_on: [unit-tests-backend]

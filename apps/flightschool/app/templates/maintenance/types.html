@@ -1,0 +1,48 @@
+{% extends "maintenance/base.html" %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item active">Maintenance Types</li>
+{% endblock %}
+
+{% block maintenance_content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1>Maintenance Types</h1>
+    <a href="{{ url_for('admin.create_maintenance_type') }}" class="btn btn-primary">
+        <i class="fas fa-plus"></i> Add Maintenance Type
+    </a>
+</div>
+
+<div class="table-responsive">
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Description</th>
+                <th>Calendar Interval (days)</th>
+                <th>Operating Hours Interval</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for type in types %}
+            <tr>
+                <td>{{ type.name }}</td>
+                <td>{{ type.description or '' }}</td>
+                <td>{{ type.interval_days or 'N/A' }}</td>
+                <td>{{ type.interval_hours or 'N/A' }}</td>
+                <td>
+                    <a href="{{ url_for('maintenance.edit_maintenance_type', id=type.id) }}" 
+                       class="btn btn-sm btn-outline-primary">
+                        <i class="fas fa-edit"></i> Edit
+                    </a>
+                </td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="5" class="text-center">No maintenance types found.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %} 

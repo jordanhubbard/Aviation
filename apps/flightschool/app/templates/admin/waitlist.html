@@ -1,0 +1,70 @@
+{% extends "admin/base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>Waitlist</h2>
+    <div class="card">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Student</th>
+                            <th>Instructor</th>
+                            <th>Aircraft</th>
+                            <th>Requested Date</th>
+                            <th>Time Preference</th>
+                            <th>Duration</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for entry in entries %}
+                        <tr>
+                            <td>{{ entry.student.full_name }}</td>
+                            <td>{{ entry.instructor.full_name if entry.instructor else 'N/A' }}</td>
+                            <td>{{ entry.aircraft.display_name }}</td>
+                            <td>{{ entry.requested_date.strftime('%Y-%m-%d') }}</td>
+                            <td>{{ entry.time_preference }}</td>
+                            <td>{{ entry.duration_hours }}</td>
+                            <td>{{ entry.status|title }}</td>
+                            <td>
+                                <div class="btn-group">
+                                    <button class="btn btn-sm btn-outline-primary" onclick="editWaitlistEntry({{ entry.id }})">Edit</button>
+                                    <button class="btn btn-sm btn-outline-danger" onclick="deleteWaitlistEntry({{ entry.id }})">Delete</button>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function updateStatus(id, status) {
+    fetch(`/admin/waitlist/${id}`, {
+        method: 'PUT',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ status: status })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.message) {
+            location.reload();
+        } else {
+            alert('Error updating waitlist entry');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Error updating waitlist entry');
+    });
+}
+</script>
+{% endblock %}

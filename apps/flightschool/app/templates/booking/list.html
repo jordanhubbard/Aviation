@@ -1,0 +1,85 @@
+{% extends "base.html" %}
+
+{% block title %}My Bookings{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">My Bookings</h5>
+                    <a href="{{ url_for('booking.create_booking') }}" class="btn btn-primary">New Booking</a>
+                </div>
+                <div class="card-body">
+                    {% if bookings %}
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Student</th>
+                                        <th>Instructor</th>
+                                        <th>Aircraft</th>
+                                        <th>Info</th>
+                                        <th>Start Time</th>
+                                        <th>End Time</th>
+                                        <th>Status</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for booking in bookings %}
+                                        <tr>
+                                            <td>{{ booking.student.full_name }}</td>
+                                            <td>{{ booking.instructor.full_name if booking.instructor else 'N/A' }}</td>
+                                            <td>{{ booking.aircraft.display_name }}</td>
+                                            <td>
+                                                <a href="{{ url_for('main.aircraft') }}" class="btn btn-sm btn-info">Info</a>
+                                            </td>
+                                            <td><span class="utc-datetime" data-utc="{{ booking.start_time.isoformat() }}"></span></td>
+                                            <td><span class="utc-datetime" data-utc="{{ booking.end_time.isoformat() }}"></span></td>
+                                            <td>
+                                                <span class="badge {% if booking.status == 'confirmed' %}bg-success{% elif booking.status == 'pending' %}bg-warning{% else %}bg-danger{% endif %}">
+                                                    {{ booking.status|title }}
+                                                </span>
+                                            </td>
+                                            <td>
+                                                <a href="{{ url_for('booking.view_booking', booking_id=booking.id) }}" class="btn btn-sm btn-outline-primary">View</a>
+                                                {% if booking.status == 'pending' %}
+                                                    <form action="{{ url_for('booking.cancel_booking', booking_id=booking.id) }}" method="POST" style="display: inline;">
+                                                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                                                        <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Are you sure you want to cancel this booking?')">Cancel</button>
+                                                    </form>
+                                                {% endif %}
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <div class="alert alert-info">
+                            You have no bookings yet. <a href="{{ url_for('booking.create_booking') }}">Create a new booking</a> to get started.
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+function utcToLocalString(utcString) {
+    if (!utcString) return '';
+    const d = new Date(utcString);
+    return d.toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' });
+}
+document.addEventListener('DOMContentLoaded', function() {
+    document.querySelectorAll('.utc-datetime').forEach(function(el) {
+        const utc = el.getAttribute('data-utc');
+        if (utc) {
+            el.textContent = utcToLocalString(utc);
+        }
+    });
+});
+</script>
+{% endblock %} 

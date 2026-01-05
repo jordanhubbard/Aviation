@@ -1,0 +1,200 @@
+{% extends "admin/base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>Flight Logs</h2>
+    <div class="card">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Booking ID</th>
+                            <th>Aircraft</th>
+                            <th>PIC</th>
+                            <th>SIC</th>
+                            <th>Date</th>
+                            <th>Route</th>
+                            <th>Departure</th>
+                            <th>Arrival</th>
+                            <th>Night</th>
+                            <th>Cross Country</th>
+                            <th>Actual Instrument</th>
+                            <th>Landings Day</th>
+                            <th>Landings Night</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for log in logs %}
+                        <tr>
+                            <td>{{ log.booking.id }}</td>
+                            <td>{{ log.aircraft.display_name }}</td>
+                            <td>{{ log.pic.full_name }}</td>
+                            <td>{{ log.sic.full_name if log.sic else 'N/A' }}</td>
+                            <td>{{ log.flight_date.strftime('%Y-%m-%d') }}</td>
+                            <td>{{ log.route }}</td>
+                            <td>{{ log.departure_airport }}</td>
+                            <td>{{ log.arrival_airport }}</td>
+                            <td>{{ log.night }}</td>
+                            <td>{{ log.cross_country }}</td>
+                            <td>{{ log.actual_instrument }}</td>
+                            <td>{{ log.landings_day }}</td>
+                            <td>{{ log.landings_night }}</td>
+                            <td>
+                                <a href="{{ url_for('admin.manage_flight_log', id=log.id) }}" class="btn btn-sm btn-outline-primary">View</a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal for editing flight log -->
+<div class="modal fade" id="editLogModal" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Edit Flight Log</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="editLogForm">
+                    <input type="hidden" id="logId">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="route">Route</label>
+                                <input type="text" class="form-control" id="route">
+                            </div>
+                            <div class="form-group">
+                                <label for="remarks">Remarks</label>
+                                <textarea class="form-control" id="remarks"></textarea>
+                            </div>
+                            <div class="form-group">
+                                <label for="weather">Weather Conditions</label>
+                                <select class="form-control" id="weather">
+                                    <option value="VFR">VFR</option>
+                                    <option value="MVFR">MVFR</option>
+                                    <option value="IFR">IFR</option>
+                                    <option value="LIFR">LIFR</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label>Flight Times (hours)</label>
+                                <div class="row">
+                                    <div class="col-6">
+                                        <input type="number" step="0.1" class="form-control mb-2" id="groundTime" placeholder="Ground">
+                                        <input type="number" step="0.1" class="form-control mb-2" id="dualTime" placeholder="Dual">
+                                        <input type="number" step="0.1" class="form-control mb-2" id="picTime" placeholder="PIC">
+                                        <input type="number" step="0.1" class="form-control mb-2" id="sicTime" placeholder="SIC">
+                                    </div>
+                                    <div class="col-6">
+                                        <input type="number" step="0.1" class="form-control mb-2" id="crossCountry" placeholder="Cross Country">
+                                        <input type="number" step="0.1" class="form-control mb-2" id="night" placeholder="Night">
+                                        <input type="number" step="0.1" class="form-control mb-2" id="actualInstrument" placeholder="Actual IMC">
+                                        <input type="number" step="0.1" class="form-control mb-2" id="simInstrument" placeholder="Sim Instrument">
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label>Landings</label>
+                                <div class="row">
+                                    <div class="col-6">
+                                        <input type="number" class="form-control" id="landingsDay" placeholder="Day">
+                                    </div>
+                                    <div class="col-6">
+                                        <input type="number" class="form-control" id="landingsNight" placeholder="Night">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" onclick="saveLog()">Save Changes</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function editLog(id) {
+    document.getElementById('logId').value = id;
+    // TODO: Fetch log details and populate form
+    $('#editLogModal').modal('show');
+}
+
+function saveLog() {
+    const id = document.getElementById('logId').value;
+    const formData = {
+        route: document.getElementById('route').value,
+        remarks: document.getElementById('remarks').value,
+        weather_conditions: document.getElementById('weather').value,
+        ground_instruction: parseFloat(document.getElementById('groundTime').value) || 0.0,
+        dual_received: parseFloat(document.getElementById('dualTime').value) || 0.0,
+        pic_time: parseFloat(document.getElementById('picTime').value) || 0.0,
+        sic_time: parseFloat(document.getElementById('sicTime').value) || 0.0,
+        cross_country: parseFloat(document.getElementById('crossCountry').value) || 0.0,
+        night: parseFloat(document.getElementById('night').value) || 0.0,
+        actual_instrument: parseFloat(document.getElementById('actualInstrument').value) || 0.0,
+        simulated_instrument: parseFloat(document.getElementById('simInstrument').value) || 0.0,
+        landings_day: parseInt(document.getElementById('landingsDay').value) || 0,
+        landings_night: parseInt(document.getElementById('landingsNight').value) || 0
+    };
+
+    fetch(`/admin/flight-logs/${id}`, {
+        method: 'PUT',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(formData)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.message) {
+            $('#editLogModal').modal('hide');
+            location.reload();
+        } else {
+            alert('Error updating flight log');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Error updating flight log');
+    });
+}
+
+function deleteLog(id) {
+    if (confirm('Are you sure you want to delete this flight log?')) {
+        fetch(`/admin/flight-logs/${id}`, {
+            method: 'DELETE',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.message) {
+                location.reload();
+            } else {
+                alert('Error deleting flight log');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Error deleting flight log');
+        });
+    }
+}
+</script>
+{% endblock %}

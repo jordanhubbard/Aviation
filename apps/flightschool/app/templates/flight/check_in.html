@@ -1,0 +1,202 @@
+{% extends "base.html" %}
+
+{% block title %}Flight Check-In - {{ config.SCHOOL_NAME }}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-12">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{{ url_for('booking.dashboard') }}">Dashboard</a></li>
+                    <li class="breadcrumb-item"><a href="{{ url_for('booking.view_booking', booking_id=booking.id) }}">Flight Details</a></li>
+                    <li class="breadcrumb-item active">Check-In</li>
+                </ol>
+            </nav>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Flight Information -->
+        <div class="col-md-8">
+            <div class="card mb-4">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <div>
+                        <h5 class="mb-0">{{ booking.aircraft.make }} {{ booking.aircraft.model }} ({{ booking.aircraft.registration }})</h5>
+                        <p class="text-muted mb-0">{{ booking.start_time.strftime('%A, %B %d, %Y') }}</p>
+                    </div>
+                    <span class="badge bg-success">Check-In</span>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-4">
+                        <div class="col-md-4">
+                            <img src="{{ booking.aircraft.image_url }}" alt="{{ booking.aircraft.registration }}" class="img-fluid rounded" style="max-height: 150px; object-fit: contain;">
+                        </div>
+                        <div class="col-md-8">
+                            <h5>Aircraft Details</h5>
+                            <table class="table table-sm">
+                                <tr>
+                                    <th>Registration:</th>
+                                    <td>{{ booking.aircraft.registration }}</td>
+                                </tr>
+                                <tr>
+                                    <th>Type:</th>
+                                    <td>{{ booking.aircraft.make }} {{ booking.aircraft.model }}</td>
+                                </tr>
+                                <tr>
+                                    <th>Engine:</th>
+                                    <td>{{ booking.aircraft.engine_type|title }} ({{ booking.aircraft.num_engines }})</td>
+                                </tr>
+                                <tr>
+                                    <th>Equipment:</th>
+                                    <td>
+                                        {% if booking.aircraft.ifr_equipped %}IFR, {% endif %}
+                                        {% if booking.aircraft.gps %}GPS, {% endif %}
+                                        {% if booking.aircraft.autopilot %}Autopilot{% endif %}
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+
+                    <form method="POST" action="{{ url_for('flight.check_in', booking_id=booking.id) }}">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                        
+                        <div class="row g-4">
+                            <!-- Hobbs & Tach -->
+                            <div class="col-md-6">
+                                <div class="p-3 bg-light rounded-3">
+                                    <h6 class="text-muted mb-3">Hobbs Time</h6>
+                                    <div class="input-group">
+                                        <span class="input-group-text"><i class="fas fa-tachometer-alt"></i></span>
+                                        <input type="number" class="form-control" id="hobbs_start" name="hobbs_start" 
+                                               step="0.1" min="0" value="{{ booking.aircraft.hobbs_time or 0 }}" required>
+                                    </div>
+                                    <small class="text-muted">Last recorded: {{ booking.aircraft.hobbs_time or 'N/A' }}</small>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="p-3 bg-light rounded-3">
+                                    <h6 class="text-muted mb-3">Tach Time</h6>
+                                    <div class="input-group">
+                                        <span class="input-group-text"><i class="fas fa-tachometer-alt"></i></span>
+                                        <input type="number" class="form-control" id="tach_start" name="tach_start" 
+                                               step="0.1" min="0" value="{{ booking.aircraft.tach_time or 0 }}" required>
+                                    </div>
+                                    <small class="text-muted">Last recorded: {{ booking.aircraft.tach_time or 'N/A' }}</small>
+                                </div>
+                            </div>
+                        </div>
+
+                        <hr class="my-4">
+
+                        <!-- Weather Conditions -->
+                        <div class="row g-4 mb-4">
+                            <div class="col-12">
+                                <div class="p-3 bg-light rounded-3">
+                                    <h6 class="text-muted mb-3">Weather Conditions</h6>
+                                    <div class="form-check form-switch">
+                                        <input class="form-check-input" type="checkbox" id="weather_conditions_acceptable" name="weather_conditions_acceptable" checked>
+                                        <label class="form-check-label" for="weather_conditions_acceptable">
+                                            Weather conditions are acceptable for this flight
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Notes -->
+                        <div class="mb-4">
+                            <label for="notes" class="form-label">Notes</label>
+                            <textarea class="form-control" id="notes" name="notes" rows="3"></textarea>
+                        </div>
+
+                        <!-- Confirmation -->
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary">Start Flight</button>
+                            <a href="{{ url_for('booking.view_booking', booking_id=booking.id) }}" class="btn btn-secondary">Cancel</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Maintenance & Squawks -->
+        <div class="col-md-4">
+            <!-- Maintenance Records -->
+            <div class="card mb-4">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Recent Maintenance</h5>
+                    <a href="{{ url_for('flight.maintenance_records', aircraft_id=booking.aircraft_id) }}" class="btn btn-sm btn-outline-primary">View All</a>
+                </div>
+                <div class="card-body p-0">
+                    <div class="list-group list-group-flush">
+                        {% if maintenance_records %}
+                            {% for record in maintenance_records %}
+                            <div class="list-group-item">
+                                <div class="d-flex w-100 justify-content-between">
+                                    <h6 class="mb-1">{{ record.maintenance_type_obj.name if record.maintenance_type_obj else 'Unknown' }}</h6>
+                                    <small>{{ record.performed_at.strftime('%Y-%m-%d') }}</small>
+                                </div>
+                                <p class="mb-1 text-truncate">{{ record.notes or 'No notes provided' }}</p>
+                                <small>By: {{ record.performed_by.full_name }}</small>
+                            </div>
+                            {% endfor %}
+                        {% else %}
+                            <div class="list-group-item">
+                                <p class="mb-0 text-muted">No recent maintenance records found.</p>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Open Squawks -->
+            <div class="card">
+                <div class="card-header bg-warning text-dark">
+                    <h5 class="mb-0">Open Squawks</h5>
+                </div>
+                <div class="card-body p-0">
+                    <div class="list-group list-group-flush">
+                        {% if open_squawks %}
+                            {% for squawk in open_squawks %}
+                            <div class="list-group-item">
+                                <div class="d-flex w-100 justify-content-between">
+                                    <h6 class="mb-1">Reported {{ squawk.created_at.strftime('%Y-%m-%d') }}</h6>
+                                    <span class="badge bg-warning text-dark">Open</span>
+                                </div>
+                                <p class="mb-1">{{ squawk.description }}</p>
+                                <small>By: {{ squawk.reported_by.full_name }}</small>
+                            </div>
+                            {% endfor %}
+                        {% else %}
+                            <div class="list-group-item">
+                                <p class="mb-0 text-muted">No open squawks reported.</p>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Auto-populate Hobbs and Tach time from aircraft data
+        const hobbsInput = document.getElementById('hobbs_start');
+        const tachInput = document.getElementById('tach_start');
+        
+        // Set minimum values to current aircraft values
+        if (hobbsInput.value) {
+            hobbsInput.min = hobbsInput.value;
+        }
+        
+        if (tachInput.value) {
+            tachInput.min = tachInput.value;
+        }
+    });
+</script>
+{% endblock %}

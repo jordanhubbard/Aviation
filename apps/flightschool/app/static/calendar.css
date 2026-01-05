@@ -1,0 +1,45 @@
+/* Custom week calendar styles for a paper calendar look */
+.calendar-table {
+    background: #fffbe8;
+    border-radius: 8px;
+    border: 2px solid #f7d774;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+    font-family: 'Segoe UI', 'Arial', sans-serif;
+    margin-bottom: 0;
+}
+.calendar-table th, .calendar-table td {
+    border: 1px solid #f7d774;
+    text-align: center;
+    padding: 12px 0;
+    font-size: 1.1em;
+}
+.calendar-table th {
+    background: #f7d774;
+    color: #494200;
+    font-weight: 600;
+}
+.calendar-table td {
+    background: #fffbe8;
+    cursor: pointer;
+    transition: background 0.2s, color 0.2s;
+}
+.calendar-table td.bg-primary {
+    background: #22577a !important;
+    color: #fff !important;
+    font-weight: bold;
+    border: 2px solid #22577a;
+}
+.calendar-table td:hover {
+    background: #ffe082;
+}
+.calendar-nav {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 8px;
+}
+.calendar-nav button {
+    font-size: 1em;
+    padding: 3px 14px;
+    border-radius: 4px;
+}

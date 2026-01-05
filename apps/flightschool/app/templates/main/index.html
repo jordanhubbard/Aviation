@@ -1,0 +1,218 @@
+{% extends "base.html" %}
+
+{% block title %}Home - {{ config.SCHOOL_NAME }}{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<div class="hero-section position-relative">
+    <div class="container position-relative z-index-1 py-5">
+        <div class="row align-items-center min-vh-75">
+            <div class="col-lg-6">
+                <h1 class="display-4 fw-bold text-white mb-4">Take Flight with Confidence</h1>
+                <p class="lead text-white mb-4">Begin your journey to becoming a pilot at {{ config.SCHOOL_NAME }}, where excellence in flight training meets unparalleled safety standards.</p>
+                <div class="d-flex gap-3">
+                    <a href="{{ url_for('auth.register') }}" class="btn btn-primary btn-lg">Start Training</a>
+                    <a href="{{ url_for('main.about') }}" class="btn btn-outline-light btn-lg">Learn More</a>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="hero-overlay"></div>
+</div>
+
+<!-- Features Section -->
+<div class="container py-5">
+    <div class="row text-center mb-5">
+        <div class="col-md-12">
+            <h2 class="fw-bold">Why Choose {{ config.SCHOOL_NAME }}?</h2>
+            <p class="lead text-muted">Experience the difference in flight training excellence</p>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-md-4 mb-4">
+            <div class="card h-100 border-0 shadow-sm">
+                <div class="card-body text-center p-4">
+                    <i class="fas fa-shield-alt fa-3x text-primary mb-3"></i>
+                    <h5 class="card-title">Safety First</h5>
+                    <p class="card-text">Our commitment to safety is unmatched, with rigorous maintenance programs and experienced instructors.</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4 mb-4">
+            <div class="card h-100 border-0 shadow-sm">
+                <div class="card-body text-center p-4">
+                    <i class="fas fa-plane fa-3x text-primary mb-3"></i>
+                    <h5 class="card-title">Modern Fleet</h5>
+                    <p class="card-text">Train on state-of-the-art aircraft equipped with the latest avionics and safety features.</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4 mb-4">
+            <div class="card h-100 border-0 shadow-sm">
+                <div class="card-body text-center p-4">
+                    <i class="fas fa-graduation-cap fa-3x text-primary mb-3"></i>
+                    <h5 class="card-title">Expert Instructors</h5>
+                    <p class="card-text">Learn from industry professionals with years of experience and a passion for teaching.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Programs Section -->
+<div class="container-fluid bg-light py-5">
+    <div class="container">
+        <div class="row text-center mb-5">
+            <div class="col-md-12">
+                <h2 class="fw-bold">Our Training Programs</h2>
+                <p class="lead text-muted">Find the perfect path for your aviation goals</p>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-md-4 mb-4">
+                <div class="card h-100">
+                    <img src="{{ url_for('static', filename='images/private_pilot.jpg') }}" class="card-img-top" alt="Private Pilot Training">
+                    <div class="card-body">
+                        <h5 class="card-title">Private Pilot</h5>
+                        <p class="card-text">Begin your aviation journey with our comprehensive private pilot training program.</p>
+                        <ul class="list-unstyled">
+                            <li><i class="fas fa-check text-success me-2"></i>40 hours minimum flight time</li>
+                            <li><i class="fas fa-check text-success me-2"></i>Ground school included</li>
+                            <li><i class="fas fa-check text-success me-2"></i>FAA checkride preparation</li>
+                        </ul>
+                        <a href="{{ url_for('main.training') }}" class="btn btn-outline-primary">Learn More</a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4 mb-4">
+                <div class="card h-100">
+                    <img src="{{ url_for('static', filename='images/instrument.jpg') }}" class="card-img-top" alt="Instrument Rating">
+                    <div class="card-body">
+                        <h5 class="card-title">Instrument Rating</h5>
+                        <p class="card-text">Master instrument flying with our advanced training program.</p>
+                        <ul class="list-unstyled">
+                            <li><i class="fas fa-check text-success me-2"></i>40 hours instrument time</li>
+                            <li><i class="fas fa-check text-success me-2"></i>Simulator training</li>
+                            <li><i class="fas fa-check text-success me-2"></i>Real-world scenarios</li>
+                        </ul>
+                        <a href="{{ url_for('main.training') }}" class="btn btn-outline-primary">Learn More</a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4 mb-4">
+                <div class="card h-100">
+                    <img src="{{ url_for('static', filename='images/commercial.jpg') }}" class="card-img-top" alt="Commercial Pilot">
+                    <div class="card-body">
+                        <h5 class="card-title">Commercial Pilot</h5>
+                        <p class="card-text">Take your career to new heights with our commercial pilot program.</p>
+                        <ul class="list-unstyled">
+                            <li><i class="fas fa-check text-success me-2"></i>250 hours total time</li>
+                            <li><i class="fas fa-check text-success me-2"></i>Complex aircraft training</li>
+                            <li><i class="fas fa-check text-success me-2"></i>Career preparation</li>
+                        </ul>
+                        <a href="{{ url_for('main.programs') }}" class="btn btn-outline-primary">Learn More</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Testimonials Section -->
+<div class="container py-5">
+    <div class="row text-center mb-5">
+        <div class="col-md-12">
+            <h2 class="fw-bold">Student Success Stories</h2>
+            <p class="lead text-muted">Hear from our graduates</p>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-md-4 mb-4">
+            <div class="card h-100 border-0 shadow-sm">
+                <div class="card-body">
+                    <div class="d-flex align-items-center mb-3">
+                        <img src="{{ url_for('static', filename='images/testimonial1.jpg') }}" class="rounded-circle me-3" width="60" height="60" alt="Student">
+                        <div>
+                            <h5 class="mb-0">Emily Johnson</h5>
+                            <p class="text-muted mb-0">Private Pilot</p>
+                        </div>
+                    </div>
+                    <p class="card-text">"The instructors at {{ config.SCHOOL_NAME }} are exceptional. Their patience and expertise made my training experience both enjoyable and effective."</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4 mb-4">
+            <div class="card h-100 border-0 shadow-sm">
+                <div class="card-body">
+                    <div class="d-flex align-items-center mb-3">
+                        <img src="{{ url_for('static', filename='images/testimonial2.jpg') }}" class="rounded-circle me-3" width="60" height="60" alt="Student">
+                        <div>
+                            <h5 class="mb-0">Michael Chen</h5>
+                            <p class="text-muted mb-0">Commercial Pilot</p>
+                        </div>
+                    </div>
+                    <p class="card-text">"The comprehensive training program prepared me perfectly for my career in aviation. I couldn't have asked for a better start."</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4 mb-4">
+            <div class="card h-100 border-0 shadow-sm">
+                <div class="card-body">
+                    <div class="d-flex align-items-center mb-3">
+                        <img src="{{ url_for('static', filename='images/testimonial3.jpg') }}" class="rounded-circle me-3" width="60" height="60" alt="Student">
+                        <div>
+                            <h5 class="mb-0">Sarah Williams</h5>
+                            <p class="text-muted mb-0">Instrument Rating</p>
+                        </div>
+                    </div>
+                    <p class="card-text">"The instrument rating program was challenging but rewarding. The instructors' attention to detail made all the difference."</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Call to Action Section -->
+<div class="container-fluid bg-primary text-white py-5">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-md-8">
+                <h2 class="fw-bold mb-3">Ready to Start Your Aviation Journey?</h2>
+                <p class="lead mb-0">Join {{ config.SCHOOL_NAME }} today and take the first step towards your dream of flying.</p>
+            </div>
+            <div class="col-md-4 text-md-end">
+                <a href="{{ url_for('auth.register') }}" class="btn btn-light btn-lg">Get Started</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block styles %}
+<style>
+.hero-section {
+    background-image: url("{{ url_for('static', filename='images/hero-bg.jpg') }}");
+    background-size: cover;
+    background-position: center;
+    min-height: 75vh;
+}
+
+.hero-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 0;
+}
+
+.min-vh-75 {
+    min-height: 75vh;
+}
+
+.z-index-1 {
+    z-index: 1;
+}
+</style>
+{% endblock %} 

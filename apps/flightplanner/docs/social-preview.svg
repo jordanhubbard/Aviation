@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="640" viewBox="0 0 1280 640">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#0b1020"/>
+      <stop offset="100%" stop-color="#122a4a"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="1280" height="640" fill="url(#bg)"/>
+
+  <g fill="#ffffff" font-family="ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial">
+    <text x="96" y="250" font-size="88" font-weight="700">flightplanner</text>
+    <text x="96" y="320" font-size="34" opacity="0.9">Unified VFR flight planning: routes, terrain, and weather</text>
+    <text x="96" y="390" font-size="26" opacity="0.75">FastAPI • React • Leaflet • METAR • OpenWeatherMap • Open‑Meteo</text>
+  </g>
+
+  <g opacity="0.25" fill="#ffffff">
+    <path d="M1080 120c-110 36-220 80-340 120-160 54-310 76-440 78v26c135-2 292-25 455-80 114-38 220-80 325-115v-29z"/>
+    <path d="M1040 210c-90 28-185 58-300 95-170 55-350 92-520 103v26c175-11 360-49 536-106 111-36 206-66 284-90v-28z"/>
+  </g>
+</svg>

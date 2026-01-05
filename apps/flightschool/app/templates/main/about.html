@@ -1,0 +1,139 @@
+{% extends "base.html" %}
+
+{% block title %}About Us - {{ config.SCHOOL_NAME }}{% endblock %}
+
+{% block content %}
+<!-- Header Section -->
+<div class="container py-5">
+    <div class="row text-center">
+        <div class="col-md-12">
+            <h1 class="display-4 fw-bold">About Us</h1>
+            <p class="lead text-muted">Your journey to the skies starts here</p>
+        </div>
+    </div>
+</div>
+
+<!-- Mission Statement -->
+<div class="container py-5">
+    <div class="row align-items-center">
+        <div class="col-md-6">
+            <h2 class="fw-bold mb-4">Our Mission</h2>
+            <p class="lead">To provide exceptional flight training and create the next generation of skilled aviators.</p>
+            <p>At {{ config.SCHOOL_NAME }}, we believe that quality flight training is the foundation of aviation safety and excellence. Our mission is to equip our students with the knowledge, skills, and confidence they need to become competent and responsible pilots.</p>
+        </div>
+        <div class="col-md-6">
+            <img src="{{ url_for('static', filename='images/mission.jpg') }}" alt="Flight Training" class="img-fluid rounded shadow">
+        </div>
+    </div>
+</div>
+
+<!-- History Section -->
+<div class="container-fluid py-5 bg-light">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-md-6 order-md-2">
+                <h2 class="fw-bold mb-4">Our History</h2>
+                <p>Founded in 1995, {{ config.SCHOOL_NAME }} has been a cornerstone of aviation training in the region. What started as a small flight school with a single aircraft has grown into a premier training facility with a fleet of modern aircraft and a team of experienced instructors.</p>
+                <p>Over the years, we've trained thousands of pilots who have gone on to successful careers in both commercial and private aviation. Our commitment to excellence and safety has earned us recognition as one of the leading flight schools in the country.</p>
+            </div>
+            <div class="col-md-6 order-md-1">
+                <img src="{{ url_for('static', filename='images/history.jpg') }}" alt="School History" class="img-fluid rounded shadow">
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Team Section -->
+<div class="container py-5">
+    <h2 class="text-center fw-bold mb-5">Meet Our Team</h2>
+    <div class="row">
+        <div class="col-md-4 mb-4">
+            <div class="card h-100">
+                <img src="{{ url_for('static', filename='images/chief_instructor.jpg') }}" class="card-img-top" alt="Chief Flight Instructor">
+                <div class="card-body text-center">
+                    <h5 class="card-title">John Smith</h5>
+                    <p class="text-muted">Chief Flight Instructor</p>
+                    <p class="card-text">With over 20 years of experience and 15,000+ flight hours, John leads our team of instructors and ensures the highest standards of training.</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4 mb-4">
+            <div class="card h-100">
+                <img src="{{ url_for('static', filename='images/maintenance.jpg') }}" class="card-img-top" alt="Maintenance Manager">
+                <div class="card-body text-center">
+                    <h5 class="card-title">Sarah Johnson</h5>
+                    <p class="text-muted">Maintenance Manager</p>
+                    <p class="card-text">Sarah oversees our aircraft maintenance program, ensuring our fleet is always in perfect condition for training flights.</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4 mb-4">
+            <div class="card h-100">
+                <img src="{{ url_for('static', filename='images/operations.jpg') }}" class="card-img-top" alt="Operations Manager">
+                <div class="card-body text-center">
+                    <h5 class="card-title">Michael Brown</h5>
+                    <p class="text-muted">Operations Manager</p>
+                    <p class="card-text">Michael manages our day-to-day operations, ensuring smooth scheduling and coordination of all flight training activities.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Facilities Section -->
+<div class="container-fluid py-5 bg-light">
+    <div class="container">
+        <h2 class="text-center fw-bold mb-5">Our Facilities</h2>
+        <div class="row">
+            <div class="col-md-4 mb-4">
+                <div class="card h-100">
+                    <div class="card-body text-center">
+                        <i class="fas fa-plane fa-3x text-primary mb-3"></i>
+                        <h5 class="card-title">Modern Fleet</h5>
+                        <p class="card-text">Our fleet includes state-of-the-art training aircraft equipped with the latest avionics and safety features.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4 mb-4">
+                <div class="card h-100">
+                    <div class="card-body text-center">
+                        <i class="fas fa-desktop fa-3x text-primary mb-3"></i>
+                        <h5 class="card-title">Flight Simulators</h5>
+                        <p class="card-text">Advanced flight simulators for instrument training and emergency procedures practice.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4 mb-4">
+                <div class="card h-100">
+                    <div class="card-body text-center">
+                        <i class="fas fa-book fa-3x text-primary mb-3"></i>
+                        <h5 class="card-title">Classrooms</h5>
+                        <p class="card-text">Modern classrooms equipped with multimedia tools for ground school instruction.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Accreditation Section -->
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8 text-center">
+            <h2 class="fw-bold mb-4">Accreditation & Certifications</h2>
+            <p class="lead">We are proud to be accredited by the following organizations:</p>
+            <div class="row mt-4">
+                <div class="col-md-4 mb-4">
+                    <img src="{{ url_for('static', filename='images/faa.png') }}" alt="FAA" class="img-fluid" style="max-height: 100px;">
+                </div>
+                <div class="col-md-4 mb-4">
+                    <img src="{{ url_for('static', filename='images/ata.png') }}" alt="ATA" class="img-fluid" style="max-height: 100px;">
+                </div>
+                <div class="col-md-4 mb-4">
+                    <img src="{{ url_for('static', filename='images/safety.png') }}" alt="Safety" class="img-fluid" style="max-height: 100px;">
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

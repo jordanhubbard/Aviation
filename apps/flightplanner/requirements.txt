@@ -1,0 +1,37 @@
+# Backend dependencies (FastAPI)
+fastapi
+uvicorn[standard]
+pydantic
+pydantic-settings
+
+# HTTP client / async
+httpx
+aiofiles
+
+# Middleware
+slowapi
+
+# Environment
+python-dotenv
+
+# Template engine (for any server-rendered pages)
+jinja2
+
+# Legacy / compatibility
+requests
+
+# Route planning / geospatial (from xctry-planner)
+pandas
+geopandas
+shapely
+
+# Testing
+pytest
+pytest-asyncio
+pytest-cov
+
+# Code quality
+black
+flake8
+mypy
+pre-commit

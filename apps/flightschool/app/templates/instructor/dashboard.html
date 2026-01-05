@@ -1,0 +1,147 @@
+{% extends "base.html" %}
+
+{% block title %}Instructor Dashboard - {{ config.SCHOOL_NAME }}{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row mb-4">
+        <div class="col-12">
+            <h1 class="display-4">Instructor Dashboard</h1>
+            <p class="lead">Welcome back, {{ current_user.first_name }}!</p>
+        </div>
+    </div>
+
+    <!-- Quick Stats -->
+    <div class="row mb-4">
+        <div class="col-md-4">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title">Upcoming Lessons</h5>
+                    <p class="display-4">{{ upcoming_lessons|length }}</p>
+                    <a href="{{ url_for('instructor.schedule') }}" class="btn btn-outline-primary">View Schedule</a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title">Pending Requests</h5>
+                    <p class="display-4">{{ pending_requests|length }}</p>
+                    <a href="#pending-requests" class="btn btn-outline-primary">View Requests</a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title">My Students</h5>
+                    <p class="display-4">{{ current_user.students|length }}</p>
+                    <a href="{{ url_for('instructor.students') }}" class="btn btn-outline-primary">View Students</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Upcoming Lessons -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">Upcoming Lessons</h5>
+                </div>
+                <div class="card-body">
+                    {% if upcoming_lessons %}
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Date & Time</th>
+                                        <th>Student</th>
+                                        <th>Aircraft</th>
+                                        <th>Duration</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for lesson in upcoming_lessons %}
+                                        <tr>
+                                            <td>{{ lesson.start_time|datetime }}</td>
+                                            <td>{{ lesson.student.first_name }} {{ lesson.student.last_name }}</td>
+                                            <td>{{ lesson.aircraft.registration }}</td>
+                                            <td>{{ lesson.duration }} minutes</td>
+                                            <td>
+                                                <a href="{{ url_for('booking.view', id=lesson.id) }}" 
+                                                   class="btn btn-sm btn-outline-primary">
+                                                    <i class="fas fa-eye"></i> View
+                                                </a>
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle"></i> No upcoming lessons scheduled.
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Pending Requests -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow-sm">
+                <div class="card-header bg-warning text-white">
+                    <h5 class="mb-0">Pending Requests</h5>
+                </div>
+                <div class="card-body">
+                    {% if pending_requests %}
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Date & Time</th>
+                                        <th>Student</th>
+                                        <th>Aircraft</th>
+                                        <th>Duration</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for request in pending_requests %}
+                                        <tr>
+                                            <td>{{ request.start_time|datetime }}</td>
+                                            <td>{{ request.student.first_name }} {{ request.student.last_name }}</td>
+                                            <td>{{ request.aircraft.registration }}</td>
+                                            <td>{{ request.duration }} minutes</td>
+                                            <td>
+                                                <div class="btn-group">
+                                                    <a href="{{ url_for('booking.approve', id=request.id) }}" 
+                                                       class="btn btn-sm btn-success">
+                                                        <i class="fas fa-check"></i> Approve
+                                                    </a>
+                                                    <a href="{{ url_for('booking.reject', id=request.id) }}" 
+                                                       class="btn btn-sm btn-danger">
+                                                        <i class="fas fa-times"></i> Reject
+                                                    </a>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle"></i> No pending requests.
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

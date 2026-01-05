@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Debug Info</title>
+</head>
+<body>
+    <h1>Debug Information</h1>
+    <h2>Authentication Status</h2>
+    <ul>
+        <li>current_user.is_authenticated: {{ current_user.is_authenticated }}</li>
+        <li>current_user.is_anonymous: {{ current_user.is_anonymous }}</li>
+        {% if current_user.is_authenticated %}
+        <li>current_user.email: {{ current_user.email }}</li>
+        <li>current_user.id: {{ current_user.id }}</li>
+        {% endif %}
+    </ul>
+    
+    <h2>Session Data</h2>
+    <ul>
+        {% for key, value in session.items() %}
+        <li>{{ key }}: {{ value }}</li>
+        {% endfor %}
+    </ul>
+</body>
+</html> 

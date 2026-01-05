@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+
+{% block title %}Our Instructors - {{ config.SCHOOL_NAME }}{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <h1 class="display-4">Our Instructors</h1>
+            <p class="lead">Meet our team of experienced flight instructors</p>
+        </div>
+    </div>
+
+    <div class="row">
+        {% for instructor in instructors %}
+        <div class="col-md-4 mb-4">
+            <div class="card h-100">
+                {% if instructor.image_url %}
+                <img src="{{ instructor.image_url }}" class="card-img-top" alt="{{ instructor.full_name }}">
+                {% endif %}
+                <div class="card-body">
+                    <h5 class="card-title">{{ instructor.full_name }}</h5>
+                    <p class="card-text">
+                        <strong>Certificates:</strong> {{ instructor.certificates|join(', ') }}<br>
+                        <strong>Ratings:</strong> {{ instructor.ratings|join(', ') }}<br>
+                        <strong>Experience:</strong> {{ instructor.total_hours }} hours
+                    </p>
+                    {% if instructor.bio %}
+                    <p class="card-text">{{ instructor.bio }}</p>
+                    {% endif %}
+                </div>
+                <div class="card-footer">
+                    {% if current_user.is_authenticated %}
+                    <a href="{{ url_for('booking.create_booking', instructor_id=instructor.id) }}" class="btn btn-primary">Book Lesson</a>
+                    {% else %}
+                    <a href="{{ url_for('auth.login') }}" class="btn btn-primary">Login to Book</a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

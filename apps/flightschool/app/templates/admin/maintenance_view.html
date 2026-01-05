@@ -1,0 +1,132 @@
+{% extends "base.html" %}
+
+{% block title %}Maintenance Record Details{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-3">
+            <div class="card mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">Admin Navigation</h5>
+                </div>
+                <div class="card-body">
+                    <div class="nav flex-column nav-pills">
+                        <a href="{{ url_for('admin.dashboard') }}" class="nav-link">
+                            <i class="fas fa-tachometer-alt me-2"></i> Dashboard
+                        </a>
+                        <a href="{{ url_for('admin.users') }}" class="nav-link">
+                            <i class="fas fa-users me-2"></i> Users
+                        </a>
+                        <a href="{{ url_for('admin.aircraft') }}" class="nav-link">
+                            <i class="fas fa-plane me-2"></i> Aircraft
+                        </a>
+                        <a href="{{ url_for('admin.schedule') }}" class="nav-link">
+                            <i class="fas fa-calendar-alt me-2"></i> Schedule
+                        </a>
+                        <a href="{{ url_for('admin.settings') }}" class="nav-link">
+                            <i class="fas fa-cogs me-2"></i> Settings
+                        </a>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">Quick Actions</h5>
+                </div>
+                <div class="card-body">
+                    <a href="{{ url_for('admin.maintenance_list') }}" class="btn btn-secondary d-block mb-2">
+                        <i class="fas fa-arrow-left me-2"></i> Back to Maintenance Records
+                    </a>
+                    <a href="{{ url_for('admin.maintenance_edit', id=maintenance.id) }}" class="btn btn-primary d-block mb-2">
+                        <i class="fas fa-edit me-2"></i> Edit Record
+                    </a>
+                    <a href="{{ url_for('admin.aircraft_view', id=maintenance.aircraft_id) }}" class="btn btn-info d-block">
+                        <i class="fas fa-plane me-2"></i> View Aircraft
+                    </a>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-9">
+            <div class="card mb-4">
+                <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Maintenance Record Details</h5>
+                    <span class="badge {% if maintenance.status == 'completed' %}bg-success{% elif maintenance.status == 'in_progress' %}bg-warning{% else %}bg-info{% endif %}">
+                        {{ maintenance.status|title }}
+                    </span>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6 class="text-muted">Basic Information</h6>
+                            <dl class="row mb-0">
+                                <dt class="col-sm-4">Aircraft</dt>
+                                <dd class="col-sm-8">
+                                    <a href="{{ url_for('admin.aircraft_view', id=maintenance.aircraft_id) }}">
+                                        {{ maintenance.aircraft.tail_number }} ({{ maintenance.aircraft.make }} {{ maintenance.aircraft.model }})
+                                    </a>
+                                </dd>
+                                
+                                <dt class="col-sm-4">Date</dt>
+                                <dd class="col-sm-8">{{ maintenance.date.strftime('%Y-%m-%d') }}</dd>
+                                
+                                <dt class="col-sm-4">Type</dt>
+                                <dd class="col-sm-8">{{ maintenance.maintenance_type|title }}</dd>
+                                
+                                <dt class="col-sm-4">Description</dt>
+                                <dd class="col-sm-8">{{ maintenance.description }}</dd>
+                            </dl>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <h6 class="text-muted">Technical Details</h6>
+                            <dl class="row mb-0">
+                                <dt class="col-sm-4">Hours</dt>
+                                <dd class="col-sm-8">{{ maintenance.hours|default('N/A') }}</dd>
+                                
+                                <dt class="col-sm-4">Cost</dt>
+                                <dd class="col-sm-8">${{ "%.2f"|format(maintenance.cost) if maintenance.cost else 'N/A' }}</dd>
+                                
+                                <dt class="col-sm-4">Parts Used</dt>
+                                <dd class="col-sm-8">{{ maintenance.parts|default('None') }}</dd>
+                                
+                                <dt class="col-sm-4">Technician</dt>
+                                <dd class="col-sm-8">{{ maintenance.technician|default('N/A') }}</dd>
+                            </dl>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">Documentation</h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-4">
+                        <h6 class="text-muted">Additional Notes</h6>
+                        <p>{{ maintenance.notes|default('No additional notes.') }}</p>
+                    </div>
+                    
+                    {% if maintenance.documents %}
+                    <div>
+                        <h6 class="text-muted">Supporting Documents</h6>
+                        <div class="list-group">
+                            {% for document in maintenance.documents %}
+                            <a href="{{ url_for('admin.download_document', id=document.id) }}" class="list-group-item list-group-item-action">
+                                <i class="fas fa-file me-2"></i> {{ document.filename }}
+                            </a>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% else %}
+                    <p class="text-muted">No supporting documents attached.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

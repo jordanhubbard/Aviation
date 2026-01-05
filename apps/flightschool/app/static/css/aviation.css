@@ -1,0 +1,323 @@
+:root {
+    --sky-blue: #87CEEB;
+    --cloud-white: #FFFFFF;
+    --horizon-gray: #E8E8E8;
+    --night-blue: #14213D;
+    --sunset-orange: #FCA311;
+    --storm-gray: #495057;
+    --success-green: #28a745;
+    --warning-yellow: #ffc107;
+    --danger-red: #dc3545;
+}
+
+body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    background-color: var(--horizon-gray);
+    color: var(--night-blue);
+    line-height: 1.6;
+}
+
+/* Navigation */
+.navbar {
+    background-color: var(--night-blue);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    padding: 1rem 0;
+}
+
+.navbar-brand {
+    color: var(--cloud-white) !important;
+    font-weight: 600;
+    font-size: 1.5rem;
+}
+
+.navbar-nav .nav-link {
+    color: var(--cloud-white) !important;
+    font-weight: 500;
+    padding: 0.5rem 1rem;
+    transition: color 0.3s ease;
+}
+
+.navbar-nav .nav-link:hover {
+    color: var(--sunset-orange) !important;
+}
+
+/* Cards */
+.card {
+    background-color: var(--cloud-white);
+    border: none;
+    border-radius: 8px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    margin-bottom: 1.5rem;
+    transition: transform 0.2s ease;
+}
+
+.card:hover {
+    transform: translateY(-2px);
+}
+
+.card-header {
+    background-color: var(--night-blue);
+    color: var(--cloud-white);
+    font-weight: 600;
+    border-radius: 8px 8px 0 0 !important;
+}
+
+/* Buttons */
+.btn {
+    border-radius: 6px;
+    font-weight: 500;
+    padding: 0.5rem 1rem;
+    transition: all 0.2s ease;
+}
+
+.btn-primary {
+    background-color: var(--night-blue);
+    border-color: var(--night-blue);
+}
+
+.btn-primary:hover {
+    background-color: var(--storm-gray);
+    border-color: var(--storm-gray);
+}
+
+.btn-accent {
+    background-color: var(--sunset-orange);
+    border-color: var(--sunset-orange);
+    color: var(--cloud-white);
+}
+
+.btn-accent:hover {
+    background-color: #e69310;
+    border-color: #e69310;
+    color: var(--cloud-white);
+}
+
+/* Forms */
+.form-control {
+    border-radius: 6px;
+    border: 1px solid var(--horizon-gray);
+    padding: 0.75rem;
+}
+
+.form-control:focus {
+    border-color: var(--sunset-orange);
+    box-shadow: 0 0 0 0.2rem rgba(252, 163, 17, 0.25);
+}
+
+/* Tables */
+.table {
+    background-color: var(--cloud-white);
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.table thead th {
+    background-color: var(--night-blue);
+    color: var(--cloud-white);
+    border-bottom: none;
+    font-weight: 600;
+}
+
+.table tbody tr:hover {
+    background-color: var(--horizon-gray);
+}
+
+/* Status Badges */
+.badge {
+    padding: 0.5rem 0.75rem;
+    font-weight: 500;
+    border-radius: 4px;
+}
+
+.badge-available {
+    background-color: var(--success-green);
+    color: var(--cloud-white);
+}
+
+.badge-maintenance {
+    background-color: var(--warning-yellow);
+    color: var(--night-blue);
+}
+
+.badge-grounded {
+    background-color: var(--danger-red);
+    color: var(--cloud-white);
+}
+
+/* Weather Display */
+.weather-card {
+    background: linear-gradient(135deg, var(--sky-blue), var(--night-blue));
+    color: var(--cloud-white);
+    padding: 1.5rem;
+    border-radius: 8px;
+}
+
+.weather-icon {
+    font-size: 2.5rem;
+    margin-bottom: 1rem;
+}
+
+.weather-info {
+    font-size: 1.1rem;
+    margin-bottom: 0.5rem;
+}
+
+/* Flight Log */
+.flight-log {
+    background-color: var(--cloud-white);
+    padding: 1.5rem;
+    border-radius: 8px;
+}
+
+.flight-log-header {
+    border-bottom: 2px solid var(--horizon-gray);
+    padding-bottom: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.flight-log-times {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 1rem;
+}
+
+.time-entry {
+    background-color: var(--horizon-gray);
+    padding: 1rem;
+    border-radius: 6px;
+    text-align: center;
+}
+
+.time-entry-label {
+    font-weight: 500;
+    margin-bottom: 0.5rem;
+}
+
+/* Calendar */
+.calendar {
+    background-color: var(--cloud-white);
+    border-radius: 8px;
+    padding: 1rem;
+}
+
+.calendar-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+.calendar-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 0.5rem;
+}
+
+.calendar-day {
+    aspect-ratio: 1;
+    border: 1px solid var(--horizon-gray);
+    border-radius: 4px;
+    padding: 0.5rem;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+.calendar-day:hover {
+    background-color: var(--horizon-gray);
+}
+
+.calendar-day.booked {
+    background-color: var(--sunset-orange);
+    color: var(--cloud-white);
+}
+
+/* Aircraft Cards */
+.aircraft-card {
+    position: relative;
+    overflow: hidden;
+    border-radius: 8px;
+}
+
+.aircraft-image {
+    width: 100%;
+    height: 200px;
+    object-fit: contain;
+}
+
+.aircraft-info {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: linear-gradient(transparent, rgba(20, 33, 61, 0.9));
+    color: var(--cloud-white);
+    padding: 1rem;
+}
+
+.aircraft-status {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+}
+
+/* Dashboard Widgets */
+.widget {
+    background-color: var(--cloud-white);
+    border-radius: 8px;
+    padding: 1.5rem;
+    margin-bottom: 1rem;
+}
+
+.widget-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin-bottom: 1rem;
+    color: var(--night-blue);
+}
+
+.widget-value {
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--sunset-orange);
+}
+
+/* Animations */
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.fade-in {
+    animation: fadeIn 0.5s ease forwards;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .flight-log-times {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .calendar-grid {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+/* Print Styles */
+@media print {
+    .no-print {
+        display: none;
+    }
+    
+    .flight-log {
+        border: 1px solid #000;
+    }
+    
+    .table {
+        border-collapse: collapse;
+    }
+    
+    .table th,
+    .table td {
+        border: 1px solid #000;
+    }
+}

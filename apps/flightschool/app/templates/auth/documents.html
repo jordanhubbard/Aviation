@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+
+{% block title %}My Documents - {{ config.SCHOOL_NAME }}{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0">My Documents</h4>
+                </div>
+                <div class="card-body">
+                    {% if documents %}
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Document Type</th>
+                                        <th>Issue Date</th>
+                                        <th>Expiry Date</th>
+                                        <th>Status</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for doc in documents %}
+                                        <tr>
+                                            <td>{{ doc.document_type }}</td>
+                                            <td>{{ doc.issue_date.strftime('%Y-%m-%d') }}</td>
+                                            <td>{{ doc.expiry_date.strftime('%Y-%m-%d') if doc.expiry_date else 'N/A' }}</td>
+                                            <td>
+                                                <span class="badge {% if doc.is_valid %}bg-success{% else %}bg-danger{% endif %}">
+                                                    {{ 'Valid' if doc.is_valid else 'Expired' }}
+                                                </span>
+                                            </td>
+                                            <td>
+                                                <a href="{{ url_for('static', filename='uploads/documents/' + doc.filename) }}" 
+                                                   class="btn btn-sm btn-outline-primary" 
+                                                   target="_blank">
+                                                    <i class="fas fa-download"></i> Download
+                                                </a>
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle"></i> No documents found.
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

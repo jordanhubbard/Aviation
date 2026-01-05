@@ -1,0 +1,187 @@
+{% extends "admin/base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>Recurring Bookings</h2>
+    <div class="card">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Student</th>
+                            <th>Instructor</th>
+                            <th>Aircraft</th>
+                            <th>Day</th>
+                            <th>Time</th>
+                            <th>Duration</th>
+                            <th>Start Date</th>
+                            <th>End Date</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for booking in bookings %}
+                        <tr>
+                            <td>{{ booking.student.full_name }}</td>
+                            <td>{{ booking.instructor.full_name if booking.instructor else 'N/A' }}</td>
+                            <td>{{ booking.aircraft.display_name }}</td>
+                            <td>{{ ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'][booking.day_of_week] }}</td>
+                            <td>{{ booking.start_time.strftime('%H:%M') }}</td>
+                            <td>{{ booking.duration_hours }} hrs</td>
+                            <td>{{ booking.start_date.strftime('%Y-%m-%d') }}</td>
+                            <td>{{ booking.end_date.strftime('%Y-%m-%d') if booking.end_date else 'Ongoing' }}</td>
+                            <td>{{ booking.status|title }}</td>
+                            <td>
+                                <div class="btn-group">
+                                    <button class="btn btn-sm btn-outline-primary" onclick="editRecurringBooking({{ booking.id }})">Edit</button>
+                                    <button class="btn btn-sm btn-outline-danger" onclick="deleteRecurringBooking({{ booking.id }})">Delete</button>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal for editing recurring booking -->
+<div class="modal fade" id="editBookingModal" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Edit Recurring Booking</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="editBookingForm">
+                    <input type="hidden" id="bookingId">
+                    <div class="form-group">
+                        <label for="instructor">Instructor</label>
+                        <select class="form-control" id="instructor">
+                            <option value="">No Instructor</option>
+                            {% for instructor in instructors %}
+                            <option value="{{ instructor.id }}">{{ instructor.full_name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="aircraft">Aircraft</label>
+                        <select class="form-control" id="aircraft" required>
+                            {% for aircraft in aircraft_list %}
+                            <option value="{{ aircraft.id }}">{{ aircraft.registration }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="dayOfWeek">Day of Week</label>
+                        <select class="form-control" id="dayOfWeek" required>
+                            <option value="0">Monday</option>
+                            <option value="1">Tuesday</option>
+                            <option value="2">Wednesday</option>
+                            <option value="3">Thursday</option>
+                            <option value="4">Friday</option>
+                            <option value="5">Saturday</option>
+                            <option value="6">Sunday</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="startTime">Start Time</label>
+                        <input type="time" class="form-control" id="startTime" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="duration">Duration (hours)</label>
+                        <input type="number" step="0.5" class="form-control" id="duration" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="endDate">End Date</label>
+                        <input type="date" class="form-control" id="endDate">
+                    </div>
+                    <div class="form-group">
+                        <label for="status">Status</label>
+                        <select class="form-control" id="status" required>
+                            <option value="active">Active</option>
+                            <option value="inactive">Inactive</option>
+                            <option value="completed">Completed</option>
+                        </select>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" onclick="saveBooking()">Save Changes</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function editRecurringBooking(id) {
+    document.getElementById('bookingId').value = id;
+    // TODO: Fetch booking details and populate form
+    $('#editBookingModal').modal('show');
+}
+
+function saveBooking() {
+    const id = document.getElementById('bookingId').value;
+    const formData = {
+        instructor_id: document.getElementById('instructor').value || null,
+        aircraft_id: document.getElementById('aircraft').value,
+        day_of_week: parseInt(document.getElementById('dayOfWeek').value),
+        start_time: document.getElementById('startTime').value,
+        duration_hours: parseFloat(document.getElementById('duration').value),
+        end_date: document.getElementById('endDate').value || null,
+        status: document.getElementById('status').value
+    };
+
+    fetch(`/admin/recurring-bookings/${id}`, {
+        method: 'PUT',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(formData)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.message) {
+            $('#editBookingModal').modal('hide');
+            location.reload();
+        } else {
+            alert('Error updating recurring booking');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Error updating recurring booking');
+    });
+}
+
+function deleteRecurringBooking(id) {
+    if (confirm('Are you sure you want to delete this recurring booking?')) {
+        fetch(`/admin/recurring-bookings/${id}`, {
+            method: 'DELETE',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.message) {
+                location.reload();
+            } else {
+                alert('Error deleting recurring booking');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Error deleting recurring booking');
+        });
+    }
+}
+</script>
+{% endblock %}

@@ -1,0 +1,126 @@
+{% extends "admin/base.html" %}
+
+{% block title %}Squawks{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <h1>Squawks</h1>
+        <div class="card">
+            <div class="card-header">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Active Squawks</h5>
+                    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addSquawkModal">
+                        Add Squawk
+                    </button>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>Aircraft</th>
+                                <th>Description</th>
+                                <th>Reported By</th>
+                                <th>Status</th>
+                                <th>Created</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for squawk in squawks %}
+                            <tr>
+                                <td>{{ squawk.aircraft.display_name }}</td>
+                                <td>{{ squawk.description }}</td>
+                                <td>{{ squawk.reported_by.full_name }}</td>
+                                <td>
+                                    <span class="badge {% if squawk.status == 'open' %}bg-danger{% elif squawk.status == 'in_progress' %}bg-warning{% else %}bg-success{% endif %}">
+                                        {{ squawk.status|title }}
+                                    </span>
+                                </td>
+                                <td>{{ squawk.created_at.strftime('%Y-%m-%d') }}</td>
+                                <td>
+                                    <div class="btn-group">
+                                        <button class="btn btn-sm btn-outline-primary" onclick="editSquawk({{ squawk.id }})">Edit</button>
+                                        <button class="btn btn-sm btn-outline-danger" onclick="deleteSquawk({{ squawk.id }})">Delete</button>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add Squawk Modal -->
+<div class="modal fade" id="addSquawkModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Add Squawk</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="POST" action="{{ url_for('admin.squawks') }}">
+                {{ form.csrf_token }}
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="aircraft_id" class="form-label">Aircraft</label>
+                        {{ form.aircraft_id(class="form-control") }}
+                    </div>
+                    <div class="mb-3">
+                        <label for="description" class="form-label">Description</label>
+                        {{ form.description(class="form-control") }}
+                    </div>
+                    <div class="mb-3">
+                        <label for="severity" class="form-label">Severity</label>
+                        {{ form.severity(class="form-control") }}
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="submit" class="btn btn-primary">Add Squawk</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Squawk Modals -->
+{% for squawk in squawks %}
+<div class="modal fade" id="editSquawkModal{{ squawk.id }}" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Edit Squawk</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="POST" action="{{ url_for('admin.edit_squawk', squawk_id=squawk.id) }}">
+                {{ form.csrf_token }}
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="status" class="form-label">Status</label>
+                        <select name="status" class="form-control">
+                            <option value="open" {% if squawk.status == 'open' %}selected{% endif %}>Open</option>
+                            <option value="in_progress" {% if squawk.status == 'in_progress' %}selected{% endif %}>In Progress</option>
+                            <option value="resolved" {% if squawk.status == 'resolved' %}selected{% endif %}>Resolved</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="resolution_notes" class="form-label">Resolution Notes</label>
+                        <textarea name="resolution_notes" class="form-control">{{ squawk.resolution_notes }}</textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="submit" class="btn btn-primary">Update Squawk</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endfor %}
+{% endblock %}

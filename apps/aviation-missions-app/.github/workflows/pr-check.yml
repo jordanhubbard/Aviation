@@ -1,0 +1,152 @@
+name: 🔍 Pull Request Validation
+
+on:
+  pull_request:
+    branches: [ main, develop ]
+    types: [opened, synchronize, reopened]
+
+jobs:
+  pr-validation:
+    name: 🔍 PR Validation
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Validate PR title
+        run: |
+          PR_TITLE="${{ github.event.pull_request.title }}"
+          if [[ ! "$PR_TITLE" =~ ^(feat|fix|docs|style|refactor|test|chore|perf|ci|build|revert)(\(.+\))?:.+ ]]; then
+            echo "❌ PR title must follow conventional commits format:"
+            echo "   <type>(<scope>): <description>"
+            echo ""
+            echo "Valid types: feat, fix, docs, style, refactor, test, chore, perf, ci, build, revert"
+            echo ""
+            echo "Examples:"
+            echo "  feat: add mission search functionality"
+            echo "  fix(api): resolve mission creation bug"
+            echo "  docs: update API documentation"
+            exit 1
+          fi
+          echo "✅ PR title format is valid"
+
+      - name: Check for large files
+        run: |
+          echo "Checking for large files..."
+          LARGE_FILES=$(find . -type f -size +5M -not -path "./.git/*" -not -path "./node_modules/*")
+          if [ -n "$LARGE_FILES" ]; then
+            echo "❌ Found large files (>5MB):"
+            echo "$LARGE_FILES"
+            exit 1
+          fi
+          echo "✅ No large files found"
+
+      - name: Check for secrets
+        run: |
+          echo "Scanning for potential secrets..."
+          if git diff --name-only origin/${{ github.base_ref }}...HEAD | xargs grep -iE "(password|secret|api[_-]?key|token|credential)" 2>/dev/null | grep -v "PASSWORD" | grep -v ".github" | grep -v "ADMIN_PASSWORD"; then
+            echo "⚠️  Warning: Potential secrets detected in changed files"
+            echo "Please ensure no sensitive information is committed"
+          else
+            echo "✅ No obvious secrets detected"
+          fi
+
+  quick-test:
+    name: ⚡ Quick Validation
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+
+      - name: Cache Leiningen dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2/repository
+          key: ${{ runner.os }}-lein-${{ hashFiles('backend/project.clj') }}
+          restore-keys: |
+            ${{ runner.os }}-lein-
+
+      - name: Install Leiningen
+        run: |
+          wget https://raw.githubusercontent.com/technomancy/leiningen/stable/bin/lein
+          chmod +x lein
+          sudo mv lein /usr/local/bin/
+          lein version
+
+      - name: Quick lint check
+        run: |
+          echo "Running quick lint..."
+          docker run --rm -v $(pwd):/workspace -w /workspace \
+            cljkondo/clj-kondo:latest clj-kondo --lint backend/src --config '{:output {:pattern "::warning file={{filename}},line={{row}},col={{col}}::{{message}}"}}'
+
+      - name: Check backend compiles
+        working-directory: backend
+        run: |
+          echo "Checking if backend compiles..."
+          lein compile
+
+      - name: Run critical tests only
+        working-directory: backend
+        run: |
+          echo "Running critical tests..."
+          lein test :only aviation-missions.db-test aviation-missions.handlers-test
+
+  size-check:
+    name: 📦 Build Size Check
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build image
+        run: |
+          docker build --target production -t aviation-missions:pr .
+
+      - name: Check image size
+        run: |
+          IMAGE_SIZE=$(docker image inspect aviation-missions:pr --format='{{.Size}}')
+          IMAGE_SIZE_MB=$((IMAGE_SIZE / 1024 / 1024))
+          echo "Image size: ${IMAGE_SIZE_MB} MB"
+          
+          if [ $IMAGE_SIZE_MB -gt 500 ]; then
+            echo "⚠️  Warning: Image size is larger than 500MB"
+          else
+            echo "✅ Image size is acceptable"
+          fi
+
+  changes-summary:
+    name: 📊 Changes Summary
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Generate changes summary
+        run: |
+          echo "## 📊 Changes Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          CLOJURE_CHANGES=$(git diff --numstat origin/${{ github.base_ref }}...HEAD | grep "\.clj$" | wc -l)
+          JS_CHANGES=$(git diff --numstat origin/${{ github.base_ref }}...HEAD | grep "\.js$" | wc -l)
+          YML_CHANGES=$(git diff --numstat origin/${{ github.base_ref }}...HEAD | grep "\.yml$\|\.yaml$" | wc -l)
+          
+          echo "- 🟣 Clojure files changed: $CLOJURE_CHANGES" >> $GITHUB_STEP_SUMMARY
+          echo "- 🟡 JavaScript files changed: $JS_CHANGES" >> $GITHUB_STEP_SUMMARY
+          echo "- ⚙️  YAML/Config files changed: $YML_CHANGES" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          echo "### Modified Files:" >> $GITHUB_STEP_SUMMARY
+          git diff --name-only origin/${{ github.base_ref }}...HEAD | sed 's/^/- /' >> $GITHUB_STEP_SUMMARY

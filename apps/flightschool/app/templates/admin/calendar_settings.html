@@ -1,0 +1,168 @@
+{% extends "base.html" %}
+
+{% block title %}Calendar Settings - Flight School{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <h1><i class="fas fa-calendar-alt me-2"></i>Calendar Settings</h1>
+            <p class="lead">Configure calendar integration settings</p>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-3 mb-4">
+            <div class="list-group">
+                <a href="{{ url_for('admin.dashboard') }}" class="list-group-item list-group-item-action">
+                    <i class="fas fa-tachometer-alt me-2"></i>Dashboard
+                </a>
+                <a href="{{ url_for('admin.users') }}" class="list-group-item list-group-item-action">
+                    <i class="fas fa-users me-2"></i>Users
+                </a>
+                <a href="{{ url_for('admin.aircraft') }}" class="list-group-item list-group-item-action">
+                    <i class="fas fa-plane me-2"></i>Aircraft
+                </a>
+                <a href="{{ url_for('admin.schedule') }}" class="list-group-item list-group-item-action">
+                    <i class="fas fa-calendar-alt me-2"></i>Bookings
+                </a>
+                <a href="{{ url_for('admin.maintenance_records') }}" class="list-group-item list-group-item-action">
+                    <i class="fas fa-tools me-2"></i>Maintenance
+                </a>
+                <a href="{{ url_for('admin.squawks') }}" class="list-group-item list-group-item-action">
+                    <i class="fas fa-exclamation-triangle me-2"></i>Squawks
+                </a>
+                <a href="{{ url_for('admin.endorsements') }}" class="list-group-item list-group-item-action">
+                    <i class="fas fa-certificate me-2"></i>Endorsements
+                </a>
+                <a href="{{ url_for('admin.documents') }}" class="list-group-item list-group-item-action">
+                    <i class="fas fa-file-alt me-2"></i>Documents
+                </a>
+                <a href="{{ url_for('admin.weather_minima') }}" class="list-group-item list-group-item-action">
+                    <i class="fas fa-cloud-sun me-2"></i>Weather Minima
+                </a>
+                <a href="{{ url_for('admin.audit_logs') }}" class="list-group-item list-group-item-action">
+                    <i class="fas fa-clipboard-list me-2"></i>Audit Logs
+                </a>
+                <a href="{{ url_for('admin.calendar_settings') }}" class="list-group-item list-group-item-action active">
+                    <i class="fas fa-calendar-alt me-2"></i>Calendar Settings
+                </a>
+                <a href="{{ url_for('admin.reports') }}" class="list-group-item list-group-item-action">
+                    <i class="fas fa-chart-bar me-2"></i>Reports
+                </a>
+                <a href="{{ url_for('admin.settings') }}" class="list-group-item list-group-item-action">
+                    <i class="fas fa-cogs me-2"></i>Settings
+                </a>
+            </div>
+        </div>
+        
+        <div class="col-md-9">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">Google Calendar Integration</h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-4">
+                        <h6>Connection Status</h6>
+                        {% if admin_google_calendar_enabled %}
+                        <div class="alert alert-success">
+                            <i class="fas fa-check-circle me-2"></i>Connected to Google Calendar
+                        </div>
+                        {% else %}
+                        <div class="alert alert-warning">
+                            <i class="fas fa-exclamation-triangle me-2"></i>Not connected to Google Calendar
+                        </div>
+                        {% endif %}
+                        
+                        {% if admin_google_calendar_enabled %}
+                        <form action="{{ url_for('booking.disconnect_google_calendar') }}" method="post">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                            <button type="submit" class="btn btn-danger">
+                                <i class="fas fa-unlink me-2"></i>Disconnect
+                            </button>
+                        </form>
+                        {% else %}
+                        <a href="{{ url_for('booking.authorize_google_calendar') }}" class="btn btn-primary">
+                            <i class="fab fa-google me-2"></i>Connect to Google Calendar
+                        </a>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="mb-4">
+                        <h6>Synchronization Settings</h6>
+                        <form action="{{ url_for('admin.calendar_settings') }}" method="post">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                            
+                            <div class="form-check mb-3">
+                                <input class="form-check-input" type="checkbox" id="sync_bookings" name="sync_bookings" {% if sync_bookings %}checked{% endif %}>
+                                <label class="form-check-label" for="sync_bookings">
+                                    Automatically sync bookings to Google Calendar
+                                </label>
+                            </div>
+                            
+                            <div class="form-check mb-3">
+                                <input class="form-check-input" type="checkbox" id="notify_instructors" name="notify_instructors" {% if notify_instructors %}checked{% endif %}>
+                                <label class="form-check-label" for="notify_instructors">
+                                    Send calendar invites to instructors
+                                </label>
+                            </div>
+                            
+                            <div class="form-check mb-3">
+                                <input class="form-check-input" type="checkbox" id="notify_students" name="notify_students" {% if notify_students %}checked{% endif %}>
+                                <label class="form-check-label" for="notify_students">
+                                    Send calendar invites to students
+                                </label>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="calendar_id" class="form-label">Calendar ID</label>
+                                <input type="text" class="form-control" id="calendar_id" name="calendar_id" value="{{ calendar_id if calendar_id else '' }}" placeholder="primary">
+                                <div class="form-text">Leave blank to use your primary calendar</div>
+                            </div>
+                            
+                            <div class="d-grid">
+                                <button type="submit" class="btn btn-primary">Save Settings</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Calendar Display Settings</h5>
+                </div>
+                <div class="card-body">
+                    <form action="{{ url_for('admin.calendar_settings') }}" method="post">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                        
+                        <div class="mb-3">
+                            <label for="default_view" class="form-label">Default Calendar View</label>
+                            <select class="form-select" id="default_view" name="default_view">
+                                <option value="month" {% if default_view == 'month' %}selected{% endif %}>Month</option>
+                                <option value="week" {% if default_view == 'week' %}selected{% endif %}>Week</option>
+                                <option value="day" {% if default_view == 'day' %}selected{% endif %}>Day</option>
+                                <option value="list" {% if default_view == 'list' %}selected{% endif %}>List</option>
+                            </select>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="business_hours_start" class="form-label">Business Hours Start</label>
+                            <input type="time" class="form-control" id="business_hours_start" name="business_hours_start" value="{{ business_hours_start if business_hours_start else '08:00' }}">
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="business_hours_end" class="form-label">Business Hours End</label>
+                            <input type="time" class="form-control" id="business_hours_end" name="business_hours_end" value="{{ business_hours_end if business_hours_end else '18:00' }}">
+                        </div>
+                        
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-primary">Save Display Settings</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

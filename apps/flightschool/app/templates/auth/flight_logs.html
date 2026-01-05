@@ -1,0 +1,217 @@
+{% extends "base.html" %}
+
+{% block title %}My Flight Logs - {{ config.SCHOOL_NAME }}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-12">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{{ url_for('main.index') }}">Home</a></li>
+                    <li class="breadcrumb-item active">My Flight Logs</li>
+                </ol>
+            </nav>
+        </div>
+    </div>
+
+    <div class="row mb-4">
+        <div class="col-12">
+            <h1 class="display-4 text-primary">
+                <i class="fas fa-book me-3"></i>My Flight Logs
+            </h1>
+            <p class="lead">View your flight history and training progress.</p>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">Flight Logs</h5>
+                        <div class="btn-group">
+                            <button class="btn btn-outline-primary" onclick="exportFlightLogs('csv')">
+                                <i class="fas fa-file-csv me-2"></i>Export CSV
+                            </button>
+                            <button class="btn btn-outline-primary" onclick="exportFlightLogs('pdf')">
+                                <i class="fas fa-file-pdf me-2"></i>Export PDF
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body">
+                    {% if logs %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Aircraft</th>
+                                    <th>Date</th>
+                                    <th>Route</th>
+                                    <th>PIC</th>
+                                    <th>SIC</th>
+                                    <th>Night</th>
+                                    <th>Cross Country</th>
+                                    <th>Instrument</th>
+                                    <th>Landings Day</th>
+                                    <th>Landings Night</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for log in logs %}
+                                <tr>
+                                    <td>{{ log.aircraft.display_name }}</td>
+                                    <td>{{ log.flight_date.strftime('%Y-%m-%d') }}</td>
+                                    <td>
+                                        {% if log.route %}
+                                        <span class="text-monospace">{{ log.route }}</span>
+                                        {% else %}
+                                        <span class="text-muted">Local</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ log.pic.full_name }}</td>
+                                    <td>{{ log.sic.full_name if log.sic else 'N/A' }}</td>
+                                    <td>{{ log.night }}</td>
+                                    <td>{{ log.cross_country }}</td>
+                                    <td>{{ log.actual_instrument }}</td>
+                                    <td>{{ log.landings_day }}</td>
+                                    <td>{{ log.landings_night }}</td>
+                                    <td>
+                                        <a href="{{ url_for('auth.view_flight_log', id=log.id) }}" class="btn btn-sm btn-outline-primary">View</a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Flight Time Summary -->
+                    <div class="row mt-4">
+                        <div class="col-md-6">
+                            <div class="card bg-light">
+                                <div class="card-body">
+                                    <h5 class="card-title">Flight Time Summary</h5>
+                                    <div class="row">
+                                        <div class="col-6">
+                                            <p class="mb-1"><strong>Total Time:</strong></p>
+                                            <h4>{{ "%.1f"|format(logs|sum(attribute='pic_time') + logs|sum(attribute='dual_received')) }}</h4>
+                                        </div>
+                                        <div class="col-6">
+                                            <p class="mb-1"><strong>PIC Time:</strong></p>
+                                            <h4>{{ "%.1f"|format(logs|sum(attribute='pic_time')) }}</h4>
+                                        </div>
+                                    </div>
+                                    <div class="row mt-3">
+                                        <div class="col-6">
+                                            <p class="mb-1"><strong>Dual Received:</strong></p>
+                                            <h4>{{ "%.1f"|format(logs|sum(attribute='dual_received')) }}</h4>
+                                        </div>
+                                        <div class="col-6">
+                                            <p class="mb-1"><strong>Cross Country:</strong></p>
+                                            <h4>{{ "%.1f"|format(logs|sum(attribute='cross_country')) }}</h4>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card bg-light">
+                                <div class="card-body">
+                                    <h5 class="card-title">Recent Progress</h5>
+                                    <div class="row">
+                                        <div class="col-6">
+                                            <p class="mb-1"><strong>Total Landings:</strong></p>
+                                            <h4>{{ logs|sum(attribute='landings_day') + logs|sum(attribute='landings_night') }}</h4>
+                                        </div>
+                                        <div class="col-6">
+                                            <p class="mb-1"><strong>Night Time:</strong></p>
+                                            <h4>{{ "%.1f"|format(logs|sum(attribute='night')) }}</h4>
+                                        </div>
+                                    </div>
+                                    <div class="row mt-3">
+                                        <div class="col-6">
+                                            <p class="mb-1"><strong>Instrument Time:</strong></p>
+                                            <h4>{{ "%.1f"|format(logs|sum(attribute='actual_instrument') + logs|sum(attribute='simulated_instrument')) }}</h4>
+                                        </div>
+                                        <div class="col-6">
+                                            <p class="mb-1"><strong>Ground Instruction:</strong></p>
+                                            <h4>{{ "%.1f"|format(logs|sum(attribute='ground_instruction')) }}</h4>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% else %}
+                    <div class="text-center py-4">
+                        <i class="fas fa-book fa-3x text-muted mb-3"></i>
+                        <p class="lead text-muted">No flight logs found</p>
+                        <p>Your flight logs will appear here after completing flights.</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Flight Log Detail Modal -->
+<div class="modal fade" id="flightLogModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Flight Log Details</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div id="flightLogDetails">
+                    <!-- Flight log details will be loaded here -->
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% block extra_js %}
+<script>
+function viewFlightLog(logId) {
+    fetch(`/auth/flight-logs/${logId}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success') {
+                document.getElementById('flightLogDetails').innerHTML = data.html;
+                new bootstrap.Modal(document.getElementById('flightLogModal')).show();
+            } else {
+                alert('Failed to load flight log details: ' + data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('An error occurred while loading flight log details');
+        });
+}
+
+function copyFlightLog(logId) {
+    fetch(`/auth/flight-logs/${logId}/copy`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success') {
+                location.reload();
+            } else {
+                alert('Failed to copy flight log: ' + data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('An error occurred while copying the flight log');
+        });
+}
+
+function exportFlightLogs(format) {
+    window.location.href = `/auth/flight-logs/export?format=${format}`;
+}
+</script>
+{% endblock %}
+{% endblock %}

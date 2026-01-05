@@ -1,0 +1,142 @@
+{% extends "base.html" %}
+
+{% block title %}Book a Flight{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-8 offset-md-2">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Book a Flight</h5>
+                </div>
+                <div class="card-body">
+                    <form method="POST" action="{{ url_for('booking.create_booking') }}">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                        
+                        <div class="mb-3">
+                            <label for="aircraft_id" class="form-label">Aircraft</label>
+                            {{ form.aircraft_id(class="form-select", id="aircraft_id") }}
+                            {% if form.aircraft_id.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {{ form.aircraft_id.errors[0] }}
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="instructor_id" class="form-label">Instructor (Optional)</label>
+                            {{ form.instructor_id(class="form-select", id="instructor_id") }}
+                        </div>
+                        
+                        <div class="d-grid gap-2 mb-4">
+                            <button type="submit" class="btn btn-primary">Book Flight</button>
+                            <a href="{{ url_for('booking.dashboard') }}" class="btn btn-secondary">Cancel</a>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Current Time: {{ current_time }}</label>
+                            <div id="calendar-widget"></div>
+                            <input type="hidden" id="calendar-datetime-start" name="calendar_datetime_start">
+                            <input type="hidden" id="calendar-datetime-end" name="calendar_datetime_end">
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="duration" class="form-label">Duration (minutes)</label>
+                            <input type="number" class="form-control" id="duration" name="duration" min="30" step="30" required readonly>
+                            <small id="duration-local" class="form-text text-muted"></small>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="start_time" class="form-label d-none">Start Time</label>
+                            {{ form.start_time(class="form-control d-none", id="start_time", required=True) }}
+                            <small id="start-time-local" class="form-text text-muted d-none"></small>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="notes" class="form-label">Notes (Optional)</label>
+                            <textarea class="form-control" id="notes" name="notes" rows="3"></textarea>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<link rel="stylesheet" href="{{ url_for('static', filename='calendar.css') }}">
+<script src="{{ url_for('static', filename='calendar.js') }}"></script>
+
+<script>
+// Ensure start_time is sent as UTC ISO string
+function localToUTCString(dtLocal) {
+    const d = new Date(dtLocal);
+    return d.toISOString().slice(0,16); // 'YYYY-MM-DDTHH:mm'
+}
+
+// Format and display the local time next to the input
+function formatLocalDatetime(dtString) {
+    if (!dtString) return '';
+    const d = new Date(dtString);
+    // Get local timezone abbreviation
+    const tz = Intl.DateTimeFormat(undefined, {timeZoneName:'short'}).formatToParts(d).find(x => x.type === 'timeZoneName');
+    const tzAbbr = tz ? tz.value : '';
+    // Format as YYYY-MM-DD HH:MM TZ
+    const pad = n => n.toString().padStart(2, '0');
+    return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())} ${tzAbbr}`;
+}
+
+// Booking blocks from backend
+const bookingBlocks = {{ booking_blocks|safe }};
+
+// Color config
+const aircraftBlockColor = '#ffcccc';
+const instructorBlockColor = '#cce5ff';
+
+// Helper to check overlap
+function overlaps(start1, end1, start2, end2) {
+    return (start1 < end2 && end1 > start2);
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.querySelector('form');
+    if (form) {
+        form.addEventListener('submit', function(e) {
+            const startInput = document.getElementById('start_time');
+            if (startInput && startInput.value) {
+                // Convert local datetime to UTC ISO string
+                const utcString = localToUTCString(startInput.value);
+                startInput.value = utcString;
+            }
+        });
+    }
+    
+    // Calendar integration
+    let selectedStart = null, selectedEnd = null;
+    if (window.WeekCalendar) {
+        new WeekCalendar('calendar-widget', function(start, end) {
+            selectedStart = start;
+            selectedEnd = end;
+            document.getElementById('calendar-datetime-start').value = start.toISOString();
+            document.getElementById('calendar-datetime-end').value = end.toISOString();
+            
+            // Transfer the selected start date to the actual start_time form field
+            document.getElementById('start_time').value = start.toISOString().slice(0,16);
+            
+            // Calculate duration in minutes
+            const duration = Math.round((end - start) / (1000 * 60)) + 30; // slot is inclusive
+            document.getElementById('duration').value = duration;
+            document.getElementById('duration-local').textContent = `Selected: ${duration} minutes (${formatLocalDatetime(start.toISOString())} to ${formatLocalDatetime(end.toISOString())})`;
+        }, {
+            bookingBlocks: bookingBlocks,
+            aircraftBlockColor: aircraftBlockColor,
+            instructorBlockColor: instructorBlockColor
+        });
+    }
+    // Hide manual time input
+    document.getElementById('start_time').classList.add('d-none');
+    document.getElementById('start-time-local').classList.add('d-none');
+});
+</script>
+
+{% endblock %} 

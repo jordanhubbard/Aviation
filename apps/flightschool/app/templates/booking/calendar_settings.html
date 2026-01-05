@@ -1,0 +1,85 @@
+{% extends "base.html" %}
+
+{% block title %}Calendar Settings{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h4 class="mb-0">Google Calendar Integration</h4>
+                </div>
+                <div class="card-body">
+                    <form method="POST">
+                        {{ form.hidden_tag() }}
+                        
+                        <div class="mb-4">
+                            <div class="form-check form-switch">
+                                {{ form.enabled(class="form-check-input") }}
+                                {{ form.enabled.label(class="form-check-label") }}
+                            </div>
+                            <small class="text-muted">Enable synchronization with your Google Calendar</small>
+                        </div>
+
+                        {% if current_user.google_calendar_enabled or session.get('google_calendar_connected') %}
+                            <div class="mb-4">
+                                <h5>Connected Account</h5>
+                                <p class="text-success">
+                                    <i class="fas fa-check-circle"></i> Your Google Calendar is connected
+                                </p>
+                                <div class="mb-3">
+                                    {{ form.calendar_id.label(class="form-label") }}
+                                    {{ form.calendar_id(class="form-control") }}
+                                    <small class="text-muted">Leave empty to use your primary calendar</small>
+                                </div>
+                                <a href="{{ url_for('booking.disconnect_google_calendar') }}" class="btn btn-danger">
+                                    <i class="fas fa-unlink"></i> Disconnect Google Calendar
+                                </a>
+                            </div>
+                        {% else %}
+                            <div class="mb-4">
+                                <a href="{{ url_for('booking.authorize_google_calendar') }}" class="btn btn-primary">
+                                    <i class="fab fa-google"></i> Connect Google Calendar
+                                </a>
+                            </div>
+                        {% endif %}
+
+                        <div class="d-grid gap-2">
+                            {{ form.submit(class="btn btn-primary") }}
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <div class="card mt-4">
+                <div class="card-header">
+                    <h4 class="mb-0">Calendar Sync Information</h4>
+                </div>
+                <div class="card-body">
+                    <h5>What gets synced?</h5>
+                    <ul>
+                        <li>All your flight bookings will be added to your Google Calendar</li>
+                        <li>Each booking will include:
+                            <ul>
+                                <li>Aircraft information ({{ aircraft.display_name }})</li>
+                                <li>Instructor details (if applicable, {{ instructor.full_name }})</li>
+                                <li>Booking status</li>
+                            </ul>
+                        </li>
+                        <li>Events will be color-coded based on booking status</li>
+                    </ul>
+
+                    <h5>Privacy</h5>
+                    <p>We only sync flight bookings from our system to your Google Calendar. We do not:</p>
+                    <ul>
+                        <li>Read your existing Google Calendar events</li>
+                        <li>Modify or delete any existing events</li>
+                        <li>Share your calendar with others</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

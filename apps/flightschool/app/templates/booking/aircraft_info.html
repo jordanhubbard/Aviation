@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block title %}Aircraft Info{% endblock %}
+{% block content %}
+<div class="container mt-4">
+    <div class="card">
+        <div class="card-header bg-primary text-white">
+            <h4 class="mb-0">Aircraft Information: {{ aircraft.display_name }}</h4>
+        </div>
+        <div class="card-body">
+            <dl class="row">
+                <dt class="col-sm-4">Tail Number</dt>
+                <dd class="col-sm-8">{{ aircraft.registration }}</dd>
+                <dt class="col-sm-4">Make/Model</dt>
+                <dd class="col-sm-8">{{ aircraft.make }} {{ aircraft.model }}</dd>
+                <dt class="col-sm-4">Year</dt>
+                <dd class="col-sm-8">{{ aircraft.year }}</dd>
+                <dt class="col-sm-4">Time to Next Oil Change</dt>
+                <dd class="col-sm-8">{{ aircraft.time_to_next_oil_change or 'N/A' }} hours</dd>
+                <dt class="col-sm-4">Time to Next 100 Hour</dt>
+                <dd class="col-sm-8">{{ aircraft.time_to_next_100hr or 'N/A' }} hours</dd>
+                <dt class="col-sm-4">Date of Next Annual</dt>
+                <dd class="col-sm-8">{{ aircraft.date_of_next_annual.strftime('%Y-%m-%d') if aircraft.date_of_next_annual else 'N/A' }}</dd>
+            </dl>
+            <a href="{{ url_for('booking.list') }}" class="btn btn-secondary">Back to Aircraft List</a>
+        </div>
+    </div>
+</div>
+{% endblock %}

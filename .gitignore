@@ -3,10 +3,36 @@ node_modules/
 .pnp
 .pnp.js
 
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.Python
+.venv/
+venv/
+ENV/
+env/
+*.egg
+*.egg-info/
+dist/
+build/
+pip-log.txt
+pip-delete-this-directory.txt
+
 # Build outputs
 dist/
 build/
 *.tsbuildinfo
+out/
+target/
+
+# Clojure
+.lein-*
+.nrepl-port
+classes/
+checkouts/
+pom.xml
+pom.xml.asc
 
 # Environment variables
 .env
@@ -40,6 +66,14 @@ Thumbs.db
 # Testing
 coverage/
 .nyc_output/
+.coverage
+htmlcov/
+.pytest_cache/
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
 
 # Temporary files
 tmp/

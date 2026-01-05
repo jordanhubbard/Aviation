@@ -1,0 +1,236 @@
+{% extends "base.html" %}
+
+{% block title %}Aircraft Management{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>Aircraft Management</h2>
+    
+    <div class="row">
+        <div class="col-md-3">
+            <div class="card mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">Admin Navigation</h5>
+                </div>
+                <div class="card-body">
+                    <div class="nav flex-column nav-pills">
+                        <a href="{{ url_for('admin.dashboard') }}" class="nav-link">
+                            <i class="fas fa-tachometer-alt me-2"></i> Dashboard
+                        </a>
+                        <a href="{{ url_for('admin.user_list') }}" class="nav-link">
+                            <i class="fas fa-users me-2"></i> Users
+                        </a>
+                        <a href="{{ url_for('admin.instructor_list') }}" class="nav-link">
+                            <i class="fas fa-chalkboard-teacher me-2"></i> Instructors
+                        </a>
+                        <a href="{{ url_for('admin.aircraft_list') }}" class="nav-link active">
+                            <i class="fas fa-plane me-2"></i> Aircraft
+                        </a>
+                        <a href="{{ url_for('admin.schedule') }}" class="nav-link">
+                            <i class="fas fa-calendar-alt me-2"></i> Schedule
+                        </a>
+                        <a href="{{ url_for('admin.settings') }}" class="nav-link">
+                            <i class="fas fa-cogs me-2"></i> Settings
+                        </a>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">Quick Actions</h5>
+                </div>
+                <div class="card-body">
+                    <a href="{{ url_for('admin.create_aircraft') }}" class="btn btn-primary mb-3">
+                        <i class="fas fa-plus"></i> Add Aircraft
+                    </a>
+                    <a href="{{ url_for('admin.maintenance_list') }}" class="btn btn-info d-block mb-2">
+                        <i class="fas fa-tools me-2"></i> View Maintenance Records
+                    </a>
+                    <a href="{{ url_for('admin.maintenance_add') }}" class="btn btn-secondary d-block">
+                        <i class="fas fa-wrench me-2"></i> Log Maintenance
+                    </a>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-9">
+            <div class="card mb-4">
+                <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Aircraft Fleet</h5>
+                    <div>
+                        <button class="btn btn-sm btn-light" data-bs-toggle="modal" data-bs-target="#filterModal">
+                            <i class="fas fa-filter me-1"></i> Filter
+                        </button>
+                        <div class="dropdown d-inline-block">
+                            <button class="btn btn-sm btn-light dropdown-toggle" type="button" id="exportDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                                <i class="fas fa-download me-1"></i> Export
+                            </button>
+                            <ul class="dropdown-menu" aria-labelledby="exportDropdown">
+                                <li><a class="dropdown-item" href="#">Export as CSV</a></li>
+                                <li><a class="dropdown-item" href="#">Export as PDF</a></li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead>
+                                <tr>
+                                    <th>Registration</th>
+                                    <th>Make/Model</th>
+                                    <th>Year</th>
+                                    <th>Status</th>
+                                    <th>Rate/hr</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for aircraft in aircraft %}
+                                <tr>
+                                    <td>{{ aircraft.registration }}</td>
+                                    <td>{{ aircraft.display_name }}</td>
+                                    <td>{{ aircraft.year }}</td>
+                                    <td>
+                                        <span class="badge {% if aircraft.status == 'available' %}bg-success{% else %}bg-secondary{% endif %}">
+                                            {{ aircraft.status|title }}
+                                        </span>
+                                    </td>
+                                    <td>${{ aircraft.rate_per_hour }}</td>
+                                    <td>
+                                        <div class="btn-group btn-group-sm">
+                                            <a href="{{ url_for('admin.edit_aircraft', id=aircraft.id) }}" class="btn btn-primary">
+                                                <i class="fas fa-edit"></i>
+                                            </a>
+                                            <button class="btn btn-danger delete-aircraft" data-id="{{ aircraft.id }}">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <!-- Pagination controls -->
+                    <nav aria-label="Aircraft list pagination">
+                        <ul class="pagination justify-content-center">
+                            <li class="page-item disabled">
+                                <a class="page-link" href="#" tabindex="-1" aria-disabled="true">Previous</a>
+                            </li>
+                            <li class="page-item active"><a class="page-link" href="#">1</a></li>
+                            <li class="page-item"><a class="page-link" href="#">2</a></li>
+                            <li class="page-item"><a class="page-link" href="#">3</a></li>
+                            <li class="page-item">
+                                <a class="page-link" href="#">Next</a>
+                            </li>
+                        </ul>
+                    </nav>
+                </div>
+            </div>
+            
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">Aircraft Availability Overview</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-4 text-center mb-3">
+                            <div class="p-3 border rounded bg-light">
+                                <h1 class="text-success">{{ available_count|default(0) }}</h1>
+                                <p class="mb-0">Available Aircraft</p>
+                            </div>
+                        </div>
+                        <div class="col-md-4 text-center mb-3">
+                            <div class="p-3 border rounded bg-light">
+                                <h1 class="text-warning">{{ maintenance_count|default(0) }}</h1>
+                                <p class="mb-0">In Maintenance</p>
+                            </div>
+                        </div>
+                        <div class="col-md-4 text-center mb-3">
+                            <div class="p-3 border rounded bg-light">
+                                <h1 class="text-danger">{{ unavailable_count|default(0) }}</h1>
+                                <p class="mb-0">Unavailable</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-3">
+                        <h6>Aircraft by Type</h6>
+                        <div class="progress mb-3" style="height: 30px;">
+                            <div class="progress-bar" role="progressbar" style="width: 45%;" aria-valuenow="45" aria-valuemin="0" aria-valuemax="100">Cessna (45%)</div>
+                            <div class="progress-bar bg-success" role="progressbar" style="width: 30%;" aria-valuenow="30" aria-valuemin="0" aria-valuemax="100">Piper (30%)</div>
+                            <div class="progress-bar bg-info" role="progressbar" style="width: 15%;" aria-valuenow="15" aria-valuemin="0" aria-valuemax="100">Beechcraft (15%)</div>
+                            <div class="progress-bar bg-warning" role="progressbar" style="width: 10%;" aria-valuenow="10" aria-valuemin="0" aria-valuemax="100">Other (10%)</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Filter Modal -->
+<div class="modal fade" id="filterModal" tabindex="-1" aria-labelledby="filterModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="filterModalLabel">Filter Aircraft</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="filterForm">
+                    <div class="mb-3">
+                        <label for="filterMake" class="form-label">Aircraft Make</label>
+                        <select class="form-select" id="filterMake">
+                            <option value="">All Makes</option>
+                            <option value="Cessna">Cessna</option>
+                            <option value="Piper">Piper</option>
+                            <option value="Beechcraft">Beechcraft</option>
+                            <option value="Cirrus">Cirrus</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="filterStatus" class="form-label">Status</label>
+                        <select class="form-select" id="filterStatus">
+                            <option value="">All Statuses</option>
+                            <option value="available">Available</option>
+                            <option value="maintenance">In Maintenance</option>
+                            <option value="unavailable">Unavailable</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="filterYear" class="form-label">Year (Minimum)</label>
+                        <input type="number" class="form-control" id="filterYear" min="1950" max="2023">
+                    </div>
+                    <div class="mb-3">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="filterIfr">
+                            <label class="form-check-label" for="filterIfr">
+                                IFR Equipped Only
+                            </label>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" id="applyFilter">Apply Filter</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.getElementById('applyFilter').addEventListener('click', function() {
+        // Implement filter logic here
+        alert('Filter applied!');
+        
+        // Close the modal
+        var filterModal = bootstrap.Modal.getInstance(document.getElementById('filterModal'));
+        filterModal.hide();
+    });
+</script>
+{% endblock %}

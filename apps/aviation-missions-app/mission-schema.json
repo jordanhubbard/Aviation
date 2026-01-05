@@ -1,0 +1,211 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://aviation-missions.app/schemas/mission.json",
+  "title": "Aviation Mission",
+  "description": "Schema for aviation training mission data",
+  "type": "object",
+  "required": [
+    "title",
+    "category", 
+    "difficulty",
+    "objective",
+    "mission_description",
+    "why_description"
+  ],
+  "properties": {
+    "id": {
+      "type": "integer",
+      "description": "Unique mission identifier (auto-generated)",
+      "minimum": 1
+    },
+    "title": {
+      "type": "string",
+      "description": "Mission title/name",
+      "minLength": 1,
+      "maxLength": 255,
+      "examples": [
+        "Class B Ops: LAX Bravo Transition",
+        "Mountain Gateway: Truckee (KTRK)",
+        "Coastal Marine Layer Run: Half Moon Bay (KHAF)"
+      ]
+    },
+    "category": {
+      "type": "string",
+      "description": "Mission category",
+      "enum": [
+        "Airspace Operations",
+        "Terrain & Environment", 
+        "Weather & Atmospheric",
+        "Navigation & Diversions",
+        "Airport Operations",
+        "Endurance & Planning",
+        "Advanced Adventures",
+        "General Training"
+      ]
+    },
+    "difficulty": {
+      "type": "integer",
+      "description": "Difficulty rating from 1 (beginner) to 10 (expert)",
+      "minimum": 1,
+      "maximum": 10,
+      "examples": [3, 7, 9]
+    },
+    "objective": {
+      "type": "string",
+      "description": "Primary learning objective",
+      "minLength": 1,
+      "examples": [
+        "Master Class B communication, clearances, and situational awareness",
+        "Practice overwater flight planning and engine-out decision-making",
+        "Learn marine layer effects on VFR navigation"
+      ]
+    },
+    "mission_description": {
+      "type": "string", 
+      "description": "Detailed mission description",
+      "minLength": 1,
+      "examples": [
+        "Fly down the California coast, request the Coastal Route or Mini Route through LAX Bravo",
+        "Launch from KPAO, cross to KHAF on a less than ideal day, then continue down to KMRY"
+      ]
+    },
+    "why_description": {
+      "type": "string",
+      "description": "Educational rationale - why this mission is valuable",
+      "minLength": 1,
+      "examples": [
+        "Learn to fit GA ops into airline-dense airspace, sharpen radio skills",
+        "Coastal ops teach rapid weather evaluation and diversion decision-making"
+      ]
+    },
+    "notes": {
+      "type": ["string", "null"],
+      "description": "Additional notes, tips, and considerations",
+      "examples": [
+        "Study LAX VFR charts. Have alternates (e.g., Hawthorne, Compton)",
+        "Monitor METARs and TAFs carefully. Be prepared for rapid weather changes"
+      ]
+    },
+    "route": {
+      "type": ["string", "null"],
+      "description": "Primary route description",
+      "maxLength": 500,
+      "examples": [
+        "KPAO → coastal route south → request Coastal or Mini Route through LAX Bravo → land at KTOA",
+        "KPAO → Half Moon Bay (KHAF) → Monterey (KMRY) → return via Salinas Valley"
+      ]
+    },
+    "suggested_route": {
+      "type": ["string", "null"],
+      "description": "Suggested waypoint route using ICAO codes",
+      "maxLength": 500,
+      "pattern": "^([A-Z0-9]{3,4}\\s*)*$",
+      "examples": [
+        "KPAO KWVI KHHR KTOA",
+        "KPAO KSJC KSMF",
+        "KPAO KSBA KAVX KSMO"
+      ]
+    },
+    "pilot_experience": {
+      "type": ["string", "null"],
+      "description": "Target pilot experience level",
+      "maxLength": 50,
+      "enum": [
+        "Beginner (< 100 hours)",
+        "Intermediate (100-500 hours)", 
+        "Advanced (500+ hours)",
+        "Commercial/ATP",
+        null
+      ],
+      "default": "Beginner (< 100 hours)"
+    },
+    "special_challenges": {
+      "type": ["string", "null"],
+      "description": "Special challenges or requirements",
+      "examples": [
+        "Mountain Flying, High Altitude",
+        "Overwater Operations, Life Vests Required",
+        "Night Operations, Instrument Proficiency"
+      ]
+    },
+    "comment_count": {
+      "type": "integer",
+      "description": "Number of comments (computed field)",
+      "minimum": 0,
+      "readOnly": true
+    },
+    "completion_count": {
+      "type": "integer", 
+      "description": "Number of pilot completions (computed field)",
+      "minimum": 0,
+      "readOnly": true
+    },
+    "thumbs_up": {
+      "type": "integer",
+      "description": "Number of positive ratings (computed field)",
+      "minimum": 0,
+      "readOnly": true
+    },
+    "thumbs_down": {
+      "type": "integer",
+      "description": "Number of negative ratings (computed field)", 
+      "minimum": 0,
+      "readOnly": true
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Mission creation timestamp",
+      "readOnly": true
+    },
+    "updated_at": {
+      "type": "string",
+      "format": "date-time", 
+      "description": "Last modification timestamp",
+      "readOnly": true
+    }
+  },
+  "additionalProperties": false,
+  "examples": [
+    {
+      "id": 1,
+      "title": "Class B Ops: LAX Bravo Transition",
+      "category": "Airspace Operations",
+      "difficulty": 7,
+      "objective": "Master Class B communication, clearances, and situational awareness in one of the busiest airspaces in the world",
+      "mission_description": "Fly down the California coast, request the Coastal Route or Mini Route through LAX Bravo. Land at Torrance (KTOA) or Santa Monica (KSMO)",
+      "why_description": "Learn to fit GA ops into airline-dense airspace, sharpen radio skills, and reduce intimidation factor",
+      "notes": "Study LAX VFR charts. Have alternates (e.g., Hawthorne, Compton). Expect precise instructions",
+      "route": "KPAO → coastal route south → request Coastal or Mini Route through LAX Bravo → land at KTOA or KSMO",
+      "suggested_route": "KPAO KWVI KHHR KTOA",
+      "pilot_experience": "Intermediate (100-500 hours)",
+      "special_challenges": "Class B Airspace, High Traffic Density",
+      "comment_count": 5,
+      "completion_count": 12,
+      "thumbs_up": 8,
+      "thumbs_down": 1,
+      "created_at": "2025-09-15T21:00:05Z",
+      "updated_at": "2025-09-15T21:00:05Z"
+    },
+    {
+      "id": 2,
+      "title": "Mountain Gateway: Truckee (KTRK)",
+      "category": "Terrain & Environment",
+      "difficulty": 9,
+      "objective": "High-altitude operations, density altitude awareness, terrain clearance, and mountain downdrafts",
+      "mission_description": "Morning departure KPAO → TRK. Focus on climb planning, leaning for takeoff, and valley approaches. Use Hwy 80 for safety",
+      "why_description": "Introduces real-world mountain ops without going to Colorado — a must-have confidence builder",
+      "notes": "Depart early to avoid afternoon winds. Lean for takeoff and climb. Plan your climb path for terrain clearance",
+      "route": "KPAO → Truckee (KTRK)",
+      "suggested_route": "KPAO KAUN KTRK",
+      "pilot_experience": "Advanced (500+ hours)",
+      "special_challenges": "Mountain Flying, High Altitude, Density Altitude",
+      "comment_count": 3,
+      "completion_count": 7,
+      "thumbs_up": 6,
+      "thumbs_down": 0,
+      "created_at": "2025-09-15T21:00:03Z",
+      "updated_at": "2025-09-15T21:00:03Z"
+    }
+  ]
+}

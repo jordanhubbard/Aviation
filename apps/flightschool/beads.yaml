@@ -1,0 +1,157 @@
+# Beads Configuration for Flight School
+# 
+# This file defines the independent work units (beads) that compose the
+# Flight School Management System. Beads enable parallel development, testing,
+# and execution of different application components.
+
+version: "1.0"
+
+beads:
+  # Database Models
+  - name: models
+    description: SQLAlchemy database models for users, aircraft, bookings
+    path: app/models/
+    dependencies: []
+    parallel: true
+    test_path: tests/test_models_aircraft.py
+    
+  # Authentication
+  - name: auth
+    description: User authentication and session management
+    path: app/routes/auth.py
+    dependencies: [models]
+    parallel: true
+    test_path: tests/test_auth.py
+    
+  # Booking System
+  - name: booking
+    description: Aircraft and instructor scheduling with conflict prevention
+    path: app/routes/booking.py
+    dependencies: [models, auth]
+    parallel: false
+    test_path: tests/test_booking_routes.py
+    
+  # Flight Operations
+  - name: flight-ops
+    description: Check-in/check-out and flight status tracking
+    path: app/routes/flight.py
+    dependencies: [models, auth, booking]
+    parallel: false
+    test_path: tests/test_flight_routes.py
+    
+  # Admin Dashboard
+  - name: admin
+    description: Administrative interface for resource management
+    path: app/routes/admin.py
+    dependencies: [models, auth]
+    parallel: true
+    test_path: tests/test_admin_routes.py
+    
+  # Main Routes
+  - name: main-routes
+    description: Public-facing routes and information pages
+    path: app/routes/main.py
+    dependencies: [models]
+    parallel: true
+    
+  # Maintenance System
+  - name: maintenance
+    description: Aircraft maintenance tracking and squawk reporting
+    path: app/routes/maintenance.py
+    dependencies: [models, auth]
+    parallel: true
+    
+  # Instructor Dashboard
+  - name: instructor
+    description: Instructor-specific dashboard and tools
+    path: app/routes/instructor.py
+    dependencies: [models, auth, booking]
+    parallel: true
+    
+  # Templates
+  - name: templates
+    description: Jinja2 templates for UI rendering
+    path: app/templates/
+    dependencies: []
+    parallel: true
+    
+  # Static Assets
+  - name: static
+    description: CSS, JavaScript, and image assets
+    path: app/static/
+    dependencies: []
+    parallel: true
+
+# Bead execution groups for parallel processing
+execution_groups:
+  # Group 1: Can run in parallel (no dependencies)
+  - name: initial
+    beads: [models, templates, static]
+    
+  # Group 2: Authentication and basic routes
+  - name: auth-layer
+    beads: [auth, main-routes]
+    depends_on: [initial]
+    
+  # Group 3: Core features
+  - name: core-features
+    beads: [booking, admin, maintenance]
+    depends_on: [auth-layer]
+    
+  # Group 4: Advanced features
+  - name: advanced-features
+    beads: [flight-ops, instructor]
+    depends_on: [core-features]
+
+# Development workflow
+workflows:
+  # Full test suite
+  - name: test-all
+    description: Run all tests in optimal order
+    steps:
+      - group: initial
+        parallel: true
+      - group: auth-layer
+        parallel: true
+      - group: core-features
+        parallel: true
+      - group: advanced-features
+        parallel: true
+        
+  # Backend-only workflow
+  - name: backend-dev
+    description: Backend development workflow
+    steps:
+      - bead: models
+      - bead: auth
+      - group: core-features
+        parallel: true
+      
+  # Frontend-only workflow
+  - name: frontend-dev
+    description: Frontend development workflow
+    steps:
+      - group: initial
+        beads: [templates, static]
+        parallel: true
+
+# CI/CD integration
+ci:
+  # Parallel test execution strategy
+  test_strategy: parallel
+  max_parallel: 4
+  
+  # Test groups for CI pipeline
+  test_groups:
+    - name: unit-tests-models
+      beads: [models]
+      
+    - name: unit-tests-routes
+      beads: [auth, booking, flight-ops, admin, main-routes, maintenance, instructor]
+      
+    - name: integration-tests
+      beads: [booking, flight-ops]
+      depends_on: [unit-tests-models, unit-tests-routes]
+      
+    - name: frontend-tests
+      beads: [templates, static]

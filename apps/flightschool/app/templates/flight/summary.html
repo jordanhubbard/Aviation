@@ -1,0 +1,238 @@
+{% extends "base.html" %}
+
+{% block title %}Flight Summary - {{ config.SCHOOL_NAME }}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-12">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{{ url_for('booking.dashboard') }}">Dashboard</a></li>
+                    <li class="breadcrumb-item"><a href="{{ url_for('booking.view_booking', booking_id=booking.id) }}">Flight Details</a></li>
+                    <li class="breadcrumb-item active">Flight Summary</li>
+                </ol>
+            </nav>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-8">
+            <!-- Flight Summary Card -->
+            <div class="card mb-4">
+                <div class="card-header bg-success text-white d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Flight Summary</h5>
+                    <span class="badge bg-light text-dark">Completed</span>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-4">
+                        <div class="col-md-4">
+                            <img src="{{ booking.aircraft.image_url }}" alt="{{ booking.aircraft.registration }}" class="img-fluid rounded" style="max-height: 150px; object-fit: contain;">
+                        </div>
+                        <div class="col-md-8">
+                            <h5>{{ booking.aircraft.make }} {{ booking.aircraft.model }} ({{ booking.aircraft.registration }})</h5>
+                            <p class="text-muted">{{ booking.start_time.strftime('%A, %B %d, %Y') }}</p>
+                            
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <div>
+                                    <i class="fas fa-clock me-2"></i>
+                                    <span>{{ booking.start_time.strftime('%H:%M') }} - {{ booking.end_time.strftime('%H:%M') }}</span>
+                                </div>
+                                <div>
+                                    <i class="fas fa-user me-2"></i>
+                                    <span>{{ booking.student.full_name }}</span>
+                                </div>
+                            </div>
+                            
+                            {% if booking.instructor %}
+                            <div class="mb-3">
+                                <i class="fas fa-chalkboard-teacher me-2"></i>
+                                <span>Instructor: {{ booking.instructor.full_name }}</span>
+                            </div>
+                            {% endif %}
+                            
+                            {% if booking.notes %}
+                            <div class="mb-3">
+                                <i class="fas fa-sticky-note me-2"></i>
+                                <span>{{ booking.notes }}</span>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <hr>
+                    
+                    <!-- Flight Time Summary -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <h5>Flight Time</h5>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <table class="table">
+                                        <tr>
+                                            <th>Check-In:</th>
+                                            <td>{{ booking.check_in.check_in_time.strftime('%H:%M') }}</td>
+                                        </tr>
+                                        <tr>
+                                            <th>Check-Out:</th>
+                                            <td>{{ booking.check_out.check_out_time.strftime('%H:%M') }}</td>
+                                        </tr>
+                                        <tr>
+                                            <th>Duration:</th>
+                                            <td>
+                                                {% set duration = (booking.check_out.check_out_time - booking.check_in.check_in_time).total_seconds() / 3600 %}
+                                                {{ "%.1f"|format(duration) }} hours
+                                            </td>
+                                        </tr>
+                                    </table>
+                                </div>
+                                <div class="col-md-6">
+                                    <table class="table">
+                                        <tr>
+                                            <th>Hobbs Start:</th>
+                                            <td>{{ booking.check_in.hobbs_start }}</td>
+                                        </tr>
+                                        <tr>
+                                            <th>Hobbs End:</th>
+                                            <td>{{ booking.check_out.hobbs_end }}</td>
+                                        </tr>
+                                        <tr>
+                                            <th>Hobbs Time:</th>
+                                            <td>{{ "%.1f"|format(booking.check_out.hobbs_end - booking.check_in.hobbs_start) }} hours</td>
+                                        </tr>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <hr>
+                    
+                    <!-- Billing Summary -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <h5>Billing Summary</h5>
+                            <table class="table">
+                                <tr>
+                                    <th>Aircraft Rate:</th>
+                                    <td>${{ "%.2f"|format(booking.aircraft.rate_per_hour) }}/hour</td>
+                                </tr>
+                                <tr>
+                                    <th>Aircraft Time:</th>
+                                    <td>{{ "%.1f"|format(booking.check_out.hobbs_end - booking.check_in.hobbs_start) }} hours</td>
+                                </tr>
+                                <tr>
+                                    <th>Aircraft Total:</th>
+                                    <td>${{ "%.2f"|format(booking.aircraft.rate_per_hour * (booking.check_out.hobbs_end - booking.check_in.hobbs_start)) }}</td>
+                                </tr>
+                                {% if booking.instructor %}
+                                <tr>
+                                    <th>Instructor Rate:</th>
+                                    <td>${{ "%.2f"|format(booking.instructor.instructor_rate_per_hour or 0) }}/hour</td>
+                                </tr>
+                                <tr>
+                                    <th>Instructor Time:</th>
+                                    <td>{{ "%.1f"|format(booking.check_out.hobbs_end - booking.check_in.hobbs_start) }} hours</td>
+                                </tr>
+                                <tr>
+                                    <th>Instructor Total:</th>
+                                    <td>${{ "%.2f"|format((booking.instructor.instructor_rate_per_hour or 0) * (booking.check_out.hobbs_end - booking.check_in.hobbs_start)) }}</td>
+                                </tr>
+                                {% endif %}
+                                <tr class="table-primary">
+                                    <th>Total:</th>
+                                    <td>
+                                        ${{ "%.2f"|format(
+                                            booking.aircraft.rate_per_hour * (booking.check_out.hobbs_end - booking.check_in.hobbs_start) + 
+                                            (booking.instructor.instructor_rate_per_hour or 0) * (booking.check_out.hobbs_end - booking.check_in.hobbs_start)
+                                        ) }}
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+                    
+                    <!-- Notes -->
+                    {% if booking.check_out.notes %}
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <h5>Flight Notes</h5>
+                            <div class="p-3 bg-light rounded">
+                                {{ booking.check_out.notes }}
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+                    
+                    <!-- Action Buttons -->
+                    <div class="d-grid gap-2">
+                        <a href="{{ url_for('booking.dashboard') }}" class="btn btn-primary">Return to Dashboard</a>
+                        {% if current_user.id == booking.student_id %}
+                        <a href="#" class="btn btn-outline-primary">Log Flight in Logbook</a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4">
+            <!-- Aircraft Info -->
+            <div class="card mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">Aircraft Information</h5>
+                </div>
+                <div class="card-body">
+                    <table class="table">
+                        <tr>
+                            <th>Registration:</th>
+                            <td>{{ booking.aircraft.registration }}</td>
+                        </tr>
+                        <tr>
+                            <th>Make/Model:</th>
+                            <td>{{ booking.aircraft.make }} {{ booking.aircraft.model }}</td>
+                        </tr>
+                        <tr>
+                            <th>Year:</th>
+                            <td>{{ booking.aircraft.year }}</td>
+                        </tr>
+                        <tr>
+                            <th>Engine:</th>
+                            <td>{{ booking.aircraft.engine_type|title }} ({{ booking.aircraft.num_engines }})</td>
+                        </tr>
+                        <tr>
+                            <th>Equipment:</th>
+                            <td>
+                                {% if booking.aircraft.ifr_equipped %}IFR, {% endif %}
+                                {% if booking.aircraft.gps %}GPS, {% endif %}
+                                {% if booking.aircraft.autopilot %}Autopilot{% endif %}
+                            </td>
+                        </tr>
+                    </table>
+                    
+                    <div class="d-grid gap-2 mt-3">
+                        <a href="{{ url_for('flight.maintenance_records', aircraft_id=booking.aircraft_id) }}" class="btn btn-outline-primary">
+                            <i class="fas fa-wrench me-2"></i>View Maintenance Records
+                        </a>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Reported Squawks -->
+            {% if booking.check_out and booking.check_out.notes and 'has_squawk' in request.form %}
+            <div class="card">
+                <div class="card-header bg-warning text-dark">
+                    <h5 class="mb-0">Reported Squawk</h5>
+                </div>
+                <div class="card-body">
+                    <p>{{ booking.check_out.notes }}</p>
+                    <p class="text-muted mb-0">
+                        <small>Reported by: {{ current_user.full_name }}</small><br>
+                        <small>Date: {{ booking.check_out.check_out_time.strftime('%Y-%m-%d %H:%M') }}</small>
+                    </p>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

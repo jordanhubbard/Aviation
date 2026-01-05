@@ -1,0 +1,82 @@
+{% extends "maintenance/base.html" %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{{ url_for('admin.aircraft_list') }}">Aircraft</a></li>
+<li class="breadcrumb-item"><a href="{{ url_for('maintenance.aircraft_maintenance', aircraft_id=aircraft.id) }}">{{ aircraft.tail_number }} - Maintenance</a></li>
+<li class="breadcrumb-item active">{{ title }}</li>
+{% endblock %}
+
+{% block maintenance_content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h2 class="mb-0">{{ title }}</h2>
+            </div>
+            <div class="card-body">
+                <form method="POST">
+                    {{ form.hidden_tag() }}
+                    
+                    <div class="mb-3">
+                        {{ form.maintenance_type.label(class="form-label") }}
+                        {{ form.maintenance_type(class="form-select") }}
+                        {% for error in form.maintenance_type.errors %}
+                        <div class="invalid-feedback d-block">{{ error }}</div>
+                        {% endfor %}
+                    </div>
+
+                    <div class="mb-3">
+                        {{ form.performed_at.label(class="form-label") }}
+                        {{ form.performed_at(class="form-control", type="datetime-local") }}
+                        {% for error in form.performed_at.errors %}
+                        <div class="invalid-feedback d-block">{{ error }}</div>
+                        {% endfor %}
+                    </div>
+
+                    <div class="mb-3">
+                        {{ form.performed_by.label(class="form-label") }}
+                        {{ form.performed_by(class="form-select") }}
+                        {% for error in form.performed_by.errors %}
+                        <div class="invalid-feedback d-block">{{ error }}</div>
+                        {% endfor %}
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                {{ form.hobbs_hours.label(class="form-label") }}
+                                {{ form.hobbs_hours(class="form-control") }}
+                                {% for error in form.hobbs_hours.errors %}
+                                <div class="invalid-feedback d-block">{{ error }}</div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                {{ form.tach_hours.label(class="form-label") }}
+                                {{ form.tach_hours(class="form-control") }}
+                                {% for error in form.tach_hours.errors %}
+                                <div class="invalid-feedback d-block">{{ error }}</div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        {{ form.notes.label(class="form-label") }}
+                        {{ form.notes(class="form-control", rows=3) }}
+                        {% for error in form.notes.errors %}
+                        <div class="invalid-feedback d-block">{{ error }}</div>
+                        {% endfor %}
+                    </div>
+
+                    <div class="d-grid gap-2">
+                        {{ form.submit(class="btn btn-primary") }}
+                        <a href="{{ url_for('maintenance.aircraft_maintenance', aircraft_id=aircraft.id) }}" class="btn btn-secondary">Cancel</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 
