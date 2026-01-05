@@ -1,14 +1,12 @@
 # ✈️ Aviation Mission Management System
 
-[![CI/CD Pipeline](https://github.com/jordanhubbard/aviation-missions-app/actions/workflows/ci.yml/badge.svg)](https://github.com/jordanhubbard/aviation-missions-app/actions/workflows/ci.yml)
-[![Deploy to Railway](https://github.com/jordanhubbard/aviation-missions-app/actions/workflows/deploy-railway.yml/badge.svg)](https://github.com/jordanhubbard/aviation-missions-app/actions/workflows/deploy-railway.yml)
-[![PR Validation](https://github.com/jordanhubbard/aviation-missions-app/actions/workflows/pr-check.yml/badge.svg)](https://github.com/jordanhubbard/aviation-missions-app/actions/workflows/pr-check.yml)
-[![Nightly Checks](https://github.com/jordanhubbard/aviation-missions-app/actions/workflows/nightly.yml/badge.svg)](https://github.com/jordanhubbard/aviation-missions-app/actions/workflows/nightly.yml)
+> Part of the [Aviation Monorepo](../../README.md)
+
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Docker Image](https://img.shields.io/badge/docker-ghcr.io-blue)](https://ghcr.io/jordanhubbard/aviation-missions-app)
-[![Railway](https://img.shields.io/badge/deploy-railway-blueviolet)](https://railway.app)
 
 > A modern, full-stack web application for managing general aviation training missions. Built with Clojure backend and Pure JavaScript frontend, featuring a comprehensive mission catalog, community interactions, and administrative tools.
+
+**Note**: This application is now part of the Aviation monorepo. For monorepo-wide documentation, see the [root README](../../README.md).
 
 ## 🌐 Live Demo
 
@@ -41,10 +39,10 @@
 
 ### Installation
 
-1. **Clone the repository**:
+1. **Navigate to the application directory**:
    ```bash
-   git clone https://github.com/jordanhubbard/aviation-missions-app.git
-   cd aviation-missions-app
+   # From the monorepo root
+   cd apps/aviation-missions-app
    ```
 
 2. **Build and start the application**:

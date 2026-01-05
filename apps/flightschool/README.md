@@ -1,12 +1,30 @@
 # Tailwheel Addicts Aviation Flight School Management System
 
+> Part of the [Aviation Monorepo](../../README.md)
+
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
 A Flask-based web application for managing a flight school's operations, including student registration, aircraft and instructor management, booking system, and administrative functions.
 
-# Quick start
-- make demo
-- log in as student@example.com / student123
-  - This username and password comes from tests/test_data.json - see this file
-  for admin user credentials as well as pre-loaded aircraft types and other data
+**Note**: This application is now part of the Aviation monorepo. For monorepo-wide documentation, see the [root README](../../README.md).
+
+## Quick start
+
+1. **Navigate to the application directory**:
+   ```bash
+   # From the monorepo root
+   cd apps/flightschool
+   ```
+
+2. **Run the demo**:
+   ```bash
+   make demo
+   ```
+
+3. **Log in as a student**:
+   - Username: student@example.com
+   - Password: student123
+   - This username and password comes from tests/test_data.json - see this file for admin user credentials as well as pre-loaded aircraft types and other data
 
 ## Features
 

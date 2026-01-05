@@ -1,6 +1,12 @@
 # flightplanner
 
+> Part of the [Aviation Monorepo](../../README.md)
+
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
 Unified VFR flight planning app with route + local planning, terrain checks, and weather.
+
+**Note**: This application is now part of the Aviation monorepo. For monorepo-wide documentation, see the [root README](../../README.md).
 
 ## Features
 
@@ -17,6 +23,14 @@ Unified VFR flight planning app with route + local planning, terrain checks, and
 - Python 3
 - Node 18+
 - Git LFS (recommended for large `backend/data/*` caches)
+
+### Setup
+
+1. **Navigate to the application directory**:
+   ```bash
+   # From the monorepo root
+   cd apps/flightplanner
+   ```
 
 ### Backend
 

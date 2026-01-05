@@ -1,0 +1,144 @@
+# Beads Configuration for Flight Planner
+# 
+# This file defines the independent work units (beads) that compose the
+# Flight Planner application. Beads enable parallel development, testing, and
+# execution of different application components.
+
+version: "1.0"
+
+beads:
+  # Airport Data
+  - name: airport-data
+    description: Airport database and search functionality
+    path: backend/services/airport_service.py
+    dependencies: []
+    parallel: true
+    test_path: tests/test_airport_service.py
+    
+  # Weather Service
+  - name: weather-service
+    description: Weather data integration (OpenWeatherMap, METAR, Open-Meteo)
+    path: backend/services/weather_service.py
+    dependencies: []
+    parallel: true
+    test_path: tests/test_weather_service.py
+    
+  # Terrain Service
+  - name: terrain-service
+    description: Terrain profile and clearance checks (OpenTopography)
+    path: backend/services/terrain_service.py
+    dependencies: []
+    parallel: true
+    test_path: tests/test_terrain_service.py
+    
+  # Route Planning
+  - name: route-planning
+    description: Route planning with fuel stops and multi-leg support
+    path: backend/services/route_planner.py
+    dependencies: [airport-data, terrain-service]
+    parallel: false
+    test_path: tests/test_route_planner.py
+    
+  # Local Planning
+  - name: local-planning
+    description: Nearby airport search within radius
+    path: backend/services/local_planner.py
+    dependencies: [airport-data]
+    parallel: true
+    test_path: tests/test_local_planner.py
+    
+  # API Layer
+  - name: api
+    description: FastAPI endpoints for planning and data retrieval
+    path: backend/main.py
+    dependencies: [route-planning, local-planning, weather-service]
+    parallel: false
+    test_path: tests/test_api.py
+    
+  # Frontend Components
+  - name: frontend-ui
+    description: React UI components for map and planning interface
+    path: frontend/src/components/
+    dependencies: []
+    parallel: true
+    
+  # Map Integration
+  - name: map-integration
+    description: Leaflet map with route display and weather overlays
+    path: frontend/src/lib/map.ts
+    dependencies: []
+    parallel: true
+    
+  # Frontend Services
+  - name: frontend-services
+    description: Frontend API client and data services
+    path: frontend/src/lib/api.ts
+    dependencies: [api]
+    parallel: true
+
+# Bead execution groups for parallel processing
+execution_groups:
+  # Group 1: Can run in parallel (no dependencies)
+  - name: initial
+    beads: [airport-data, weather-service, terrain-service, frontend-ui, map-integration]
+    
+  # Group 2: Planning services
+  - name: planning
+    beads: [route-planning, local-planning]
+    depends_on: [initial]
+    
+  # Group 3: API and frontend services
+  - name: integration
+    beads: [api, frontend-services]
+    depends_on: [planning]
+
+# Development workflow
+workflows:
+  # Full test suite
+  - name: test-all
+    description: Run all tests in optimal order
+    steps:
+      - group: initial
+        parallel: true
+      - group: planning
+        parallel: true
+      - group: integration
+        parallel: true
+        
+  # Backend-only workflow
+  - name: backend-dev
+    description: Backend development workflow
+    steps:
+      - group: initial
+        beads: [airport-data, weather-service, terrain-service]
+        parallel: true
+      - group: planning
+        parallel: true
+      - bead: api
+      
+  # Frontend-only workflow
+  - name: frontend-dev
+    description: Frontend development workflow
+    steps:
+      - group: initial
+        beads: [frontend-ui, map-integration]
+        parallel: true
+      - bead: frontend-services
+
+# CI/CD integration
+ci:
+  # Parallel test execution strategy
+  test_strategy: parallel
+  max_parallel: 4
+  
+  # Test groups for CI pipeline
+  test_groups:
+    - name: unit-tests-backend
+      beads: [airport-data, weather-service, terrain-service, route-planning, local-planning]
+      
+    - name: unit-tests-frontend
+      beads: [frontend-ui, map-integration, frontend-services]
+      
+    - name: integration-tests
+      beads: [api]
+      depends_on: [unit-tests-backend, unit-tests-frontend]
