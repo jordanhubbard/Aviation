@@ -1,0 +1,37 @@
+# Ignore development files
+.git
+.gitignore
+README.md
+.env
+.env.local
+.env.production
+.env.development
+
+# Ignore build artifacts and caches
+frontend/.shadow-cljs/
+frontend/node_modules/
+backend/target/
+data/
+*.log
+
+# Ignore backup directories
+frontend-react-backup/
+
+# Ignore OS files
+.DS_Store
+Thumbs.db
+
+# Ignore IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Test files needed for testing stage
+# backend/test/
+
+# Ignore local development files
+docker-compose.dev.yml
+docker-compose.prod.yml
+Dockerfile.local
+docker-entrypoint.sh

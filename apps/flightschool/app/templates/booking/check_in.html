@@ -1,0 +1,408 @@
+{% extends "base.html" %}
+
+{% block title %}Flight Check-In - {{ config.SCHOOL_NAME }}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-12">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{{ url_for('booking.dashboard') }}">Dashboard</a></li>
+                    <li class="breadcrumb-item"><a href="{{ url_for('booking.view_booking', booking_id=booking.id) }}">Flight Details</a></li>
+                    <li class="breadcrumb-item active">Check-In</li>
+                </ol>
+            </nav>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Flight Information -->
+        <div class="col-md-8">
+            <div class="card mb-4">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <div>
+                        <h5 class="mb-0">{{ booking.aircraft.make }} {{ booking.aircraft.model }} ({{ booking.aircraft.registration }})</h5>
+                        <p class="text-muted mb-0">{{ booking.start_time.strftime('%A, %B %d, %Y') }}</p>
+                    </div>
+                    <span class="badge bg-success">Check-In</span>
+                </div>
+                <div class="card-body">
+                    <div class="row g-4">
+                        <!-- Time Information -->
+                        <div class="col-md-4">
+                            <div class="p-3 bg-light rounded-3">
+                                <h6 class="text-muted mb-3">Time</h6>
+                                <div class="d-flex align-items-center mb-2">
+                                    <i class="fas fa-clock me-2 text-primary"></i>
+                                    <div>
+                                        <div class="fw-bold">{{ booking.start_time.strftime('%H:%M') }}</div>
+                                        <small class="text-muted">Start Time</small>
+                                    </div>
+                                </div>
+                                <div class="d-flex align-items-center">
+                                    <i class="fas fa-hourglass-end me-2 text-primary"></i>
+                                    <div>
+                                        <div class="fw-bold">{{ booking.end_time.strftime('%H:%M') }}</div>
+                                        <small class="text-muted">End Time</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- People Information -->
+                        <div class="col-md-4">
+                            <div class="p-3 bg-light rounded-3">
+                                <h6 class="text-muted mb-3">People</h6>
+                                <div class="d-flex align-items-center mb-2">
+                                    <i class="fas fa-user-graduate me-2 text-primary"></i>
+                                    <div>
+                                        <div class="fw-bold">{{ booking.student.full_name }}</div>
+                                        <small class="text-muted">Student</small>
+                                    </div>
+                                </div>
+                                <div class="d-flex align-items-center">
+                                    <i class="fas fa-chalkboard-teacher me-2 text-primary"></i>
+                                    <div>
+                                        <div class="fw-bold">{{ booking.instructor.full_name if booking.instructor else 'Solo Flight' }}</div>
+                                        <small class="text-muted">{{ 'Instructor' if booking.instructor else 'No Instructor' }}</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Weather Information -->
+                        <div class="col-md-4">
+                            <div class="p-3 bg-light rounded-3">
+                                <h6 class="text-muted mb-3">Weather</h6>
+                                <div class="d-flex align-items-center mb-2">
+                                    <i class="fas fa-thermometer-half me-2 text-primary"></i>
+                                    <div>
+                                        <div class="fw-bold">72°F</div>
+                                        <small class="text-muted">Temperature</small>
+                                    </div>
+                                </div>
+                                <div class="d-flex align-items-center">
+                                    <i class="fas fa-wind me-2 text-primary"></i>
+                                    <div>
+                                        <div class="fw-bold">8kt 270°</div>
+                                        <small class="text-muted">Wind</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <hr class="my-4">
+
+                    <!-- Check-In Form -->
+                    <form method="POST" action="{{ url_for('booking.check_in', booking_id=booking.id) }}">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                        
+                        <div class="row g-4">
+                            <!-- Hobbs & Tach -->
+                            <div class="col-md-6">
+                                <div class="p-3 bg-light rounded-3">
+                                    <h6 class="text-muted mb-3">Hobbs Time</h6>
+                                    <div class="input-group">
+                                        <span class="input-group-text"><i class="fas fa-tachometer-alt"></i></span>
+                                        <input type="number" class="form-control" id="hobbs_start" name="hobbs_start" 
+                                               step="0.1" min="{{ booking.aircraft.hobbs }}" value="{{ booking.aircraft.hobbs }}" required>
+                                    </div>
+                                    <small class="text-muted">Current: {{ booking.aircraft.hobbs }}</small>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="p-3 bg-light rounded-3">
+                                    <h6 class="text-muted mb-3">Tach Time</h6>
+                                    <div class="input-group">
+                                        <span class="input-group-text"><i class="fas fa-gauge"></i></span>
+                                        <input type="number" class="form-control" id="tach_start" name="tach_start" 
+                                               step="0.1" min="{{ booking.aircraft.tach }}" value="{{ booking.aircraft.tach }}" required>
+                                    </div>
+                                    <small class="text-muted">Current: {{ booking.aircraft.tach }}</small>
+                                </div>
+                            </div>
+
+                            <!-- Fuel & Oil -->
+                            <div class="col-md-6">
+                                <div class="p-3 bg-light rounded-3">
+                                    <h6 class="text-muted mb-3">Fuel Level</h6>
+                                    <div class="input-group">
+                                        <span class="input-group-text"><i class="fas fa-gas-pump"></i></span>
+                                        <select class="form-select" id="fuel_level" name="fuel_level" required>
+                                            <option value="">Select fuel level</option>
+                                            <option value="full">Full</option>
+                                            <option value="3/4">3/4</option>
+                                            <option value="1/2">1/2</option>
+                                            <option value="1/4">1/4</option>
+                                            <option value="empty">Empty</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="p-3 bg-light rounded-3">
+                                    <h6 class="text-muted mb-3">Oil Level</h6>
+                                    <div class="input-group">
+                                        <span class="input-group-text"><i class="fas fa-oil-can"></i></span>
+                                        <input type="number" class="form-control" id="oil_level" name="oil_level" 
+                                               step="0.1" min="0" required>
+                                        <span class="input-group-text">qts</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Instructor -->
+                            <div class="col-md-6">
+                                <div class="p-3 bg-light rounded-3">
+                                    <h6 class="text-muted mb-3">Instructor</h6>
+                                    <div class="input-group">
+                                        <span class="input-group-text"><i class="fas fa-chalkboard-teacher"></i></span>
+                                        <select class="form-select" id="instructor" name="instructor" required>
+                                            <option value="">Select instructor</option>
+                                            {% for instructor in instructors %}
+                                            <option value="{{ instructor.id }}">{{ instructor.full_name }}</option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Aircraft -->
+                            <div class="col-md-6">
+                                <div class="p-3 bg-light rounded-3">
+                                    <h6 class="text-muted mb-3">Aircraft</h6>
+                                    <div class="input-group">
+                                        <span class="input-group-text"><i class="fas fa-plane"></i></span>
+                                        <select class="form-select" id="aircraft" name="aircraft" required>
+                                            <option value="">Select aircraft</option>
+                                            {% for aircraft in aircrafts %}
+                                            <option value="{{ aircraft.id }}">{{ aircraft.display_name }}</option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Notes -->
+                            <div class="col-12">
+                                <div class="p-3 bg-light rounded-3">
+                                    <h6 class="text-muted mb-3">Pre-Flight Notes</h6>
+                                    <div class="input-group">
+                                        <span class="input-group-text"><i class="fas fa-clipboard"></i></span>
+                                        <textarea class="form-control" id="notes" name="notes" rows="3" 
+                                                  placeholder="Enter any notes about the aircraft condition, issues, or special instructions"></textarea>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <hr class="my-4">
+
+                        <!-- Confirmation -->
+                        <div class="p-3 bg-light rounded-3">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="preflight_completed" name="preflight_completed" required>
+                                <label class="form-check-label" for="preflight_completed">
+                                    <strong>Pre-Flight Confirmation</strong><br>
+                                    <small class="text-muted">I confirm that I have completed the pre-flight checklist according to the POH and the aircraft is airworthy.</small>
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="d-flex justify-content-between align-items-center mt-4">
+                            <a href="{{ url_for('booking.view_booking', booking_id=booking.id) }}" class="btn btn-outline-secondary">
+                                <i class="fas fa-arrow-left me-2"></i>Back to Flight Details
+                            </a>
+                            <button type="submit" class="btn btn-accent">
+                                <i class="fas fa-plane-departure me-2"></i>Complete Check-In
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Pre-Flight Checklist -->
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Pre-Flight Checklist</h5>
+                </div>
+                <div class="card-body p-0">
+                    <div class="accordion" id="preflightAccordion">
+                        <div class="accordion-item">
+                            <h2 class="accordion-header" id="headingOne">
+                                <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne" aria-expanded="true" aria-controls="collapseOne">
+                                    <i class="fas fa-plane me-2"></i>Exterior Inspection
+                                </button>
+                            </h2>
+                            <div id="collapseOne" class="accordion-collapse collapse show" aria-labelledby="headingOne" data-bs-parent="#preflightAccordion">
+                                <div class="accordion-body">
+                                    <div class="checklist-item">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" id="check1">
+                                            <label class="form-check-label" for="check1">Aircraft documents on board</label>
+                                        </div>
+                                    </div>
+                                    <div class="checklist-item">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" id="check2">
+                                            <label class="form-check-label" for="check2">Control surfaces free and correct</label>
+                                        </div>
+                                    </div>
+                                    <div class="checklist-item">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" id="check3">
+                                            <label class="form-check-label" for="check3">Fuel quantity verified</label>
+                                        </div>
+                                    </div>
+                                    <div class="checklist-item">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" id="check4">
+                                            <label class="form-check-label" for="check4">Fuel caps secure</label>
+                                        </div>
+                                    </div>
+                                    <div class="checklist-item">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" id="check5">
+                                            <label class="form-check-label" for="check5">Oil level checked</label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="accordion-item">
+                            <h2 class="accordion-header" id="headingTwo">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseTwo" aria-expanded="false" aria-controls="collapseTwo">
+                                    <i class="fas fa-cog me-2"></i>Cockpit Preparation
+                                </button>
+                            </h2>
+                            <div id="collapseTwo" class="accordion-collapse collapse" aria-labelledby="headingTwo" data-bs-parent="#preflightAccordion">
+                                <div class="accordion-body">
+                                    <div class="checklist-item">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" id="check6">
+                                            <label class="form-check-label" for="check6">Seats adjusted and secured</label>
+                                        </div>
+                                    </div>
+                                    <div class="checklist-item">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" id="check7">
+                                            <label class="form-check-label" for="check7">Seatbelts fastened</label>
+                                        </div>
+                                    </div>
+                                    <div class="checklist-item">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" id="check8">
+                                            <label class="form-check-label" for="check8">Flight controls free and correct</label>
+                                        </div>
+                                    </div>
+                                    <div class="checklist-item">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" id="check9">
+                                            <label class="form-check-label" for="check9">Instruments checked</label>
+                                        </div>
+                                    </div>
+                                    <div class="checklist-item">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" id="check10">
+                                            <label class="form-check-label" for="check10">Circuit breakers checked</label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="accordion-item">
+                            <h2 class="accordion-header" id="headingThree">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseThree" aria-expanded="false" aria-controls="collapseThree">
+                                    <i class="fas fa-power-off me-2"></i>Before Starting Engine
+                                </button>
+                            </h2>
+                            <div id="collapseThree" class="accordion-collapse collapse" aria-labelledby="headingThree" data-bs-parent="#preflightAccordion">
+                                <div class="accordion-body">
+                                    <div class="checklist-item">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" id="check11">
+                                            <label class="form-check-label" for="check11">Avionics OFF</label>
+                                        </div>
+                                    </div>
+                                    <div class="checklist-item">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" id="check12">
+                                            <label class="form-check-label" for="check12">Electrical equipment OFF</label>
+                                        </div>
+                                    </div>
+                                    <div class="checklist-item">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" id="check13">
+                                            <label class="form-check-label" for="check13">Brakes tested and set</label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="p-3">
+                        <div class="alert alert-info mb-0">
+                            <div class="d-flex align-items-center">
+                                <i class="fas fa-info-circle fa-2x me-3"></i>
+                                <div>
+                                    <h6 class="alert-heading mb-1">Important Note</h6>
+                                    <p class="mb-0 small">This checklist is a general guide. Always follow the specific Pilot's Operating Handbook (POH) for your aircraft.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% block extra_js %}
+<script>
+    // Auto-calculate Hobbs and Tach time differences
+    document.getElementById('hobbs_start').addEventListener('input', function() {
+        var current = parseFloat('{{ booking.aircraft.hobbs }}');
+        var input = parseFloat(this.value);
+        if (input < current) {
+            alert('Warning: Hobbs start time is less than current reading');
+        }
+    });
+
+    document.getElementById('tach_start').addEventListener('input', function() {
+        var current = parseFloat('{{ booking.aircraft.tach }}');
+        var input = parseFloat(this.value);
+        if (input < current) {
+            alert('Warning: Tach start time is less than current reading');
+        }
+    });
+
+    // Track checklist completion
+    var checkboxes = document.querySelectorAll('.checklist-item input[type="checkbox"]');
+    var preflightConfirmation = document.getElementById('preflight_completed');
+    
+    function updatePreflightStatus() {
+        var allChecked = Array.from(checkboxes).every(function(checkbox) {
+            return checkbox.checked;
+        });
+        if (allChecked) {
+            preflightConfirmation.disabled = false;
+        } else {
+            preflightConfirmation.checked = false;
+            preflightConfirmation.disabled = true;
+        }
+    }
+
+    checkboxes.forEach(function(checkbox) {
+        checkbox.addEventListener('change', updatePreflightStatus);
+    });
+
+    // Initialize
+    updatePreflightStatus();
+</script>
+{% endblock %}
+{% endblock %}

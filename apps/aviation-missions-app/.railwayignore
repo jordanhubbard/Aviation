@@ -1,0 +1,47 @@
+# Railway ignore file - similar to .dockerignore but specifically for Railway
+# Ignore all TypeScript and React build attempts
+
+# Ignore frontend package.json to prevent Node.js buildpack detection
+frontend/package.json
+frontend/package-lock.json
+frontend/node_modules/
+frontend/.shadow-cljs/
+
+# Ignore any React/TypeScript files that might confuse buildpack detection
+*.tsx
+*.ts
+tsconfig.json
+vite.config.*
+.eslintrc*
+
+# Ignore backup directories
+frontend-react-backup/
+
+# Ignore development files
+.env
+.env.local
+.env.production
+.env.development
+
+# Ignore build artifacts
+backend/target/
+data/
+*.log
+
+# Ignore OS files
+.DS_Store
+Thumbs.db
+
+# Ignore IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Ignore test files
+backend/test/
+
+# Ignore local development files
+docker-compose.dev.yml
+docker-compose.prod.yml
+Dockerfile.local

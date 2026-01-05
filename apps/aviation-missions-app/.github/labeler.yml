@@ -1,0 +1,55 @@
+# Auto-labeling configuration for PRs
+
+# Backend changes
+'backend':
+  - backend/**/*
+  - '**/*.clj'
+
+# Frontend changes
+'frontend':
+  - frontend/**/*
+  - '**/*.js'
+  - '**/*.jsx'
+  - '**/*.css'
+  - '**/*.html'
+
+# Tests
+'tests':
+  - '**/test/**/*'
+  - '**/*test.clj'
+  - '**/*_test.clj'
+
+# Documentation
+'documentation':
+  - '**/*.md'
+  - 'docs/**/*'
+
+# CI/CD
+'ci/cd':
+  - '.github/**/*'
+  - 'Dockerfile'
+  - 'docker-compose*.yml'
+  - 'Makefile'
+
+# Dependencies
+'dependencies':
+  - 'backend/project.clj'
+  - 'frontend/package.json'
+  - '**/package-lock.json'
+
+# Configuration
+'configuration':
+  - '**/*.json'
+  - '**/*.yml'
+  - '**/*.yaml'
+  - '**/*.toml'
+
+# Database
+'database':
+  - 'data/**/*'
+  - '**/db.clj'
+
+# Security
+'security':
+  - '**/admin_auth.clj'
+  - '**/auth*.clj'

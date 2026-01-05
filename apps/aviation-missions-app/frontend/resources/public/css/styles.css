@@ -1,0 +1,1056 @@
+/* Aviation Mission Management - Modern CSS Styles */
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: system-ui, -apple-system, sans-serif;
+    background-color: #f8fafc;
+    color: #1e293b;
+    line-height: 1.5;
+}
+
+.app-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+/* Header Styles */
+.app-header {
+    padding: 40px 30px;
+    margin-bottom: 30px;
+    background: linear-gradient(135deg, #2563eb, #1e40af);
+    color: white;
+    border-radius: 12px;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+.header-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 20px;
+}
+
+.header-text {
+    text-align: left;
+}
+
+.app-header h1 {
+    font-size: 2.5rem;
+    font-weight: 700;
+    margin-bottom: 10px;
+}
+
+.app-header p {
+    font-size: 1.125rem;
+    opacity: 0.9;
+}
+
+.header-actions {
+    display: flex;
+    gap: 12px;
+    flex-shrink: 0;
+}
+
+@media (max-width: 768px) {
+    .header-content {
+        flex-direction: column;
+        text-align: center;
+    }
+
+    .header-text {
+        text-align: center;
+    }
+
+    .header-actions {
+        width: 100%;
+        justify-content: center;
+    }
+}
+
+/* Filters Panel */
+.filters-panel {
+    background: white;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+    margin-bottom: 30px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px;
+    align-items: center;
+}
+
+.search-container,
+.filter-container {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.search-container {
+    flex: 1;
+    min-width: 200px;
+}
+
+.filter-container {
+    min-width: 140px;
+}
+
+.search-container input,
+.filter-container select {
+    padding: 10px;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    font-size: 14px;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.search-container input:focus,
+.filter-container select:focus {
+    outline: none;
+    border-color: #2563eb;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+/* Button Styles */
+.btn {
+    padding: 10px 16px;
+    border: none;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-decoration: none;
+    display: inline-block;
+    text-align: center;
+}
+
+.btn:hover {
+    transform: translateY(-1px);
+}
+
+.btn-primary {
+    background-color: #2563eb;
+    color: white;
+}
+
+.btn-primary:hover {
+    background-color: #1d4ed8;
+}
+
+.btn-secondary {
+    background-color: #64748b;
+    color: white;
+}
+
+.btn-secondary:hover {
+    background-color: #475569;
+}
+
+.btn-warning {
+    background-color: #f59e0b;
+    color: white;
+}
+
+.btn-warning:hover {
+    background-color: #d97706;
+}
+
+.btn-danger {
+    background-color: #ef4444;
+    color: white;
+}
+
+.btn-danger:hover {
+    background-color: #dc2626;
+}
+
+/* Content Area */
+.content-area {
+    min-height: 400px;
+}
+
+/* Loading Indicator */
+.loading-indicator {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 60px 20px;
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+}
+
+.spinner {
+    width: 40px;
+    height: 40px;
+    border: 4px solid #e5e7eb;
+    border-top: 4px solid #2563eb;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin-bottom: 20px;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+.loading-indicator p {
+    font-size: 18px;
+    color: #64748b;
+}
+
+/* Error Display */
+.error-display {
+    background: #fef2f2;
+    border: 1px solid #fecaca;
+    border-radius: 8px;
+    padding: 40px;
+    text-align: center;
+}
+
+.error-display h3 {
+    color: #dc2626;
+    font-size: 20px;
+    margin-bottom: 10px;
+}
+
+.error-display p {
+    color: #991b1b;
+    margin-bottom: 20px;
+}
+
+/* Missions Grid */
+.missions-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(420px, 1fr));
+    gap: 1rem;
+    align-items: stretch; /* Make all cards same height */
+    padding: 1rem 0;
+}
+
+/* Mission Card */
+.mission-card {
+    background: white;
+    border: 2px solid #e0e0e0;
+    border-radius: 4px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    transition: all 0.3s ease;
+    cursor: pointer;
+    overflow: hidden;
+    font-family: 'Courier New', monospace;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    height: 400px; /* Fixed height for uniform grid */
+    min-height: 400px;
+}
+
+.mission-card:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+    border-color: #1976d2;
+}
+
+/* Visual indicator that card is scrollable when hovered */
+.mission-card:hover .mission-content::after {
+  content: "↕ SCROLL";
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
+  background: rgba(25, 118, 210, 0.8);
+  color: white;
+  font-size: 0.6rem;
+  padding: 0.2rem 0.4rem;
+  border-radius: 2px;
+  font-weight: bold;
+  letter-spacing: 0.5px;
+  opacity: 0;
+  animation: fadeInScroll 0.5s ease-in-out 0.5s forwards;
+  z-index: 20;
+}
+
+@keyframes fadeInScroll {
+  to {
+    opacity: 1;
+  }
+}
+
+.mission-header {
+  background: #f8f9fa;
+  border-bottom: 2px solid #1976d2;
+  padding: 0.75rem;
+  position: relative;
+}
+
+
+.mission-title {
+  font-size: 1rem;
+  font-weight: bold;
+  color: #000;
+  margin-bottom: 0.5rem;
+  line-height: 1.2;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.mission-meta {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  margin-top: 0.5rem;
+}
+
+.category-badge, .difficulty-badge, .experience-badge {
+  padding: 0.2rem 0.5rem;
+  border-radius: 3px;
+  font-size: 0.7rem;
+  font-weight: bold;
+  color: white;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border: 1px solid rgba(0,0,0,0.2);
+}
+
+.category-badge {
+  background-color: #2c3e50;
+}
+
+.difficulty-badge {
+  /* Color set dynamically */
+}
+
+.experience-badge {
+  background-color: #27ae60;
+}
+
+.mission-content {
+  padding: 0.75rem;
+  background: #fefefe;
+  border-bottom: 1px solid #e0e0e0;
+  flex: 1;
+  overflow: hidden;
+  transition: all 0.3s ease;
+  position: relative;
+}
+
+.mission-card:hover .mission-content {
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: #1976d2 #f0f0f0;
+}
+
+.mission-card:hover .mission-content::-webkit-scrollbar {
+  width: 6px;
+}
+
+.mission-card:hover .mission-content::-webkit-scrollbar-track {
+  background: #f0f0f0;
+  border-radius: 3px;
+}
+
+.mission-card:hover .mission-content::-webkit-scrollbar-thumb {
+  background: #1976d2;
+  border-radius: 3px;
+}
+
+.mission-card:hover .mission-content::-webkit-scrollbar-thumb:hover {
+  background: #1565c0;
+}
+
+.mission-data-grid {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 0.25rem 0.75rem;
+  margin-bottom: 0.75rem;
+  font-size: 0.85rem;
+}
+
+.mission-data-label {
+  font-weight: bold;
+  color: #000;
+  text-transform: uppercase;
+  font-size: 0.75rem;
+  letter-spacing: 0.5px;
+  white-space: nowrap;
+}
+
+.mission-data-value {
+  color: #333;
+  font-weight: normal;
+  word-wrap: break-word;
+}
+
+.mission-section {
+  margin-bottom: 0.5rem;
+}
+
+.mission-section h4 {
+  font-size: 0.75rem;
+  font-weight: bold;
+  color: #000;
+  margin-bottom: 0.25rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border-bottom: 1px solid #ddd;
+  padding-bottom: 0.1rem;
+}
+
+.mission-section p {
+  color: #333;
+  line-height: 1.3;
+  font-size: 0.8rem;
+  margin: 0;
+}
+
+/* Flight Challenges */
+.challenges-section {
+  margin: 0.75rem 0;
+}
+
+.challenges-section h4 {
+  font-size: 0.75rem;
+  font-weight: bold;
+  color: #000;
+  margin-bottom: 0.5rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border-bottom: 1px solid #ddd;
+  padding-bottom: 0.1rem;
+}
+
+.challenges-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 0.25rem;
+  margin-bottom: 0.5rem;
+}
+
+.challenge-item {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.2rem 0.4rem;
+  background: #fff3cd;
+  border: 1px solid #ffeaa7;
+  border-radius: 3px;
+  font-size: 0.7rem;
+  font-weight: bold;
+  color: #856404;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+.challenge-icon {
+  font-size: 0.8rem;
+  color: #f39c12;
+}
+
+.challenge-label {
+  font-size: 0.65rem;
+  line-height: 1.1;
+}
+
+.scrollable-content {
+  max-height: 100px;
+  overflow-y: auto;
+  padding-right: 0.5rem;
+}
+
+.mission-footer {
+  padding: 0.5rem 0.75rem;
+  background-color: #f0f0f0;
+  border-top: 1px solid #ccc;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  gap: 1rem;
+  flex-shrink: 0; /* Prevent footer from shrinking */
+}
+
+.pilot-experience {
+  font-size: 0.75rem;
+  font-weight: bold;
+  color: #000;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin: 0;
+}
+
+.mission-stats {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+}
+
+.stat-item {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.2rem 0.4rem;
+  background: white;
+  border: 1px solid #ccc;
+  border-radius: 3px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 0.7rem;
+}
+
+.stat-item:hover {
+  background-color: #e3f2fd;
+  border-color: #1976d2;
+}
+
+.stat-icon {
+  font-size: 0.8rem;
+  color: #666;
+}
+
+.stat-label {
+  font-size: 0.65rem;
+  color: #666;
+  font-weight: bold;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+.stat-count {
+  font-size: 0.75rem;
+  font-weight: bold;
+  color: #1976d2;
+}
+
+.mission-actions {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+.btn-mission {
+  padding: 0.3rem 0.6rem;
+  font-size: 0.7rem;
+  font-weight: bold;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border: 1px solid #1976d2;
+  background: white;
+  color: #1976d2;
+  border-radius: 3px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-mission:hover {
+  background: #1976d2;
+  color: white;
+}
+
+.btn-mission.primary {
+  background: #1976d2;
+  color: white;
+}
+
+.btn-mission.primary:hover {
+  background: #1565c0;
+}
+
+/* Empty State */
+.empty-state {
+    text-align: center;
+    padding: 60px 20px;
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+    grid-column: 1 / -1;
+}
+
+.empty-state p {
+    color: #64748b;
+    font-size: 16px;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .app-container {
+        padding: 15px;
+    }
+
+    .app-header {
+        padding: 30px 20px;
+    }
+
+    .app-header h1 {
+        font-size: 2rem;
+    }
+
+    .filters-panel {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .search-container,
+    .filter-container {
+        min-width: unset;
+    }
+
+    .missions-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .mission-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+    }
+
+    .mission-badges {
+        align-self: flex-end;
+    }
+
+    .mission-footer {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 15px;
+    }
+
+    .mission-actions {
+        width: 100%;
+        justify-content: flex-end;
+    }
+}
+
+@media (max-width: 480px) {
+    .mission-actions {
+        flex-direction: column;
+        width: 100%;
+    }
+
+    .mission-actions .btn {
+        width: 100%;
+    }
+}
+
+/* Floating Action Button */
+.fab {
+  position: fixed;
+  bottom: 30px;
+  right: 30px;
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #1976d2 0%, #1565c0 100%);
+  color: white;
+  border: none;
+  box-shadow: 0 4px 12px rgba(25, 118, 210, 0.4);
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+  z-index: 1000;
+  overflow: hidden;
+}
+
+.fab:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(25, 118, 210, 0.6);
+  width: 200px;
+  border-radius: 30px;
+}
+
+.fab:hover .fab-label {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+.fab-icon {
+  font-size: 24px;
+  margin-bottom: 2px;
+  transition: all 0.3s ease;
+}
+
+.fab-label {
+  font-size: 12px;
+  font-weight: 600;
+  opacity: 0;
+  transform: translateX(-20px);
+  transition: all 0.3s ease;
+  white-space: nowrap;
+}
+
+/* Modal Improvements */
+.modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 2000;
+  display: none;
+  align-items: center;
+  justify-content: center;
+}
+
+.modal-open {
+  display: flex !important;
+}
+
+.modal-backdrop {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
+}
+
+.modal-content {
+  position: relative;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  max-width: 600px;
+  width: 90%;
+  max-height: 90vh;
+  overflow-y: auto;
+  animation: modalSlideIn 0.3s ease-out;
+}
+
+@keyframes modalSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-50px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 25px;
+  border-bottom: 1px solid #e0e0e0;
+  background: #f8f9fa;
+  border-radius: 12px 12px 0 0;
+}
+
+.modal-header h2 {
+  margin: 0;
+  color: #1976d2;
+  font-size: 1.5rem;
+}
+
+.modal-close {
+  background: none;
+  border: none;
+  font-size: 24px;
+  color: #666;
+  cursor: pointer;
+  padding: 0;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: all 0.2s ease;
+}
+
+.modal-close:hover {
+  background: #e0e0e0;
+  color: #333;
+}
+
+.modal-body {
+  padding: 25px;
+}
+
+/* Modal Overlay for Forms */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 10000;
+  overflow-y: auto;
+  padding: 20px;
+}
+
+/* Mission Form Modal */
+.mission-form-modal {
+  max-width: 800px;
+  width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+}
+
+/* Form Styles */
+.mission-form {
+  padding: 0;
+}
+
+.form-section {
+  padding: 20px 25px;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.form-section:last-of-type {
+  border-bottom: none;
+}
+
+.form-section h3 {
+  margin: 0 0 15px 0;
+  font-size: 1.1rem;
+  color: #1976d2;
+  font-weight: 600;
+}
+
+.form-group {
+  margin-bottom: 15px;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 6px;
+  font-weight: 500;
+  color: #333;
+  font-size: 0.9rem;
+}
+
+.form-group input,
+.form-group select,
+.form-group textarea {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-size: 14px;
+  font-family: inherit;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+  outline: none;
+  border-color: #1976d2;
+  box-shadow: 0 0 0 3px rgba(25, 118, 210, 0.1);
+}
+
+.form-group textarea {
+  resize: vertical;
+  min-height: 80px;
+}
+
+.form-group small {
+  display: block;
+  margin-top: 4px;
+  font-size: 0.8rem;
+  color: #666;
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 15px;
+}
+
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  padding: 20px 25px;
+  background: #f8f9fa;
+  border-radius: 0 0 12px 12px;
+}
+
+.form-actions .btn {
+  min-width: 120px;
+}
+
+/* Badge styles for difficulty levels */
+.badge-difficulty-1 {
+  background-color: #27ae60 !important;
+  color: white !important;
+}
+
+.badge-difficulty-2 {
+  background-color: #f39c12 !important;
+  color: white !important;
+}
+
+.badge-difficulty-3,
+.badge-difficulty-4,
+.badge-difficulty-5 {
+  background-color: #e74c3c !important;
+  color: white !important;
+}
+
+.badge-difficulty-6,
+.badge-difficulty-7,
+.badge-difficulty-8,
+.badge-difficulty-9 {
+  background-color: #8e44ad !important;
+  color: white !important;
+}
+
+/* Page navigation */
+.page-navigation {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 1rem;
+  margin: 2rem 0;
+  padding: 1rem;
+  background: #f8f9fa;
+  border-radius: 8px;
+  border: 1px solid #e0e0e0;
+}
+
+.nav-button {
+  padding: 0.5rem 1rem;
+  font-size: 0.9rem;
+  font-weight: bold;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border: 2px solid #1976d2;
+  background: white;
+  color: #1976d2;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-family: 'Courier New', monospace;
+}
+
+.nav-button:hover {
+  background: #1976d2;
+  color: white;
+  transform: translateY(-1px);
+}
+
+.nav-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.nav-button:disabled:hover {
+  background: white;
+  color: #1976d2;
+}
+
+.page-info {
+  font-family: 'Courier New', monospace;
+  font-size: 0.9rem;
+  font-weight: bold;
+  color: #333;
+  background: white;
+  padding: 0.5rem 1rem;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+
+/* Responsive FAB */
+@media (max-width: 768px) {
+  .fab {
+    bottom: 20px;
+    right: 20px;
+    width: 56px;
+    height: 56px;
+  }
+
+  .fab:hover {
+    width: 180px;
+  }
+
+  .modal-content {
+    width: 95%;
+    margin: 20px;
+  }
+
+  .modal-header {
+    padding: 15px 20px;
+  }
+
+  .modal-body {
+    padding: 20px;
+  }
+}
+
+/* Admin Login Modal */
+.admin-login-modal {
+  max-width: 400px;
+  width: 100%;
+}
+
+.admin-login-form {
+  padding: 25px;
+}
+
+.admin-login-form .form-group {
+  margin-bottom: 20px;
+}
+
+.admin-login-form .form-group:last-of-type {
+  margin-bottom: 25px;
+}
+
+.login-error {
+  margin-top: 15px;
+  padding: 12px;
+  background: #fee;
+  border: 1px solid #fcc;
+  border-radius: 6px;
+  color: #c33;
+  font-size: 14px;
+  text-align: center;
+}
+
+/* Admin Status Indicator */
+.admin-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  background: rgba(255, 255, 255, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 6px;
+  color: white;
+  font-size: 14px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+@media (max-width: 768px) {
+  .admin-login-modal {
+    width: 95%;
+    margin: 10px;
+  }
+
+  .admin-status {
+    font-size: 12px;
+    padding: 8px 12px;
+  }
+}

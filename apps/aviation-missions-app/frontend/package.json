@@ -1,0 +1,17 @@
+{
+  "name": "aviation-missions-frontend",
+  "version": "0.1.0",
+  "description": "Aviation Mission Management Frontend - Pure JavaScript",
+  "main": "index.js",
+  "scripts": {
+    "build": "echo 'Using pure JavaScript - no build needed' && exit 0",
+    "dev": "echo 'Development mode: serve static files from resources/public'",
+    "test": "echo 'No tests configured for pure JavaScript implementation'",
+    "clean": "echo 'No build artifacts to clean'"
+  },
+  "dependencies": {},
+  "devDependencies": {},
+  "keywords": ["javascript", "aviation", "missions"],
+  "author": "Aviation Missions Team",
+  "license": "MIT"
+}

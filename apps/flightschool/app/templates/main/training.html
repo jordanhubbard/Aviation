@@ -1,0 +1,138 @@
+{% extends "base.html" %}
+
+{% block title %}Training Programs - {{ config.SCHOOL_NAME }}{% endblock %}
+
+{% block content %}
+<!-- Header Section -->
+<div class="container py-5">
+    <div class="row text-center">
+        <div class="col-md-12">
+            <h1 class="display-4 fw-bold">Training Programs</h1>
+            <p class="lead text-muted">Comprehensive flight training for all levels</p>
+        </div>
+    </div>
+</div>
+
+<!-- Private Pilot License -->
+<div class="container py-5">
+    <div class="row align-items-center">
+        <div class="col-md-6">
+            <h2 class="display-6 mb-4">Private Pilot License (PPL)</h2>
+            <p class="lead">Start your aviation journey with our comprehensive PPL program.</p>
+            <ul class="list-unstyled">
+                <li class="mb-3"><i class="fas fa-check text-primary me-2"></i>40 hours minimum flight time</li>
+                <li class="mb-3"><i class="fas fa-check text-primary me-2"></i>Ground school instruction</li>
+                <li class="mb-3"><i class="fas fa-check text-primary me-2"></i>Cross-country flight training</li>
+                <li class="mb-3"><i class="fas fa-check text-primary me-2"></i>Night flying experience</li>
+                <li class="mb-3"><i class="fas fa-check text-primary me-2"></i>Preparation for FAA written and practical exams</li>
+            </ul>
+            <a href="{{ url_for('auth.register') }}" class="btn btn-primary">Enroll Now</a>
+        </div>
+        <div class="col-md-6">
+            <img src="{{ url_for('static', filename='images/ppl-training.jpg') }}" 
+                 alt="Private Pilot Training" 
+                 class="img-fluid rounded shadow">
+        </div>
+    </div>
+</div>
+
+<!-- Instrument Rating -->
+<div class="bg-light py-5">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-md-6 order-md-2">
+                <h2 class="display-6 mb-4">Instrument Rating (IR)</h2>
+                <p class="lead">Master flying in all weather conditions.</p>
+                <ul class="list-unstyled">
+                    <li class="mb-3"><i class="fas fa-check text-primary me-2"></i>50 hours cross-country flight time</li>
+                    <li class="mb-3"><i class="fas fa-check text-primary me-2"></i>40 hours instrument flight time</li>
+                    <li class="mb-3"><i class="fas fa-check text-primary me-2"></i>Advanced avionics training</li>
+                    <li class="mb-3"><i class="fas fa-check text-primary me-2"></i>IFR procedures and regulations</li>
+                    <li class="mb-3"><i class="fas fa-check text-primary me-2"></i>Preparation for FAA written and practical exams</li>
+                </ul>
+                <a href="{{ url_for('auth.register') }}" class="btn btn-primary">Enroll Now</a>
+            </div>
+            <div class="col-md-6 order-md-1">
+                <img src="{{ url_for('static', filename='images/ir-training.jpg') }}" 
+                     alt="Instrument Rating Training" 
+                     class="img-fluid rounded shadow">
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Commercial License -->
+<div class="container py-5">
+    <div class="row align-items-center">
+        <div class="col-md-6">
+            <h2 class="display-6 mb-4">Commercial Pilot License (CPL)</h2>
+            <p class="lead">Take your career to new heights.</p>
+            <ul class="list-unstyled">
+                <li class="mb-3"><i class="fas fa-check text-primary me-2"></i>250 hours total flight time</li>
+                <li class="mb-3"><i class="fas fa-check text-primary me-2"></i>100 hours pilot-in-command time</li>
+                <li class="mb-3"><i class="fas fa-check text-primary me-2"></i>50 hours cross-country flight time</li>
+                <li class="mb-3"><i class="fas fa-check text-primary me-2"></i>Advanced aircraft systems</li>
+                <li class="mb-3"><i class="fas fa-check text-primary me-2"></i>Preparation for FAA written and practical exams</li>
+            </ul>
+            <a href="{{ url_for('auth.register') }}" class="btn btn-primary">Enroll Now</a>
+        </div>
+        <div class="col-md-6">
+            <img src="{{ url_for('static', filename='images/cpl-training.jpg') }}" 
+                 alt="Commercial Pilot Training" 
+                 class="img-fluid rounded shadow">
+        </div>
+    </div>
+</div>
+
+<!-- Additional Training -->
+<div class="bg-light py-5">
+    <div class="container">
+        <div class="row text-center mb-4">
+            <div class="col-md-12">
+                <h2 class="display-6">Additional Training Options</h2>
+                <p class="lead text-muted">Specialized training programs</p>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-md-4 mb-4">
+                <div class="card h-100">
+                    <div class="card-body text-center">
+                        <i class="fas fa-plane-departure fa-3x text-primary mb-3"></i>
+                        <h5 class="card-title">Multi-Engine Rating</h5>
+                        <p class="card-text">Learn to operate multi-engine aircraft with our comprehensive training program.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4 mb-4">
+                <div class="card h-100">
+                    <div class="card-body text-center">
+                        <i class="fas fa-chalkboard-teacher fa-3x text-primary mb-3"></i>
+                        <h5 class="card-title">Flight Instructor</h5>
+                        <p class="card-text">Become a certified flight instructor and share your passion for aviation.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4 mb-4">
+                <div class="card h-100">
+                    <div class="card-body text-center">
+                        <i class="fas fa-helicopter fa-3x text-primary mb-3"></i>
+                        <h5 class="card-title">Helicopter Training</h5>
+                        <p class="card-text">Specialized training for helicopter operations and certifications.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Contact Section -->
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8 text-center">
+            <h2 class="display-6 mb-4">Ready to Start Your Training?</h2>
+            <p class="lead mb-4">Contact us to discuss your training goals and get started today.</p>
+            <a href="{{ url_for('main.contact') }}" class="btn btn-primary btn-lg">Contact Us</a>
+        </div>
+    </div>
+</div>
+{% endblock %} 

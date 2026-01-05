@@ -1,0 +1,27 @@
+services:
+  aviation-missions:
+    image: aviation-missions:latest
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: production
+    ports:
+      - "${PORT:-8080}:3000"
+    volumes:
+      # Persistent database storage - survives container rebuilds
+      - ./data:/app/data:rw
+      # Optional: Backup directory for database exports
+      - ./backups:/app/backups:rw
+    restart: unless-stopped
+    environment:
+      - ENVIRONMENT=${ENVIRONMENT:-production}
+      - API_PORT=3000
+      # Ensure database is stored in persistent volume
+      - DATABASE_URL=./data/aviation-missions
+    # Set healthcheck to ensure container is running properly
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s

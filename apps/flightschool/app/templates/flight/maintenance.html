@@ -1,0 +1,238 @@
+{% extends "base.html" %}
+
+{% block title %}Aircraft Maintenance Records - {{ config.SCHOOL_NAME }}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-12">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{{ url_for('booking.dashboard') }}">Dashboard</a></li>
+                    <li class="breadcrumb-item active">Maintenance Records</li>
+                </ol>
+            </nav>
+        </div>
+    </div>
+
+    <div class="row mb-4">
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">Aircraft Information</h5>
+                </div>
+                <div class="card-body">
+                    <div class="text-center mb-3">
+                        <img src="{{ aircraft.image_url }}" alt="{{ aircraft.registration }}" class="img-fluid rounded" style="max-height: 150px; object-fit: contain;">
+                    </div>
+                    <table class="table">
+                        <tr>
+                            <th>Registration:</th>
+                            <td>{{ aircraft.registration }}</td>
+                        </tr>
+                        <tr>
+                            <th>Make/Model:</th>
+                            <td>{{ aircraft.make }} {{ aircraft.model }}</td>
+                        </tr>
+                        <tr>
+                            <th>Year:</th>
+                            <td>{{ aircraft.year }}</td>
+                        </tr>
+                        <tr>
+                            <th>Engine:</th>
+                            <td>{{ aircraft.engine_type|title }} ({{ aircraft.num_engines }})</td>
+                        </tr>
+                        <tr>
+                            <th>Hobbs Time:</th>
+                            <td>{{ aircraft.hobbs_time }}</td>
+                        </tr>
+                        <tr>
+                            <th>Tach Time:</th>
+                            <td>{{ aircraft.tach_time }}</td>
+                        </tr>
+                        <tr>
+                            <th>Last Maintenance:</th>
+                            <td>{{ aircraft.last_maintenance.strftime('%Y-%m-%d') if aircraft.last_maintenance else 'N/A' }}</td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">Maintenance Status</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="card mb-3">
+                                <div class="card-body text-center">
+                                    <h6 class="text-muted">Time to Next Oil Change</h6>
+                                    <h3 class="mb-0 {% if aircraft.time_to_next_oil_change and aircraft.time_to_next_oil_change < 10 %}text-danger{% endif %}">
+                                        {{ aircraft.time_to_next_oil_change|round(1) if aircraft.time_to_next_oil_change else 'N/A' }}
+                                    </h3>
+                                    <small class="text-muted">hours</small>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card mb-3">
+                                <div class="card-body text-center">
+                                    <h6 class="text-muted">Time to Next 100hr</h6>
+                                    <h3 class="mb-0 {% if aircraft.time_to_next_100hr and aircraft.time_to_next_100hr < 10 %}text-danger{% endif %}">
+                                        {{ aircraft.time_to_next_100hr|round(1) if aircraft.time_to_next_100hr else 'N/A' }}
+                                    </h3>
+                                    <small class="text-muted">hours</small>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card mb-3">
+                                <div class="card-body text-center">
+                                    <h6 class="text-muted">Annual Due</h6>
+                                    <h3 class="mb-0">
+                                        {{ aircraft.date_of_next_annual.strftime('%Y-%m-%d') if aircraft.date_of_next_annual else 'N/A' }}
+                                    </h3>
+                                    <small class="text-muted">date</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-8">
+            <!-- Maintenance Records -->
+            <div class="card mb-4">
+                <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Maintenance Records</h5>
+                    {% if current_user.is_admin or current_user.is_instructor %}
+                    <a href="#" class="btn btn-sm btn-light">Add Maintenance Record</a>
+                    {% endif %}
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Type</th>
+                                    <th>Performed By</th>
+                                    <th>Notes</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% if maintenance_records %}
+                                    {% for record in maintenance_records %}
+                                    <tr>
+                                        <td>{{ record.performed_at.strftime('%Y-%m-%d') }}</td>
+                                        <td>{{ record.maintenance_type_obj.name if record.maintenance_type_obj else 'Unknown' }}</td>
+                                        <td>{{ record.performed_by.full_name }}</td>
+                                        <td>{{ record.notes|truncate(50) if record.notes else 'No notes' }}</td>
+                                        <td>
+                                            <span class="badge {% if record.status == 'completed' %}bg-success{% elif record.status == 'in_progress' %}bg-warning{% else %}bg-secondary{% endif %}">
+                                                {{ record.status|title }}
+                                            </span>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                {% else %}
+                                    <tr>
+                                        <td colspan="5" class="text-center py-3">No maintenance records found.</td>
+                                    </tr>
+                                {% endif %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4">
+            <!-- Squawks -->
+            <div class="card mb-4">
+                <div class="card-header bg-warning text-dark d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Squawks</h5>
+                    <button type="button" class="btn btn-sm btn-dark" data-bs-toggle="modal" data-bs-target="#reportSquawkModal">
+                        Report Squawk
+                    </button>
+                </div>
+                <div class="card-body p-0">
+                    <div class="list-group list-group-flush">
+                        {% if squawks %}
+                            {% for squawk in squawks %}
+                            <div class="list-group-item">
+                                <div class="d-flex w-100 justify-content-between">
+                                    <h6 class="mb-1">Reported {{ squawk.created_at.strftime('%Y-%m-%d') }}</h6>
+                                    <span class="badge {% if squawk.status == 'open' %}bg-warning text-dark{% elif squawk.status == 'in_progress' %}bg-info{% else %}bg-success{% endif %}">
+                                        {{ squawk.status|title }}
+                                    </span>
+                                </div>
+                                <p class="mb-1">{{ squawk.description }}</p>
+                                <small>By: {{ squawk.reported_by.full_name }}</small>
+                                
+                                {% if squawk.resolved_at %}
+                                <div class="mt-2 p-2 bg-light rounded">
+                                    <small class="text-muted">Resolved: {{ squawk.resolved_at.strftime('%Y-%m-%d') }}</small>
+                                    <p class="mb-0 small">{{ squawk.resolution_notes }}</p>
+                                    <small>By: {{ squawk.resolved_by.full_name }}</small>
+                                </div>
+                                {% endif %}
+                            </div>
+                            {% endfor %}
+                        {% else %}
+                            <div class="list-group-item">
+                                <p class="mb-0 text-muted">No squawks reported.</p>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Report Squawk Modal -->
+<div class="modal fade" id="reportSquawkModal" tabindex="-1" aria-labelledby="reportSquawkModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form action="{{ url_for('flight.add_squawk', aircraft_id=aircraft.id) }}" method="POST">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                <div class="modal-header">
+                    <h5 class="modal-title" id="reportSquawkModalLabel">Report Squawk</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="description" class="form-label">Describe the Issue</label>
+                        <textarea class="form-control" id="description" name="description" rows="4" required></textarea>
+                    </div>
+                    <div class="mb-3 form-check">
+                        <input type="checkbox" class="form-check-input" id="ground_airplane" name="ground_airplane">
+                        <label class="form-check-label" for="ground_airplane">
+                            <strong class="text-danger">Ground Airplane</strong> - This issue prevents safe operation of the aircraft
+                        </label>
+                        <div class="form-text">
+                            Checking this box will mark the aircraft as unavailable for booking until the squawk is resolved.
+                        </div>
+                    </div>
+                    <div class="form-text">
+                        <i class="fas fa-info-circle me-1"></i>
+                        This report will be visible to all users and maintenance staff.
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Submit Report</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

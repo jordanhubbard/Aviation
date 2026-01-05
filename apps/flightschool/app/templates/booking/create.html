@@ -1,0 +1,523 @@
+{% extends "base.html" %}
+
+{% block title %}Schedule Flight - {{ config.SCHOOL_NAME }}{% endblock %}
+
+{% block extra_css %}
+<link href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css" rel="stylesheet">
+<style>
+    .aircraft-selection {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+    }
+    
+    .aircraft-card {
+        position: relative;
+        border-radius: 8px;
+        overflow: hidden;
+        cursor: pointer;
+        transition: transform 0.2s ease;
+        background-color: var(--cloud-white);
+        border: 1px solid var(--horizon-gray);
+        height: 280px;
+    }
+    
+    .aircraft-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+    
+    .aircraft-card.selected {
+        border: 2px solid var(--sunset-orange);
+    }
+    
+    .aircraft-image {
+        width: 100%;
+        height: 180px;
+        object-fit: cover;
+    }
+    
+    .aircraft-info {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        padding: 1rem;
+        background: linear-gradient(transparent, rgba(20, 33, 61, 0.9));
+        color: var(--cloud-white);
+        min-height: 100px;
+    }
+    
+    .aircraft-status {
+        position: absolute;
+        top: 1rem;
+        right: 1rem;
+        padding: 0.5rem 1rem;
+        border-radius: 20px;
+        font-weight: 500;
+        text-transform: uppercase;
+        font-size: 0.8rem;
+        letter-spacing: 0.5px;
+        background-color: var(--success-green);
+        color: var(--cloud-white);
+        z-index: 1;
+    }
+    
+    .schedule-grid {
+        display: grid;
+        grid-template-columns: [times] 60px repeat(24, [hour] 1fr);
+        gap: 1px;
+        background-color: var(--horizon-gray);
+        border-radius: 8px;
+        overflow: hidden;
+        margin: 2rem 0;
+    }
+    
+    .schedule-row {
+        display: contents;
+    }
+    
+    .schedule-label {
+        grid-column: times;
+        background-color: var(--cloud-white);
+        padding: 0.5rem;
+        font-size: 0.8rem;
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+        border-right: 2px solid var(--horizon-gray);
+    }
+    
+    .schedule-cell {
+        background-color: var(--cloud-white);
+        padding: 0.5rem;
+        min-height: 40px;
+        position: relative;
+        cursor: pointer;
+    }
+    
+    .schedule-cell:hover {
+        background-color: var(--sky-blue-light);
+    }
+    
+    .schedule-booking {
+        position: absolute;
+        top: 2px;
+        bottom: 2px;
+        left: 2px;
+        right: 2px;
+        background-color: var(--sunset-orange);
+        border-radius: 4px;
+        padding: 0.25rem;
+        font-size: 0.8rem;
+        color: var(--cloud-white);
+        overflow: hidden;
+        white-space: nowrap;
+        text-overflow: ellipsis;
+    }
+    
+    .schedule-hour {
+        grid-row: 1;
+        text-align: center;
+        font-size: 0.8rem;
+        padding: 0.25rem;
+        background-color: var(--night-blue);
+        color: var(--cloud-white);
+    }
+    
+    .instructor-selection {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 1rem;
+        margin-bottom: 2rem;
+    }
+    
+    .instructor-card {
+        background-color: var(--cloud-white);
+        border-radius: 8px;
+        padding: 1rem;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+    
+    .instructor-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+    
+    .instructor-card.selected {
+        border: 2px solid var(--sunset-orange);
+    }
+    
+    .instructor-avatar {
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        background-color: var(--horizon-gray);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        color: var(--storm-gray);
+    }
+    
+    .instructor-info {
+        flex: 1;
+    }
+    
+    .time-selection {
+        background-color: var(--cloud-white);
+        border-radius: 8px;
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+    }
+    
+    .weather-forecast {
+        background: linear-gradient(135deg, var(--sky-blue), var(--night-blue));
+        color: var(--cloud-white);
+        padding: 1.5rem;
+        border-radius: 8px;
+        margin-bottom: 2rem;
+    }
+    
+    .weather-info {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+        gap: 1rem;
+        margin-top: 1rem;
+    }
+    
+    .weather-item {
+        text-align: center;
+    }
+    
+    .weather-item i {
+        font-size: 2rem;
+        margin-bottom: 0.5rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-12">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{{ url_for('booking.dashboard') }}">Dashboard</a></li>
+                    <li class="breadcrumb-item active">Schedule Flight</li>
+                </ol>
+            </nav>
+            
+            <form method="POST" action="{{ url_for('booking.create_booking') }}" id="bookingForm">
+                {{ form.hidden_tag() }}
+                {{ form.csrf_token }}
+                
+                <!-- Aircraft Selection -->
+                <section class="mb-5">
+                    <h3 class="mb-4">Select Aircraft</h3>
+                    <div class="aircraft-selection">
+                        {% for choice in form.aircraft_id.choices %}
+                            {% set aircraft = get_aircraft(choice[0]) %}
+                            <div class="aircraft-card" onclick="selectAircraft('{{ choice[0] }}')">
+                                <img src="{{ aircraft.image_url }}"
+                                     class="aircraft-image"
+                                     alt="{{ aircraft.make }} {{ aircraft.model }}">
+                                <span class="aircraft-status {{ aircraft.status }}">{{ aircraft.status|title }}</span>
+                                <div class="aircraft-info">
+                                    <h5 class="mb-1">{{ aircraft.display_name }}</h5>
+                                    <p class="mb-2">{{ aircraft.registration }}</p>
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <span>${{ "%.2f"|format(aircraft.rate_per_hour) }}/hour</span>
+                                        <small>{{ "IFR" if aircraft.ifr_equipped else "VFR" }} | {{ aircraft.category }}</small>
+                                    </div>
+                                </div>
+                                <input type="radio" name="aircraft_id" value="{{ choice[0] }}" class="d-none">
+                            </div>
+                        {% endfor %}
+                    </div>
+                    {% if form.aircraft_id.errors %}
+                        <div class="alert alert-danger">
+                            {% for error in form.aircraft_id.errors %}
+                                {{ error }}
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                </section>
+                
+                <!-- Instructor Selection -->
+                <section class="mb-5">
+                    <h3 class="mb-4">Select Instructor (Optional)</h3>
+                    <div class="instructor-selection">
+                        <div class="instructor-card" onclick="selectInstructor(0)">
+                            <div class="instructor-avatar">
+                                <i class="fas fa-user"></i>
+                            </div>
+                            <div class="instructor-info">
+                                <h6 class="mb-1">Solo Flight</h6>
+                                <p class="mb-0 text-muted">No instructor needed</p>
+                            </div>
+                            <input type="radio" name="instructor_id" value="0" class="d-none">
+                        </div>
+                        {% for choice in form.instructor_id.choices[1:] %}
+                            {% set instructor = get_instructor(choice[0]) %}
+                            <div class="instructor-card" onclick="selectInstructor('{{ choice[0] }}')">
+                                <div class="instructor-avatar">
+                                    <i class="fas fa-chalkboard-teacher"></i>
+                                </div>
+                                <div class="instructor-info">
+                                    <h6 class="mb-1">{{ instructor.full_name }}</h6>
+                                    <p class="mb-0 text-muted">{{ instructor.certificates }}</p>
+                                    <small class="text-primary">${{ instructor.instructor_rate_per_hour }}/hour</small>
+                                </div>
+                                <input type="radio" name="instructor_id" value="{{ choice[0] }}" class="d-none">
+                            </div>
+                        {% endfor %}
+                    </div>
+                    {% if form.instructor_id.errors %}
+                        <div class="alert alert-danger">
+                            {% for error in form.instructor_id.errors %}
+                                {{ error }}
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                </section>
+                
+                <!-- Schedule View -->
+                <section class="mb-5">
+                    <h3 class="mb-4">Today's Schedule</h3>
+                    
+                    <!-- Aircraft Schedule -->
+                    <h5 class="mb-3">Aircraft Availability</h5>
+                    <div class="schedule-grid">
+                        <!-- Hour labels -->
+                        <div class="schedule-row">
+                            <div class="schedule-label"></div>
+                            {% for hour in range(24) %}
+                                <div class="schedule-hour">{{ "%02d"|format(hour) }}</div>
+                            {% endfor %}
+                        </div>
+                        
+                        <!-- Aircraft rows -->
+                        {% for aircraft_id, data in schedule.aircraft.items() %}
+                            <div class="schedule-row">
+                                <div class="schedule-label">{{ data.aircraft.display_name }}</div>
+                                {% for hour in range(24) %}
+                                    <div class="schedule-cell" onclick="setStartTime('{{ "%02d"|format(hour) }}:00')">
+                                        {% for booking in data.bookings %}
+                                            {% if booking.start_time.hour <= hour and booking.end_time.hour > hour %}
+                                                <div class="schedule-booking">
+                                                    {{ booking.student.full_name }}
+                                                </div>
+                                            {% endif %}
+                                        {% endfor %}
+                                    </div>
+                                {% endfor %}
+                            </div>
+                        {% endfor %}
+                    </div>
+                    
+                    <!-- Instructor Schedule -->
+                    <h5 class="mb-3 mt-4">Instructor Availability</h5>
+                    <div class="schedule-grid">
+                        <!-- Hour labels -->
+                        <div class="schedule-row">
+                            <div class="schedule-label"></div>
+                            {% for hour in range(24) %}
+                                <div class="schedule-hour">{{ "%02d"|format(hour) }}</div>
+                            {% endfor %}
+                        </div>
+                        
+                        <!-- Instructor rows -->
+                        {% for instructor_id, data in schedule.instructors.items() %}
+                            <div class="schedule-row">
+                                <div class="schedule-label">{{ data.instructor.full_name }}</div>
+                                {% for hour in range(24) %}
+                                    <div class="schedule-cell" onclick="setStartTime('{{ "%02d"|format(hour) }}:00')">
+                                        {% for booking in data.bookings %}
+                                            {% if booking.start_time.hour <= hour and booking.end_time.hour > hour %}
+                                                <div class="schedule-booking">
+                                                    {{ booking.student.full_name }}
+                                                </div>
+                                            {% endif %}
+                                        {% endfor %}
+                                    </div>
+                                {% endfor %}
+                            </div>
+                        {% endfor %}
+                    </div>
+                </section>
+                
+                <!-- Time Selection -->
+                <section class="mb-5">
+                    <h3 class="mb-4">Select Date & Time</h3>
+                    <div class="time-selection">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    {{ form.start_time.label(class="form-label") }}
+                                    {{ form.start_time(class="form-control", id="start_time") }}
+                                    {% if form.start_time.errors %}
+                                        <div class="invalid-feedback d-block">
+                                            {% for error in form.start_time.errors %}
+                                                {{ error }}
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    {{ form.end_time.label(class="form-label") }}
+                                    {{ form.end_time(class="form-control", id="end_time") }}
+                                    {% if form.end_time.errors %}
+                                        <div class="invalid-feedback d-block">
+                                            {% for error in form.end_time.errors %}
+                                                {{ error }}
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+                
+                <!-- Weather Forecast -->
+                <section class="mb-5">
+                    <h3 class="mb-4">Weather Forecast</h3>
+                    <div class="weather-forecast">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div>
+                                <h5 class="mb-1">KPAO - Palo Alto Airport</h5>
+                                <p class="mb-0">Forecast for selected time</p>
+                            </div>
+                            <i class="fas fa-cloud-sun fa-2x"></i>
+                        </div>
+                        <div class="weather-info">
+                            <div class="weather-item">
+                                <i class="fas fa-thermometer-half"></i>
+                                <h6>Temperature</h6>
+                                <p class="mb-0">72°F</p>
+                            </div>
+                            <div class="weather-item">
+                                <i class="fas fa-wind"></i>
+                                <h6>Wind</h6>
+                                <p class="mb-0">8kt 270°</p>
+                            </div>
+                            <div class="weather-item">
+                                <i class="fas fa-eye"></i>
+                                <h6>Visibility</h6>
+                                <p class="mb-0">10SM</p>
+                            </div>
+                            <div class="weather-item">
+                                <i class="fas fa-cloud"></i>
+                                <h6>Ceiling</h6>
+                                <p class="mb-0">CLR</p>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+                
+                <!-- Notes -->
+                <section class="mb-5">
+                    <h3 class="mb-4">Additional Notes</h3>
+                    <div class="bg-white p-4 rounded-3">
+                        {{ form.notes.label(class="form-label") }}
+                        {{ form.notes(class="form-control", rows=3, placeholder="Add any special requests or notes for your flight...") }}
+                        {% if form.notes.errors %}
+                            <div class="invalid-feedback d-block">
+                                {% for error in form.notes.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                </section>
+                
+                <!-- Submit -->
+                <div class="d-flex justify-content-between align-items-center">
+                    <a href="{{ url_for('booking.dashboard') }}" class="btn btn-outline-secondary">
+                        <i class="fas fa-arrow-left me-2"></i>Back to Dashboard
+                    </a>
+                    <button type="submit" class="btn btn-accent">
+                        <i class="fas fa-check me-2"></i>Schedule Flight
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    function selectAircraft(id) {
+        const cards = document.querySelectorAll('.aircraft-card');
+        cards.forEach(card => card.classList.remove('selected'));
+        
+        const selectedCard = document.querySelector(`.aircraft-card input[value="${id}"]`).parentElement;
+        selectedCard.classList.add('selected');
+        selectedCard.querySelector('input').checked = true;
+    }
+
+    function selectInstructor(id) {
+        const cards = document.querySelectorAll('.instructor-card');
+        cards.forEach(card => card.classList.remove('selected'));
+        
+        if (id === '0') {
+            document.querySelector('.instructor-card:first-child').classList.add('selected');
+        } else {
+            const selectedCard = document.querySelector(`.instructor-card input[value="${id}"]`).parentElement;
+            selectedCard.classList.add('selected');
+        }
+        document.querySelector(`input[name="instructor_id"][value="${id}"]`).checked = true;
+    }
+
+    function setStartTime(time) {
+        const today = new Date();
+        const [hours, minutes] = time.split(':');
+        today.setHours(parseInt(hours), parseInt(minutes), 0);
+        
+        const startPicker = document.getElementById('start_time')._flatpickr;
+        startPicker.setDate(today);
+        
+        // Set end time to 2 hours after start time by default
+        const endTime = new Date(today);
+        endTime.setHours(today.getHours() + 2);
+        const endPicker = document.getElementById('end_time')._flatpickr;
+        endPicker.setDate(endTime);
+    }
+
+    // Initialize datetime pickers
+    flatpickr("#start_time", {
+        enableTime: true,
+        dateFormat: "Y-m-d H:i",
+        minuteIncrement: 15,
+        onChange: function(selectedDates, dateStr, instance) {
+            // Update end time to be 2 hours after start time
+            const endDate = new Date(selectedDates[0]);
+            endDate.setHours(endDate.getHours() + 2);
+            document.getElementById('end_time')._flatpickr.setDate(endDate);
+        }
+    });
+
+    flatpickr("#end_time", {
+        enableTime: true,
+        dateFormat: "Y-m-d H:i",
+        minuteIncrement: 15
+    });
+
+    // Make functions globally available
+    window.selectAircraft = selectAircraft;
+    window.selectInstructor = selectInstructor;
+    window.setStartTime = setStartTime;
+});
+</script>
+{% endblock %}

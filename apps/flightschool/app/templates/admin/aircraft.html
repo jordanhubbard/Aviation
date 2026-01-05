@@ -1,0 +1,168 @@
+{% extends "base.html" %}
+
+{% block title %}Aircraft Management{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>Aircraft Management</h2>
+        <a href="{{ url_for('admin.create_aircraft') }}" class="btn btn-primary">
+            <i class="fas fa-plus"></i> Add New Aircraft
+        </a>
+    </div>
+
+    {% include 'includes/flash_messages.html' %}
+
+    <div class="card">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>Registration</th>
+                            <th>Image</th>
+                            <th>Make/Model</th>
+                            <th>Year</th>
+                            <th>Category</th>
+                            <th>Rate</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for aircraft in aircraft %}
+                        <tr>
+                            <td>{{ aircraft.registration }}</td>
+                            <td>
+                                <img src="{{ url_for('static', filename='images/aircraft/' + aircraft.registration.lower() + '.jpg') }}" 
+                                     onerror="this.onerror=null; this.src='{{ url_for('static', filename='images/aircraft/' + aircraft.get_type_image()) }}';"
+                                     alt="{{ aircraft.registration }}" 
+                                     class="img-thumbnail" style="max-width: 80px;">
+                            </td>
+                            <td>{{ aircraft.make }} {{ aircraft.model }}</td>
+                            <td>{{ aircraft.year }}</td>
+                            <td>{{ aircraft.category }}</td>
+                            <td>${{ aircraft.rate_per_hour }}/hr</td>
+                            <td>
+                                <span class="badge {% if aircraft.status == 'available' %}bg-success{% elif aircraft.status == 'maintenance' %}bg-warning{% elif aircraft.status == 'out_of_service' %}bg-danger{% else %}bg-secondary{% endif %}">
+                                    {{ aircraft.status }}
+                                </span>
+                            </td>
+                            <td>
+                                <div class="btn-group" role="group">
+                                    <a href="{{ url_for('admin.edit_aircraft', id=aircraft.id) }}" class="btn btn-sm btn-outline-primary">
+                                        <i class="fas fa-edit"></i> Edit
+                                    </a>
+                                    <button type="button" class="btn btn-sm btn-outline-danger" onclick="deleteAircraft('{{ aircraft.id }}')">
+                                        <i class="fas fa-trash"></i> Delete
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="8" class="text-center">No aircraft found</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mt-4">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">Maintenance Status</h5>
+                </div>
+                <div class="card-body">
+                    <div class="list-group">
+                        {% for aircraft in aircraft %}
+                            {% if aircraft.status == 'maintenance' %}
+                                <div class="list-group-item">
+                                    <div class="d-flex w-100 justify-content-between">
+                                        <h5 class="mb-1">{{ aircraft.registration }}</h5>
+                                        <small>{{ aircraft.make }} {{ aircraft.model }}</small>
+                                    </div>
+                                    <p class="mb-1">
+                                        <i class="fas fa-tools text-warning"></i> 
+                                        Currently in maintenance
+                                    </p>
+                                    <a href="{{ url_for('admin.maintenance_records') }}" class="btn btn-sm btn-outline-info mt-2">
+                                        View Maintenance Records
+                                    </a>
+                                </div>
+                            {% endif %}
+                        {% else %}
+                            <div class="list-group-item">
+                                <p class="mb-0 text-center">No aircraft currently in maintenance</p>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">Upcoming Maintenance</h5>
+                </div>
+                <div class="card-body">
+                    <div class="list-group">
+                        {% for aircraft in aircraft %}
+                            {% if aircraft.time_to_next_oil_change < 10 or aircraft.time_to_next_100hr < 10 %}
+                                <div class="list-group-item">
+                                    <div class="d-flex w-100 justify-content-between">
+                                        <h5 class="mb-1">{{ aircraft.registration }}</h5>
+                                        <small>{{ aircraft.make }} {{ aircraft.model }}</small>
+                                    </div>
+                                    {% if aircraft.time_to_next_oil_change < 10 %}
+                                        <p class="mb-1">
+                                            <i class="fas fa-oil-can text-danger"></i> 
+                                            Oil change due in {{ aircraft.time_to_next_oil_change }} hours
+                                        </p>
+                                    {% endif %}
+                                    {% if aircraft.time_to_next_100hr < 10 %}
+                                        <p class="mb-1">
+                                            <i class="fas fa-clock text-danger"></i> 
+                                            100hr inspection due in {{ aircraft.time_to_next_100hr }} hours
+                                        </p>
+                                    {% endif %}
+                                </div>
+                            {% endif %}
+                        {% else %}
+                            <div class="list-group-item">
+                                <p class="mb-0 text-center">No upcoming maintenance needed</p>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function deleteAircraft(aircraftId) {
+    if (confirm('Are you sure you want to delete this aircraft? This action cannot be undone.')) {
+        // Create a form to submit the delete request
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = `{{ url_for('admin.delete_aircraft', id=0) }}`.replace('0', aircraftId);
+        
+        // Add CSRF token
+        const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+        const csrfInput = document.createElement('input');
+        csrfInput.type = 'hidden';
+        csrfInput.name = 'csrf_token';
+        csrfInput.value = csrfToken;
+        form.appendChild(csrfInput);
+        
+        document.body.appendChild(form);
+        form.submit();
+    }
+}
+</script>
+{% endblock %}

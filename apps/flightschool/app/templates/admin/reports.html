@@ -1,0 +1,161 @@
+{% extends "base.html" %}
+
+{% block title %}Admin Reports - Flight School{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <h1><i class="fas fa-chart-bar me-2"></i>Reports</h1>
+            <p class="lead">Generate and view flight school reports</p>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-3 mb-4">
+            <div class="list-group">
+                <a href="#" class="list-group-item list-group-item-action active" data-report="bookings">Booking Reports</a>
+                <a href="#" class="list-group-item list-group-item-action" data-report="revenue">Revenue Reports</a>
+                <a href="#" class="list-group-item list-group-item-action" data-report="aircraft">Aircraft Utilization</a>
+                <a href="#" class="list-group-item list-group-item-action" data-report="instructors">Instructor Hours</a>
+                <a href="#" class="list-group-item list-group-item-action" data-report="students">Student Progress</a>
+            </div>
+        </div>
+        <div class="col-md-9">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0" id="report-title">Booking Reports</h5>
+                    <div>
+                        <button class="btn btn-outline-primary btn-sm me-2" id="export-csv">
+                            <i class="fas fa-file-csv me-1"></i>Export CSV
+                        </button>
+                        <button class="btn btn-outline-danger btn-sm" id="export-pdf">
+                            <i class="fas fa-file-pdf me-1"></i>Export PDF
+                        </button>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="report-filters mb-4">
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label for="date-from" class="form-label">Date From</label>
+                                    <input type="date" class="form-control" id="date-from">
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label for="date-to" class="form-label">Date To</label>
+                                    <input type="date" class="form-control" id="date-to">
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label for="report-filter" class="form-label">Filter</label>
+                                    <select class="form-select" id="report-filter">
+                                        <option value="all">All Bookings</option>
+                                        <option value="confirmed">Confirmed Only</option>
+                                        <option value="cancelled">Cancelled Only</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="d-grid">
+                            <button class="btn btn-primary" id="generate-report">Generate Report</button>
+                        </div>
+                    </div>
+
+                    <div id="report-content">
+                        <div id="report-chart" style="height: 300px;" class="mb-4">
+                            <!-- Chart will be rendered here -->
+                            <div class="text-center py-5">
+                                <p class="text-muted">Select date range and filters, then click "Generate Report"</p>
+                            </div>
+                        </div>
+
+                        <div id="report-table" class="table-responsive">
+                            <table class="table table-striped">
+                                <thead>
+                                    <tr>
+                                        <th>Date</th>
+                                        <th>Total Bookings</th>
+                                        <th>Completed</th>
+                                        <th>Cancelled</th>
+                                        <th>Hours Flown</th>
+                                        <th>Revenue</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td colspan="6" class="text-center">No data to display</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Set default date range (last 30 days)
+        const today = new Date();
+        const thirtyDaysAgo = new Date();
+        thirtyDaysAgo.setDate(today.getDate() - 30);
+        
+        document.getElementById('date-to').valueAsDate = today;
+        document.getElementById('date-from').valueAsDate = thirtyDaysAgo;
+        
+        // Handle report type selection
+        document.querySelectorAll('.list-group-item').forEach(item => {
+            item.addEventListener('click', function(e) {
+                e.preventDefault();
+                
+                // Update active state
+                document.querySelectorAll('.list-group-item').forEach(i => {
+                    i.classList.remove('active');
+                });
+                this.classList.add('active');
+                
+                // Update report title
+                const reportType = this.getAttribute('data-report');
+                const reportTitle = this.textContent;
+                document.getElementById('report-title').textContent = reportTitle;
+                
+                // Clear current report data
+                document.querySelector('#report-table tbody').innerHTML = 
+                    '<tr><td colspan="6" class="text-center">No data to display</td></tr>';
+                
+                // You would typically update the filters and chart here based on report type
+            });
+        });
+        
+        // Generate report button
+        document.getElementById('generate-report').addEventListener('click', function() {
+            // In a real app, this would make an AJAX request to fetch the report data
+            // For this demo, we'll just show a loading message
+            
+            const reportTable = document.querySelector('#report-table tbody');
+            reportTable.innerHTML = '<tr><td colspan="6" class="text-center">Loading data...</td></tr>';
+            
+            setTimeout(() => {
+                reportTable.innerHTML = '<tr><td colspan="6" class="text-center">Report generation not implemented in demo version</td></tr>';
+            }, 1000);
+        });
+        
+        // Export buttons
+        document.getElementById('export-csv').addEventListener('click', function() {
+            alert('CSV export not implemented in demo version');
+        });
+        
+        document.getElementById('export-pdf').addEventListener('click', function() {
+            alert('PDF export not implemented in demo version');
+        });
+    });
+</script>
+{% endblock %} 

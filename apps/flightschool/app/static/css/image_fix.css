@@ -1,0 +1,26 @@
+/* 
+ * Custom CSS to fix aircraft image display issues
+ * This file overrides the default image styling to ensure images are fully visible
+ */
+
+/* Override the aircraft image styling to show full images */
+.aircraft-image {
+    width: 100%;
+    height: 200px;
+    object-fit: contain !important;
+    background-color: #f8f9fa;
+}
+
+/* Additional styling for aircraft cards */
+.aircraft-card {
+    margin-bottom: 15px;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+/* Ensure the info overlay doesn't cover too much of the image */
+.aircraft-info {
+    background: linear-gradient(transparent, rgba(20, 33, 61, 0.9)) !important;
+    padding-top: 30px !important;
+}

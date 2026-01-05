@@ -1,0 +1,77 @@
+{% extends "maintenance/base.html" %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{{ url_for('admin.aircraft_list') }}">Aircraft</a></li>
+<li class="breadcrumb-item active">{{ aircraft.tail_number }} - Squawks</li>
+{% endblock %}
+
+{% block maintenance_content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1>Squawks - {{ aircraft.tail_number }}</h1>
+    <a href="{{ url_for('maintenance.add_squawk', aircraft_id=aircraft.id) }}" class="btn btn-primary">
+        <i class="fas fa-plus"></i> Add Squawk
+    </a>
+</div>
+
+<div class="card mb-4">
+    <div class="card-header">
+        <h5 class="mb-0">Aircraft Details</h5>
+    </div>
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-4">
+                <p><strong>Make/Model:</strong> {{ aircraft.make_model }}</p>
+            </div>
+            <div class="col-md-4">
+                <p><strong>Year:</strong> {{ aircraft.year }}</p>
+            </div>
+            <div class="col-md-4">
+                <p><strong>Status:</strong> {{ aircraft.status }}</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    {% for squawk in squawks %}
+    <div class="col-md-6 mb-4">
+        <div class="card h-100">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">Squawk #{{ squawk.id }}</h5>
+                <span class="badge {% if squawk.status == 'open' %}bg-danger{% elif squawk.status == 'in_progress' %}bg-warning{% else %}bg-success{% endif %}">
+                    {{ squawk.status|replace('_', ' ')|title }}
+                </span>
+            </div>
+            <div class="card-body">
+                <p class="card-text">{{ squawk.description }}</p>
+                <div class="small text-muted">
+                    <p class="mb-1">Reported by: {{ squawk.reported_by.full_name }}</p>
+                    <p class="mb-1">Reported on: {{ squawk.created_at.strftime('%Y-%m-%d %H:%M') }}</p>
+                    {% if squawk.resolved_at %}
+                    <p class="mb-1">Resolved on: {{ squawk.resolved_at.strftime('%Y-%m-%d %H:%M') }}</p>
+                    <p class="mb-1">Resolved by: {{ squawk.resolved_by.full_name }}</p>
+                    {% endif %}
+                </div>
+                {% if squawk.resolution_notes %}
+                <div class="mt-3">
+                    <strong>Resolution Notes:</strong>
+                    <p class="card-text">{{ squawk.resolution_notes }}</p>
+                </div>
+                {% endif %}
+            </div>
+            <div class="card-footer">
+                <a href="{{ url_for('maintenance.edit_squawk', id=squawk.id) }}" class="btn btn-sm btn-outline-primary">
+                    <i class="fas fa-edit"></i> Edit
+                </a>
+            </div>
+        </div>
+    </div>
+    {% else %}
+    <div class="col-12">
+        <div class="alert alert-info">
+            No squawks found for this aircraft.
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %} 

@@ -1,0 +1,269 @@
+{% extends "base.html" %}
+
+{% block title %}Flight Check-Out - {{ config.SCHOOL_NAME }}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-12">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{{ url_for('booking.dashboard') }}">Dashboard</a></li>
+                    <li class="breadcrumb-item"><a href="{{ url_for('booking.view_booking', booking_id=booking.id) }}">Flight Details</a></li>
+                    <li class="breadcrumb-item active">Check-Out</li>
+                </ol>
+            </nav>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Flight Information -->
+        <div class="col-md-8">
+            <div class="card mb-4">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <div>
+                        <h5 class="mb-0">{{ booking.aircraft.make }} {{ booking.aircraft.model }} ({{ booking.aircraft.registration }})</h5>
+                        <p class="text-muted mb-0">{{ booking.start_time.strftime('%A, %B %d, %Y') }}</p>
+                    </div>
+                    <span class="badge bg-info">Check-Out</span>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-4">
+                        <div class="col-md-4">
+                            <img src="{{ booking.aircraft.image_url }}" alt="{{ booking.aircraft.registration }}" class="img-fluid rounded" style="max-height: 150px; object-fit: contain;">
+                        </div>
+                        <div class="col-md-8">
+                            <h5>Aircraft Details</h5>
+                            <table class="table table-sm">
+                                <tr>
+                                    <th>Registration:</th>
+                                    <td>{{ booking.aircraft.registration }}</td>
+                                </tr>
+                                <tr>
+                                    <th>Type:</th>
+                                    <td>{{ booking.aircraft.make }} {{ booking.aircraft.model }}</td>
+                                </tr>
+                                <tr>
+                                    <th>Engine:</th>
+                                    <td>{{ booking.aircraft.engine_type|title }} ({{ booking.aircraft.num_engines }})</td>
+                                </tr>
+                                <tr>
+                                    <th>Equipment:</th>
+                                    <td>
+                                        {% if booking.aircraft.ifr_equipped %}IFR, {% endif %}
+                                        {% if booking.aircraft.gps %}GPS, {% endif %}
+                                        {% if booking.aircraft.autopilot %}Autopilot{% endif %}
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+
+                    <form method="POST" action="{{ url_for('flight.check_out', booking_id=booking.id) }}">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                        
+                        <div class="row g-4">
+                            <!-- Hobbs & Tach -->
+                            <div class="col-md-6">
+                                <div class="p-3 bg-light rounded-3">
+                                    <h6 class="text-muted mb-3">Hobbs Time</h6>
+                                    <div class="input-group">
+                                        <span class="input-group-text"><i class="fas fa-tachometer-alt"></i></span>
+                                        <input type="number" class="form-control" id="hobbs_end" name="hobbs_end" 
+                                               step="0.1" min="{{ check_in.hobbs_start }}" required>
+                                    </div>
+                                    <small class="text-muted">Start: {{ check_in.hobbs_start }}</small>
+                                    <div class="mt-2 text-primary" id="hobbs_difference"></div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="p-3 bg-light rounded-3">
+                                    <h6 class="text-muted mb-3">Tach Time</h6>
+                                    <div class="input-group">
+                                        <span class="input-group-text"><i class="fas fa-tachometer-alt"></i></span>
+                                        <input type="number" class="form-control" id="tach_end" name="tach_end" 
+                                               step="0.1" min="{{ check_in.tach_start }}" required>
+                                    </div>
+                                    <small class="text-muted">Start: {{ check_in.tach_start }}</small>
+                                    <div class="mt-2 text-primary" id="tach_difference"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <hr class="my-4">
+
+                        <!-- Squawk Report -->
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <div class="card border-warning">
+                                    <div class="card-header bg-warning text-dark">
+                                        <div class="form-check form-switch">
+                                            <input class="form-check-input" type="checkbox" id="has_squawk" name="has_squawk">
+                                            <label class="form-check-label fw-bold" for="has_squawk">
+                                                Report a Squawk
+                                            </label>
+                                        </div>
+                                    </div>
+                                    <div class="card-body" id="squawk_section" style="display: none;">
+                                        <div class="mb-3">
+                                            <label for="squawk_description" class="form-label">Describe the Issue</label>
+                                            <textarea class="form-control" id="squawk_description" name="squawk_description" rows="3" placeholder="Describe any issues encountered during the flight..."></textarea>
+                                        </div>
+                                        <div class="mb-3 form-check">
+                                            <input type="checkbox" class="form-check-input" id="ground_airplane" name="ground_airplane">
+                                            <label class="form-check-label" for="ground_airplane">
+                                                <strong class="text-danger">Ground Airplane</strong> - This issue prevents safe operation of the aircraft
+                                            </label>
+                                            <div class="form-text">
+                                                Checking this box will mark the aircraft as unavailable for booking until the squawk is resolved.
+                                            </div>
+                                        </div>
+                                        <div class="form-text">
+                                            <i class="fas fa-info-circle me-1"></i>
+                                            This report will be visible to all users and maintenance staff.
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Notes -->
+                        <div class="mb-4">
+                            <label for="notes" class="form-label">Flight Notes</label>
+                            <textarea class="form-control" id="notes" name="notes" rows="3" placeholder="Add any notes about the flight..."></textarea>
+                        </div>
+
+                        <!-- Confirmation -->
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary">Complete Flight</button>
+                            <a href="{{ url_for('flight.flight_status', booking_id=booking.id) }}" class="btn btn-secondary">Cancel</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Flight Summary -->
+        <div class="col-md-4">
+            <!-- Check-In Summary -->
+            <div class="card mb-4">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0">Check-In Summary</h5>
+                </div>
+                <div class="card-body">
+                    <table class="table table-sm">
+                        <tr>
+                            <th>Check-In Time:</th>
+                            <td>{{ check_in.check_in_time.strftime('%H:%M') }}</td>
+                        </tr>
+                        <tr>
+                            <th>Hobbs Start:</th>
+                            <td>{{ check_in.hobbs_start }}</td>
+                        </tr>
+                        <tr>
+                            <th>Tach Start:</th>
+                            <td>{{ check_in.tach_start }}</td>
+                        </tr>
+                        <tr>
+                            <th>Weather:</th>
+                            <td>
+                                {% if check_in.weather_conditions_acceptable %}
+                                <span class="badge bg-success">Acceptable</span>
+                                {% else %}
+                                <span class="badge bg-warning">Marginal</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% if check_in.notes %}
+                        <tr>
+                            <th>Notes:</th>
+                            <td>{{ check_in.notes }}</td>
+                        </tr>
+                        {% endif %}
+                    </table>
+                </div>
+            </div>
+
+            <!-- Flight Time Calculator -->
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">Flight Time Summary</h5>
+                </div>
+                <div class="card-body">
+                    <table class="table table-sm" id="flight_summary">
+                        <tr>
+                            <th>Hobbs Time:</th>
+                            <td id="hobbs_total">0.0 hrs</td>
+                        </tr>
+                        <tr>
+                            <th>Tach Time:</th>
+                            <td id="tach_total">0.0 hrs</td>
+                        </tr>
+                        <tr>
+                            <th>Flight Duration:</th>
+                            <td id="flight_duration">0.0 hrs</td>
+                        </tr>
+                        <tr>
+                            <th>Estimated Cost:</th>
+                            <td id="estimated_cost">$0.00</td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Show/hide squawks section based on checkbox
+    document.addEventListener('DOMContentLoaded', function() {
+        const hasSquawkCheckbox = document.getElementById('has_squawk');
+        const squawkSection = document.getElementById('squawk_section');
+        
+        hasSquawkCheckbox.addEventListener('change', function() {
+            squawkSection.style.display = this.checked ? 'block' : 'none';
+            if (!this.checked) {
+                document.getElementById('squawk_description').value = '';
+            }
+        });
+        
+        // Calculate time differences and update billing
+        function updateBilling() {
+            const hobbsStart = parseFloat('{{ check_in.hobbs_start }}');
+            const tachStart = parseFloat('{{ check_in.tach_start }}');
+            
+            const hobbsEnd = parseFloat(document.getElementById('hobbs_end').value) || 0;
+            const tachEnd = parseFloat(document.getElementById('tach_end').value) || 0;
+            
+            // Calculate differences
+            const hobbsDiff = Math.max(0, hobbsEnd - hobbsStart).toFixed(1);
+            const tachDiff = Math.max(0, tachEnd - tachStart).toFixed(1);
+            
+            // Display differences
+            document.getElementById('hobbs_difference').textContent = `Flight time: ${hobbsDiff} hours`;
+            document.getElementById('tach_difference').textContent = `Engine time: ${tachDiff} hours`;
+            
+            // Update summary
+            document.getElementById('hobbs_total').textContent = `${hobbsDiff} hrs`;
+            document.getElementById('tach_total').textContent = `${tachDiff} hrs`;
+            document.getElementById('flight_duration').textContent = `${hobbsDiff} hrs`;
+            
+            // Calculate cost (using aircraft rate)
+            const rate = parseFloat('{{ booking.aircraft.rate_per_hour }}');
+            const cost = (rate * hobbsDiff).toFixed(2);
+            document.getElementById('estimated_cost').textContent = `$${cost}`;
+        }
+        
+        // Add event listeners
+        ['hobbs_end', 'tach_end'].forEach(function(id) {
+            document.getElementById(id).addEventListener('input', updateBilling);
+        });
+        
+        // Set minimum values to check-in values
+        document.getElementById('hobbs_end').min = '{{ check_in.hobbs_start }}';
+        document.getElementById('tach_end').min = '{{ check_in.tach_start }}';
+    });
+</script>
+{% endblock %}

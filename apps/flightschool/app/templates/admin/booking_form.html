@@ -1,0 +1,124 @@
+{% extends "base.html" %}
+
+{% block title %}Admin - {% if booking %}Edit{% else %}Create{% endif %} Booking{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>{% if booking %}Edit{% else %}Create{% endif %} Booking</h2>
+        <a href="{{ url_for('admin.bookings') }}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i> Back to Bookings
+        </a>
+    </div>
+
+    {% include 'includes/flash_messages.html' %}
+
+    <div class="card">
+        <div class="card-body">
+            <form method="POST" action="{% if booking %}{{ url_for('admin.edit_booking', id=booking.id) }}{% else %}{{ url_for('admin.create_booking') }}{% endif %}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label for="student_id" class="form-label">Student</label>
+                        <select class="form-select" id="student_id" name="student_id" required>
+                            <option value="">Select a student</option>
+                            {% for student in students %}
+                            <option value="{{ student.id }}" {% if booking and booking.student_id == student.id %}selected{% endif %}>
+                                {{ student.first_name }} {{ student.last_name }} ({{ student.email }})
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <label for="instructor_id" class="form-label">Instructor (Optional)</label>
+                        <select class="form-select" id="instructor_id" name="instructor_id">
+                            <option value="">No instructor</option>
+                            {% for instructor in instructors %}
+                            <option value="{{ instructor.id }}" {% if booking and booking.instructor_id == instructor.id %}selected{% endif %}>
+                                {{ instructor.first_name }} {{ instructor.last_name }} ({{ instructor.email }})
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label for="aircraft_id" class="form-label">Aircraft</label>
+                        <select class="form-select" id="aircraft_id" name="aircraft_id" required>
+                            <option value="">Select an aircraft</option>
+                            {% for aircraft in aircraft_list %}
+                            <option value="{{ aircraft.id }}" 
+                                {% if booking and booking.aircraft_id == aircraft.id %}selected{% endif %}
+                                {% if not aircraft.is_available %}disabled class="text-decoration-line-through text-muted"{% endif %}
+                                data-status="{{ aircraft.availability_status }}">
+                                {{ aircraft.registration }} ({{ aircraft.make }} {{ aircraft.model }})
+                                {% if not aircraft.is_available %} - {{ aircraft.availability_status }}{% endif %}
+                            </option>
+                            {% endfor %}
+                        </select>
+                        <div class="form-text">
+                            <small><i class="fas fa-info-circle"></i> Aircraft that are unavailable due to maintenance or grounding are shown but cannot be selected.</small>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <div class="row">
+                            <div class="col-md-8">
+                                <label for="start_time" class="form-label">Start Time</label>
+                                <input type="datetime-local" class="form-control" id="start_time" name="start_time" 
+                                       value="{% if booking %}{{ booking.start_time.strftime('%Y-%m-%dT%H:%M') }}{% endif %}" required>
+                            </div>
+                            <div class="col-md-4">
+                                <label for="duration" class="form-label">Duration (min)</label>
+                                <input type="number" class="form-control" id="duration" name="duration" 
+                                       value="{% if booking %}{{ duration }}{% else %}60{% endif %}" min="30" max="480" step="15" required>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                {% if booking %}
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label for="status" class="form-label">Status</label>
+                        <select class="form-select" id="status" name="status" required>
+                            <option value="pending" {% if booking.status == 'pending' %}selected{% endif %}>Pending</option>
+                            <option value="confirmed" {% if booking.status == 'confirmed' %}selected{% endif %}>Confirmed</option>
+                            <option value="in_progress" {% if booking.status == 'in_progress' %}selected{% endif %}>In Progress</option>
+                            <option value="completed" {% if booking.status == 'completed' %}selected{% endif %}>Completed</option>
+                            <option value="cancelled" {% if booking.status == 'cancelled' %}selected{% endif %}>Cancelled</option>
+                        </select>
+                    </div>
+                </div>
+                {% endif %}
+                
+                <div class="mb-3">
+                    <label for="notes" class="form-label">Notes</label>
+                    <textarea class="form-control" id="notes" name="notes" rows="3">{% if booking %}{{ booking.notes }}{% endif %}</textarea>
+                </div>
+                
+                <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                    <a href="{{ url_for('admin.bookings') }}" class="btn btn-secondary me-md-2">Cancel</a>
+                    <button type="submit" class="btn btn-primary">
+                        {% if booking %}Update{% else %}Create{% endif %} Booking
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Show aircraft image when an aircraft is selected
+    document.getElementById('aircraft_id').addEventListener('change', function() {
+        const aircraftId = this.value;
+        if (aircraftId) {
+            // You could add code here to display the aircraft image using the fallback system
+            // This would involve an AJAX call to get the aircraft details including the image path
+        }
+    });
+</script>
+{% endblock %}

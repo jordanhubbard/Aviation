@@ -1,0 +1,40 @@
+# Environment variables
+.env
+
+# Database files
+data/
+backups/
+*.db
+
+# Backend (Clojure)
+backend/target/
+backend/.lein-*
+backend/.nrepl-port
+backend/pom.xml
+backend/pom.xml.asc
+
+# Frontend (Node.js)
+frontend/node_modules/
+frontend/dist/
+frontend/.vite/
+frontend/npm-debug.log*
+frontend/yarn-debug.log*
+frontend/yarn-error.log*
+frontend/.shadow-cljs
+
+# Docker
+.docker/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/

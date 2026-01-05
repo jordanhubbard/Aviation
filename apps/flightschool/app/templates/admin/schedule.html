@@ -1,0 +1,119 @@
+{% extends "base.html" %}
+
+{% block title %}Admin Schedule - Flight School{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <h1>
+                <i class="fas fa-calendar-alt me-2"></i>Flight Schedule
+                <a href="{{ url_for('booking.create_booking') }}" class="btn btn-primary float-end">
+                    <i class="fas fa-plus me-1"></i>Add Booking
+                </a>
+            </h1>
+            <p class="lead">View and manage all flight bookings</p>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-header">
+            <ul class="nav nav-tabs card-header-tabs" id="scheduleTab" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active" id="list-tab" data-bs-toggle="tab" data-bs-target="#list" type="button" role="tab" aria-controls="list" aria-selected="true">List View</button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="calendar-tab" data-bs-toggle="tab" data-bs-target="#calendar" type="button" role="tab" aria-controls="calendar" aria-selected="false">Calendar View</button>
+                </li>
+            </ul>
+        </div>
+        <div class="card-body">
+            <div class="tab-content" id="scheduleTabContent">
+                <div class="tab-pane fade show active" id="list" role="tabpanel" aria-labelledby="list-tab">
+                    <div class="table-responsive">
+                        <table class="table table-striped table-hover">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Date</th>
+                                    <th>Time</th>
+                                    <th>Student</th>
+                                    <th>Instructor</th>
+                                    <th>Aircraft</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% if bookings %}
+                                    {% for booking in bookings %}
+                                    <tr>
+                                        <td>{{ booking.id }}</td>
+                                        <td>{{ booking.start_time.strftime('%Y-%m-%d') }}</td>
+                                        <td>{{ booking.start_time.strftime('%H:%M') }} - {{ booking.end_time.strftime('%H:%M') }}</td>
+                                        <td>{{ booking.student.full_name }}</td>
+                                        <td>{{ booking.instructor.full_name if booking.instructor else 'N/A' }}</td>
+                                        <td>{{ booking.aircraft.display_name }}</td>
+                                        <td>
+                                            <span class="badge {% if booking.status == 'confirmed' %}bg-success{% elif booking.status == 'cancelled' %}bg-danger{% elif booking.status == 'in_progress' %}bg-warning{% else %}bg-secondary{% endif %}">
+                                                {{ booking.status|title }}
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <div class="btn-group">
+                                                <a href="{{ url_for('admin.edit_booking', booking_id=booking.id) }}" class="btn btn-sm btn-outline-primary">
+                                                    <i class="fas fa-edit"></i>
+                                                </a>
+                                                {% if booking.status == 'confirmed' %}
+                                                <form method="POST" action="{{ url_for('admin.cancel_booking', booking_id=booking.id) }}" class="d-inline">
+                                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                                                    <button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirm('Are you sure you want to cancel this booking?')">
+                                                        <i class="fas fa-times"></i>
+                                                    </button>
+                                                </form>
+                                                {% endif %}
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                {% else %}
+                                    <tr>
+                                        <td colspan="8" class="text-center">No bookings found</td>
+                                    </tr>
+                                {% endif %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="tab-pane fade" id="calendar" role="tabpanel" aria-labelledby="calendar-tab">
+                    <div id="schedule-calendar" class="mt-3" style="height: 600px;">
+                        <!-- Calendar view will be loaded via JavaScript -->
+                        <div class="text-center">
+                            <p>Loading calendar...</p>
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Calendar view initialization would go here
+        // This would typically use a library like FullCalendar
+        // For now, we're just showing a placeholder
+        setTimeout(() => {
+            const calendarTab = document.getElementById('calendar');
+            if (calendarTab) {
+                calendarTab.innerHTML = '<div class="alert alert-info">Calendar view not implemented in demo version</div>';
+            }
+        }, 1000);
+    });
+</script>
+{% endblock %} 

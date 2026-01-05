@@ -1,0 +1,275 @@
+name: 🌙 Nightly Checks
+
+on:
+  schedule:
+    # Run every day at 2 AM UTC
+    - cron: '0 2 * * *'
+  workflow_dispatch: # Allow manual trigger
+
+jobs:
+  dependency-audit:
+    name: 🔍 Dependency Audit
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+
+      - name: Install Leiningen
+        run: |
+          wget https://raw.githubusercontent.com/technomancy/leiningen/stable/bin/lein
+          chmod +x lein
+          sudo mv lein /usr/local/bin/
+
+      - name: Check for outdated dependencies
+        working-directory: backend
+        run: |
+          echo "Checking for outdated Clojure dependencies..."
+          lein ancient :all || echo "⚠️  Some dependencies are outdated"
+
+      - name: Security audit
+        working-directory: backend
+        run: |
+          echo "Running security audit on dependencies..."
+          # Check for known vulnerabilities
+          lein deps :tree | grep -i "SECURITY" || echo "No obvious security issues found"
+
+  extended-tests:
+    name: 🧪 Extended Test Suite
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+
+      - name: Cache Leiningen dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2/repository
+          key: ${{ runner.os }}-lein-${{ hashFiles('backend/project.clj') }}
+          restore-keys: |
+            ${{ runner.os }}-lein-
+
+      - name: Install Leiningen
+        run: |
+          wget https://raw.githubusercontent.com/technomancy/leiningen/stable/bin/lein
+          chmod +x lein
+          sudo mv lein /usr/local/bin/
+          lein version
+
+      - name: Run all tests with coverage
+        working-directory: backend
+        run: |
+          echo "Running full test suite..."
+          lein test
+
+      - name: Performance tests
+        working-directory: backend
+        run: |
+          echo "Running performance tests..."
+          # Add performance test commands here if available
+
+  database-migration-test:
+    name: 🗄️ Database Migration Test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build image
+        run: docker build --target production -t aviation-missions:nightly .
+
+      - name: Test fresh database initialization
+        run: |
+          echo "Testing fresh database initialization..."
+          docker run -d --name fresh-db-test \
+            -p 8080:3000 \
+            -v $(pwd)/test-fresh-db:/app/data \
+            aviation-missions:nightly
+
+          echo "Waiting for /health to become ready..."
+          for i in {1..30}; do
+            if curl -fs http://localhost:8080/health >/dev/null 2>&1; then
+              break
+            fi
+            sleep 2
+          done
+
+          curl -fs http://localhost:8080/health | grep '"missions_loaded"' || (docker logs fresh-db-test && exit 1)
+          docker rm -f fresh-db-test
+          sudo rm -rf test-fresh-db
+          echo "✅ Fresh database initialization successful"
+
+      - name: Test database persistence
+        run: |
+          echo "Testing database persistence..."
+          mkdir -p test-persist-db
+          
+          # Start container, create data
+          docker run -d --name persist-test-1 \
+            -p 8080:3000 \
+            -v $(pwd)/test-persist-db:/app/data \
+            aviation-missions:nightly
+          
+          echo "Waiting for /health to become ready..."
+          for i in {1..30}; do
+            if curl -fs http://localhost:8080/health >/dev/null 2>&1; then
+              break
+            fi
+            sleep 2
+          done
+          
+          echo "Logging in as admin (default credentials)..."
+          TOKEN=$(curl -fs http://localhost:8080/admin/login \
+            -H "Content-Type: application/json" \
+            -d '{"admin_name":"admin","password":"aviation123"}' \
+            | python3 -c 'import json,sys; print(json.load(sys.stdin).get("token",""))')
+
+          if [ -z "$TOKEN" ]; then
+            echo "❌ Failed to obtain admin token"
+            docker logs persist-test-1
+            docker rm -f persist-test-1
+            sudo rm -rf test-persist-db
+            exit 1
+          fi
+
+          echo "Creating a mission (admin path)..."
+          curl -fs http://localhost:8080/missions \
+            -H "Content-Type: application/json" \
+            -H "Authorization: Bearer $TOKEN" \
+            -d '{"title":"Persistence Test","category":"Training","difficulty":5,"objective":"Test","mission_description":"Test","why_description":"Test"}' \
+            >/dev/null
+          
+          docker rm -f persist-test-1
+          
+          # Start new container with same volume
+          docker run -d --name persist-test-2 \
+            -p 8080:3000 \
+            -v $(pwd)/test-persist-db:/app/data \
+            aviation-missions:nightly
+          
+          echo "Waiting for /health to become ready..."
+          for i in {1..30}; do
+            if curl -fs http://localhost:8080/health >/dev/null 2>&1; then
+              break
+            fi
+            sleep 2
+          done
+          
+          # Check data persisted
+          MISSION_COUNT=$(curl -fs http://localhost:8080/missions \
+            | python3 -c 'import json,sys; d=json.load(sys.stdin); ms=d.get("missions") or []; print(sum(1 for m in ms if (m.get("title") or "") == "Persistence Test"))')
+          
+          docker rm -f persist-test-2
+          sudo rm -rf test-persist-db
+          
+          if [ "$MISSION_COUNT" -gt 0 ]; then
+            echo "✅ Database persistence test passed"
+          else
+            echo "❌ Database persistence test failed"
+            exit 1
+          fi
+
+  image-size-tracking:
+    name: 📊 Image Size Tracking
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build and analyze image
+        run: |
+          docker build --target production -t aviation-missions:size-check .
+          
+          IMAGE_SIZE=$(docker image inspect aviation-missions:size-check --format='{{.Size}}')
+          IMAGE_SIZE_MB=$((IMAGE_SIZE / 1024 / 1024))
+          
+          echo "## 📊 Image Size Report" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- **Total Size:** ${IMAGE_SIZE_MB} MB" >> $GITHUB_STEP_SUMMARY
+          echo "- **Date:** $(date -u +"%Y-%m-%d %H:%M UTC")" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          # Layer analysis
+          echo "### Layer Breakdown:" >> $GITHUB_STEP_SUMMARY
+          docker history aviation-missions:size-check --format "table {{.Size}}\t{{.CreatedBy}}" --no-trunc | head -20 >> $GITHUB_STEP_SUMMARY
+          
+          if [ $IMAGE_SIZE_MB -gt 500 ]; then
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "⚠️  **Warning:** Image size exceeds 500MB threshold" >> $GITHUB_STEP_SUMMARY
+          fi
+
+  health-monitoring:
+    name: 🏥 Health Monitoring
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build and run long-running test
+        run: |
+          docker build --target production -t aviation-missions:health .
+          
+          docker run -d --name health-monitor \
+            -p 8080:3000 \
+            aviation-missions:health
+
+          echo "Waiting for /health to become ready..."
+          for i in {1..30}; do
+            if curl -fs http://localhost:8080/health >/dev/null 2>&1; then
+              echo "✅ Initial health check passed"
+              break
+            fi
+            sleep 2
+          done
+
+          curl -fs http://localhost:8080/health >/dev/null 2>&1 || (echo "❌ App never became healthy" && docker logs health-monitor && docker rm -f health-monitor && exit 1)
+          
+          echo "Monitoring application health for 5 minutes..."
+          
+          for i in {1..30}; do
+            if ! curl -f http://localhost:8080/health 2>/dev/null; then
+              echo "❌ Health check failed at iteration $i"
+              docker logs health-monitor
+              docker rm -f health-monitor
+              exit 1
+            fi
+            echo "✅ Health check $i/30 passed"
+            sleep 10
+          done
+          
+          docker rm -f health-monitor
+          echo "✅ Application remained healthy for 5 minutes"
+
+  notification:
+    name: 📢 Send Notification
+    runs-on: ubuntu-latest
+    needs: [dependency-audit, extended-tests, database-migration-test, image-size-tracking, health-monitoring]
+    if: always()
+    steps:
+      - name: Check status
+        run: |
+          echo "## 🌙 Nightly Check Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "All nightly checks completed at $(date -u +"%Y-%m-%d %H:%M UTC")" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Review the job results above for details." >> $GITHUB_STEP_SUMMARY

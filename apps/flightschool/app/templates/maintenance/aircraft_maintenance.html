@@ -1,0 +1,67 @@
+{% extends "maintenance/base.html" %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{{ url_for('admin.aircraft_list') }}">Aircraft</a></li>
+<li class="breadcrumb-item active">{{ aircraft.tail_number }} - Maintenance</li>
+{% endblock %}
+
+{% block maintenance_content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1>Maintenance Records - {{ aircraft.tail_number }}</h1>
+    {% if current_user.is_admin %}
+    <a href="{{ url_for('maintenance.add_maintenance_record', aircraft_id=aircraft.id) }}" class="btn btn-primary">
+        <i class="fas fa-plus"></i> Add Maintenance Record
+    </a>
+    {% endif %}
+</div>
+
+<div class="card mb-4">
+    <div class="card-header">
+        <h5 class="mb-0">Aircraft Details</h5>
+    </div>
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-4">
+                <p><strong>Make/Model:</strong> {{ aircraft.make_model }}</p>
+            </div>
+            <div class="col-md-4">
+                <p><strong>Year:</strong> {{ aircraft.year }}</p>
+            </div>
+            <div class="col-md-4">
+                <p><strong>Status:</strong> {{ aircraft.status }}</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="table-responsive">
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>Type</th>
+                <th>Performed At</th>
+                <th>Performed By</th>
+                <th>Hobbs Hours</th>
+                <th>Tach Hours</th>
+                <th>Notes</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for record in records %}
+            <tr>
+                <td>{{ record.maintenance_type.name }}</td>
+                <td>{{ record.performed_at.strftime('%Y-%m-%d %H:%M') }}</td>
+                <td>{{ record.performed_by.full_name }}</td>
+                <td>{{ record.hobbs_hours or 'N/A' }}</td>
+                <td>{{ record.tach_hours or 'N/A' }}</td>
+                <td>{{ record.notes or '' }}</td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="6" class="text-center">No maintenance records found.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %} 

@@ -1,0 +1,98 @@
+{% extends "base.html" %}
+
+{% block title %}Training Programs - {{ config.SCHOOL_NAME }}{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row mb-5">
+        <div class="col-12 text-center">
+            <h1 class="display-4 fw-bold">Our Training Programs</h1>
+            <p class="lead text-muted">Choose the path that's right for your aviation goals</p>
+        </div>
+    </div>
+
+    <!-- Private Pilot Program -->
+    <div class="row mb-5">
+        <div class="col-md-6">
+            <img src="{{ url_for('static', filename='images/private_pilot.jpg') }}" 
+                 class="img-fluid rounded shadow" 
+                 alt="Private Pilot Training">
+        </div>
+        <div class="col-md-6">
+            <h2 class="fw-bold mb-4">Private Pilot License (PPL)</h2>
+            <p class="lead">Begin your journey to becoming a pilot with our comprehensive PPL program.</p>
+            <ul class="list-unstyled mb-4">
+                <li class="mb-3"><i class="fas fa-check text-success me-2"></i>40 hours minimum flight time</li>
+                <li class="mb-3"><i class="fas fa-check text-success me-2"></i>Ground school instruction</li>
+                <li class="mb-3"><i class="fas fa-check text-success me-2"></i>FAA checkride preparation</li>
+                <li class="mb-3"><i class="fas fa-check text-success me-2"></i>Cross-country flight training</li>
+                <li class="mb-3"><i class="fas fa-check text-success me-2"></i>Night flight operations</li>
+            </ul>
+            <a href="{{ url_for('auth.register') }}" class="btn btn-primary">Start Your Journey</a>
+        </div>
+    </div>
+
+    <!-- Instrument Rating Program -->
+    <div class="row mb-5">
+        <div class="col-md-6 order-md-2">
+            <img src="{{ url_for('static', filename='images/instrument.jpg') }}" 
+                 class="img-fluid rounded shadow" 
+                 alt="Instrument Rating Training">
+        </div>
+        <div class="col-md-6 order-md-1">
+            <h2 class="fw-bold mb-4">Instrument Rating (IR)</h2>
+            <p class="lead">Master instrument flying and expand your capabilities.</p>
+            <ul class="list-unstyled mb-4">
+                <li class="mb-3"><i class="fas fa-check text-success me-2"></i>40 hours instrument time</li>
+                <li class="mb-3"><i class="fas fa-check text-success me-2"></i>Advanced simulator training</li>
+                <li class="mb-3"><i class="fas fa-check text-success me-2"></i>Real-world IFR scenarios</li>
+                <li class="mb-3"><i class="fas fa-check text-success me-2"></i>Approach procedures</li>
+                <li class="mb-3"><i class="fas fa-check text-success me-2"></i>Emergency procedures</li>
+            </ul>
+            <a href="{{ url_for('auth.register') }}" class="btn btn-primary">Start Training</a>
+        </div>
+    </div>
+
+    <!-- Commercial Pilot Program -->
+    <div class="row mb-5">
+        <div class="col-md-6">
+            <img src="{{ url_for('static', filename='images/commercial.jpg') }}" 
+                 class="img-fluid rounded shadow" 
+                 alt="Commercial Pilot Training">
+        </div>
+        <div class="col-md-6">
+            <h2 class="fw-bold mb-4">Commercial Pilot License (CPL)</h2>
+            <p class="lead">Take your flying career to the next level with our CPL program.</p>
+            <ul class="list-unstyled mb-4">
+                <li class="mb-3"><i class="fas fa-check text-success me-2"></i>250 hours total time</li>
+                <li class="mb-3"><i class="fas fa-check text-success me-2"></i>Advanced maneuvers</li>
+                <li class="mb-3"><i class="fas fa-check text-success me-2"></i>Complex aircraft training</li>
+                <li class="mb-3"><i class="fas fa-check text-success me-2"></i>Commercial operations</li>
+                <li class="mb-3"><i class="fas fa-check text-success me-2"></i>Career preparation</li>
+            </ul>
+            <a href="{{ url_for('auth.register') }}" class="btn btn-primary">Start Training</a>
+        </div>
+    </div>
+
+    <!-- Flight Instructor Program -->
+    <div class="row">
+        <div class="col-md-6 order-md-2">
+            <img src="{{ url_for('static', filename='images/instructor.jpg') }}" 
+                 class="img-fluid rounded shadow" 
+                 alt="Flight Instructor Training">
+        </div>
+        <div class="col-md-6 order-md-1">
+            <h2 class="fw-bold mb-4">Flight Instructor Rating (CFI)</h2>
+            <p class="lead">Share your passion for flying by becoming a certified flight instructor.</p>
+            <ul class="list-unstyled mb-4">
+                <li class="mb-3"><i class="fas fa-check text-success me-2"></i>Teaching methodology</li>
+                <li class="mb-3"><i class="fas fa-check text-success me-2"></i>Lesson planning</li>
+                <li class="mb-3"><i class="fas fa-check text-success me-2"></i>Student evaluation</li>
+                <li class="mb-3"><i class="fas fa-check text-success me-2"></i>Flight instruction techniques</li>
+                <li class="mb-3"><i class="fas fa-check text-success me-2"></i>FAA checkride preparation</li>
+            </ul>
+            <a href="{{ url_for('auth.register') }}" class="btn btn-primary">Start Training</a>
+        </div>
+    </div>
+</div>
+{% endblock %} 

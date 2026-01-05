@@ -1,0 +1,89 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-12">
+            <h2>Instructor Management</h2>
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Instructors</h5>
+                    <a href="{{ url_for('admin.create_user', type='instructor') }}" class="btn btn-primary">
+                        <i class="fas fa-plus"></i> Add Instructor
+                    </a>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Email</th>
+                                    <th>Phone</th>
+                                    <th>Certificates</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for instructor in instructors %}
+                                <tr>
+                                    <td>{{ instructor.full_name }}</td>
+                                    <td>{{ instructor.email }}</td>
+                                    <td>{{ instructor.phone }}</td>
+                                    <td>{{ instructor.certificates }}</td>
+                                    <td>
+                                        <span class="badge {% if instructor.status == 'active' %}bg-success{% else %}bg-danger{% endif %}">
+                                            {{ instructor.status|title }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <div class="btn-group btn-group-sm">
+                                            <a href="{{ url_for('admin.edit_user', id=instructor.id) }}" class="btn btn-primary">
+                                                <i class="fas fa-edit"></i>
+                                            </a>
+                                            <button class="btn btn-danger delete-instructor" data-id="{{ instructor.id }}">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Handle instructor deletion
+    document.querySelectorAll('.delete-instructor').forEach(button => {
+        button.addEventListener('click', function() {
+            const instructorId = this.dataset.id;
+            if (confirm('Are you sure you want to delete this instructor?')) {
+                fetch(`/admin/user/${instructorId}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'X-CSRFToken': '{{ csrf_token() }}'
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.message) {
+                        location.reload();
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Error deleting instructor');
+                });
+            }
+        });
+    });
+});
+</script>
+{% endblock %} 

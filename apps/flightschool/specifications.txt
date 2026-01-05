@@ -1,0 +1,37 @@
+A straight-forward flask application for a small flight school without a
+large number of students (less than 200). It will run containerized on
+a cloud hosted linux system, and the most important thing is
+reliability and the ability to extend it over time without breaking it,
+so as each function or API for this school is implemented a corresponding
+test should also be written and made to pass before moving on to the next
+function or API.  Test data should also be generated to allow manual
+testers of this application to use it and verify functionality as well
+as the automated tests.
+
+The workflow for this application will follow three different paths from
+a common home screen:
+
+One, the user is brand new to the school and wishes to register themselves.
+They will need to click a register button at the home screen which will
+request:
+	Their first and last name
+	Their postal address
+	Their phone number
+	Their email address
+	A password, with a confirmation box to ensure that the password is correct
+	Clicking Cancel will abort the registration.  Clicking Continue will create their account if their email address is not found.  If it is found, they will be offered instead an opportunity to reset their password.
+
+	Email confirmation of registration as well as email reset links should be designed in but not implemented - that will be done when the application is mature.
+
+Two, the user has a username (their email address) and a password in which case they should be logged in and presented with a booking screen which looks like this:
+
+	A table of aircraft available to book
+	A table of instructors available to book along with an aircraft
+	A time and date selector, with the default starting time being the current local time and the duration being one hour, along with an ending time which will be automatically calculated from the starting time and duration.
+	A calendar view which shows all of the currently logged in client's bookings.
+
+Three, the user is the administrator of this school and should go straight to an administrative UI which shows all of the aircraft, instructors, clients, and schedules and supports full CRUD semantics for each.  They should also be able to see a calendar view which shows the master schedule for all resources - aircraft, instructors and clients.  They should also be able to CRUD any entry on the schedule in case a client cancels or reschedules by phone
+
+The UI should look polished and be easy for non-computer users to use, since both client and administrator will be aviators rather than power users.  An aviation theme should also be used where practical, with a nice graphic which represents the school (this should be loaded from a file, which I will provide later).  You can put placeholder graphics and the name of the school, which is "Tailwheel Addicts Aviation"
+
+Be sure that both UI and APIs can be thoroughly tested before deployment.  There will be only one deployment type, which is production, but after making every change you should also re-run all of the tests to make sure that your incremental changes to the application do not break the basic functionality of either the API or the UI - make sure to give yourself plenty of logging and other information necessary to AI generate this code while retaining the maximum amount of context for yourself, since you will be guiding yourself from this information.

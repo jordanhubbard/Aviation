@@ -1,0 +1,101 @@
+{% extends "base.html" %}
+
+{% block title %}{% if record %}Edit Maintenance Record{% else %}Add Maintenance Record{% endif %}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>{% if record %}Edit Maintenance Record{% else %}Add Maintenance Record{% endif %}</h2>
+        <a href="{{ url_for('admin.maintenance_records') }}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i> Back to Maintenance Records
+        </a>
+    </div>
+
+    {% include 'includes/flash_messages.html' %}
+
+    <div class="card">
+        <div class="card-body">
+            <form method="POST" action="{% if record %}{{ url_for('admin.maintenance_edit', id=record.id) }}{% else %}{{ url_for('admin.maintenance_add') }}{% endif %}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label for="aircraft_id" class="form-label">Aircraft</label>
+                        <select class="form-select" id="aircraft_id" name="aircraft_id" required>
+                            <option value="">Select an aircraft</option>
+                            {% for aircraft in aircraft_list %}
+                            <option value="{{ aircraft.id }}" {% if record and record.aircraft_id == aircraft.id %}selected{% endif %}>
+                                {{ aircraft.registration }} ({{ aircraft.make }} {{ aircraft.model }})
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <label for="maintenance_type_id" class="form-label">Maintenance Type</label>
+                        <select class="form-select" id="maintenance_type_id" name="maintenance_type_id" required>
+                            <option value="">Select maintenance type</option>
+                            {% for type in maintenance_types %}
+                            <option value="{{ type.id }}" {% if record and record.maintenance_type_id == type.id %}selected{% endif %}>
+                                {{ type.name }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label for="performed_at" class="form-label">Date Performed</label>
+                        <input type="date" class="form-control" id="performed_at" name="performed_at" 
+                               value="{% if record %}{{ record.performed_at.strftime('%Y-%m-%d') }}{% endif %}" required>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <label for="hobbs_hours" class="form-label">Hobbs Hours</label>
+                        <input type="number" class="form-control" id="hobbs_hours" name="hobbs_hours" 
+                               value="{% if record %}{{ record.hobbs_hours }}{% endif %}" step="0.1" required>
+                    </div>
+                </div>
+                
+                {% if record %}
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label for="status" class="form-label">Status</label>
+                        <select class="form-select" id="status" name="status" required>
+                            <option value="pending" {% if record.status == 'pending' %}selected{% endif %}>Pending</option>
+                            <option value="in_progress" {% if record.status == 'in_progress' %}selected{% endif %}>In Progress</option>
+                            <option value="completed" {% if record.status == 'completed' %}selected{% endif %}>Completed</option>
+                            <option value="due" {% if record.status == 'due' %}selected{% endif %}>Due</option>
+                        </select>
+                    </div>
+                </div>
+                {% endif %}
+                
+                <div class="mb-3">
+                    <label for="notes" class="form-label">Notes</label>
+                    <textarea class="form-control" id="notes" name="notes" rows="3">{% if record %}{{ record.notes }}{% endif %}</textarea>
+                </div>
+                
+                <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                    <a href="{{ url_for('admin.maintenance_records') }}" class="btn btn-secondary me-md-2">Cancel</a>
+                    <button type="submit" class="btn btn-primary">
+                        {% if record %}Update{% else %}Create{% endif %} Maintenance Record
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Show aircraft image when an aircraft is selected
+    document.getElementById('aircraft_id').addEventListener('change', function() {
+        const aircraftId = this.value;
+        if (aircraftId) {
+            // You could add code here to display the aircraft image using the fallback system
+            // This would involve an AJAX call to get the aircraft details including the image path
+        }
+    });
+</script>
+{% endblock %}

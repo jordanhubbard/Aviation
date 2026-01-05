@@ -1,0 +1,321 @@
+{% extends "base.html" %}
+
+{% block title %}Flight Check-Out - {{ config.SCHOOL_NAME }}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-12">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{{ url_for('booking.dashboard') }}">Dashboard</a></li>
+                    <li class="breadcrumb-item"><a href="{{ url_for('booking.view_booking', booking_id=booking.id) }}">Flight Details</a></li>
+                    <li class="breadcrumb-item active">Check-Out</li>
+                </ol>
+            </nav>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Flight Information -->
+        <div class="col-md-8">
+            <div class="card mb-4">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <div>
+                        <h5 class="mb-0">{{ booking.aircraft.display_name }} ({{ booking.aircraft.registration }})</h5>
+                        <p class="text-muted mb-0">{{ booking.start_time.strftime('%A, %B %d, %Y') }}</p>
+                    </div>
+                    <span class="badge bg-info">Check-Out</span>
+                </div>
+                <div class="card-body">
+                    <form method="POST" action="{{ url_for('booking.check_out', booking_id=booking.id) }}">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                        
+                        <!-- Flight Times -->
+                        <div class="row g-4">
+                            <div class="col-md-6">
+                                <div class="p-3 bg-light rounded-3">
+                                    <h6 class="text-muted mb-3">Hobbs Time</h6>
+                                    <div class="input-group">
+                                        <span class="input-group-text"><i class="fas fa-tachometer-alt"></i></span>
+                                        <input type="number" class="form-control" id="hobbs_end" name="hobbs_end" 
+                                               step="0.1" min="{{ check_in.hobbs_start }}" required>
+                                    </div>
+                                    <small class="text-muted">Start: {{ check_in.hobbs_start }}</small>
+                                    <div class="mt-2 text-primary" id="hobbs_difference"></div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="p-3 bg-light rounded-3">
+                                    <h6 class="text-muted mb-3">Tach Time</h6>
+                                    <div class="input-group">
+                                        <span class="input-group-text"><i class="fas fa-gauge"></i></span>
+                                        <input type="number" class="form-control" id="tach_end" name="tach_end" 
+                                               step="0.1" min="{{ check_in.tach_start }}" required>
+                                    </div>
+                                    <small class="text-muted">Start: {{ check_in.tach_start }}</small>
+                                    <div class="mt-2 text-primary" id="tach_difference"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <hr class="my-4">
+
+                        <!-- Flight Details -->
+                        <div class="row g-4">
+                            <div class="col-md-6">
+                                <div class="p-3 bg-light rounded-3">
+                                    <h6 class="text-muted mb-3">Fuel Status</h6>
+                                    <div class="mb-3">
+                                        <label class="form-label">Fuel Level</label>
+                                        <select class="form-select" id="fuel_level" name="fuel_level" required>
+                                            <option value="">Select fuel level</option>
+                                            <option value="full">Full</option>
+                                            <option value="3/4">3/4</option>
+                                            <option value="1/2">1/2</option>
+                                            <option value="1/4">1/4</option>
+                                            <option value="empty">Empty</option>
+                                        </select>
+                                    </div>
+                                    <div class="input-group">
+                                        <span class="input-group-text"><i class="fas fa-gas-pump"></i></span>
+                                        <input type="number" class="form-control" id="fuel_added" name="fuel_added" 
+                                               step="0.1" min="0" value="0" placeholder="Fuel Added">
+                                        <span class="input-group-text">gal</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="p-3 bg-light rounded-3">
+                                    <h6 class="text-muted mb-3">Oil Status</h6>
+                                    <div class="input-group">
+                                        <span class="input-group-text"><i class="fas fa-oil-can"></i></span>
+                                        <input type="number" class="form-control" id="oil_added" name="oil_added" 
+                                               step="0.1" min="0" value="0" placeholder="Oil Added">
+                                        <span class="input-group-text">qts</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <hr class="my-4">
+
+                        <!-- Flight Log -->
+                        <div class="row g-4">
+                            <div class="col-md-6">
+                                <div class="p-3 bg-light rounded-3">
+                                    <h6 class="text-muted mb-3">Flight Time</h6>
+                                    <div class="input-group">
+                                        <span class="input-group-text"><i class="fas fa-clock"></i></span>
+                                        <input type="number" class="form-control" id="flight_time" name="flight_time" 
+                                               step="0.1" min="0" required>
+                                        <span class="input-group-text">hrs</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="p-3 bg-light rounded-3">
+                                    <h6 class="text-muted mb-3">Landings</h6>
+                                    <div class="input-group">
+                                        <span class="input-group-text"><i class="fas fa-plane-arrival"></i></span>
+                                        <input type="number" class="form-control" id="landings" name="landings" 
+                                               min="0" value="1" required>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <hr class="my-4">
+
+                        <!-- Notes & Squawks -->
+                        <div class="row g-4">
+                            <div class="col-12">
+                                <div class="p-3 bg-light rounded-3">
+                                    <h6 class="text-muted mb-3">Post-Flight Notes</h6>
+                                    <div class="input-group">
+                                        <span class="input-group-text"><i class="fas fa-clipboard"></i></span>
+                                        <textarea class="form-control" id="notes" name="notes" rows="3" 
+                                                  placeholder="Enter any notes about the flight, aircraft condition, issues encountered, etc."></textarea>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="col-12">
+                                <div class="p-3 bg-light rounded-3">
+                                    <div class="form-check mb-3">
+                                        <input class="form-check-input" type="checkbox" id="squawks" name="squawks_exist">
+                                        <label class="form-check-label" for="squawks">
+                                            <strong>Maintenance Issues</strong><br>
+                                            <small class="text-muted">Check this box if there are any maintenance issues to report (squawks)</small>
+                                        </label>
+                                    </div>
+                                    <div id="squawksSection" style="display: none;">
+                                        <div class="input-group">
+                                            <span class="input-group-text"><i class="fas fa-wrench"></i></span>
+                                            <textarea class="form-control" id="squawks_description" name="squawks_description" rows="3" 
+                                                      placeholder="Please describe any maintenance issues in detail"></textarea>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="d-flex justify-content-between align-items-center mt-4">
+                            <a href="{{ url_for('booking.view_booking', booking_id=booking.id) }}" class="btn btn-outline-secondary">
+                                <i class="fas fa-arrow-left me-2"></i>Back to Flight Details
+                            </a>
+                            <button type="submit" class="btn btn-accent">
+                                <i class="fas fa-plane-arrival me-2"></i>Complete Check-Out
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Flight Summary -->
+        <div class="col-md-4">
+            <!-- Check-In Summary -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">Check-In Summary</h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-flex align-items-center mb-3">
+                        <i class="fas fa-clock fa-2x text-primary me-3"></i>
+                        <div>
+                            <div class="text-muted">Check-In Time</div>
+                            <div class="h5 mb-0">{{ check_in.timestamp.strftime('%H:%M') }}</div>
+                        </div>
+                    </div>
+                    <div class="d-flex align-items-center mb-3">
+                        <i class="fas fa-tachometer-alt fa-2x text-primary me-3"></i>
+                        <div>
+                            <div class="text-muted">Hobbs Start</div>
+                            <div class="h5 mb-0">{{ check_in.hobbs_start }}</div>
+                        </div>
+                    </div>
+                    <div class="d-flex align-items-center mb-3">
+                        <i class="fas fa-gauge fa-2x text-primary me-3"></i>
+                        <div>
+                            <div class="text-muted">Tach Start</div>
+                            <div class="h5 mb-0">{{ check_in.tach_start }}</div>
+                        </div>
+                    </div>
+                    <div class="d-flex align-items-center">
+                        <i class="fas fa-gas-pump fa-2x text-primary me-3"></i>
+                        <div>
+                            <div class="text-muted">Initial Fuel</div>
+                            <div class="h5 mb-0">{{ check_in.fuel_level }}</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Billing Summary -->
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Estimated Charges</h5>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-info mb-4">
+                        <div class="d-flex align-items-center">
+                            <i class="fas fa-calculator fa-2x me-3"></i>
+                            <div>
+                                <h6 class="alert-heading mb-1">Billing Information</h6>
+                                <p class="mb-0 small" id="billing_summary">Complete the form to see billing details</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="table-responsive">
+                        <table class="table table-sm">
+                            <tbody>
+                                <tr>
+                                    <td><i class="fas fa-plane me-2"></i>Aircraft Rental</td>
+                                    <td class="text-end" id="aircraft_charge">$0.00</td>
+                                </tr>
+                                <tr>
+                                    <td><i class="fas fa-chalkboard-teacher me-2"></i>Instructor Time</td>
+                                    <td class="text-end" id="instructor_charge">$0.00</td>
+                                </tr>
+                                <tr>
+                                    <td><i class="fas fa-receipt me-2"></i>Other Fees</td>
+                                    <td class="text-end" id="other_fees">$0.00</td>
+                                </tr>
+                                <tr class="table-light fw-bold">
+                                    <td>Total</td>
+                                    <td class="text-end" id="total_charge">$0.00</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% block extra_js %}
+<script>
+    // Show/hide squawks section based on checkbox
+    document.getElementById('squawks').addEventListener('change', function() {
+        var squawksSection = document.getElementById('squawksSection');
+        squawksSection.style.display = this.checked ? 'block' : 'none';
+        if (!this.checked) {
+            document.getElementById('squawks_description').value = '';
+        }
+    });
+
+    // Calculate time differences and update billing
+    function updateBilling() {
+        var hobbsStart = parseFloat('{{ check_in.hobbs_start }}');
+        var tachStart = parseFloat('{{ check_in.tach_start }}');
+        var hobbsEnd = parseFloat(document.getElementById('hobbs_end').value) || 0;
+        var tachEnd = parseFloat(document.getElementById('tach_end').value) || 0;
+        var flightTime = parseFloat(document.getElementById('flight_time').value) || 0;
+
+        // Calculate differences
+        var hobbsDiff = hobbsEnd - hobbsStart;
+        var tachDiff = tachEnd - tachStart;
+
+        // Update difference displays
+        document.getElementById('hobbs_difference').textContent = hobbsDiff > 0 ? 
+            'Time: ' + hobbsDiff.toFixed(1) + ' hours' : '';
+        document.getElementById('tach_difference').textContent = tachDiff > 0 ? 
+            'Time: ' + tachDiff.toFixed(1) + ' hours' : '';
+
+        // Calculate charges
+        var aircraftRate = parseFloat('{{ booking.aircraft.rate_per_hour }}');
+        var instructorRate = parseFloat('{{ booking.instructor.instructor_rate_per_hour if booking.instructor else 0 }}');
+
+        var aircraftCharge = hobbsDiff * aircraftRate;
+        var instructorCharge = flightTime * instructorRate;
+        var totalCharge = aircraftCharge + instructorCharge;
+
+        // Update billing display
+        document.getElementById('aircraft_charge').textContent = '$' + aircraftCharge.toFixed(2);
+        document.getElementById('instructor_charge').textContent = '$' + instructorCharge.toFixed(2);
+        document.getElementById('total_charge').textContent = '$' + totalCharge.toFixed(2);
+
+        // Update billing summary
+        var summary = '';
+        if (hobbsDiff > 0) {
+            summary = hobbsDiff.toFixed(1) + ' hours at $' + aircraftRate.toFixed(2) + '/hr';
+            if (instructorRate > 0) {
+                summary += ' plus instruction at $' + instructorRate.toFixed(2) + '/hr';
+            }
+        }
+        document.getElementById('billing_summary').textContent = summary || 'Complete the form to see billing details';
+    }
+
+    // Add event listeners
+    ['hobbs_end', 'tach_end', 'flight_time'].forEach(function(id) {
+        document.getElementById(id).addEventListener('input', updateBilling);
+    });
+
+    // Initialize
+    updateBilling();
+</script>
+{% endblock %}
+{% endblock %}

@@ -1,0 +1,63 @@
+{% extends "maintenance/base.html" %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{{ url_for('admin.aircraft_list') }}">Aircraft</a></li>
+<li class="breadcrumb-item"><a href="{{ url_for('maintenance.aircraft_squawks', aircraft_id=aircraft.id) }}">{{ aircraft.tail_number }} - Squawks</a></li>
+<li class="breadcrumb-item active">{{ title }}</li>
+{% endblock %}
+
+{% block maintenance_content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h2 class="mb-0">{{ title }}</h2>
+            </div>
+            <div class="card-body">
+                <form method="POST">
+                    {{ form.hidden_tag() }}
+                    
+                    <div class="mb-3">
+                        {{ form.description.label(class="form-label") }}
+                        {{ form.description(class="form-control", rows=3) }}
+                        {% for error in form.description.errors %}
+                        <div class="invalid-feedback d-block">{{ error }}</div>
+                        {% endfor %}
+                    </div>
+
+                    <div class="mb-3">
+                        {{ form.status.label(class="form-label") }}
+                        {{ form.status(class="form-select") }}
+                        {% for error in form.status.errors %}
+                        <div class="invalid-feedback d-block">{{ error }}</div>
+                        {% endfor %}
+                    </div>
+
+                    <div class="mb-3 form-check">
+                        <input type="checkbox" class="form-check-input" id="ground_airplane" name="ground_airplane" {% if form.ground_airplane and form.ground_airplane.data %}checked{% endif %}>
+                        <label class="form-check-label" for="ground_airplane">
+                            <strong class="text-danger">Ground Airplane</strong> - This issue prevents safe operation of the aircraft
+                        </label>
+                        <div class="form-text">
+                            Checking this box will mark the aircraft as unavailable for booking until the squawk is resolved.
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        {{ form.resolution_notes.label(class="form-label") }}
+                        {{ form.resolution_notes(class="form-control", rows=3) }}
+                        {% for error in form.resolution_notes.errors %}
+                        <div class="invalid-feedback d-block">{{ error }}</div>
+                        {% endfor %}
+                    </div>
+
+                    <div class="d-grid gap-2">
+                        {{ form.submit(class="btn btn-primary") }}
+                        <a href="{{ url_for('maintenance.aircraft_squawks', aircraft_id=aircraft.id) }}" class="btn btn-secondary">Cancel</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

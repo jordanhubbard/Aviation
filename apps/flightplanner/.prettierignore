@@ -1,0 +1,10 @@
+node_modules/
+dist/
+build/
+.vite/
+playwright-report/
+test-results/
+frontend/test-results/
+frontend/playwright-report/
+backend/data/
+sources/

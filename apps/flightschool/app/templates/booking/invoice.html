@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+
+{% block title %}Invoice - {{ booking.aircraft.display_name }}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>Generate Invoice - {{ booking.aircraft.display_name }}</h2>
+    <div class="card">
+        <div class="card-body">
+            <div class="alert alert-info">
+                <h5>Flight Details:</h5>
+                <p class="mb-1">Date: {{ booking.start_time.strftime('%Y-%m-%d') }}</p>
+                <p class="mb-1">Start Time: {{ booking.start_time.strftime('%H:%M') }}</p>
+                <p class="mb-1">End Time: {{ booking.end_time.strftime('%H:%M') }}</p>
+                {% if booking.instructor %}
+                    <p class="mb-0">Instructor: {{ booking.instructor.full_name }}</p>
+                {% else %}
+                    <p class="mb-0">Solo Flight</p>
+                {% endif %}
+            </div>
+
+            <div class="alert alert-warning">
+                <h5>Check-out Details:</h5>
+                <p class="mb-1">Aircraft Time: {{ "%.1f"|format(check_out.total_aircraft_time) }} hours</p>
+                <p class="mb-1">Instructor Time: {{ "%.1f"|format(check_out.total_instructor_time) }} hours</p>
+                <p class="mb-1">Aircraft Rate: ${{ "%.2f"|format(booking.aircraft.rate_per_hour) }}/hour</p>
+                {% if booking.instructor %}
+                    <p class="mb-0">Instructor Rate: ${{ "%.2f"|format(booking.instructor.instructor_rate_per_hour) }}/hour</p>
+                {% endif %}
+            </div>
+
+            <div class="alert alert-success">
+                <h5>Invoice Summary:</h5>
+                <p class="mb-1">Aircraft Total: ${{ "%.2f"|format(check_out.total_aircraft_time * booking.aircraft.rate_per_hour) }}</p>
+                {% if booking.instructor %}
+                    <p class="mb-1">Instructor Total: ${{ "%.2f"|format(check_out.total_instructor_time * booking.instructor.instructor_rate_per_hour) }}</p>
+                {% endif %}
+                <p class="mb-0"><strong>Total Amount: ${{ "%.2f"|format(check_out.total_aircraft_time * booking.aircraft.rate_per_hour + (check_out.total_instructor_time * booking.instructor.instructor_rate_per_hour if booking.instructor else 0)) }}</strong></p>
+            </div>
+
+            <form method="POST" action="{{ url_for('booking.generate_invoice', id=booking.id) }}">
+                <button type="submit" class="btn btn-primary">Generate Invoice</button>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %} 

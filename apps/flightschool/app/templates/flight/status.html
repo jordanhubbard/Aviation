@@ -1,0 +1,209 @@
+{% extends "base.html" %}
+
+{% block title %}Flight Status - {{ config.SCHOOL_NAME }}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-12">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{{ url_for('booking.dashboard') }}">Dashboard</a></li>
+                    <li class="breadcrumb-item"><a href="{{ url_for('booking.view_booking', booking_id=booking.id) }}">Flight Details</a></li>
+                    <li class="breadcrumb-item active">Flight Status</li>
+                </ol>
+            </nav>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-8">
+            <!-- Flight Status Card -->
+            <div class="card mb-4">
+                <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Flight in Progress</h5>
+                    <span class="badge bg-warning">In Progress</span>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-4">
+                        <div class="col-md-4">
+                            <img src="{{ booking.aircraft.image_url }}" alt="{{ booking.aircraft.registration }}" class="img-fluid rounded" style="max-height: 150px; object-fit: contain;">
+                        </div>
+                        <div class="col-md-8">
+                            <h5>{{ booking.aircraft.make }} {{ booking.aircraft.model }} ({{ booking.aircraft.registration }})</h5>
+                            <p class="text-muted">{{ booking.start_time.strftime('%A, %B %d, %Y') }}</p>
+                            
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <div>
+                                    <i class="fas fa-clock me-2"></i>
+                                    <span>{{ booking.start_time.strftime('%H:%M') }} - {{ booking.end_time.strftime('%H:%M') }}</span>
+                                </div>
+                                <div>
+                                    <i class="fas fa-user me-2"></i>
+                                    <span>{{ booking.student.full_name }}</span>
+                                </div>
+                            </div>
+                            
+                            {% if booking.instructor %}
+                            <div class="mb-3">
+                                <i class="fas fa-chalkboard-teacher me-2"></i>
+                                <span>Instructor: {{ booking.instructor.full_name }}</span>
+                            </div>
+                            {% endif %}
+                            
+                            {% if booking.notes %}
+                            <div class="mb-3">
+                                <i class="fas fa-sticky-note me-2"></i>
+                                <span>{{ booking.notes }}</span>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <hr>
+                    
+                    <!-- Flight Timer -->
+                    <div class="row mb-4">
+                        <div class="col-12 text-center">
+                            <h4>Flight Time</h4>
+                            <div class="display-4 mb-3" id="flight-timer">00:00:00</div>
+                            <p class="text-muted">
+                                Check-in time: {{ booking.check_in.check_in_time.strftime('%H:%M:%S') }}
+                            </p>
+                        </div>
+                    </div>
+                    
+                    <hr>
+                    
+                    <!-- Check-In Details -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <h5>Check-In Details</h5>
+                            <table class="table">
+                                <tr>
+                                    <th>Hobbs Start:</th>
+                                    <td>{{ booking.check_in.hobbs_start }}</td>
+                                </tr>
+                                <tr>
+                                    <th>Tach Start:</th>
+                                    <td>{{ booking.check_in.tach_start }}</td>
+                                </tr>
+                                <tr>
+                                    <th>Weather:</th>
+                                    <td>
+                                        {% if booking.check_in.weather_conditions_acceptable %}
+                                        <span class="badge bg-success">Acceptable</span>
+                                        {% else %}
+                                        <span class="badge bg-warning">Marginal</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% if booking.check_in.notes %}
+                                <tr>
+                                    <th>Notes:</th>
+                                    <td>{{ booking.check_in.notes }}</td>
+                                </tr>
+                                {% endif %}
+                            </table>
+                        </div>
+                    </div>
+                    
+                    <!-- Action Buttons -->
+                    <div class="d-grid gap-2">
+                        <a href="{{ url_for('flight.check_out', booking_id=booking.id) }}" class="btn btn-primary">End Flight</a>
+                        <a href="{{ url_for('booking.dashboard') }}" class="btn btn-secondary">Back to Dashboard</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4">
+            <!-- Maintenance Records -->
+            <div class="card mb-4">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Recent Maintenance</h5>
+                    <a href="{{ url_for('flight.maintenance_records', aircraft_id=booking.aircraft_id) }}" class="btn btn-sm btn-outline-primary">View All</a>
+                </div>
+                <div class="card-body p-0">
+                    <div class="list-group list-group-flush">
+                        {% if maintenance_records %}
+                            {% for record in maintenance_records %}
+                            <div class="list-group-item">
+                                <div class="d-flex w-100 justify-content-between">
+                                    <h6 class="mb-1">{{ record.maintenance_type_obj.name if record.maintenance_type_obj else 'Unknown' }}</h6>
+                                    <small>{{ record.performed_at.strftime('%Y-%m-%d') }}</small>
+                                </div>
+                                <p class="mb-1 text-truncate">{{ record.notes or 'No notes provided' }}</p>
+                                <small>By: {{ record.performed_by.full_name }}</small>
+                            </div>
+                            {% endfor %}
+                        {% else %}
+                            <div class="list-group-item">
+                                <p class="mb-0 text-muted">No recent maintenance records found.</p>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Open Squawks -->
+            <div class="card">
+                <div class="card-header bg-warning text-dark">
+                    <h5 class="mb-0">Open Squawks</h5>
+                </div>
+                <div class="card-body p-0">
+                    <div class="list-group list-group-flush">
+                        {% if open_squawks %}
+                            {% for squawk in open_squawks %}
+                            <div class="list-group-item">
+                                <div class="d-flex w-100 justify-content-between">
+                                    <h6 class="mb-1">Reported {{ squawk.created_at.strftime('%Y-%m-%d') }}</h6>
+                                    <span class="badge bg-warning text-dark">Open</span>
+                                </div>
+                                <p class="mb-1">{{ squawk.description }}</p>
+                                <small>By: {{ squawk.reported_by.full_name }}</small>
+                            </div>
+                            {% endfor %}
+                        {% else %}
+                            <div class="list-group-item">
+                                <p class="mb-0 text-muted">No open squawks reported.</p>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Flight timer
+        const checkInTime = new Date('{{ booking.check_in.check_in_time.isoformat() }}Z');
+        const timerElement = document.getElementById('flight-timer');
+        
+        function updateTimer() {
+            const now = new Date();
+            const diff = now - checkInTime;
+            
+            // Convert to hours, minutes, seconds
+            const hours = Math.floor(diff / (1000 * 60 * 60));
+            const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+            const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+            
+            // Format with leading zeros
+            const formattedHours = String(hours).padStart(2, '0');
+            const formattedMinutes = String(minutes).padStart(2, '0');
+            const formattedSeconds = String(seconds).padStart(2, '0');
+            
+            timerElement.textContent = `${formattedHours}:${formattedMinutes}:${formattedSeconds}`;
+        }
+        
+        // Update timer immediately and then every second
+        updateTimer();
+        setInterval(updateTimer, 1000);
+    });
+</script>
+{% endblock %}

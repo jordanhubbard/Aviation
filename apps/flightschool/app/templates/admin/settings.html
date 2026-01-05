@@ -1,0 +1,156 @@
+{% extends "base.html" %}
+
+{% block title %}Admin Settings{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>System Settings</h2>
+    
+    <div class="row">
+        <div class="col-md-3">
+            <div class="card mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">Admin Navigation</h5>
+                </div>
+                <div class="card-body">
+                    <div class="nav flex-column nav-pills">
+                        <a href="{{ url_for('admin.dashboard') }}" class="nav-link">
+                            <i class="fas fa-tachometer-alt me-2"></i> Dashboard
+                        </a>
+                        <a href="{{ url_for('admin.users') }}" class="nav-link">
+                            <i class="fas fa-users me-2"></i> Users
+                        </a>
+                        <a href="{{ url_for('admin.instructors') }}" class="nav-link">
+                            <i class="fas fa-chalkboard-teacher me-2"></i> Instructors
+                        </a>
+                        <a href="{{ url_for('admin.aircraft') }}" class="nav-link">
+                            <i class="fas fa-plane me-2"></i> Aircraft
+                        </a>
+                        <a href="{{ url_for('admin.schedule') }}" class="nav-link">
+                            <i class="fas fa-calendar-alt me-2"></i> Schedule
+                        </a>
+                        <a href="{{ url_for('admin.settings') }}" class="nav-link active">
+                            <i class="fas fa-cogs me-2"></i> Settings
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-9">
+            <div class="card mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">General Settings</h5>
+                </div>
+                <div class="card-body">
+                    <form id="generalSettingsForm">
+                        <div class="mb-3">
+                            <label for="schoolName" class="form-label">Flight School Name</label>
+                            <input type="text" class="form-control" id="schoolName" value="Tailwheel Addicts Aviation">
+                        </div>
+                        <div class="mb-3">
+                            <label for="contactEmail" class="form-label">Contact Email</label>
+                            <input type="email" class="form-control" id="contactEmail" value="info@tailwheeladdicts.com">
+                        </div>
+                        <div class="mb-3">
+                            <label for="phoneNumber" class="form-label">Phone Number</label>
+                            <input type="text" class="form-control" id="phoneNumber" value="(555) 123-4567">
+                        </div>
+                        <div class="mb-3">
+                            <label for="address" class="form-label">Address</label>
+                            <textarea class="form-control" id="address" rows="3">123 Airport Road, Hangar 4
+Flightville, CA 90210</textarea>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Save General Settings</button>
+                    </form>
+                </div>
+            </div>
+            
+            <div class="card mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">Booking Settings</h5>
+                </div>
+                <div class="card-body">
+                    <form id="bookingSettingsForm">
+                        <div class="mb-3">
+                            <label for="minBookingNotice" class="form-label">Minimum Notice for Booking (hours)</label>
+                            <input type="number" class="form-control" id="minBookingNotice" value="24">
+                        </div>
+                        <div class="mb-3">
+                            <label for="maxAdvanceBooking" class="form-label">Maximum Advance Booking (days)</label>
+                            <input type="number" class="form-control" id="maxAdvanceBooking" value="30">
+                        </div>
+                        <div class="mb-3">
+                            <label for="defaultLessonDuration" class="form-label">Default Lesson Duration (minutes)</label>
+                            <input type="number" class="form-control" id="defaultLessonDuration" value="120">
+                        </div>
+                        <div class="mb-3">
+                            <label for="cancellationPolicy" class="form-label">Cancellation Policy (hours)</label>
+                            <input type="number" class="form-control" id="cancellationPolicy" value="24">
+                        </div>
+                        <button type="submit" class="btn btn-primary">Save Booking Settings</button>
+                    </form>
+                </div>
+            </div>
+            
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">Calendar Integration</h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-4">
+                        <h6>Google Calendar Integration</h6>
+                        <p>Connect your Google Calendar to synchronize bookings automatically.</p>
+                        
+                        <div class="d-flex align-items-center mb-3">
+                            <span class="me-3">Status:</span>
+                            <span class="badge bg-danger">Not Connected</span>
+                        </div>
+                        
+                        <a href="{{ url_for('admin.calendar_oauth') }}" class="btn btn-primary">
+                            <i class="fab fa-google me-2"></i> Connect Google Calendar
+                        </a>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <h6>Calendar Settings</h6>
+                        <div class="form-check form-switch mb-3">
+                            <input class="form-check-input" type="checkbox" id="autoSyncBookings">
+                            <label class="form-check-label" for="autoSyncBookings">
+                                Automatically sync new bookings to calendar
+                            </label>
+                        </div>
+                        <div class="form-check form-switch mb-3">
+                            <input class="form-check-input" type="checkbox" id="notifyInstructors">
+                            <label class="form-check-label" for="notifyInstructors">
+                                Send calendar invites to instructors
+                            </label>
+                        </div>
+                        <div class="form-check form-switch mb-3">
+                            <input class="form-check-input" type="checkbox" id="notifyStudents">
+                            <label class="form-check-label" for="notifyStudents">
+                                Send calendar invites to students
+                            </label>
+                        </div>
+                        <button class="btn btn-primary">Save Calendar Settings</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.getElementById('generalSettingsForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        // Handle form submission with fetch API
+        alert('General settings saved!');
+    });
+    
+    document.getElementById('bookingSettingsForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        // Handle form submission with fetch API
+        alert('Booking settings saved!');
+    });
+</script>
+{% endblock %}

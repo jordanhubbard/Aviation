@@ -1,0 +1,369 @@
+{% extends "base.html" %}
+
+{% block title %}{{ title }} - {{ config.SCHOOL_NAME }}{% endblock %}
+
+{% block extra_css %}
+<link href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css" rel="stylesheet">
+<style>
+    .weather-widget {
+        background: linear-gradient(135deg, var(--sky-blue), var(--night-blue));
+        color: var(--cloud-white);
+        padding: 1.5rem;
+        border-radius: 8px;
+        margin-bottom: 1.5rem;
+    }
+    
+    .stats-widget {
+        background-color: var(--cloud-white);
+        border-radius: 8px;
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+    
+    .stats-value {
+        font-size: 2rem;
+        font-weight: 700;
+        color: var(--sunset-orange);
+    }
+    
+    .stats-label {
+        color: var(--storm-gray);
+        font-size: 0.9rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    .aircraft-card {
+        position: relative;
+        overflow: hidden;
+        border-radius: 12px;
+        margin-bottom: 1.5rem;
+        background-color: #ffffff;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        border: 1px solid rgba(0, 0, 0, 0.1);
+        transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+    }
+    
+    .aircraft-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    }
+    
+    .aircraft-image {
+        width: 100%;
+        height: 180px;
+        object-fit: cover;
+        background-color: #f8f9fa;
+    }
+    
+    .aircraft-info {
+        padding: 1.25rem;
+        background-color: #ffffff;
+    }
+    
+    .aircraft-status {
+        position: absolute;
+        top: 1rem;
+        right: 1rem;
+        padding: 0.5rem 1rem;
+        border-radius: 20px;
+        font-weight: 600;
+        text-transform: uppercase;
+        font-size: 0.8rem;
+        letter-spacing: 0.5px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+    
+    .aircraft-status.available {
+        background-color: #28a745;
+        color: #ffffff;
+    }
+    
+    .aircraft-status.maintenance {
+        background-color: #ffc107;
+        color: #000000;
+        font-weight: 600;
+    }
+    
+    .aircraft-title {
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: #212529;
+        margin-bottom: 0.25rem;
+    }
+    
+    .aircraft-registration {
+        color: #6c757d;
+        font-size: 0.9rem;
+        margin-bottom: 1rem;
+    }
+    
+    .aircraft-rate {
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: #0d6efd;
+    }
+    
+    .booking-timeline {
+        position: relative;
+        padding-left: 2rem;
+        margin-bottom: 1.5rem;
+    }
+    
+    .booking-timeline::before {
+        content: '';
+        position: absolute;
+        left: 0;
+        top: 0;
+        bottom: 0;
+        width: 2px;
+        background-color: var(--horizon-gray);
+    }
+    
+    .timeline-item {
+        position: relative;
+        padding-bottom: 1.5rem;
+    }
+    
+    .timeline-item::before {
+        content: '';
+        position: absolute;
+        left: -2rem;
+        top: 0.5rem;
+        width: 1rem;
+        height: 1rem;
+        border-radius: 50%;
+        background-color: var(--sunset-orange);
+        border: 2px solid var(--cloud-white);
+    }
+    
+    .timeline-date {
+        font-size: 0.9rem;
+        color: var(--storm-gray);
+        margin-bottom: 0.25rem;
+    }
+    
+    .timeline-content {
+        background-color: var(--cloud-white);
+        padding: 1rem;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <!-- Left Column -->
+        <div class="col-md-8">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2 class="mb-0">{{ title }}</h2>
+                <a href="{{ url_for('booking.create_booking') }}" class="btn btn-accent">
+                    <i class="fas fa-plus me-2"></i>Book New Flight
+                </a>
+            </div>
+            
+            <!-- Upcoming Bookings Timeline -->
+            <div class="card mb-4">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <div>
+                        <h5 class="mb-0">Upcoming Flights</h5>
+                        {% if date_range %}
+                        <small class="text-muted">{{ date_range }}</small>
+                        {% endif %}
+                    </div>
+                    <a href="{{ url_for('booking.list_bookings') }}" class="btn btn-sm btn-outline-primary">View All</a>
+                </div>
+                <div class="card-body">
+                    {% if upcoming_bookings %}
+                        <div class="booking-timeline">
+                            {% for booking in upcoming_bookings %}
+                                <div class="timeline-item">
+                                    <div class="timeline-date">
+                                        <span class="utc-datetime" data-utc="{{ booking.start_time.isoformat() }}" data-format="date"></span>
+                                    </div>
+                                    <div class="timeline-content">
+                                        <div class="d-flex justify-content-between align-items-start">
+                                            <div>
+                                                <h6 class="mb-1">{{ booking.aircraft.display_name }} ({{ booking.aircraft.registration }})</h6>
+                                                <p class="mb-1">
+                                                    <i class="fas fa-clock me-1"></i>
+                                                    <span class="utc-datetime" data-utc="{{ booking.start_time.isoformat() }}" data-format="time"></span> - <span class="utc-datetime" data-utc="{{ booking.end_time.isoformat() }}" data-format="time"></span>
+                                                </p>
+                                                <p class="mb-1">
+                                                    <i class="fas fa-user me-1"></i>
+                                                    {% if booking.instructor %}
+                                                        Instructor: {{ booking.instructor.full_name }}
+                                                    {% else %}
+                                                        Solo Flight
+                                                    {% endif %}
+                                                </p>
+                                            </div>
+                                            <div class="ms-3">
+                                                <span class="badge bg-{{ 'success' if booking.status == 'confirmed' else 'warning' }}">
+                                                    {{ booking.status|title }}
+                                                </span>
+                                                <div class="btn-group mt-2">
+                                                    <a href="{{ url_for('booking.view_booking', booking_id=booking.id) }}" 
+                                                       class="btn btn-sm btn-outline-primary"
+                                                       data-bs-toggle="tooltip"
+                                                       title="View Details">
+                                                        <i class="fas fa-eye"></i>
+                                                    </a>
+                                                    {% if booking.status == 'pending' %}
+                                                        <a href="{{ url_for('booking.cancel_booking', booking_id=booking.id) }}" 
+                                                           class="btn btn-sm btn-outline-danger"
+                                                           onclick="return confirm('Are you sure you want to cancel this booking?')"
+                                                           data-bs-toggle="tooltip"
+                                                           title="Cancel Booking">
+                                                            <i class="fas fa-times"></i>
+                                                        </a>
+                                                    {% endif %}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="text-center py-4">
+                            <i class="fas fa-calendar-alt fa-3x text-muted mb-3"></i>
+                            <p class="mb-0">No upcoming flights scheduled.</p>
+                            <a href="{{ url_for('booking.create_booking') }}" class="btn btn-accent mt-3">Book Your First Flight</a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <!-- Right Column -->
+        <div class="col-md-4">
+            <!-- Weather Widget -->
+            <div class="weather-widget">
+                <div class="d-flex justify-content-between align-items-start mb-3">
+                    <div>
+                        <h5 class="mb-1">Current Weather</h5>
+                        <p class="mb-0">KPAO - Palo Alto Airport</p>
+                    </div>
+                    <i class="fas fa-sun fa-2x"></i>
+                </div>
+                <div class="row g-3">
+                    <div class="col-6">
+                        <div class="weather-info">
+                            <small>Temperature</small>
+                            <h4 class="mb-0">72°F</h4>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="weather-info">
+                            <small>Wind</small>
+                            <h4 class="mb-0">8kt 270°</h4>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="weather-info">
+                            <small>Visibility</small>
+                            <h4 class="mb-0">10SM</h4>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="weather-info">
+                            <small>Ceiling</small>
+                            <h4 class="mb-0">CLR</h4>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Available Aircraft -->
+            <h5 class="mb-3">Available Aircraft</h5>
+            {% if available_aircraft %}
+                {% for aircraft in available_aircraft %}
+                    <div class="aircraft-card">
+                        <img src="{{ aircraft.image_url }}"
+                             class="aircraft-image"
+                             alt="{{ aircraft.make }} {{ aircraft.model }}">
+                        <span class="aircraft-status {{ aircraft.status }}">{{ aircraft.status|title }}</span>
+                        <div class="aircraft-info">
+                            <h6 class="aircraft-title">{{ aircraft.make }} {{ aircraft.model }}</h6>
+                            <p class="aircraft-registration">{{ aircraft.registration }}</p>
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span class="aircraft-rate">${{ "%.2f"|format(aircraft.rate_per_hour) }}/hour</span>
+                                <a href="{{ url_for('booking.create_booking', aircraft_id=aircraft.id) }}" 
+                                   class="btn btn-sm btn-outline-primary">Book Now</a>
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            {% else %}
+                <div class="text-center py-4">
+                    <i class="fas fa-plane-slash fa-3x text-muted mb-3"></i>
+                    <p class="mb-0">No aircraft available at this time.</p>
+                </div>
+            {% endif %}
+            
+            <!-- Flight Stats -->
+            <div class="row g-3 mt-3">
+                <div class="col-6">
+                    <div class="stats-widget text-center">
+                        <div class="stats-value">24.5</div>
+                        <div class="stats-label">Hours Flown</div>
+                    </div>
+                </div>
+                <div class="col-6">
+                    <div class="stats-widget text-center">
+                        <div class="stats-value">12</div>
+                        <div class="stats-label">Flights</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+<script>
+    // Initialize datetime picker
+    flatpickr("#start_time", {
+        enableTime: true,
+        dateFormat: "Y-m-d H:i",
+        minDate: "today",
+        time_24hr: true
+    });
+
+    // Initialize tooltips
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl);
+    });
+
+    // Convert all UTC datetimes to local time in the dashboard
+    function utcToLocalString(utcString, format) {
+        if (!utcString) return '';
+        const d = new Date(utcString);
+        if (format === 'date') {
+            return d.toLocaleString([], { dateStyle: 'medium' });
+        } else if (format === 'time') {
+            return d.toLocaleString([], { timeStyle: 'short' });
+        } else {
+            return d.toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' });
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        // For each element with class 'utc-datetime', convert to local
+        document.querySelectorAll('.utc-datetime').forEach(function(el) {
+            const utc = el.getAttribute('data-utc');
+            const format = el.getAttribute('data-format');
+            if (utc) {
+                el.textContent = utcToLocalString(utc, format);
+            }
+        });
+    });
+</script>
+{% endblock %}
