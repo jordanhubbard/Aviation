@@ -1,0 +1,23 @@
+{
+  "name": "@aviation/shared-sdk",
+  "version": "0.1.0",
+  "description": "Shared SDK for aviation applications with common AI methodology",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "clean": "rm -rf dist"
+  },
+  "keywords": [
+    "aviation",
+    "sdk",
+    "ai"
+  ],
+  "author": "Jordan Hubbard",
+  "license": "MIT",
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "typescript": "^5.0.0"
+  }
+}
