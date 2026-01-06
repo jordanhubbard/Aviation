@@ -1,5 +1,5 @@
 import { BackgroundService, ServiceConfig } from '@aviation/shared-sdk';
-import { SecureKeyStore } from '@aviation/keystore';
+import { createSecretLoader } from '@aviation/keystore';
 
 /**
  * Flight Tracker Service
@@ -9,20 +9,22 @@ import { SecureKeyStore } from '@aviation/keystore';
  * access API keys for flight data providers.
  */
 export class FlightTrackerService extends BackgroundService {
-  private keystore: SecureKeyStore;
+  private secrets = createSecretLoader('flight-tracker');
   private intervalId?: NodeJS.Timeout;
 
-  constructor(config: ServiceConfig, keystore: SecureKeyStore) {
+  constructor(config: ServiceConfig) {
     super(config);
-    this.keystore = keystore;
   }
 
   protected async onStart(): Promise<void> {
-    // Get API key from keystore
-    const apiKey = this.keystore.getSecret('flight-tracker', 'flightapi_key');
+    // Get API keys from keystore
+    const flightApiKey = this.secrets.get('FLIGHT_API_KEY');
+    const flightAwareKey = this.secrets.get('FLIGHTAWARE_API_KEY');
+    const aviationStackKey = this.secrets.get('AVIATIONSTACK_API_KEY');
     
-    if (!apiKey) {
-      console.warn('No API key found for flight-tracker. Some features may be limited.');
+    if (!flightApiKey && !flightAwareKey && !aviationStackKey) {
+      console.warn('No flight API keys found. Some features may be limited.');
+      console.warn('Add keys with: npm run keystore set flight-tracker FLIGHT_API_KEY "your-key"');
     }
 
     // Start polling for flight data

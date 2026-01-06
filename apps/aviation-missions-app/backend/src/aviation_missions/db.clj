@@ -36,10 +36,29 @@
       (throw (ex-info "Invalid mission category" {:category category}))))
   true)
 
+(defn- get-database-url
+  "Get database URL from keystore or environment variable"
+  []
+  (try
+    ;; Try to get from keystore using npm CLI
+    (let [result (clojure.java.shell/sh "npm" "run" "keystore" "get" "aviation-missions" "DATABASE_URL"
+                                        :dir (or (System/getenv "KEYSTORE_ROOT") "../.."))]
+      (if (zero? (:exit result))
+        ;; Parse output - value is on the last line
+        (let [lines (clojure.string/split-lines (:out result))
+              value (last lines)]
+          (when (and value (not (clojure.string/blank? value)))
+            (clojure.string/trim value)))
+        nil))
+    (catch Exception _e
+      nil)))
+
 (def db-spec
   {:classname "org.h2.Driver"
    :subprotocol "h2"
-   :subname (or (System/getenv "DATABASE_URL") "./data/aviation-missions")
+   :subname (or (get-database-url)
+                (System/getenv "DATABASE_URL")
+                "./data/aviation-missions")
    :user "sa"
    :password ""})
 

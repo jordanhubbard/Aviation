@@ -11,7 +11,10 @@
     "build": "npm run build --workspaces --if-present",
     "dev": "npm run dev --workspaces --if-present",
     "test": "npm run test --workspaces --if-present",
-    "clean": "npm run clean --workspaces --if-present"
+    "clean": "npm run clean --workspaces --if-present",
+    "secrets:migrate": "ts-node scripts/migrate-secrets.ts",
+    "keystore": "ts-node scripts/keystore-cli.ts",
+    "keystore:list": "ts-node scripts/keystore-cli.ts services"
   },
   "keywords": [
     "aviation",
@@ -20,7 +23,8 @@
   "author": "Jordan Hubbard",
   "license": "MIT",
   "devDependencies": {
-    "@types/node": "^25.0.3",
+    "@types/node": "^20.0.0",
+    "ts-node": "^10.9.2",
     "typescript": "^5.0.0"
   }
 }

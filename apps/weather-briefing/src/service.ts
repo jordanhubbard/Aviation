@@ -1,5 +1,5 @@
 import { BackgroundService, ServiceConfig, AIService } from '@aviation/shared-sdk';
-import { SecureKeyStore } from '@aviation/keystore';
+import { createSecretLoader } from '@aviation/keystore';
 
 /**
  * Weather Briefing Service
@@ -9,25 +9,28 @@ import { SecureKeyStore } from '@aviation/keystore';
  * API keys for weather data providers and AI services.
  */
 export class WeatherBriefingService extends BackgroundService {
-  private keystore: SecureKeyStore;
+  private secrets = createSecretLoader('weather-briefing');
   private intervalId?: NodeJS.Timeout;
 
-  constructor(config: ServiceConfig, keystore: SecureKeyStore) {
+  constructor(config: ServiceConfig) {
     super(config);
-    this.keystore = keystore;
   }
 
   protected async onStart(): Promise<void> {
     // Get API keys from keystore
-    const weatherApiKey = this.keystore.getSecret('weather-briefing', 'weather_api_key');
-    const aiApiKey = this.keystore.getSecret('weather-briefing', 'ai_api_key');
+    const weatherApiKey = this.secrets.get('WEATHER_API_KEY');
+    const aviationWeatherKey = this.secrets.get('AVIATION_WEATHER_API_KEY');
+    const aiApiKey = this.secrets.get('AI_API_KEY');
+    const openaiKey = this.secrets.get('OPENAI_API_KEY');
     
-    if (!weatherApiKey) {
+    if (!weatherApiKey && !aviationWeatherKey) {
       console.warn('No weather API key found. Some features may be limited.');
+      console.warn('Add keys with: npm run keystore set weather-briefing WEATHER_API_KEY "your-key"');
     }
 
-    if (!aiApiKey) {
+    if (!aiApiKey && !openaiKey) {
       console.warn('No AI API key found. AI analysis features will be disabled.');
+      console.warn('Add keys with: npm run keystore set weather-briefing OPENAI_API_KEY "your-key"');
     }
 
     // Start periodic weather updates
