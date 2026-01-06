@@ -1,0 +1,277 @@
+# Dependabot configuration for Aviation monorepo
+# This file configures automated dependency updates across all applications and packages
+# See: https://docs.github.com/en/code-security/dependabot/dependabot-version-updates/configuration-options-for-the-dependabot.yml-file
+
+version: 2
+updates:
+  # ============================================================================
+  # GitHub Actions
+  # ============================================================================
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    commit-message:
+      prefix: "ci"
+      include: "scope"
+    labels:
+      - "dependencies"
+      - "github-actions"
+    open-pull-requests-limit: 5
+
+  # ============================================================================
+  # Root Monorepo npm dependencies
+  # ============================================================================
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    commit-message:
+      prefix: "chore"
+      include: "scope"
+    labels:
+      - "dependencies"
+      - "npm"
+      - "monorepo"
+    open-pull-requests-limit: 10
+    groups:
+      # Group all non-major updates together to reduce PR noise
+      development-dependencies:
+        dependency-type: "development"
+        update-types:
+          - "minor"
+          - "patch"
+
+  # ============================================================================
+  # Shared Packages
+  # ============================================================================
+  - package-ecosystem: "npm"
+    directory: "/packages/keystore"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    commit-message:
+      prefix: "fix"
+      prefix-development: "chore"
+      include: "scope"
+    labels:
+      - "dependencies"
+      - "npm"
+      - "keystore"
+    open-pull-requests-limit: 5
+
+  - package-ecosystem: "npm"
+    directory: "/packages/shared-sdk"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    commit-message:
+      prefix: "fix"
+      prefix-development: "chore"
+      include: "scope"
+    labels:
+      - "dependencies"
+      - "npm"
+      - "shared-sdk"
+    open-pull-requests-limit: 5
+
+  - package-ecosystem: "npm"
+    directory: "/packages/ui-framework"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    commit-message:
+      prefix: "fix"
+      prefix-development: "chore"
+      include: "scope"
+    labels:
+      - "dependencies"
+      - "npm"
+      - "ui-framework"
+    open-pull-requests-limit: 5
+
+  # ============================================================================
+  # Aviation Missions App (Clojure + JavaScript)
+  # ============================================================================
+  - package-ecosystem: "maven"
+    directory: "/apps/aviation-missions-app/backend"
+    schedule:
+      interval: "weekly"
+      day: "tuesday"
+    commit-message:
+      prefix: "fix"
+      include: "scope"
+    labels:
+      - "dependencies"
+      - "maven"
+      - "aviation-missions-app"
+    open-pull-requests-limit: 5
+
+  - package-ecosystem: "npm"
+    directory: "/apps/aviation-missions-app/frontend"
+    schedule:
+      interval: "weekly"
+      day: "tuesday"
+    commit-message:
+      prefix: "fix"
+      prefix-development: "chore"
+      include: "scope"
+    labels:
+      - "dependencies"
+      - "npm"
+      - "aviation-missions-app"
+    open-pull-requests-limit: 5
+
+  # ============================================================================
+  # ForeFlight Dashboard (Python + React)
+  # ============================================================================
+  - package-ecosystem: "pip"
+    directory: "/apps/foreflight-dashboard"
+    schedule:
+      interval: "weekly"
+      day: "wednesday"
+    commit-message:
+      prefix: "fix"
+      prefix-development: "chore"
+      include: "scope"
+    labels:
+      - "dependencies"
+      - "python"
+      - "foreflight-dashboard"
+    open-pull-requests-limit: 5
+
+  - package-ecosystem: "npm"
+    directory: "/apps/foreflight-dashboard/frontend"
+    schedule:
+      interval: "weekly"
+      day: "wednesday"
+    commit-message:
+      prefix: "fix"
+      prefix-development: "chore"
+      include: "scope"
+    labels:
+      - "dependencies"
+      - "npm"
+      - "foreflight-dashboard"
+    open-pull-requests-limit: 5
+    groups:
+      # Group MUI (Material-UI) updates together
+      mui:
+        patterns:
+          - "@mui/*"
+        update-types:
+          - "minor"
+          - "patch"
+      # Group vitest updates together
+      vitest:
+        patterns:
+          - "vitest"
+          - "@vitest/*"
+        update-types:
+          - "minor"
+          - "patch"
+
+  # ============================================================================
+  # Flight School (Python)
+  # ============================================================================
+  - package-ecosystem: "pip"
+    directory: "/apps/flightschool"
+    schedule:
+      interval: "weekly"
+      day: "thursday"
+    commit-message:
+      prefix: "fix"
+      prefix-development: "chore"
+      include: "scope"
+    labels:
+      - "dependencies"
+      - "python"
+      - "flightschool"
+    open-pull-requests-limit: 5
+    groups:
+      # Group Flask ecosystem updates together
+      flask:
+        patterns:
+          - "Flask"
+          - "Flask-*"
+        update-types:
+          - "minor"
+          - "patch"
+      # Group Google API updates together
+      google-apis:
+        patterns:
+          - "google-*"
+        update-types:
+          - "minor"
+          - "patch"
+
+  # ============================================================================
+  # Flight Planner (Python + TypeScript)
+  # ============================================================================
+  - package-ecosystem: "pip"
+    directory: "/apps/flightplanner"
+    schedule:
+      interval: "weekly"
+      day: "friday"
+    commit-message:
+      prefix: "fix"
+      prefix-development: "chore"
+      include: "scope"
+    labels:
+      - "dependencies"
+      - "python"
+      - "flightplanner"
+    open-pull-requests-limit: 5
+
+  - package-ecosystem: "npm"
+    directory: "/apps/flightplanner/frontend"
+    schedule:
+      interval: "weekly"
+      day: "friday"
+    commit-message:
+      prefix: "fix"
+      prefix-development: "chore"
+      include: "scope"
+    labels:
+      - "dependencies"
+      - "npm"
+      - "flightplanner"
+    open-pull-requests-limit: 5
+
+  # ============================================================================
+  # Flight Tracker (TypeScript Service)
+  # ============================================================================
+  - package-ecosystem: "npm"
+    directory: "/apps/flight-tracker"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    commit-message:
+      prefix: "fix"
+      prefix-development: "chore"
+      include: "scope"
+    labels:
+      - "dependencies"
+      - "npm"
+      - "flight-tracker"
+    open-pull-requests-limit: 5
+
+  # ============================================================================
+  # Weather Briefing (TypeScript Service)
+  # ============================================================================
+  - package-ecosystem: "npm"
+    directory: "/apps/weather-briefing"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    commit-message:
+      prefix: "fix"
+      prefix-development: "chore"
+      include: "scope"
+    labels:
+      - "dependencies"
+      - "npm"
+      - "weather-briefing"
+    open-pull-requests-limit: 5
