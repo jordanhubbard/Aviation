@@ -1,5 +1,4 @@
 import { FlightTrackerService } from './service';
-import { SecureKeyStore } from '@aviation/keystore';
 
 /**
  * Flight Tracker Application Entry Point
@@ -7,21 +6,13 @@ import { SecureKeyStore } from '@aviation/keystore';
 async function main() {
   console.log('Starting Flight Tracker Application...');
 
-  // Initialize keystore
-  const keystore = new SecureKeyStore();
-
-  // Example: Set API key (in production, this would be done through a secure setup process)
-  // keystore.setSecret('flight-tracker', 'flightapi_key', 'your-api-key-here');
-
   // Initialize service
-  const service = new FlightTrackerService(
-    {
-      name: 'flight-tracker',
-      enabled: true,
-      autoStart: true,
-    },
-    keystore
-  );
+  // Note: Service uses createSecretLoader internally for keystore access
+  const service = new FlightTrackerService({
+    name: 'flight-tracker',
+    enabled: true,
+    autoStart: true,
+  });
 
   // Start the service
   await service.start();
