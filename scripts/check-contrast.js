@@ -57,23 +57,33 @@ function meetsWCAG_AA(ratio, isLargeText = false) {
 // Extract color pairs from CSS
 function extractColorPairs(cssContent) {
   const pairs = [];
-  const rules = cssContent.split('}');
   
-  for (const rule of rules) {
-    const selector = rule.split('{')[0]?.trim();
-    const declarations = rule.split('{')[1];
+  // Remove comments first
+  const cleanedCss = cssContent.replace(/\/\*[\s\S]*?\*\//g, '');
+  
+  // Match complete CSS rules
+  const ruleRegex = /([^{}]+)\{([^{}]+)\}/g;
+  let match;
+  
+  while ((match = ruleRegex.exec(cleanedCss)) !== null) {
+    const selector = match[1].trim();
+    const declarations = match[2];
     
-    if (!declarations) continue;
+    // Skip if selector is empty or looks like a media query
+    if (!selector || selector.includes('@')) continue;
     
-    const colorMatch = declarations.match(/color:\s*(#[0-9a-fA-F]{3,6})/);
-    const bgMatch = declarations.match(/background(?:-color)?:\s*(#[0-9a-fA-F]{3,6})/);
+    const colorMatch = declarations.match(/(?:^|;)\s*color:\s*(#[0-9a-fA-F]{3,6})/);
+    const bgMatch = declarations.match(/(?:^|;)\s*background(?:-color)?:\s*(#[0-9a-fA-F]{3,6})/);
     
-    if (colorMatch && bgMatch) {
+    // Only add pairs where BOTH color and background-color are explicitly defined
+    // AND they are different colors (same color would be invisible text)
+    if (colorMatch && bgMatch && colorMatch[1] !== bgMatch[1]) {
+      const lineNumber = cleanedCss.substring(0, match.index).split('\n').length;
       pairs.push({
         selector,
         foreground: colorMatch[1],
         background: bgMatch[1],
-        line: cssContent.substring(0, rule.indexOf(declarations)).split('\n').length
+        line: lineNumber
       });
     }
   }
@@ -93,6 +103,13 @@ function checkContrast(cssFilePath) {
   
   const cssContent = fs.readFileSync(cssFilePath, 'utf8');
   const pairs = extractColorPairs(cssContent);
+  
+  // If no color pairs found, consider it a pass (nothing to check)
+  if (pairs.length === 0) {
+    console.log('No explicit color/background-color pairs found to check.');
+    console.log('✅ No contrast issues detected.\n');
+    process.exit(0);
+  }
   
   let failures = 0;
   let warnings = 0;

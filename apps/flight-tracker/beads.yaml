@@ -1,0 +1,49 @@
+# Beads Configuration for Flight Tracker
+# 
+# This file defines the independent work units (beads) that compose the
+# Flight Tracker application. Beads enable parallel development,
+# testing, and execution of different application components.
+
+version: "1.0"
+
+beads:
+  # Core Service
+  - name: tracker-service
+    description: Flight tracking service for real-time flight data
+    path: src/service.ts
+    dependencies: []
+    parallel: true
+    
+  # Service Entry Point
+  - name: service-index
+    description: Service entry point and initialization
+    path: src/index.ts
+    dependencies: [tracker-service]
+    parallel: false
+
+# Bead execution groups for parallel processing
+execution_groups:
+  # Group 1: Core service
+  - name: core
+    beads: [tracker-service]
+    
+  # Group 2: Integration
+  - name: integration
+    beads: [service-index]
+    depends_on: [core]
+
+# Development workflow
+workflows:
+  # Build workflow
+  - name: build
+    description: Build the service
+    steps:
+      - group: core
+        parallel: false
+      - group: integration
+        parallel: false
+
+# CI/CD integration
+ci:
+  test_strategy: sequential
+  max_parallel: 2

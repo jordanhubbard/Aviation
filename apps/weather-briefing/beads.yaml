@@ -1,0 +1,49 @@
+# Beads Configuration for Weather Briefing Service
+# 
+# This file defines the independent work units (beads) that compose the
+# Weather Briefing service. Beads enable parallel development,
+# testing, and execution of different application components.
+
+version: "1.0"
+
+beads:
+  # Core Service
+  - name: weather-service
+    description: Weather briefing service with AI-powered analysis
+    path: src/service.ts
+    dependencies: []
+    parallel: true
+    
+  # Service Entry Point
+  - name: service-index
+    description: Service entry point and initialization
+    path: src/index.ts
+    dependencies: [weather-service]
+    parallel: false
+
+# Bead execution groups for parallel processing
+execution_groups:
+  # Group 1: Core service
+  - name: core
+    beads: [weather-service]
+    
+  # Group 2: Integration
+  - name: integration
+    beads: [service-index]
+    depends_on: [core]
+
+# Development workflow
+workflows:
+  # Build workflow
+  - name: build
+    description: Build the service
+    steps:
+      - group: core
+        parallel: false
+      - group: integration
+        parallel: false
+
+# CI/CD integration
+ci:
+  test_strategy: sequential
+  max_parallel: 2
