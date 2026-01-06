@@ -20,7 +20,7 @@ bcrypt==4.0.1
 email-validator==2.1.0
 
 # HTTP client
-requests==2.31.0
+requests==2.32.4
 
 # Rate limiting
 slowapi==0.1.9
