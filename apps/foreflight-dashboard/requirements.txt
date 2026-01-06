@@ -5,7 +5,7 @@ python-multipart==0.0.7
 python-dotenv==1.0.1
 
 # Database
-sqlalchemy==2.0.25
+sqlalchemy==2.0.45
 
 # Data processing and validation
 pandas==2.2.1
