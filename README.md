@@ -66,9 +66,40 @@ npm run keystore:init
 
 ## 🛠️ Building and Running Applications
 
-### Quick Commands
+### Quick Start with Makefile
 
-Each application can be built and run independently:
+The repository includes a top-level Makefile for common tasks:
+
+```bash
+# Build everything
+make build
+
+# Run all tests
+make test
+
+# Clean all build artifacts
+make clean
+
+# Show all available targets
+make help
+```
+
+**Component-specific targets:**
+```bash
+make build-node      # Build Node.js/TypeScript apps
+make build-python    # Build Python apps
+make build-clojure   # Build Clojure apps
+make test-node       # Test Node.js apps
+make test-python     # Test Python apps
+make test-clojure    # Test Clojure apps
+make clean-node      # Clean Node.js artifacts
+make clean-python    # Clean Python artifacts
+make clean-clojure   # Clean Clojure artifacts
+```
+
+### Building Individual Applications
+
+Each application can also be built and run independently:
 
 #### Aviation Missions App (Clojure + JavaScript)
 ```bash
