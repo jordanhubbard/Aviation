@@ -20,9 +20,9 @@ fi
 for css_file in $CSS_FILES; do
     echo "Checking: $css_file"
     if node scripts/check-contrast.js "$css_file"; then
-        ((SUCCESS_COUNT++))
+        SUCCESS_COUNT=$((SUCCESS_COUNT + 1))
     else
-        ((FAIL_COUNT++))
+        FAIL_COUNT=$((FAIL_COUNT + 1))
     fi
     echo ""
 done
