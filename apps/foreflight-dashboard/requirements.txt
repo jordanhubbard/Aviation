@@ -11,7 +11,7 @@ sqlalchemy==2.0.25
 pandas==2.2.1
 pydantic==2.6.3
 python-dateutil==2.8.2
-pytz==2024.1
+pytz==2025.2
 
 # Authentication and security
 PyJWT==2.8.0
