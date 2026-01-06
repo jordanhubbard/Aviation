@@ -21,9 +21,20 @@ def utcnow():
 def get_local_timezone():
     """
     Get the local timezone.
-    First tries to use tzlocal to get the system timezone,
+    Checks environment variable FLIGHTSCHOOL_TIMEZONE first,
+    then tries to use tzlocal to get the system timezone,
     falls back to DEFAULT_LOCAL_TIMEZONE if that fails.
     """
+    import os
+    
+    # Check for environment variable first (useful for testing and configuration)
+    env_tz = os.environ.get('FLIGHTSCHOOL_TIMEZONE')
+    if env_tz:
+        try:
+            return pytz.timezone(env_tz)
+        except pytz.exceptions.UnknownTimeZoneError:
+            pass  # Fall through to other methods
+    
     try:
         import tzlocal
         return pytz.timezone(tzlocal.get_localzone().key)

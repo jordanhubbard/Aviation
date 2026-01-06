@@ -2,6 +2,10 @@ import os
 import tempfile
 import pytest
 from datetime import datetime, timedelta, timezone
+
+# Force Pacific/Auckland timezone for all tests
+os.environ['FLIGHTSCHOOL_TIMEZONE'] = 'Pacific/Auckland'
+
 from app import create_app, db
 from app.models import (
     User, Aircraft, Booking, CheckIn, CheckOut, Invoice,
