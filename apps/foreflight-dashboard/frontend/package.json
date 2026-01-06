@@ -30,7 +30,7 @@
     "react-hot-toast": "^2.4.1",
     "react-query": "^3.39.3",
     "react-router-dom": "^6.20.1",
-    "recharts": "^2.8.0",
+    "recharts": "^3.6.0",
     "yup": "^1.4.0",
     "zustand": "^4.4.7"
   },
