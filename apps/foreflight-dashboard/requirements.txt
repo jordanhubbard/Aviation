@@ -14,7 +14,7 @@ python-dateutil==2.8.2
 pytz==2025.2
 
 # Authentication and security
-PyJWT==2.8.0
+PyJWT==2.10.1
 passlib[bcrypt]==1.7.4
 bcrypt==4.0.1
 email-validator==2.1.0
