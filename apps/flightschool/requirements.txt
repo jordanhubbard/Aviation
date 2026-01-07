@@ -4,15 +4,15 @@
 # - SQLAlchemy 1.4.51 is used to avoid breaking changes in 2.x
 # - Future upgrades should be done with caution and proper testing
 
-# Core Framework  
-Flask==3.0.3
+# Core Framework
+Flask==2.3.3
 Flask-SQLAlchemy==3.1.1
 Flask-Login==0.6.3
 Flask-WTF==1.2.2
 Flask-Migrate==4.1.0
 Flask-Mail==0.10.0
 python-dotenv==1.0.1
-Werkzeug==3.0.4
+Werkzeug==2.3.8
 SQLAlchemy>=2.0.16
 WTForms==3.1.2
 
