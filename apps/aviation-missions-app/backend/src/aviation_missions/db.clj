@@ -2,7 +2,9 @@
   (:require [clojure.java.jdbc :as jdbc]
             [clj-time.core :as time]
             [clj-time.coerce :as coerce]
-            [clojure.tools.logging :as log]))
+            [clojure.tools.logging :as log]
+            [clojure.java.shell :as shell]
+            [clojure.string :as str]))
 
 (def ^:private default-pilot-experience "Beginner (< 100 hours)")
 
@@ -41,14 +43,14 @@
   []
   (try
     ;; Try to get from keystore using npm CLI
-    (let [result (clojure.java.shell/sh "npm" "run" "keystore" "get" "aviation-missions" "DATABASE_URL"
-                                        :dir (or (System/getenv "KEYSTORE_ROOT") "../.."))]
+    (let [result (shell/sh "npm" "run" "keystore" "get" "aviation-missions" "DATABASE_URL"
+                           :dir (or (System/getenv "KEYSTORE_ROOT") "../.."))]
       (if (zero? (:exit result))
         ;; Parse output - value is on the last line
-        (let [lines (clojure.string/split-lines (:out result))
+        (let [lines (str/split-lines (:out result))
               value (last lines)]
-          (when (and value (not (clojure.string/blank? value)))
-            (clojure.string/trim value)))
+          (when (and value (not (str/blank? value)))
+            (str/trim value)))
         nil))
     (catch Exception _e
       nil)))
