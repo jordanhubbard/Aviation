@@ -4,8 +4,8 @@
 # - SQLAlchemy 1.4.51 is used to avoid breaking changes in 2.x
 # - Future upgrades should be done with caution and proper testing
 
-# Core Framework
-Flask==3.1.2
+# Core Framework  
+Flask==3.0.3
 Flask-SQLAlchemy==3.1.1
 Flask-Login==0.6.3
 Flask-WTF==1.2.2
