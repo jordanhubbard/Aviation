@@ -100,13 +100,13 @@ const RouteLegsTable: React.FC<Props> = ({ plan }) => {
             field: 'ete_minutes',
             headerName: 'ETE',
             width: 90,
-            valueFormatter: (p) => fmtMinutes(p.value as number),
+            valueFormatter: (value) => fmtMinutes(value as number),
           },
           {
             field: 'elapsed_minutes',
             headerName: 'Elapsed',
             width: 110,
-            valueFormatter: (p) => fmtMinutes(p.value as number),
+            valueFormatter: (value) => fmtMinutes(value as number),
           },
         ]
 
@@ -128,13 +128,13 @@ const RouteLegsTable: React.FC<Props> = ({ plan }) => {
           field: 'depart_time_utc',
           headerName: 'Depart (UTC)',
           width: 140,
-          valueFormatter: (p) => formatUtcMinute(p.value as string),
+          valueFormatter: (value) => formatUtcMinute(value as string),
         },
         {
           field: 'arrive_time_utc',
           headerName: 'Arrive (UTC)',
           width: 140,
-          valueFormatter: (p) => formatUtcMinute(p.value as string),
+          valueFormatter: (value) => formatUtcMinute(value as string),
         },
         { field: 'distance_nm', headerName: 'Distance (nm)', width: 130 },
         { field: 'groundspeed_kt', headerName: 'GS (kt)', width: 90 },
@@ -142,14 +142,14 @@ const RouteLegsTable: React.FC<Props> = ({ plan }) => {
           field: 'ete_minutes',
           headerName: 'ETE',
           width: 90,
-          valueFormatter: (p) => fmtMinutes(p.value as number),
+          valueFormatter: (value) => fmtMinutes(value as number),
         },
         {
           field: 'refuel_minutes',
           headerName: 'Refuel',
           width: 90,
-          valueFormatter: (p) => {
-            const n = p.value as number
+          valueFormatter: (value) => {
+            const n = value as number
             if (!Number.isFinite(n) || n <= 0) return '—'
             return `+${Math.round(n)}m`
           },
@@ -158,7 +158,7 @@ const RouteLegsTable: React.FC<Props> = ({ plan }) => {
           field: 'elapsed_minutes',
           headerName: 'Elapsed',
           width: 110,
-          valueFormatter: (p) => fmtMinutes(p.value as number),
+          valueFormatter: (value) => fmtMinutes(value as number),
         },
       ]
 
@@ -171,13 +171,13 @@ const RouteLegsTable: React.FC<Props> = ({ plan }) => {
           field: 'depart_time_utc',
           headerName: 'Depart (UTC)',
           width: 140,
-          valueFormatter: (p) => formatUtcMinute(p.value as string),
+          valueFormatter: (value) => formatUtcMinute(value as string),
         },
         {
           field: 'arrive_time_utc',
           headerName: 'Arrive (UTC)',
           width: 140,
-          valueFormatter: (p) => formatUtcMinute(p.value as string),
+          valueFormatter: (value) => formatUtcMinute(value as string),
         },
         { field: 'distance_nm', headerName: 'Distance (nm)', width: 130 },
         { field: 'vfr_altitude', headerName: 'Alt (ft)', width: 110 },
@@ -186,14 +186,14 @@ const RouteLegsTable: React.FC<Props> = ({ plan }) => {
           field: 'ete_minutes',
           headerName: 'ETE',
           width: 90,
-          valueFormatter: (p) => fmtMinutes(p.value as number),
+          valueFormatter: (value) => fmtMinutes(value as number),
         },
         {
           field: 'refuel_minutes',
           headerName: 'Refuel',
           width: 90,
-          valueFormatter: (p) => {
-            const n = p.value as number
+          valueFormatter: (value) => {
+            const n = value as number
             if (!Number.isFinite(n) || n <= 0) return '—'
             return `+${Math.round(n)}m`
           },
@@ -202,7 +202,7 @@ const RouteLegsTable: React.FC<Props> = ({ plan }) => {
           field: 'elapsed_minutes',
           headerName: 'Elapsed',
           width: 110,
-          valueFormatter: (p) => fmtMinutes(p.value as number),
+          valueFormatter: (value) => fmtMinutes(value as number),
         },
       ]
     }
