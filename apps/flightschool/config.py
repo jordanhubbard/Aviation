@@ -7,7 +7,7 @@ load_dotenv(os.path.join(basedir, '.env'))
 
 # Import keystore secrets
 try:
-    from secrets import (
+    from app_secrets import (
         get_secret_key,
         get_database_url,
         get_csrf_secret_key,
