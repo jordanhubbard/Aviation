@@ -18,7 +18,7 @@
     "@hookform/resolvers": "^5.2.2",
     "@mui/icons-material": "^5.15.0",
     "@mui/material": "^5.15.0",
-    "@mui/x-charts": "^6.18.2",
+    "@mui/x-charts": "^8.23.0",
     "@mui/x-data-grid": "^6.18.2",
     "@mui/x-date-pickers": "^6.18.2",
     "axios": "^1.6.2",
