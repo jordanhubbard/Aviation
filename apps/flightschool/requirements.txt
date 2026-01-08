@@ -12,7 +12,7 @@ Flask-WTF==1.2.2
 Flask-Migrate==4.1.0
 Flask-Mail==0.10.0
 python-dotenv==1.0.1
-Werkzeug==2.3.8
+Werkzeug==3.1.5
 SQLAlchemy>=2.0.16
 WTForms==3.1.2
 
