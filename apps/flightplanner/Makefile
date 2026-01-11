@@ -1,4 +1,4 @@
-.PHONY: help \
+.PHONY: help start stop \
 	dev-up dev-down dev-logs dev-build \
 	prod-up prod-down prod-logs prod-build \
 	backend-test backend-format backend-format-check backend-lint backend-typecheck \
@@ -7,11 +7,17 @@
 
 help:
 	@echo "Targets:"
+	@echo "  start/stop                                Quick start/stop (aliases for dev-up/dev-down)"
 	@echo "  dev-up/dev-down/dev-logs/dev-build        Run local dev via docker-compose.yml"
 	@echo "  prod-up/prod-down/prod-logs/prod-build    Run prod via docker-compose.prod.yml"
 	@echo "  backend-test/backend-format/backend-lint/backend-typecheck"
 	@echo "  frontend-install/frontend-typecheck/frontend-lint/frontend-test/frontend-e2e"
 	@echo "  clean"
+
+# Quick aliases
+start: dev-up
+
+stop: dev-down
 
 dev-up:
 	docker compose up

@@ -1,18 +1,31 @@
 # Aviation Monorepo Makefile
-# Provides unified build, clean, and test targets for all applications and packages
+# Provides unified build, clean, test, and run targets for all applications and packages
 
 .PHONY: help build clean test
 .PHONY: build-node build-python build-clojure
 .PHONY: clean-node clean-python clean-clojure
 .PHONY: test-node test-python test-clojure
+.PHONY: run-aviation-missions run-flight-planner run-flight-school
+.PHONY: run-foreflight-dashboard run-flight-tracker run-weather-briefing
+.PHONY: stop-all
 
 # Default target
 help:
 	@echo "Aviation Monorepo - Available targets:"
 	@echo ""
+	@echo "Build & Test:"
 	@echo "  make build       - Build all applications and packages"
 	@echo "  make clean       - Clean all build artifacts and dependencies"
 	@echo "  make test        - Run all tests"
+	@echo ""
+	@echo "Run Applications (build + start):"
+	@echo "  make run-aviation-missions    - Run Aviation Missions App (port 8080)"
+	@echo "  make run-flight-planner       - Run Flight Planner (ports 8000+5173)"
+	@echo "  make run-flight-school        - Run Flight School demo (port 5001)"
+	@echo "  make run-foreflight-dashboard - Run ForeFlight Dashboard (port 5051)"
+	@echo "  make run-flight-tracker       - Run Flight Tracker (port 3001)"
+	@echo "  make run-weather-briefing     - Run Weather Briefing (port 3002)"
+	@echo "  make stop-all                 - Stop all running applications"
 	@echo ""
 	@echo "Component targets:"
 	@echo "  make build-node      - Build Node.js/TypeScript applications"
@@ -167,3 +180,66 @@ format:
 	@echo "✨ Formatting code..."
 	npm run format --workspaces --if-present
 	@echo "✅ Code formatting complete"
+
+#
+# RUN TARGETS - Start individual applications
+#
+
+run-aviation-missions:
+	@echo "🚀 Starting Aviation Missions App..."
+	@echo "This will build and start the Clojure backend + JavaScript frontend"
+	@echo ""
+	cd apps/aviation-missions-app && $(MAKE) start
+
+run-flight-planner:
+	@echo "🚀 Starting Flight Planner..."
+	@echo "This will start the Python backend + React frontend via Docker"
+	@echo ""
+	cd apps/flightplanner && $(MAKE) dev-up
+
+run-flight-school:
+	@echo "🚀 Starting Flight School (demo mode with test data)..."
+	@echo "This will create virtual environment, install dependencies, and start the Flask server"
+	@echo ""
+	cd apps/flightschool && $(MAKE) demo
+
+run-foreflight-dashboard:
+	@echo "🚀 Starting ForeFlight Dashboard..."
+	@echo "This will build and start the FastAPI backend + React frontend via Docker"
+	@echo ""
+	cd apps/foreflight-dashboard && $(MAKE) start
+
+run-flight-tracker:
+	@echo "🚀 Starting Flight Tracker..."
+	@echo "This will install dependencies, build, and start the TypeScript service"
+	@echo ""
+	cd apps/flight-tracker && $(MAKE) start
+
+run-weather-briefing:
+	@echo "🚀 Starting Weather Briefing..."
+	@echo "This will install dependencies, build, and start the TypeScript service"
+	@echo ""
+	cd apps/weather-briefing && $(MAKE) start
+
+stop-all:
+	@echo "🛑 Stopping all applications..."
+	@echo ""
+	@echo "Stopping Aviation Missions App..."
+	@cd apps/aviation-missions-app && $(MAKE) stop 2>/dev/null || true
+	@echo ""
+	@echo "Stopping Flight Planner..."
+	@cd apps/flightplanner && $(MAKE) dev-down 2>/dev/null || true
+	@echo ""
+	@echo "Stopping Flight School..."
+	@pkill -f "flask.*flightschool" 2>/dev/null || true
+	@echo ""
+	@echo "Stopping ForeFlight Dashboard..."
+	@cd apps/foreflight-dashboard && $(MAKE) stop 2>/dev/null || true
+	@echo ""
+	@echo "Stopping Flight Tracker..."
+	@cd apps/flight-tracker && $(MAKE) stop 2>/dev/null || true
+	@echo ""
+	@echo "Stopping Weather Briefing..."
+	@cd apps/weather-briefing && $(MAKE) stop 2>/dev/null || true
+	@echo ""
+	@echo "✅ All applications stopped!"
