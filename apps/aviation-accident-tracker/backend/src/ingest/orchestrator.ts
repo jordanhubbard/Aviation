@@ -3,13 +3,13 @@
  * Coordinates source adapters, handles dedupe/merge, and persists events
  */
 
-import type { EventRecord } from '../types';
-import type { SourceAdapter } from './adapter';
-import { EventRepository } from '../db/repository';
-import { logger } from '../logger';
-import { config } from '../config';
-import { ASNAdapter } from './asn-adapter';
-import { AVHeraldAdapter } from './avherald-adapter';
+import type { EventRecord } from '../types.js';
+import type { SourceAdapter } from './adapter.js';
+import { EventRepository } from '../db/repository.js';
+import { logger } from '../logger.js';
+import { config } from '../config.js';
+import { ASNAdapter } from './asn-adapter.js';
+import { AVHeraldAdapter } from './avherald-adapter.js';
 
 export interface IngestionResult {
   source: string;

@@ -2,7 +2,7 @@
  * Structured logging for aviation accident tracker
  */
 
-import { config } from './config';
+import { config } from './config.js';
 
 export enum LogLevel {
   DEBUG = 0,

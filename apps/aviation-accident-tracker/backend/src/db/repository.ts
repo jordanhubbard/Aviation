@@ -4,9 +4,15 @@
  * Converts between snake_case DB columns and camelCase TypeScript types
  */
 
-import { Database } from 'sqlite3';
+import sqlite3 from 'sqlite3';
+const { Database } = sqlite3;
 import { promisify } from 'util';
-import type { EventRecord, SourceAttribution, ListEventsParams, Category } from '../types';
+import { fileURLToPath } from 'url';
+import { dirname } from 'path';
+import type { EventRecord, SourceAttribution, ListEventsParams, Category } from '../types.js';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
 interface DbEvent {
   id: number;
@@ -42,7 +48,7 @@ interface DbSource {
 }
 
 export class EventRepository {
-  private db: Database;
+  private db: sqlite3.Database;
   private dbRun: (sql: string, params?: any[]) => Promise<any>;
   private dbGet: (sql: string, params?: any[]) => Promise<any>;
   private dbAll: (sql: string, params?: any[]) => Promise<any[]>;
@@ -60,7 +66,8 @@ export class EventRepository {
   async initialize(): Promise<void> {
     const fs = await import('fs/promises');
     const path = await import('path');
-    const schemaPath = path.join(__dirname, 'schema.sql');
+    // Point to source directory even when running from dist
+    const schemaPath = path.join(__dirname, '../../src/db/schema.sql');
     const schema = await fs.readFile(schemaPath, 'utf-8');
     
     await this.dbRun(schema);
@@ -333,7 +340,7 @@ export class EventRepository {
    */
   async close(): Promise<void> {
     return new Promise((resolve, reject) => {
-      this.db.close((err) => {
+      this.db.close((err: Error | null) => {
         if (err) reject(err);
         else resolve();
       });

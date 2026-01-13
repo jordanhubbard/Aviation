@@ -3,11 +3,11 @@
  * Fetches recent accident occurrences
  */
 
-import type { EventRecord, SourceAttribution } from '../types';
-import type { SourceAdapter } from './adapter';
-import { normalizeToUTC, isWithinRetentionWindow } from './adapter';
-import { classifier } from '../classifier';
-import { logger } from '../logger';
+import type { EventRecord, SourceAttribution } from '../types.js';
+import type { SourceAdapter } from './adapter.js';
+import { normalizeToUTC, isWithinRetentionWindow } from './adapter.js';
+import { classifier } from '../classifier.js';
+import { logger } from '../logger.js';
 
 export class ASNAdapter implements SourceAdapter {
   readonly sourceName = 'asn';

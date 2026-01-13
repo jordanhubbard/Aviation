@@ -5,7 +5,9 @@
   "description": "Monorepo for aviation-related applications and SDKs",
   "workspaces": [
     "packages/*",
-    "apps/*"
+    "apps/*",
+    "apps/aviation-accident-tracker/backend",
+    "apps/aviation-accident-tracker/frontend"
   ],
   "scripts": {
     "build": "npm run build --workspaces --if-present",
