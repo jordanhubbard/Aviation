@@ -221,6 +221,11 @@ run-weather-briefing:
 	@echo ""
 	cd apps/weather-briefing && $(MAKE) start
 
+run-aviation-accident-tracker:
+	@echo "🚀 Starting Aviation Accident Tracker (backend placeholder)..."
+	@echo ""
+	cd apps/aviation-accident-tracker && $(MAKE) start
+
 stop-all:
 	@echo "🛑 Stopping all applications..."
 	@echo ""

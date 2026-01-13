@@ -1,0 +1,248 @@
+version: "1.0"
+
+# Epic-level beads for the Aviation Accident Tracker app
+# Each epic will own its implementation tasks as tracked in PLAN.md
+
+beads:
+  - name: epic-plan
+    description: Planning and architecture for the aviation-accident-tracker app
+    path: PLAN.md
+    dependencies: []
+    parallel: true
+
+  - name: story-scope-mvp
+    description: Lock MVP scope, non-goals, timelines
+    path: PLAN.md
+    dependencies: [epic-plan]
+    parallel: true
+
+  - name: story-data-model
+    description: Finalize data model (events, sources), uniqueness, enums
+    path: PLAN.md
+    dependencies: [epic-plan]
+    parallel: true
+
+  - name: story-classification-rules
+    description: GA/Commercial classification heuristics and override rules
+    path: PLAN.md
+    dependencies: [epic-plan]
+    parallel: true
+
+  - name: epic-frontend
+    description: React/Vite UI (map, filters, table, detail views)
+    path: frontend/
+    dependencies: [epic-plan, epic-api]
+    parallel: true
+
+  - name: story-fe-skeleton
+    description: App shell, routing, layout structure
+    path: frontend/
+    dependencies: [epic-frontend]
+    parallel: true
+
+  - name: story-fe-map
+    description: Mercator map with clusters, tooltips, selection wiring
+    path: frontend/
+    dependencies: [story-fe-skeleton, epic-api]
+    parallel: true
+
+  - name: story-fe-filters
+    description: Filters for date range, airport/region, category, search
+    path: frontend/
+    dependencies: [story-fe-skeleton, epic-api]
+    parallel: true
+
+  - name: story-fe-table
+    description: Paginated/sorted table with key columns and source badges
+    path: frontend/
+    dependencies: [story-fe-skeleton, epic-api]
+    parallel: true
+
+  - name: story-fe-detail
+    description: Detail modal with narrative and sources
+    path: frontend/
+    dependencies: [story-fe-table, epic-api]
+    parallel: true
+
+  - name: epic-backend
+    description: Node/TypeScript service scaffolding, ingestion orchestrator, business logic
+    path: backend/
+    dependencies: [epic-plan, epic-database, epic-data-sources]
+    parallel: true
+
+  - name: story-be-service-bootstrap
+    description: Service wiring, logging, config, health/version
+    path: backend/
+    dependencies: [epic-backend]
+    parallel: true
+
+  - name: story-be-geo-cache
+    description: Airport/geo cache access from service
+    path: backend/geo/
+    dependencies: [epic-geo, epic-backend]
+    parallel: true
+
+  - name: epic-api
+    description: REST API for events, filters, ingestion triggers, health
+    path: backend/api/
+    dependencies: [epic-backend]
+    parallel: true
+
+  - name: story-api-list
+    description: GET /events with filters/pagination and map-lightweight payload
+    path: backend/api/
+    dependencies: [epic-api, epic-database]
+    parallel: true
+
+  - name: story-api-detail
+    description: GET /events/:id with sources
+    path: backend/api/
+    dependencies: [epic-api, epic-database]
+    parallel: true
+
+  - name: story-api-ingest-trigger
+    description: POST /ingest/run guarded endpoint
+    path: backend/api/
+    dependencies: [epic-api, epic-data-sources]
+    parallel: true
+
+  - name: epic-database
+    description: Schema, migrations, indexing, retention (>= year 2000), provenance storage
+    path: backend/db/
+    dependencies: [epic-plan]
+    parallel: true
+
+  - name: story-db-schema
+    description: Define schema/migrations for events and sources
+    path: backend/db/
+    dependencies: [epic-database]
+    parallel: true
+
+  - name: story-db-repo
+    description: Repository layer (upsert, list, detail) with dedupe key
+    path: backend/db/
+    dependencies: [story-db-schema]
+    parallel: true
+
+  - name: epic-data-sources
+    description: Source adapters/parsers (ASN, AVHerald; extensible), dedupe/merge, provenance
+    path: backend/ingest/
+    dependencies: [epic-plan, epic-database]
+    parallel: true
+
+  - name: story-source-asn
+    description: Adapter/parser for ASN recent occurrences
+    path: backend/ingest/
+    dependencies: [epic-data-sources, story-db-repo]
+    parallel: true
+
+  - name: story-source-avherald
+    description: Adapter/parser for AVHerald recent feed
+    path: backend/ingest/
+    dependencies: [epic-data-sources, story-db-repo]
+    parallel: true
+
+  - name: story-dedupe-merge
+    description: Dedupe on (date_z, reg) + fuzzy merge; provenance append
+    path: backend/ingest/
+    dependencies: [epic-data-sources, story-db-repo]
+    parallel: true
+
+  - name: story-ingest-scheduler
+    description: Scheduled recent-window ingest + manual trigger glue
+    path: backend/ingest/
+    dependencies: [story-source-asn, story-source-avherald, story-dedupe-merge]
+    parallel: true
+
+  - name: epic-geo
+    description: Geocoding/airport lookup, Mercator map data prep, clustering, caching
+    path: backend/geo/
+    dependencies: [epic-plan, epic-database]
+    parallel: true
+
+  - name: story-geo-airport-lookup
+    description: Airport ICAO/IATA lookup to lat/lon/country/region
+    path: backend/geo/
+    dependencies: [epic-geo]
+    parallel: true
+
+  - name: story-geo-reverse
+    description: Reverse geo fallback when no airport is given
+    path: backend/geo/
+    dependencies: [epic-geo]
+    parallel: true
+
+  - name: epic-docs
+    description: User-facing docs, API docs, architecture notes
+    path: docs/
+    dependencies: [epic-plan]
+    parallel: true
+
+  - name: story-docs-readme
+    description: App README updates (run, build, ingest)
+    path: README.md
+    dependencies: [epic-docs]
+    parallel: true
+
+  - name: story-docs-api
+    description: API/OpenAPI documentation
+    path: docs/
+    dependencies: [epic-docs, epic-api]
+    parallel: true
+
+  - name: story-docs-ingest
+    description: Ingestion/source/backfill guide
+    path: docs/
+    dependencies: [epic-docs, epic-data-sources]
+    parallel: true
+
+  - name: epic-tests
+    description: Test strategy (unit, integration, ingestion contract tests, UI smoke/E2E)
+    path: tests/
+    dependencies: [epic-plan, epic-backend, epic-frontend, epic-data-sources]
+    parallel: true
+
+  - name: story-tests-parsers
+    description: Unit tests for adapters/parsers/time normalization
+    path: tests/
+    dependencies: [epic-tests, epic-data-sources]
+    parallel: true
+
+  - name: story-tests-dedupe
+    description: Unit tests for dedupe/merge and provenance
+    path: tests/
+    dependencies: [epic-tests, story-dedupe-merge]
+    parallel: true
+
+  - name: story-tests-api
+    description: API integration tests (list/detail/filters)
+    path: tests/
+    dependencies: [epic-tests, epic-api]
+    parallel: true
+
+  - name: story-tests-fe-smoke
+    description: Frontend smoke/E2E (map load, filters, table rows)
+    path: tests/
+    dependencies: [epic-tests, epic-frontend]
+    parallel: true
+
+# Execution groups (optional for parallelization visibility)
+execution_groups:
+  - name: planning
+    beads: [epic-plan]
+
+  - name: foundation
+    beads: [epic-database, epic-data-sources, epic-geo]
+    depends_on: [planning]
+
+  - name: services
+    beads: [epic-backend, epic-api]
+    depends_on: [foundation]
+
+  - name: ui
+    beads: [epic-frontend]
+    depends_on: [services]
+
+  - name: quality
+    beads: [epic-tests, epic-docs]
+    depends_on: [services, ui]
