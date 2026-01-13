@@ -1,65 +1,130 @@
 import express from 'express';
-import { memoryRepo } from '../repo/memoryRepo.js';
-import { ListEventsParams } from '../types.js';
-import { v4 as uuidv4 } from 'uuid';
+import { EventRepository } from '../db/repository.js';
+import { config } from '../config.js';
+import { logger } from '../logger.js';
+import { IngestionOrchestrator } from '../ingest/orchestrator.js';
+import type { ListEventsParams } from '../types.js';
 
 const router = express.Router();
 
-router.get('/health', (_req, res) => {
-  res.json({ status: 'ok' });
+// Lazy-init repository (shared across requests)
+let repository: EventRepository | null = null;
+let orchestrator: IngestionOrchestrator | null = null;
+
+function getRepository(): EventRepository {
+  if (!repository) {
+    repository = new EventRepository(config.databasePath);
+  }
+  return repository;
+}
+
+function getOrchestrator(): IngestionOrchestrator {
+  if (!orchestrator) {
+    orchestrator = new IngestionOrchestrator(config.databasePath);
+  }
+  return orchestrator;
+}
+
+/**
+ * GET /api/events
+ * List events with filters and pagination
+ */
+router.get('/events', async (req, res, next) => {
+  try {
+    const params: ListEventsParams = {
+      from: req.query.from as string | undefined,
+      to: req.query.to as string | undefined,
+      category: (req.query.category as any) || 'all',
+      airport: req.query.airport as string | undefined,
+      country: req.query.country as string | undefined,
+      region: req.query.region as string | undefined,
+      search: req.query.search as string | undefined,
+      limit: req.query.limit ? Number(req.query.limit) : 50,
+      offset: req.query.offset ? Number(req.query.offset) : 0,
+    };
+
+    const repo = getRepository();
+    const events = await repo.listEvents(params);
+    const total = await repo.countEvents(params);
+
+    res.json({
+      events,
+      total,
+      limit: params.limit,
+      offset: params.offset
+    });
+  } catch (error) {
+    next(error);
+  }
 });
 
-router.get('/version', (_req, res) => {
-  res.json({ version: '0.1.0' });
+/**
+ * GET /api/events/:id
+ * Get event detail with sources
+ */
+router.get('/events/:id', async (req, res, next) => {
+  try {
+    const repo = getRepository();
+    const event = await repo.getEventWithSources(req.params.id);
+    
+    if (!event) {
+      return res.status(404).json({ 
+        error: 'Not found',
+        message: `Event ${req.params.id} not found`
+      });
+    }
+
+    res.json(event);
+  } catch (error) {
+    next(error);
+  }
 });
 
-router.get('/events', (req, res) => {
-  const params: ListEventsParams = {
-    from: req.query.from as string | undefined,
-    to: req.query.to as string | undefined,
-    category: (req.query.category as any) || 'all',
-    airport: req.query.airport as string | undefined,
-    country: req.query.country as string | undefined,
-    region: req.query.region as string | undefined,
-    search: req.query.search as string | undefined,
-    limit: req.query.limit ? Number(req.query.limit) : undefined,
-    offset: req.query.offset ? Number(req.query.offset) : undefined,
-  };
-  const result = memoryRepo.list(params);
-  res.json(result);
-});
+/**
+ * POST /api/ingest/run
+ * Trigger manual ingestion (guarded by simple auth check)
+ */
+router.post('/ingest/run', async (req, res, next) => {
+  try {
+    // TODO: Add proper authentication/authorization
+    // For now, simple bearer token check
+    const authHeader = req.headers.authorization;
+    const expectedToken = process.env.INGESTION_TOKEN || 'dev-token';
+    
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return res.status(401).json({ 
+        error: 'Unauthorized',
+        message: 'Bearer token required'
+      });
+    }
 
-router.get('/events/:id', (req, res) => {
-  const item = memoryRepo.get(req.params.id);
-  if (!item) return res.status(404).json({ error: 'not_found' });
-  res.json(item);
-});
+    const token = authHeader.substring(7);
+    if (token !== expectedToken) {
+      return res.status(403).json({ 
+        error: 'Forbidden',
+        message: 'Invalid token'
+      });
+    }
 
-router.post('/ingest/run', (_req, res) => {
-  // Placeholder ingestion: seed a sample record so UI has data.
-  const now = new Date().toISOString();
-  const sample = {
-    id: uuidv4(),
-    dateZ: now,
-    registration: 'N123AB',
-    aircraftType: 'B738',
-    operator: 'Sample Air',
-    category: 'commercial' as const,
-    country: 'US',
-    summary: 'Sample seeded event (placeholder)',
-    narrative: 'This is placeholder data; real ingestion will populate actual records.',
-    sources: [
-      {
-        sourceName: 'seed',
-        url: 'https://example.com',
-        fetchedAt: now,
-      },
-    ],
-    createdAt: now,
-    updatedAt: now,
-  };
-  memoryRepo.upsert(sample);
-  res.json({ status: 'queued', seeded: true });
+    const sourceName = req.body.source as string | undefined;
+    const windowDays = req.body.windowDays ? Number(req.body.windowDays) : undefined;
+
+    logger.info('Manual ingestion triggered', { 
+      source: sourceName || 'all',
+      windowDays: windowDays || config.ingestion.windowDays,
+      triggeredBy: req.ip
+    });
+
+    const orch = getOrchestrator();
+    const results = await orch.ingest(sourceName, windowDays);
+
+    res.json({
+      status: 'completed',
+      results
+    });
+  } catch (error) {
+    next(error);
+  }
 });
 
 export default router;
