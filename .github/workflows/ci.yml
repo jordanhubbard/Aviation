@@ -130,7 +130,7 @@ jobs:
         run: pytest --cov=app --cov-report=xml
       
       - name: Upload coverage
-        uses: codecov/codecov-action@v3
+        uses: codecov/codecov-action@v5
         with:
           file: apps/flightschool/coverage.xml
           flags: flightschool
