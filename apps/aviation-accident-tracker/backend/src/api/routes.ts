@@ -1,9 +1,15 @@
 import express from 'express';
+<<<<<<< HEAD
 import { EventRepository } from '../db/repository.js';
 import { config } from '../config.js';
 import { logger } from '../logger.js';
 import { IngestionOrchestrator } from '../ingest/orchestrator.js';
 import type { ListEventsParams } from '../types.js';
+=======
+import { memoryRepo } from '../repo/memoryRepo.js';
+import { ListEventsParams } from '../types.js';
+import { runRecentIngest } from '../ingest/ingestService.js';
+>>>>>>> 896e780 (feat(accident-tracker): add ingest scaffolding and geo lookup)
 
 const router = express.Router();
 
@@ -106,6 +112,7 @@ router.post('/ingest/run', async (req, res, next) => {
       });
     }
 
+<<<<<<< HEAD
     const sourceName = req.body.source as string | undefined;
     const windowDays = req.body.windowDays ? Number(req.body.windowDays) : undefined;
 
@@ -125,6 +132,15 @@ router.post('/ingest/run', async (req, res, next) => {
   } catch (error) {
     next(error);
   }
+=======
+router.post('/ingest/run', (_req, res) => {
+  runRecentIngest()
+    .then((result) => res.json({ status: 'ok', result }))
+    .catch((err) => {
+      console.error('[ingest] failed', err);
+      res.status(500).json({ error: 'ingest_failed' });
+    });
+>>>>>>> 896e780 (feat(accident-tracker): add ingest scaffolding and geo lookup)
 });
 
 export default router;
