@@ -1,8 +1,30 @@
 import { createApp } from './app.js';
+import { config } from './config.js';
+import { logger } from './logger.js';
+import { EventRepository } from './db/repository.js';
 
-const port = process.env.PORT || 4000;
-const app = createApp();
+async function start() {
+  try {
+    // Initialize database
+    logger.info('Initializing database...', { path: config.databasePath });
+    const repo = new EventRepository(config.databasePath);
+    await repo.initialize();
+    await repo.close();
+    logger.info('Database initialized');
 
-app.listen(port, () => {
-  console.log(`[accident-tracker] API listening on :${port}`);
-});
+    // Start server
+    const app = createApp();
+    app.listen(config.port, () => {
+      logger.info(`Server started`, {
+        port: config.port,
+        env: config.env,
+        logLevel: config.logLevel
+      });
+    });
+  } catch (error) {
+    logger.error('Failed to start server', error as Error);
+    process.exit(1);
+  }
+}
+
+start();
