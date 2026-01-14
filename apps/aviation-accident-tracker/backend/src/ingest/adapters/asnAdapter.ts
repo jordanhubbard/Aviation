@@ -1,8 +1,11 @@
 import { RawEvent } from '../types.js';
+import fs from 'fs';
+import path from 'path';
 
 // ASN publishes an RSS feed. We attempt to fetch and parse, but fall back to fixtures
 // to keep the ingest path deterministic when offline.
 const ASN_FEED = 'https://aviation-safety.net/rss/'; // RSS 2.0
+const fixturePath = path.resolve(path.dirname(new URL(import.meta.url).pathname), '../../data/asn-feed.xml');
 
 function parseRss(xml: string): RawEvent[] {
   const items = xml.split('<item>').slice(1);
@@ -78,9 +81,16 @@ export async function fetchRecentAsn(): Promise<RawEvent[]> {
     const xml = await resp.text();
     const parsed = parseRss(xml);
     if (parsed.length >= 1) return parsed.slice(0, 40);
-    return FALLBACK;
+    // fall through to fixture
   } catch (err) {
     console.warn('[asn] falling back to fixtures', err);
-    return FALLBACK;
   }
+  try {
+    const xml = fs.readFileSync(fixturePath, 'utf-8');
+    const parsed = parseRss(xml);
+    if (parsed.length >= 1) return parsed;
+  } catch (err) {
+    console.warn('[asn] fixture read failed', err);
+  }
+  return FALLBACK;
 }

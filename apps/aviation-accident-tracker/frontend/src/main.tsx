@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import ReactDOM from 'react-dom/client';
+<<<<<<< HEAD
 import './index.css';
 
 // Types
@@ -285,6 +286,9 @@ function App() {
     </div>
   );
 }
+=======
+import { App } from './App';
+>>>>>>> cfa134e (feat(accident-tracker): fixtures for ASN/AVHerald and frontend map/table)
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
