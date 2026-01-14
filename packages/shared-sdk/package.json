@@ -1,23 +1,31 @@
 {
   "name": "@aviation/shared-sdk",
-  "version": "0.1.0",
-  "description": "Shared SDK for aviation applications with common AI methodology",
+  "version": "0.2.0",
+  "description": "Shared SDK for aviation applications with weather services, AI methodology, and common utilities",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
     "build": "tsc",
     "dev": "tsc --watch",
-    "clean": "rm -rf dist"
+    "clean": "rm -rf dist",
+    "test": "echo \"Tests coming soon\" && exit 0",
+    "type-check": "tsc --noEmit"
   },
   "keywords": [
     "aviation",
     "sdk",
-    "ai"
+    "ai",
+    "weather",
+    "metar",
+    "flight-planning"
   ],
   "author": "Jordan Hubbard",
   "license": "MIT",
   "devDependencies": {
     "@types/node": "^25.0.3",
     "typescript": "^5.0.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
   }
 }
