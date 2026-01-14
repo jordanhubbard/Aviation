@@ -2,6 +2,7 @@ import express from 'express';
 import { memoryRepo } from '../repo/memoryRepo.js';
 import { ListEventsParams } from '../types.js';
 import { runRecentIngest } from '../ingest/ingestService.js';
+import { searchAirports } from '../geo/airportLookup.js';
 
 const router = express.Router();
 
@@ -42,6 +43,13 @@ router.post('/ingest/run', (_req, res) => {
       console.error('[ingest] failed', err);
       res.status(500).json({ error: 'ingest_failed' });
     });
+});
+
+router.get('/airports', (req, res) => {
+  const q = (req.query.search as string | undefined)?.trim() || '';
+  if (!q) return res.json([]);
+  const results = searchAirports(q, 20);
+  res.json(results);
 });
 
 export default router;
