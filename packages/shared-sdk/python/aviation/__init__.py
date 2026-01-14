@@ -12,10 +12,13 @@ from .airports import (
     load_airport_cache
 )
 
+from . import weather
+
 __all__ = [
     "get_airport",
     "search_airports",
     "search_airports_advanced",
     "haversine_distance",
-    "load_airport_cache"
+    "load_airport_cache",
+    "weather"
 ]
