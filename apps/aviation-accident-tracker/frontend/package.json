@@ -8,8 +8,13 @@
     "build": "tsc && vite build",
     "preview": "vite preview",
     "clean": "rm -rf dist",
-    "test": "echo \"(placeholder)\"",
-    "lint": "echo \"(placeholder lint)\""
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:ui": "vitest --ui",
+    "test:coverage": "vitest run --coverage",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui",
+    "lint": "eslint src --ext ts,tsx"
   },
   "dependencies": {
     "@aviation/shared-sdk": "*",
@@ -19,7 +24,7 @@
     "react-router-dom": "^7.11.0",
     "leaflet": "^1.9.4",
     "react-leaflet": "^4.2.1",
-    "react-leaflet-cluster": "^4.1.0",
+    "react-leaflet-cluster": "^2.1.0",
     "lodash.debounce": "^4.0.8"
   },
   "devDependencies": {
@@ -27,7 +32,20 @@
     "@types/react": "^18.2.43",
     "@types/react-dom": "^18.2.17",
     "@types/leaflet": "^1.9.21",
+    "@types/lodash.debounce": "^4.0.9",
     "vite": "^7.3.0",
-    "@vitejs/plugin-react": "^5.1.2"
+    "@vitejs/plugin-react": "^5.1.2",
+    "vitest": "^4.0.16",
+    "@vitest/ui": "^4.0.16",
+    "@vitest/coverage-v8": "^4.0.16",
+    "@testing-library/react": "^14.1.2",
+    "@testing-library/jest-dom": "^6.1.5",
+    "@testing-library/user-event": "^14.5.1",
+    "jsdom": "^23.0.1",
+    "@playwright/test": "^1.40.1",
+    "@axe-core/playwright": "^4.8.2",
+    "eslint": "^8.55.0",
+    "@typescript-eslint/eslint-plugin": "^6.14.0",
+    "@typescript-eslint/parser": "^6.14.0"
   }
 }
