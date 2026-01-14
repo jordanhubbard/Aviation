@@ -223,110 +223,93 @@ export function calculateSunriseSunset(
 ): { sunrise: Date; sunset: Date } {
   const utcDate = toUtc(date);
   
-  // Day of year
-  const start = new Date(utcDate.getFullYear(), 0, 0);
-  const diff = utcDate.getTime() - start.getTime();
-  const oneDay = 1000 * 60 * 60 * 24;
-  const n = Math.floor(diff / oneDay);
-  
-  // Longitude hour value
-  const lngHour = longitude / 15;
-  
-  // Approximate time
-  const tRise = n + ((6 - lngHour) / 24);
-  const tSet = n + ((18 - lngHour) / 24);
-  
-  // Sun's mean anomaly
-  const mRise = (0.9856 * tRise) - 3.289;
-  const mSet = (0.9856 * tSet) - 3.289;
-  
-  // Convert to radians
+  // Helper functions
   const toRad = (deg: number) => deg * (Math.PI / 180);
   const toDeg = (rad: number) => rad * (180 / Math.PI);
   
-  // Sun's true longitude
-  const sunLongitude = (m: number) => {
-    let l = m + (1.916 * Math.sin(toRad(m))) + (0.020 * Math.sin(toRad(2 * m))) + 282.634;
-    return l % 360;
-  };
+  // Julian day calculation
+  const year = utcDate.getUTCFullYear();
+  const month = utcDate.getUTCMonth() + 1;
+  const day = utcDate.getUTCDate();
   
-  const lRise = sunLongitude(mRise);
-  const lSet = sunLongitude(mSet);
+  let a = Math.floor((14 - month) / 12);
+  let y = year + 4800 - a;
+  let m = month + (12 * a) - 3;
   
-  // Sun's right ascension
-  const rightAscension = (l: number) => {
-    let ra = toDeg(Math.atan(0.91764 * Math.tan(toRad(l))));
-    ra = ra % 360;
-    
-    // Adjust into same quadrant as l
-    const lQuadrant = Math.floor(l / 90) * 90;
-    const raQuadrant = Math.floor(ra / 90) * 90;
-    ra = ra + (lQuadrant - raQuadrant);
-    
-    return ra / 15; // Convert to hours
-  };
+  const julianDay = day + Math.floor((153 * m + 2) / 5) + (365 * y) + 
+                    Math.floor(y / 4) - Math.floor(y / 100) + 
+                    Math.floor(y / 400) - 32045;
   
-  const raRise = rightAscension(lRise);
-  const raSet = rightAscension(lSet);
+  const n = julianDay - 2451545 + 0.0008;
   
-  // Sun's declination
-  const declination = (l: number) => {
-    const sinDec = 0.39782 * Math.sin(toRad(l));
-    return toDeg(Math.asin(sinDec));
-  };
+  // Mean solar noon
+  const jStar = n - (longitude / 360);
   
-  const sinDecRise = Math.sin(toRad(declination(lRise)));
-  const cosDecRise = Math.cos(toRad(declination(lRise)));
-  const sinDecSet = Math.sin(toRad(declination(lSet)));
-  const cosDecSet = Math.cos(toRad(declination(lSet)));
+  // Solar mean anomaly
+  const m_deg = (357.5291 + 0.98560028 * jStar) % 360;
+  const m_rad = toRad(m_deg);
   
-  // Sun's local hour angle
-  const cosH = (Math.cos(toRad(90.833)) - (sinDecRise * Math.sin(toRad(latitude)))) /
-               (cosDecRise * Math.cos(toRad(latitude)));
+  // Equation of center
+  const c = 1.9148 * Math.sin(m_rad) + 0.0200 * Math.sin(2 * m_rad) + 
+            0.0003 * Math.sin(3 * m_rad);
+  
+  // Ecliptic longitude
+  const lambda = (m_deg + c + 180 + 102.9372) % 360;
+  
+  // Solar transit
+  const jTransit = 2451545 + jStar + 0.0053 * Math.sin(m_rad) - 
+                   0.0069 * Math.sin(2 * toRad(lambda));
+  
+  // Declination of the sun
+  const delta = toDeg(Math.asin(Math.sin(toRad(lambda)) * Math.sin(toRad(23.44))));
+  
+  // Hour angle
+  const cosOmega = (Math.sin(toRad(-0.833)) - Math.sin(toRad(latitude)) * Math.sin(toRad(delta))) /
+                   (Math.cos(toRad(latitude)) * Math.cos(toRad(delta)));
   
   // Check if sun never rises or sets
-  let hRise: number, hSet: number;
-  
-  if (cosH > 1) {
-    // Sun never rises
-    hRise = 0;
-    hSet = 0;
-  } else if (cosH < -1) {
-    // Sun never sets
-    hRise = 180;
-    hSet = 180;
-  } else {
-    hRise = 360 - toDeg(Math.acos(cosH));
-    hRise = hRise / 15;
-    
-    hSet = toDeg(Math.acos(cosH));
-    hSet = hSet / 15;
+  if (cosOmega > 1) {
+    // Sun never rises (polar night)
+    const sunrise = new Date(Date.UTC(year, month - 1, day, 12, 0, 0));
+    const sunset = new Date(Date.UTC(year, month - 1, day, 12, 0, 0));
+    return { sunrise, sunset };
+  } else if (cosOmega < -1) {
+    // Sun never sets (midnight sun)
+    const sunrise = new Date(Date.UTC(year, month - 1, day, 0, 0, 0));
+    const sunset = new Date(Date.UTC(year, month - 1, day, 23, 59, 59));
+    return { sunrise, sunset };
   }
   
-  // Local mean time
-  const tRiseLocal = hRise + raRise - (0.06571 * tRise) - 6.622;
-  const tSetLocal = hSet + raSet - (0.06571 * tSet) - 6.622;
+  const omega = toDeg(Math.acos(cosOmega));
   
-  // Adjust to UTC
-  const utRise = (tRiseLocal - lngHour) % 24;
-  const utSet = (tSetLocal - lngHour) % 24;
+  // Sunrise and sunset Julian days
+  const jRise = jTransit - (omega / 360);
+  const jSet = jTransit + (omega / 360);
   
-  // Create Date objects
-  const sunrise = new Date(Date.UTC(
-    utcDate.getUTCFullYear(),
-    utcDate.getUTCMonth(),
-    utcDate.getUTCDate()
-  ));
-  sunrise.setUTCHours(Math.floor(utRise));
-  sunrise.setUTCMinutes((utRise % 1) * 60);
+  // Convert Julian days back to dates
+  const julianToDate = (j: number) => {
+    const jd = Math.floor(j);
+    const time = (j - jd) * 24; // Hours
+    
+    const a = jd + 32044;
+    const b = Math.floor((4 * a + 3) / 146097);
+    const c = a - Math.floor((146097 * b) / 4);
+    const d = Math.floor((4 * c + 3) / 1461);
+    const e = c - Math.floor((1461 * d) / 4);
+    const m = Math.floor((5 * e + 2) / 153);
+    
+    const day = e - Math.floor((153 * m + 2) / 5) + 1;
+    const month = m + 3 - 12 * Math.floor(m / 10);
+    const year = 100 * b + d - 4800 + Math.floor(m / 10);
+    
+    const hours = Math.floor(time);
+    const minutes = Math.floor((time % 1) * 60);
+    
+    return new Date(Date.UTC(year, month - 1, day, hours, minutes, 0));
+  };
   
-  const sunset = new Date(Date.UTC(
-    utcDate.getUTCFullYear(),
-    utcDate.getUTCMonth(),
-    utcDate.getUTCDate()
-  ));
-  sunset.setUTCHours(Math.floor(utSet));
-  sunset.setUTCMinutes((utSet % 1) * 60);
+  const sunrise = julianToDate(jRise);
+  const sunset = julianToDate(jSet);
   
   return { sunrise, sunset };
 }
