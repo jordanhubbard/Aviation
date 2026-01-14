@@ -39,10 +39,16 @@ export function App() {
   const [events, setEvents] = useState<EventRecord[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [search, setSearch] = useState('');
+  const [category, setCategory] = useState<'all' | 'general' | 'commercial'>('all');
 
   useEffect(() => {
     setLoading(true);
-    fetch('/api/events?limit=200')
+    const params = new URLSearchParams();
+    params.set('limit', '200');
+    if (search.trim()) params.set('search', search.trim());
+    if (category !== 'all') params.set('category', category);
+    fetch(`/api/events?${params.toString()}`)
       .then((r) => r.json())
       .then((data) => {
         setEvents(data.data ?? data?.data ?? data);
@@ -52,7 +58,7 @@ export function App() {
         setError(String(err));
         setLoading(false);
       });
-  }, []);
+  }, [search, category]);
 
   const positioned = useMemo(() => events.filter((e) => typeof e.lat === 'number' && typeof e.lon === 'number'), [events]);
 
@@ -63,6 +69,27 @@ export function App() {
         {loading && <p>Loading events…</p>}
         {error && <p style={{ color: 'red' }}>Error: {error}</p>}
         {!loading && events.length === 0 && <p>No events yet. Run backend seed or ingestion.</p>}
+      </div>
+
+      <div style={{ gridColumn: '1 / span 2', display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+        <label>
+          Search:{' '}
+          <input
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="registration/operator/summary"
+            style={{ minWidth: 240 }}
+          />
+        </label>
+        <label>
+          Category:{' '}
+          <select value={category} onChange={(e) => setCategory(e.target.value as any)}>
+            <option value="all">All</option>
+            <option value="general">General</option>
+            <option value="commercial">Commercial</option>
+          </select>
+        </label>
+        <button onClick={() => { setSearch(''); setCategory('all'); }}>Clear</button>
       </div>
 
       <div style={{ height: 480, minHeight: 400 }}>
