@@ -1,13 +1,63 @@
 # @aviation/shared-sdk
 
-Shared SDK for aviation applications providing base classes for services and AI integration.
+Shared SDK for aviation applications providing common services, AI integration patterns, and aviation data services.
 
 ## Features
 
-- **BackgroundService**: Base class for long-running background services
-- **AIService**: Base class for AI-powered services
-- **AIProvider Interface**: Standard interface for AI provider implementations
-- **SecureKeyStore**: Encrypted storage for API keys and secrets
+### Background Services
+- `BackgroundService` - Base class for long-running services
+- `AIService` - Base class for AI-powered services
+
+### AI Integration
+- `AIProvider` - Interface for AI provider implementations
+- Common AI patterns and utilities
+
+### Aviation Data Services
+
+#### Airport Database (`aviation/airports`)
+
+Comprehensive airport database with search and geospatial capabilities.
+
+**TypeScript:**
+```typescript
+import { searchAirports, getAirportByCode, findNearbyAirports } from '@aviation/shared-sdk';
+
+// Search by code, name, or city
+const results = searchAirports('SFO', 20);
+
+// Get specific airport
+const airport = getAirportByCode('KSFO');
+
+// Find nearby airports
+const nearby = findNearbyAirports(37.6213, -122.3790, 50, 20);
+```
+
+**Python:**
+```python
+from aviation import search_airports, get_airport_by_code, find_nearby_airports
+
+# Search by code, name, or city
+results = search_airports('SFO', limit=20)
+
+# Get specific airport
+airport = get_airport_by_code('KSFO')
+
+# Find nearby airports
+nearby = find_nearby_airports(37.6213, -122.3790, radius_nm=50, limit=20)
+```
+
+**Features:**
+- ICAO and IATA code lookup
+- Fuzzy search by name, city, country
+- Proximity search (haversine distance)
+- K-prefix handling for US airports (e.g., 7S5 ↔ K7S5)
+- In-memory caching for performance
+- < 10ms search performance
+
+**Data:**
+- 50,000+ airports worldwide
+- Source: OurAirports database
+- Location: `packages/shared-sdk/data/airports_cache.json`
 
 ## Installation
 
@@ -17,113 +67,98 @@ npm install @aviation/shared-sdk
 
 ## Usage
 
-### Creating a Background Service
+### TypeScript
 
 ```typescript
-import { BackgroundService, ServiceConfig } from '@aviation/shared-sdk';
+import { BackgroundService, AirportDatabase } from '@aviation/shared-sdk';
 
 class MyService extends BackgroundService {
+  private airports = new AirportDatabase();
+  
   protected async onStart(): Promise<void> {
-    console.log('Service starting...');
-    // Initialize your service
+    const airport = this.airports.getByIcao('KSFO');
+    console.log('Found:', airport?.name);
   }
-
+  
   protected async onStop(): Promise<void> {
-    console.log('Service stopping...');
-    // Cleanup resources
+    // Cleanup
   }
 }
-
-const service = new MyService({
-  name: 'my-service',
-  enabled: true,
-  autoStart: true
-});
-
-await service.start();
-console.log(service.getStatus());
 ```
 
-### Using SecureKeyStore
+### Python
 
-```typescript
-import { SecureKeyStore } from '@aviation/shared-sdk';
+```python
+from aviation import AirportDatabase
 
-const keystore = new SecureKeyStore();
-
-// Store a secret
-keystore.setSecret('my-service', 'api_key', 'your-api-key');
-
-// Retrieve a secret
-const apiKey = keystore.getSecret('my-service', 'api_key');
-
-// List all keys for a service
-const keys = keystore.listKeys('my-service');
-
-// Delete a secret
-keystore.deleteSecret('my-service', 'old_key');
-```
-
-### AI Integration
-
-```typescript
-import { AIProvider, AIService } from '@aviation/shared-sdk';
-
-// Implement a custom AI provider
-class MyAIProvider implements AIProvider {
-  name = 'my-provider';
-  
-  async initialize(config: AIConfig): Promise<void> {
-    // Setup AI provider
-  }
-  
-  async query(prompt: string, options?: AIQueryOptions): Promise<AIResponse> {
-    // Execute AI query
-    return {
-      content: 'AI response',
-      tokens: 100,
-      model: 'gpt-4'
-    };
-  }
-}
-
-// Use in a service
-class MyAIService extends AIService {
-  async processData(data: any): Promise<any> {
-    const response = await this.provider.query('Analyze this data: ' + JSON.stringify(data));
-    return response.content;
-  }
-}
+db = AirportDatabase()
+airport = db.get_by_icao('KSFO')
+print(f'Found: {airport.name}')
 ```
 
 ## API Reference
 
-### BackgroundService
+### Airport Database
 
-Base class for background services.
+#### TypeScript API
 
-**Methods:**
-- `start()`: Start the service
-- `stop()`: Stop the service
-- `getStatus()`: Get current service status
+**`AirportDatabase`**
+- `getAirportCoordinates(code: string): Airport | null`
+- `searchAirports(options: AirportSearchOptions): Airport[]`
+- `search(query: string, limit?: number): Airport[]`
+- `findNearby(lat: number, lon: number, radiusNm: number, limit?: number): Airport[]`
+- `getByIcao(icao: string): Airport | null`
+- `getByIata(iata: string): Airport | null`
 
-**Abstract Methods (must implement):**
-- `onStart()`: Called when service starts
-- `onStop()`: Called when service stops
+**Convenience Functions:**
+- `searchAirports(query: string, limit?: number): Airport[]`
+- `getAirportByCode(code: string): Airport | null`
+- `findNearbyAirports(lat: number, lon: number, radiusNm: number, limit?: number): Airport[]`
 
-### SecureKeyStore
+#### Python API
 
-Encrypted storage for API keys and secrets.
+**`AirportDatabase`**
+- `get_airport_coordinates(code: str) -> Optional[Airport]`
+- `search_airports(**options) -> List[Airport]`
+- `search(query: str, limit: int = 20) -> List[Airport]`
+- `find_nearby(lat: float, lon: float, radius_nm: float, limit: int = 20) -> List[Airport]`
+- `get_by_icao(icao: str) -> Optional[Airport]`
+- `get_by_iata(iata: str) -> Optional[Airport]`
 
-**Methods:**
-- `setSecret(service, key, value)`: Store a secret
-- `getSecret(service, key)`: Retrieve a secret
-- `deleteSecret(service, key)`: Delete a secret
-- `listKeys(service)`: List all keys for a service
+**Convenience Functions:**
+- `search_airports(query: str, limit: int = 20) -> List[Airport]`
+- `get_airport_by_code(code: str) -> Optional[Airport]`
+- `find_nearby_airports(lat: float, lon: float, radius_nm: float, limit: int = 20) -> List[Airport]`
 
-**Configuration:**
-- `storePath`: Path to keystore file (default: `.keystore`)
-- `encryptionKey`: Encryption key (from env var `KEYSTORE_ENCRYPTION_KEY`)
+### Airport Data Structure
+
+```typescript
+interface Airport {
+  icao: string;           // ICAO code (e.g., "KSFO")
+  iata: string;           // IATA code (e.g., "SFO")
+  name: string;           // Airport name
+  city: string;           // City
+  country: string;        // Country
+  latitude: number;       // Latitude
+  longitude: number;      // Longitude
+  elevation?: number;     // Elevation in feet
+  type?: string;          // Airport type
+  distance_nm?: number;   // Distance in NM (proximity searches only)
+}
+```
+
+## Development
+
+```bash
+# Build
+npm run build
+
+# Watch mode
+npm run dev
+
+# Clean
+npm run clean
+```
 
 ## License
 
