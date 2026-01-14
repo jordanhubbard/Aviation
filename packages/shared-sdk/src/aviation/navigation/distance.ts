@@ -37,15 +37,15 @@ function toDegrees(radians: number): number {
  * @example
  * ```typescript
  * // Distance from San Francisco to Los Angeles
- * const distance = haversineDistance(37.7749, -122.4194, 34.0522, -118.2437);
+ * const distance = greatCircleDistance(37.7749, -122.4194, 34.0522, -118.2437);
  * console.log(distance); // ~293 nautical miles
  * 
  * // Get distance in statute miles
- * const distanceSM = haversineDistance(37.7749, -122.4194, 34.0522, -118.2437, 'sm');
+ * const distanceSM = greatCircleDistance(37.7749, -122.4194, 34.0522, -118.2437, 'sm');
  * console.log(distanceSM); // ~337 statute miles
  * ```
  */
-export function haversineDistance(
+export function greatCircleDistance(
   lat1: number,
   lon1: number,
   lat2: number,
@@ -90,7 +90,7 @@ export function calculateDistance(
   to: Coordinate,
   unit: DistanceUnit = 'nm'
 ): number {
-  return haversineDistance(from.latitude, from.longitude, to.latitude, to.longitude, unit);
+  return greatCircleDistance(from.latitude, from.longitude, to.latitude, to.longitude, unit);
 }
 
 /**
@@ -116,7 +116,7 @@ export function calculateDistanceAllUnits(
   lat2: number,
   lon2: number
 ): DistanceResult {
-  const nautical_miles = haversineDistance(lat1, lon1, lat2, lon2, 'nm');
+  const nautical_miles = greatCircleDistance(lat1, lon1, lat2, lon2, 'nm');
   
   return {
     nautical_miles,
