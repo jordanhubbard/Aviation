@@ -133,6 +133,38 @@ export function estimateCeilingFromCloudCover(cloudPercent: number | null): numb
 }
 
 /**
+ * Estimate ceiling from cloud cover percentage
+ * Alias for estimateCeilingFromCloudCover to match naming conventions
+ * 
+ * @param cloudCoverPercent Cloud cover percentage (0-100)
+ * @returns Estimated ceiling in feet AGL, or null if no data
+ */
+export function estimateCeilingFtFromCloudcover(cloudCoverPercent: number | null): number | null {
+  return estimateCeilingFromCloudCover(cloudCoverPercent);
+}
+
+/**
+ * Get color code for flight category (for UI/visualization)
+ * 
+ * @param category Flight category
+ * @returns Hex color code
+ */
+export function colorForCategory(category: FlightCategory): string {
+  switch (category) {
+    case 'VFR':
+      return '#00ff00'; // Green
+    case 'MVFR':
+      return '#0000ff'; // Blue
+    case 'IFR':
+      return '#ff0000'; // Red
+    case 'LIFR':
+      return '#ff00ff'; // Magenta
+    case 'UNKNOWN':
+      return '#808080'; // Gray
+  }
+}
+
+/**
  * Score an hour for flight planning (higher is better)
  */
 export function scoreHour(

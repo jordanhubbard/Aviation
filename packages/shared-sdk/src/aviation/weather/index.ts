@@ -59,6 +59,8 @@ export {
   warningsForConditions,
   metersToSM,
   estimateCeilingFromCloudCover,
+  estimateCeilingFtFromCloudcover,
+  colorForCategory,
   scoreHour,
   bestDepartureWindows,
   DEFAULT_THRESHOLDS,
