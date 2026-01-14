@@ -1,6 +1,7 @@
 # Aviation Monorepo Makefile
 # Provides unified build, clean, test, and run targets for all applications and packages
 
+PYTHON_AUDIT := $(shell command -v python3.12 || command -v python3)
 .PHONY: help build clean test
 .PHONY: build-node build-python build-clojure
 .PHONY: clean-node clean-python clean-clojure
@@ -37,6 +38,7 @@ help:
 	@echo "  make test-node       - Test Node.js applications"
 	@echo "  make test-python     - Test Python applications"
 	@echo "  make test-clojure    - Test Clojure applications"
+	@echo "  make audit           - Run security audits (Node.js + Python)"
 	@echo ""
 
 #
@@ -164,7 +166,7 @@ test-clojure:
 # UTILITY TARGETS
 #
 
-.PHONY: validate lint format
+.PHONY: validate lint format audit audit-node audit-python
 
 validate:
 	@echo "🔍 Validating beads configuration..."
@@ -180,6 +182,29 @@ format:
 	@echo "✨ Formatting code..."
 	npm run format --workspaces --if-present
 	@echo "✅ Code formatting complete"
+
+audit: audit-node audit-python
+	@echo ""
+	@echo "✅ Security audit complete!"
+
+audit-node:
+	@echo "🔐 Running Node.js security audit..."
+	npm audit --workspaces --if-present
+	@echo "✅ Node.js audit complete"
+
+audit-python:
+	@echo "🔐 Running Python security audit..."
+	@$(PYTHON_AUDIT) -m venv .venv-audit
+	@./.venv-audit/bin/pip install -q --upgrade pip pip-audit
+	@grep -v "^-e " apps/flightplanner/requirements.txt > /tmp/flightplanner-requirements.txt
+	@./.venv-audit/bin/pip-audit -r apps/foreflight-dashboard/requirements.txt || \
+		echo "⚠️  pip-audit failed for foreflight-dashboard"
+	@./.venv-audit/bin/pip-audit -r apps/flightschool/requirements.txt || \
+		echo "⚠️  pip-audit failed for flightschool"
+	@./.venv-audit/bin/pip-audit -r /tmp/flightplanner-requirements.txt || \
+		echo "⚠️  pip-audit failed for flightplanner"
+	@echo "✅ Python audit complete"
+
 
 #
 # RUN TARGETS - Start individual applications
