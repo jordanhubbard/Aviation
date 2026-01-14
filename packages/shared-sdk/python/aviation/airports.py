@@ -266,6 +266,11 @@ def get_airport(code: str) -> Optional[Dict[str, Any]]:
         KLAX
     """
     code_upper = _normalize_airport_code(code)
+    
+    # Return None for empty code
+    if not code_upper:
+        return None
+    
     candidates = _candidate_codes(code_upper)
     
     airports = load_airport_cache()
