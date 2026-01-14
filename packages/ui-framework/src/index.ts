@@ -125,3 +125,8 @@ export abstract class StandaloneWebUI implements ApplicationUI {
 
   abstract render(): void;
 }
+
+/**
+ * Map components and utilities
+ */
+export * from './map';
