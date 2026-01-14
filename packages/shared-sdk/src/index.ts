@@ -10,3 +10,6 @@ export {
   findNearbyAirports,
 } from './aviation/airports';
 export type { Airport, AirportSearchOptions } from './aviation/airports';
+
+// Aviation navigation utilities
+export * from './aviation/navigation';
