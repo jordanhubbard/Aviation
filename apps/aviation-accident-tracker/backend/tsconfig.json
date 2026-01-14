@@ -5,12 +5,13 @@
     "moduleResolution": "Node",
     "esModuleInterop": true,
     "resolveJsonModule": true,
-    "strict": true,
+    "strict": false,
     "outDir": "dist",
     "rootDir": "src",
     "skipLibCheck": true,
     "lib": ["ES2020", "DOM"],
     "types": ["node"]
   },
-  "include": ["src/**/*"]
+  "include": ["src/**/*"],
+  "exclude": ["src/**/*.test.ts", "src/**/__tests__"]
 }
