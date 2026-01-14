@@ -132,17 +132,17 @@ describe('Weather Recommendations', () => {
 describe('Weather Warnings', () => {
   it('should warn about low visibility', () => {
     const warnings = warningsForConditions(3, 5000, 10);
-    expect(warnings).toContain(expect.stringContaining('visibility'));
+    expect(warnings.some(w => w.toLowerCase().includes('visibility'))).toBe(true);
   });
 
   it('should warn about low ceiling', () => {
     const warnings = warningsForConditions(10, 2000, 10);
-    expect(warnings).toContain(expect.stringContaining('ceiling'));
+    expect(warnings.some(w => w.toLowerCase().includes('ceiling'))).toBe(true);
   });
 
   it('should warn about high winds', () => {
     const warnings = warningsForConditions(10, 5000, 25);
-    expect(warnings).toContain(expect.stringContaining('winds'));
+    expect(warnings.some(w => w.toLowerCase().includes('winds'))).toBe(true);
   });
 
   it('should provide no warnings for good conditions', () => {
