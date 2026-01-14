@@ -1,3 +1,5 @@
+export * from './map';
+
 /**
  * UI Modality types
  */
@@ -36,34 +38,21 @@ export class MultiTabWebUI {
     this.activePane = null;
   }
 
-  /**
-   * Register an application pane
-   */
   registerPane(pane: ApplicationPane): void {
     this.panes.set(pane.id, pane);
-    
-    // Set as active if it's the first pane
     if (this.panes.size === 1) {
       this.activePane = pane.id;
     }
   }
 
-  /**
-   * Unregister an application pane
-   */
   unregisterPane(paneId: string): void {
     this.panes.delete(paneId);
-    
-    // If active pane was removed, switch to first available
     if (this.activePane === paneId) {
       const firstPane = Array.from(this.panes.keys())[0];
       this.activePane = firstPane || null;
     }
   }
 
-  /**
-   * Switch to a different pane
-   */
   switchPane(paneId: string): void {
     if (this.panes.has(paneId)) {
       this.activePane = paneId;
@@ -72,9 +61,6 @@ export class MultiTabWebUI {
     }
   }
 
-  /**
-   * Get the currently active pane
-   */
   getActivePane(): ApplicationPane | null {
     if (this.activePane) {
       return this.panes.get(this.activePane) || null;
@@ -82,9 +68,6 @@ export class MultiTabWebUI {
     return null;
   }
 
-  /**
-   * Get all registered panes
-   */
   getAllPanes(): ApplicationPane[] {
     return Array.from(this.panes.values()).sort((a, b) => {
       const orderA = a.order || 0;
@@ -94,9 +77,6 @@ export class MultiTabWebUI {
   }
 }
 
-/**
- * Base class for mobile UIs
- */
 export abstract class MobileUI implements ApplicationUI {
   public id: string;
   public name: string;
@@ -110,9 +90,6 @@ export abstract class MobileUI implements ApplicationUI {
   abstract render(): void;
 }
 
-/**
- * Base class for standalone web UIs
- */
 export abstract class StandaloneWebUI implements ApplicationUI {
   public id: string;
   public name: string;
