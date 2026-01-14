@@ -1,7 +1,7 @@
 import { memoryRepo } from '../repo/memoryRepo.js';
 import { fetchRecentAsn } from './adapters/asnAdapter.js';
 import { fetchRecentAvHerald } from './adapters/avHeraldAdapter.js';
-import { dedupe } from './dedupe.js';
+import { dedupe, fuzzyDedup } from './dedupe.js';
 import { normalize } from './normalize.js';
 import { IngestResult, NormalizedEvent } from './types.js';
 
@@ -12,7 +12,7 @@ export async function runRecentIngest(): Promise<IngestResult> {
   ];
 
   const normalized: NormalizedEvent[] = raw.map(normalize);
-  const deduped = dedupe(normalized);
+  const deduped = fuzzyDedup(dedupe(normalized));
 
   let inserted = 0;
   let updated = 0;
