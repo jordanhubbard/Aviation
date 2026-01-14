@@ -3,6 +3,7 @@ import cors from 'cors';
 import router from './api/routes.js';
 import { logger } from './logger.js';
 import { config } from './config.js';
+import { getSchedulerStatus } from './scheduler.js';
 import swaggerUi from 'swagger-ui-express';
 import fs from 'fs';
 import path from 'path';
@@ -27,10 +28,12 @@ export function createApp() {
   
   // Health check
   app.get('/health', (req, res) => {
+    const schedulerStatus = getSchedulerStatus();
     res.json({
       status: 'healthy',
       timestamp: new Date().toISOString(),
-      env: config.env
+      env: config.env,
+      scheduler: schedulerStatus
     });
   });
   
