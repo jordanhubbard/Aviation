@@ -1,97 +1,73 @@
 /**
- * Aviation Map Framework - Type Definitions
- * Shared types for map components
+ * Map Component Types
+ * 
+ * Shared types for aviation map components.
+ * Extracted from flightplanner for shared use.
  */
 
-import type { LatLngExpression, DivIcon, IconOptions, PathOptions } from 'leaflet';
-
-/**
- * Flight category for weather-based color coding
- */
 export type FlightCategory = 'VFR' | 'MVFR' | 'IFR' | 'LIFR' | 'UNKNOWN';
 
-/**
- * Color scheme for flight categories
- */
-export interface FlightCategoryColors {
-  fill: string;
-  stroke: string;
-}
-
-/**
- * Geographic point with optional metadata
- */
-export interface GeoPoint {
+export interface MapPosition {
   latitude: number;
   longitude: number;
-  altitude?: number;
+}
+
+export interface MapBounds {
+  north: number;
+  south: number;
+  east: number;
+  west: number;
+}
+
+export interface AirportMarker {
+  code: string;
+  name?: string;
+  position: MapPosition;
+  category?: FlightCategory;
+  distance_nm?: number;
+}
+
+export interface WeatherMarker {
+  position: MapPosition;
+  wind_direction?: number;
+  wind_speed_kt?: number;
+  category?: FlightCategory;
   label?: string;
-  metadata?: Record<string, any>;
 }
 
-/**
- * Map marker configuration
- */
-export interface MapMarker {
-  position: LatLngExpression;
-  icon?: DivIcon | L.Icon;
-  popup?: React.ReactNode;
-  tooltip?: string;
-  metadata?: Record<string, any>;
+export interface RoutePoint {
+  position: MapPosition;
+  altitude_ft?: number;
+  name?: string;
 }
 
-/**
- * Circle marker configuration
- */
-export interface CircleMarkerConfig {
-  center: LatLngExpression;
-  radius: number;
-  pathOptions?: PathOptions;
-  popup?: React.ReactNode;
-  tooltip?: string;
+export interface MapColors {
+  fill: string;
+  stroke: string;
+  opacity?: number;
 }
 
-/**
- * Polyline configuration
- */
-export interface PolylineConfig {
-  positions: LatLngExpression[];
-  pathOptions?: PathOptions;
-  popup?: React.ReactNode;
-}
+export const FLIGHT_CATEGORY_COLORS: Record<FlightCategory, MapColors> = {
+  VFR: { fill: '#2e7d32', stroke: '#ffffff', opacity: 0.95 },
+  MVFR: { fill: '#1976d2', stroke: '#ffffff', opacity: 0.95 },
+  IFR: { fill: '#d32f2f', stroke: '#ffffff', opacity: 0.95 },
+  LIFR: { fill: '#8e24aa', stroke: '#ffffff', opacity: 0.95 },
+  UNKNOWN: { fill: '#9e9e9e', stroke: '#ffffff', opacity: 0.5 },
+};
 
-/**
- * Map overlay configuration
- */
-export interface MapOverlay {
+export interface WeatherOverlay {
   enabled: boolean;
   opacity: number;
-  url?: string;
-  attribution?: string;
 }
 
-/**
- * Wind barb configuration
- */
-export interface WindBarbConfig {
-  direction: number;
-  speedKts: number;
-  category?: FlightCategory;
-  size?: number;
-  backgroundFill?: string;
-  backgroundStroke?: string;
-}
+export type WeatherOverlayType = 'clouds' | 'wind' | 'precipitation' | 'temperature';
 
-/**
- * Base map configuration
- */
+export type WeatherOverlays = Record<WeatherOverlayType, WeatherOverlay>;
+
 export interface MapConfig {
-  center: LatLngExpression;
-  zoom?: number;
+  center: MapPosition;
+  zoom: number;
+  scrollWheelZoom?: boolean;
   minZoom?: number;
   maxZoom?: number;
-  scrollWheelZoom?: boolean;
-  dragging?: boolean;
-  zoomControl?: boolean;
-  attributionControl?: boolean;
 }

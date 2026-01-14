@@ -1,80 +1,59 @@
 /**
- * Aviation Map Framework
- * Reusable map components and utilities for aviation applications
+ * Aviation Map Components and Utilities
+ * 
+ * Provides types, utilities, and helpers for building aviation maps.
+ * Extracted from flightplanner for shared use across aviation apps.
+ * 
+ * @module @aviation/ui-framework/map
+ * 
+ * @example
+ * ```typescript
+ * import { FLIGHT_CATEGORY_COLORS, windBarbSvg, boundsFromRadius } from '@aviation/ui-framework/map';
+ * 
+ * // Get colors for flight category
+ * const colors = FLIGHT_CATEGORY_COLORS['VFR'];
+ * 
+ * // Generate wind barb SVG
+ * const svg = windBarbSvg(270, 15, {
+ *   backgroundFill: colors.fill,
+ *   backgroundStroke: colors.stroke,
+ * });
+ * 
+ * // Calculate map bounds
+ * const bounds = boundsFromRadius({ latitude: 37.6213, longitude: -122.3790 }, 50);
+ * ```
  */
 
 // Types
 export type {
   FlightCategory,
-  FlightCategoryColors,
-  GeoPoint,
-  MapMarker,
-  CircleMarkerConfig,
-  PolylineConfig,
-  MapOverlay,
-  WindBarbConfig,
+  MapPosition,
+  MapBounds,
+  AirportMarker,
+  WeatherMarker,
+  RoutePoint,
+  MapColors,
+  WeatherOverlay,
+  WeatherOverlayType,
+  WeatherOverlays,
   MapConfig,
 } from './types';
 
-// Constants
-export {
-  CATEGORY_COLORS,
-  nmToMeters,
-  metersToNm,
-  DEFAULT_TILE_LAYERS,
-  OPENWEATHER_LAYERS,
-  type WeatherOverlayType,
-} from './constants';
-
-// Components
-export {
-  BaseMap,
-  type BaseMapProps,
-  FitBounds,
-  type FitBoundsProps,
-  WeatherOverlay,
-  type WeatherOverlayProps,
-  WindBarbMarker,
-  type WindBarbMarkerProps,
-} from './components';
-
-// Hooks
-export {
-  useFitBounds,
-  type UseFitBoundsOptions,
-} from './hooks';
+export { FLIGHT_CATEGORY_COLORS } from './types';
 
 // Utilities
 export {
-  windBarbSvg,
-  createWindBarbIcon,
-  createCircleIcon,
-  createAirplaneIcon,
-  toFlightCategory,
+  nmToMeters,
+  metersToNm,
+  boundsFromRadius,
+  boundsFromPositions,
+  padBounds,
+  isInBounds,
+  boundsCenter,
+  formatPosition,
+  osmTileUrl,
+  owmOverlayUrl,
 } from './utils';
 
-// Re-export commonly used leaflet and react-leaflet components
-export {
-  MapContainer,
-  TileLayer,
-  Marker,
-  Popup,
-  Tooltip,
-  Circle,
-  CircleMarker,
-  Polyline,
-  Polygon,
-  Rectangle,
-  useMap,
-  useMapEvents,
-} from 'react-leaflet';
-
-export type {
-  LatLngExpression,
-  LatLng,
-  LatLngBounds,
-  Map as LeafletMap,
-  Icon,
-  DivIcon,
-  PathOptions,
-} from 'leaflet';
+// Wind barbs
+export { windBarbSvg, windBarbDataUrl, type WindBarbOptions } from './windBarb';

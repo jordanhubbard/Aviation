@@ -68,3 +68,43 @@ export class MultiTabWebUI {
     }
   }
 }
+<<<<<<< HEAD
+=======
+
+/**
+ * Base class for mobile UIs
+ */
+export abstract class MobileUI implements ApplicationUI {
+  public id: string;
+  public name: string;
+  public modality: UIModality = 'mobile';
+
+  constructor(id: string, name: string) {
+    this.id = id;
+    this.name = name;
+  }
+
+  abstract render(): void;
+}
+
+/**
+ * Base class for standalone web UIs
+ */
+export abstract class StandaloneWebUI implements ApplicationUI {
+  public id: string;
+  public name: string;
+  public modality: UIModality = 'standalone';
+
+  constructor(id: string, name: string) {
+    this.id = id;
+    this.name = name;
+  }
+
+  abstract render(): void;
+}
+
+/**
+ * Map components and utilities
+ */
+export * from './map';
+>>>>>>> feature/extract-map-patterns
