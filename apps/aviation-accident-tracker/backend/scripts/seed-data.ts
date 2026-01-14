@@ -2,6 +2,7 @@ import fs from 'fs';
 import path from 'path';
 import { memoryRepo } from '../src/repo/memoryRepo.js';
 import { EventRecord } from '../src/types.js';
+import { findAirport } from '../src/geo/airportLookup.js';
 
 const dataPath = path.resolve(path.dirname(new URL(import.meta.url).pathname), '../data/seeds.json');
 
@@ -16,8 +17,18 @@ function run() {
   let inserted = 0;
   let updated = 0;
   for (const ev of seeds) {
-    const pre = memoryRepo.list({}).data.find((r) => r.registration === ev.registration && r.dateZ === ev.dateZ);
-    memoryRepo.upsert(ev);
+    const airport = ev.airportIcao ? findAirport(ev.airportIcao) : ev.airportIata ? findAirport(ev.airportIata) : undefined;
+    const enriched: EventRecord = {
+      ...ev,
+      airportIcao: ev.airportIcao || airport?.icao,
+      airportIata: ev.airportIata || airport?.iata,
+      country: ev.country || airport?.country,
+      region: ev.region || airport?.region,
+      lat: ev.lat ?? airport?.lat,
+      lon: ev.lon ?? airport?.lon,
+    };
+    const pre = memoryRepo.list({}).data.find((r) => r.registration === enriched.registration && r.dateZ === enriched.dateZ);
+    memoryRepo.upsert(enriched);
     if (pre) updated += 1;
     else inserted += 1;
   }

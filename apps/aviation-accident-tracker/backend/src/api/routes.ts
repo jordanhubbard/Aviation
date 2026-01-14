@@ -9,7 +9,11 @@ import type { ListEventsParams } from '../types.js';
 import { memoryRepo } from '../repo/memoryRepo.js';
 import { ListEventsParams } from '../types.js';
 import { runRecentIngest } from '../ingest/ingestService.js';
+<<<<<<< HEAD
 >>>>>>> 896e780 (feat(accident-tracker): add ingest scaffolding and geo lookup)
+=======
+import { searchAirports } from '../geo/airportLookup.js';
+>>>>>>> 852e5c6 (feat(accident-tracker): cluster map, filters, modal; airport search + enriched seeds)
 
 const router = express.Router();
 
@@ -141,6 +145,13 @@ router.post('/ingest/run', (_req, res) => {
       res.status(500).json({ error: 'ingest_failed' });
     });
 >>>>>>> 896e780 (feat(accident-tracker): add ingest scaffolding and geo lookup)
+});
+
+router.get('/airports', (req, res) => {
+  const q = (req.query.search as string | undefined)?.trim() || '';
+  if (!q) return res.json([]);
+  const results = searchAirports(q, 20);
+  res.json(results);
 });
 
 export default router;

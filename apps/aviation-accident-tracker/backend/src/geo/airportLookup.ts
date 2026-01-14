@@ -36,6 +36,19 @@ export function findAirport(code: string): AirportRecord | undefined {
   return found;
 }
 
+export function searchAirports(query: string, limit = 10): AirportRecord[] {
+  const q = query.toLowerCase();
+  const results = airports.filter(
+    (a) =>
+      a.icao.toLowerCase().includes(q) ||
+      (a.iata && a.iata.toLowerCase().includes(q)) ||
+      a.name.toLowerCase().includes(q) ||
+      (a.country && a.country.toLowerCase().includes(q)) ||
+      (a.region && a.region.toLowerCase().includes(q))
+  );
+  return results.slice(0, limit);
+}
+
 export function reverseLookup(lat: number, lon: number): AirportRecord | undefined {
   // Naive nearest-airport search over small set
   let best: AirportRecord | undefined;
