@@ -1,0 +1,344 @@
+[
+  {
+    "id": "seed-1",
+    "dateZ": "2025-12-01T10:00:00Z",
+    "registration": "N123AB",
+    "aircraftType": "C172",
+    "operator": "Bay Flight Club",
+    "category": "general",
+    "airportIcao": "KSFO",
+    "country": "US",
+    "region": "CA",
+    "summary": "Training flight returned with rough running engine.",
+    "narrative": "Engine ran rough on climb; returned safely.",
+    "status": "preliminary",
+    "sources": [
+      { "sourceName": "seed", "url": "https://example.com/seed/1", "fetchedAt": "2025-12-01T10:00:00Z" }
+    ],
+    "createdAt": "2025-12-01T10:00:00Z",
+    "updatedAt": "2025-12-01T10:00:00Z"
+  },
+  {
+    "id": "seed-2",
+    "dateZ": "2025-11-21T15:30:00Z",
+    "registration": "G-TEST",
+    "aircraftType": "A320",
+    "operator": "Example Airways",
+    "category": "commercial",
+    "airportIcao": "EGLL",
+    "country": "GB",
+    "region": "ENG",
+    "summary": "Rejected takeoff due to engine vibration.",
+    "narrative": "Crew rejected takeoff at low speed after vibration warning.",
+    "status": "preliminary",
+    "sources": [
+      { "sourceName": "seed", "url": "https://example.com/seed/2", "fetchedAt": "2025-11-21T15:30:00Z" }
+    ],
+    "createdAt": "2025-11-21T15:30:00Z",
+    "updatedAt": "2025-11-21T15:30:00Z"
+  },
+  {
+    "id": "seed-3",
+    "dateZ": "2025-10-12T04:10:00Z",
+    "registration": "JA-TEST",
+    "aircraftType": "B789",
+    "operator": "Asia Air",
+    "category": "commercial",
+    "airportIcao": "RJTT",
+    "country": "JP",
+    "region": "JP-13",
+    "summary": "Hard landing reported in gusty winds.",
+    "narrative": "Aircraft landed hard during crosswind conditions; inspection required.",
+    "status": "preliminary",
+    "sources": [
+      { "sourceName": "seed", "url": "https://example.com/seed/3", "fetchedAt": "2025-10-12T04:10:00Z" }
+    ],
+    "createdAt": "2025-10-12T04:10:00Z",
+    "updatedAt": "2025-10-12T04:10:00Z"
+  },
+  {
+    "id": "seed-4",
+    "dateZ": "2025-09-05T18:20:00Z",
+    "registration": "ZS-ABC",
+    "aircraftType": "B738",
+    "operator": "Southern Skies",
+    "category": "commercial",
+    "airportIcao": "FAOR",
+    "country": "ZA",
+    "region": "GP",
+    "summary": "Tail strike during go-around.",
+    "narrative": "Tail contacted runway during go-around; returned for inspection.",
+    "status": "preliminary",
+    "sources": [
+      { "sourceName": "seed", "url": "https://example.com/seed/4", "fetchedAt": "2025-09-05T18:20:00Z" }
+    ],
+    "createdAt": "2025-09-05T18:20:00Z",
+    "updatedAt": "2025-09-05T18:20:00Z"
+  },
+  {
+    "id": "seed-5",
+    "dateZ": "2025-08-14T02:45:00Z",
+    "registration": "PP-XYZ",
+    "aircraftType": "A319",
+    "operator": "Brasil Air",
+    "category": "commercial",
+    "airportIcao": "SBGR",
+    "country": "BR",
+    "region": "SP",
+    "summary": "Rejected takeoff after bird strike.",
+    "narrative": "Bird strike on takeoff roll; crew rejected takeoff and taxied back.",
+    "status": "preliminary",
+    "sources": [
+      { "sourceName": "seed", "url": "https://example.com/seed/5", "fetchedAt": "2025-08-14T02:45:00Z" }
+    ],
+    "createdAt": "2025-08-14T02:45:00Z",
+    "updatedAt": "2025-08-14T02:45:00Z"
+  },
+  {
+    "id": "seed-6",
+    "dateZ": "2025-07-22T11:15:00Z",
+    "registration": "C-GAAA",
+    "aircraftType": "DH8D",
+    "operator": "Maple Regional",
+    "category": "commercial",
+    "airportIcao": "CYYZ",
+    "country": "CA",
+    "region": "ON",
+    "summary": "Runway excursion on landing.",
+    "narrative": "Aircraft veered off runway during landing roll; no injuries.",
+    "status": "preliminary",
+    "sources": [
+      { "sourceName": "seed", "url": "https://example.com/seed/6", "fetchedAt": "2025-07-22T11:15:00Z" }
+    ],
+    "createdAt": "2025-07-22T11:15:00Z",
+    "updatedAt": "2025-07-22T11:15:00Z"
+  },
+  {
+    "id": "seed-7",
+    "dateZ": "2025-06-10T06:50:00Z",
+    "registration": "N45FG",
+    "aircraftType": "B350",
+    "operator": "Corporate Wings",
+    "category": "general",
+    "airportIcao": "KDEN",
+    "country": "US",
+    "region": "CO",
+    "summary": "Gear warning led to precautionary landing.",
+    "narrative": "Crew received gear indication fault; landed without incident.",
+    "status": "preliminary",
+    "sources": [
+      { "sourceName": "seed", "url": "https://example.com/seed/7", "fetchedAt": "2025-06-10T06:50:00Z" }
+    ],
+    "createdAt": "2025-06-10T06:50:00Z",
+    "updatedAt": "2025-06-10T06:50:00Z"
+  },
+  {
+    "id": "seed-8",
+    "dateZ": "2025-05-03T20:05:00Z",
+    "registration": "N6789Q",
+    "aircraftType": "PA28",
+    "operator": "SoCal Flying Club",
+    "category": "general",
+    "airportIcao": "KLAX",
+    "country": "US",
+    "region": "CA",
+    "summary": "Off-airport landing after power loss.",
+    "narrative": "Single-engine aircraft landed in field after engine power loss.",
+    "status": "preliminary",
+    "sources": [
+      { "sourceName": "seed", "url": "https://example.com/seed/8", "fetchedAt": "2025-05-03T20:05:00Z" }
+    ],
+    "createdAt": "2025-05-03T20:05:00Z",
+    "updatedAt": "2025-05-03T20:05:00Z"
+  },
+  {
+    "id": "seed-9",
+    "dateZ": "2025-04-12T09:40:00Z",
+    "registration": "9V-AAA",
+    "aircraftType": "A350",
+    "operator": "AsiaConnect",
+    "category": "commercial",
+    "airportIcao": "ZBAA",
+    "country": "CN",
+    "region": "CN-11",
+    "summary": "Autopilot disconnect and go-around.",
+    "narrative": "Autopilot disconnected due to turbulence; crew performed go-around.",
+    "status": "preliminary",
+    "sources": [
+      { "sourceName": "seed", "url": "https://example.com/seed/9", "fetchedAt": "2025-04-12T09:40:00Z" }
+    ],
+    "createdAt": "2025-04-12T09:40:00Z",
+    "updatedAt": "2025-04-12T09:40:00Z"
+  },
+  {
+    "id": "seed-10",
+    "dateZ": "2025-03-28T13:10:00Z",
+    "registration": "D-ABCD",
+    "aircraftType": "B744",
+    "operator": "EuroCargo",
+    "category": "commercial",
+    "airportIcao": "EDDF",
+    "country": "DE",
+    "region": "HE",
+    "summary": "Smoke warning led to emergency landing.",
+    "narrative": "Cargo crew diverted after cargo bay smoke warning; no fire found.",
+    "status": "preliminary",
+    "sources": [
+      { "sourceName": "seed", "url": "https://example.com/seed/10", "fetchedAt": "2025-03-28T13:10:00Z" }
+    ],
+    "createdAt": "2025-03-28T13:10:00Z",
+    "updatedAt": "2025-03-28T13:10:00Z"
+  },
+  {
+    "id": "seed-11",
+    "dateZ": "2025-03-01T17:25:00Z",
+    "registration": "HS-XYZ",
+    "aircraftType": "A321",
+    "operator": "Siam Air",
+    "category": "commercial",
+    "airportIcao": "VIDP",
+    "country": "IN",
+    "region": "DL",
+    "summary": "TCAS RA in busy terminal area.",
+    "narrative": "TCAS resolution advisory during climb; resolved uneventfully.",
+    "status": "preliminary",
+    "sources": [
+      { "sourceName": "seed", "url": "https://example.com/seed/11", "fetchedAt": "2025-03-01T17:25:00Z" }
+    ],
+    "createdAt": "2025-03-01T17:25:00Z",
+    "updatedAt": "2025-03-01T17:25:00Z"
+  },
+  {
+    "id": "seed-12",
+    "dateZ": "2025-02-18T07:05:00Z",
+    "registration": "VH-AAA",
+    "aircraftType": "B738",
+    "operator": "Aussie Air",
+    "category": "commercial",
+    "airportIcao": "YSSY",
+    "country": "AU",
+    "region": "NSW",
+    "summary": "Fuel imbalance warning; returned to gate.",
+    "narrative": "Crew noted fuel imbalance and returned; maintenance action taken.",
+    "status": "preliminary",
+    "sources": [
+      { "sourceName": "seed", "url": "https://example.com/seed/12", "fetchedAt": "2025-02-18T07:05:00Z" }
+    ],
+    "createdAt": "2025-02-18T07:05:00Z",
+    "updatedAt": "2025-02-18T07:05:00Z"
+  },
+  {
+    "id": "seed-13",
+    "dateZ": "2025-02-02T12:55:00Z",
+    "registration": "CC-AAA",
+    "aircraftType": "A320",
+    "operator": "Andes Airlines",
+    "category": "commercial",
+    "airportIcao": "NZAA",
+    "country": "NZ",
+    "region": "AUK",
+    "summary": "Autobrake fault after landing.",
+    "narrative": "Autobrake system fault annunciated post-landing; maintenance inspected.",
+    "status": "preliminary",
+    "sources": [
+      { "sourceName": "seed", "url": "https://example.com/seed/13", "fetchedAt": "2025-02-02T12:55:00Z" }
+    ],
+    "createdAt": "2025-02-02T12:55:00Z",
+    "updatedAt": "2025-02-02T12:55:00Z"
+  },
+  {
+    "id": "seed-14",
+    "dateZ": "2025-01-19T05:45:00Z",
+    "registration": "N777XX",
+    "aircraftType": "B77W",
+    "operator": "Global Sky",
+    "category": "commercial",
+    "airportIcao": "OMDB",
+    "country": "AE",
+    "region": "AE-DU",
+    "summary": "Go-around due to windshear warning.",
+    "narrative": "Windshear warning on approach prompted go-around; second approach normal.",
+    "status": "preliminary",
+    "sources": [
+      { "sourceName": "seed", "url": "https://example.com/seed/14", "fetchedAt": "2025-01-19T05:45:00Z" }
+    ],
+    "createdAt": "2025-01-19T05:45:00Z",
+    "updatedAt": "2025-01-19T05:45:00Z"
+  },
+  {
+    "id": "seed-15",
+    "dateZ": "2025-01-03T19:20:00Z",
+    "registration": "C-FRAC",
+    "aircraftType": "CL60",
+    "operator": "BizJet Canada",
+    "category": "general",
+    "airportIcao": "CYVR",
+    "country": "CA",
+    "region": "BC",
+    "summary": "Hydraulic warning led to return to airport.",
+    "narrative": "Hydraulic system low pressure; aircraft returned without incident.",
+    "status": "preliminary",
+    "sources": [
+      { "sourceName": "seed", "url": "https://example.com/seed/15", "fetchedAt": "2025-01-03T19:20:00Z" }
+    ],
+    "createdAt": "2025-01-03T19:20:00Z",
+    "updatedAt": "2025-01-03T19:20:00Z"
+  },
+  {
+    "id": "seed-16",
+    "dateZ": "2024-12-20T08:30:00Z",
+    "registration": "N2024X",
+    "aircraftType": "PA46",
+    "operator": "Mountain Air",
+    "category": "general",
+    "airportIcao": "KSEA",
+    "country": "US",
+    "region": "WA",
+    "summary": "Icing encounter on approach.",
+    "narrative": "Light icing reported; aircraft landed safely.",
+    "status": "preliminary",
+    "sources": [
+      { "sourceName": "seed", "url": "https://example.com/seed/16", "fetchedAt": "2024-12-20T08:30:00Z" }
+    ],
+    "createdAt": "2024-12-20T08:30:00Z",
+    "updatedAt": "2024-12-20T08:30:00Z"
+  },
+  {
+    "id": "seed-17",
+    "dateZ": "2024-11-11T23:15:00Z",
+    "registration": "XA-ABC",
+    "aircraftType": "E190",
+    "operator": "Mexico Regional",
+    "category": "commercial",
+    "airportIcao": "KORD",
+    "country": "US",
+    "region": "IL",
+    "summary": "Slat fault message after takeoff.",
+    "narrative": "Slat fault indicated; crew held to burn fuel then landed.",
+    "status": "preliminary",
+    "sources": [
+      { "sourceName": "seed", "url": "https://example.com/seed/17", "fetchedAt": "2024-11-11T23:15:00Z" }
+    ],
+    "createdAt": "2024-11-11T23:15:00Z",
+    "updatedAt": "2024-11-11T23:15:00Z"
+  },
+  {
+    "id": "seed-18",
+    "dateZ": "2024-10-30T14:55:00Z",
+    "registration": "N5050Z",
+    "aircraftType": "B737",
+    "operator": "Coastal Air",
+    "category": "commercial",
+    "airportIcao": "KSEA",
+    "country": "US",
+    "region": "WA",
+    "summary": "Cabin pressurization fault; returned to departure.",
+    "narrative": "Cabin altitude warning after climb; crew returned safely.",
+    "status": "preliminary",
+    "sources": [
+      { "sourceName": "seed", "url": "https://example.com/seed/18", "fetchedAt": "2024-10-30T14:55:00Z" }
+    ],
+    "createdAt": "2024-10-30T14:55:00Z",
+    "updatedAt": "2024-10-30T14:55:00Z"
+  }
+]
