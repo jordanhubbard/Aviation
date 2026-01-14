@@ -249,6 +249,12 @@ export function haversineDistance(
  */
 export async function getAirport(code: string): Promise<Airport | null> {
   const codeUpper = normalizeAirportCode(code);
+  
+  // Return null for empty code
+  if (!codeUpper) {
+    return null;
+  }
+  
   const candidates = candidateCodes(codeUpper);
 
   const airports = await loadAirportCache();
