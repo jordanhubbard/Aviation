@@ -155,7 +155,7 @@ export function App() {
             }}
           >
             <option value="">All</option>
-            {options.countries.map((c) => (
+            {(options.countries || []).map((c) => (
               <option key={c} value={c}>
                 {c}
               </option>
@@ -172,7 +172,7 @@ export function App() {
             }}
           >
             <option value="">All</option>
-            {options.regions.map((r) => (
+            {(options.regions || []).map((r) => (
               <option key={r} value={r}>
                 {r}
               </option>
