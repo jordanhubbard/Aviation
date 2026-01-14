@@ -3,437 +3,50 @@
 > Part of the Aviation monorepo. Tracks and visualizes aviation accidents/incidents (>= year 2000) with provenance and GA/Commercial classification.
 
 ## Overview
-
-The Aviation Accident Tracker ingests, deduplicates, and serves aviation accident/incident data from trusted public sources. It provides a web interface with an interactive map, powerful filters, and detailed event information with full provenance tracking.
-
-### Key Features
-
-- **Multi-Source Ingestion**: ASN (Aviation Safety Network), AVHerald
-- **Deduplication**: Smart merging based on (date_z, registration) with fuzzy fallback
-- **Classification**: Automated GA (General Aviation) vs Commercial categorization
-- **Provenance**: Full source tracking with URLs, fetch times, and checksums
-- **UTC Normalization**: All timestamps normalized to Zulu time
-- **Historical Window**: Events from year 2000 onward
-- **Interactive Map**: Mercator projection with clustered pins
-- **Advanced Filters**: Date range, category, airport, country/region, text search
-- **Sortable Table**: Paginated results with key details
-- **Detail View**: Complete narratives with source attribution
+- Ingests recent accidents/incidents from trusted public sources (initially ASN, AVHerald), normalizes to UTC/Z, and de-duplicates by (date_z, registration).
+- Preserves provenance (source URL, fetched time, checksum) and classification (general, commercial, unknown).
+- UI: map (Mercator) with clustered pins, airport/region and GA/Commercial filters, and a date-sorted table with details.
 
 ## Structure
-
 ```
 apps/aviation-accident-tracker/
-├── PLAN.md                     # Epic/work breakdown
-├── README.md                   # This file
-├── beads.yaml                  # Work organization
-├── backend/                    # Node/TypeScript service
-│   ├── src/
-│   │   ├── api/                # REST API routes
-│   │   ├── db/                 # Database schema & repository
-│   │   │   ├── schema.sql      # SQLite schema with constraints
-│   │   │   └── repository.ts   # Data access layer
-│   │   ├── ingest/             # Source adapters & ingestion
-│   │   ├── geo/                # Geocoding & airport lookup
-│   │   ├── app.ts              # Express app setup
-│   │   ├── index.ts            # Entry point
-│   │   └── types.ts            # Shared TypeScript types
-│   ├── package.json
-│   └── tsconfig.json
-├── frontend/                   # Vite/React UI
-│   ├── src/
-│   │   ├── components/         # React components
-│   │   ├── pages/              # Page views
-│   │   └── main.tsx            # App entry
-│   ├── package.json
-│   └── tsconfig.json
-└── Makefile                    # Build/run commands
+├── PLAN.md            # Epic/work breakdown
+├── beads.yaml         # Epics as beads
+├── backend/           # Service, ingestion, API, DB
+└── frontend/          # Vite/React UI
 ```
 
-## Quick Start
-
-### Prerequisites
-
-- Node.js 20+
-- npm 9+
-- SQLite 3
-
-### Setup & Build
-
+## Quickstart (placeholder)
 ```bash
-# From monorepo root
-cd apps/aviation-accident-tracker
-
-# Install dependencies (backend + frontend)
-make install
-
-# Build both backend and frontend
-make build
-```
-
-### Run Locally
-
-```bash
-# Start backend (port 8080)
-make start-backend
-
-# In another terminal, start frontend dev server (port 5173)
-make start-frontend
-
-# Or run both concurrently
-make dev
-```
-
-Visit `http://localhost:5173` to access the UI.
-
-### Run Tests
-
-```bash
-# Run all tests (backend + frontend)
-make test
-
-# Run backend tests only
-cd backend && npm test
-
-# Run frontend tests only
-cd frontend && npm test
-```
-
-## Data Model
-
-### Events Table
-
-Core accident/incident records with >= 2000 constraint:
-
-| Column | Type | Description |
-|--------|------|-------------|
-| `id` | INTEGER | Primary key |
-| `date_z` | TEXT | UTC date (YYYY-MM-DD), >= 2000-01-01 |
-| `registration` | TEXT | Aircraft registration (N-number, etc) |
-| `aircraft_type` | TEXT | Aircraft model/type |
-| `operator` | TEXT | Airline/operator name |
-| `category` | TEXT | 'general', 'commercial', 'unknown' |
-| `airport_icao` | TEXT | ICAO airport code |
-| `airport_iata` | TEXT | IATA airport code |
-| `latitude` | REAL | Decimal degrees |
-| `longitude` | REAL | Decimal degrees |
-| `country` | TEXT | Country name |
-| `region` | TEXT | Region/state |
-| `fatalities` | INTEGER | Number of fatalities |
-| `injuries` | INTEGER | Number of injuries |
-| `summary` | TEXT | Brief summary |
-| `narrative` | TEXT | Detailed description |
-| `status` | TEXT | 'preliminary', 'final', 'ongoing' |
-| `created_at` | TEXT | UTC timestamp |
-| `updated_at` | TEXT | UTC timestamp |
-
-**Uniqueness**: `(date_z, registration)` — prevents duplicates for same accident
-
-### Sources Table
-
-Provenance tracking for each event:
-
-| Column | Type | Description |
-|--------|------|-------------|
-| `id` | INTEGER | Primary key |
-| `event_id` | INTEGER | Foreign key to events |
-| `source_name` | TEXT | e.g. 'asn', 'avherald' |
-| `url` | TEXT | Source URL |
-| `fetched_at` | TEXT | UTC timestamp |
-| `checksum` | TEXT | Content hash for change detection |
-| `raw_fragment` | TEXT | Optional: raw HTML/JSON snippet |
-| `created_at` | TEXT | UTC timestamp |
-
-**Note**: An event can have multiple sources, enabling provenance aggregation.
-
-## API Endpoints
-
-### `GET /api/events`
-
-List events with filters and pagination.
-
-**Query Parameters:**
-- `from` — Start date (YYYY-MM-DD)
-- `to` — End date (YYYY-MM-DD)
-- `category` — 'general', 'commercial', 'all' (default: all)
-- `airport` — ICAO or IATA code
-- `country` — Country name
-- `region` — Region/state
-- `search` — Text search (summary/operator/registration)
-- `limit` — Results per page (default: 50)
-- `offset` — Pagination offset (default: 0)
-
-**Response:**
-```json
-{
-  "events": [
-    {
-      "id": "42",
-      "dateZ": "2024-03-15T10:30:00Z",
-      "registration": "N12345",
-      "aircraftType": "Cessna 172",
-      "operator": "Private",
-      "category": "general",
-      "airportIcao": "KSFO",
-      "country": "USA",
-      "lat": 37.6213,
-      "lon": -122.3790,
-      "fatalities": 0,
-      "injuries": 2,
-      "summary": "Landing gear collapsed on touchdown",
-      "status": "preliminary",
-      "sources": [],
-      "createdAt": "2024-03-15T12:00:00Z",
-      "updatedAt": "2024-03-15T12:00:00Z"
-    }
-  ],
-  "total": 1234,
-  "limit": 50,
-  "offset": 0
-}
-```
-
-### `GET /api/events/:id`
-
-Get detailed event with sources.
-
-**Response:**
-```json
-{
-  "id": "42",
-  "dateZ": "2024-03-15T10:30:00Z",
-  "registration": "N12345",
-  "narrative": "Detailed description...",
-  "sources": [
-    {
-      "sourceName": "asn",
-      "url": "https://aviation-safety.net/...",
-      "fetchedAt": "2024-03-15T12:00:00Z",
-      "checksum": "abc123"
-    }
-  ],
-  ...
-}
-```
-
-### `POST /api/ingest/run`
-
-Trigger manual ingestion (guarded endpoint, requires auth).
-
-**Request:**
-```json
-{
-  "source": "asn",  // optional: specific source
-  "windowDays": 40  // optional: recent window (default: 40)
-}
-```
-
-### `GET /api/health`
-
-Health check endpoint.
-
-**Response:**
-```json
-{
-  "status": "healthy",
-  "timestamp": "2024-03-15T12:00:00Z"
-}
-```
-
-## Ingestion
-
-### Sources
-
-1. **ASN (Aviation Safety Network)** — `source_name: 'asn'`
-   - Recent occurrences page
-   - HTML scraping with fallback to JSON if available
-   - Updates: daily
-
-2. **AVHerald** — `source_name: 'avherald'`
-   - Recent incidents feed
-   - RSS/Atom or HTML parsing
-   - Updates: daily
-
-### Deduplication Strategy
-
-**Primary Key**: `(date_z, registration)`
-
-- Exact match: upserts existing event
-- Fuzzy fallback: `(date_z ± 1 day, country, aircraft_type)`
-- Merge policy: preserve all fields, append sources
-
-### Classification Heuristic
-
-**GA (General Aviation)**:
-- Operator matches: "Private", "N-number owner"
-- Aircraft type: Cessna 172, Piper PA-28, small single-engine
-
-**Commercial**:
-- Operator matches: airline names, cargo carriers
-- Aircraft type: jets, turboprops > 19 seats
-
-**Unknown**: Default when heuristic inconclusive
-
-### Scheduling
-
-- **Recent window**: Crawl last 40 days daily at 02:00 UTC
-- **Manual trigger**: `POST /api/ingest/run` (auth required)
-- **Backfill**: Controlled batches for historical data (post-MVP)
-
-### Error Handling
-
-- Retries: 3 attempts with exponential backoff
-- Partial failures: log and continue
-- Rate limits: respect source rate limits (e.g. 1 req/sec)
-- Observability: structured logs with ingestion metrics
-
-## Development
-
-### Backend Development
-
-```bash
-cd backend
-
-# Install dependencies
+# Backend
+cd apps/aviation-accident-tracker/backend
 npm install
-
-# Run in watch mode
-npm run dev
-
-# Run tests
-npm test
-
-# Lint & format
-npm run lint
-npm run format
-```
-
-### Frontend Development
-
-```bash
-cd frontend
-
-# Install dependencies
-npm install
-
-# Start dev server with HMR
-npm run dev
-
-# Run tests
-npm test
-
-# Build for production
 npm run build
+# Seed sample data (in-memory repo for local/dev)
+npm run seed
+npm start            # serves API + /docs if dist/openapi.json exists
+
+# Frontend
+cd apps/aviation-accident-tracker/frontend
+npm install
+npm run dev
 ```
 
-### Database Migrations
+### Backend runtime knobs
+- `ENABLE_CRON` (default: `true`): disable scheduled ingest if set to `false`.
+- `INGESTION_CRON` (default: `0 */6 * * *`): cron expression for periodic ingest.
+- `PORT` (default: `4000`): API port.
+- `/health` reports scheduler last run; `/docs` serves OpenAPI if generated.
 
-Currently using SQLite with `schema.sql`. For future migrations:
-
-1. Create migration file: `migrations/00X_description.sql`
-2. Apply with migration tool (to be added)
-
-### Adding a New Source
-
-1. Create adapter: `backend/src/ingest/adapters/my-source.ts`
-2. Implement `SourceAdapter` interface:
-   ```typescript
-   interface SourceAdapter {
-     fetchRecent(windowDays: number): Promise<EventRecord[]>;
-     parseEvent(raw: any): EventRecord;
-   }
-   ```
-3. Register in ingestion orchestrator
-4. Add tests: `backend/tests/ingest/adapters/my-source.test.ts`
-
-## Deployment
-
-### Docker
-
+## Scripts (app-level Makefile)
 ```bash
-# Build images
-docker-compose build
-
-# Run services
-docker-compose up -d
-
-# View logs
-docker-compose logs -f
-
-# Stop
-docker-compose down
+make build   # build backend + frontend
+make test    # placeholder tests
+make start   # start backend (placeholder)
 ```
 
-### Environment Variables
-
-| Variable | Description | Default |
-|----------|-------------|---------|
-| `PORT` | Backend server port | 8080 |
-| `DATABASE_PATH` | SQLite file path | `./data/events.db` |
-| `NODE_ENV` | Environment | `development` |
-| `LOG_LEVEL` | Logging level | `info` |
-
-### Security
-
-- Use Aviation monorepo `@aviation/keystore` for API keys
-- Never commit `.env` files or secrets
-- Rate limit ingestion endpoints
-- Validate all input (sanitize search queries)
-
-## Testing
-
-### Backend Tests
-
-- **Unit**: Repository, adapters, parsers (`npm test`)
-- **Integration**: API endpoints with test DB
-- **Contract**: Fixture-based source adapter tests
-- Coverage target: 80%+
-
-### Frontend Tests
-
-- **Component**: React Testing Library
-- **E2E**: Playwright (smoke tests)
-- **Accessibility**: WCAG AA compliance checks
-
-## Performance
-
-### Targets
-
-- Event list API: < 200ms (p95)
-- Event detail API: < 100ms (p95)
-- Map load: < 500ms (p95)
-- Table pagination: < 300ms (p95)
-- Ingestion throughput: 100 events/min
-
-### Optimization
-
-- Database indexes on common filters
-- Pagination for large result sets
-- Map clustering for dense areas
-- CDN for static assets
-- Server-side caching for expensive queries
-
-## Contributing
-
-See [Aviation monorepo CONTRIBUTING.md](../../CONTRIBUTING.md) for general guidelines.
-
-### Workflow
-
-1. Check `bd ready` for available work
-2. Claim issue: `bd update <id> --status in_progress`
-3. Branch: `git checkout -b feature/<bead-id>`
-4. Implement + test
-5. Quality checks: `make test lint`
-6. Commit: `git commit -m "feat(accident-tracker): description"`
-7. Push: `git push && bd sync`
-8. Close issue: `bd close <id> --reason "..."`
-
-## License
-
-MIT License — see [LICENSE](../../LICENSE)
-
-## Support
-
-For questions or issues:
-- Check [PLAN.md](./PLAN.md) for architecture details
-- Review beads: `bd list --json`
-- Open GitHub issue in [jordanhubbard/Aviation](https://github.com/jordanhubbard/Aviation)
+## Notes
+- Secrets: use keystore for DB/proxy credentials.
+- Data window: only >= 2000; normalize all timestamps to Zulu.
+- Uniqueness: (date_z, registration) primary; fuzzy merge fallback (date_z±1d, country, type).
+- Airports: backend/data/airports.json (replace with full OurAirports/OpenFlights when ready).
