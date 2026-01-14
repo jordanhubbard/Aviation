@@ -13,7 +13,7 @@
     "test": "echo \"(placeholder)\"",
     "seed": "tsx scripts/seed-data.ts",
     "lint": "echo \"(placeholder lint)\"",
-    "openapi": "tsx scripts/openapi.ts",
+    "openapi": "node scripts/openapi.js",
     "ingest:cron": "node dist/scheduler.js"
   },
   "dependencies": {
