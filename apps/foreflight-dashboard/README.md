@@ -57,7 +57,6 @@ make clean
    - 📚 **API Documentation**: http://localhost:5051/docs (Interactive API docs)
    - ⚛️ **React Dev Server**: http://localhost:3001 (Development mode only)
 
-<<<<<<< HEAD
 ### No User Accounts Required
 This is a **stateless application** - simply:
 1. Start the application with `make start`

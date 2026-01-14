@@ -68,8 +68,6 @@ export class MultiTabWebUI {
     }
   }
 }
-<<<<<<< HEAD
-=======
 
 /**
  * Base class for mobile UIs
