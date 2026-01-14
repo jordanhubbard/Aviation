@@ -1,7 +1,11 @@
 import { createApp } from './app.js';
+<<<<<<< HEAD
 import { config } from './config.js';
 import { logger } from './logger.js';
 import { EventRepository } from './db/repository.js';
+=======
+import { startScheduler } from './scheduler.js';
+>>>>>>> 2d3ab0e (chore(accident-tracker): scheduler, openapi script, fuzzy dedup, api tests)
 
 async function start() {
   try {
@@ -12,6 +16,7 @@ async function start() {
     await repo.close();
     logger.info('Database initialized');
 
+<<<<<<< HEAD
     // Start server
     const app = createApp();
     app.listen(config.port, () => {
@@ -28,3 +33,12 @@ async function start() {
 }
 
 start();
+=======
+app.listen(port, () => {
+  console.log(`[accident-tracker] API listening on :${port}`);
+});
+
+if (process.env.ENABLE_CRON !== 'false') {
+  startScheduler();
+}
+>>>>>>> 2d3ab0e (chore(accident-tracker): scheduler, openapi script, fuzzy dedup, api tests)
