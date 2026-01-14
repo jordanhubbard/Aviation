@@ -25,6 +25,9 @@ pandas
 geopandas
 shapely
 
+# Shared SDK (local package)
+-e ../../packages/shared-sdk/python
+
 # Testing
 pytest
 pytest-asyncio
