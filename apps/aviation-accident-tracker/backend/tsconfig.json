@@ -12,5 +12,6 @@
     "lib": ["ES2020", "DOM"],
     "types": ["node"]
   },
-  "include": ["src/**/*", "scripts/**/*"]
+  "include": ["src/**/*"],
+  "exclude": ["node_modules", "dist", "scripts", "**/*.test.ts", "**/__tests__"]
 }
