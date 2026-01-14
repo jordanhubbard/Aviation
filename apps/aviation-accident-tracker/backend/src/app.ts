@@ -3,6 +3,11 @@ import cors from 'cors';
 import router from './api/routes.js';
 import { logger } from './logger.js';
 import { config } from './config.js';
+import swaggerUi from 'swagger-ui-express';
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
+import yaml from 'yaml';
 
 export function createApp() {
   const app = express();
@@ -39,6 +44,38 @@ export function createApp() {
   
   // API routes
   app.use('/api', router);
+  
+  // Swagger/OpenAPI documentation
+  try {
+    const __filename = fileURLToPath(import.meta.url);
+    const __dirname = path.dirname(__filename);
+    const openapiPath = path.join(__dirname, 'openapi.yaml');
+    
+    if (fs.existsSync(openapiPath)) {
+      const openapiContent = fs.readFileSync(openapiPath, 'utf-8');
+      const openapiSpec = yaml.parse(openapiContent);
+      
+      app.use('/docs', swaggerUi.serve, swaggerUi.setup(openapiSpec, {
+        customCss: '.swagger-ui .topbar { display: none }',
+        customSiteTitle: 'Aviation Accident Tracker API Docs'
+      }));
+      
+      // Also serve raw spec
+      app.get('/openapi.yaml', (req, res) => {
+        res.type('application/x-yaml').send(openapiContent);
+      });
+      
+      app.get('/openapi.json', (req, res) => {
+        res.json(openapiSpec);
+      });
+      
+      logger.info('OpenAPI documentation available at /docs');
+    } else {
+      logger.warn('OpenAPI spec not found at ' + openapiPath);
+    }
+  } catch (error) {
+    logger.error('Failed to load OpenAPI spec', error as Error);
+  }
   
   // Error handler
   app.use((err: Error, req: express.Request, res: express.Response, next: express.NextFunction) => {
