@@ -13,7 +13,11 @@ import { runRecentIngest } from '../ingest/ingestService.js';
 >>>>>>> 896e780 (feat(accident-tracker): add ingest scaffolding and geo lookup)
 =======
 import { searchAirports } from '../geo/airportLookup.js';
+<<<<<<< HEAD
 >>>>>>> 852e5c6 (feat(accident-tracker): cluster map, filters, modal; airport search + enriched seeds)
+=======
+import airportsData from '../data/airports.json' assert { type: 'json' };
+>>>>>>> 822bd20 (feat(accident-tracker): filters (date/country/region/airport), badge UI, modal polish)
 
 const router = express.Router();
 
@@ -152,6 +156,12 @@ router.get('/airports', (req, res) => {
   if (!q) return res.json([]);
   const results = searchAirports(q, 20);
   res.json(results);
+});
+
+router.get('/filters/options', (_req, res) => {
+  const countries = Array.from(new Set((airportsData as any[]).map((a) => a.country).filter(Boolean))).sort();
+  const regions = Array.from(new Set((airportsData as any[]).map((a) => a.region).filter(Boolean))).sort();
+  res.json({ countries, regions });
 });
 
 export default router;

@@ -4,6 +4,7 @@ import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import L from 'leaflet';
 import MarkerClusterGroup from 'react-leaflet-cluster';
 import debounce from 'lodash.debounce';
+import { Badge } from './components/Badge';
 
 type EventRecord = {
   id: string;
@@ -50,6 +51,11 @@ export function App() {
   const [selected, setSelected] = useState<EventRecord | null>(null);
   const [airportQuery, setAirportQuery] = useState('');
   const [airportOptions, setAirportOptions] = useState<{ label: string; code: string }[]>([]);
+  const [country, setCountry] = useState('');
+  const [region, setRegion] = useState('');
+  const [from, setFrom] = useState('');
+  const [to, setTo] = useState('');
+  const [options, setOptions] = useState<{ countries: string[]; regions: string[] }>({ countries: [], regions: [] });
 
   const fetchAirports = useMemo(
     () =>
@@ -78,6 +84,10 @@ export function App() {
     if (search.trim()) params.set('search', search.trim());
     if (category !== 'all') params.set('category', category);
     if (airportQuery.trim()) params.set('airport', airportQuery.trim());
+    if (country) params.set('country', country);
+    if (region) params.set('region', region);
+    if (from) params.set('from', from);
+    if (to) params.set('to', to);
     fetch(`/api/events?${params.toString()}`)
       .then((r) => r.json())
       .then((data) => {
@@ -88,7 +98,14 @@ export function App() {
         setError(String(err));
         setLoading(false);
       });
-  }, [search, category, page, airportQuery]);
+  }, [search, category, page, airportQuery, country, region, from, to]);
+
+  useEffect(() => {
+    fetch('/api/filters/options')
+      .then((r) => r.json())
+      .then((data) => setOptions(data))
+      .catch(() => setOptions({ countries: [], regions: [] }));
+  }, []);
 
   const positioned = useMemo(() => events.filter((e) => typeof e.lat === 'number' && typeof e.lon === 'number'), [events]);
 
@@ -129,6 +146,62 @@ export function App() {
           </select>
         </label>
         <label>
+          Country:{' '}
+          <select
+            value={country}
+            onChange={(e) => {
+              setCountry(e.target.value);
+              setPage(0);
+            }}
+          >
+            <option value="">All</option>
+            {options.countries.map((c) => (
+              <option key={c} value={c}>
+                {c}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label>
+          Region:{' '}
+          <select
+            value={region}
+            onChange={(e) => {
+              setRegion(e.target.value);
+              setPage(0);
+            }}
+          >
+            <option value="">All</option>
+            {options.regions.map((r) => (
+              <option key={r} value={r}>
+                {r}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label>
+          From:{' '}
+          <input
+            type="date"
+            value={from}
+            onChange={(e) => {
+              setFrom(e.target.value);
+              setPage(0);
+            }}
+          />
+        </label>
+        <label>
+          To:{' '}
+          <input
+            type="date"
+            value={to}
+            onChange={(e) => {
+              setTo(e.target.value);
+              setPage(0);
+            }}
+          />
+        </label>
+        <label>
           Airport:{' '}
           <input
             value={airportQuery}
@@ -156,11 +229,27 @@ export function App() {
             setCategory('all');
             setAirportQuery('');
             setAirportOptions([]);
+            setCountry('');
+            setRegion('');
+            setFrom('');
+            setTo('');
             setPage(0);
           }}
         >
           Clear
         </button>
+        <Badge>
+          Filters active:{' '}
+          {[
+            search && 'search',
+            category !== 'all' && 'category',
+            airportQuery && 'airport',
+            country && 'country',
+            region && 'region',
+            from && 'from',
+            to && 'to',
+          ].filter(Boolean).length || '0'}
+        </Badge>
       </div>
 
       <div style={{ height: 480, minHeight: 400 }}>
@@ -208,16 +297,12 @@ export function App() {
                   <td>{e.aircraftType || '—'}</td>
                   <td>{e.airportIcao || e.airportIata || '—'}</td>
                   <td>
-                    <span
-                      style={{
-                        padding: '2px 6px',
-                        borderRadius: 4,
-                        background: e.category === 'commercial' ? '#e3f2fd' : e.category === 'general' ? '#e8f5e9' : '#eee',
-                        border: '1px solid #ccc',
-                      }}
+                    <Badge
+                      color={e.category === 'commercial' ? '#e3f2fd' : e.category === 'general' ? '#e8f5e9' : '#eee'}
+                      border="#ccc"
                     >
                       {e.category}
-                    </span>
+                    </Badge>
                   </td>
                 </tr>
               ))}
