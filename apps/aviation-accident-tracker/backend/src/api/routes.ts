@@ -3,6 +3,7 @@ import { memoryRepo } from '../repo/memoryRepo.js';
 import { ListEventsParams } from '../types.js';
 import { runRecentIngest } from '../ingest/ingestService.js';
 import { searchAirports } from '../geo/airportLookup.js';
+import airportsData from '../data/airports.json' assert { type: 'json' };
 
 const router = express.Router();
 
@@ -50,6 +51,12 @@ router.get('/airports', (req, res) => {
   if (!q) return res.json([]);
   const results = searchAirports(q, 20);
   res.json(results);
+});
+
+router.get('/filters/options', (_req, res) => {
+  const countries = Array.from(new Set((airportsData as any[]).map((a) => a.country).filter(Boolean))).sort();
+  const regions = Array.from(new Set((airportsData as any[]).map((a) => a.region).filter(Boolean))).sort();
+  res.json({ countries, regions });
 });
 
 export default router;
