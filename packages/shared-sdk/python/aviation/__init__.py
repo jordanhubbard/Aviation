@@ -13,6 +13,7 @@ from .airports import (
 )
 
 from . import weather
+from . import datetime
 
 __all__ = [
     "get_airport",
@@ -20,5 +21,6 @@ __all__ = [
     "search_airports_advanced",
     "haversine_distance",
     "load_airport_cache",
-    "weather"
+    "weather",
+    "datetime"
 ]
