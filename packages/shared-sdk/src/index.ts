@@ -1,5 +1,5 @@
-export * from './ai';
-export * from './service';
+export * from './ai.js';
+export * from './service.js';
 
 // Aviation functionality
 export * from './aviation/types.js';

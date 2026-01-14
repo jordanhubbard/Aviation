@@ -4,6 +4,7 @@ import { config } from '../config.js';
 import { logger } from '../logger.js';
 import { IngestionOrchestrator } from '../ingest/orchestrator.js';
 import type { ListEventsParams } from '../types.js';
+import { getAirport, searchAirports, searchAirportsAdvanced } from '@aviation/shared-sdk';
 
 const router = express.Router();
 
@@ -122,6 +123,99 @@ router.post('/ingest/run', async (req, res, next) => {
       status: 'completed',
       results
     });
+  } catch (error) {
+    next(error);
+  }
+});
+
+/**
+ * GET /api/airports/search
+ * Search airports by text query
+ * Query params: q (query), limit (max results, default 20)
+ * MUST come before /:code route!
+ */
+router.get('/airports/search', async (req, res, next) => {
+  try {
+    const query = req.query.q as string;
+    const limit = req.query.limit ? Number(req.query.limit) : 20;
+
+    if (!query) {
+      return res.status(400).json({
+        error: 'Bad request',
+        message: 'Query parameter "q" is required'
+      });
+    }
+
+    const results = await searchAirports(query, limit);
+    
+    res.json({
+      query,
+      limit,
+      count: results.length,
+      results
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
+/**
+ * GET /api/airports/nearby
+ * Find airports near coordinates
+ * Query params: lat, lon, radius (nm), limit (default 20)
+ * MUST come before /:code route!
+ */
+router.get('/airports/nearby', async (req, res, next) => {
+  try {
+    const lat = req.query.lat ? Number(req.query.lat) : undefined;
+    const lon = req.query.lon ? Number(req.query.lon) : undefined;
+    const radius_nm = req.query.radius ? Number(req.query.radius) : undefined;
+    const limit = req.query.limit ? Number(req.query.limit) : 20;
+
+    if (lat === undefined || lon === undefined) {
+      return res.status(400).json({
+        error: 'Bad request',
+        message: 'Query parameters "lat" and "lon" are required'
+      });
+    }
+
+    const results = await searchAirportsAdvanced({
+      lat,
+      lon,
+      radius_nm,
+      limit
+    });
+
+    res.json({
+      lat,
+      lon,
+      radius_nm: radius_nm || 'unlimited',
+      limit,
+      count: results.length,
+      results
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
+/**
+ * GET /api/airports/:code
+ * Look up airport by ICAO or IATA code
+ * MUST come AFTER specific routes like /search and /nearby!
+ */
+router.get('/airports/:code', async (req, res, next) => {
+  try {
+    const airport = await getAirport(req.params.code);
+    
+    if (!airport) {
+      return res.status(404).json({
+        error: 'Not found',
+        message: `Airport ${req.params.code} not found`
+      });
+    }
+
+    res.json(airport);
   } catch (error) {
     next(error);
   }
