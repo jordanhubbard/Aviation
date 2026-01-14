@@ -1,9 +1,16 @@
 from __future__ import annotations
 
+import sys
 from dataclasses import dataclass
+from pathlib import Path
 from typing import List, Optional, Sequence, Set
 
-from app.models.airport import search_airports_advanced
+# Add shared-sdk Python package to path
+SHARED_SDK_PATH = Path(__file__).parents[5] / "packages" / "shared-sdk" / "python"
+if str(SHARED_SDK_PATH) not in sys.path:
+    sys.path.insert(0, str(SHARED_SDK_PATH))
+
+from aviation import search_airports_advanced
 from app.schemas.route import AlternateAirport, AlternateWeather
 from app.services import metar
 

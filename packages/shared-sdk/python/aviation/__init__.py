@@ -8,12 +8,14 @@ from .airports import (
     get_airport,
     search_airports,
     search_airports_advanced,
-    haversine_distance
+    haversine_distance,
+    load_airport_cache
 )
 
 __all__ = [
     "get_airport",
     "search_airports",
     "search_airports_advanced",
-    "haversine_distance"
+    "haversine_distance",
+    "load_airport_cache"
 ]

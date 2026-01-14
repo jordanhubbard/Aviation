@@ -1,12 +1,21 @@
 from __future__ import annotations
 
+import sys
+from pathlib import Path
+
+# Add shared-sdk Python package to path
+SHARED_SDK_PATH = Path(__file__).parents[5] / "packages" / "shared-sdk" / "python"
+if str(SHARED_SDK_PATH) not in sys.path:
+    sys.path.insert(0, str(SHARED_SDK_PATH))
+
+from aviation import get_airport, search_airports_advanced, haversine_distance, load_airport_cache
+
 from datetime import datetime, timezone
 import math
 from typing import Any, Dict, List, Optional, Tuple
 
 from fastapi import APIRouter, HTTPException
 
-from app.models.airport import get_airport_coordinates, load_airport_cache
 from app.schemas.local import LocalPlanRequest, LocalPlanResponse
 
 router = APIRouter()
@@ -67,7 +76,7 @@ def local_plan(req: LocalPlanRequest) -> LocalPlanResponse:
     radius_nm = float(req.radius_nm) if req.radius_nm is not None else 50.0
     planned_at_utc = datetime.now(timezone.utc)
 
-    center = get_airport_coordinates(req.airport)
+    center = get_airport(req.airport)
     if not center:
         raise HTTPException(status_code=404, detail=f"Unknown airport '{req.airport}'")
 

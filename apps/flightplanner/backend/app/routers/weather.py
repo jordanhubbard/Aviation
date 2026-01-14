@@ -1,10 +1,19 @@
 from __future__ import annotations
 
+import sys
+from pathlib import Path
+
+# Add shared-sdk Python package to path
+SHARED_SDK_PATH = Path(__file__).parents[5] / "packages" / "shared-sdk" / "python"
+if str(SHARED_SDK_PATH) not in sys.path:
+    sys.path.insert(0, str(SHARED_SDK_PATH))
+
+from aviation import get_airport, search_airports_advanced, haversine_distance, load_airport_cache
+
 from typing import List, Tuple
 
 from fastapi import APIRouter, HTTPException
 
-from app.models.airport import get_airport_coordinates
 from app.schemas.weather import (
     DailyForecast,
     DepartureWindow,
@@ -123,7 +132,7 @@ def weather_route(req: RouteWeatherRequest) -> RouteWeatherResponse:
     description="Daily forecast from Open-Meteo (1-16 days).",
 )
 def weather_forecast(code: str, days: int = 7) -> ForecastResponse:
-    coords = get_airport_coordinates(code)
+    coords = get_airport(code)
     if not coords:
         raise HTTPException(status_code=404, detail=f"Unknown airport '{code}'")
 
@@ -149,7 +158,7 @@ def weather_forecast(code: str, days: int = 7) -> ForecastResponse:
     description="Current conditions from OpenWeatherMap enriched with METAR parsing when available.",
 )
 def weather_for_airport(code: str) -> dict:
-    coords = get_airport_coordinates(code)
+    coords = get_airport(code)
     if not coords:
         raise HTTPException(status_code=404, detail=f"Unknown airport '{code}'")
 
@@ -206,7 +215,7 @@ def weather_for_airport(code: str) -> dict:
     description="VFR/IFR suitability (best-effort) and suggested departure windows using Open-Meteo hourly data.",
 )
 def weather_recommendations(code: str) -> WeatherRecommendationsResponse:
-    coords = get_airport_coordinates(code)
+    coords = get_airport(code)
     if not coords:
         raise HTTPException(status_code=404, detail=f"Unknown airport '{code}'")
 

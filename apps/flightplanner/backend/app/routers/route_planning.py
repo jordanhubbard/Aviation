@@ -1,11 +1,20 @@
 from __future__ import annotations
 
+import sys
+from pathlib import Path
+
+# Add shared-sdk Python package to path
+SHARED_SDK_PATH = Path(__file__).parents[5] / "packages" / "shared-sdk" / "python"
+if str(SHARED_SDK_PATH) not in sys.path:
+    sys.path.insert(0, str(SHARED_SDK_PATH))
+
+from aviation import get_airport, search_airports_advanced, haversine_distance, load_airport_cache
+
 from typing import List, Literal, Optional, Tuple
 
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, Field
 
-from app.models.airport import get_airport_coordinates
 from app.services.xctry_route_planner import haversine_nm, plan_route
 
 
@@ -43,7 +52,7 @@ class RouteResponse(BaseModel):
 
 @router.get("/airport/{code}")
 def airport_lookup(code: str) -> dict:
-    airport = get_airport_coordinates(code)
+    airport = get_airport(code)
     if not airport:
         raise HTTPException(status_code=404, detail=f"Airport {code} not found")
     return airport
@@ -51,8 +60,8 @@ def airport_lookup(code: str) -> dict:
 
 @router.post("/route", response_model=RouteResponse)
 def calculate_route(req: RouteRequest) -> RouteResponse:
-    origin = get_airport_coordinates(req.origin)
-    dest = get_airport_coordinates(req.destination)
+    origin = get_airport(req.origin)
+    dest = get_airport(req.destination)
     if not origin or not dest:
         raise HTTPException(status_code=400, detail="Invalid origin or destination code")
 
