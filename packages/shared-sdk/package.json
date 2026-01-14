@@ -8,7 +8,9 @@
     "build": "tsc",
     "dev": "tsc --watch",
     "clean": "rm -rf dist",
-    "test": "echo \"Tests coming soon\" && exit 0",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
     "type-check": "tsc --noEmit"
   },
   "keywords": [
@@ -23,7 +25,9 @@
   "license": "MIT",
   "devDependencies": {
     "@types/node": "^25.0.3",
-    "typescript": "^5.0.0"
+    "jsdom": "^23.0.1",
+    "typescript": "^5.0.0",
+    "vitest": "^4.0.16"
   },
   "engines": {
     "node": ">=18.0.0"

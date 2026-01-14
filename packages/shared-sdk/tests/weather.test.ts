@@ -12,7 +12,7 @@
  * - API client behavior (mocked responses)
  */
 
-import { describe, it, expect } from '@jest/globals';
+import { describe, it, expect } from 'vitest';
 import {
   parseMetar,
   flightCategory,

@@ -20,3 +20,6 @@ export {
 
 // Aviation modules
 export * as Weather from './aviation/weather';
+
+// Integrations
+export * as GoogleCalendar from './integrations/google';
