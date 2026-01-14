@@ -3,148 +3,49 @@
 UI framework supporting multiple modalities for aviation applications.
 
 ## Features
-
-- **Multi-Tab Web UI**: Single web application with multiple panes
-- **Mobile UI**: Self-contained mobile applications
-- **Standalone Web UI**: Individual web applications
+- Multi-Tab Web UI container
+- Mobile and standalone UI bases
+- Map helper utilities (marker normalization, cluster defaults)
 
 ## Installation
-
 ```bash
 npm install @aviation/ui-framework
 ```
 
 ## Usage
-
 ### Multi-Tab Web UI
-
-Create a multi-tab interface with multiple application panes:
-
 ```typescript
-import { MultiTabWebUI, ApplicationPane } from '@aviation/ui-framework';
+import { MultiTabWebUI } from '@aviation/ui-framework';
 
 const webUI = new MultiTabWebUI();
-
-// Register application panes
-webUI.registerPane({
-  id: 'flight-tracker',
-  title: 'Flight Tracker',
-  icon: '✈️',
-  component: FlightTrackerComponent,
-  order: 1
-});
-
-webUI.registerPane({
-  id: 'weather',
-  title: 'Weather',
-  icon: '🌤️',
-  component: WeatherComponent,
-  order: 2
-});
-
-// Switch between panes
+webUI.registerPane({ id: 'flight-tracker', title: 'Flight Tracker', component: FlightTrackerComponent, order: 1 });
+webUI.registerPane({ id: 'weather', title: 'Weather', component: WeatherComponent, order: 2 });
 webUI.switchPane('weather');
-
-// Get active pane
 const activePane = webUI.getActivePane();
-console.log(`Active pane: ${activePane.title}`);
-
-// Get all panes (ordered)
-const allPanes = webUI.getAllPanes();
 ```
 
-### Mobile UI
-
-Create a mobile application:
-
+### Map helpers
 ```typescript
-import { MobileUI } from '@aviation/ui-framework';
+import { normalizeMarkers, defaultClusterOptions } from '@aviation/ui-framework';
 
-class MyMobileApp extends MobileUI {
-  constructor() {
-    super('my-app', 'My Aviation App');
-  }
-
-  render(): void {
-    // Render mobile UI
-    console.log(`Rendering mobile UI for ${this.name}`);
-  }
-}
-
-const mobileApp = new MyMobileApp();
-mobileApp.render();
+const markers = normalizeMarkers([
+  { id: 'evt-1', lat: 37.6, lon: -122.3, title: 'KSFO', subtitle: 'Incident', category: 'general', onClickId: 'evt-1' },
+]);
+const clusterOpts = defaultClusterOptions({ disableClusteringAtZoom: 10 });
 ```
+Use these with your Leaflet/Mapbox layer to keep payloads normalized and clustering consistent.
 
-### Standalone Web UI
-
-Create a standalone web application:
-
+### Mobile / Standalone bases
 ```typescript
-import { StandaloneWebUI } from '@aviation/ui-framework';
-
-class MyWebApp extends StandaloneWebUI {
-  constructor() {
-    super('my-app', 'My Aviation App');
-  }
-
-  render(): void {
-    // Render standalone web UI
-    console.log(`Rendering web UI for ${this.name}`);
-  }
-}
-
-const webApp = new MyWebApp();
-webApp.render();
+import { MobileUI, StandaloneWebUI } from '@aviation/ui-framework';
 ```
+(Extend and implement `render()` as needed.)
 
 ## API Reference
-
-### MultiTabWebUI
-
-Container for multi-tab web interfaces.
-
-**Methods:**
-- `registerPane(pane)`: Register an application pane
-- `unregisterPane(paneId)`: Remove an application pane
-- `switchPane(paneId)`: Switch to a different pane
-- `getActivePane()`: Get the currently active pane
-- `getAllPanes()`: Get all registered panes (sorted by order)
-
-### ApplicationPane Interface
-
-Configuration for application panes.
-
-**Properties:**
-- `id`: Unique identifier
-- `title`: Display title
-- `icon`: Optional icon
-- `component`: Component reference
-- `order`: Optional display order
-
-### MobileUI
-
-Base class for mobile applications.
-
-**Properties:**
-- `id`: Application identifier
-- `name`: Application name
-- `modality`: Always 'mobile'
-
-**Methods:**
-- `render()`: Render the mobile UI (abstract, must implement)
-
-### StandaloneWebUI
-
-Base class for standalone web applications.
-
-**Properties:**
-- `id`: Application identifier
-- `name`: Application name
-- `modality`: Always 'standalone'
-
-**Methods:**
-- `render()`: Render the web UI (abstract, must implement)
+- `MultiTabWebUI`: registerPane, unregisterPane, switchPane, getActivePane, getAllPanes
+- `normalizeMarkers(inputs)`: convert lat/lon + metadata into normalized markers
+- `defaultClusterOptions(overrides)`: sensible clustering defaults
+- `MobileUI`, `StandaloneWebUI`: base classes
 
 ## License
-
 MIT
