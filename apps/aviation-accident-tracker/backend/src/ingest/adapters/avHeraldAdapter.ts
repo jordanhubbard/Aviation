@@ -1,6 +1,9 @@
 import { RawEvent } from '../types.js';
+import fs from 'fs';
+import path from 'path';
 
 const AVH_FEED = 'https://avherald.com/rss.php?keyword=&title=.';
+const fixturePath = path.resolve(path.dirname(new URL(import.meta.url).pathname), '../../data/avherald-feed.xml');
 
 function parseRss(xml: string): RawEvent[] {
   const items = xml.split('<item>').slice(1);
@@ -75,9 +78,16 @@ export async function fetchRecentAvHerald(): Promise<RawEvent[]> {
     const xml = await resp.text();
     const parsed = parseRss(xml);
     if (parsed.length >= 1) return parsed.slice(0, 40);
-    return FALLBACK;
+    // fall through to fixture
   } catch (err) {
     console.warn('[avherald] falling back to fixtures', err);
-    return FALLBACK;
   }
+  try {
+    const xml = fs.readFileSync(fixturePath, 'utf-8');
+    const parsed = parseRss(xml);
+    if (parsed.length >= 1) return parsed;
+  } catch (err) {
+    console.warn('[avherald] fixture read failed', err);
+  }
+  return FALLBACK;
 }

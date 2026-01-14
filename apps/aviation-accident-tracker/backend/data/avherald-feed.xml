@@ -1,0 +1,15 @@
+<rss>
+  <channel>
+    <title>AVHerald Recent Incidents</title>
+    <item>
+      <title>Asia Air B789 at Tokyo on Oct 12 2025, hard landing</title>
+      <link>https://avherald.com/sample/avh1</link>
+      <pubDate>Sun, 12 Oct 2025 04:10:00 GMT</pubDate>
+    </item>
+    <item>
+      <title>Example Airways A320 at London on Nov 21 2025, rejected takeoff</title>
+      <link>https://avherald.com/sample/avh2</link>
+      <pubDate>Fri, 21 Nov 2025 15:30:00 GMT</pubDate>
+    </item>
+  </channel>
+</rss>

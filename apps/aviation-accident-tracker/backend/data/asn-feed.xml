@@ -1,0 +1,20 @@
+<rss>
+  <channel>
+    <title>ASN Recent Incidents</title>
+    <item>
+      <title>Sample Air B738 at San Francisco on Dec 1 2025, engine issue on climb</title>
+      <link>https://aviation-safety.net/sample/asn1</link>
+      <pubDate>Mon, 01 Dec 2025 10:00:00 GMT</pubDate>
+    </item>
+    <item>
+      <title>Example Airways A320 at London on Nov 21 2025, rejected takeoff</title>
+      <link>https://aviation-safety.net/sample/asn2</link>
+      <pubDate>Fri, 21 Nov 2025 15:30:00 GMT</pubDate>
+    </item>
+    <item>
+      <title>Asia Air B789 at Tokyo on Oct 12 2025, hard landing in gusts</title>
+      <link>https://aviation-safety.net/sample/asn3</link>
+      <pubDate>Sun, 12 Oct 2025 04:10:00 GMT</pubDate>
+    </item>
+  </channel>
+</rss>
