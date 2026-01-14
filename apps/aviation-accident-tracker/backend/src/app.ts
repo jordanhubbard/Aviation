@@ -4,8 +4,7 @@ import router from './api/routes.js';
 import { logger } from './logger.js';
 import { config } from './config.js';
 import swaggerUi from 'swagger-ui-express';
-import fs from 'fs';
-import path from 'path';
+import { swaggerSpec } from './api/swagger.js';
 import { getLastRun } from './scheduler.js';
 
 export function createApp() {
@@ -24,7 +23,36 @@ export function createApp() {
     next();
   });
   
-  // Health check
+  /**
+   * @swagger
+   * /health:
+   *   get:
+   *     summary: Health check
+   *     description: Check service health and get last ingestion run info
+   *     tags: [Health]
+   *     responses:
+   *       200:
+   *         description: Service health status
+   *         content:
+   *           application/json:
+   *             schema:
+   *               allOf:
+   *                 - $ref: '#/components/schemas/Health'
+   *                 - type: object
+   *                   properties:
+   *                     env:
+   *                       type: string
+   *                       example: 'development'
+   *                     ingest:
+   *                       type: object
+   *                       nullable: true
+   *                       properties:
+   *                         lastRun:
+   *                           type: string
+   *                           format: date-time
+   *                         eventsIngested:
+   *                           type: integer
+   */
   app.get('/health', (req, res) => {
     res.json({
       status: 'healthy',
@@ -34,7 +62,28 @@ export function createApp() {
     });
   });
   
-  // Version endpoint
+  /**
+   * @swagger
+   * /version:
+   *   get:
+   *     summary: Get service version
+   *     description: Retrieve the service version and name
+   *     tags: [Health]
+   *     responses:
+   *       200:
+   *         description: Service version information
+   *         content:
+   *           application/json:
+   *             schema:
+   *               type: object
+   *               properties:
+   *                 version:
+   *                   type: string
+   *                   example: '0.1.0'
+   *                 service:
+   *                   type: string
+   *                   example: 'accident-tracker'
+   */
   app.get('/version', (req, res) => {
     res.json({
       version: '0.1.0',
@@ -45,12 +94,17 @@ export function createApp() {
   // API routes
   app.use('/api', router);
   
-  // Swagger UI if spec exists
-  const specPath = path.resolve(path.dirname(new URL(import.meta.url).pathname), './dist/openapi.json');
-  if (fs.existsSync(specPath)) {
-    const spec = JSON.parse(fs.readFileSync(specPath, 'utf-8'));
-    app.use('/docs', swaggerUi.serve, swaggerUi.setup(spec));
-  }
+  // Swagger UI for API documentation
+  app.use('/docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec, {
+    customCss: '.swagger-ui .topbar { display: none }',
+    customSiteTitle: 'Aviation Accident Tracker API Documentation',
+  }));
+  
+  // OpenAPI spec JSON
+  app.get('/openapi.json', (req, res) => {
+    res.setHeader('Content-Type', 'application/json');
+    res.send(swaggerSpec);
+  });
   
   // Error handler
   app.use((err: Error, req: express.Request, res: express.Response, next: express.NextFunction) => {
