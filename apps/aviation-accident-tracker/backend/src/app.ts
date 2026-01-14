@@ -3,9 +3,12 @@ import cors from 'cors';
 import router from './api/routes.js';
 import { logger } from './logger.js';
 import { config } from './config.js';
+import { getSchedulerStatus } from './scheduler.js';
 import swaggerUi from 'swagger-ui-express';
-import { swaggerSpec } from './api/swagger.js';
-import { getLastRun } from './scheduler.js';
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
+import yaml from 'yaml';
 
 export function createApp() {
   const app = express();
@@ -23,67 +26,18 @@ export function createApp() {
     next();
   });
   
-  /**
-   * @swagger
-   * /health:
-   *   get:
-   *     summary: Health check
-   *     description: Check service health and get last ingestion run info
-   *     tags: [Health]
-   *     responses:
-   *       200:
-   *         description: Service health status
-   *         content:
-   *           application/json:
-   *             schema:
-   *               allOf:
-   *                 - $ref: '#/components/schemas/Health'
-   *                 - type: object
-   *                   properties:
-   *                     env:
-   *                       type: string
-   *                       example: 'development'
-   *                     ingest:
-   *                       type: object
-   *                       nullable: true
-   *                       properties:
-   *                         lastRun:
-   *                           type: string
-   *                           format: date-time
-   *                         eventsIngested:
-   *                           type: integer
-   */
+  // Health check
   app.get('/health', (req, res) => {
+    const schedulerStatus = getSchedulerStatus();
     res.json({
       status: 'healthy',
       timestamp: new Date().toISOString(),
       env: config.env,
-      ingest: getLastRun()
+      scheduler: schedulerStatus
     });
   });
   
-  /**
-   * @swagger
-   * /version:
-   *   get:
-   *     summary: Get service version
-   *     description: Retrieve the service version and name
-   *     tags: [Health]
-   *     responses:
-   *       200:
-   *         description: Service version information
-   *         content:
-   *           application/json:
-   *             schema:
-   *               type: object
-   *               properties:
-   *                 version:
-   *                   type: string
-   *                   example: '0.1.0'
-   *                 service:
-   *                   type: string
-   *                   example: 'accident-tracker'
-   */
+  // Version endpoint
   app.get('/version', (req, res) => {
     res.json({
       version: '0.1.0',
@@ -94,17 +48,37 @@ export function createApp() {
   // API routes
   app.use('/api', router);
   
-  // Swagger UI for API documentation
-  app.use('/docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec, {
-    customCss: '.swagger-ui .topbar { display: none }',
-    customSiteTitle: 'Aviation Accident Tracker API Documentation',
-  }));
-  
-  // OpenAPI spec JSON
-  app.get('/openapi.json', (req, res) => {
-    res.setHeader('Content-Type', 'application/json');
-    res.send(swaggerSpec);
-  });
+  // Swagger/OpenAPI documentation
+  try {
+    const __filename = fileURLToPath(import.meta.url);
+    const __dirname = path.dirname(__filename);
+    const openapiPath = path.join(__dirname, 'openapi.yaml');
+    
+    if (fs.existsSync(openapiPath)) {
+      const openapiContent = fs.readFileSync(openapiPath, 'utf-8');
+      const openapiSpec = yaml.parse(openapiContent);
+      
+      app.use('/docs', swaggerUi.serve, swaggerUi.setup(openapiSpec, {
+        customCss: '.swagger-ui .topbar { display: none }',
+        customSiteTitle: 'Aviation Accident Tracker API Docs'
+      }));
+      
+      // Also serve raw spec
+      app.get('/openapi.yaml', (req, res) => {
+        res.type('application/x-yaml').send(openapiContent);
+      });
+      
+      app.get('/openapi.json', (req, res) => {
+        res.json(openapiSpec);
+      });
+      
+      logger.info('OpenAPI documentation available at /docs');
+    } else {
+      logger.warn('OpenAPI spec not found at ' + openapiPath);
+    }
+  } catch (error) {
+    logger.error('Failed to load OpenAPI spec', error as Error);
+  }
   
   // Error handler
   app.use((err: Error, req: express.Request, res: express.Response, next: express.NextFunction) => {
