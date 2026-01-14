@@ -1,127 +1,70 @@
 /**
- * UI Modality types
+ * Aviation UI Framework
+ * Shared UI components and patterns for aviation applications
  */
-export type UIModality = 'mobile' | 'web-tab' | 'standalone';
+
+// Map components and utilities
+export * from './map';
 
 /**
- * Application pane configuration for multi-tab web UI
+ * UI Modality Types
  */
-export interface ApplicationPane {
+export type UIModality = 'mobile' | 'web' | 'multi-tab' | 'embedded';
+
+/**
+ * Pane configuration for multi-tab interfaces
+ */
+export interface PaneConfig {
   id: string;
   title: string;
   icon?: string;
-  component: any; // Component reference
+  component: React.ComponentType<any>;
   order?: number;
+  closeable?: boolean;
+  defaultOpen?: boolean;
 }
 
 /**
- * Base application UI interface
+ * Multi-tab web UI interface
  */
-export interface ApplicationUI {
-  id: string;
-  name: string;
-  modality: UIModality;
-  render(): void;
+export interface MultiTabWebUI {
+  registerPane(config: PaneConfig): void;
+  unregisterPane(id: string): void;
+  getAllPanes(): PaneConfig[];
+  getActivePane(): PaneConfig | null;
+  setActivePane(id: string): void;
 }
 
 /**
- * Multi-tab web UI container that holds multiple application panes
+ * Placeholder class for multi-tab UI implementation
+ * To be implemented as needed by applications
  */
 export class MultiTabWebUI {
-  private panes: Map<string, ApplicationPane>;
-  private activePane: string | null;
+  private panes: Map<string, PaneConfig> = new Map();
+  private activeId: string | null = null;
 
-  constructor() {
-    this.panes = new Map();
-    this.activePane = null;
+  registerPane(config: PaneConfig): void {
+    this.panes.set(config.id, config);
   }
 
-  /**
-   * Register an application pane
-   */
-  registerPane(pane: ApplicationPane): void {
-    this.panes.set(pane.id, pane);
-    
-    // Set as active if it's the first pane
-    if (this.panes.size === 1) {
-      this.activePane = pane.id;
+  unregisterPane(id: string): void {
+    this.panes.delete(id);
+    if (this.activeId === id) {
+      this.activeId = null;
     }
   }
 
-  /**
-   * Unregister an application pane
-   */
-  unregisterPane(paneId: string): void {
-    this.panes.delete(paneId);
-    
-    // If active pane was removed, switch to first available
-    if (this.activePane === paneId) {
-      const firstPane = Array.from(this.panes.keys())[0];
-      this.activePane = firstPane || null;
+  getAllPanes(): PaneConfig[] {
+    return Array.from(this.panes.values()).sort((a, b) => (a.order || 0) - (b.order || 0));
+  }
+
+  getActivePane(): PaneConfig | null {
+    return this.activeId ? this.panes.get(this.activeId) || null : null;
+  }
+
+  setActivePane(id: string): void {
+    if (this.panes.has(id)) {
+      this.activeId = id;
     }
   }
-
-  /**
-   * Switch to a different pane
-   */
-  switchPane(paneId: string): void {
-    if (this.panes.has(paneId)) {
-      this.activePane = paneId;
-    } else {
-      throw new Error(`Pane ${paneId} not found`);
-    }
-  }
-
-  /**
-   * Get the currently active pane
-   */
-  getActivePane(): ApplicationPane | null {
-    if (this.activePane) {
-      return this.panes.get(this.activePane) || null;
-    }
-    return null;
-  }
-
-  /**
-   * Get all registered panes
-   */
-  getAllPanes(): ApplicationPane[] {
-    return Array.from(this.panes.values()).sort((a, b) => {
-      const orderA = a.order || 0;
-      const orderB = b.order || 0;
-      return orderA - orderB;
-    });
-  }
-}
-
-/**
- * Base class for mobile UIs
- */
-export abstract class MobileUI implements ApplicationUI {
-  public id: string;
-  public name: string;
-  public modality: UIModality = 'mobile';
-
-  constructor(id: string, name: string) {
-    this.id = id;
-    this.name = name;
-  }
-
-  abstract render(): void;
-}
-
-/**
- * Base class for standalone web UIs
- */
-export abstract class StandaloneWebUI implements ApplicationUI {
-  public id: string;
-  public name: string;
-  public modality: UIModality = 'standalone';
-
-  constructor(id: string, name: string) {
-    this.id = id;
-    this.name = name;
-  }
-
-  abstract render(): void;
 }
