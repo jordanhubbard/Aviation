@@ -13,3 +13,6 @@ export type { Airport, AirportSearchOptions } from './aviation/airports';
 
 // Aviation navigation utilities
 export * from './aviation/navigation';
+
+// Aviation weather services
+export * from './aviation/weather';
