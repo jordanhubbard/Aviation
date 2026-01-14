@@ -1,5 +1,6 @@
 import { createApp } from './app.js';
 import { startScheduler } from './scheduler.js';
+import { config } from './config.js';
 
 const port = process.env.PORT || 4000;
 const app = createApp();
@@ -8,6 +9,6 @@ app.listen(port, () => {
   console.log(`[accident-tracker] API listening on :${port}`);
 });
 
-if (process.env.ENABLE_CRON !== 'false') {
+if (config.ingestion.enabled) {
   startScheduler();
 }

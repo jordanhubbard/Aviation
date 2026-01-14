@@ -37,6 +37,11 @@ make test    # placeholder tests
 make start   # start backend (placeholder)
 ```
 
+## Scheduler / ingestion
+- Set `ENABLE_CRON=false` to disable scheduled ingest (default enabled).
+- Override cadence with `INGESTION_CRON` (default `0 */6 * * *`, every 6h).
+- Health endpoint (`/health`) reports `ingestEnabled`, `ingestSchedule`, and last run summary.
+
 ## Notes
 - Secrets: use keystore for DB/proxy credentials.
 - Data window: only >= 2000; normalize all timestamps to Zulu.

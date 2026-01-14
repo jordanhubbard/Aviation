@@ -29,6 +29,8 @@ export function createApp() {
       status: 'healthy',
       timestamp: new Date().toISOString(),
       env: config.env,
+       ingestSchedule: config.ingestion.cron,
+       ingestEnabled: config.ingestion.enabled,
       ingest: getLastRun(),
     });
   });

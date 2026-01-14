@@ -82,6 +82,8 @@ const spec = {
           status: { type: 'string', example: 'healthy' },
           timestamp: { type: 'string', format: 'date-time' },
           env: { type: 'string', example: 'development' },
+          ingestEnabled: { type: 'boolean', example: true },
+          ingestSchedule: { type: 'string', example: '0 */6 * * *' },
           ingest: { type: 'object', nullable: true },
         },
         required: ['status'],
