@@ -1,86 +1,85 @@
-from flask import Blueprint, render_template, flash, redirect, url_for, request, current_app
+from flask import (
+    Blueprint,
+    render_template,
+    flash,
+    redirect,
+    url_for,
+    request,
+    current_app,
+    session,
+)
 from flask_login import login_required, current_user
 from app import db
-import google_auth_oauthlib.flow
-import google.oauth2.credentials
+from app.calendar_service import GoogleCalendarService
+import json
 
-settings_bp = Blueprint('settings', __name__)
+settings_bp = Blueprint("settings", __name__)
 
 
-@settings_bp.route('/calendar')
+@settings_bp.route("/calendar")
 @login_required
 def calendar():
     """Display calendar settings."""
-    return render_template('settings/calendar.html')
+    return render_template("settings/calendar.html")
 
 
-@settings_bp.route('/calendar/authorize')
+@settings_bp.route("/calendar/authorize")
 @login_required
 def calendar_authorize():
-    """Start Google Calendar OAuth2 flow."""
-    if not current_app.config.get('GOOGLE_CLIENT_CONFIG'):
-        flash('Google Calendar integration is not configured.', 'error')
-        return redirect(url_for('settings.calendar'))
-    
-    flow = google_auth_oauthlib.flow.Flow.from_client_config(
-        current_app.config['GOOGLE_CLIENT_CONFIG'],
-        scopes=['https://www.googleapis.com/auth/calendar.events']
-    )
-    flow.redirect_uri = url_for('settings.calendar_callback', _external=True)
-    
-    authorization_url, state = flow.authorization_url(
-        access_type='offline',
-        include_granted_scopes='true'
-    )
-    
-    session['google_oauth_state'] = state
-    return redirect(authorization_url)
+    """Start Google Calendar OAuth2 flow using shared SDK."""
+    if not current_app.config.get("GOOGLE_CLIENT_ID"):
+        flash("Google Calendar integration is not configured.", "error")
+        return redirect(url_for("settings.calendar"))
+
+    try:
+        calendar_service = GoogleCalendarService()
+        authorization_url = calendar_service.get_authorization_url()
+        return redirect(authorization_url)
+    except Exception as e:
+        current_app.logger.error(f"Google OAuth error: {str(e)}")
+        flash("Failed to start Google Calendar authorization.", "error")
+        return redirect(url_for("settings.calendar"))
 
 
-@settings_bp.route('/calendar/callback')
+@settings_bp.route("/calendar/callback")
 @login_required
 def calendar_callback():
-    """Handle Google Calendar OAuth2 callback."""
-    if not session.get('google_oauth_state'):
-        flash('Invalid OAuth state.', 'error')
-        return redirect(url_for('settings.calendar'))
-    
-    flow = google_auth_oauthlib.flow.Flow.from_client_config(
-        current_app.config['GOOGLE_CLIENT_CONFIG'],
-        scopes=['https://www.googleapis.com/auth/calendar.events'],
-        state=session['google_oauth_state']
-    )
-    flow.redirect_uri = url_for('settings.calendar_callback', _external=True)
-    
+    """Handle Google Calendar OAuth2 callback using shared SDK."""
+    if not session.get("google_oauth_state"):
+        flash("Invalid OAuth state.", "error")
+        return redirect(url_for("settings.calendar"))
+
     try:
-        flow.fetch_token(authorization_response=request.url)
-        credentials = flow.credentials
-        
-        # Store credentials in the database
-        current_user.google_credentials = {
-            'token': credentials.token,
-            'refresh_token': credentials.refresh_token,
-            'token_uri': credentials.token_uri,
-            'client_id': credentials.client_id,
-            'client_secret': credentials.client_secret,
-            'scopes': credentials.scopes
-        }
+        # Extract authorization code from callback URL
+        code = request.args.get("code")
+        if not code:
+            flash("No authorization code received.", "error")
+            return redirect(url_for("settings.calendar"))
+
+        # Handle callback using shared SDK
+        calendar_service = GoogleCalendarService()
+        credentials = calendar_service.handle_callback(code)
+
+        # Store credentials in the database (using shared SDK format)
+        current_user.google_calendar_credentials = json.dumps(credentials.to_dict())
+        current_user.google_calendar_enabled = True
         db.session.commit()
-        
-        flash('Successfully connected to Google Calendar!', 'success')
+
+        flash("Successfully connected to Google Calendar!", "success")
     except Exception as e:
-        current_app.logger.error(f'Google OAuth error: {str(e)}')
-        flash('Failed to connect to Google Calendar.', 'error')
-    
-    return redirect(url_for('settings.calendar'))
+        current_app.logger.error(f"Google OAuth error: {str(e)}")
+        flash("Failed to connect to Google Calendar.", "error")
+
+    return redirect(url_for("settings.calendar"))
 
 
-@settings_bp.route('/calendar/disconnect')
+@settings_bp.route("/calendar/disconnect")
 @login_required
 def calendar_disconnect():
     """Disconnect Google Calendar integration."""
-    if current_user.google_credentials:
-        current_user.google_credentials = None
+    if current_user.google_calendar_credentials:
+        current_user.google_calendar_credentials = None
+        current_user.google_calendar_enabled = False
         db.session.commit()
-        flash('Google Calendar disconnected successfully.', 'success')
-    return redirect(url_for('settings.calendar')) 
+        flash("Google Calendar disconnected successfully.", "success")
+    return redirect(url_for("settings.calendar"))
