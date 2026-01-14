@@ -1,52 +1,69 @@
 /**
- * Aviation Weather Services
+ * Weather Services for Aviation
  * 
- * Unified weather services for aviation applications including:
- * - Current weather (OpenWeatherMap, Open-Meteo)
- * - Forecasts (Open-Meteo daily/hourly)
- * - METAR fetching and parsing (AviationWeather.gov)
- * - Flight category determination (VFR/MVFR/IFR/LIFR)
- * - Weather recommendations and warnings
+ * Comprehensive weather data services for flight planning.
+ * Supports multiple weather APIs with caching and error handling.
  * 
  * @module @aviation/shared-sdk/aviation/weather
+ * 
+ * @example
+ * ```typescript
+ * import { fetchMetarRaw, parseMetar, flightCategory } from '@aviation/shared-sdk';
+ * 
+ * // Fetch and parse METAR
+ * const raw = await fetchMetarRaw('KSFO');
+ * const parsed = parseMetar(raw);
+ * 
+ * // Determine flight category
+ * const category = flightCategory(parsed.visibility_sm, parsed.ceiling_ft);
+ * console.log(`KSFO: ${category}`);
+ * ```
  */
 
-// Export all types
-export * from './types';
+// Cache
+export { WeatherCache, weatherCache } from './cache';
 
-// Export cache
-export { TTLCache, weatherCache } from './cache';
-
-// Export OpenWeatherMap client
+// METAR
 export {
-  getCurrentWeather as owmGetCurrentWeather,
-  getAirportWeather as owmGetAirportWeather,
-} from './openweathermap';
-
-// Export Open-Meteo client
-export {
-  getCurrentWeather as omGetCurrentWeather,
-  getDailyForecast as omGetDailyForecast,
-  getHourlyForecast as omGetHourlyForecast,
-  samplePointsAlongRoute,
-} from './open-meteo';
-
-// Export METAR services
-export {
-  parseMetar,
   fetchMetarRaw,
   fetchMetarRaws,
-  fetchMetar,
-  fetchMetars,
+  parseMetar,
+  type MetarData,
 } from './metar';
 
-// Export flight category services
+// OpenWeatherMap
+export {
+  getCurrentWeather as getOpenWeatherMapCurrent,
+  toWeatherData,
+  OpenWeatherMapError,
+  type OpenWeatherMapResponse,
+  type WeatherData,
+} from './openweathermap';
+
+// Open-Meteo
+export {
+  getCurrentWeather as getOpenMeteoCurrent,
+  getDailyForecast,
+  getHourlyForecast,
+  samplePointsAlongRoute,
+  OpenMeteoError,
+  type CurrentWeather,
+  type DailyForecast,
+  type HourlyForecast,
+} from './open-meteo';
+
+// Flight Category
 export {
   flightCategory,
   recommendationForCategory,
   warningsForConditions,
-  estimateCeilingFtFromCloudcover,
+  metersToSM,
+  estimateCeilingFromCloudCover,
   scoreHour,
   bestDepartureWindows,
-  colorForCategory,
+  DEFAULT_THRESHOLDS,
+  type FlightCategory,
+  type FlightCategoryThresholds,
+  type DepartureWindow,
+  type HourlyData,
 } from './flight-category';

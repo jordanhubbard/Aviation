@@ -1,134 +1,134 @@
 /**
- * TTL (Time-To-Live) Cache implementation for weather data
+ * Weather Cache Utility
  * 
- * This module provides a thread-safe cache with TTL support for weather API responses.
- * Includes support for stale data fallback when API calls fail.
+ * Implements TTL-based caching with stale-on-error fallback for weather data.
+ * Extracted from flightplanner for shared use.
  */
 
 interface CacheEntry<T> {
   value: T;
-  storedAt: number;
-  ttlSeconds: number;
+  timestamp: number;
+  ttlMs: number;
 }
 
 /**
- * Thread-safe TTL cache for weather data
+ * Simple in-memory cache with TTL and LRU eviction
  */
-export class TTLCache {
+export class WeatherCache {
   private cache: Map<string, CacheEntry<any>>;
+  private maxSize: number;
 
-  constructor() {
+  constructor(maxSize: number = 1000) {
     this.cache = new Map();
+    this.maxSize = maxSize;
   }
 
   /**
-   * Clear all cache entries
+   * Get value from cache if not expired
    */
-  clear(): void {
-    this.cache.clear();
-  }
-
-  /**
-   * Get a value from cache if it hasn't expired
-   * 
-   * @param key - Cache key
-   * @returns Cached value or undefined if expired/missing
-   */
-  get<T>(key: string): T | undefined {
-    const now = Date.now() / 1000;
+  get<T>(key: string): T | null {
     const entry = this.cache.get(key);
-
+    
     if (!entry) {
-      return undefined;
+      return null;
     }
 
-    if (now - entry.storedAt > entry.ttlSeconds) {
-      return undefined;
+    const age = Date.now() - entry.timestamp;
+    
+    if (age > entry.ttlMs) {
+      // Expired
+      return null;
     }
 
     return entry.value as T;
   }
 
   /**
-   * Get a value from cache even if expired (stale data)
-   * 
-   * @param key - Cache key
-   * @returns Cached value or undefined if missing
+   * Get stale value from cache (even if expired)
    */
-  getStale<T>(key: string): T | undefined {
+  getStale<T>(key: string): T | null {
     const entry = this.cache.get(key);
-    return entry ? (entry.value as T) : undefined;
+    return entry ? (entry.value as T) : null;
   }
 
   /**
-   * Set a value in cache with TTL
-   * 
-   * @param key - Cache key
-   * @param value - Value to cache
-   * @param ttlSeconds - Time-to-live in seconds
+   * Set value in cache with TTL
    */
   set<T>(key: string, value: T, ttlSeconds: number): void {
+    // LRU eviction if cache is full
+    if (this.cache.size >= this.maxSize && !this.cache.has(key)) {
+      const firstKey = this.cache.keys().next().value;
+      if (firstKey !== undefined) {
+        this.cache.delete(firstKey);
+      }
+    }
+
     this.cache.set(key, {
       value,
-      storedAt: Date.now() / 1000,
-      ttlSeconds,
+      timestamp: Date.now(),
+      ttlMs: ttlSeconds * 1000,
     });
   }
 
   /**
-   * Get a value from cache, or compute and cache it if missing/expired
-   * 
-   * @param key - Cache key
-   * @param ttlSeconds - Time-to-live in seconds
-   * @param fn - Function to compute value if cache miss
-   * @param allowStaleOnError - If true, return stale value on error
-   * @returns Cached or computed value
+   * Get value or fetch and cache if not present
    */
   async getOrSet<T>(
     key: string,
     ttlSeconds: number,
-    fn: () => Promise<T>,
+    fetchFn: () => Promise<T>,
     allowStaleOnError: boolean = false
   ): Promise<T> {
-    // Try to get fresh value
+    // Try cache first
     const cached = this.get<T>(key);
-    if (cached !== undefined) {
+    if (cached !== null) {
       return cached;
     }
 
-    // Get stale value for fallback
-    const stale = allowStaleOnError ? this.getStale<T>(key) : undefined;
-
+    // Fetch new value
     try {
-      // Compute fresh value
-      const value = await fn();
+      const value = await fetchFn();
       this.set(key, value, ttlSeconds);
       return value;
     } catch (error) {
-      // Fallback to stale value if allowed
-      if (allowStaleOnError && stale !== undefined) {
-        return stale;
+      // If fetch fails and stale is allowed, return stale value
+      if (allowStaleOnError) {
+        const stale = this.getStale<T>(key);
+        if (stale !== null) {
+          return stale;
+        }
       }
       throw error;
     }
   }
 
   /**
-   * Get cache size (number of entries)
+   * Clear cache
+   */
+  clear(): void {
+    this.cache.clear();
+  }
+
+  /**
+   * Get cache size
    */
   size(): number {
     return this.cache.size;
   }
 
   /**
-   * Remove a specific key from cache
+   * Remove expired entries
    */
-  delete(key: string): boolean {
-    return this.cache.delete(key);
+  cleanup(): void {
+    const now = Date.now();
+    for (const [key, entry] of this.cache.entries()) {
+      const age = now - entry.timestamp;
+      if (age > entry.ttlMs) {
+        this.cache.delete(key);
+      }
+    }
   }
 }
 
-/**
- * Global weather cache instance
- */
-export const weatherCache = new TTLCache();
+// Singleton cache instance
+export const weatherCache = new WeatherCache();

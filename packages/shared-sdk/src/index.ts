@@ -35,6 +35,11 @@ export {
 } from './aviation/airports';
 export type { Airport, AirportSearchOptions } from './aviation/airports';
 
+<<<<<<< HEAD
 // Aviation navigation utilities
 export * from './aviation/navigation';
 >>>>>>> feature/extract-navigation-utils
+=======
+// Aviation weather services
+export * from './aviation/weather';
+>>>>>>> feature/extract-weather-services

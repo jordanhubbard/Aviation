@@ -1,159 +1,139 @@
 /**
- * OpenWeatherMap API client for aviation weather
+ * OpenWeatherMap API Client
  * 
- * Provides current weather conditions from OpenWeatherMap API.
- * Requires OPENWEATHERMAP_API_KEY or OPENWEATHER_API_KEY in environment/keystore.
+ * Provides current weather data from OpenWeatherMap.
+ * Requires OPENWEATHERMAP_API_KEY environment variable.
+ * 
+ * Extracted from flightplanner for shared use.
  */
 
 import { weatherCache } from './cache';
-import {
-  OpenWeatherMapResponse,
-  WeatherData,
-  WeatherError,
-  WeatherApiKeyError,
-} from './types';
+
+export class OpenWeatherMapError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'OpenWeatherMapError';
+  }
+}
+
+export interface OpenWeatherMapResponse {
+  coord?: { lat: number; lon: number };
+  weather?: Array<{ id: number; main: string; description: string; icon: string }>;
+  main?: {
+    temp: number;
+    feels_like: number;
+    temp_min: number;
+    temp_max: number;
+    pressure: number;
+    humidity: number;
+  };
+  wind?: { speed: number; deg: number; gust?: number };
+  clouds?: { all: number };
+  visibility?: number;
+  dt: number;
+  name: string;
+}
+
+export interface WeatherData {
+  airport: string;
+  conditions: string;
+  temperature: number;       // Fahrenheit
+  wind_speed: number;        // knots
+  wind_direction: number;    // degrees
+  visibility: number;        // statute miles
+  ceiling: number;           // feet
+  metar: string;
+}
 
 /**
- * Get API key from environment or keystore
+ * Get API key from environment
  */
 function getApiKey(): string {
-  // Check environment variables
-  const key =
-    process.env.OPENWEATHERMAP_API_KEY ||
-    process.env.OPENWEATHER_API_KEY;
-
+  const key = process.env.OPENWEATHERMAP_API_KEY || process.env.OPENWEATHER_API_KEY;
   if (!key) {
-    throw new WeatherApiKeyError('OpenWeatherMap');
+    throw new OpenWeatherMapError('Missing OPENWEATHERMAP_API_KEY');
   }
-
   return key;
 }
 
 /**
- * Convert miles per hour to knots
+ * Get current weather for coordinates
+ */
+export async function getCurrentWeather(lat: number, lon: number): Promise<OpenWeatherMapResponse> {
+  const key = getApiKey();
+  const cacheKey = `owm:current:${lat.toFixed(3)}:${lon.toFixed(3)}`;
+
+  const fetchFn = async (): Promise<OpenWeatherMapResponse> => {
+    const url = new URL('https://api.openweathermap.org/data/2.5/weather');
+    url.searchParams.set('lat', lat.toString());
+    url.searchParams.set('lon', lon.toString());
+    url.searchParams.set('appid', key);
+    url.searchParams.set('units', 'imperial');
+
+    const response = await fetch(url.toString(), {
+      signal: AbortSignal.timeout(20000),
+    });
+
+    if (!response.ok) {
+      throw new OpenWeatherMapError(`HTTP ${response.status}`);
+    }
+
+    return await response.json() as OpenWeatherMapResponse;
+  };
+
+  return weatherCache.getOrSet(cacheKey, 300, fetchFn, true);
+}
+
+/**
+ * Convert MPH to knots
  */
 function mphToKnots(mph: number | null | undefined): number {
-  if (mph == null) return 0;
-  return mph * 0.868976;
+  return (mph || 0) * 0.868976;
 }
 
 /**
  * Convert meters to statute miles
  */
-function metersToSm(meters: number | null | undefined): number {
-  if (meters == null) return 0;
-  return meters / 1609.34;
+function metersToSM(meters: number | null | undefined): number {
+  return (meters || 0) / 1609.34;
 }
 
 /**
- * Estimate ceiling from cloud percentage (rough heuristic)
+ * Estimate ceiling from cloud percentage
  */
-function estimateCeilingFt(cloudPct: number | null | undefined): number {
-  if (cloudPct == null) return 10000;
-
-  if (cloudPct >= 75) return 1500;
-  if (cloudPct >= 50) return 3000;
-  if (cloudPct >= 25) return 5000;
+function estimateCeilingFt(cloudPercent: number | null | undefined): number {
+  const pct = cloudPercent || 0;
+  if (pct >= 75) return 1500;
+  if (pct >= 50) return 3000;
+  if (pct >= 25) return 5000;
   return 10000;
 }
 
 /**
- * Convert OpenWeatherMap response to standardized WeatherData
+ * Convert OpenWeatherMap response to simplified weather data
  */
-function toWeatherData(
-  airportCode: string,
-  payload: OpenWeatherMapResponse
-): WeatherData {
-  const weather = payload.weather?.[0] || {};
-  const main = payload.main || {};
-  const wind = payload.wind || {};
-  const clouds = payload.clouds || {};
+export function toWeatherData(airportCode: string, payload: OpenWeatherMapResponse): WeatherData {
+  const weather = payload.weather?.[0];
+  const main = payload.main || {} as any;
+  const wind = payload.wind || {} as any;
+  const clouds = payload.clouds || {} as any;
 
-  const tempF = main.temp || 0;
-  const windSpeedKt = mphToKnots(wind.speed);
-  const windDir = wind.deg || 0;
-  const visSm = metersToSm(payload.visibility);
-  const ceilingFt = estimateCeilingFt(clouds.all);
+  const temp_f = main.temp || 0;
+  const wind_speed_kt = mphToKnots(wind.speed);
+  const wind_dir = wind.deg || 0;
+  const vis_sm = metersToSM(payload.visibility);
+  const ceiling_ft = estimateCeilingFt(clouds.all);
 
-  const conditions = weather.description || weather.main || 'Unknown';
+  const conditions = weather?.description || weather?.main || 'Unknown';
 
   return {
     airport: airportCode.toUpperCase(),
     conditions,
-    temperature: Math.round(tempF),
-    wind_speed: Math.round(windSpeedKt),
-    wind_direction: windDir,
-    visibility: Math.round(visSm * 10) / 10,
-    ceiling: Math.round(ceilingFt),
+    temperature: Math.round(temp_f),
+    wind_speed: Math.round(wind_speed_kt),
+    wind_direction: wind_dir,
+    visibility: Math.round(vis_sm * 10) / 10,
+    ceiling: Math.round(ceiling_ft),
     metar: '',
   };
-}
-
-/**
- * Fetch current weather from OpenWeatherMap API
- * 
- * @param lat - Latitude
- * @param lon - Longitude
- * @returns Current weather conditions
- * @throws WeatherError if API call fails
- */
-export async function getCurrentWeather(
-  lat: number,
-  lon: number
-): Promise<OpenWeatherMapResponse> {
-  const apiKey = getApiKey();
-  const cacheKey = `owm:current:${lat.toFixed(3)}:${lon.toFixed(3)}`;
-
-  return weatherCache.getOrSet(
-    cacheKey,
-    300, // 5 minute TTL
-    async () => {
-      const params = new URLSearchParams({
-        lat: lat.toString(),
-        lon: lon.toString(),
-        appid: apiKey,
-        units: 'imperial',
-      });
-
-      const url = `https://api.openweathermap.org/data/2.5/weather?${params}`;
-
-      try {
-        const response = await fetch(url, {
-          headers: {
-            'User-Agent': 'aviation-shared-sdk',
-          },
-        });
-
-        if (!response.ok) {
-          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-        }
-
-        return await response.json() as OpenWeatherMapResponse;
-      } catch (error) {
-        throw new WeatherError(
-          `Failed to fetch OpenWeatherMap data: ${error}`,
-          'OpenWeatherMap',
-          error instanceof Error ? error : undefined
-        );
-      }
-    },
-    true // Allow stale data on error
-  );
-}
-
-/**
- * Get standardized weather data for an airport
- * 
- * @param airportCode - ICAO airport code
- * @param lat - Airport latitude
- * @param lon - Airport longitude
- * @returns Standardized weather data
- */
-export async function getAirportWeather(
-  airportCode: string,
-  lat: number,
-  lon: number
-): Promise<WeatherData> {
-  const payload = await getCurrentWeather(lat, lon);
-  return toWeatherData(airportCode, payload);
 }
