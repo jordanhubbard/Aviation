@@ -227,6 +227,58 @@ Trigger manual ingestion (guarded endpoint, requires auth).
 }
 ```
 
+## Automated Ingestion
+
+The application includes built-in scheduled data ingestion that runs automatically in the background.
+
+### Configuration
+
+- **Schedule**: Every 6 hours by default (`0 */6 * * *`)
+- **Customization**: Set `INGEST_CRON` environment variable (cron format)
+- **Enable/Disable**: Set `ENABLE_CRON=false` to disable automatic ingestion
+- **Window**: Ingests events from the last 40 days (configurable)
+
+### Monitoring
+
+The `/health` endpoint includes information about the last ingestion run:
+
+```json
+{
+  "status": "healthy",
+  "timestamp": "2024-03-15T12:00:00Z",
+  "ingest": {
+    "started": "2024-03-15T11:00:00Z",
+    "finished": "2024-03-15T11:05:30Z",
+    "error": null  // or error message if failed
+  }
+}
+```
+
+### Manual Trigger
+
+Use the `/api/ingest/run` endpoint to manually trigger ingestion outside the scheduled runs.
+
+### How It Works
+
+1. **Cron Job**: Runs on schedule (default: every 6 hours)
+2. **Recent Window**: Fetches events from last 40 days from all sources
+3. **Deduplication**: Automatically merges data from multiple sources
+4. **Error Handling**: Failures are logged and reported in health endpoint
+5. **Graceful**: Does not interrupt running server, runs in background
+
+### Example Configuration
+
+```bash
+# Custom schedule (every 3 hours)
+INGEST_CRON="0 */3 * * *"
+
+# Disable automatic ingestion
+ENABLE_CRON=false
+
+# Or set in .env file
+echo 'INGEST_CRON="0 */3 * * *"' >> .env
+```
+
 ### `GET /api/health`
 
 Health check endpoint.
