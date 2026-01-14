@@ -28,8 +28,86 @@ function getOrchestrator(): IngestionOrchestrator {
 }
 
 /**
- * GET /api/events
- * List events with filters and pagination
+ * @swagger
+ * /api/events:
+ *   get:
+ *     summary: List aviation events
+ *     description: Retrieve a paginated list of aviation accidents and incidents with optional filters
+ *     tags: [Events]
+ *     parameters:
+ *       - in: query
+ *         name: from
+ *         schema:
+ *           type: string
+ *           format: date
+ *         description: Filter events from this date (YYYY-MM-DD)
+ *         example: '2024-01-01'
+ *       - in: query
+ *         name: to
+ *         schema:
+ *           type: string
+ *           format: date
+ *         description: Filter events to this date (YYYY-MM-DD)
+ *         example: '2024-12-31'
+ *       - in: query
+ *         name: category
+ *         schema:
+ *           type: string
+ *           enum: [GA, Commercial, all]
+ *         description: Filter by flight category
+ *         example: 'GA'
+ *       - in: query
+ *         name: airport
+ *         schema:
+ *           type: string
+ *         description: Filter by airport ICAO code
+ *         example: 'KSFO'
+ *       - in: query
+ *         name: country
+ *         schema:
+ *           type: string
+ *         description: Filter by country code
+ *         example: 'US'
+ *       - in: query
+ *         name: region
+ *         schema:
+ *           type: string
+ *         description: Filter by region
+ *         example: 'North America'
+ *       - in: query
+ *         name: search
+ *         schema:
+ *           type: string
+ *         description: Full-text search in narrative
+ *         example: 'engine failure'
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           minimum: 1
+ *           maximum: 100
+ *           default: 50
+ *         description: Number of results per page
+ *       - in: query
+ *         name: offset
+ *         schema:
+ *           type: integer
+ *           minimum: 0
+ *           default: 0
+ *         description: Pagination offset
+ *     responses:
+ *       200:
+ *         description: List of events
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/EventList'
+ *       500:
+ *         description: Server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
  */
 router.get('/events', async (req, res, next) => {
   try {
@@ -61,8 +139,39 @@ router.get('/events', async (req, res, next) => {
 });
 
 /**
- * GET /api/events/:id
- * Get event detail with sources
+ * @swagger
+ * /api/events/{id}:
+ *   get:
+ *     summary: Get event details
+ *     description: Retrieve detailed information about a specific event including provenance sources
+ *     tags: [Events]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Event ID
+ *         example: 'ASN_2024-01-15_N12345'
+ *     responses:
+ *       200:
+ *         description: Event details
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/EventWithSources'
+ *       404:
+ *         description: Event not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       500:
+ *         description: Server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
  */
 router.get('/events/:id', async (req, res, next) => {
   try {
@@ -83,8 +192,44 @@ router.get('/events/:id', async (req, res, next) => {
 });
 
 /**
- * POST /api/ingest/run
- * Trigger manual ingestion (guarded by simple auth check)
+ * @swagger
+ * /api/ingest/run:
+ *   post:
+ *     summary: Trigger manual ingestion
+ *     description: Manually trigger data ingestion from aviation accident sources (requires authentication)
+ *     tags: [Ingestion]
+ *     security:
+ *       - BearerAuth: []
+ *     requestBody:
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/IngestionRequest'
+ *     responses:
+ *       200:
+ *         description: Ingestion completed
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/IngestionResult'
+ *       401:
+ *         description: Unauthorized - Bearer token required
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       403:
+ *         description: Forbidden - Invalid token
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       500:
+ *         description: Server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
  */
 router.post('/ingest/run', async (req, res, next) => {
   try {
@@ -130,8 +275,29 @@ router.post('/ingest/run', async (req, res, next) => {
 });
 
 /**
- * GET /api/airports
- * Search airports by query
+ * @swagger
+ * /api/airports:
+ *   get:
+ *     summary: Search airports
+ *     description: Search for airports by ICAO code, IATA code, or name
+ *     tags: [Airports]
+ *     parameters:
+ *       - in: query
+ *         name: search
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Search query (ICAO, IATA, or name)
+ *         example: 'SFO'
+ *     responses:
+ *       200:
+ *         description: List of matching airports (max 20 results)
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 $ref: '#/components/schemas/Airport'
  */
 router.get('/airports', (req, res) => {
   const q = (req.query.search as string | undefined)?.trim() || '';
@@ -141,8 +307,19 @@ router.get('/airports', (req, res) => {
 });
 
 /**
- * GET /api/filters/options
- * Get available filter options (countries, regions)
+ * @swagger
+ * /api/filters/options:
+ *   get:
+ *     summary: Get filter options
+ *     description: Retrieve available filter options (countries and regions) for event filtering
+ *     tags: [Filters]
+ *     responses:
+ *       200:
+ *         description: Available filter options
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/FilterOptions'
  */
 router.get('/filters/options', (_req, res) => {
   const countries = Array.from(new Set((airportsData as any[]).map((a) => a.country).filter(Boolean))).sort();
