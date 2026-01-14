@@ -1,6 +1,7 @@
 export * from './ai';
 export * from './service';
 
+<<<<<<< HEAD
 // Aviation modules
 export * from './aviation/airports';
 export * from './aviation/navigation';
@@ -23,3 +24,17 @@ export * as Weather from './aviation/weather';
 
 // Integrations
 export * as GoogleCalendar from './integrations/google';
+=======
+// Aviation data services
+export {
+  AirportDatabase,
+  getAirportDatabase,
+  searchAirports,
+  getAirportByCode,
+  findNearbyAirports,
+} from './aviation/airports';
+export type { Airport, AirportSearchOptions } from './aviation/airports';
+
+// Aviation navigation utilities
+export * from './aviation/navigation';
+>>>>>>> feature/extract-navigation-utils

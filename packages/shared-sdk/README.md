@@ -1,27 +1,114 @@
 # @aviation/shared-sdk
 
-Shared SDK for aviation applications with weather services, AI methodology, and common utilities.
+Shared SDK for aviation applications providing common services, AI integration patterns, and aviation data services.
 
 ## Features
 
-### ✈️ Aviation Weather Services
+### Background Services
+- `BackgroundService` - Base class for long-running services
+- `AIService` - Base class for AI-powered services
 
-Comprehensive weather data services for flight planning:
+### AI Integration
+- `AIProvider` - Interface for AI provider implementations
+- Common AI patterns and utilities
 
-- **OpenWeatherMap Integration** - Current weather conditions
-- **Open-Meteo Integration** - Free weather forecasts (daily/hourly)
-- **METAR Services** - Fetch and parse METARs from AviationWeather.gov
-- **Flight Categories** - Automatic VFR/MVFR/IFR/LIFR determination
-- **Smart Caching** - TTL-based caching with stale data fallback
-- **Weather Recommendations** - Flight planning guidance and warnings
+### Aviation Data Services
 
-### 🤖 AI Integration
+#### Airport Database (`aviation/airports`)
 
-Base patterns for AI-powered aviation applications.
+Comprehensive airport database with search and geospatial capabilities.
 
-### 🛠️ Background Services
+**TypeScript:**
+```typescript
+import { searchAirports, getAirportByCode, findNearbyAirports } from '@aviation/shared-sdk';
 
-Base classes for long-running aviation services.
+// Search by code, name, or city
+const results = searchAirports('SFO', 20);
+
+// Get specific airport
+const airport = getAirportByCode('KSFO');
+
+// Find nearby airports
+const nearby = findNearbyAirports(37.6213, -122.3790, 50, 20);
+```
+
+**Python:**
+```python
+from aviation import search_airports, get_airport_by_code, find_nearby_airports
+
+# Search by code, name, or city
+results = search_airports('SFO', limit=20)
+
+# Get specific airport
+airport = get_airport_by_code('KSFO')
+
+# Find nearby airports
+nearby = find_nearby_airports(37.6213, -122.3790, radius_nm=50, limit=20)
+```
+
+**Features:**
+- ICAO and IATA code lookup
+- Fuzzy search by name, city, country
+- Proximity search (haversine distance)
+- K-prefix handling for US airports (e.g., 7S5 ↔ K7S5)
+- In-memory caching for performance
+- < 10ms search performance
+
+**Data:**
+- 50,000+ airports worldwide
+- Source: OurAirports database
+- Location: `packages/shared-sdk/data/airports_cache.json`
+
+#### Navigation Utilities (`aviation/navigation`)
+
+Comprehensive navigation calculations for flight planning. All calculations use standard aviation units (nautical miles, knots, degrees).
+
+**TypeScript:**
+```typescript
+import { distanceNM, initialBearing, fuelRequired, groundSpeed } from '@aviation/shared-sdk';
+
+// Calculate distance and bearing from KSFO to KJFK
+const distance = distanceNM(37.6213, -122.3790, 40.6413, -73.7781);
+const bearing = initialBearing(37.6213, -122.3790, 40.6413, -73.7781);
+
+// Calculate fuel required (450 kts GS, 12 GPH)
+const fuel = fuelRequired(distance, 450, 12);
+console.log(`${distance.toFixed(0)} NM at ${bearing.toFixed(0)}°`);
+console.log(`Fuel: ${fuel.gallons.toFixed(1)} gal, Time: ${fuel.hours.toFixed(2)} hrs`);
+
+// Wind correction
+const gs = groundSpeed(450, 90, 270, 25); // TAS 450, course 90°, wind 270@25
+```
+
+**Python:**
+```python
+from aviation.navigation import distance_nm, initial_bearing, fuel_required, ground_speed
+
+# Calculate distance and bearing
+distance = distance_nm(37.6213, -122.3790, 40.6413, -73.7781)
+bearing = initial_bearing(37.6213, -122.3790, 40.6413, -73.7781)
+
+# Calculate fuel required
+fuel = fuel_required(distance, 450, 12)
+print(f"{distance:.0f} NM at {bearing:.0f}°")
+print(f"Fuel: {fuel['gallons']:.1f} gal, Time: {fuel['hours']:.2f} hrs")
+
+# Wind correction
+gs = ground_speed(450, 90, 270, 25)
+```
+
+**Features:**
+- **Distance Calculations:** Haversine distance, midpoint, destination from bearing/distance, great circle routes
+- **Bearing Calculations:** Initial/final bearing, wind correction angle, true heading, ground speed
+- **Coordinate Utilities:** Validation, normalization, DMS conversion, bounding boxes
+- **Fuel Calculations:** Consumption, range, endurance, VFR/IFR reserves, weight/volume
+- **Time-Speed-Distance:** ETA, flight time, IAS to TAS conversion, Mach number calculations
+- **Unit Conversions:** NM/km/miles, knots/mph/kph, feet/meters
+
+**Performance:**
+- < 1ms per calculation (pure math, no I/O)
+- High precision (< 0.1% error for distances > 10 NM)
+- Validated against known aviation values
 
 ## Installation
 
@@ -29,315 +116,87 @@ Base classes for long-running aviation services.
 npm install @aviation/shared-sdk
 ```
 
-Or for use in the monorepo:
+## Usage
 
-```json
-{
-  "dependencies": {
-    "@aviation/shared-sdk": "*"
-  }
-}
-```
-
-## Quick Start
-
-### Weather Services (TypeScript)
+### TypeScript
 
 ```typescript
-import { Weather } from '@aviation/shared-sdk';
+import { BackgroundService, AirportDatabase } from '@aviation/shared-sdk';
 
-// Fetch METAR
-const metar = await Weather.fetchMetarRaw('KSFO');
-console.log(metar); // "KSFO 141756Z 27015KT 10SM FEW015 SCT250 14/09 A3012 RMK AO2"
-
-// Parse METAR
-const parsed = Weather.parseMetar(metar);
-console.log(parsed);
-// {
-//   wind_direction: 270,
-//   wind_speed_kt: 15,
-//   visibility_sm: 10,
-//   temperature_f: 57,
-//   ceiling_ft: undefined
-// }
-
-// Determine flight category
-const category = Weather.flightCategory(
-  parsed.visibility_sm,
-  parsed.ceiling_ft || 10000
-);
-console.log(category); // "VFR"
-
-// Get recommendation
-const recommendation = Weather.recommendationForCategory(category);
-console.log(recommendation);
-// "VFR conditions. Routine VFR flight should be feasible."
-
-// Fetch current weather from OpenWeatherMap
-const weather = await Weather.owmGetAirportWeather('KSFO', 37.6213, -122.3790);
-console.log(weather);
-// {
-//   airport: 'KSFO',
-//   conditions: 'clear sky',
-//   temperature: 57,
-//   wind_speed: 13,
-//   wind_direction: 270,
-//   visibility: 10,
-//   ceiling: 10000
-// }
-
-// Get Open-Meteo forecast
-const forecast = await Weather.omGetHourlyForecast(37.6213, -122.3790, 24);
-console.log(forecast[0]);
-// {
-//   time: '2026-01-14T00:00',
-//   visibility_m: 16000,
-//   cloudcover_pct: 25,
-//   precipitation_mm: 0,
-//   wind_speed_kt: 12
-// }
-
-// Find best departure windows
-const windows = Weather.bestDepartureWindows(forecast, 3, 3);
-console.log(windows);
-// [
-//   {
-//     start_time: '2026-01-14T09:00',
-//     end_time: '2026-01-14T12:00',
-//     score: 385.2,
-//     flight_category: 'VFR'
-//   },
-//   ...
-// ]
-```
-
-### Weather Services (Python)
-
-```python
-from aviation.weather import (
-    fetch_metar_raw,
-    parse_metar,
-    flight_category,
-    recommendation_for_category,
-)
-
-# Fetch METAR
-metar = fetch_metar_raw("KSFO")
-print(metar)
-
-# Parse METAR
-parsed = parse_metar(metar)
-print(parsed)
-
-# Determine flight category
-category = flight_category(
-    visibility_sm=parsed.get("visibility_sm"),
-    ceiling_ft=parsed.get("ceiling_ft", 10000),
-)
-print(category)  # "VFR"
-
-# Get recommendation
-rec = recommendation_for_category(category)
-print(rec)
-```
-
-### Background Services
-
-```typescript
-import { BackgroundService } from '@aviation/shared-sdk';
-
-class FlightTrackerService extends BackgroundService {
+class MyService extends BackgroundService {
+  private airports = new AirportDatabase();
+  
   protected async onStart(): Promise<void> {
-    console.log('Flight tracker starting...');
-    // Initialize your service
+    const airport = this.airports.getByIcao('KSFO');
+    console.log('Found:', airport?.name);
   }
-
+  
   protected async onStop(): Promise<void> {
-    console.log('Flight tracker stopping...');
     // Cleanup
   }
 }
+```
 
-const service = new FlightTrackerService({
-  name: 'flight-tracker',
-  enabled: true,
-});
+### Python
 
-await service.start();
+```python
+from aviation import AirportDatabase
+
+db = AirportDatabase()
+airport = db.get_by_icao('KSFO')
+print(f'Found: {airport.name}')
 ```
 
 ## API Reference
 
-### Weather Services
+### Airport Database
 
-#### METAR Services
+#### TypeScript API
 
-```typescript
-// Fetch raw METAR
-fetchMetarRaw(station: string): Promise<string | null>
+**`AirportDatabase`**
+- `getAirportCoordinates(code: string): Airport | null`
+- `searchAirports(options: AirportSearchOptions): Airport[]`
+- `search(query: string, limit?: number): Airport[]`
+- `findNearby(lat: number, lon: number, radiusNm: number, limit?: number): Airport[]`
+- `getByIcao(icao: string): Airport | null`
+- `getByIata(iata: string): Airport | null`
 
-// Fetch multiple METARs
-fetchMetarRaws(stations: string[]): Promise<Map<string, string | null>>
+**Convenience Functions:**
+- `searchAirports(query: string, limit?: number): Airport[]`
+- `getAirportByCode(code: string): Airport | null`
+- `findNearbyAirports(lat: number, lon: number, radiusNm: number, limit?: number): Airport[]`
 
-// Parse METAR string
-parseMetar(raw: string): ParsedMetar
+#### Python API
 
-// Fetch and parse METAR
-fetchMetar(station: string): Promise<ParsedMetar | null>
-```
+**`AirportDatabase`**
+- `get_airport_coordinates(code: str) -> Optional[Airport]`
+- `search_airports(**options) -> List[Airport]`
+- `search(query: str, limit: int = 20) -> List[Airport]`
+- `find_nearby(lat: float, lon: float, radius_nm: float, limit: int = 20) -> List[Airport]`
+- `get_by_icao(icao: str) -> Optional[Airport]`
+- `get_by_iata(iata: str) -> Optional[Airport]`
 
-#### OpenWeatherMap
+**Convenience Functions:**
+- `search_airports(query: str, limit: int = 20) -> List[Airport]`
+- `get_airport_by_code(code: str) -> Optional[Airport]`
+- `find_nearby_airports(lat: float, lon: float, radius_nm: float, limit: int = 20) -> List[Airport]`
 
-```typescript
-// Get current weather (raw API response)
-owmGetCurrentWeather(lat: number, lon: number): Promise<OpenWeatherMapResponse>
-
-// Get standardized airport weather
-owmGetAirportWeather(
-  airportCode: string,
-  lat: number,
-  lon: number
-): Promise<WeatherData>
-```
-
-#### Open-Meteo
-
-```typescript
-// Get current weather
-omGetCurrentWeather(lat: number, lon: number): Promise<OpenMeteoCurrentWeather>
-
-// Get daily forecast (1-16 days)
-omGetDailyForecast(
-  lat: number,
-  lon: number,
-  days?: number
-): Promise<OpenMeteoDailyForecast[]>
-
-// Get hourly forecast (1-168 hours)
-omGetHourlyForecast(
-  lat: number,
-  lon: number,
-  hours?: number
-): Promise<OpenMeteoHourlyForecast[]>
-
-// Sample route points
-samplePointsAlongRoute(
-  points: Array<[number, number]>,
-  interval?: number
-): Array<[number, number]>
-```
-
-#### Flight Categories
+### Airport Data Structure
 
 ```typescript
-// Determine flight category
-flightCategory(
-  visibility_sm: number | null,
-  ceiling_ft: number | null,
-  thresholds?: FlightCategoryThresholds
-): FlightCategory
-
-// Get recommendation
-recommendationForCategory(category: FlightCategory): string
-
-// Get warnings
-warningsForConditions(
-  visibility_sm: number | null,
-  ceiling_ft: number | null,
-  wind_speed_kt: number | null
-): string[]
-
-// Estimate ceiling from cloud cover
-estimateCeilingFtFromCloudcover(cloud_pct: number | null): number | null
-
-// Score weather hour (higher = better)
-scoreHour(
-  category: FlightCategory,
-  precipitation_mm: number | null,
-  wind_speed_kt: number | null
-): number
-
-// Find best departure windows
-bestDepartureWindows(
-  hourly: OpenMeteoHourlyForecast[],
-  windowHours?: number,
-  maxWindows?: number
-): DepartureWindow[]
-
-// Get color for flight category
-colorForCategory(category: FlightCategory): string
-```
-
-### Types
-
-```typescript
-type FlightCategory = 'VFR' | 'MVFR' | 'IFR' | 'LIFR' | 'UNKNOWN';
-
-interface FlightCategoryThresholds {
-  vfr_ceiling_ft: number;      // Default: 3000
-  vfr_visibility_sm: number;   // Default: 5.0
-  mvfr_ceiling_ft: number;     // Default: 1000
-  mvfr_visibility_sm: number;  // Default: 3.0
-  ifr_ceiling_ft: number;      // Default: 500
-  ifr_visibility_sm: number;   // Default: 1.0
-}
-
-interface ParsedMetar {
-  wind_direction?: number;
-  wind_speed_kt?: number;
-  visibility_sm?: number;
-  temperature_f?: number;
-  ceiling_ft?: number;
-}
-
-interface WeatherData {
-  airport: string;
-  conditions: string;
-  temperature: number;
-  wind_speed: number;
-  wind_direction: number;
-  visibility: number;
-  ceiling: number;
-  metar?: string;
-}
-
-interface DepartureWindow {
-  start_time: string;
-  end_time: string;
-  score: number;
-  flight_category: FlightCategory;
+interface Airport {
+  icao: string;           // ICAO code (e.g., "KSFO")
+  iata: string;           // IATA code (e.g., "SFO")
+  name: string;           // Airport name
+  city: string;           // City
+  country: string;        // Country
+  latitude: number;       // Latitude
+  longitude: number;      // Longitude
+  elevation?: number;     // Elevation in feet
+  type?: string;          // Airport type
+  distance_nm?: number;   // Distance in NM (proximity searches only)
 }
 ```
-
-## Configuration
-
-### API Keys
-
-Weather services require API keys to be set in environment variables or keystore:
-
-**OpenWeatherMap:**
-```bash
-export OPENWEATHERMAP_API_KEY="your-key-here"
-# OR
-export OPENWEATHER_API_KEY="your-key-here"
-```
-
-**Open-Meteo:**
-No API key required (free service)
-
-**AviationWeather.gov:**
-No API key required (government service)
-
-### Caching
-
-Weather data is automatically cached with TTL:
-
-- **METAR**: 5 minutes
-- **OpenWeatherMap**: 5 minutes
-- **Open-Meteo current**: 10 minutes
-- **Open-Meteo forecast**: 30 minutes
-
-Cache supports stale data fallback on API failures.
 
 ## Development
 
@@ -348,36 +207,10 @@ npm run build
 # Watch mode
 npm run dev
 
-# Type check
-npm run type-check
-
 # Clean
 npm run clean
 ```
 
-## Requirements
-
-- Node.js >= 18.0.0 (for native `fetch` API)
-- TypeScript >= 5.0.0
-
 ## License
 
 MIT
-
-## Contributing
-
-See [CONTRIBUTING.md](../../CONTRIBUTING.md) for guidelines.
-
-## Related Packages
-
-- [@aviation/keystore](../keystore/) - Encrypted secrets management
-- [@aviation/ui-framework](../ui-framework/) - Multi-modal UI framework
-
-## Applications Using This SDK
-
-- **aviation-accident-tracker** - Accident and incident tracking
-- **flight-tracker** - Real-time flight tracking
-- **flightplanner** - VFR flight planning
-- **flightschool** - Flight school management
-- **foreflight-dashboard** - Logbook analysis
-- **weather-briefing** - AI-powered weather briefings
