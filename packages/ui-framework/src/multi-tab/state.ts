@@ -21,6 +21,22 @@ export const getDefaultActiveId = (panes: PaneConfig[]): string | null => {
 
 export const isPaneCloseable = (pane: PaneConfig): boolean => pane.closeable !== false;
 
+export const getRelativePaneId = (
+  panes: PaneConfig[],
+  currentId: string | null,
+  delta: number
+): string | null => {
+  if (panes.length === 0) {
+    return null;
+  }
+  const index = panes.findIndex((pane) => pane.id === currentId);
+  if (index === -1) {
+    return getDefaultActiveId(panes);
+  }
+  const nextIndex = (index + delta + panes.length) % panes.length;
+  return panes[nextIndex]?.id ?? null;
+};
+
 export const getNextActiveId = (
   panes: PaneConfig[],
   currentId: string | null

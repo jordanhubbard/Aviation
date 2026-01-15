@@ -1,5 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import { getDefaultActiveId, getNextActiveId, isPaneCloseable, sortPanes } from '../state';
+import {
+  getDefaultActiveId,
+  getNextActiveId,
+  getRelativePaneId,
+  isPaneCloseable,
+  sortPanes,
+} from '../state';
 
 const panes = [
   { id: 'b', title: 'Bravo', component: () => null, order: 2 },
@@ -46,5 +52,15 @@ describe('getNextActiveId', () => {
 
   it('returns previous pane when current is last', () => {
     expect(getNextActiveId(panes, 'c')).toBe('b');
+  });
+});
+
+describe('getRelativePaneId', () => {
+  it('wraps forward through panes', () => {
+    expect(getRelativePaneId(panes, 'c', 1)).toBe('a');
+  });
+
+  it('wraps backward through panes', () => {
+    expect(getRelativePaneId(panes, 'a', -1)).toBe('c');
   });
 });
