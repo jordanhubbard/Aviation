@@ -17,7 +17,7 @@ class Settings(BaseSettings):
         extra="ignore",
     )
 
-    app_name: str = Field("flightplanner", description="Application name")
+    app_name: str = Field("flight-planner", description="Application name")
     app_version: str = Field("0.1.0", description="Application version")
     debug: bool = Field(True, description="Debug mode")
 

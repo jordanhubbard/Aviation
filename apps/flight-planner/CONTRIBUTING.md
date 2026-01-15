@@ -1,6 +1,6 @@
 # Contributing
 
-Thanks for your interest in contributing to **flightplanner**.
+Thanks for your interest in contributing to **flight-planner**.
 
 ## 1) Issue tracking (required)
 

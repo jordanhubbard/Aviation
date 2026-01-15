@@ -1,7 +1,7 @@
 # Security Summary
 
 ## Overview
-Security assessment for the Aviation monorepo integration of three applications: aviation-missions-app, flightplanner, and flightschool.
+Security assessment for the Aviation monorepo integration of three applications: aviation-missions-app, flight-planner, and flightschool.
 
 ## Security Measures Implemented
 

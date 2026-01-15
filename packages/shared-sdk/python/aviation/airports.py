@@ -2,7 +2,7 @@
 Airport Database and Search
 
 Provides airport lookup, search, and geospatial queries for aviation applications.
-Extracted from flightplanner for shared use across the monorepo.
+Extracted from flight-planner for shared use across the monorepo.
 """
 
 import difflib

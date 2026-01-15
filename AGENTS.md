@@ -32,7 +32,7 @@ Aviation/
 ├── apps/                          # Applications
 │   ├── aviation-missions-app/     # Mission management (Clojure + JS)
 │   ├── flight-tracker/            # Flight tracking (TypeScript)
-│   ├── flightplanner/             # VFR planning (Python + React)
+│   ├── flight-planner/            # VFR planning (Python + React)
 │   ├── flightschool/              # Flight school mgmt (Python Flask)
 │   ├── foreflight-dashboard/      # Logbook analysis (Python + React)
 │   └── weather-briefing/          # Weather briefing (TypeScript)
@@ -75,7 +75,7 @@ cd apps/my-aviation-app
 
 Based on the application's requirements:
 
-**Python + React** (for data-intensive apps like flightplanner, foreflight-dashboard):
+**Python + React** (for data-intensive apps like flight-planner, foreflight-dashboard):
 ```
 my-aviation-app/
 ├── backend/
@@ -668,7 +668,7 @@ The CI/CD pipeline (`.github/workflows/ci.yml`) runs automatically on:
 2. **Accessibility** - Checks WCAG AA color contrast
 3. **Test Applications** - Runs tests for each app:
    - `test-missions-app` - Clojure backend tests
-   - `test-flightplanner` - Python backend + TypeScript frontend
+   - `test-flight-planner` - Python backend + TypeScript frontend
    - `test-flightschool` - Python Flask tests
    - `test-foreflight` - Python backend + React frontend
 4. **Lint & Format** - Code style checks (Black, Prettier, ESLint)
@@ -802,14 +802,14 @@ This monorepo uses **5 programming languages**, each chosen for specific strengt
 **Common Python Dependencies:**
 ```
 # Backend frameworks
-fastapi==0.110.0              # Modern API framework (flightplanner, foreflight-dashboard)
+fastapi==0.110.0              # Modern API framework (flight-planner, foreflight-dashboard)
 uvicorn==0.27.1               # ASGI server
 Flask==2.3.3                  # Traditional web framework (flightschool)
 
 # Data processing
 pandas==2.2.1                 # Data manipulation
 numpy>=1.24.0                 # Numerical computing
-geopandas>=0.14.0             # Geospatial data (flightplanner)
+geopandas>=0.14.0             # Geospatial data (flight-planner)
 shapely>=2.0.0                # Geometric operations
 
 # Validation
@@ -854,7 +854,7 @@ mypy>=1.7                     # Type checker
 
 **App-Specific Dependencies:**
 
-*flightplanner:*
+*flight-planner:*
 - `geopandas` - Geospatial route planning
 - `shapely` - Geometric calculations
 
@@ -901,7 +901,7 @@ mypy>=1.7                     # Type checker
   "axios": "^1.6.2",
   "react-query": "^3.39.3",
   
-  // Maps (flightplanner)
+  // Maps (flight-planner)
   "leaflet": "^1.9.4",
   "react-leaflet": "^4.2.1",
   
@@ -2149,7 +2149,7 @@ All secrets are stored in an encrypted `.keystore` file using AES-256-CBC encryp
 npm run keystore set <service-name> <KEY_NAME> "value"
 
 # Examples
-npm run keystore set flightplanner OPENWEATHERMAP_API_KEY "abc123"
+npm run keystore set flight-planner OPENWEATHERMAP_API_KEY "abc123"
 npm run keystore set foreflight-dashboard SECRET_KEY "xyz789"
 ```
 

@@ -1,4 +1,4 @@
-# flightplanner
+# flight-planner
 
 > Part of the [Aviation Monorepo](../../README.md)
 
@@ -29,7 +29,7 @@ Unified VFR flight planning app with route + local planning, terrain checks, and
 1. **Navigate to the application directory**:
    ```bash
    # From the monorepo root
-   cd apps/flightplanner
+   cd apps/flight-planner
    ```
 
 ### Backend
@@ -136,13 +136,13 @@ To regenerate caches from the source datasets:
 Build:
 
 ```bash
-docker build -f backend/Dockerfile -t flightplanner-backend .
+docker build -f backend/Dockerfile -t flight-planner-backend .
 ```
 
 Run:
 
 ```bash
-docker run --rm -p 8000:8000 --env-file .env flightplanner-backend
+docker run --rm -p 8000:8000 --env-file .env flight-planner-backend
 ```
 
 ## Screenshots

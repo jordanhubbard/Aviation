@@ -9,7 +9,7 @@
   <rect width="1280" height="640" fill="url(#bg)"/>
 
   <g fill="#ffffff" font-family="ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial">
-    <text x="96" y="250" font-size="88" font-weight="700">flightplanner</text>
+    <text x="96" y="250" font-size="88" font-weight="700">flight-planner</text>
     <text x="96" y="320" font-size="34" opacity="0.9">Unified VFR flight planning: routes, terrain, and weather</text>
     <text x="96" y="390" font-size="26" opacity="0.75">FastAPI • React • Leaflet • METAR • OpenWeatherMap • Open‑Meteo</text>
   </g>

@@ -17,7 +17,7 @@ try:
     from keystore import create_secret_loader, SecretNotFoundError
     
     # Create secret loader for this service
-    _secrets = create_secret_loader('flightplanner')
+    _secrets = create_secret_loader('flight-planner')
     KEYSTORE_AVAILABLE = True
 except Exception as e:
     print(f"Warning: Keystore not available: {e}")

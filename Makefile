@@ -111,7 +111,7 @@ clean-python:
 	find . -type f -name ".coverage" -delete
 	find . -type d -name "htmlcov" -exec rm -rf {} + 2>/dev/null || true
 	# Clean individual Python apps
-	@if [ -f apps/flightplanner/Makefile ]; then cd apps/flightplanner && $(MAKE) clean; fi
+	@if [ -f apps/flight-planner/Makefile ]; then cd apps/flight-planner && $(MAKE) clean; fi
 	@if [ -f apps/flightschool/Makefile ]; then cd apps/flightschool && $(MAKE) clean; fi
 	@if [ -f apps/foreflight-dashboard/Makefile ]; then cd apps/foreflight-dashboard && $(MAKE) clean; fi
 	@echo "✅ Python artifacts cleaned"
@@ -139,8 +139,8 @@ test-node:
 test-python:
 	@echo "🧪 Running Python tests..."
 	@echo "   Flight Planner:"
-	@if [ -f apps/flightplanner/Makefile ]; then \
-		cd apps/flightplanner && $(MAKE) backend-test 2>/dev/null || echo "   ⚠️  Tests require setup (see app README)"; \
+	@if [ -f apps/flight-planner/Makefile ]; then \
+		cd apps/flight-planner && $(MAKE) backend-test 2>/dev/null || echo "   ⚠️  Tests require setup (see app README)"; \
 	else \
 		echo "   No tests configured"; \
 	fi
@@ -196,8 +196,8 @@ test-docker-node:
 test-docker-python:
 	@echo "🐳 Running Python tests in Docker..."
 	@echo "   Flight Planner:"
-	@if [ -f apps/flightplanner/Makefile ]; then \
-		cd apps/flightplanner && $(MAKE) test-docker || echo "   ⚠️  Tests failed or not configured"; \
+	@if [ -f apps/flight-planner/Makefile ]; then \
+		cd apps/flight-planner && $(MAKE) test-docker || echo "   ⚠️  Tests failed or not configured"; \
 	fi
 	@echo ""
 	@echo "   Flight School:"
@@ -253,13 +253,13 @@ audit-python:
 	@echo "🔐 Running Python security audit..."
 	@$(PYTHON_AUDIT) -m venv .venv-audit
 	@./.venv-audit/bin/pip install -q --upgrade pip pip-audit
-	@grep -v "^-e " apps/flightplanner/requirements.txt > /tmp/flightplanner-requirements.txt
+	@grep -v "^-e " apps/flight-planner/requirements.txt > /tmp/flight-planner-requirements.txt
 	@./.venv-audit/bin/pip-audit -r apps/foreflight-dashboard/requirements.txt || \
 		echo "⚠️  pip-audit failed for foreflight-dashboard"
 	@./.venv-audit/bin/pip-audit -r apps/flightschool/requirements.txt || \
 		echo "⚠️  pip-audit failed for flightschool"
-	@./.venv-audit/bin/pip-audit -r /tmp/flightplanner-requirements.txt || \
-		echo "⚠️  pip-audit failed for flightplanner"
+	@./.venv-audit/bin/pip-audit -r /tmp/flight-planner-requirements.txt || \
+		echo "⚠️  pip-audit failed for flight-planner"
 	@echo "✅ Python audit complete"
 
 
@@ -277,7 +277,7 @@ run-flight-planner:
 	@echo "🚀 Starting Flight Planner..."
 	@echo "This will start the Python backend + React frontend via Docker"
 	@echo ""
-	cd apps/flightplanner && $(MAKE) dev-up
+	cd apps/flight-planner && $(MAKE) dev-up
 
 run-flight-school:
 	@echo "🚀 Starting Flight School (demo mode with test data)..."
@@ -315,7 +315,7 @@ stop-all:
 	@cd apps/aviation-missions-app && $(MAKE) stop 2>/dev/null || true
 	@echo ""
 	@echo "Stopping Flight Planner..."
-	@cd apps/flightplanner && $(MAKE) dev-down 2>/dev/null || true
+	@cd apps/flight-planner && $(MAKE) dev-down 2>/dev/null || true
 	@echo ""
 	@echo "Stopping Flight School..."
 	@pkill -f "flask.*flightschool" 2>/dev/null || true

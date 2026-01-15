@@ -297,4 +297,4 @@ MIT
 - [@aviation/shared-sdk](../../packages/shared-sdk/) - Aviation utilities and weather services
 - [@aviation/keystore](../../packages/keystore/) - Encrypted secret management
 - [weather-briefing](../weather-briefing/) - AI-powered weather briefings
-- [flightplanner](../flightplanner/) - VFR flight planning
+- [flight-planner](../flight-planner/) - VFR flight planning

@@ -44,7 +44,7 @@ def fetch_metar_raws(stations: Sequence[str]) -> Dict[str, Optional[str]]:
         resp = httpx.get(
             "https://aviationweather.gov/api/data/metar",
             params={"ids": ",".join(missing), "format": "raw"},
-            headers={"User-Agent": "flightplanner"},
+            headers={"User-Agent": "flight-planner"},
             timeout=20,
         )
 
@@ -88,7 +88,7 @@ def fetch_metar_raw(station: str) -> Optional[str]:
         resp = httpx.get(
             "https://aviationweather.gov/api/data/metar",
             params={"ids": station_u, "format": "raw"},
-            headers={"User-Agent": "flightplanner"},
+            headers={"User-Agent": "flight-planner"},
             timeout=20,
         )
 

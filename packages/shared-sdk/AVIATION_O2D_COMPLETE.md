@@ -10,7 +10,7 @@
 
 ## 📊 Summary
 
-Successfully extracted airport database and search functionality from `flightplanner` into `@aviation/shared-sdk`, creating a unified, well-tested, and documented API for all aviation applications in the monorepo.
+Successfully extracted airport database and search functionality from `flight-planner` into `@aviation/shared-sdk`, creating a unified, well-tested, and documented API for all aviation applications in the monorepo.
 
 ---
 
@@ -35,7 +35,7 @@ Successfully extracted airport database and search functionality from `flightpla
 
 - [x] **API Documentation** (`AIRPORTS.md`) - 300+ lines, comprehensive
 - [x] **Code Examples** - 20+ examples, 5 use cases
-- [x] **Migration Guide** - Documented path from flightplanner
+- [x] **Migration Guide** - Documented path from flight-planner
 
 ---
 
@@ -251,7 +251,7 @@ Mirror all TypeScript tests with API parity.
 4. **Performance** - Benchmarks for both languages
 5. **Data Source** - OurAirports information
 6. **Testing** - How to run tests
-7. **Migration Guide** - From flightplanner
+7. **Migration Guide** - From flight-planner
 
 ### Code Examples (20+)
 
@@ -304,7 +304,7 @@ Mirror all TypeScript tests with API parity.
 
 ### Next Steps
 
-1. **Migrate Applications** - Update flightplanner, accident-tracker to use shared-sdk
+1. **Migrate Applications** - Update flight-planner, accident-tracker to use shared-sdk
 2. **Integration Tests** - Test in real applications
 3. **Performance Monitoring** - Track actual usage patterns
 4. **Data Updates** - Establish process for updating airport database
@@ -391,7 +391,7 @@ Mirror all TypeScript tests with API parity.
 **Aviation-o2d is COMPLETE and PRODUCTION-READY!**
 
 This bead successfully:
-- ✅ Extracted airport functionality from flightplanner
+- ✅ Extracted airport functionality from flight-planner
 - ✅ Created unified TypeScript & Python APIs
 - ✅ Achieved >80% test coverage
 - ✅ Delivered comprehensive documentation

@@ -196,7 +196,7 @@ Once the first service deploys successfully:
 1. **Repeat for all other services:**
    - aviation-accident-tracker → `apps/aviation-accident-tracker`
    - flight-tracker → `apps/flight-tracker`
-   - flightplanner → `apps/flightplanner`
+   - flight-planner → `apps/flight-planner`
    - flightschool → `apps/flightschool`
    - foreflight-dashboard → `apps/foreflight-dashboard`
    - weather-briefing → `apps/weather-briefing`

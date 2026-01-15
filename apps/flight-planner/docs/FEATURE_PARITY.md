@@ -1,6 +1,6 @@
 # Feature Parity Checklist
 
-This checklist is used to verify that the unified **flightplanner** app preserves the key functionality of the legacy apps:
+This checklist is used to verify that the unified **flight-planner** app preserves the key functionality of the legacy apps:
 
 - `xctry-planner` (cross-country routing + map UI)
 - `vfr-flightplanner` (modular FastAPI backend, weather integrations, overlays)

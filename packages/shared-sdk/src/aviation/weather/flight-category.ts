@@ -4,7 +4,7 @@
  * Determines flight category (VFR, MVFR, IFR, LIFR) based on visibility and ceiling.
  * Provides recommendations and warnings for flight planning.
  * 
- * Extracted from flightplanner for shared use.
+ * Extracted from flight-planner for shared use.
  */
 
 export type FlightCategory = 'VFR' | 'MVFR' | 'IFR' | 'LIFR' | 'UNKNOWN';

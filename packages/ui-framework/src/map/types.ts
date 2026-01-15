@@ -2,7 +2,7 @@
  * Map Component Types
  * 
  * Shared types for aviation map components.
- * Extracted from flightplanner for shared use.
+ * Extracted from flight-planner for shared use.
  */
 
 export type FlightCategory = 'VFR' | 'MVFR' | 'IFR' | 'LIFR' | 'UNKNOWN';

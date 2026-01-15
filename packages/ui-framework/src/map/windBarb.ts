@@ -2,7 +2,7 @@
  * Wind Barb SVG Generator
  * 
  * Generates SVG wind barb symbols for aviation maps.
- * Extracted from flightplanner for shared use.
+ * Extracted from flight-planner for shared use.
  */
 
 export interface WindBarbOptions {

@@ -9,11 +9,11 @@
 
 ## Overview
 
-Extract weather data services from flightplanner into reusable shared SDK, including OpenWeatherMap, Open-Meteo, METAR parsing, and flight category calculations.
+Extract weather data services from flight-planner into reusable shared SDK, including OpenWeatherMap, Open-Meteo, METAR parsing, and flight category calculations.
 
 ### Current Implementation
 
-**Location:** `apps/flightplanner/backend/app/services/`
+**Location:** `apps/flight-planner/backend/app/services/`
 - `openweathermap.py` (~100 lines) - Current weather via OpenWeatherMap API
 - `open_meteo.py` (~150 lines) - Forecast via Open-Meteo API
 - `metar.py` (~120 lines) - METAR fetching and parsing from AviationWeather.gov
@@ -811,7 +811,7 @@ describe('MetarParser', () => {
 4. Write comprehensive tests
 5. Create Python wrappers
 6. Integrate into accident-tracker (optional)
-7. Update flightplanner later
+7. Update flight-planner later
 
 ---
 

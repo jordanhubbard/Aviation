@@ -481,7 +481,7 @@ python -m pytest tests/ --cov=aviation --cov-report=html
 
 ## Migration Guide
 
-Migrating from `apps/flightplanner/backend/app/models/airport.py`:
+Migrating from `apps/flight-planner/backend/app/models/airport.py`:
 
 **Before:**
 ```python

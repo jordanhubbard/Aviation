@@ -26,7 +26,7 @@ Before building the meta-app, ensure each application:
 | aviation-accident-tracker | ❌ | ❌ | ❌ | ⚠️ | **NEEDS WORK** |
 | aviation-missions-app | ✅ | ✅ | ✅ (sleeping) | ⚠️ | **MOSTLY READY** |
 | flight-tracker | ❌ | ❌ | ❌ | ⚠️ | **NEEDS WORK** |
-| flightplanner | ✅ | ✅ | ✅ (sleeping, 2 warnings) | ⚠️ | **MOSTLY READY** |
+| flight-planner | ✅ | ✅ | ✅ (sleeping, 2 warnings) | ⚠️ | **MOSTLY READY** |
 | flightschool | ❌ | ❌ | ❌ | ⚠️ | **NEEDS WORK** |
 | foreflight-dashboard | ✅ | ✅ | ✅ (sleeping, 4 warnings) | ⚠️ | **MOSTLY READY** |
 | weather-briefing | ❌ | ❌ | ❌ | ⚠️ | **NEEDS WORK** |
@@ -125,7 +125,7 @@ apps/aviation-missions-app/
 
 **Docker Files:**
 ```
-apps/flightplanner/
+apps/flight-planner/
 ├── Dockerfile                      ✅ (root)
 ├── backend/Dockerfile              ✅
 ├── frontend/Dockerfile             ✅
@@ -228,7 +228,7 @@ apps/foreflight-dashboard/
 
 **Currently Deployed (3 apps):**
 1. ✅ **aviation-missions-app** - Sleeping
-2. ✅ **flightplanner** - Sleeping (2 warnings)
+2. ✅ **flight-planner** - Sleeping (2 warnings)
 3. ✅ **foreflight-dashboard** - Sleeping (4 warnings)
 
 **Not Deployed (4 apps):**
@@ -249,7 +249,7 @@ apps/foreflight-dashboard/
 - Single service (Clojure backend)
 - Port 3000
 
-**flightplanner:**
+**flight-planner:**
 - Multi-service (backend + frontend)
 - Backend: Python/FastAPI (port 8000)
 - Frontend: React/Vite (port 5173)
@@ -362,7 +362,7 @@ test-docker:
    - Verify Railway deployment
    - Test containerized tests
 
-6. **flightplanner**
+6. **flight-planner**
    - Test docker-compose
    - Investigate 2 Railway warnings
    - Verify Railway deployment

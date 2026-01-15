@@ -1,6 +1,6 @@
 # Architecture
 
-This document describes the high-level architecture of the unified **flightplanner** application: major components, data flow, integration points, and the design decisions that shaped the current structure.
+This document describes the high-level architecture of the unified **flight-planner** application: major components, data flow, integration points, and the design decisions that shaped the current structure.
 
 ## Goals
 

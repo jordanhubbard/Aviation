@@ -120,7 +120,7 @@ Create embeddable pane component for each of the 7 applications:
 1. ✅ **aviation-accident-tracker** - Incident tracking pane
 2. ✅ **aviation-missions-app** - Mission management pane
 3. ✅ **flight-tracker** - Flight tracking pane
-4. ✅ **flightplanner** - Route planning pane
+4. ✅ **flight-planner** - Route planning pane
 5. ✅ **flightschool** - Flight school management pane
 6. ✅ **foreflight-dashboard** - Logbook analysis pane
 7. ✅ **weather-briefing** - Weather briefing pane
@@ -149,7 +149,7 @@ Create root-level `docker-compose.yml` orchestrating:
 - `accident-tracker-backend`
 - `missions-app-backend`
 - `flight-tracker-backend`
-- `flightplanner-backend`
+- `flight-planner-backend`
 - `flightschool-backend`
 - `foreflight-backend`
 - `weather-briefing-backend`
@@ -179,7 +179,7 @@ Create root-level `docker-compose.yml` orchestrating:
 /api/accident-tracker/*  →  accident-tracker-backend:3002
 /api/missions/*          →  missions-app-backend:3000
 /api/flight-tracker/*    →  flight-tracker-backend:3001
-/api/planner/*           →  flightplanner-backend:8000
+/api/planner/*           →  flight-planner-backend:8000
 /api/school/*            →  flightschool-backend:5000
 /api/foreflight/*        →  foreflight-backend:8000
 /api/weather/*           →  weather-briefing-backend:3003
@@ -238,7 +238,7 @@ Create root-level `docker-compose.yml` orchestrating:
 
 **Existing Dockerfiles:**
 - ✅ `missions-app`
-- ✅ `flightplanner` (backend + frontend)
+- ✅ `flight-planner` (backend + frontend)
 - ✅ `foreflight-dashboard`
 
 **Per-app tasks:**

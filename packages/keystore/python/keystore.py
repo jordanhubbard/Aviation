@@ -46,7 +46,7 @@ class SecretLoader:
         Initialize the secret loader.
         
         Args:
-            service_name: Name of the service (e.g., 'flightplanner', 'flightschool')
+            service_name: Name of the service (e.g., 'flight-planner', 'flightschool')
             keystore_path: Optional path to keystore file (defaults to monorepo root)
             fallback_to_env: Whether to fall back to environment variables if secret not found
             npm_executable: Path to npm executable (defaults to 'npm')
@@ -242,7 +242,7 @@ def create_secret_loader(
         SecretLoader instance
         
     Example:
-        >>> secrets = create_secret_loader('flightplanner')
+        >>> secrets = create_secret_loader('flight-planner')
         >>> api_key = secrets.get('OPENWEATHER_API_KEY')
     """
     return SecretLoader(service_name, **kwargs)
@@ -262,7 +262,7 @@ def get_secret(service_name: str, key: str, default: Optional[str] = None) -> Op
         Secret value, default, or None
         
     Example:
-        >>> api_key = get_secret('flightplanner', 'OPENWEATHER_API_KEY', 'fallback-key')
+        >>> api_key = get_secret('flight-planner', 'OPENWEATHER_API_KEY', 'fallback-key')
     """
     loader = SecretLoader(service_name)
     if default is not None:

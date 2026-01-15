@@ -30,7 +30,7 @@ For each app, create a service in Railway Dashboard:
    - `aviation-missions-app`
    - `aviation-accident-tracker`
    - `flight-tracker`
-   - `flightplanner`
+   - `flight-planner`
    - `flightschool`
    - `foreflight-dashboard`
    - `weather-briefing`
@@ -65,7 +65,7 @@ Each service should show:
 | aviation-missions-app | `apps/aviation-missions-app` | `apps/aviation-missions-app/railway.toml` |
 | aviation-accident-tracker | `apps/aviation-accident-tracker` | `apps/aviation-accident-tracker/railway.toml` |
 | flight-tracker | `apps/flight-tracker` | `apps/flight-tracker/railway.toml` |
-| flightplanner | `apps/flightplanner` | `apps/flightplanner/railway.toml` |
+| flight-planner | `apps/flight-planner` | `apps/flight-planner/railway.toml` |
 | flightschool | `apps/flightschool` | `apps/flightschool/railway.toml` |
 | foreflight-dashboard | `apps/foreflight-dashboard` | `apps/foreflight-dashboard/railway.toml` |
 | weather-briefing | `apps/weather-briefing` | `apps/weather-briefing/railway.toml` |
@@ -115,7 +115,7 @@ railway variables set NODE_ENV=production --service aviation-missions-app
 railway variables set NODE_ENV=production --service aviation-accident-tracker
 railway variables set NODE_ENV=production --service flight-tracker
 railway variables set NODE_ENV=production --service weather-briefing
-railway variables set ENVIRONMENT=production --service flightplanner
+railway variables set ENVIRONMENT=production --service flight-planner
 railway variables set ENVIRONMENT=production --service foreflight-dashboard
 railway variables set FLASK_ENV=production --service flightschool
 ```

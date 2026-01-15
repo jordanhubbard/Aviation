@@ -9,7 +9,7 @@ import App from './App.tsx'
 
 import { installFrontendBeadsErrorReporting } from './utils/beadsReporting'
 
-const reloadOnceKey = 'flightplanner:reload-once:preload-error'
+const reloadOnceKey = 'flight-planner:reload-once:preload-error'
 
 const reloadOnce = () => {
   try {

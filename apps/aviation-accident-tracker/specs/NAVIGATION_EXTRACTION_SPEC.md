@@ -9,11 +9,11 @@
 
 ## Overview
 
-Extract navigation and distance calculation utilities from flightplanner into reusable shared SDK, including great circle distance, bearing calculations, coordinate utilities, and time/speed/distance calculations.
+Extract navigation and distance calculation utilities from flight-planner into reusable shared SDK, including great circle distance, bearing calculations, coordinate utilities, and time/speed/distance calculations.
 
 ### Current Implementation
 
-**Location:** `apps/flightplanner/backend/app/models/airport.py`
+**Location:** `apps/flight-planner/backend/app/models/airport.py`
 - `_haversine_nm(lat1, lon1, lat2, lon2)` - Distance in nautical miles (~20 lines)
 
 **Additional Sources:**
@@ -830,7 +830,7 @@ describe('performance', () => {
 3. Precision validation against known values
 4. Python wrapper
 5. Integrate into accident-tracker
-6. Update flightplanner later
+6. Update flight-planner later
 
 ---
 

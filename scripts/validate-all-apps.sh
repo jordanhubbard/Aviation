@@ -200,8 +200,8 @@ echo ""
 echo "Step 3: Validate Python Applications"
 echo "======================================"
 
-# flightplanner
-validate_python_app "flightplanner" "apps/flightplanner"
+# flight-planner
+validate_python_app "flight-planner" "apps/flight-planner"
 
 # flightschool
 validate_python_app "flightschool" "apps/flightschool"

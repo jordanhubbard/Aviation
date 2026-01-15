@@ -9,13 +9,13 @@
 
 ## Overview
 
-Extract airport database loading, search, and lookup functionality from flightplanner into a reusable shared SDK package.
+Extract airport database loading, search, and lookup functionality from flight-planner into a reusable shared SDK package.
 
 ### Current Implementation
 
-**Location:** `apps/flightplanner/backend/app/models/airport.py` (~210 lines)
+**Location:** `apps/flight-planner/backend/app/models/airport.py` (~210 lines)
 
-**Data Source:** `apps/flightplanner/backend/data/airports_cache.json`
+**Data Source:** `apps/flight-planner/backend/data/airports_cache.json`
 - OurAirports database snapshot
 - ~68,000+ airports worldwide
 - Size: ~15MB uncompressed
@@ -714,7 +714,7 @@ describe('AirportDatabase', () => {
 
 ### Step 1: Move Data File
 ```bash
-cp apps/flightplanner/backend/data/airports_cache.json packages/shared-sdk/data/
+cp apps/flight-planner/backend/data/airports_cache.json packages/shared-sdk/data/
 ```
 
 ### Step 2: Implement TypeScript Version
@@ -771,7 +771,7 @@ export async function lookupAirport(code: string) {
 - [ ] Documentation with examples
 - [ ] Singleton pattern for easy import
 - [ ] Ready for use in accident-tracker
-- [ ] No breaking changes to flightplanner interface
+- [ ] No breaking changes to flight-planner interface
 
 ---
 

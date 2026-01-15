@@ -53,9 +53,9 @@ npm run keystore set foreflight-dashboard DATABASE_URL "postgresql://..."
 
 ---
 
-### 2. Flight Planner (`flightplanner`)
+### 2. Flight Planner (`flight-planner`)
 
-**Service Name:** `flightplanner`
+**Service Name:** `flight-planner`
 
 **Secrets Used:**
 - `OPENWEATHERMAP_API_KEY` / `OPENWEATHER_API_KEY` - OpenWeatherMap API key
@@ -77,9 +77,9 @@ terrain_key = settings.opentopography_api_key
 
 **Add Secrets:**
 ```bash
-npm run keystore set flightplanner OPENWEATHERMAP_API_KEY "your-key"
-npm run keystore set flightplanner OPENTOPOGRAPHY_API_KEY "your-key"
-npm run keystore set flightplanner OPENAIP_API_KEY "your-key"
+npm run keystore set flight-planner OPENWEATHERMAP_API_KEY "your-key"
+npm run keystore set flight-planner OPENTOPOGRAPHY_API_KEY "your-key"
+npm run keystore set flight-planner OPENAIP_API_KEY "your-key"
 ```
 
 ---
@@ -333,7 +333,7 @@ For each application:
 npm run keystore set foreflight-dashboard SECRET_KEY "test-secret-123"
 
 # Flight Planner
-npm run keystore set flightplanner OPENWEATHER_API_KEY "test-key-123"
+npm run keystore set flight-planner OPENWEATHER_API_KEY "test-key-123"
 
 # Flight School
 npm run keystore set flightschool SECRET_KEY "test-secret-123"

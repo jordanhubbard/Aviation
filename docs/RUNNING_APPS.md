@@ -53,7 +53,7 @@ make run-flight-planner
 - Frontend at: http://localhost:5173
 - Includes Leaflet maps, terrain profiles, and weather overlays
 
-**Stop:** `cd apps/flightplanner && make stop`
+**Stop:** `cd apps/flight-planner && make stop`
 
 ---
 
@@ -181,7 +181,7 @@ Or use background processes:
 # Start all apps in background (Docker-based ones)
 cd apps/aviation-missions-app && make start
 cd apps/foreflight-dashboard && make start
-cd apps/flightplanner && make start
+cd apps/flight-planner && make start
 
 # Stop all at once
 make stop-all
@@ -213,7 +213,7 @@ Some apps have separate development and production modes:
 
 **Flight Planner:**
 ```bash
-cd apps/flightplanner
+cd apps/flight-planner
 make dev-up      # Development (with hot reload)
 make prod-up     # Production (optimized builds)
 ```

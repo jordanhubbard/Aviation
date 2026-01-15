@@ -91,7 +91,7 @@ class BeadsIssueCreator:
             "--json",
         ]
 
-        parent = discovered_from or os.environ.get("BEADS_AUTOREPORT_PARENT") or "flightplanner-47q"
+        parent = discovered_from or os.environ.get("BEADS_AUTOREPORT_PARENT") or "flight-planner-47q"
         if parent:
             cmd += ["--deps", f"discovered-from:{parent}"]
 

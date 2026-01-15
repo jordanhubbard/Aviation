@@ -9,7 +9,7 @@
 ## 🎯 Purpose
 
 Test and validate all 7 aviation applications' Docker infrastructure:
-- 3 apps with existing Docker (missions-app, flightplanner, foreflight-dashboard)
+- 3 apps with existing Docker (missions-app, flight-planner, foreflight-dashboard)
 - 4 apps with newly created Docker (accident-tracker, flight-tracker, flightschool, weather-briefing)
 
 ---
@@ -94,7 +94,7 @@ docker-compose down
 #### Test Commands
 
 ```bash
-cd apps/flightplanner
+cd apps/flight-planner
 
 # Build Docker image
 docker-compose build
@@ -427,7 +427,7 @@ make docker-test
 **Commands to investigate:**
 
 ```bash
-cd apps/flightplanner
+cd apps/flight-planner
 railway status
 railway logs
 railway vars

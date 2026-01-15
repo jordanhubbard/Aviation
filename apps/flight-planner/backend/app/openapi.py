@@ -38,7 +38,7 @@ OPENAPI_TAGS = [
 
 
 APP_DESCRIPTION = """
-flightplanner is a unified VFR flight planning API.
+flight-planner is a unified VFR flight planning API.
 
 Use `POST /api/plan` for a single entrypoint that supports both route planning and local planning.
 """.strip()

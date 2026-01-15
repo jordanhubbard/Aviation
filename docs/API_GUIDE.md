@@ -30,7 +30,7 @@ This guide provides comprehensive documentation for using the Aviation Monorepo 
 |-------------|-------------|----------|
 | Accident Tracker | Production | `https://accident-tracker.aviation.example.com` |
 | Accident Tracker | Staging | `https://staging-accident-tracker.aviation.example.com` |
-| Flight Planner | Production | `https://flightplanner.aviation.example.com` |
+| Flight Planner | Production | `https://flight-planner.aviation.example.com` |
 | Flight School | Production | `https://flightschool.aviation.example.com` |
 | ForeFlight Dashboard | Production | `https://foreflight.aviation.example.com` |
 
@@ -568,7 +568,7 @@ import requests
 
 def calculate_route(origin: str, destination: str):
     response = requests.post(
-        'https://flightplanner.aviation.example.com/api/v1/route',
+        'https://flight-planner.aviation.example.com/api/v1/route',
         json={
             'origin': origin,
             'destination': destination,

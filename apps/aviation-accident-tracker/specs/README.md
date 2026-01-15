@@ -18,7 +18,7 @@ These specs support the **Incremental Execution Plan (Option B)**, which extract
 **Dependencies:** None
 
 **What:**
-- Extract airport database loading and search from flightplanner
+- Extract airport database loading and search from flight-planner
 - Create `@aviation/shared-sdk/aviation/airports` module
 - Support ICAO/IATA lookup, text search, proximity search
 - Port `airports_cache.json` (68K+ airports)
@@ -45,7 +45,7 @@ These specs support the **Incremental Execution Plan (Option B)**, which extract
 **Dependencies:** Aviation-o2d (for coordinate lookup)
 
 **What:**
-- Extract weather services from flightplanner
+- Extract weather services from flight-planner
 - Create `@aviation/shared-sdk/aviation/weather` module
 - Support OpenWeatherMap, Open-Meteo, METAR
 - Flight category calculations (VFR/MVFR/IFR/LIFR)
@@ -78,7 +78,7 @@ These specs support the **Incremental Execution Plan (Option B)**, which extract
 **Dependencies:** None
 
 **What:**
-- Extract navigation calculations from flightplanner
+- Extract navigation calculations from flight-planner
 - Create `@aviation/shared-sdk/aviation/navigation` module
 - Distance, bearing, coordinate utilities, T/S/D calculations
 
@@ -105,7 +105,7 @@ These specs support the **Incremental Execution Plan (Option B)**, which extract
 **Dependencies:** None (but benefits from airports and navigation)
 
 **What:**
-- Extract Leaflet map patterns from flightplanner
+- Extract Leaflet map patterns from flight-planner
 - Create `@aviation/ui-framework/map` module
 - Reusable React components for maps
 
@@ -244,7 +244,7 @@ packages/
 
 1. **OpenWeatherMap**
    - Key: `OPENWEATHERMAP_API_KEY`
-   - Source: flightplanner (already exists)
+   - Source: flight-planner (already exists)
    - Storage: keystore
    - Usage: Weather services
 

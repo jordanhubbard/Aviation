@@ -18,7 +18,7 @@ This guide explains how to deploy all 7 aviation applications from this monorepo
 ### Deployed (3 apps - all sleeping)
 
 1. **aviation-missions-app** - No warnings ✅
-2. **flightplanner** - 2 warnings ⚠️⚠️
+2. **flight-planner** - 2 warnings ⚠️⚠️
 3. **foreflight-dashboard** - 4 warnings ⚠️⚠️⚠️⚠️
 
 ### Not Deployed (4 apps)
@@ -136,7 +136,7 @@ railway logs
 
 **Status:** ✅ Deployed (2 warnings)  
 **Ports:** 5051 (FastAPI), 3001 (React dev)  
-**Root Directory:** `apps/flightplanner`
+**Root Directory:** `apps/flight-planner`
 
 #### Railway Configuration
 
@@ -160,13 +160,13 @@ SECRET_KEY=<random-secret>
 
 # Optional
 OPENTOPO_API_KEY=<your-key>
-DATABASE_URL=sqlite:///./data/flightplanner.db
+DATABASE_URL=sqlite:///./data/flight-planner.db
 ```
 
 #### Investigate Warnings
 
 ```bash
-cd apps/flightplanner
+cd apps/flight-planner
 railway logs --tail 100
 # Look for warnings about:
 # - Missing environment variables

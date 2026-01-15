@@ -9,11 +9,11 @@
 
 ## Overview
 
-Extract Leaflet map integration patterns from flightplanner into reusable UI framework components, including base map, markers, clustering, polylines, route drawing, and controls.
+Extract Leaflet map integration patterns from flight-planner into reusable UI framework components, including base map, markers, clustering, polylines, route drawing, and controls.
 
 ### Current Implementation
 
-**Location:** `apps/flightplanner/frontend/src/components/`
+**Location:** `apps/flight-planner/frontend/src/components/`
 - `MapComponent.tsx` (~200 lines) - Base map component
 - `FlightMap.tsx` (~150 lines) - Flight-specific map features
 - `RouteVisualization.tsx` (~100 lines) - Route drawing
@@ -806,12 +806,12 @@ describe('MarkerCluster', () => {
 
 1. Create ui-framework package structure
 2. Implement TypeScript React components
-3. Extract Leaflet patterns from flightplanner
+3. Extract Leaflet patterns from flight-planner
 4. Add marker clustering
 5. Write component tests
 6. Documentation with Storybook (optional)
 7. Integrate into accident-tracker
-8. Update flightplanner later
+8. Update flight-planner later
 
 ---
 

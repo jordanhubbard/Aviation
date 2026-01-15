@@ -1,6 +1,6 @@
 # User Acceptance Testing (UAT)
 
-This document captures the high-level UAT scenarios for the unified **flightplanner** app.
+This document captures the high-level UAT scenarios for the unified **flight-planner** app.
 
 ## Prerequisites
 
