@@ -2,10 +2,10 @@ import { useEffect, useMemo, useState } from 'react';
 import 'leaflet/dist/leaflet.css';
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import L from 'leaflet';
-import MarkerClusterGroup from 'react-leaflet-cluster';
+// import MarkerClusterGroup from 'react-leaflet-cluster'; // Package doesn't exist, clustering temporarily disabled
 import debounce from 'lodash.debounce';
 import { Badge } from './components/Badge';
-import { normalizeMarkers, defaultClusterOptions } from '@aviation/ui-framework';
+// import { normalizeMarkers, defaultClusterOptions } from '@aviation/ui-framework';
 
 type EventRecord = {
   id: string;
@@ -274,27 +274,26 @@ export function App() {
       <div style={{ height: 480, minHeight: 400 }}>
         <MapContainer center={[20, 0]} zoom={2} style={{ height: '100%', width: '100%' }}>
           <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" attribution="© OpenStreetMap contributors" />
-          <MarkerClusterGroup chunkedLoading {...clusterOpts}>
-            {markers.map((m) => {
-              const evt = m.payload?.onClickId ? eventMap.get(m.payload.onClickId as string) : undefined;
-              return (
-                <Marker
-                  key={m.id}
-                  position={m.position as [number, number]}
-                  icon={icon}
-                  eventHandlers={{ click: () => evt && setSelected(evt) }}
-                >
-                  <Popup>
-                    <strong>{evt?.registration || 'Unknown'}</strong> ({evt?.aircraftType || 'Aircraft'})
-                    <br />
-                    {evt ? formatDate(evt.dateZ) : ''} — {evt?.summary || 'No summary'}
-                    <br />
-                    {evt?.operator || 'Unknown operator'}
-                  </Popup>
-                </Marker>
-              );
-            })}
-          </MarkerClusterGroup>
+          {/* Marker clustering temporarily disabled due to missing package */}
+          {markers.map((m) => {
+            const evt = m.payload?.onClickId ? eventMap.get(m.payload.onClickId as string) : undefined;
+            return (
+              <Marker
+                key={m.id}
+                position={m.position as [number, number]}
+                icon={icon}
+                eventHandlers={{ click: () => evt && setSelected(evt) }}
+              >
+                <Popup>
+                  <strong>{evt?.registration || 'Unknown'}</strong> ({evt?.aircraftType || 'Aircraft'})
+                  <br />
+                  {evt ? formatDate(evt.dateZ) : ''} — {evt?.summary || 'No summary'}
+                  <br />
+                  {evt?.operator || 'Unknown operator'}
+                </Popup>
+              </Marker>
+            );
+          })}
         </MapContainer>
       </div>
 
