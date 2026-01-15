@@ -4,7 +4,7 @@
 # Port Configuration (can be overridden by environment variables)
 # Note: Flask has been eliminated! 🔥 FastAPI now handles everything
 FASTAPI_PORT ?= 5051
-REACT_DEV_PORT ?= 3001
+REACT_DEV_PORT ?= 3005
 
 # Export ports for use in docker-compose and other tools
 export FASTAPI_PORT

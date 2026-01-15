@@ -4,7 +4,7 @@ export default defineConfig({
   testDir: './e2e',
   timeout: 60_000,
   use: {
-    baseURL: 'http://127.0.0.1:3000',
+    baseURL: 'http://127.0.0.1:3004',
     trace: 'on-first-retry',
   },
   webServer: [
@@ -18,8 +18,8 @@ export default defineConfig({
       },
     },
     {
-      command: 'npm run dev -- --host 127.0.0.1 --port 3000',
-      url: 'http://127.0.0.1:3000',
+      command: 'npm run dev -- --host 127.0.0.1 --port 3004',
+      url: 'http://127.0.0.1:3004',
       cwd: '.',
       reuseExistingServer: !process.env.CI,
     },

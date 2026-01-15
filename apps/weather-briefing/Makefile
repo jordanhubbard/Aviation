@@ -3,7 +3,7 @@
 
 .PHONY: help install build start stop clean test lint docker-build docker-up docker-down docker-test test-docker docker-logs
 
-PORT ?= 3002
+PORT ?= 3003
 
 help:
 	@echo "Weather Briefing - Available Commands:"

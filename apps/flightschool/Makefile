@@ -15,7 +15,7 @@ COVERAGE = $(VENV)/bin/coverage
 export FLASK_APP = app
 export FLASK_ENV = development
 export PYTHONPATH = $(shell pwd)
-PORT ?= 5001  # Default port, can be overridden with make run PORT=xxxx
+PORT ?= 5000  # Default port, can be overridden with make run PORT=xxxx
 TYPE ?= "Aircraft"
 
 help:

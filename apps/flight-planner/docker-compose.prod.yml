@@ -38,7 +38,7 @@ services:
       - BACKEND_URL=http://backend:8000
       - OPENWEATHERMAP_API_KEY=${OPENWEATHERMAP_API_KEY:-}
     ports:
-      - "3000:80"
+      - "3004:80"
     depends_on:
       backend:
         condition: service_healthy
