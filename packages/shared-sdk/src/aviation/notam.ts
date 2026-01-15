@@ -31,7 +31,7 @@ export interface NotamSearchParams {
 /**
  * Categorize NOTAM by severity based on keywords
  */
-export function categor izeNotamSeverity(notam: NOTAM): 'low' | 'medium' | 'high' | 'critical' {
+export function categorizeNotamSeverity(notam: NOTAM): 'low' | 'medium' | 'high' | 'critical' {
   const text = notam.text.toUpperCase();
 
   // Critical keywords

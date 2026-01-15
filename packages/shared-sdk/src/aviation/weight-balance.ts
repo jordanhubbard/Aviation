@@ -31,7 +31,7 @@ export interface AircraftProfile {
     baggage2?: { arm: number; maxWeight?: number };
     fuel: { arm: number };
   };
-  cgLimits: CG Limit[];
+  cgLimits: CGLimit[];
 }
 
 export interface CGLimit {
