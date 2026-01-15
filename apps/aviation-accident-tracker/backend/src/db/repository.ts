@@ -216,7 +216,7 @@ export class EventRepository {
   /**
    * List events with pagination and filters
    */
-  async listEvents(params: ListEventsParams): Promise<EventRecord[]> {
+  async listEvents(params: ListEventsParams): Promise<{ events: EventRecord[]; total: number }> {
     const conditions: string[] = [];
     const sqlParams: any[] = [];
 
@@ -263,6 +263,9 @@ export class EventRepository {
     const limit = params.limit || 50;
     const offset = params.offset || 0;
 
+    // Get total count
+    const total = await this.countEvents(params);
+
     const sql = `
       SELECT * FROM events
       ${whereClause}
@@ -275,7 +278,9 @@ export class EventRepository {
     const rows: DbEvent[] = await this.dbAll(sql, sqlParams);
     
     // For list view, we don't include sources (performance)
-    return rows.map(row => this.dbEventToRecord(row, []));
+    const events = rows.map(row => this.dbEventToRecord(row, []));
+    
+    return { events, total };
   }
 
   /**
@@ -340,6 +345,13 @@ export class EventRepository {
   }
 
   /**
+   * Get event detail (alias for getEventWithSources for GraphQL compatibility)
+   */
+  async getEventDetail(id: number): Promise<EventRecord | null> {
+    return this.getEventWithSources(String(id));
+  }
+
+  /**
    * Count total events matching filter
    */
   async countEvents(params: ListEventsParams): Promise<number> {
@@ -381,6 +393,95 @@ export class EventRepository {
 
     const result = await this.dbGet(sql, sqlParams);
     return result.count;
+  }
+
+  /**
+   * Get statistics aggregated by specified field
+   */
+  async getStatistics(params: any): Promise<any[]> {
+    const conditions: string[] = [];
+    const sqlParams: any[] = [];
+
+    // Apply filters
+    if (params.from) {
+      conditions.push('date_z >= ?');
+      sqlParams.push(params.from);
+    }
+    if (params.to) {
+      conditions.push('date_z <= ?');
+      sqlParams.push(params.to);
+    }
+    if (params.category && params.category !== 'all') {
+      conditions.push('category = ?');
+      sqlParams.push(params.category);
+    }
+    if (params.country) {
+      conditions.push('country = ?');
+      sqlParams.push(params.country);
+    }
+
+    const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
+
+    // Group by specified field
+    const groupBy = params.groupBy || 'category';
+    let sql: string;
+
+    switch (groupBy) {
+      case 'category':
+        sql = `
+          SELECT 
+            category,
+            COUNT(*) as count,
+            SUM(fatalities) as total_fatalities,
+            SUM(injuries) as total_injuries
+          FROM events
+          ${whereClause}
+          GROUP BY category
+          ORDER BY count DESC
+        `;
+        break;
+
+      case 'country':
+        sql = `
+          SELECT 
+            country,
+            COUNT(*) as count,
+            SUM(fatalities) as total_fatalities,
+            SUM(injuries) as total_injuries
+          FROM events
+          ${whereClause}
+          GROUP BY country
+          ORDER BY count DESC
+          LIMIT 50
+        `;
+        break;
+
+      case 'date':
+        sql = `
+          SELECT 
+            substr(date_z, 1, 7) as period,
+            COUNT(*) as count,
+            SUM(fatalities) as total_fatalities,
+            SUM(injuries) as total_injuries
+          FROM events
+          ${whereClause}
+          GROUP BY period
+          ORDER BY period DESC
+        `;
+        break;
+
+      default:
+        sql = `
+          SELECT 
+            category,
+            COUNT(*) as count
+          FROM events
+          ${whereClause}
+          GROUP BY category
+        `;
+    }
+
+    return await this.dbAll(sql, sqlParams);
   }
 
   /**

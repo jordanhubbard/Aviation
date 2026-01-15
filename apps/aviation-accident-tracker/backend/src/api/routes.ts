@@ -3,7 +3,7 @@ import { memoryRepo } from '../repo/memoryRepo.js';
 import { ListEventsParams } from '../types.js';
 import { runRecentIngest } from '../ingest/ingestService.js';
 import { searchAirports } from '../geo/airportLookup.js';
-import airportsData from '../data/airports.json' assert { type: 'json' };
+import { AirportDatabase } from '@aviation/shared-sdk';
 
 const router = express.Router();
 
@@ -233,8 +233,16 @@ router.get('/airports', (req, res) => {
  *               $ref: '#/components/schemas/FiltersOptions'
  */
 router.get('/filters/options', (_req, res) => {
-  const countries = Array.from(new Set((airportsData as any[]).map((a) => a.country).filter(Boolean))).sort();
-  const regions = Array.from(new Set((airportsData as any[]).map((a) => a.region).filter(Boolean))).sort();
+  // Return common aviation countries
+  // TODO: Could be generated dynamically from events table or full airport database
+  const countries = [
+    'Australia', 'Brazil', 'Canada', 'China', 'France', 'Germany', 'India',
+    'Indonesia', 'Italy', 'Japan', 'Mexico', 'Netherlands', 'Russia', 
+    'Spain', 'Sweden', 'Switzerland', 'Turkey', 'United Kingdom', 'United States'
+  ].sort();
+  
+  const regions: string[] = []; // Regions not currently supported
+  
   res.json({ countries, regions });
 });
 

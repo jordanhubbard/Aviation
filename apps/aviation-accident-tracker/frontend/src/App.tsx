@@ -20,8 +20,11 @@ type EventRecord = {
   region?: string;
   lat?: number;
   lon?: number;
+  fatalities?: number;
+  injuries?: number;
   summary?: string;
   narrative?: string;
+  status?: string;
   sources: { sourceName: string; url: string }[];
 };
 
@@ -112,21 +115,18 @@ export function App() {
   const eventMap = useMemo(() => new Map(events.map((e) => [e.id, e])), [events]);
   const markers = useMemo(
     () =>
-      normalizeMarkers(
-        positioned.map((e) => ({
-          id: e.id,
-          lat: e.lat!,
-          lon: e.lon!,
+      positioned.map((e) => ({
+        id: e.id,
+        position: [e.lat!, e.lon!] as [number, number],
+        payload: {
           title: e.registration || e.aircraftType || e.summary,
           subtitle: e.summary,
           category: e.category,
-          status: e.status,
           onClickId: e.id,
-        }))
-      ),
+        }
+      })),
     [positioned]
   );
-  const clusterOpts = useMemo(() => defaultClusterOptions(), []);
 
   return (
     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, padding: 16 }}>

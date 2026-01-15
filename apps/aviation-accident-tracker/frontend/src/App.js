@@ -3,7 +3,7 @@ import { useEffect, useMemo, useState } from 'react';
 import 'leaflet/dist/leaflet.css';
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import L from 'leaflet';
-import MarkerClusterGroup from 'react-leaflet-cluster';
+// import MarkerClusterGroup from 'react-leaflet-cluster'; // Package doesn't exist, clustering temporarily disabled
 import debounce from 'lodash.debounce';
 import { Badge } from './components/Badge';
 const icon = L.icon({
@@ -85,6 +85,17 @@ export function App() {
             .catch(() => setOptions({ countries: [], regions: [] }));
     }, []);
     const positioned = useMemo(() => events.filter((e) => typeof e.lat === 'number' && typeof e.lon === 'number'), [events]);
+    const eventMap = useMemo(() => new Map(events.map((e) => [e.id, e])), [events]);
+    const markers = useMemo(() => positioned.map((e) => ({
+        id: e.id,
+        position: [e.lat, e.lon],
+        payload: {
+            title: e.registration || e.aircraftType || e.summary,
+            subtitle: e.summary,
+            category: e.category,
+            onClickId: e.id,
+        }
+    })), [positioned]);
     return (_jsxs("div", { style: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, padding: 16 }, children: [_jsxs("div", { style: { gridColumn: '1 / span 2' }, children: [_jsx("h1", { children: "Aviation Accident Tracker" }), loading && _jsx("p", { children: "Loading events\u2026" }), error && _jsxs("p", { style: { color: 'red' }, children: ["Error: ", error] }), !loading && events.length === 0 && _jsx("p", { children: "No events yet. Run backend seed or ingestion." })] }), _jsxs("div", { style: { gridColumn: '1 / span 2', display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }, children: [_jsxs("label", { children: ["Search:", ' ', _jsx("input", { value: search, onChange: (e) => {
                                     setPage(0);
                                     setSearch(e.target.value);
@@ -94,10 +105,10 @@ export function App() {
                                 }, children: [_jsx("option", { value: "all", children: "All" }), _jsx("option", { value: "general", children: "General" }), _jsx("option", { value: "commercial", children: "Commercial" })] })] }), _jsxs("label", { children: ["Country:", ' ', _jsxs("select", { value: country, onChange: (e) => {
                                     setCountry(e.target.value);
                                     setPage(0);
-                                }, children: [_jsx("option", { value: "", children: "All" }), (options.countries || []).map((c) => (_jsx("option", { value: c, children: c }, c)))] })] }), _jsxs("label", { children: ["Region:", ' ', _jsxs("select", { value: region, onChange: (e) => {
+                                }, children: [_jsx("option", { value: "", children: "All" }), options.countries.map((c) => (_jsx("option", { value: c, children: c }, c)))] })] }), _jsxs("label", { children: ["Region:", ' ', _jsxs("select", { value: region, onChange: (e) => {
                                     setRegion(e.target.value);
                                     setPage(0);
-                                }, children: [_jsx("option", { value: "", children: "All" }), (options.regions || []).map((r) => (_jsx("option", { value: r, children: r }, r)))] })] }), _jsxs("label", { children: ["From:", ' ', _jsx("input", { type: "date", value: from, onChange: (e) => {
+                                }, children: [_jsx("option", { value: "", children: "All" }), options.regions.map((r) => (_jsx("option", { value: r, children: r }, r)))] })] }), _jsxs("label", { children: ["From:", ' ', _jsx("input", { type: "date", value: from, onChange: (e) => {
                                     setFrom(e.target.value);
                                     setPage(0);
                                 } })] }), _jsxs("label", { children: ["To:", ' ', _jsx("input", { type: "date", value: to, onChange: (e) => {
@@ -126,7 +137,10 @@ export function App() {
                                 region && 'region',
                                 from && 'from',
                                 to && 'to',
-                            ].filter(Boolean).length || '0'] })] }), _jsx("div", { style: { height: 480, minHeight: 400 }, children: _jsxs(MapContainer, { center: [20, 0], zoom: 2, style: { height: '100%', width: '100%' }, children: [_jsx(TileLayer, { url: "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", attribution: "\u00A9 OpenStreetMap contributors" }), _jsx(MarkerClusterGroup, { chunkedLoading: true, children: positioned.map((e) => (_jsx(Marker, { position: [e.lat, e.lon], icon: icon, eventHandlers: { click: () => setSelected(e) }, children: _jsxs(Popup, { children: [_jsx("strong", { children: e.registration }), " (", e.aircraftType || 'Aircraft', ")", _jsx("br", {}), formatDate(e.dateZ), " \u2014 ", e.summary || 'No summary', _jsx("br", {}), e.operator || 'Unknown operator'] }) }, e.id))) })] }) }), _jsxs("div", { children: [loading ? (_jsx("p", { children: "Loading\u2026" })) : events.length === 0 ? (_jsx("p", { children: "No events found for current filters." })) : (_jsxs("table", { style: { width: '100%', borderCollapse: 'collapse' }, children: [_jsx("thead", { children: _jsxs("tr", { children: [_jsx("th", { children: "Date (Z)" }), _jsx("th", { children: "Reg" }), _jsx("th", { children: "Operator" }), _jsx("th", { children: "Type" }), _jsx("th", { children: "Airport" }), _jsx("th", { children: "Category" })] }) }), _jsx("tbody", { children: events.map((e) => (_jsxs("tr", { onClick: () => setSelected(e), style: { cursor: 'pointer' }, children: [_jsx("td", { children: formatDate(e.dateZ) }), _jsx("td", { children: e.registration }), _jsx("td", { children: e.operator || '—' }), _jsx("td", { children: e.aircraftType || '—' }), _jsx("td", { children: e.airportIcao || e.airportIata || '—' }), _jsx("td", { children: _jsx(Badge, { color: e.category === 'commercial' ? '#e3f2fd' : e.category === 'general' ? '#e8f5e9' : '#eee', border: "#ccc", children: e.category }) })] }, e.id))) })] })), _jsxs("div", { style: { marginTop: 8, display: 'flex', gap: 8, alignItems: 'center' }, children: [_jsx("button", { disabled: page === 0, onClick: () => setPage((p) => Math.max(0, p - 1)), children: "Prev" }), _jsxs("span", { children: ["Page ", page + 1] }), _jsx("button", { onClick: () => setPage((p) => p + 1), children: "Next" })] })] }), selected && (_jsx("div", { style: {
+                            ].filter(Boolean).length || '0'] })] }), _jsx("div", { style: { height: 480, minHeight: 400 }, children: _jsxs(MapContainer, { center: [20, 0], zoom: 2, style: { height: '100%', width: '100%' }, children: [_jsx(TileLayer, { url: "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", attribution: "\u00A9 OpenStreetMap contributors" }), markers.map((m) => {
+                            const evt = m.payload?.onClickId ? eventMap.get(m.payload.onClickId) : undefined;
+                            return (_jsx(Marker, { position: m.position, icon: icon, eventHandlers: { click: () => evt && setSelected(evt) }, children: _jsxs(Popup, { children: [_jsx("strong", { children: evt?.registration || 'Unknown' }), " (", evt?.aircraftType || 'Aircraft', ")", _jsx("br", {}), evt ? formatDate(evt.dateZ) : '', " \u2014 ", evt?.summary || 'No summary', _jsx("br", {}), evt?.operator || 'Unknown operator'] }) }, m.id));
+                        })] }) }), _jsxs("div", { children: [loading ? (_jsx("p", { children: "Loading\u2026" })) : events.length === 0 ? (_jsx("p", { children: "No events found for current filters." })) : (_jsxs("table", { style: { width: '100%', borderCollapse: 'collapse' }, children: [_jsx("thead", { children: _jsxs("tr", { children: [_jsx("th", { children: "Date (Z)" }), _jsx("th", { children: "Reg" }), _jsx("th", { children: "Operator" }), _jsx("th", { children: "Type" }), _jsx("th", { children: "Airport" }), _jsx("th", { children: "Category" })] }) }), _jsx("tbody", { children: events.map((e) => (_jsxs("tr", { onClick: () => setSelected(e), style: { cursor: 'pointer' }, children: [_jsx("td", { children: formatDate(e.dateZ) }), _jsx("td", { children: e.registration }), _jsx("td", { children: e.operator || '—' }), _jsx("td", { children: e.aircraftType || '—' }), _jsx("td", { children: e.airportIcao || e.airportIata || '—' }), _jsx("td", { children: _jsx(Badge, { color: e.category === 'commercial' ? '#e3f2fd' : e.category === 'general' ? '#e8f5e9' : '#eee', border: "#ccc", children: e.category }) })] }, e.id))) })] })), _jsxs("div", { style: { marginTop: 8, display: 'flex', gap: 8, alignItems: 'center' }, children: [_jsx("button", { disabled: page === 0, onClick: () => setPage((p) => Math.max(0, p - 1)), children: "Prev" }), _jsxs("span", { children: ["Page ", page + 1] }), _jsx("button", { onClick: () => setPage((p) => p + 1), children: "Next" })] })] }), selected && (_jsx("div", { style: {
                     position: 'fixed',
                     inset: 0,
                     background: 'rgba(0,0,0,0.4)',

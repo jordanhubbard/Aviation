@@ -33,7 +33,7 @@ async function start() {
       startScheduler();
     }
   } catch (error) {
-    logger.error('Failed to start server', { error });
+    logger.error('Failed to start server', error instanceof Error ? error : new Error(String(error)));
     process.exit(1);
   }
 }

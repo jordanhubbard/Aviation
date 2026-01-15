@@ -22,7 +22,7 @@ export function normalize(raw: RawEvent): NormalizedEvent {
     airportIcao: raw.airportIcao || airport?.icao,
     airportIata: raw.airportIata || airport?.iata,
     country: raw.country || airport?.country,
-    region: raw.region || airport?.region,
+    region: raw.region, // Note: Airport type from shared-sdk doesn't have region
     lat: raw.lat ?? airport?.latitude,
     lon: raw.lon ?? airport?.longitude,
     fatalities: raw.fatalities,
