@@ -90,7 +90,12 @@ CMD ["npm", "test"]
 # Production stage - optimized for smaller size
 FROM base AS production
 
-# Install only production dependencies
+# Copy pre-built shared packages from development stage (includes dist/ folders)
+COPY --from=development /app/packages/shared-sdk ./packages/shared-sdk
+COPY --from=development /app/packages/keystore ./packages/keystore
+COPY --from=development /app/packages/ui-framework ./packages/ui-framework
+
+# Install only production dependencies (workspace links to already-built packages)
 ENV NODE_ENV=production
 RUN npm ci --omit=dev && \
     cd backend && npm ci --omit=dev && \
@@ -100,7 +105,7 @@ RUN npm ci --omit=dev && \
 COPY --from=development /app/backend/dist ./backend/dist
 COPY apps/aviation-accident-tracker/backend/package*.json ./backend/
 
-# Build frontend for production
+# Build frontend for production (shared packages already available)
 COPY apps/aviation-accident-tracker/frontend ./frontend
 RUN cd frontend && npm ci && npm run build && npm prune --production
 

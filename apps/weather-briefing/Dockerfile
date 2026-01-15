@@ -68,16 +68,16 @@ CMD ["npm", "test"]
 # Production stage - optimized for smaller size
 FROM base AS production
 
-# Install only production dependencies
+# Copy pre-built shared packages from development stage (includes dist/ folders)
+COPY --from=development /app/packages/shared-sdk ./packages/shared-sdk
+COPY --from=development /app/packages/keystore ./packages/keystore
+COPY --from=development /app/packages/ui-framework ./packages/ui-framework
+
+# Install only production dependencies (workspace links to already-built packages)
 ENV NODE_ENV=production
 RUN npm ci --omit=dev
 
-# Build shared packages in production mode too
-RUN cd packages/shared-sdk && npm run build && cd ../..
-RUN cd packages/keystore && npm run build && cd ../..
-RUN cd packages/ui-framework && npm run build && cd ../..
-
-# Copy built code from development stage
+# Copy built app code from development stage
 COPY --from=development /app/dist ./dist
 COPY apps/weather-briefing/package*.json ./
 
