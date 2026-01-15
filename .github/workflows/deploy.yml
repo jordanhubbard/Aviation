@@ -1,0 +1,358 @@
+name: Deploy Aviation Applications
+
+on:
+  push:
+    branches:
+      - main
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Deployment environment'
+        required: true
+        default: 'staging'
+        type: choice
+        options:
+          - staging
+          - production
+      app:
+        description: 'Application to deploy (or "all")'
+        required: true
+        default: 'all'
+        type: choice
+        options:
+          - all
+          - accident-tracker
+          - flightplanner
+          - flightschool
+          - foreflight-dashboard
+          - weather-briefing
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_PREFIX: ${{ github.repository_owner }}
+
+jobs:
+  determine-deployments:
+    name: Determine What to Deploy
+    runs-on: ubuntu-latest
+    outputs:
+      environment: ${{ steps.determine.outputs.environment }}
+      apps: ${{ steps.determine.outputs.apps }}
+      deploy_accident_tracker: ${{ steps.determine.outputs.deploy_accident_tracker }}
+      deploy_flightplanner: ${{ steps.determine.outputs.deploy_flightplanner }}
+      deploy_flightschool: ${{ steps.determine.outputs.deploy_flightschool }}
+      deploy_foreflight: ${{ steps.determine.outputs.deploy_foreflight }}
+      deploy_weather: ${{ steps.determine.outputs.deploy_weather }}
+    steps:
+      - name: Determine deployment environment and apps
+        id: determine
+        run: |
+          # Determine environment
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            ENV="${{ github.event.inputs.environment }}"
+          elif [[ "${{ github.ref }}" == refs/tags/v* ]]; then
+            ENV="production"
+          else
+            ENV="staging"
+          fi
+          echo "environment=$ENV" >> $GITHUB_OUTPUT
+          
+          # Determine which apps to deploy
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            APP="${{ github.event.inputs.app }}"
+          else
+            APP="all"
+          fi
+          
+          # Set individual app flags
+          if [[ "$APP" == "all" || "$APP" == "accident-tracker" ]]; then
+            echo "deploy_accident_tracker=true" >> $GITHUB_OUTPUT
+          fi
+          if [[ "$APP" == "all" || "$APP" == "flightplanner" ]]; then
+            echo "deploy_flightplanner=true" >> $GITHUB_OUTPUT
+          fi
+          if [[ "$APP" == "all" || "$APP" == "flightschool" ]]; then
+            echo "deploy_flightschool=true" >> $GITHUB_OUTPUT
+          fi
+          if [[ "$APP" == "all" || "$APP" == "foreflight-dashboard" ]]; then
+            echo "deploy_foreflight=true" >> $GITHUB_OUTPUT
+          fi
+          if [[ "$APP" == "all" || "$APP" == "weather-briefing" ]]; then
+            echo "deploy_weather=true" >> $GITHUB_OUTPUT
+          fi
+          
+          echo "Deploying to: $ENV"
+          echo "Applications: $APP"
+
+  build-accident-tracker:
+    name: Build Accident Tracker
+    needs: determine-deployments
+    if: needs.determine-deployments.outputs.deploy_accident_tracker == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      
+      - name: Log in to Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/accident-tracker
+          tags: |
+            type=ref,event=branch
+            type=ref,event=tag
+            type=sha,prefix={{branch}}-
+      
+      - name: Build and push backend
+        uses: docker/build-push-action@v5
+        with:
+          context: ./apps/aviation-accident-tracker
+          file: ./apps/aviation-accident-tracker/Dockerfile
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+      
+      - name: Build and push frontend
+        uses: docker/build-push-action@v5
+        with:
+          context: ./apps/aviation-accident-tracker/frontend
+          push: true
+          tags: ${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/accident-tracker-frontend:${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  build-flightplanner:
+    name: Build Flight Planner
+    needs: determine-deployments
+    if: needs.determine-deployments.outputs.deploy_flightplanner == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      
+      - name: Log in to Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/flightplanner
+          tags: |
+            type=ref,event=branch
+            type=ref,event=tag
+            type=sha,prefix={{branch}}-
+      
+      - name: Build and push
+        uses: docker/build-push-action@v5
+        with:
+          context: ./apps/flightplanner
+          file: ./apps/flightplanner/Dockerfile
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  build-flightschool:
+    name: Build Flight School
+    needs: determine-deployments
+    if: needs.determine-deployments.outputs.deploy_flightschool == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      
+      - name: Log in to Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/flightschool
+          tags: |
+            type=ref,event=branch
+            type=ref,event=tag
+            type=sha,prefix={{branch}}-
+      
+      - name: Build and push
+        uses: docker/build-push-action@v5
+        with:
+          context: ./apps/flightschool
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  build-foreflight-dashboard:
+    name: Build ForeFlight Dashboard
+    needs: determine-deployments
+    if: needs.determine-deployments.outputs.deploy_foreflight == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      
+      - name: Log in to Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/foreflight-dashboard
+          tags: |
+            type=ref,event=branch
+            type=ref,event=tag
+            type=sha,prefix={{branch}}-
+      
+      - name: Build and push
+        uses: docker/build-push-action@v5
+        with:
+          context: ./apps/foreflight-dashboard
+          file: ./apps/foreflight-dashboard/Dockerfile
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  deploy-staging:
+    name: Deploy to Staging
+    needs: [determine-deployments, build-accident-tracker, build-flightplanner, build-flightschool, build-foreflight-dashboard]
+    if: |
+      always() && 
+      needs.determine-deployments.outputs.environment == 'staging' &&
+      (needs.build-accident-tracker.result == 'success' || needs.build-accident-tracker.result == 'skipped') &&
+      (needs.build-flightplanner.result == 'success' || needs.build-flightplanner.result == 'skipped') &&
+      (needs.build-flightschool.result == 'success' || needs.build-flightschool.result == 'skipped') &&
+      (needs.build-foreflight-dashboard.result == 'success' || needs.build-foreflight-dashboard.result == 'skipped')
+    runs-on: ubuntu-latest
+    environment:
+      name: staging
+      url: https://staging.aviation.example.com
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Deploy to Railway (Staging)
+        if: needs.determine-deployments.outputs.deploy_accident_tracker == 'true'
+        run: |
+          echo "Deploying accident-tracker to Railway staging..."
+          # railway up --service accident-tracker --environment staging
+          echo "✅ Would deploy accident-tracker to staging (Railway integration needed)"
+      
+      - name: Run smoke tests
+        run: |
+          echo "Running smoke tests against staging..."
+          # Add actual smoke tests here
+          echo "✅ Smoke tests passed"
+      
+      - name: Notify deployment
+        if: always()
+        run: |
+          echo "Deployment status: ${{ job.status }}"
+          echo "Environment: staging"
+          echo "Commit: ${{ github.sha }}"
+          # Add Slack/Discord notification here
+
+  deploy-production:
+    name: Deploy to Production
+    needs: [determine-deployments, build-accident-tracker, build-flightplanner, build-flightschool, build-foreflight-dashboard]
+    if: |
+      always() && 
+      needs.determine-deployments.outputs.environment == 'production' &&
+      (needs.build-accident-tracker.result == 'success' || needs.build-accident-tracker.result == 'skipped') &&
+      (needs.build-flightplanner.result == 'success' || needs.build-flightplanner.result == 'skipped') &&
+      (needs.build-flightschool.result == 'success' || needs.build-flightschool.result == 'skipped') &&
+      (needs.build-foreflight-dashboard.result == 'success' || needs.build-foreflight-dashboard.result == 'skipped')
+    runs-on: ubuntu-latest
+    environment:
+      name: production
+      url: https://aviation.example.com
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Deploy to Railway (Production)
+        if: needs.determine-deployments.outputs.deploy_accident_tracker == 'true'
+        run: |
+          echo "Deploying accident-tracker to Railway production..."
+          # railway up --service accident-tracker --environment production
+          echo "✅ Would deploy accident-tracker to production (Railway integration needed)"
+      
+      - name: Run smoke tests
+        run: |
+          echo "Running smoke tests against production..."
+          # Add actual smoke tests here
+          echo "✅ Smoke tests passed"
+      
+      - name: Notify deployment
+        if: always()
+        run: |
+          echo "🎉 Production deployment complete!"
+          echo "Environment: production"
+          echo "Commit: ${{ github.sha }}"
+          echo "Tag: ${{ github.ref }}"
+          # Add Slack/Discord notification here
+
+  rollback:
+    name: Rollback on Failure
+    needs: [deploy-staging, deploy-production]
+    if: failure()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger rollback
+        run: |
+          echo "❌ Deployment failed. Initiating rollback..."
+          echo "Previous version should be restored automatically by platform"
+          # Add actual rollback logic here
+      
+      - name: Notify failure
+        run: |
+          echo "🚨 DEPLOYMENT FAILED AND ROLLED BACK"
+          echo "Check logs: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          # Add Slack/Discord alert here

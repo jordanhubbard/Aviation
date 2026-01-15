@@ -1,6 +1,9 @@
 export * from './ai';
 export * from './service';
 
+// Caching
+export * from './cache';
+
 // Aviation data services
 export {
   AirportDatabase,

@@ -23,6 +23,9 @@
   ],
   "author": "Jordan Hubbard",
   "license": "MIT",
+  "dependencies": {
+    "redis": "^4.6.7"
+  },
   "devDependencies": {
     "@types/node": "^25.0.3",
     "jsdom": "^23.0.1",

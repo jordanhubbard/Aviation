@@ -1,0 +1,388 @@
+/**
+ * Aviation UI Framework - Mobile Responsive Styles
+ * 
+ * Mobile-first responsive design system for aviation applications.
+ * Based on Material Design breakpoints.
+ */
+
+/* ==========================================================================
+   CSS Variables
+   ========================================================================== */
+
+:root {
+  /* Breakpoints */
+  --breakpoint-xs: 0px;
+  --breakpoint-sm: 600px;
+  --breakpoint-md: 960px;
+  --breakpoint-lg: 1280px;
+  --breakpoint-xl: 1920px;
+
+  /* Touch targets */
+  --touch-target-min: 44px;
+  --touch-target-recommended: 48px;
+
+  /* Spacing */
+  --spacing-xs: 4px;
+  --spacing-sm: 8px;
+  --spacing-md: 16px;
+  --spacing-lg: 24px;
+  --spacing-xl: 32px;
+
+  /* Typography (mobile-first) */
+  --font-size-xs: 12px;
+  --font-size-sm: 14px;
+  --font-size-base: 16px;
+  --font-size-lg: 18px;
+  --font-size-xl: 20px;
+  --font-size-2xl: 24px;
+  --font-size-3xl: 30px;
+
+  /* Line heights */
+  --line-height-tight: 1.25;
+  --line-height-normal: 1.5;
+  --line-height-relaxed: 1.75;
+
+  /* Container widths */
+  --container-sm: 540px;
+  --container-md: 720px;
+  --container-lg: 960px;
+  --container-xl: 1140px;
+}
+
+/* ==========================================================================
+   Base Mobile Styles
+   ========================================================================== */
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  font-size: var(--font-size-base);
+  -webkit-text-size-adjust: 100%;
+  -webkit-tap-highlight-color: transparent;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  line-height: var(--line-height-normal);
+}
+
+/* ==========================================================================
+   Container
+   ========================================================================== */
+
+.aviation-container {
+  width: 100%;
+  padding-right: var(--spacing-md);
+  padding-left: var(--spacing-md);
+  margin-right: auto;
+  margin-left: auto;
+}
+
+@media (min-width: 600px) {
+  .aviation-container {
+    max-width: var(--container-sm);
+  }
+}
+
+@media (min-width: 960px) {
+  .aviation-container {
+    max-width: var(--container-md);
+    padding-right: var(--spacing-lg);
+    padding-left: var(--spacing-lg);
+  }
+}
+
+@media (min-width: 1280px) {
+  .aviation-container {
+    max-width: var(--container-lg);
+  }
+}
+
+@media (min-width: 1920px) {
+  .aviation-container {
+    max-width: var(--container-xl);
+  }
+}
+
+/* ==========================================================================
+   Touch Targets
+   ========================================================================== */
+
+.aviation-btn,
+.aviation-touch-target {
+  min-width: var(--touch-target-min);
+  min-height: var(--touch-target-min);
+  padding: var(--spacing-sm) var(--spacing-md);
+  cursor: pointer;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .aviation-btn:hover {
+    opacity: 0.9;
+  }
+}
+
+/* ==========================================================================
+   Mobile Navigation
+   ========================================================================== */
+
+.aviation-nav-mobile {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+
+.aviation-nav-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--spacing-md);
+  min-height: var(--touch-target-recommended);
+}
+
+.aviation-nav-menu {
+  display: none;
+  flex-direction: column;
+  width: 100%;
+}
+
+.aviation-nav-menu.is-open {
+  display: flex;
+}
+
+.aviation-nav-item {
+  padding: var(--spacing-md);
+  min-height: var(--touch-target-recommended);
+  border-bottom: 1px solid #eee;
+}
+
+@media (min-width: 960px) {
+  .aviation-nav-mobile {
+    flex-direction: row;
+    align-items: center;
+  }
+
+  .aviation-nav-toggle {
+    display: none;
+  }
+
+  .aviation-nav-menu {
+    display: flex;
+    flex-direction: row;
+    flex: 1;
+  }
+
+  .aviation-nav-item {
+    border-bottom: none;
+    padding: var(--spacing-sm) var(--spacing-md);
+  }
+}
+
+/* ==========================================================================
+   Responsive Typography
+   ========================================================================== */
+
+h1, .aviation-h1 {
+  font-size: var(--font-size-2xl);
+  line-height: var(--line-height-tight);
+  margin: var(--spacing-md) 0;
+}
+
+h2, .aviation-h2 {
+  font-size: var(--font-size-xl);
+  line-height: var(--line-height-tight);
+  margin: var(--spacing-md) 0;
+}
+
+h3, .aviation-h3 {
+  font-size: var(--font-size-lg);
+  line-height: var(--line-height-normal);
+  margin: var(--spacing-sm) 0;
+}
+
+@media (min-width: 960px) {
+  h1, .aviation-h1 {
+    font-size: var(--font-size-3xl);
+  }
+
+  h2, .aviation-h2 {
+    font-size: var(--font-size-2xl);
+  }
+
+  h3, .aviation-h3 {
+    font-size: var(--font-size-xl);
+  }
+}
+
+/* ==========================================================================
+   Responsive Tables
+   ========================================================================== */
+
+.aviation-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+@media (max-width: 959px) {
+  .aviation-table {
+    display: block;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .aviation-table thead {
+    display: none;
+  }
+
+  .aviation-table tbody {
+    display: block;
+  }
+
+  .aviation-table tr {
+    display: block;
+    margin-bottom: var(--spacing-md);
+    border: 1px solid #ddd;
+    border-radius: 4px;
+  }
+
+  .aviation-table td {
+    display: flex;
+    justify-content: space-between;
+    padding: var(--spacing-sm);
+    border-bottom: 1px solid #eee;
+  }
+
+  .aviation-table td:before {
+    content: attr(data-label);
+    font-weight: bold;
+    margin-right: var(--spacing-sm);
+  }
+
+  .aviation-table td:last-child {
+    border-bottom: none;
+  }
+}
+
+/* ==========================================================================
+   Responsive Forms
+   ========================================================================== */
+
+.aviation-form-group {
+  margin-bottom: var(--spacing-md);
+}
+
+.aviation-input,
+.aviation-select,
+.aviation-textarea {
+  width: 100%;
+  padding: var(--spacing-sm) var(--spacing-md);
+  font-size: var(--font-size-base);
+  min-height: var(--touch-target-min);
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+
+.aviation-input:focus,
+.aviation-select:focus,
+.aviation-textarea:focus {
+  outline: none;
+  border-color: #1976d2;
+  box-shadow: 0 0 0 3px rgba(25, 118, 210, 0.1);
+}
+
+@media (min-width: 960px) {
+  .aviation-form-row {
+    display: flex;
+    gap: var(--spacing-md);
+  }
+
+  .aviation-form-row .aviation-form-group {
+    flex: 1;
+  }
+}
+
+/* ==========================================================================
+   Responsive Grid
+   ========================================================================== */
+
+.aviation-grid {
+  display: grid;
+  gap: var(--spacing-md);
+  grid-template-columns: 1fr;
+}
+
+@media (min-width: 600px) {
+  .aviation-grid-sm-2 {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .aviation-grid-sm-3 {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (min-width: 960px) {
+  .aviation-grid-md-2 {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .aviation-grid-md-3 {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  .aviation-grid-md-4 {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+/* ==========================================================================
+   Utility Classes
+   ========================================================================== */
+
+/* Hide/show on mobile */
+.aviation-hide-mobile {
+  display: none;
+}
+
+@media (min-width: 960px) {
+  .aviation-hide-mobile {
+    display: block;
+  }
+
+  .aviation-hide-desktop {
+    display: none;
+  }
+}
+
+/* Spacing utilities */
+.aviation-p-sm { padding: var(--spacing-sm); }
+.aviation-p-md { padding: var(--spacing-md); }
+.aviation-p-lg { padding: var(--spacing-lg); }
+
+.aviation-m-sm { margin: var(--spacing-sm); }
+.aviation-m-md { margin: var(--spacing-md); }
+.aviation-m-lg { margin: var(--spacing-lg); }
+
+/* Text utilities */
+.aviation-text-center { text-align: center; }
+.aviation-text-left { text-align: left; }
+.aviation-text-right { text-align: right; }
+
+/* Flex utilities */
+.aviation-flex { display: flex; }
+.aviation-flex-column { flex-direction: column; }
+.aviation-flex-wrap { flex-wrap: wrap; }
+.aviation-justify-center { justify-content: center; }
+.aviation-items-center { align-items: center; }
+.aviation-gap-sm { gap: var(--spacing-sm); }
+.aviation-gap-md { gap: var(--spacing-md); }
