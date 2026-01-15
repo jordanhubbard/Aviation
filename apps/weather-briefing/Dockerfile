@@ -17,6 +17,7 @@ ENV NODE_ENV=development \
 
 # Copy package files for dependency installation
 COPY apps/weather-briefing/package*.json ./
+COPY package-lock.json ./
 
 # Install shared SDK dependencies (from monorepo workspace)
 COPY packages/shared-sdk ./packages/shared-sdk

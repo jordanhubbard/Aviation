@@ -19,6 +19,7 @@ ENV NODE_ENV=development \
 COPY apps/aviation-accident-tracker/package*.json ./
 COPY apps/aviation-accident-tracker/backend/package*.json ./backend/
 COPY apps/aviation-accident-tracker/frontend/package*.json ./frontend/
+COPY package-lock.json ./
 
 # Install shared SDK dependencies (from monorepo workspace)
 COPY packages/shared-sdk ./packages/shared-sdk
