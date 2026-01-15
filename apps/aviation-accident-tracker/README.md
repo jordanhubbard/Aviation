@@ -279,12 +279,13 @@ ENABLE_CRON=false
 echo 'INGEST_CRON="0 */3 * * *"' >> .env
 ```
 
-### `GET /api/health`
+### Caching
 
-Health check endpoint.
+The API caches `/api/events` and `/api/filters/options` responses. It uses a
+short TTL in memory by default and switches to Redis if `REDIS_URL` is set.
 
-**Response:**
-```json
+- `REDIS_URL` (optional): Redis connection string (e.g., `redis://localhost:6379`)
+json
 {
   "status": "healthy",
   "timestamp": "2024-03-15T12:00:00Z"

@@ -9,12 +9,14 @@ import { IngestionOrchestrator } from '../ingest/orchestrator.js';
 import type { ListEventsParams } from '../types.js';
 import { searchAirports } from '../geo/airportLookup.js';
 import airportsData from '../data/airports.json' assert { type: 'json' };
+import { getCache } from '../cache.js';
 
 const router = express.Router();
 
 // Lazy-init repository (shared across requests)
 let repository: EventRepository | null = null;
 let orchestrator: IngestionOrchestrator | null = null;
+const exportRequestsByIp = new Map<string, number[]>();
 const exportRequestsByIp = new Map<string, number[]>();
 
 function getRepository(): EventRepository {
@@ -94,88 +96,6 @@ function csvEscape(value: string | number | null): string {
   return str;
 }
 
-/**
- * @swagger
- * /api/events:
- *   get:
- *     summary: List aviation events
- *     description: Retrieve a paginated list of aviation accidents and incidents with optional filters
- *     tags: [Events]
- *     parameters:
- *       - in: query
- *         name: from
- *         schema:
- *           type: string
- *           format: date
- *         description: Filter events from this date (YYYY-MM-DD)
- *         example: '2024-01-01'
- *       - in: query
- *         name: to
- *         schema:
- *           type: string
- *           format: date
- *         description: Filter events to this date (YYYY-MM-DD)
- *         example: '2024-12-31'
- *       - in: query
- *         name: category
- *         schema:
- *           type: string
- *           enum: [GA, Commercial, all]
- *         description: Filter by flight category
- *         example: 'GA'
- *       - in: query
- *         name: airport
- *         schema:
- *           type: string
- *         description: Filter by airport ICAO code
- *         example: 'KSFO'
- *       - in: query
- *         name: country
- *         schema:
- *           type: string
- *         description: Filter by country code
- *         example: 'US'
- *       - in: query
- *         name: region
- *         schema:
- *           type: string
- *         description: Filter by region
- *         example: 'North America'
- *       - in: query
- *         name: search
- *         schema:
- *           type: string
- *         description: Full-text search in narrative
- *         example: 'engine failure'
- *       - in: query
- *         name: limit
- *         schema:
- *           type: integer
- *           minimum: 1
- *           maximum: 100
- *           default: 50
- *         description: Number of results per page
- *       - in: query
- *         name: offset
- *         schema:
- *           type: integer
- *           minimum: 0
- *           default: 0
- *         description: Pagination offset
- *     responses:
- *       200:
- *         description: List of events
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/EventList'
- *       500:
- *         description: Server error
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/Error'
- */
 router.get('/events', async (req, res, next) => {
   try {
     const params: ListEventsParams = {
@@ -190,10 +110,25 @@ router.get('/events', async (req, res, next) => {
       offset: req.query.offset ? Number(req.query.offset) : 0,
     };
 
+    const cache = getCache();
+    const cacheKey = `events:${JSON.stringify(params)}`;
+    const cached = await cache.get<{ events: any[]; total: number }>(cacheKey);
+    if (cached) {
+      res.setHeader('Cache-Control', 'private, max-age=60');
+      return res.json({
+        events: cached.events,
+        total: cached.total,
+        limit: params.limit,
+        offset: params.offset
+      });
+    }
+
     const repo = getRepository();
     const events = await repo.listEvents(params);
     const total = await repo.countEvents(params);
 
+    await cache.set(cacheKey, { events, total }, 60);
+    res.setHeader('Cache-Control', 'private, max-age=60');
     res.json({
       events,
       total,
@@ -357,6 +292,7 @@ router.post('/events/export', async (req, res, next) => {
     next(error);
   }
 });
+
 router.get('/events/:id', async (req, res, next) => {
   try {
     const repo = getRepository();
@@ -506,9 +442,20 @@ router.get('/airports', (req, res) => {
  *               $ref: '#/components/schemas/FilterOptions'
  */
 router.get('/filters/options', (_req, res) => {
-  const countries = Array.from(new Set((airportsData as any[]).map((a) => a.country).filter(Boolean))).sort();
-  const regions = Array.from(new Set((airportsData as any[]).map((a) => a.region).filter(Boolean))).sort();
-  res.json({ countries, regions });
+  const cache = getCache();
+  const cacheKey = 'filters:options';
+  cache.get<{ countries: string[]; regions: string[] }>(cacheKey).then((cached) => {
+    if (cached) {
+      res.setHeader('Cache-Control', 'private, max-age=300');
+      return res.json(cached);
+    }
+    const countries = Array.from(new Set((airportsData as any[]).map((a) => a.country).filter(Boolean))).sort();
+    const regions = Array.from(new Set((airportsData as any[]).map((a) => a.region).filter(Boolean))).sort();
+    const payload = { countries, regions };
+    cache.set(cacheKey, payload, 300).catch(() => undefined);
+    res.setHeader('Cache-Control', 'private, max-age=300');
+    res.json(payload);
+  });
 });
 
 export default router;
