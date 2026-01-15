@@ -70,7 +70,6 @@ RUN pip install -r requirements.txt
 COPY apps/flightschool/app ./app
 COPY apps/flightschool/config.py apps/flightschool/app_secrets.py ./
 COPY apps/flightschool/static ./static
-COPY apps/flightschool/migrations ./migrations
 
 # Set Flask environment variables for production
 ENV FLASK_APP=app \

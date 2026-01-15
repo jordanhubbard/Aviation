@@ -30,6 +30,7 @@ RUN apt-get update \
 
 WORKDIR /build
 COPY apps/flight-planner/requirements.txt ./requirements.txt
+COPY packages/shared-sdk/python /packages/shared-sdk/python
 
 RUN python -m venv /opt/venv \
     && /opt/venv/bin/pip install --upgrade pip \
