@@ -178,3 +178,15 @@ export class WeatherApiKeyError extends WeatherError {
     this.name = 'WeatherApiKeyError';
   }
 }
+
+/**
+ * Cache entry for weather data with TTL
+ */
+export interface WeatherCacheEntry<T> {
+  /** Cached data */
+  data: T;
+  /** Timestamp when data was cached (Unix timestamp in milliseconds) */
+  cached_at: number;
+  /** Time to live in milliseconds */
+  ttl: number;
+}
