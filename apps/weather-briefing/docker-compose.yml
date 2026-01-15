@@ -1,0 +1,35 @@
+version: '3.8'
+
+services:
+  weather-briefing:
+    image: weather-briefing:dev
+    build:
+      context: .
+      dockerfile: ${DOCKERFILE:-Dockerfile}
+      target: development
+      args:
+        NODE_VERSION: ${NODE_VERSION:-20}
+        BUILDKIT_INLINE_CACHE: 1
+      cache_from:
+        - weather-briefing:dev
+    ports:
+      - "${SERVICE_PORT:-3003}:3003"  # Port for future API
+    volumes:
+      - ./src:/app/src  # Hot reload source
+      - ./dist:/app/dist  # Built code
+      - ./logs:/app/logs  # Application logs
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=development
+      - SERVICE_PORT=3003
+      - LOG_LEVEL=debug
+      - BUILDKIT_PROGRESS=plain
+      - DOCKER_BUILDKIT=1
+    tty: true
+    stdin_open: true
+    healthcheck:
+      test: ["CMD", "pgrep", "-f", "node.*weather-briefing"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s

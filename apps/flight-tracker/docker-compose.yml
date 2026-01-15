@@ -1,0 +1,35 @@
+version: '3.8'
+
+services:
+  flight-tracker:
+    image: flight-tracker:dev
+    build:
+      context: .
+      dockerfile: ${DOCKERFILE:-Dockerfile}
+      target: development
+      args:
+        NODE_VERSION: ${NODE_VERSION:-20}
+        BUILDKIT_INLINE_CACHE: 1
+      cache_from:
+        - flight-tracker:dev
+    ports:
+      - "${SERVICE_PORT:-3001}:3001"  # Port for future API
+    volumes:
+      - ./src:/app/src  # Hot reload source
+      - ./dist:/app/dist  # Built code
+      - ./logs:/app/logs  # Application logs
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=development
+      - SERVICE_PORT=3001
+      - LOG_LEVEL=debug
+      - BUILDKIT_PROGRESS=plain
+      - DOCKER_BUILDKIT=1
+    tty: true
+    stdin_open: true
+    healthcheck:
+      test: ["CMD", "pgrep", "-f", "node.*flight-tracker"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
