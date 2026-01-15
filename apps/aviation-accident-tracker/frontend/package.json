@@ -12,6 +12,7 @@
     "lint": "echo \"(placeholder lint)\""
   },
   "dependencies": {
+    "@aviation/ui-framework": "*",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-router-dom": "^7.11.0",

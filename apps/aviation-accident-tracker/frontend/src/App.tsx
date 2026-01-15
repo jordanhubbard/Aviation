@@ -5,6 +5,7 @@ import L from 'leaflet';
 import MarkerClusterGroup from 'react-leaflet-cluster';
 import debounce from 'lodash.debounce';
 import { Badge } from './components/Badge';
+import { normalizeMarkers, defaultClusterOptions } from '@aviation/ui-framework';
 
 type EventRecord = {
   id: string;
@@ -108,6 +109,24 @@ export function App() {
   }, []);
 
   const positioned = useMemo(() => events.filter((e) => typeof e.lat === 'number' && typeof e.lon === 'number'), [events]);
+  const eventMap = useMemo(() => new Map(events.map((e) => [e.id, e])), [events]);
+  const markers = useMemo(
+    () =>
+      normalizeMarkers(
+        positioned.map((e) => ({
+          id: e.id,
+          lat: e.lat!,
+          lon: e.lon!,
+          title: e.registration || e.aircraftType || e.summary,
+          subtitle: e.summary,
+          category: e.category,
+          status: e.status,
+          onClickId: e.id,
+        }))
+      ),
+    [positioned]
+  );
+  const clusterOpts = useMemo(() => defaultClusterOptions(), []);
 
   return (
     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, padding: 16 }}>
@@ -255,18 +274,26 @@ export function App() {
       <div style={{ height: 480, minHeight: 400 }}>
         <MapContainer center={[20, 0]} zoom={2} style={{ height: '100%', width: '100%' }}>
           <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" attribution="© OpenStreetMap contributors" />
-          <MarkerClusterGroup chunkedLoading>
-            {positioned.map((e) => (
-              <Marker key={e.id} position={[e.lat!, e.lon!]} icon={icon} eventHandlers={{ click: () => setSelected(e) }}>
-                <Popup>
-                  <strong>{e.registration}</strong> ({e.aircraftType || 'Aircraft'})
-                  <br />
-                  {formatDate(e.dateZ)} — {e.summary || 'No summary'}
-                  <br />
-                  {e.operator || 'Unknown operator'}
-                </Popup>
-              </Marker>
-            ))}
+          <MarkerClusterGroup chunkedLoading {...clusterOpts}>
+            {markers.map((m) => {
+              const evt = m.payload?.onClickId ? eventMap.get(m.payload.onClickId as string) : undefined;
+              return (
+                <Marker
+                  key={m.id}
+                  position={m.position as [number, number]}
+                  icon={icon}
+                  eventHandlers={{ click: () => evt && setSelected(evt) }}
+                >
+                  <Popup>
+                    <strong>{evt?.registration || 'Unknown'}</strong> ({evt?.aircraftType || 'Aircraft'})
+                    <br />
+                    {evt ? formatDate(evt.dateZ) : ''} — {evt?.summary || 'No summary'}
+                    <br />
+                    {evt?.operator || 'Unknown operator'}
+                  </Popup>
+                </Marker>
+              );
+            })}
           </MarkerClusterGroup>
         </MapContainer>
       </div>
