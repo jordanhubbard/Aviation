@@ -1,0 +1,414 @@
+"""
+Aviation Accident Tracker GraphQL API Schema
+"""
+
+scalar DateTime
+scalar JSON
+
+# ============================================================================
+# Event Types
+# ============================================================================
+
+type Event {
+  "Unique event identifier"
+  id: ID!
+  "Event date in ISO 8601 format"
+  date: DateTime!
+  "Event category (accident or incident)"
+  category: EventCategory!
+  "Brief summary of the event"
+  summary: String!
+  "Detailed description (if available)"
+  description: String
+  "Location description"
+  location: String!
+  "Country where event occurred"
+  country: String
+  "Region within country"
+  region: String
+  "ICAO airport code"
+  airportIcao: String
+  "IATA airport code"
+  airportIata: String
+  "Aircraft type/model"
+  aircraftType: String
+  "Aircraft registration"
+  registration: String
+  "Operating airline/company"
+  operator: String
+  "Phase of flight when event occurred"
+  phaseOfFlight: FlightPhase
+  "Number of fatalities"
+  fatalities: Int
+  "Number of injuries"
+  injuries: Int
+  "Total people on board"
+  totalOnBoard: Int
+  "Weather conditions at time of event"
+  weather: String
+  "Primary cause (if determined)"
+  cause: String
+  "Source data references"
+  sources: [EventSource!]!
+  "When this record was created"
+  createdAt: DateTime!
+  "When this record was last updated"
+  updatedAt: DateTime
+}
+
+type EventSource {
+  "Source type (NTSB, ASN, AVHerald, etc.)"
+  type: String!
+  "URL to source document"
+  url: String!
+  "Title/description of source"
+  title: String
+  "When this source was fetched"
+  fetchedAt: DateTime
+}
+
+enum EventCategory {
+  ACCIDENT
+  INCIDENT
+  ALL
+}
+
+enum FlightPhase {
+  TAXI
+  TAKEOFF
+  INITIAL_CLIMB
+  CLIMB
+  CRUISE
+  DESCENT
+  APPROACH
+  LANDING
+  GROUND
+  UNKNOWN
+}
+
+# ============================================================================
+# Query Filters and Pagination
+# ============================================================================
+
+input EventFilter {
+  "Filter by date range (from)"
+  from: DateTime
+  "Filter by date range (to)"
+  to: DateTime
+  "Filter by category"
+  category: EventCategory
+  "Filter by airport ICAO or IATA code"
+  airport: String
+  "Filter by country"
+  country: String
+  "Filter by region"
+  region: String
+  "Filter by aircraft type"
+  aircraftType: String
+  "Filter by operator"
+  operator: String
+  "Search in summary, operator, and registration"
+  search: String
+  "Filter by minimum fatalities"
+  minFatalities: Int
+  "Filter by phase of flight"
+  phaseOfFlight: FlightPhase
+}
+
+input EventSort {
+  "Field to sort by"
+  field: EventSortField!
+  "Sort direction"
+  direction: SortDirection!
+}
+
+enum EventSortField {
+  DATE
+  FATALITIES
+  INJURIES
+  CREATED_AT
+}
+
+enum SortDirection {
+  ASC
+  DESC
+}
+
+type PageInfo {
+  "Whether there are more pages after this one"
+  hasNextPage: Boolean!
+  "Whether there are pages before this one"
+  hasPreviousPage: Boolean!
+  "Cursor for the start of this page"
+  startCursor: String
+  "Cursor for the end of this page"
+  endCursor: String
+}
+
+type EventEdge {
+  "The event node"
+  node: Event!
+  "Cursor for this edge"
+  cursor: String!
+}
+
+type EventConnection {
+  "List of event edges"
+  edges: [EventEdge!]!
+  "Pagination information"
+  pageInfo: PageInfo!
+  "Total count of events matching filter"
+  totalCount: Int!
+}
+
+# ============================================================================
+# Statistics
+# ============================================================================
+
+type EventStatistics {
+  "Total events matching criteria"
+  total: Int!
+  "Events by category"
+  byCategory: [CategoryStatistic!]!
+  "Events by country"
+  byCountry: [CountryStatistic!]!
+  "Events by aircraft type"
+  byAircraftType: [AircraftTypeStatistic!]!
+  "Events by phase of flight"
+  byPhaseOfFlight: [PhaseStatistic!]!
+  "Time period for statistics"
+  period: StatisticsPeriod!
+}
+
+type CategoryStatistic {
+  category: EventCategory!
+  count: Int!
+  fatalities: Int!
+  injuries: Int!
+}
+
+type CountryStatistic {
+  country: String!
+  count: Int!
+  fatalities: Int!
+  injuries: Int!
+}
+
+type AircraftTypeStatistic {
+  aircraftType: String!
+  count: Int!
+  fatalities: Int!
+  injuries: Int!
+}
+
+type PhaseStatistic {
+  phase: FlightPhase!
+  count: Int!
+  fatalities: Int!
+  injuries: Int!
+}
+
+type StatisticsPeriod {
+  from: DateTime
+  to: DateTime
+}
+
+# ============================================================================
+# Timeline
+# ============================================================================
+
+type TimelineDataPoint {
+  "Date (year-month)"
+  date: String!
+  "Number of events in this period"
+  count: Int!
+  "Breakdown by category"
+  accidents: Int!
+  incidents: Int!
+  "Total fatalities in this period"
+  fatalities: Int!
+}
+
+enum TimelineInterval {
+  DAY
+  WEEK
+  MONTH
+  QUARTER
+  YEAR
+}
+
+# ============================================================================
+# Health and System
+# ============================================================================
+
+type HealthStatus {
+  "System status"
+  status: String!
+  "Current timestamp"
+  timestamp: DateTime!
+  "API version"
+  version: String!
+  "System uptime in seconds"
+  uptime: Int!
+  "Database status"
+  database: DatabaseStatus!
+}
+
+type DatabaseStatus {
+  "Database connection status"
+  connected: Boolean!
+  "Total events in database"
+  totalEvents: Int!
+  "Last ingestion time"
+  lastIngestion: DateTime
+}
+
+# ============================================================================
+# Queries
+# ============================================================================
+
+type Query {
+  "Get a single event by ID"
+  event(id: ID!): Event
+  
+  "List events with cursor-based pagination"
+  events(
+    "Cursor for pagination"
+    after: String
+    "Number of items to return (max 100)"
+    first: Int = 20
+    "Filter criteria"
+    filter: EventFilter
+    "Sort order"
+    sort: EventSort
+  ): EventConnection!
+  
+  "Get event statistics"
+  statistics(
+    "Filter criteria for statistics"
+    filter: EventFilter
+  ): EventStatistics!
+  
+  "Get timeline data for visualization"
+  timeline(
+    "Start date"
+    from: DateTime!
+    "End date"
+    to: DateTime!
+    "Time interval for grouping"
+    interval: TimelineInterval = MONTH
+    "Filter criteria"
+    filter: EventFilter
+  ): [TimelineDataPoint!]!
+  
+  "Search events by text"
+  searchEvents(
+    "Search query"
+    query: String!
+    "Number of results (max 100)"
+    limit: Int = 20
+  ): [Event!]!
+  
+  "Get system health status"
+  health: HealthStatus!
+}
+
+# ============================================================================
+# Mutations
+# ============================================================================
+
+type Mutation {
+  "Trigger manual data ingestion (admin only)"
+  triggerIngestion(
+    "Source to ingest from"
+    source: IngestionSource!
+  ): IngestionResult!
+  
+  "Update event metadata (admin only)"
+  updateEvent(
+    "Event ID"
+    id: ID!
+    "Fields to update"
+    input: EventUpdateInput!
+  ): Event!
+  
+  "Delete an event (admin only)"
+  deleteEvent(
+    "Event ID"
+    id: ID!
+  ): DeleteResult!
+}
+
+enum IngestionSource {
+  ASN
+  AVHERALD
+  NTSB
+}
+
+type IngestionResult {
+  "Whether ingestion was successful"
+  success: Boolean!
+  "Number of events ingested"
+  eventsIngested: Int!
+  "Ingestion start time"
+  startedAt: DateTime!
+  "Ingestion completion time"
+  completedAt: DateTime!
+  "Any errors encountered"
+  errors: [String!]
+}
+
+input EventUpdateInput {
+  summary: String
+  description: String
+  category: EventCategory
+  aircraftType: String
+  operator: String
+  fatalities: Int
+  injuries: Int
+  cause: String
+}
+
+type DeleteResult {
+  "Whether deletion was successful"
+  success: Boolean!
+  "ID of deleted event"
+  deletedId: ID!
+}
+
+# ============================================================================
+# Subscriptions
+# ============================================================================
+
+type Subscription {
+  "Subscribe to new events as they are ingested"
+  eventAdded(
+    "Filter for subscribed events"
+    filter: EventFilter
+  ): Event!
+  
+  "Subscribe to ingestion status updates"
+  ingestionStatus: IngestionStatus!
+}
+
+type IngestionStatus {
+  "Current ingestion state"
+  state: IngestionState!
+  "Number of events processed so far"
+  eventsProcessed: Int!
+  "Current source being ingested"
+  source: IngestionSource
+  "Progress percentage (0-100)"
+  progress: Int!
+  "Estimated time remaining (seconds)"
+  estimatedTimeRemaining: Int
+}
+
+enum IngestionState {
+  IDLE
+  STARTING
+  IN_PROGRESS
+  COMPLETING
+  COMPLETED
+  FAILED
+}

@@ -18,6 +18,8 @@ The Aviation Accident Tracker ingests, deduplicates, and serves aviation acciden
 - **Advanced Filters**: Date range, category, airport, country/region, text search
 - **Sortable Table**: Paginated results with key details
 - **Detail View**: Complete narratives with source attribution
+- **Dual API**: REST + GraphQL APIs for maximum flexibility
+- **Real-Time Subscriptions**: WebSocket support for live event updates
 
 ## Structure
 
@@ -225,6 +227,97 @@ Trigger manual ingestion (guarded endpoint, requires auth).
   "source": "asn",  // optional: specific source
   "windowDays": 40  // optional: recent window (default: 40)
 }
+```
+
+---
+
+## GraphQL API
+
+The application also provides a **GraphQL API** at `/graphql` with full query, mutation, and subscription support.
+
+### Quick Start
+
+**GraphQL Playground:** Available in development at `http://localhost:3002/graphql`
+
+**Example Query:**
+```graphql
+query RecentAccidents {
+  events(first: 10, filter: { category: ACCIDENT }, sort: { field: DATE, direction: DESC }) {
+    edges {
+      node {
+        id
+        date
+        summary
+        location
+        aircraftType
+        fatalities
+        injuries
+      }
+    }
+    totalCount
+  }
+}
+```
+
+**Example Subscription:**
+```graphql
+subscription OnNewEvent {
+  eventAdded(filter: { category: ACCIDENT }) {
+    id
+    date
+    summary
+    location
+  }
+}
+```
+
+### Features
+
+- **Cursor-based Pagination** - Efficient pagination for large datasets
+- **Field Selection** - Request only the fields you need
+- **Filtering & Sorting** - Powerful query capabilities
+- **Real-Time Subscriptions** - WebSocket support for live updates
+- **Query Complexity Limiting** - Automatic protection against expensive queries
+- **Strong Typing** - Full TypeScript/introspection support
+- **DataLoader** - Optimized batch loading to prevent N+1 queries
+
+### Documentation
+
+See **[GRAPHQL_API.md](./GRAPHQL_API.md)** for:
+- Complete schema documentation
+- Query examples
+- Mutation guide
+- Subscription setup
+- Best practices
+- Code examples (TypeScript, Python, curl)
+
+### Advantages
+
+**GraphQL Benefits:**
+- Single request for multiple resources
+- No over-fetching or under-fetching
+- Real-time data with subscriptions
+- Self-documenting via introspection
+- Strong typing and validation
+
+**When to Use:**
+- Complex queries requiring multiple resources
+- Mobile/bandwidth-constrained clients
+- Real-time data requirements
+- Dynamic UI requirements
+
+**When to Use REST:**
+- Simple CRUD operations
+- Caching requirements
+- Existing integrations
+- File uploads/downloads
+
+---
+
+## API Documentation
+
+- **REST API:** See API Endpoints section above
+- **GraphQL API:** See [GRAPHQL_API.md](./GRAPHQL_API.md)
 ```
 
 ## Automated Ingestion

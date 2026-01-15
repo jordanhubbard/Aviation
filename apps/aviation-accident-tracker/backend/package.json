@@ -26,7 +26,16 @@
     "sqlite3": "^5.1.7",
     "uuid": "^9.0.1",
     "node-cron": "^3.0.3",
-    "swagger-ui-express": "^5.0.1"
+    "swagger-ui-express": "^5.0.1",
+    "@apollo/server": "^4.10.0",
+    "graphql": "^16.8.1",
+    "graphql-subscriptions": "^2.0.0",
+    "graphql-ws": "^5.14.3",
+    "ws": "^8.16.0",
+    "dataloader": "^2.2.2",
+    "@graphql-tools/schema": "^10.0.2",
+    "graphql-validation-complexity": "^0.4.2",
+    "express-rate-limit": "^7.1.5"
   },
   "devDependencies": {
     "typescript": "^5.0.0",
@@ -35,6 +44,7 @@
     "@types/cors": "^2.8.17",
     "@types/uuid": "^9.0.7",
     "@types/swagger-ui-express": "^4.1.6",
+    "@types/ws": "^8.5.10",
     "nodemon": "^3.0.3",
     "tsx": "^4.7.0",
     "swagger-jsdoc": "^6.2.8",
