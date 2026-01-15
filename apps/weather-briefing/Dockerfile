@@ -30,6 +30,11 @@ FROM base AS development
 # Install all dependencies (including dev dependencies)
 RUN npm ci
 
+# Build shared packages first (they're needed for the app build)
+RUN cd packages/shared-sdk && npm run build && cd ../..
+RUN cd packages/keystore && npm run build && cd ../..
+RUN cd packages/ui-framework && npm run build && cd ../..
+
 # Copy source code
 COPY apps/weather-briefing/src ./src
 COPY apps/weather-briefing/tsconfig.json ./

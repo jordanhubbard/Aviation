@@ -35,6 +35,11 @@ RUN npm ci && \
     cd ../frontend && npm ci && \
     cd ..
 
+# Build shared packages first (they're needed for the backend build)
+RUN cd packages/shared-sdk && npm run build && cd ../..
+RUN cd packages/keystore && npm run build && cd ../..
+RUN cd packages/ui-framework && npm run build && cd ../..
+
 # Copy source code
 COPY apps/aviation-accident-tracker/backend ./backend
 COPY apps/aviation-accident-tracker/frontend ./frontend
