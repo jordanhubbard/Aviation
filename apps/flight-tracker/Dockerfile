@@ -16,12 +16,12 @@ ENV NODE_ENV=development \
     PYTHONUNBUFFERED=1
 
 # Copy package files for dependency installation
-COPY package*.json ./
+COPY apps/flight-tracker/package*.json ./
 
 # Install shared SDK dependencies (from monorepo workspace)
-COPY ../../packages/shared-sdk ./packages/shared-sdk
-COPY ../../packages/keystore ./packages/keystore
-COPY ../../packages/ui-framework ./packages/ui-framework
+COPY packages/shared-sdk ./packages/shared-sdk
+COPY packages/keystore ./packages/keystore
+COPY packages/ui-framework ./packages/ui-framework
 
 # Development stage
 FROM base AS development
@@ -30,8 +30,8 @@ FROM base AS development
 RUN npm ci
 
 # Copy source code
-COPY src ./src
-COPY tsconfig.json ./
+COPY apps/flight-tracker/src ./src
+COPY apps/flight-tracker/tsconfig.json ./
 
 # Build TypeScript
 RUN npm run build
@@ -67,7 +67,7 @@ RUN npm ci --omit=dev
 
 # Copy built code from development stage
 COPY --from=development /app/dist ./dist
-COPY package*.json ./
+COPY apps/flight-tracker/package*.json ./
 
 # Create necessary directories
 RUN mkdir -p logs
