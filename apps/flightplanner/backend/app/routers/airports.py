@@ -1,8 +1,16 @@
 from __future__ import annotations
 
+import sys
+from pathlib import Path
+
 from fastapi import APIRouter, HTTPException, Query
 
-from app.models.airport import get_airport_coordinates, search_airports_advanced
+# Add shared-sdk Python package to path
+SHARED_SDK_PATH = Path(__file__).parents[5] / "packages" / "shared-sdk" / "python"
+if str(SHARED_SDK_PATH) not in sys.path:
+    sys.path.insert(0, str(SHARED_SDK_PATH))
+
+from aviation import get_airport, search_airports_advanced
 
 
 router = APIRouter()
@@ -33,7 +41,7 @@ def airports_search(
 )
 def airport_lookup(code: str) -> dict:
     """Look up an airport by ICAO/IATA code."""
-    airport = get_airport_coordinates(code)
+    airport = get_airport(code)
     if not airport:
         raise HTTPException(status_code=404, detail=f"Airport {code} not found")
     return airport

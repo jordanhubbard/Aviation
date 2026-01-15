@@ -1,5 +1,15 @@
 from __future__ import annotations
 
+import sys
+from pathlib import Path
+
+# Add shared-sdk Python package to path
+SHARED_SDK_PATH = Path(__file__).parents[5] / "packages" / "shared-sdk" / "python"
+if str(SHARED_SDK_PATH) not in sys.path:
+    sys.path.insert(0, str(SHARED_SDK_PATH))
+
+from aviation import get_airport, search_airports_advanced, haversine_distance, load_airport_cache
+
 from concurrent.futures import ThreadPoolExecutor, TimeoutError
 from datetime import datetime, timedelta, timezone
 import logging
@@ -9,7 +19,6 @@ from typing import Any, List, Literal, Optional
 
 from fastapi import APIRouter, HTTPException
 
-from app.models.airport import get_airport_coordinates, load_airport_cache
 from app.schemas.route import RouteLeg, RouteRequest, RouteResponse, Segment
 from app.services import a_star
 from app.services.alternates import recommend_alternates
@@ -133,8 +142,8 @@ def calculate_route_internal(
     ctx.check_deadline()
 
     t0 = time.perf_counter()
-    origin = get_airport_coordinates(req.origin)
-    dest = get_airport_coordinates(req.destination)
+    origin = get_airport(req.origin)
+    dest = get_airport(req.destination)
     _mark("airport_lookup", t0)
     if not origin or not dest:
         raise HTTPException(status_code=400, detail="Invalid origin or destination code")
@@ -245,8 +254,8 @@ def calculate_route_internal(
 
             a_code = route_codes[i]
             b_code = route_codes[i + 1]
-            a_ap = get_airport_coordinates(a_code)
-            b_ap = get_airport_coordinates(b_code)
+            a_ap = get_airport(a_code)
+            b_ap = get_airport(b_code)
             if not a_ap or not b_ap:
                 raise HTTPException(status_code=400, detail="Invalid waypoint code")
 

@@ -2,7 +2,7 @@
  * Aircraft classification: General Aviation vs Commercial
  */
 
-import type { Category } from './types';
+import type { Category } from './types.js';
 
 // Known airline/commercial operators
 const COMMERCIAL_OPERATORS = new Set([
