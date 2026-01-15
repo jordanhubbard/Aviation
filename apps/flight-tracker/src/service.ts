@@ -1,4 +1,13 @@
-import { BackgroundService, ServiceConfig, Weather, FlightCategory } from '@aviation/shared-sdk';
+import {
+  BackgroundService,
+  ServiceConfig,
+  FlightCategory,
+  fetchMetarRaw,
+  parseMetar,
+  flightCategory,
+  recommendationForCategory,
+  warningsForConditions,
+} from '@aviation/shared-sdk';
 import { createSecretLoader } from '@aviation/keystore';
 
 /**
@@ -134,7 +143,7 @@ export class FlightTrackerService extends BackgroundService {
     for (const icao of icaoCodes) {
       try {
         // Fetch METAR
-        const metar = await Weather.fetchMetarRaw(icao);
+        const metar = await fetchMetarRaw(icao);
         
         if (!metar) {
           console.log(`   ⚠️  No METAR available for ${icao}`);
@@ -142,17 +151,17 @@ export class FlightTrackerService extends BackgroundService {
         }
 
         // Parse METAR
-        const parsed = Weather.parseMetar(metar);
+        const parsed = parseMetar(metar);
 
         // Determine flight category
-        const category = Weather.flightCategory(
+        const category = flightCategory(
           parsed.visibility_sm || null,
           parsed.ceiling_ft || 10000 // Assume high ceiling if not reported
         );
 
         // Get recommendation and warnings
-        const recommendation = Weather.recommendationForCategory(category);
-        const warnings = Weather.warningsForConditions(
+        const recommendation = recommendationForCategory(category);
+        const warnings = warningsForConditions(
           parsed.visibility_sm || null,
           parsed.ceiling_ft || null,
           parsed.wind_speed_kt || null
