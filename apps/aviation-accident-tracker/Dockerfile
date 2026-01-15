@@ -16,7 +16,6 @@ ENV NODE_ENV=development \
     PYTHONUNBUFFERED=1
 
 # Copy package files for dependency installation
-COPY apps/aviation-accident-tracker/package*.json ./
 COPY apps/aviation-accident-tracker/backend/package*.json ./backend/
 COPY apps/aviation-accident-tracker/frontend/package*.json ./frontend/
 COPY package-lock.json ./
@@ -29,21 +28,20 @@ COPY packages/ui-framework ./packages/ui-framework
 # Development stage
 FROM base AS development
 
-# Install all dependencies (including dev dependencies)
-RUN npm ci && \
-    cd backend && npm ci && \
+# Install backend + frontend dependencies (including dev dependencies)
+RUN cd backend && npm ci && \
     cd ../frontend && npm ci && \
     cd ..
 
 # Build shared packages in order (dependencies first)
 WORKDIR /app/packages/shared-sdk
-RUN npm run build
+RUN npm install && npm run build
 
 WORKDIR /app/packages/keystore
-RUN npm run build
+RUN npm install && npm run build
 
 WORKDIR /app/packages/ui-framework
-RUN npm run build
+RUN npm install && npm run build
 
 # Return to app directory
 WORKDIR /app
@@ -95,11 +93,9 @@ COPY --from=development /app/packages/shared-sdk ./packages/shared-sdk
 COPY --from=development /app/packages/keystore ./packages/keystore
 COPY --from=development /app/packages/ui-framework ./packages/ui-framework
 
-# Install only production dependencies (workspace links to already-built packages)
+# Install only production dependencies (backend only)
 ENV NODE_ENV=production
-RUN npm ci --omit=dev && \
-    cd backend && npm ci --omit=dev && \
-    cd ..
+RUN cd backend && npm ci --omit=dev && cd ..
 
 # Copy built backend from development stage
 COPY --from=development /app/backend/dist ./backend/dist
