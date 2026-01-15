@@ -9,7 +9,17 @@ export * from './map';
 /**
  * UI Modality Types
  */
-export type UIModality = 'mobile' | 'web' | 'multi-tab' | 'embedded';
+export type UIModality = 'mobile' | 'web' | 'multi-tab' | 'embedded' | 'standalone';
+
+/**
+ * Base application UI interface
+ */
+export interface ApplicationUI {
+  id: string;
+  name: string;
+  modality: UIModality;
+  render(): void;
+}
 
 /**
  * Pane configuration for multi-tab interfaces
@@ -18,7 +28,7 @@ export interface PaneConfig {
   id: string;
   title: string;
   icon?: string;
-  component: React.ComponentType<any>;
+  component: any;
   order?: number;
   closeable?: boolean;
   defaultOpen?: boolean;
@@ -27,7 +37,7 @@ export interface PaneConfig {
 /**
  * Multi-tab web UI interface
  */
-export interface MultiTabWebUI {
+export interface IMultiTabWebUI {
   registerPane(config: PaneConfig): void;
   unregisterPane(id: string): void;
   getAllPanes(): PaneConfig[];
@@ -39,7 +49,7 @@ export interface MultiTabWebUI {
  * Placeholder class for multi-tab UI implementation
  * To be implemented as needed by applications
  */
-export class MultiTabWebUI {
+export class MultiTabWebUI implements IMultiTabWebUI {
   private panes: Map<string, PaneConfig> = new Map();
   private activeId: string | null = null;
 
@@ -100,9 +110,3 @@ export abstract class StandaloneWebUI implements ApplicationUI {
 
   abstract render(): void;
 }
-
-/**
- * Map components and utilities
- */
-export * from './map';
->>>>>>> feature/extract-map-patterns

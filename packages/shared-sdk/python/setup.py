@@ -14,7 +14,7 @@ setup(
     packages=find_packages(),
     python_requires=">=3.11",
     install_requires=[
-        # No external dependencies for core utilities
+        "httpx>=0.25.0",  # For weather API requests
     ],
     classifiers=[
         "Development Status :: 3 - Alpha",

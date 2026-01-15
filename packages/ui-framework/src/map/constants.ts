@@ -2,13 +2,13 @@
  * Aviation Map Framework - Constants
  */
 
-import type { FlightCategory, FlightCategoryColors } from './types';
+import type { FlightCategory, MapColors } from './types';
 
 /**
  * Standard flight category colors
  * Following aviation standard color scheme
  */
-export const CATEGORY_COLORS: Record<FlightCategory, FlightCategoryColors> = {
+export const CATEGORY_COLORS: Record<FlightCategory, MapColors> = {
   VFR: { fill: '#2e7d32', stroke: '#ffffff' },    // Green - Visual Flight Rules
   MVFR: { fill: '#1976d2', stroke: '#ffffff' },   // Blue - Marginal VFR
   IFR: { fill: '#d32f2f', stroke: '#ffffff' },    // Red - Instrument Flight Rules

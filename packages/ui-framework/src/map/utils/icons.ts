@@ -3,7 +3,7 @@
  */
 
 import L from 'leaflet';
-import type { FlightCategory, WindBarbConfig } from '../types';
+import type { FlightCategory } from '../types';
 import { CATEGORY_COLORS } from '../constants';
 
 /**

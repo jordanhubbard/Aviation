@@ -10,7 +10,7 @@ import { useRouteWeather } from '../hooks'
 import { weatherService } from '../services'
 import { getRuntimeEnv } from '../utils'
 import { windBarbSvg } from '../utils/windBarb'
-import type { FlightCategory, LocalPlanResponse, WeatherData } from '../types'
+import type { FlightCategory, LocalPlanResponse, WeatherData} from '../types'
 import type { WeatherOverlayKey, WeatherOverlays } from './WeatherOverlayControls'
 
 type Props = {

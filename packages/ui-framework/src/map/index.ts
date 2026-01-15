@@ -56,4 +56,4 @@ export {
 } from './utils';
 
 // Wind barbs
-export { windBarbSvg, windBarbDataUrl, type WindBarbOptions } from './windBarb';
+export { windBarbSvg } from './utils/icons';
