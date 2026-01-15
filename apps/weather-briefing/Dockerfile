@@ -27,27 +27,20 @@ COPY packages/ui-framework ./packages/ui-framework
 # Development stage
 FROM base AS development
 
-# Install all dependencies (including dev dependencies) - this sets up workspace symlinks
+# Install ALL dependencies at once (this creates workspace symlinks correctly)
 RUN npm ci
 
-# Build shared packages in order (dependencies first)
-WORKDIR /app/packages/shared-sdk
-RUN npm run build
-
-WORKDIR /app/packages/keystore
-RUN npm run build
-
-WORKDIR /app/packages/ui-framework
-RUN npm run build
-
-# Return to app directory
-WORKDIR /app
+# Now build shared packages (the symlinks already point to the right place)
+# TypeScript in each package can now find dependencies via workspace links
+RUN cd packages/shared-sdk && npm run build && cd ../..
+RUN cd packages/keystore && npm run build && cd ../..
+RUN cd packages/ui-framework && npm run build && cd ../..
 
 # Copy source code
 COPY apps/weather-briefing/src ./src
 COPY apps/weather-briefing/tsconfig.json ./
 
-# Build TypeScript (now shared-sdk dist folder exists)
+# Build TypeScript (now shared-sdk dist folder exists and workspace links work)
 RUN npm run build
 
 # Create necessary directories
@@ -79,6 +72,11 @@ FROM base AS production
 ENV NODE_ENV=production
 RUN npm ci --omit=dev
 
+# Build shared packages in production mode too
+RUN cd packages/shared-sdk && npm run build && cd ../..
+RUN cd packages/keystore && npm run build && cd ../..
+RUN cd packages/ui-framework && npm run build && cd ../..
+
 # Copy built code from development stage
 COPY --from=development /app/dist ./dist
 COPY apps/weather-briefing/package*.json ./
@@ -93,5 +91,5 @@ EXPOSE 3003
 HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
   CMD pgrep -f "node.*weather-briefing" || exit 1
 
-# Start the service
-CMD ["npm", "start"]
+# Start the service in production mode
+CMD ["node", "dist/index.js"]

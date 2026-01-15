@@ -9,7 +9,7 @@ import {
   type MetarData,
   type FlightCategory,
 } from '@aviation/shared-sdk';
-import {  searchAirports } from '@aviation/shared-sdk';
+import { searchAirports } from '@aviation/shared-sdk';
 
 /**
  * Weather Briefing Service
