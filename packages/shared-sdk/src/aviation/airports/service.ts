@@ -3,14 +3,12 @@
  * 
  * Provides airport data lookup by ICAO/IATA codes, name search, and
  * reverse geocoding (nearest airport to coordinates).
+ * 
+ * Includes LRU caching for improved performance on repeated lookups.
  */
 
 import { Airport, AirportNotFoundError } from './types';
-
-/**
- * In-memory cache for airport lookups
- */
-const cache = new Map<string, Airport>();
+import { airportCodeCache, airportSearchCache, CacheStatistics } from './cache';
 
 /**
  * Airport database (loaded from external source or embedded data)
@@ -18,14 +16,31 @@ const cache = new Map<string, Airport>();
 let airportDatabase: Airport[] = [];
 
 /**
- * Initialize the airport database
+ * Initialize the airport database and warm caches
  * 
  * @param airports - Array of airport records to load
+ * @param warmCache - Whether to warm the cache on load (default: true)
  */
-export function loadAirportData(airports: Airport[]): void {
+export function loadAirportData(airports: Airport[], warmCache: boolean = true): void {
   airportDatabase = airports;
-  cache.clear();
+  
+  // Clear existing caches
+  airportCodeCache.clear();
+  airportSearchCache.clear();
+  
   console.log(`[airports] Loaded ${airports.length} airports`);
+  
+  // Warm cache with all airports for fast lookups
+  if (warmCache && airports.length > 0) {
+    airportCodeCache.warm(airports, (airport) => {
+      const keys = [normalizeCode(airport.icao)];
+      if (airport.iata) {
+        keys.push(normalizeCode(airport.iata));
+      }
+      return keys;
+    });
+    console.log(`[airports] Cache warmed with ${airportCodeCache.size()} entries`);
+  }
 }
 
 /**
@@ -63,7 +78,7 @@ function candidateCodes(code: string): Set<string> {
 }
 
 /**
- * Find an airport by ICAO or IATA code
+ * Find an airport by ICAO or IATA code (with caching)
  * 
  * @param code - ICAO (4-letter) or IATA (3-letter) code
  * @returns Airport record or undefined if not found
@@ -71,10 +86,11 @@ function candidateCodes(code: string): Set<string> {
 export function findAirport(code: string): Airport | undefined {
   const candidates = candidateCodes(code);
   
-  // Check cache first
+  // Check cache first - try all candidate codes
   for (const candidate of candidates) {
-    if (cache.has(candidate)) {
-      return cache.get(candidate);
+    const cached = airportCodeCache.get(candidate);
+    if (cached) {
+      return cached as Airport;
     }
   }
 
@@ -86,10 +102,10 @@ export function findAirport(code: string): Airport | undefined {
     return candidates.has(icao) || (iata && candidates.has(iata));
   });
 
-  // Cache the result
+  // Cache the result for all candidate codes
   if (found) {
     for (const candidate of candidates) {
-      cache.set(candidate, found);
+      airportCodeCache.set(candidate, found);
     }
   }
 
@@ -112,7 +128,7 @@ export function findAirportRequired(code: string): Airport {
 }
 
 /**
- * Search airports by query string
+ * Search airports by query string (with caching)
  * Searches in ICAO, IATA, name, city, country, and region fields
  * 
  * @param query - Search query
@@ -125,7 +141,15 @@ export function searchAirports(query: string, limit: number = 10): Airport[] {
   }
 
   const queryLower = query.toLowerCase().trim();
+  const cacheKey = `search:${queryLower}:${limit}`;
   
+  // Check search cache
+  const cached = airportSearchCache.get(cacheKey);
+  if (cached) {
+    return cached as Airport[];
+  }
+  
+  // Perform search
   const results = airportDatabase.filter((airport) => {
     return (
       airport.icao.toLowerCase().includes(queryLower) ||
@@ -137,7 +161,12 @@ export function searchAirports(query: string, limit: number = 10): Airport[] {
     );
   });
 
-  return results.slice(0, limit);
+  const limited = results.slice(0, limit);
+  
+  // Cache search results
+  airportSearchCache.set(cacheKey, limited);
+  
+  return limited;
 }
 
 /**
@@ -240,4 +269,44 @@ export function findAirportsNearby(
   // Sort by distance and apply limit
   nearby.sort((a, b) => a.distance - b.distance);
   return nearby.slice(0, limit).map((item) => item.airport);
+}
+
+/**
+ * Get cache statistics for monitoring performance
+ * 
+ * @returns Combined cache statistics
+ */
+export function getAirportCacheStats(): {
+  codeCache: CacheStatistics;
+  searchCache: CacheStatistics;
+} {
+  return {
+    codeCache: airportCodeCache.getStatistics(),
+    searchCache: airportSearchCache.getStatistics(),
+  };
+}
+
+/**
+ * Clear all airport caches
+ */
+export function clearAirportCache(): void {
+  airportCodeCache.clear();
+  airportSearchCache.clear();
+  console.log('[airports] Caches cleared');
+}
+
+/**
+ * Get most frequently accessed airports
+ * 
+ * @param limit - Number of airports to return (default: 10)
+ * @returns Array of most accessed airports with access counts
+ */
+export function getMostAccessedAirports(limit: number = 10): Array<{
+  airport: Airport;
+  accessCount: number;
+}> {
+  return airportCodeCache.getMostAccessed(limit).map(item => ({
+    airport: item.value as Airport,
+    accessCount: item.accessCount,
+  }));
 }
