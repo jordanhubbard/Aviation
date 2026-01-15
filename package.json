@@ -23,7 +23,7 @@
   "author": "Jordan Hubbard",
   "license": "MIT",
   "devDependencies": {
-    "@types/node": "^20.0.0",
+    "@types/node": "^25.0.8",
     "ts-node": "^10.9.2",
     "typescript": "^5.0.0"
   },
