@@ -5,6 +5,8 @@
 
 // Map components and utilities
 export * from './map';
+// Multi-tab UI components
+export * from './multi-tab';
 
 /**
  * UI Modality Types
@@ -21,63 +23,6 @@ export interface ApplicationUI {
   render(): void;
 }
 
-/**
- * Pane configuration for multi-tab interfaces
- */
-export interface PaneConfig {
-  id: string;
-  title: string;
-  icon?: string;
-  component: any;
-  order?: number;
-  closeable?: boolean;
-  defaultOpen?: boolean;
-}
-
-/**
- * Multi-tab web UI interface
- */
-export interface IMultiTabWebUI {
-  registerPane(config: PaneConfig): void;
-  unregisterPane(id: string): void;
-  getAllPanes(): PaneConfig[];
-  getActivePane(): PaneConfig | null;
-  setActivePane(id: string): void;
-}
-
-/**
- * Placeholder class for multi-tab UI implementation
- * To be implemented as needed by applications
- */
-export class MultiTabWebUI implements IMultiTabWebUI {
-  private panes: Map<string, PaneConfig> = new Map();
-  private activeId: string | null = null;
-
-  registerPane(config: PaneConfig): void {
-    this.panes.set(config.id, config);
-  }
-
-  unregisterPane(id: string): void {
-    this.panes.delete(id);
-    if (this.activeId === id) {
-      this.activeId = null;
-    }
-  }
-
-  getAllPanes(): PaneConfig[] {
-    return Array.from(this.panes.values()).sort((a, b) => (a.order || 0) - (b.order || 0));
-  }
-
-  getActivePane(): PaneConfig | null {
-    return this.activeId ? this.panes.get(this.activeId) || null : null;
-  }
-
-  setActivePane(id: string): void {
-    if (this.panes.has(id)) {
-      this.activeId = id;
-    }
-  }
-}
 
 /**
  * Base class for mobile UIs
