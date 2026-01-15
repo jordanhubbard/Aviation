@@ -1,6 +1,7 @@
 (ns aviation-missions.handlers
   (:require [ring.util.response :refer [response status]]
             [aviation-missions.db :as db]
+            [aviation-missions.missions-storage :as storage]
             [aviation-missions.admin-auth :as admin-auth]
             [clojure.string :as str]
             [clojure.spec.alpha :as s]
@@ -109,6 +110,7 @@
         (if is-admin
           ;; Admin can create directly
           (let [new-mission (db/create-mission! mission-data)]
+            (storage/persist-missions-json!)
             (log/info "Admin created mission:" (:title mission-data))
             (handle-success {:mission new-mission} 201))
           ;; Non-admin submits for approval
@@ -135,6 +137,7 @@
         (if is-admin
           ;; Admin can update directly
           (let [updated-mission (db/update-mission! mission-id mission-data)]
+            (storage/persist-missions-json!)
             (response {:mission updated-mission}))
           ;; Non-admin submits update for approval
           (do
@@ -160,6 +163,7 @@
       (if (db/get-mission-by-id mission-id)
         (do
           (db/delete-mission! mission-id)
+          (storage/persist-missions-json!)
           (response {:message "Mission deleted successfully"}))
         (-> (response {:error "Mission not found"})
             (status 404))))
@@ -338,6 +342,7 @@
   (try
     (let [submission-id (Integer/parseInt id)]
       (db/approve-submission! submission-id)
+      (storage/persist-missions-json!)
       (response {:message "Submission approved and mission created"}))
     (catch Exception e
       (-> (response {:error "Failed to approve submission" :details (.getMessage e)})
@@ -537,6 +542,7 @@
   (try
     (let [update-id (Integer/parseInt id)]
       (db/approve-mission-update! update-id)
+      (storage/persist-missions-json!)
       (response {:message "Mission update approved"}))
     (catch Exception e
       (-> (response {:error "Failed to approve update" :details (.getMessage e)})
@@ -614,6 +620,7 @@
           missions (:missions import-data)]
       (if (and missions (vector? missions))
         (let [imported-count (db/import-missions! missions)]
+          (storage/persist-missions-json!)
           (response {:message (str "Successfully imported " imported-count " missions")
                     :imported_count imported-count}))
         (-> (response {:error "Invalid format. Expected {\"missions\": [...]}"})
@@ -631,6 +638,7 @@
           missions (get-in parsed-data [:aviation_missions :missions])]
       (if (and missions (vector? missions))
         (let [imported-count (db/import-missions! missions)]
+          (storage/persist-missions-json!)
           (response {:message (str "Successfully imported " imported-count " missions from YAML")
                     :imported_count imported-count
                     :total_in_file (count missions)}))

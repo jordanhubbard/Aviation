@@ -126,8 +126,9 @@ COPY apps/aviation-missions-app/backend/resources ./resources/
 # Copy frontend static files into backend resources before building
 COPY --from=frontend-build /app/frontend/resources/public ./resources/public/
 
-# Copy missions data file for database seeding
+# Copy missions data files for database seeding
 COPY apps/aviation-missions-app/missions.txt /app/missions.txt
+COPY apps/aviation-missions-app/missions.json /app/missions.json
 
 # Build the uberjar
 RUN lein uberjar
@@ -145,8 +146,9 @@ RUN cd backend && LEIN_ROOT=1 lein deps
 # Copy source code and test files
 COPY apps/aviation-missions-app/backend/ ./backend/
 
-# Copy missions data file for testing
+# Copy missions data files for testing
 COPY apps/aviation-missions-app/missions.txt /app/missions.txt
+COPY apps/aviation-missions-app/missions.json /app/missions.json
 
 # Run backend tests (continue on failure for now due to pre-existing test issues)
 RUN echo "=== RUNNING BACKEND TESTS ===" && \
@@ -172,8 +174,9 @@ WORKDIR /app
 # Copy built backend jar (which now includes frontend static files)
 COPY --from=backend-build /app/backend/target/uberjar/aviation-missions-*-standalone.jar /app/aviation-missions.jar
 
-# Copy missions data file to production stage
+# Copy missions data files to production stage
 COPY --from=backend-build /app/missions.txt /app/missions.txt
+COPY --from=backend-build /app/missions.json /app/missions.json
 
 # Create data directory
 RUN mkdir -p /app/data

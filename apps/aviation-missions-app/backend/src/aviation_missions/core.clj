@@ -13,6 +13,7 @@
             [ring.util.response :refer [response resource-response content-type]]
             [aviation-missions.db :as db]
             [aviation-missions.handlers :as handlers]
+            [aviation-missions.missions-storage :as storage]
             [aviation-missions.swagger :as swagger]
             [clojure.tools.logging :as log])
   (:gen-class))
@@ -155,6 +156,7 @@
   (log/info "📊 STARTUP PHASE 2: Loading mission data...")
   (let [existing-missions (db/get-all-missions)
         force-reseed (= "true" (System/getenv "FORCE_RESEED"))]
+    (storage/ensure-missions-json! existing-missions)
     (if (or (empty? existing-missions) force-reseed)
       (do
         (when force-reseed
@@ -164,15 +166,14 @@
           (log/info (format "Deleting %d existing missions before re-seed" (count existing-missions)))
           (doseq [mission existing-missions]
             (db/delete-mission! (:id mission))))
-        (log/info "Database is empty, seeding with initial missions...")
+        (log/info "Database is empty, seeding with missions.json...")
         (try
-          (require 'aviation-missions.mission-parser)
-          (let [seed-fn (resolve 'aviation-missions.mission-parser/seed-database-with-missions!)]
-            (seed-fn "/app/missions.txt")
-            (let [loaded-count (count (db/get-all-missions))]
-              (log/info (format "✅ STARTUP PHASE 2 COMPLETE: Loaded %d missions from seed file" loaded-count))))
+          (storage/ensure-missions-json!)
+          (storage/seed-db-from-json!)
+          (let [loaded-count (count (db/get-all-missions))]
+            (log/info (format "✅ STARTUP PHASE 2 COMPLETE: Loaded %d missions from missions.json" loaded-count)))
           (catch Exception e
-            (log/warn (format "⚠️  Could not seed database with missions: %s" (.getMessage e))))))
+            (log/warn (format "⚠️  Could not seed database with missions.json: %s" (.getMessage e))))))
       (log/info (format "✅ STARTUP PHASE 2 COMPLETE: Found %d existing missions in database" (count existing-missions)))))
 
   ;; Phase 3: API server startup

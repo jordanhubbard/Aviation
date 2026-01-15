@@ -497,8 +497,8 @@
   []
   (jdbc/query db-spec
     ["SELECT id, title, category, difficulty, objective, mission_description, 
-             why_description, notes, route, suggested_route, pilot_experience, 
-             created_at, updated_at 
+             why_description, notes, route, suggested_route, pilot_experience,
+             special_challenges, created_at, updated_at
       FROM missions ORDER BY id"]))
 
 (defn import-missions!
@@ -517,7 +517,8 @@
            :notes (:notes mission)
            :route (:route mission)
            :suggested_route (:suggested_route mission)
-           :pilot_experience (or (:pilot_experience mission) "Beginner (< 100 hours)")})
+           :pilot_experience (or (:pilot_experience mission) "Beginner (< 100 hours)")
+           :special_challenges (:special_challenges mission)})
         (swap! imported-count inc)
         (catch Exception e
           (println "Failed to import mission:" (:title mission) "Error:" (.getMessage e)))))
