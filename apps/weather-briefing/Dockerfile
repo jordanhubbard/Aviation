@@ -19,7 +19,7 @@ ENV NODE_ENV=development \
 COPY apps/weather-briefing/package*.json ./
 COPY package-lock.json ./
 
-# Install shared SDK dependencies (from monorepo workspace)
+# Copy shared packages source code (needed for workspace resolution)
 COPY packages/shared-sdk ./packages/shared-sdk
 COPY packages/keystore ./packages/keystore
 COPY packages/ui-framework ./packages/ui-framework
@@ -27,19 +27,27 @@ COPY packages/ui-framework ./packages/ui-framework
 # Development stage
 FROM base AS development
 
-# Install all dependencies (including dev dependencies)
+# Install all dependencies (including dev dependencies) - this sets up workspace symlinks
 RUN npm ci
 
-# Build shared packages first (they're needed for the app build)
-RUN cd packages/shared-sdk && npm run build && cd ../..
-RUN cd packages/keystore && npm run build && cd ../..
-RUN cd packages/ui-framework && npm run build && cd ../..
+# Build shared packages in order (dependencies first)
+WORKDIR /app/packages/shared-sdk
+RUN npm run build
+
+WORKDIR /app/packages/keystore
+RUN npm run build
+
+WORKDIR /app/packages/ui-framework
+RUN npm run build
+
+# Return to app directory
+WORKDIR /app
 
 # Copy source code
 COPY apps/weather-briefing/src ./src
 COPY apps/weather-briefing/tsconfig.json ./
 
-# Build TypeScript
+# Build TypeScript (now shared-sdk dist folder exists)
 RUN npm run build
 
 # Create necessary directories

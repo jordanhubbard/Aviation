@@ -35,17 +35,29 @@ RUN npm ci && \
     cd ../frontend && npm ci && \
     cd ..
 
-# Build shared packages first (they're needed for the backend build)
-RUN cd packages/shared-sdk && npm run build && cd ../..
-RUN cd packages/keystore && npm run build && cd ../..
-RUN cd packages/ui-framework && npm run build && cd ../..
+# Build shared packages in order (dependencies first)
+WORKDIR /app/packages/shared-sdk
+RUN npm run build
+
+WORKDIR /app/packages/keystore
+RUN npm run build
+
+WORKDIR /app/packages/ui-framework
+RUN npm run build
+
+# Return to app directory
+WORKDIR /app
 
 # Copy source code
 COPY apps/aviation-accident-tracker/backend ./backend
 COPY apps/aviation-accident-tracker/frontend ./frontend
 
-# Build backend TypeScript
-RUN cd backend && npm run build
+# Build backend TypeScript (now shared-sdk dist folder exists)
+WORKDIR /app/backend
+RUN npm run build
+
+# Return to app directory
+WORKDIR /app
 
 # Copy entrypoint script
 COPY apps/aviation-accident-tracker/docker-entrypoint.sh /docker-entrypoint.sh
