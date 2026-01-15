@@ -1,4 +1,7 @@
 import express from 'express';
+import PDFDocument from 'pdfkit';
+import * as XLSX from 'xlsx';
+import { PassThrough } from 'stream';
 import { EventRepository } from '../db/repository.js';
 import { config } from '../config.js';
 import { logger } from '../logger.js';
@@ -12,6 +15,7 @@ const router = express.Router();
 // Lazy-init repository (shared across requests)
 let repository: EventRepository | null = null;
 let orchestrator: IngestionOrchestrator | null = null;
+const exportRequestsByIp = new Map<string, number[]>();
 
 function getRepository(): EventRepository {
   if (!repository) {
@@ -25,6 +29,69 @@ function getOrchestrator(): IngestionOrchestrator {
     orchestrator = new IngestionOrchestrator(config.databasePath);
   }
   return orchestrator;
+}
+
+const EXPORT_COLUMNS = [
+  'id',
+  'dateZ',
+  'registration',
+  'aircraftType',
+  'operator',
+  'category',
+  'airportIcao',
+  'airportIata',
+  'country',
+  'region',
+  'lat',
+  'lon',
+  'fatalities',
+  'injuries',
+  'summary',
+  'narrative',
+  'status',
+  'sources'
+] as const;
+
+type ExportColumn = (typeof EXPORT_COLUMNS)[number];
+
+function normalizeExportColumns(columns?: string[]): ExportColumn[] {
+  if (!columns || columns.length === 0) return [...EXPORT_COLUMNS];
+  const allowed = new Set(EXPORT_COLUMNS);
+  return columns.filter((col): col is ExportColumn => allowed.has(col as ExportColumn));
+}
+
+function rateLimitExport(ip: string, maxPerMinute: number = 5): boolean {
+  const now = Date.now();
+  const windowMs = 60_000;
+  const entries = exportRequestsByIp.get(ip) || [];
+  const recent = entries.filter(ts => now - ts < windowMs);
+  recent.push(now);
+  exportRequestsByIp.set(ip, recent);
+  return recent.length <= maxPerMinute;
+}
+
+function buildExportRow(event: any, columns: ExportColumn[]): Record<string, string | number | null> {
+  const row: Record<string, string | number | null> = {};
+  for (const col of columns) {
+    const value = event[col];
+    if (col === 'sources') {
+      row[col] = Array.isArray(value) ? JSON.stringify(value) : '';
+    } else if (value === undefined) {
+      row[col] = '';
+    } else {
+      row[col] = value;
+    }
+  }
+  return row;
+}
+
+function csvEscape(value: string | number | null): string {
+  const str = value === null ? '' : String(value);
+  if (str.includes('"') || str.includes(',') || str.includes('
+')) {
+    return `"${str.replace(/"/g, '""')}"`;
+  }
+  return str;
 }
 
 /**
@@ -173,6 +240,123 @@ router.get('/events', async (req, res, next) => {
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
+
+/**
+ * POST /api/events/export
+ * Export events in CSV, JSON, XLSX, or PDF format
+ */
+router.post('/events/export', async (req, res, next) => {
+  try {
+    if (!rateLimitExport(req.ip)) {
+      return res.status(429).json({
+        error: 'Too many requests',
+        message: 'Please wait before requesting another export.'
+      });
+    }
+
+    const body = req.body || {};
+    const format = (body.format || 'csv').toLowerCase();
+    const columns = normalizeExportColumns(body.columns);
+    const exportAll = Boolean(body.exportAll);
+
+    const params: ListEventsParams = exportAll
+      ? {}
+      : {
+          from: body.from,
+          to: body.to,
+          category: body.category || 'all',
+          airport: body.airport,
+          country: body.country,
+          region: body.region,
+          search: body.search
+        };
+
+    const repo = getRepository();
+    const events = await repo.listEventsForExport(params);
+    const fileBase = `accidents_${new Date().toISOString().slice(0, 10)}`;
+
+    if (format === 'json') {
+      res.setHeader('Content-Type', 'application/json');
+      res.setHeader('Content-Disposition', `attachment; filename="${fileBase}.json"`);
+
+      res.write('[');
+      events.forEach((event, idx) => {
+        const row = buildExportRow(event, columns);
+        res.write(`${idx ? ',' : ''}${JSON.stringify(row)}`);
+      });
+      res.end(']');
+      return;
+    }
+
+    if (format === 'csv') {
+      res.setHeader('Content-Type', 'text/csv');
+      res.setHeader('Content-Disposition', `attachment; filename="${fileBase}.csv"`);
+
+      res.write(columns.join(',') + '
+');
+      for (const event of events) {
+        const row = buildExportRow(event, columns);
+        const line = columns.map((col) => csvEscape(row[col])).join(',');
+        res.write(line + '
+');
+      }
+      res.end();
+      return;
+    }
+
+    if (format === 'xlsx') {
+      const rows = events.map((event) => buildExportRow(event, columns));
+      const sheetData = [
+        columns,
+        ...rows.map((row) => columns.map((col) => row[col] ?? ''))
+      ];
+      const worksheet = XLSX.utils.aoa_to_sheet(sheetData);
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, 'Events');
+      const buffer = XLSX.write(workbook, { type: 'buffer', bookType: 'xlsx' });
+
+      res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+      res.setHeader('Content-Disposition', `attachment; filename="${fileBase}.xlsx"`);
+      res.end(buffer);
+      return;
+    }
+
+    if (format === 'pdf') {
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', `attachment; filename="${fileBase}.pdf"`);
+
+      const doc = new PDFDocument({ margin: 30 });
+      const stream = new PassThrough();
+      doc.pipe(stream);
+      stream.pipe(res);
+
+      doc.fontSize(16).text('Aviation Accident Tracker Export', { align: 'center' });
+      doc.moveDown(0.5);
+      doc.fontSize(10).text(`Generated: ${new Date().toISOString()}`);
+      doc.moveDown();
+
+      const header = columns.join(' | ');
+      doc.fontSize(9).text(header);
+      doc.moveDown(0.5);
+
+      for (const event of events) {
+        const row = buildExportRow(event, columns);
+        const line = columns.map((col) => String(row[col] ?? '')).join(' | ');
+        doc.text(line);
+      }
+
+      doc.end();
+      return;
+    }
+
+    res.status(400).json({
+      error: 'Invalid format',
+      message: `Unsupported export format: ${format}`
+    });
+  } catch (error) {
+    next(error);
+  }
+});
 router.get('/events/:id', async (req, res, next) => {
   try {
     const repo = getRepository();

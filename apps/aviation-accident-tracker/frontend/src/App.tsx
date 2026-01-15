@@ -56,6 +56,28 @@ export function App() {
   const [from, setFrom] = useState('');
   const [to, setTo] = useState('');
   const [options, setOptions] = useState<{ countries: string[]; regions: string[] }>({ countries: [], regions: [] });
+  const [exportFormat, setExportFormat] = useState<'csv' | 'json' | 'xlsx' | 'pdf'>('csv');
+  const [exportAll, setExportAll] = useState(false);
+  const [exporting, setExporting] = useState(false);
+  const [exportError, setExportError] = useState<string | null>(null);
+
+  const exportColumns = useMemo(
+    () => [
+      'dateZ',
+      'registration',
+      'aircraftType',
+      'operator',
+      'category',
+      'airportIcao',
+      'country',
+      'region',
+      'fatalities',
+      'injuries',
+      'summary'
+    ],
+    []
+  );
+  const [selectedColumns, setSelectedColumns] = useState<string[]>(exportColumns);
 
   const fetchAirports = useMemo(
     () =>
@@ -106,6 +128,54 @@ export function App() {
       .then((data) => setOptions(data))
       .catch(() => setOptions({ countries: [], regions: [] }));
   }, []);
+
+  const handleExport = async () => {
+    setExportError(null);
+    setExporting(true);
+    try {
+      const payload = exportAll
+        ? { format: exportFormat, columns: selectedColumns, exportAll: true }
+        : {
+            format: exportFormat,
+            columns: selectedColumns,
+            exportAll: false,
+            search,
+            category,
+            airport: airportQuery,
+            country,
+            region,
+            from,
+            to
+          };
+
+      const response = await fetch('/api/events/export', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(errorText || `Export failed (${response.status})`);
+      }
+
+      const blob = await response.blob();
+      const extension = exportFormat === 'xlsx' ? 'xlsx' : exportFormat;
+      const filename = `accidents_export.${extension}`;
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (err) {
+      setExportError(err instanceof Error ? err.message : 'Export failed.');
+    } finally {
+      setExporting(false);
+    }
+  };
 
   const positioned = useMemo(() => events.filter((e) => typeof e.lat === 'number' && typeof e.lon === 'number'), [events]);
 
@@ -250,6 +320,63 @@ export function App() {
             to && 'to',
           ].filter(Boolean).length || '0'}
         </Badge>
+      </div>
+
+      <div style={{ gridColumn: '1 / span 2', display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+        <label>
+          Export format:{' '}
+          <select value={exportFormat} onChange={(e) => setExportFormat(e.target.value as any)}>
+            <option value="csv">CSV</option>
+            <option value="json">JSON</option>
+            <option value="xlsx">Excel (XLSX)</option>
+            <option value="pdf">PDF</option>
+          </select>
+        </label>
+        <label>
+          <input
+            type="checkbox"
+            checked={exportAll}
+            onChange={(e) => setExportAll(e.target.checked)}
+          />
+          Export all data
+        </label>
+        <button onClick={handleExport} disabled={exporting || selectedColumns.length === 0}>
+          {exporting ? 'Exporting…' : 'Export'}
+        </button>
+        {exportError && <span style={{ color: 'red' }}>Export error: {exportError}</span>}
+      </div>
+
+      <div style={{ gridColumn: '1 / span 2', display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+        <strong>Columns:</strong>
+        <button
+          type="button"
+          onClick={() => setSelectedColumns(exportColumns)}
+          disabled={selectedColumns.length === exportColumns.length}
+        >
+          Select all
+        </button>
+        <button
+          type="button"
+          onClick={() => setSelectedColumns([])}
+          disabled={selectedColumns.length === 0}
+        >
+          Clear
+        </button>
+        {exportColumns.map((col) => (
+          <label key={col} style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+            <input
+              type="checkbox"
+              checked={selectedColumns.includes(col)}
+              onChange={(e) => {
+                const next = e.target.checked
+                  ? [...selectedColumns, col]
+                  : selectedColumns.filter((c) => c !== col);
+                setSelectedColumns(next);
+              }}
+            />
+            {col}
+          </label>
+        ))}
       </div>
 
       <div style={{ height: 480, minHeight: 400 }}>
