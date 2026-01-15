@@ -42,11 +42,11 @@
   },
   "devDependencies": {
     "@types/leaflet": "^1.9.21",
-    "@types/node": "^25.0.3",
+    "@types/node": "^25.0.9",
     "@types/react": "^18.2.0",
     "@types/react-dom": "^18.2.0",
-    "jsdom": "^23.0.1",
+    "jsdom": "^27.4.0",
     "typescript": "^5.0.0",
-    "vitest": "^4.0.16"
+    "vitest": "^4.0.17"
   }
 }
