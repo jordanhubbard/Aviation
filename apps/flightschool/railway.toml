@@ -1,6 +1,6 @@
 [build]
 builder = "DOCKERFILE"
-dockerfilePath = "apps/flightschool/Dockerfile"
+dockerfilePath = "Dockerfile"
 
 [deploy]
 startCommand = ""

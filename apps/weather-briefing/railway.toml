@@ -1,6 +1,6 @@
 [build]
 builder = "DOCKERFILE"
-dockerfilePath = "apps/weather-briefing/Dockerfile"
+dockerfilePath = "Dockerfile"
 
 [deploy]
 startCommand = ""
