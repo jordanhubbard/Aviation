@@ -16,14 +16,14 @@ ENV NODE_ENV=development \
     PYTHONUNBUFFERED=1
 
 # Copy package files for dependency installation
-COPY package*.json ./
-COPY backend/package*.json ./backend/
-COPY frontend/package*.json ./frontend/
+COPY apps/aviation-accident-tracker/package*.json ./
+COPY apps/aviation-accident-tracker/backend/package*.json ./backend/
+COPY apps/aviation-accident-tracker/frontend/package*.json ./frontend/
 
 # Install shared SDK dependencies (from monorepo workspace)
-COPY ../../packages/shared-sdk ./packages/shared-sdk
-COPY ../../packages/keystore ./packages/keystore
-COPY ../../packages/ui-framework ./packages/ui-framework
+COPY packages/shared-sdk ./packages/shared-sdk
+COPY packages/keystore ./packages/keystore
+COPY packages/ui-framework ./packages/ui-framework
 
 # Development stage
 FROM base AS development
@@ -35,14 +35,14 @@ RUN npm ci && \
     cd ..
 
 # Copy source code
-COPY backend ./backend
-COPY frontend ./frontend
+COPY apps/aviation-accident-tracker/backend ./backend
+COPY apps/aviation-accident-tracker/frontend ./frontend
 
 # Build backend TypeScript
 RUN cd backend && npm run build
 
 # Copy entrypoint script
-COPY docker-entrypoint.sh /docker-entrypoint.sh
+COPY apps/aviation-accident-tracker/docker-entrypoint.sh /docker-entrypoint.sh
 RUN chmod +x /docker-entrypoint.sh
 
 # Create necessary directories
@@ -80,14 +80,14 @@ RUN npm ci --omit=dev && \
 
 # Copy built backend from development stage
 COPY --from=development /app/backend/dist ./backend/dist
-COPY backend/package*.json ./backend/
+COPY apps/aviation-accident-tracker/backend/package*.json ./backend/
 
 # Build frontend for production
-COPY frontend ./frontend
+COPY apps/aviation-accident-tracker/frontend ./frontend
 RUN cd frontend && npm ci && npm run build && npm prune --production
 
 # Copy entrypoint script
-COPY docker-entrypoint.sh /docker-entrypoint.sh
+COPY apps/aviation-accident-tracker/docker-entrypoint.sh /docker-entrypoint.sh
 RUN chmod +x /docker-entrypoint.sh
 
 # Create necessary directories

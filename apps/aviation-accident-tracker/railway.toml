@@ -1,6 +1,6 @@
 [build]
 builder = "DOCKERFILE"
-dockerfilePath = "Dockerfile"
+dockerfilePath = "apps/aviation-accident-tracker/Dockerfile"
 
 [deploy]
 startCommand = ""
