@@ -1,105 +1,78 @@
 import express from 'express';
 import cors from 'cors';
-import router from './api/routes.js';
-import { logger } from './logger.js';
-import { config } from './config.js';
-import { getSchedulerStatus } from './scheduler.js';
-import swaggerUi from 'swagger-ui-express';
 import fs from 'fs';
 import path from 'path';
-import { fileURLToPath } from 'url';
-import yaml from 'yaml';
+import swaggerUi from 'swagger-ui-express';
+import router from './api/routes.js';
+import { getLastRun } from './scheduler.js';
+import { logger } from './logger.js';
+import { config } from './config.js';
+
+const SERVICE_VERSION = '0.1.0';
 
 export function createApp() {
   const app = express();
-  
+
   // Middleware
   app.use(cors());
   app.use(express.json());
-  
+
   // Request logging
-  app.use((req, res, next) => {
-    logger.info(`${req.method} ${req.path}`, {
-      query: req.query,
-      ip: req.ip
-    });
+  app.use((req, _res, next) => {
+    logger.info(`${req.method} ${req.path}`, { query: req.query, ip: req.ip });
     next();
   });
-  
-  // Health check
-  app.get('/health', (req, res) => {
-    const schedulerStatus = getSchedulerStatus();
+
+  // Health check (include scheduler last run)
+  app.get('/health', (_req, res) => {
     res.json({
       status: 'healthy',
       timestamp: new Date().toISOString(),
       env: config.env,
-      scheduler: schedulerStatus
+       ingestSchedule: config.ingestion.cron,
+       ingestEnabled: config.ingestion.enabled,
+      ingest: getLastRun(),
     });
   });
-  
+
   // Version endpoint
-  app.get('/version', (req, res) => {
+  app.get('/version', (_req, res) => {
     res.json({
-      version: '0.1.0',
-      service: 'accident-tracker'
+      version: SERVICE_VERSION,
+      service: 'accident-tracker',
     });
   });
-  
+
   // API routes
   app.use('/api', router);
-  
-  // Swagger/OpenAPI documentation
-  try {
-    const __filename = fileURLToPath(import.meta.url);
-    const __dirname = path.dirname(__filename);
-    const openapiPath = path.join(__dirname, 'openapi.yaml');
-    
-    if (fs.existsSync(openapiPath)) {
-      const openapiContent = fs.readFileSync(openapiPath, 'utf-8');
-      const openapiSpec = yaml.parse(openapiContent);
-      
-      app.use('/docs', swaggerUi.serve, swaggerUi.setup(openapiSpec, {
-        customCss: '.swagger-ui .topbar { display: none }',
-        customSiteTitle: 'Aviation Accident Tracker API Docs'
-      }));
-      
-      // Also serve raw spec
-      app.get('/openapi.yaml', (req, res) => {
-        res.type('application/x-yaml').send(openapiContent);
-      });
-      
-      app.get('/openapi.json', (req, res) => {
-        res.json(openapiSpec);
-      });
-      
-      logger.info('OpenAPI documentation available at /docs');
-    } else {
-      logger.warn('OpenAPI spec not found at ' + openapiPath);
-    }
-  } catch (error) {
-    logger.error('Failed to load OpenAPI spec', error as Error);
+
+  // Swagger UI if spec exists
+  const specPath = path.resolve(path.dirname(new URL(import.meta.url).pathname), './dist/openapi.json');
+  if (fs.existsSync(specPath)) {
+    const spec = JSON.parse(fs.readFileSync(specPath, 'utf-8'));
+    app.use('/docs', swaggerUi.serve, swaggerUi.setup(spec));
   }
-  
+
   // Error handler
-  app.use((err: Error, req: express.Request, res: express.Response, next: express.NextFunction) => {
+  app.use((err: Error, req: express.Request, res: express.Response, _next: express.NextFunction) => {
     logger.error('Unhandled error', err, {
       path: req.path,
-      method: req.method
+      method: req.method,
     });
-    
+
     res.status(500).json({
       error: 'Internal server error',
-      message: config.env === 'development' ? err.message : undefined
+      message: config.env === 'development' ? err.message : undefined,
     });
   });
-  
+
   // 404 handler
   app.use((req, res) => {
     res.status(404).json({
       error: 'Not found',
-      path: req.path
+      path: req.path,
     });
   });
-  
+
   return app;
 }

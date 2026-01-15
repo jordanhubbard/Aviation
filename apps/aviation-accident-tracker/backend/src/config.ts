@@ -5,10 +5,6 @@
 import { config as dotenvConfig } from 'dotenv';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import { dirname } from 'path';
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
 
 // Load .env file
 dotenvConfig();
@@ -22,6 +18,8 @@ export interface AppConfig {
     windowDays: number;
     rateLimitMs: number;
     maxRetries: number;
+    cron: string;
+    enabled: boolean;
   };
 }
 
@@ -38,6 +36,8 @@ function getEnvNumber(key: string, defaultValue: number): number {
   return value ? parseInt(value, 10) : defaultValue;
 }
 
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+
 export const config: AppConfig = {
   port: getEnvNumber('PORT', 8080),
   env: (getEnv('NODE_ENV', 'development') as AppConfig['env']),
@@ -46,6 +46,8 @@ export const config: AppConfig = {
   ingestion: {
     windowDays: getEnvNumber('INGESTION_WINDOW_DAYS', 40),
     rateLimitMs: getEnvNumber('INGESTION_RATE_LIMIT_MS', 1000),
-    maxRetries: getEnvNumber('INGESTION_MAX_RETRIES', 3)
+    maxRetries: getEnvNumber('INGESTION_MAX_RETRIES', 3),
+    cron: getEnv('INGESTION_CRON', '0 */6 * * *'),
+    enabled: getEnv('ENABLE_CRON', 'true') !== 'false',
   }
 };

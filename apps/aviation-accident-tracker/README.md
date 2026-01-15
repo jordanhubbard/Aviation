@@ -471,115 +471,12 @@ npm test
 npm run build
 ```
 
-### Database Migrations
+## Scheduler / ingestion
+- Set `ENABLE_CRON=false` to disable scheduled ingest (default enabled).
+- Override cadence with `INGESTION_CRON` (default `0 */6 * * *`, every 6h).
+- Health endpoint (`/health`) reports `ingestEnabled`, `ingestSchedule`, and last run summary.
 
-Currently using SQLite with `schema.sql`. For future migrations:
-
-1. Create migration file: `migrations/00X_description.sql`
-2. Apply with migration tool (to be added)
-
-### Adding a New Source
-
-1. Create adapter: `backend/src/ingest/adapters/my-source.ts`
-2. Implement `SourceAdapter` interface:
-   ```typescript
-   interface SourceAdapter {
-     fetchRecent(windowDays: number): Promise<EventRecord[]>;
-     parseEvent(raw: any): EventRecord;
-   }
-   ```
-3. Register in ingestion orchestrator
-4. Add tests: `backend/tests/ingest/adapters/my-source.test.ts`
-
-## Deployment
-
-### Docker
-
-```bash
-# Build images
-docker-compose build
-
-# Run services
-docker-compose up -d
-
-# View logs
-docker-compose logs -f
-
-# Stop
-docker-compose down
-```
-
-### Environment Variables
-
-| Variable | Description | Default |
-|----------|-------------|---------|
-| `PORT` | Backend server port | 8080 |
-| `DATABASE_PATH` | SQLite file path | `./data/events.db` |
-| `NODE_ENV` | Environment | `development` |
-| `LOG_LEVEL` | Logging level | `info` |
-
-### Security
-
-- Use Aviation monorepo `@aviation/keystore` for API keys
-- Never commit `.env` files or secrets
-- Rate limit ingestion endpoints
-- Validate all input (sanitize search queries)
-
-## Testing
-
-### Backend Tests
-
-- **Unit**: Repository, adapters, parsers (`npm test`)
-- **Integration**: API endpoints with test DB
-- **Contract**: Fixture-based source adapter tests
-- Coverage target: 80%+
-
-### Frontend Tests
-
-- **Component**: React Testing Library
-- **E2E**: Playwright (smoke tests)
-- **Accessibility**: WCAG AA compliance checks
-
-## Performance
-
-### Targets
-
-- Event list API: < 200ms (p95)
-- Event detail API: < 100ms (p95)
-- Map load: < 500ms (p95)
-- Table pagination: < 300ms (p95)
-- Ingestion throughput: 100 events/min
-
-### Optimization
-
-- Database indexes on common filters
-- Pagination for large result sets
-- Map clustering for dense areas
-- CDN for static assets
-- Server-side caching for expensive queries
-
-## Contributing
-
-See [Aviation monorepo CONTRIBUTING.md](../../CONTRIBUTING.md) for general guidelines.
-
-### Workflow
-
-1. Check `bd ready` for available work
-2. Claim issue: `bd update <id> --status in_progress`
-3. Branch: `git checkout -b feature/<bead-id>`
-4. Implement + test
-5. Quality checks: `make test lint`
-6. Commit: `git commit -m "feat(accident-tracker): description"`
-7. Push: `git push && bd sync`
-8. Close issue: `bd close <id> --reason "..."`
-
-## License
-
-MIT License — see [LICENSE](../../LICENSE)
-
-## Support
-
-For questions or issues:
-- Check [PLAN.md](./PLAN.md) for architecture details
-- Review beads: `bd list --json`
-- Open GitHub issue in [jordanhubbard/Aviation](https://github.com/jordanhubbard/Aviation)
+## Notes
+- Secrets: use keystore for DB/proxy credentials.
+- Data window: only >= 2000; normalize all timestamps to Zulu.
+- Uniqueness: (date_z, registration) primary; fuzzy merge fallback (date_z±1d, country, type).
