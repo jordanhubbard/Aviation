@@ -153,9 +153,17 @@
 
   ;; Phase 2: Mission data loading
   (log/info "📊 STARTUP PHASE 2: Loading mission data...")
-  (let [existing-missions (db/get-all-missions)]
-    (if (empty? existing-missions)
+  (let [existing-missions (db/get-all-missions)
+        force-reseed (= "true" (System/getenv "FORCE_RESEED"))]
+    (if (or (empty? existing-missions) force-reseed)
       (do
+        (when force-reseed
+          (log/info "FORCE_RESEED=true, clearing existing missions and re-seeding..."))
+        (when (and force-reseed (not (empty? existing-missions)))
+          ;; Clear existing missions if force reseeding
+          (log/info (format "Deleting %d existing missions before re-seed" (count existing-missions)))
+          (doseq [mission existing-missions]
+            (db/delete-mission! (:id mission))))
         (log/info "Database is empty, seeding with initial missions...")
         (try
           (require 'aviation-missions.mission-parser)
