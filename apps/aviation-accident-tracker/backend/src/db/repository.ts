@@ -272,6 +272,54 @@ export class EventRepository {
   }
 
   /**
+   * List events for export (no pagination)
+   */
+  async listEventsForExport(params: ListEventsParams): Promise<EventRecord[]> {
+    const conditions: string[] = [];
+    const sqlParams: any[] = [];
+
+    if (params.from) {
+      conditions.push('date_z >= ?');
+      sqlParams.push(params.from);
+    }
+    if (params.to) {
+      conditions.push('date_z <= ?');
+      sqlParams.push(params.to);
+    }
+    if (params.category && params.category !== 'all') {
+      conditions.push('category = ?');
+      sqlParams.push(params.category);
+    }
+    if (params.airport) {
+      conditions.push('(airport_icao = ? OR airport_iata = ?)');
+      sqlParams.push(params.airport, params.airport);
+    }
+    if (params.country) {
+      conditions.push('country = ?');
+      sqlParams.push(params.country);
+    }
+    if (params.region) {
+      conditions.push('region = ?');
+      sqlParams.push(params.region);
+    }
+    if (params.search) {
+      conditions.push('(summary LIKE ? OR operator LIKE ? OR registration LIKE ?)');
+      const searchPattern = `%${params.search}%`;
+      sqlParams.push(searchPattern, searchPattern, searchPattern);
+    }
+
+    const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
+    const sql = `
+      SELECT * FROM events
+      ${whereClause}
+      ORDER BY date_z DESC
+    `;
+
+    const rows: DbEvent[] = await this.dbAll(sql, sqlParams);
+    return rows.map(row => this.dbEventToRecord(row, []));
+  }
+
+  /**
    * Get event detail with sources
    */
   async getEventWithSources(id: string): Promise<EventRecord | null> {
