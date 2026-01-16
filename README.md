@@ -7,7 +7,7 @@ A comprehensive monorepo for aviation-related applications, featuring unified CI
 
 ## 🏗️ Architecture
 
-This monorepo contains **7 aviation applications** and **3 shared packages** with unified development infrastructure:
+This monorepo contains **8 aviation applications** and **3 shared packages** with unified development infrastructure:
 
 - **Unified CI/CD Pipeline** - Automated testing, security scanning, and deployment
 - **Secure Secrets Management** - Encrypted keystore for API keys and credentials
@@ -26,6 +26,7 @@ Aviation/
 │   ├── flight-planner/            # VFR flight planning (Python + React)
 │   ├── flightschool/              # Flight school management (Python Flask)
 │   ├── foreflight-dashboard/      # ForeFlight logbook analysis (Python + React)
+│   ├── meta-app/                  # Unified dashboard for all apps (React + TypeScript)
 │   └── weather-briefing/          # Aviation weather briefing (TypeScript)
 ├── packages/                      # Shared packages
 │   ├── keystore/                  # Secure encrypted key management
@@ -167,6 +168,22 @@ npm test
 ```
 
 ## 📦 Applications
+
+### [Aviation Suite Meta App](apps/meta-app/) 🛩️
+**Unified dashboard interface that aggregates all aviation applications into a single multi-tab web interface.**
+
+- **Tech Stack:** React, TypeScript, Vite, @aviation/ui-framework
+- **Features:** Multi-tab navigation, keyboard shortcuts, responsive design, beautiful gradient UI
+- **Port:** 3100
+- **Applications:** Integrates all 7 aviation apps in one interface
+
+Quick start:
+```bash
+cd apps/meta-app
+make dev  # Opens at http://localhost:3100
+```
+
+---
 
 ### [Aviation Accident Tracker](apps/aviation-accident-tracker/)
 Comprehensive aviation accident and incident tracking system with automated data ingestion, geospatial visualization, and flexible APIs.
