@@ -118,6 +118,7 @@ RUN npm ci --omit=dev \
 # Copy built backend from development stage
 COPY --from=development /app/backend/dist ./backend/dist
 COPY apps/aviation-accident-tracker/backend/package*.json ./backend/
+COPY apps/aviation-accident-tracker/backend/src/db/schema.sql ./backend/src/db/schema.sql
 
 # Copy pre-built frontend assets from development stage
 COPY --from=development /app/frontend/dist ./frontend/dist
