@@ -29,7 +29,7 @@ COPY packages/ui-framework ./packages/ui-framework
 FROM base AS development
 
 # Install backend + frontend dependencies (including dev dependencies)
-RUN cd backend && npm ci && \
+RUN cd backend && npm install && \
     cd ../frontend && npm ci && \
     cd ..
 
@@ -95,7 +95,7 @@ COPY --from=development /app/packages/ui-framework ./packages/ui-framework
 
 # Install only production dependencies (backend only)
 ENV NODE_ENV=production
-RUN cd backend && npm ci --omit=dev && cd ..
+RUN cd backend && npm install --omit=dev && cd ..
 
 # Copy built backend from development stage
 COPY --from=development /app/backend/dist ./backend/dist
