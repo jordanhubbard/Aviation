@@ -9,8 +9,8 @@ echo ""
 FAIL_COUNT=0
 SUCCESS_COUNT=0
 
-# Find all CSS files in apps
-CSS_FILES=$(find apps -name "*.css" -type f | grep -v node_modules | grep -v .venv)
+# Find all CSS files in apps (exclude generated build artifacts)
+CSS_FILES=$(find apps -name "*.css" -type f | grep -v node_modules | grep -v .venv | grep -v "/dist/")
 
 if [ -z "$CSS_FILES" ]; then
     echo "⚠️  No CSS files found"

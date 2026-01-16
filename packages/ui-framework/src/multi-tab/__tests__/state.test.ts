@@ -26,7 +26,10 @@ describe('getDefaultActiveId', () => {
   });
 
   it('returns first pane id when no defaultOpen', () => {
-    const result = getDefaultActiveId([panes[2], panes[1]]);
+    const result = getDefaultActiveId([
+      { ...panes[2] },
+      { ...panes[1], defaultOpen: false },
+    ]);
     expect(result).toBe('c');
   });
 });

@@ -38,10 +38,8 @@ pom.xml.asc
 .env
 .env.local
 .env.*.local
-.env.production
 
 # Key stores (security)
-.keystore
 *.keystore
 keys/
 secrets/

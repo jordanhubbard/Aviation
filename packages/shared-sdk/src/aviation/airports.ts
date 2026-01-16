@@ -7,6 +7,7 @@
 
 import * as fs from 'fs';
 import * as path from 'path';
+import { haversineDistance as haversineDistanceCore } from './navigation/distance';
 
 /**
  * Airport data structure
@@ -426,4 +427,47 @@ export function findNearbyAirports(
   limit?: number
 ): Airport[] {
   return getAirportDatabase().findNearby(latitude, longitude, radiusNm, limit);
+}
+
+export function haversineDistance(
+  lat1: number,
+  lon1: number,
+  lat2: number,
+  lon2: number
+): number {
+  return haversineDistanceCore(lat1, lon1, lat2, lon2, 'NM');
+}
+
+export async function getAirport(code: string): Promise<Airport | null> {
+  if (!code || code.trim().length === 0) {
+    return null;
+  }
+  return getAirportByCode(code);
+}
+
+export interface AirportSearchAdvancedOptions {
+  query?: string;
+  lat?: number;
+  lon?: number;
+  radius_nm?: number;
+  limit?: number;
+}
+
+export async function searchAirportsAdvanced(
+  options: AirportSearchAdvancedOptions
+): Promise<Airport[]> {
+  const { query, lat, lon, radius_nm, limit } = options;
+  const hasGeo = typeof lat === 'number' && typeof lon === 'number';
+
+  if (!query && !hasGeo) {
+    return [];
+  }
+
+  return getAirportDatabase().searchAirports({
+    query,
+    limit,
+    latitude: lat,
+    longitude: lon,
+    radiusNm: radius_nm,
+  });
 }

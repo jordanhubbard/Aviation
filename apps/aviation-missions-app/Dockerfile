@@ -40,11 +40,11 @@ FROM base AS frontend-build
 WORKDIR /app/frontend
 
 # Copy package files (minimal for pure JavaScript)
-COPY apps/aviation-missions-app/frontend/package*.json ./
+COPY frontend/package*.json ./
 RUN echo "Pure JavaScript build - no dependencies to install"
 
 # Copy static resources (no src directory for pure JS frontend)
-COPY apps/aviation-missions-app/frontend/resources ./resources/
+COPY frontend/resources ./resources/
 
 # No build step needed for pure JavaScript
 RUN echo "Frontend ready - pure JavaScript, no build required"
@@ -54,13 +54,13 @@ FROM base AS linting
 WORKDIR /app
 
 # Copy dependency files first for caching
-COPY apps/aviation-missions-app/backend/project.clj ./backend/
+COPY backend/project.clj ./backend/
 
 # Install dependencies (cached unless dependency files change)
 RUN cd backend && LEIN_ROOT=1 lein deps
 
 # Copy source code for analysis
-COPY apps/aviation-missions-app/backend/src ./backend/src/
+COPY backend/src ./backend/src/
 
 # Create deps.edn for eastwood support
 RUN echo '{:deps {jonase/eastwood {:mvn/version "1.4.2"} org.clojure/java.jdbc {:mvn/version "0.7.12"} clj-time/clj-time {:mvn/version "0.15.2"} org.clojure/tools.logging {:mvn/version "1.2.4"} ring/ring-core {:mvn/version "1.11.0"} ring/ring-codec {:mvn/version "1.2.0"} instaparse/instaparse {:mvn/version "1.4.12"}} :aliases {:lint-eastwood {:main-opts ["-m" "eastwood.lint" "{:source-paths [\"src\"]}"]}}}' > backend/deps.edn
@@ -114,21 +114,21 @@ FROM base AS backend-build
 WORKDIR /app/backend
 
 # Copy project.clj first for dependency caching
-COPY apps/aviation-missions-app/backend/project.clj ./
+COPY backend/project.clj ./
 
 # Download dependencies (this will be cached unless project.clj changes)
 RUN lein deps
 
 # Copy source code
-COPY apps/aviation-missions-app/backend/src ./src/
-COPY apps/aviation-missions-app/backend/resources ./resources/
+COPY backend/src ./src/
+COPY backend/resources ./resources/
 
 # Copy frontend static files into backend resources before building
 COPY --from=frontend-build /app/frontend/resources/public ./resources/public/
 
 # Copy missions data files for database seeding
-COPY apps/aviation-missions-app/missions.txt /app/missions.txt
-COPY apps/aviation-missions-app/missions.json /app/missions.json
+COPY missions.txt /app/missions.txt
+COPY missions.json /app/missions.json
 
 # Build the uberjar
 RUN lein uberjar
@@ -138,17 +138,17 @@ FROM base AS testing
 WORKDIR /app
 
 # Copy dependency files first for caching
-COPY apps/aviation-missions-app/backend/project.clj ./backend/
+COPY backend/project.clj ./backend/
 
 # Install dependencies (cached unless dependency files change)
 RUN cd backend && LEIN_ROOT=1 lein deps
 
 # Copy source code and test files
-COPY apps/aviation-missions-app/backend/ ./backend/
+COPY backend/ ./backend/
 
 # Copy missions data files for testing
-COPY apps/aviation-missions-app/missions.txt /app/missions.txt
-COPY apps/aviation-missions-app/missions.json /app/missions.json
+COPY missions.txt /app/missions.txt
+COPY missions.json /app/missions.json
 
 # Run backend tests (continue on failure for now due to pre-existing test issues)
 RUN echo "=== RUNNING BACKEND TESTS ===" && \

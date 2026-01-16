@@ -1,6 +1,6 @@
 [build]
 builder = "DOCKERFILE"
-dockerfilePath = "apps/flight-tracker/Dockerfile"
+dockerfilePath = "Dockerfile"
 
 [deploy]
 startCommand = ""

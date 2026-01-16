@@ -51,3 +51,5 @@ export class AviationWeatherClient {
     return this.apiKey ? { headers: { 'X-API-Key': this.apiKey } } : {};
   }
 }
+
+export * from './weather/index';
