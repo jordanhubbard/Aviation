@@ -12,7 +12,7 @@ services:
       cache_from:
         - foreflight-dashboard:dev
     ports:
-      - "${REACT_DEV_PORT:-3001}:3001"  # React dev server (PRIMARY UI - use this port!)
+      - "${REACT_DEV_PORT:-3005}:3005"  # React dev server (PRIMARY UI - use this port!)
       - "${FASTAPI_PORT:-5051}:5051"  # FastAPI backend (internal - proxied by React dev server)
     volumes:
       - ./src:/app/src  # Mount source code for hot reloading

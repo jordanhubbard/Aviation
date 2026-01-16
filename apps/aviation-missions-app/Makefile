@@ -31,6 +31,7 @@ help:
 	@echo "  clean        - Complete cleanup: stop, remove containers, images, and files"
 	@echo "  build        - Build the Docker image"
 	@echo "  test         - Run tests in Docker containers"
+	@echo "  generate-missions-json - Generate missions.json from missions.txt"
 	@echo ""
 	@echo "  Code Quality & Analysis:"
 	@echo "  lint         - Comprehensive analysis (clj-kondo + ESLint with React support)"
@@ -42,6 +43,7 @@ help:
 	@echo "Usage:"
 	@echo "  make start                    # Production mode (Docker)"
 	@echo "  make lint                     # Comprehensive code analysis"
+	@echo "  make generate-missions-json   # Create missions.json from missions.txt"
 	@echo "  PORT=9000 make start          # Use custom port"
 
 # Build the Docker image
@@ -49,6 +51,15 @@ help:
 build:
 	@echo "🔨 Building Aviation Mission Management Docker image..."
 	docker build -t $(IMAGE_NAME):latest .
+
+# Generate missions.json from missions.txt using backend parser
+.PHONY: generate-missions-json
+generate-missions-json:
+	@echo "🧾 Generating missions.json from missions.txt..."
+	cd backend && LEIN_ROOT=1 lein run -m clojure.main -e "\
+		(require 'aviation-missions.missions-storage) \
+		(aviation-missions.missions-storage/ensure-missions-json!)"
+	@echo "✅ missions.json generated"
 
 # Run comprehensive linting analysis on the code
 .PHONY: lint

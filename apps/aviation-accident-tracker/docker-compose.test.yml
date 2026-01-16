@@ -1,0 +1,21 @@
+version: '3.8'
+
+services:
+  accident-tracker-test:
+    image: aviation-accident-tracker:test
+    build:
+      context: .
+      dockerfile: ${DOCKERFILE:-Dockerfile}
+      target: testing
+      args:
+        NODE_VERSION: ${NODE_VERSION:-20}
+    environment:
+      - NODE_ENV=test
+      - DATABASE_PATH=:memory:
+      - LOG_LEVEL=error
+    command: ["npm", "test"]
+    volumes:
+      - ./backend/src:/app/backend/src
+      - ./backend/tests:/app/backend/tests
+      - ./frontend/src:/app/frontend/src
+      - ./frontend/tests:/app/frontend/tests

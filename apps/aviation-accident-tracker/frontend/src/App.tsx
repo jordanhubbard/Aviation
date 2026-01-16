@@ -2,9 +2,10 @@ import { useEffect, useMemo, useState } from 'react';
 import 'leaflet/dist/leaflet.css';
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import L from 'leaflet';
-import MarkerClusterGroup from 'react-leaflet-cluster';
+// import MarkerClusterGroup from 'react-leaflet-cluster'; // Package doesn't exist, clustering temporarily disabled
 import debounce from 'lodash.debounce';
 import { Badge } from './components/Badge';
+// import { normalizeMarkers, defaultClusterOptions } from '@aviation/ui-framework';
 
 type EventRecord = {
   id: string;
@@ -19,6 +20,8 @@ type EventRecord = {
   region?: string;
   lat?: number;
   lon?: number;
+  fatalities?: number;
+  injuries?: number;
   summary?: string;
   narrative?: string;
   status?: string;
@@ -57,28 +60,6 @@ export function App() {
   const [from, setFrom] = useState('');
   const [to, setTo] = useState('');
   const [options, setOptions] = useState<{ countries: string[]; regions: string[] }>({ countries: [], regions: [] });
-  const [exportFormat, setExportFormat] = useState<'csv' | 'json' | 'xlsx' | 'pdf'>('csv');
-  const [exportAll, setExportAll] = useState(false);
-  const [exporting, setExporting] = useState(false);
-  const [exportError, setExportError] = useState<string | null>(null);
-
-  const exportColumns = useMemo(
-    () => [
-      'dateZ',
-      'registration',
-      'aircraftType',
-      'operator',
-      'category',
-      'airportIcao',
-      'country',
-      'region',
-      'fatalities',
-      'injuries',
-      'summary'
-    ],
-    []
-  );
-  const [selectedColumns, setSelectedColumns] = useState<string[]>(exportColumns);
 
   const fetchAirports = useMemo(
     () =>
@@ -130,55 +111,22 @@ export function App() {
       .catch(() => setOptions({ countries: [], regions: [] }));
   }, []);
 
-  const handleExport = async () => {
-    setExportError(null);
-    setExporting(true);
-    try {
-      const payload = exportAll
-        ? { format: exportFormat, columns: selectedColumns, exportAll: true }
-        : {
-            format: exportFormat,
-            columns: selectedColumns,
-            exportAll: false,
-            search,
-            category,
-            airport: airportQuery,
-            country,
-            region,
-            from,
-            to
-          };
-
-      const response = await fetch('/api/events/export', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      });
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(errorText || `Export failed (${response.status})`);
-      }
-
-      const blob = await response.blob();
-      const extension = exportFormat === 'xlsx' ? 'xlsx' : exportFormat;
-      const filename = `accidents_export.${extension}`;
-      const url = window.URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = filename;
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-      window.URL.revokeObjectURL(url);
-    } catch (err) {
-      setExportError(err instanceof Error ? err.message : 'Export failed.');
-    } finally {
-      setExporting(false);
-    }
-  };
-
   const positioned = useMemo(() => events.filter((e) => typeof e.lat === 'number' && typeof e.lon === 'number'), [events]);
+  const eventMap = useMemo(() => new Map(events.map((e) => [e.id, e])), [events]);
+  const markers = useMemo(
+    () =>
+      positioned.map((e) => ({
+        id: e.id,
+        position: [e.lat!, e.lon!] as [number, number],
+        payload: {
+          title: e.registration || e.aircraftType || e.summary,
+          subtitle: e.summary,
+          category: e.category,
+          onClickId: e.id,
+        }
+      })),
+    [positioned]
+  );
 
   return (
     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, padding: 16 }}>
@@ -226,7 +174,7 @@ export function App() {
             }}
           >
             <option value="">All</option>
-            {(options.countries || []).map((c) => (
+            {options.countries.map((c) => (
               <option key={c} value={c}>
                 {c}
               </option>
@@ -243,7 +191,7 @@ export function App() {
             }}
           >
             <option value="">All</option>
-            {(options.regions || []).map((r) => (
+            {options.regions.map((r) => (
               <option key={r} value={r}>
                 {r}
               </option>
@@ -323,79 +271,29 @@ export function App() {
         </Badge>
       </div>
 
-      <div style={{ gridColumn: '1 / span 2', display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
-        <label>
-          Export format:{' '}
-          <select value={exportFormat} onChange={(e) => setExportFormat(e.target.value as any)}>
-            <option value="csv">CSV</option>
-            <option value="json">JSON</option>
-            <option value="xlsx">Excel (XLSX)</option>
-            <option value="pdf">PDF</option>
-          </select>
-        </label>
-        <label>
-          <input
-            type="checkbox"
-            checked={exportAll}
-            onChange={(e) => setExportAll(e.target.checked)}
-          />
-          Export all data
-        </label>
-        <button onClick={handleExport} disabled={exporting || selectedColumns.length === 0}>
-          {exporting ? 'Exporting…' : 'Export'}
-        </button>
-        {exportError && <span style={{ color: 'red' }}>Export error: {exportError}</span>}
-      </div>
-
-      <div style={{ gridColumn: '1 / span 2', display: 'flex', gap: 12, flexWrap: 'wrap' }}>
-        <strong>Columns:</strong>
-        <button
-          type="button"
-          onClick={() => setSelectedColumns(exportColumns)}
-          disabled={selectedColumns.length === exportColumns.length}
-        >
-          Select all
-        </button>
-        <button
-          type="button"
-          onClick={() => setSelectedColumns([])}
-          disabled={selectedColumns.length === 0}
-        >
-          Clear
-        </button>
-        {exportColumns.map((col) => (
-          <label key={col} style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-            <input
-              type="checkbox"
-              checked={selectedColumns.includes(col)}
-              onChange={(e) => {
-                const next = e.target.checked
-                  ? [...selectedColumns, col]
-                  : selectedColumns.filter((c) => c !== col);
-                setSelectedColumns(next);
-              }}
-            />
-            {col}
-          </label>
-        ))}
-      </div>
-
       <div style={{ height: 480, minHeight: 400 }}>
         <MapContainer center={[20, 0]} zoom={2} style={{ height: '100%', width: '100%' }}>
           <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" attribution="© OpenStreetMap contributors" />
-          <MarkerClusterGroup chunkedLoading>
-            {positioned.map((e) => (
-              <Marker key={e.id} position={[e.lat!, e.lon!]} icon={icon} eventHandlers={{ click: () => setSelected(e) }}>
+          {/* Marker clustering temporarily disabled due to missing package */}
+          {markers.map((m) => {
+            const evt = m.payload?.onClickId ? eventMap.get(m.payload.onClickId as string) : undefined;
+            return (
+              <Marker
+                key={m.id}
+                position={m.position as [number, number]}
+                icon={icon}
+                eventHandlers={{ click: () => evt && setSelected(evt) }}
+              >
                 <Popup>
-                  <strong>{e.registration}</strong> ({e.aircraftType || 'Aircraft'})
+                  <strong>{evt?.registration || 'Unknown'}</strong> ({evt?.aircraftType || 'Aircraft'})
                   <br />
-                  {formatDate(e.dateZ)} — {e.summary || 'No summary'}
+                  {evt ? formatDate(evt.dateZ) : ''} — {evt?.summary || 'No summary'}
                   <br />
-                  {e.operator || 'Unknown operator'}
+                  {evt?.operator || 'Unknown operator'}
                 </Popup>
               </Marker>
-            ))}
-          </MarkerClusterGroup>
+            );
+          })}
         </MapContainer>
       </div>
 

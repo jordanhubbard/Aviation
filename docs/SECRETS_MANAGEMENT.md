@@ -130,7 +130,7 @@ Use these service names for the loader:
 
 - `aviation-missions` - Aviation Missions App
 - `foreflight-dashboard` - ForeFlight Dashboard
-- `flightplanner` - Flight Planner
+- `flight-planner` - Flight Planner
 - `flightschool` - Flight School
 - `flight-tracker` - Flight Tracker
 - `weather-briefing` - Weather Briefing

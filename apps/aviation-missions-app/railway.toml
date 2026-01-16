@@ -1,14 +1,13 @@
 [build]
 builder = "DOCKERFILE"
-dockerfilePath = "Dockerfile"
+dockerfilePath = "apps/aviation-missions-app/Dockerfile"
 
 [deploy]
-startCommand = "java -jar /app/aviation-missions.jar"
+startCommand = ""
 healthcheckPath = "/health"
-healthcheckTimeout = 300
+healthcheckTimeout = 100
 restartPolicyType = "ON_FAILURE"
 restartPolicyMaxRetries = 10
-sleepApplication = true
 
-# Railway automatically sets PORT variable
-# No need to hardcode it here
+[env]
+PORT = "3000"

@@ -2,7 +2,7 @@
  * Open-Meteo API Client
  * 
  * Provides weather forecasts from Open-Meteo (free, no API key required).
- * Extracted from flightplanner for shared use.
+ * Extracted from flight-planner for shared use.
  */
 
 import { weatherCache } from './cache';

@@ -1,8 +1,9 @@
 import { createApp } from './app.js';
+import { startScheduler } from './scheduler.js';
 import { config } from './config.js';
-import { logger } from './logger.js';
 import { EventRepository } from './db/repository.js';
-import { startScheduler, stopScheduler } from './scheduler.js';
+import { logger } from './logger.js';
+import { createServer } from 'http';
 
 async function start() {
   try {
@@ -13,47 +14,26 @@ async function start() {
     await repo.close();
     logger.info('Database initialized');
 
-    // Start server
-    const app = createApp();
-    const server = app.listen(config.port, () => {
-      logger.info(`Server started`, {
-        port: config.port,
-        env: config.env,
-        logLevel: config.logLevel
-      });
+    // Create Express app
+    const app = await createApp();
+    const port = config.port;
+    const httpServer = createServer(app);
+
+    // Start HTTP server
+    httpServer.listen(port, () => {
+      console.log(`✅ [accident-tracker] API listening on :${port}`);
+      console.log(`   REST API: http://localhost:${port}/api`);
+      console.log(`   GraphQL: http://localhost:${port}/graphql`);
+      console.log(`   Health: http://localhost:${port}/health`);
     });
 
-    // Start scheduled ingestion (if enabled)
-    if (process.env.ENABLE_CRON !== 'false') {
+    // Start scheduler if enabled
+    if (config.ingestion.enabled) {
+      logger.info('Starting ingestion scheduler...');
       startScheduler();
-    } else {
-      logger.info('Scheduled ingestion disabled (ENABLE_CRON=false)');
     }
-
-    // Graceful shutdown
-    const shutdown = async () => {
-      logger.info('Shutting down gracefully...');
-      
-      // Stop accepting new connections
-      server.close(() => {
-        logger.info('HTTP server closed');
-      });
-
-      // Stop scheduler
-      stopScheduler();
-
-      // Give ongoing operations time to complete
-      setTimeout(() => {
-        logger.info('Shutdown complete');
-        process.exit(0);
-      }, 1000);
-    };
-
-    process.on('SIGTERM', shutdown);
-    process.on('SIGINT', shutdown);
-
   } catch (error) {
-    logger.error('Failed to start server', error as Error);
+    logger.error('Failed to start server', error instanceof Error ? error : new Error(String(error)));
     process.exit(1);
   }
 }

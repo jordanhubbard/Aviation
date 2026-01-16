@@ -4,9 +4,15 @@
  * Converts between snake_case DB columns and camelCase TypeScript types
  */
 
-import { Database } from 'sqlite3';
+import sqlite3 from 'sqlite3';
+const { Database } = sqlite3;
 import { promisify } from 'util';
-import type { EventRecord, SourceAttribution, ListEventsParams, Category } from '../types';
+import { fileURLToPath } from 'url';
+import { dirname } from 'path';
+import type { EventRecord, SourceAttribution, ListEventsParams, Category } from '../types.js';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
 interface DbEvent {
   id: number;
@@ -42,7 +48,7 @@ interface DbSource {
 }
 
 export class EventRepository {
-  private db: Database;
+  private db: sqlite3.Database;
   private dbRun: (sql: string, params?: any[]) => Promise<any>;
   private dbGet: (sql: string, params?: any[]) => Promise<any>;
   private dbAll: (sql: string, params?: any[]) => Promise<any[]>;
@@ -60,7 +66,8 @@ export class EventRepository {
   async initialize(): Promise<void> {
     const fs = await import('fs/promises');
     const path = await import('path');
-    const schemaPath = path.join(__dirname, 'schema.sql');
+    // Point to source directory even when running from dist
+    const schemaPath = path.join(__dirname, '../../src/db/schema.sql');
     const schema = await fs.readFile(schemaPath, 'utf-8');
     
     await this.dbRun(schema);
@@ -256,6 +263,9 @@ export class EventRepository {
     const limit = params.limit || 50;
     const offset = params.offset || 0;
 
+    // Get total count
+    const total = await this.countEvents(params);
+
     const sql = `
       SELECT * FROM events
       ${whereClause}
@@ -267,14 +277,10 @@ export class EventRepository {
 
     const rows: DbEvent[] = await this.dbAll(sql, sqlParams);
     
-    // Get total count
-    const total = await this.countEvents(params);
-    
     // For list view, we don't include sources (performance)
-    return {
-      events: rows.map(row => this.dbEventToRecord(row, [])),
-      total
-    };
+    const events = rows.map(row => this.dbEventToRecord(row, []));
+    
+    return { events, total };
   }
 
   /**
@@ -339,6 +345,13 @@ export class EventRepository {
   }
 
   /**
+   * Get event detail (alias for getEventWithSources for GraphQL compatibility)
+   */
+  async getEventDetail(id: number): Promise<EventRecord | null> {
+    return this.getEventWithSources(String(id));
+  }
+
+  /**
    * Count total events matching filter
    */
   async countEvents(params: ListEventsParams): Promise<number> {
@@ -383,35 +396,13 @@ export class EventRepository {
   }
 
   /**
-   * Get event detail by ID (alias for getEventWithSources)
+   * Get statistics aggregated by specified field
    */
-  async getEventDetail(id: string | number): Promise<EventRecord | null> {
-    return this.getEventWithSources(String(id));
-  }
-
-  /**
-   * Get statistics (simplified implementation)
-   */
-  async getStatistics(params: ListEventsParams): Promise<{ category?: string; country?: string; count: number }[]> {
-    let sql = 'SELECT ';
-    let groupBy = '';
-    
-    if (params.category && params.category !== 'all') {
-      sql += 'category';
-      groupBy = 'category';
-    } else if (params.country) {
-      sql += 'country';
-      groupBy = 'country';
-    } else {
-      sql += 'category';
-      groupBy = 'category';
-    }
-    
-    sql += ', COUNT(*) as count FROM events';
-    
+  async getStatistics(params: any): Promise<any[]> {
     const conditions: string[] = [];
     const sqlParams: any[] = [];
-    
+
+    // Apply filters
     if (params.from) {
       conditions.push('date_z >= ?');
       sqlParams.push(params.from);
@@ -420,18 +411,77 @@ export class EventRepository {
       conditions.push('date_z <= ?');
       sqlParams.push(params.to);
     }
-    
-    if (conditions.length > 0) {
-      sql += ' WHERE ' + conditions.join(' AND ');
+    if (params.category && params.category !== 'all') {
+      conditions.push('category = ?');
+      sqlParams.push(params.category);
     }
-    
-    sql += ` GROUP BY ${groupBy}`;
-    
-    const rows = await this.dbAll(sql, sqlParams);
-    return rows.map((row: any) => ({
-      [groupBy]: row[groupBy],
-      count: row.count
-    }));
+    if (params.country) {
+      conditions.push('country = ?');
+      sqlParams.push(params.country);
+    }
+
+    const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
+
+    // Group by specified field
+    const groupBy = params.groupBy || 'category';
+    let sql: string;
+
+    switch (groupBy) {
+      case 'category':
+        sql = `
+          SELECT 
+            category,
+            COUNT(*) as count,
+            SUM(fatalities) as total_fatalities,
+            SUM(injuries) as total_injuries
+          FROM events
+          ${whereClause}
+          GROUP BY category
+          ORDER BY count DESC
+        `;
+        break;
+
+      case 'country':
+        sql = `
+          SELECT 
+            country,
+            COUNT(*) as count,
+            SUM(fatalities) as total_fatalities,
+            SUM(injuries) as total_injuries
+          FROM events
+          ${whereClause}
+          GROUP BY country
+          ORDER BY count DESC
+          LIMIT 50
+        `;
+        break;
+
+      case 'date':
+        sql = `
+          SELECT 
+            substr(date_z, 1, 7) as period,
+            COUNT(*) as count,
+            SUM(fatalities) as total_fatalities,
+            SUM(injuries) as total_injuries
+          FROM events
+          ${whereClause}
+          GROUP BY period
+          ORDER BY period DESC
+        `;
+        break;
+
+      default:
+        sql = `
+          SELECT 
+            category,
+            COUNT(*) as count
+          FROM events
+          ${whereClause}
+          GROUP BY category
+        `;
+    }
+
+    return await this.dbAll(sql, sqlParams);
   }
 
   /**
@@ -439,7 +489,7 @@ export class EventRepository {
    */
   async close(): Promise<void> {
     return new Promise((resolve, reject) => {
-      this.db.close((err) => {
+      this.db.close((err: Error | null) => {
         if (err) reject(err);
         else resolve();
       });

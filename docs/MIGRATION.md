@@ -20,8 +20,8 @@ Successfully migrated multiple aviation applications into a unified monorepo str
 - **Status:** ✅ Newly integrated
 
 ### 3. Flight Planner
-- **Source:** https://github.com/jordanhubbard/flightplanner
-- **Destination:** `apps/flightplanner/`
+- **Source:** https://github.com/jordanhubbard/flight-planner
+- **Destination:** `apps/flight-planner/`
 - **Technology:** Python (FastAPI) + React + TypeScript + Leaflet
 - **Description:** VFR flight planning with weather, terrain, and route optimization
 - **Status:** ✅ Newly integrated
@@ -41,7 +41,7 @@ Aviation/
 ├── apps/                           # Applications directory
 │   ├── aviation-missions-app/     # Mission management (Clojure + JS)
 │   ├── flight-tracker/            # Real-time tracking (Node.js)
-│   ├── flightplanner/             # VFR planning (Python + React)
+│   ├── flight-planner/             # VFR planning (Python + React)
 │   ├── flightschool/              # School management (Flask)
 │   ├── foreflight-dashboard/      # Logbook analysis (FastAPI + React)
 │   └── weather-briefing/          # Weather briefing (Node.js)
@@ -140,7 +140,7 @@ Unified CI/CD pipeline with parallel job execution:
 1. **validate-beads** - Validate all beads.yaml configurations
 2. **accessibility** - Check color contrast (WCAG AA)
 3. **test-missions-app** - Test Aviation Missions App (Clojure)
-4. **test-flightplanner** - Test Flight Planner (Python + React)
+4. **test-flight-planner** - Test Flight Planner (Python + React)
 5. **test-flightschool** - Test Flight School (Flask)
 6. **test-foreflight** - Test ForeFlight Dashboard (FastAPI + React)
 7. **lint** - Lint Python and JavaScript/TypeScript code
@@ -172,7 +172,7 @@ Unified CI/CD pipeline with parallel job execution:
 
 #### Application READMEs
 - **aviation-missions-app/README.md** - Added monorepo context and navigation
-- **flightplanner/README.md** - Added monorepo context and navigation
+- **flight-planner/README.md** - Added monorepo context and navigation
 - **flightschool/README.md** - Added monorepo context and navigation
 - **foreflight-dashboard/README.md** - Previously updated with monorepo context
 
@@ -238,7 +238,7 @@ make build
 make start
 
 # Flight Planner (Python + React)
-cd apps/flightplanner
+cd apps/flight-planner
 python3 -m venv .venv
 .venv/bin/python -m pip install -r requirements.txt
 .venv/bin/python -m uvicorn backend.main:app --reload --port 8000
@@ -306,14 +306,14 @@ done
 
 ### Beads Configuration
 - [x] aviation-missions-app/beads.yaml (9 beads)
-- [x] flightplanner/beads.yaml (9 beads)
+- [x] flight-planner/beads.yaml (9 beads)
 - [x] flightschool/beads.yaml (10 beads)
 - [x] foreflight-dashboard/beads.yaml (7 beads - existing)
 
 ### Documentation
 - [x] Updated root README.md with all applications
 - [x] Updated aviation-missions-app README
-- [x] Updated flightplanner README
+- [x] Updated flight-planner README
 - [x] Updated flightschool README
 - [x] Updated MIGRATION.md (this file)
 

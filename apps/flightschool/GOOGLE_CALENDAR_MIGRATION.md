@@ -98,7 +98,7 @@ pytest tests/ -v
 
 ### 2. Consistency
 
-- Same API across `flightschool`, `flightplanner`, and other apps
+- Same API across `flightschool`, `flight-planner`, and other apps
 - Unified credential format
 - Consistent error handling
 
@@ -277,7 +277,7 @@ Migration complete! ✅
 ## Next Steps
 
 Consider migrating other apps:
-- `flightplanner` - Uses Google Calendar for flight planning
+- `flight-planner` - Uses Google Calendar for flight planning
 - Other apps that need calendar integration
 
 The shared SDK is ready to use! 🚀

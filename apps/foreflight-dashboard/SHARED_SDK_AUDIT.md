@@ -87,7 +87,7 @@ The foreflight-dashboard is optimally structured for its use case. It processes 
 ## For Reference: Other Apps Already Using Shared SDK
 
 ✅ **aviation-accident-tracker** - Uses shared airport services  
-✅ **flightplanner** - Migrated to shared airport services  
+✅ **flight-planner** - Migrated to shared airport services  
 ✅ **weather-briefing** - Uses shared weather services  
 
 These apps have genuine need for shared aviation data services. Foreflight-dashboard does not.

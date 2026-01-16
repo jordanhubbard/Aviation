@@ -2,7 +2,7 @@
  * Weather Cache Utility
  * 
  * Implements TTL-based caching with stale-on-error fallback for weather data.
- * Extracted from flightplanner for shared use.
+ * Extracted from flight-planner for shared use.
  */
 
 interface CacheEntry<T> {

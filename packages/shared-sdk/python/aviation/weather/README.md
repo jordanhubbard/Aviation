@@ -336,12 +336,12 @@ This Python SDK provides equivalent functionality to the TypeScript SDK:
 
 For Python applications, use this SDK directly. For TypeScript/JavaScript applications, use the TypeScript SDK.
 
-## Migration from flightplanner
+## Migration from flight-planner
 
-If you were using the weather services from `apps/flightplanner/backend/app/services/`, this SDK provides the same functionality:
+If you were using the weather services from `apps/flight-planner/backend/app/services/`, this SDK provides the same functionality:
 
 ```python
-# Old (flightplanner-specific)
+# Old (flight-planner-specific)
 from app.services.metar import fetch_metar_raw
 from app.services.flight_recommendations import flight_category
 

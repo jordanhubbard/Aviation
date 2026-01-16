@@ -2,7 +2,7 @@
  * Base interface for source adapters
  */
 
-import type { EventRecord } from '../types';
+import type { EventRecord } from '../types.js';
 
 export interface SourceAdapter {
   /**

@@ -27,8 +27,8 @@ scrape_configs:
       - targets: ['host.docker.internal:3002']
     metrics_path: '/metrics'
 
-  # Flightplanner Backend
-  - job_name: 'flightplanner-backend'
+  # Flight Planner Backend
+  - job_name: 'flight-planner-backend'
     static_configs:
       - targets: ['host.docker.internal:5000']
     metrics_path: '/metrics'

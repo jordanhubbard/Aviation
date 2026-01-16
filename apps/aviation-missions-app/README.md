@@ -29,6 +29,7 @@
 - **🔒 Secure Authentication**: Admin authentication with session management
 - **📊 API Documentation**: Full OpenAPI/Swagger documentation with interactive interface
 - **💾 Data Persistence**: Robust H2 database with backup/restore capabilities
+- **🧾 Mission Bootstrap**: missions.txt → missions.json → database seeding
 - **🚀 Containerized Deployment**: Docker-based deployment with multi-stage builds
 
 ## 🚀 Quick Start
@@ -92,6 +93,33 @@ make start
 - **Reverse Proxy**: Nginx for serving static assets and API proxying
 - **Database**: File-based H2 with volume persistence
 - **CI/CD**: GitHub Actions with comprehensive testing and security scanning
+
+## 🧾 Mission Bootstrap & Persistence
+
+The mission catalog uses a JSON bootstrap file to seed empty databases and preserve user updates.
+
+### Files
+- `missions.txt` - Source text file (original mission list)
+- `missions.json` - Generated bootstrap file used for seeding and persistence
+
+### Startup Flow
+1. If `missions.json` is missing, it is generated from `missions.txt`.
+2. If the database is empty, the app seeds from `missions.json`.
+3. If the database already has data, `missions.json` is generated from DB data (once).
+
+### Update Flow
+Admin actions persist updates back to `missions.json`:
+- Create mission
+- Update mission
+- Delete mission
+- Approve submission
+- Approve mission update
+- Import missions (JSON/YAML)
+
+### Environment Overrides
+- `MISSIONS_JSON_PATH` (default: `/app/missions.json`)
+- `MISSIONS_TXT_PATH` (default: `/app/missions.txt`)
+- `FORCE_RESEED=true` forces re-seed from `missions.json` (clears DB first)
 
 ## 📖 API Reference
 

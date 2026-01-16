@@ -2,10 +2,11 @@
 # Provides unified build, clean, test, and run targets for all applications and packages
 
 PYTHON_AUDIT := $(shell command -v python3.12 || command -v python3)
-.PHONY: help build clean test
+.PHONY: help build clean test test-docker
 .PHONY: build-node build-python build-clojure
 .PHONY: clean-node clean-python clean-clojure
 .PHONY: test-node test-python test-clojure
+.PHONY: test-docker-node test-docker-python test-docker-clojure
 .PHONY: run-aviation-missions run-flight-planner run-flight-school
 .PHONY: run-foreflight-dashboard run-flight-tracker run-weather-briefing
 .PHONY: stop-all
@@ -15,9 +16,10 @@ help:
 	@echo "Aviation Monorepo - Available targets:"
 	@echo ""
 	@echo "Build & Test:"
-	@echo "  make build       - Build all applications and packages"
-	@echo "  make clean       - Clean all build artifacts and dependencies"
-	@echo "  make test        - Run all tests"
+	@echo "  make build         - Build all applications and packages"
+	@echo "  make clean         - Clean all build artifacts and dependencies"
+	@echo "  make test          - Run all tests locally"
+	@echo "  make test-docker   - Run all tests in Docker containers (recommended)"
 	@echo ""
 	@echo "Run Applications (build + start):"
 	@echo "  make run-aviation-missions    - Run Aviation Missions App (port 8080)"
@@ -29,16 +31,19 @@ help:
 	@echo "  make stop-all                 - Stop all running applications"
 	@echo ""
 	@echo "Component targets:"
-	@echo "  make build-node      - Build Node.js/TypeScript applications"
-	@echo "  make build-python    - Build Python applications"
-	@echo "  make build-clojure   - Build Clojure applications"
-	@echo "  make clean-node      - Clean Node.js artifacts"
-	@echo "  make clean-python    - Clean Python artifacts"
-	@echo "  make clean-clojure   - Clean Clojure artifacts"
-	@echo "  make test-node       - Test Node.js applications"
-	@echo "  make test-python     - Test Python applications"
-	@echo "  make test-clojure    - Test Clojure applications"
-	@echo "  make audit           - Run security audits (Node.js + Python)"
+	@echo "  make build-node          - Build Node.js/TypeScript applications"
+	@echo "  make build-python        - Build Python applications"
+	@echo "  make build-clojure       - Build Clojure applications"
+	@echo "  make clean-node          - Clean Node.js artifacts"
+	@echo "  make clean-python        - Clean Python artifacts"
+	@echo "  make clean-clojure       - Clean Clojure artifacts"
+	@echo "  make test-node           - Test Node.js applications locally"
+	@echo "  make test-python         - Test Python applications locally"
+	@echo "  make test-clojure        - Test Clojure applications locally"
+	@echo "  make test-docker-node    - Test Node.js apps in Docker"
+	@echo "  make test-docker-python  - Test Python apps in Docker"
+	@echo "  make test-docker-clojure - Test Clojure apps in Docker"
+	@echo "  make audit               - Run security audits (Node.js + Python)"
 	@echo ""
 
 #
@@ -106,7 +111,7 @@ clean-python:
 	find . -type f -name ".coverage" -delete
 	find . -type d -name "htmlcov" -exec rm -rf {} + 2>/dev/null || true
 	# Clean individual Python apps
-	@if [ -f apps/flightplanner/Makefile ]; then cd apps/flightplanner && $(MAKE) clean; fi
+	@if [ -f apps/flight-planner/Makefile ]; then cd apps/flight-planner && $(MAKE) clean; fi
 	@if [ -f apps/flightschool/Makefile ]; then cd apps/flightschool && $(MAKE) clean; fi
 	@if [ -f apps/foreflight-dashboard/Makefile ]; then cd apps/foreflight-dashboard && $(MAKE) clean; fi
 	@echo "✅ Python artifacts cleaned"
@@ -134,8 +139,8 @@ test-node:
 test-python:
 	@echo "🧪 Running Python tests..."
 	@echo "   Flight Planner:"
-	@if [ -f apps/flightplanner/Makefile ]; then \
-		cd apps/flightplanner && $(MAKE) backend-test 2>/dev/null || echo "   ⚠️  Tests require setup (see app README)"; \
+	@if [ -f apps/flight-planner/Makefile ]; then \
+		cd apps/flight-planner && $(MAKE) backend-test 2>/dev/null || echo "   ⚠️  Tests require setup (see app README)"; \
 	else \
 		echo "   No tests configured"; \
 	fi
@@ -161,6 +166,58 @@ test-clojure:
 		cd apps/aviation-missions-app && $(MAKE) test; \
 	fi
 	@echo "✅ Clojure tests passed"
+
+#
+# DOCKER TEST TARGETS (Containerized Testing)
+#
+
+test-docker: test-docker-node test-docker-python test-docker-clojure
+	@echo ""
+	@echo "✅ All containerized tests complete!"
+
+test-docker-node:
+	@echo "🐳 Running Node.js/TypeScript tests in Docker..."
+	@echo "   Aviation Accident Tracker:"
+	@if [ -f apps/aviation-accident-tracker/Makefile ]; then \
+		cd apps/aviation-accident-tracker && $(MAKE) docker-test || echo "   ⚠️  Tests failed"; \
+	fi
+	@echo ""
+	@echo "   Flight Tracker:"
+	@if [ -f apps/flight-tracker/Makefile ]; then \
+		cd apps/flight-tracker && $(MAKE) docker-test || echo "   ⚠️  Tests failed"; \
+	fi
+	@echo ""
+	@echo "   Weather Briefing:"
+	@if [ -f apps/weather-briefing/Makefile ]; then \
+		cd apps/weather-briefing && $(MAKE) docker-test || echo "   ⚠️  Tests failed"; \
+	fi
+	@echo "✅ Node.js/TypeScript Docker tests complete"
+
+test-docker-python:
+	@echo "🐳 Running Python tests in Docker..."
+	@echo "   Flight Planner:"
+	@if [ -f apps/flight-planner/Makefile ]; then \
+		cd apps/flight-planner && $(MAKE) test-docker || echo "   ⚠️  Tests failed or not configured"; \
+	fi
+	@echo ""
+	@echo "   Flight School:"
+	@if [ -f apps/flightschool/Makefile ]; then \
+		cd apps/flightschool && $(MAKE) docker-test || echo "   ⚠️  Tests failed or not configured"; \
+	fi
+	@echo ""
+	@echo "   ForeFlight Dashboard:"
+	@if [ -f apps/foreflight-dashboard/Makefile ]; then \
+		cd apps/foreflight-dashboard && $(MAKE) test-docker || echo "   ⚠️  Tests failed or not configured"; \
+	fi
+	@echo "✅ Python Docker tests complete"
+
+test-docker-clojure:
+	@echo "🐳 Running Clojure tests in Docker..."
+	@echo "   Aviation Missions App:"
+	@if [ -f apps/aviation-missions-app/Makefile ]; then \
+		cd apps/aviation-missions-app && $(MAKE) test-docker || echo "   ⚠️  Tests failed or not configured"; \
+	fi
+	@echo "✅ Clojure Docker tests complete"
 
 #
 # UTILITY TARGETS
@@ -196,13 +253,13 @@ audit-python:
 	@echo "🔐 Running Python security audit..."
 	@$(PYTHON_AUDIT) -m venv .venv-audit
 	@./.venv-audit/bin/pip install -q --upgrade pip pip-audit
-	@grep -v "^-e " apps/flightplanner/requirements.txt > /tmp/flightplanner-requirements.txt
+	@grep -v "^-e " apps/flight-planner/requirements.txt > /tmp/flight-planner-requirements.txt
 	@./.venv-audit/bin/pip-audit -r apps/foreflight-dashboard/requirements.txt || \
 		echo "⚠️  pip-audit failed for foreflight-dashboard"
 	@./.venv-audit/bin/pip-audit -r apps/flightschool/requirements.txt || \
 		echo "⚠️  pip-audit failed for flightschool"
-	@./.venv-audit/bin/pip-audit -r /tmp/flightplanner-requirements.txt || \
-		echo "⚠️  pip-audit failed for flightplanner"
+	@./.venv-audit/bin/pip-audit -r /tmp/flight-planner-requirements.txt || \
+		echo "⚠️  pip-audit failed for flight-planner"
 	@echo "✅ Python audit complete"
 
 
@@ -220,7 +277,7 @@ run-flight-planner:
 	@echo "🚀 Starting Flight Planner..."
 	@echo "This will start the Python backend + React frontend via Docker"
 	@echo ""
-	cd apps/flightplanner && $(MAKE) dev-up
+	cd apps/flight-planner && $(MAKE) dev-up
 
 run-flight-school:
 	@echo "🚀 Starting Flight School (demo mode with test data)..."
@@ -258,7 +315,7 @@ stop-all:
 	@cd apps/aviation-missions-app && $(MAKE) stop 2>/dev/null || true
 	@echo ""
 	@echo "Stopping Flight Planner..."
-	@cd apps/flightplanner && $(MAKE) dev-down 2>/dev/null || true
+	@cd apps/flight-planner && $(MAKE) dev-down 2>/dev/null || true
 	@echo ""
 	@echo "Stopping Flight School..."
 	@pkill -f "flask.*flightschool" 2>/dev/null || true

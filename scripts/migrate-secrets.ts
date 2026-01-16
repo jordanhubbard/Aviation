@@ -134,8 +134,8 @@ async function main() {
     },
     {
       appName: 'Flight Planner',
-      envFilePath: path.join(workspaceRoot, 'apps/flightplanner/.env'),
-      serviceName: 'flightplanner',
+      envFilePath: path.join(workspaceRoot, 'apps/flight-planner/.env'),
+      serviceName: 'flight-planner',
     },
     {
       appName: 'Flight School',

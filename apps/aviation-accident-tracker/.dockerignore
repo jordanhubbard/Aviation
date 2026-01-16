@@ -1,0 +1,76 @@
+# Node modules
+node_modules
+*/node_modules
+**/node_modules
+
+# Build output
+dist
+*/dist
+**/dist
+build
+*/build
+**/build
+
+# Logs
+logs
+*.log
+npm-debug.log*
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Testing
+coverage
+.nyc_output
+
+# IDE
+.vscode
+.idea
+*.swp
+*.swo
+*~
+
+# Git
+.git
+.gitignore
+.gitattributes
+
+# Documentation
+*.md
+!README.md
+docs
+
+# Test files
+**/*.test.ts
+**/*.test.tsx
+**/*.test.js
+**/*.spec.ts
+**/*.spec.tsx
+**/*.spec.js
+tests
+**/tests
+
+# CI/CD
+.github
+.gitlab-ci.yml
+
+# macOS
+.DS_Store
+
+# Docker
+Dockerfile*
+docker-compose*
+.dockerignore
+
+# Temporary files
+tmp
+temp
+*.tmp
+
+# Data (exclude from image, mount as volume)
+data
+*.db
+*.sqlite
+*.sqlite3

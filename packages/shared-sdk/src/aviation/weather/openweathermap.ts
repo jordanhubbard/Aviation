@@ -4,7 +4,7 @@
  * Provides current weather data from OpenWeatherMap.
  * Requires OPENWEATHERMAP_API_KEY environment variable.
  * 
- * Extracted from flightplanner for shared use.
+ * Extracted from flight-planner for shared use.
  */
 
 import { weatherCache } from './cache';

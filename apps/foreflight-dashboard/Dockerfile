@@ -26,14 +26,14 @@ ENV PYTHONPATH=/app \
     PIP_NO_CACHE_DIR=1
 
 # Copy entrypoint script
-COPY docker-entrypoint.sh /docker-entrypoint.sh
+COPY apps/foreflight-dashboard/docker-entrypoint.sh /docker-entrypoint.sh
 RUN chmod +x /docker-entrypoint.sh
 
 # Create necessary directories
 RUN mkdir -p uploads logs
 
 # Copy requirements first for better caching
-COPY requirements.txt .
+COPY apps/foreflight-dashboard/requirements.txt .
 
 # Development stage with testing tools
 FROM base AS development
@@ -52,7 +52,7 @@ RUN pip install pytest pytest-cov flake8 black isort
 RUN pip install -r requirements.txt
 
 # Copy the application code
-COPY . .
+COPY apps/foreflight-dashboard/ .
 
 # Build frontend (skip if build fails during testing)
 # Note: Cache mounts removed for cloud deployment compatibility
@@ -64,7 +64,7 @@ ENV FLASK_APP=src/app.py
 # Set default port environment variables (can be overridden at runtime)
 # Note: Flask has been eliminated! 🔥 FastAPI now handles everything
 ENV FASTAPI_PORT=5051
-ENV REACT_DEV_PORT=3001
+ENV REACT_DEV_PORT=3005
 
 # Expose ports for FastAPI and React dev server
 EXPOSE $FASTAPI_PORT $REACT_DEV_PORT
@@ -94,9 +94,9 @@ ENV FLASK_ENV=${FLASK_ENV}
 RUN pip install -r requirements.txt
 
 # Copy only necessary files for production
-COPY src/ /app/src/
-COPY frontend/ /app/frontend/
-COPY docker-entrypoint.sh /docker-entrypoint.sh
+COPY apps/foreflight-dashboard/src/ /app/src/
+COPY apps/foreflight-dashboard/frontend/ /app/frontend/
+COPY apps/foreflight-dashboard/docker-entrypoint.sh /docker-entrypoint.sh
 RUN chmod +x /docker-entrypoint.sh
 
 # Build frontend for production (install all deps including devDeps for build)
@@ -106,7 +106,7 @@ RUN cd frontend && npm install && npm run build && npm prune --production
 # Set default port environment variables (can be overridden at runtime)
 # Note: Flask has been eliminated! 🔥 FastAPI now handles everything
 ENV FASTAPI_PORT=5051
-ENV REACT_DEV_PORT=3001
+ENV REACT_DEV_PORT=3005
 
 # Expose ports for FastAPI
 EXPOSE $FASTAPI_PORT

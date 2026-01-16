@@ -2,7 +2,7 @@
  * METAR Fetching and Parsing
  * 
  * Fetches and parses METAR data from aviationweather.gov.
- * Extracted from flightplanner for shared use.
+ * Extracted from flight-planner for shared use.
  */
 
 import { weatherCache } from './cache';

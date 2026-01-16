@@ -7,7 +7,7 @@ A comprehensive monorepo for aviation-related applications, featuring unified CI
 
 ## 🏗️ Architecture
 
-This monorepo contains **6 aviation applications** and **3 shared packages** with unified development infrastructure:
+This monorepo contains **7 aviation applications** and **3 shared packages** with unified development infrastructure:
 
 - **Unified CI/CD Pipeline** - Automated testing, security scanning, and deployment
 - **Secure Secrets Management** - Encrypted keystore for API keys and credentials
@@ -20,9 +20,10 @@ This monorepo contains **6 aviation applications** and **3 shared packages** wit
 ```
 Aviation/
 ├── apps/                          # Applications
+│   ├── aviation-accident-tracker/ # Incident tracking and analysis (TypeScript + React)
 │   ├── aviation-missions-app/     # Mission management (Clojure + JS)
 │   ├── flight-tracker/            # Real-time flight tracking (TypeScript)
-│   ├── flightplanner/             # VFR flight planning (Python + React)
+│   ├── flight-planner/            # VFR flight planning (Python + React)
 │   ├── flightschool/              # Flight school management (Python Flask)
 │   ├── foreflight-dashboard/      # ForeFlight logbook analysis (Python + React)
 │   └── weather-briefing/          # Aviation weather briefing (TypeScript)
@@ -111,7 +112,7 @@ make test       # Run tests
 
 #### Flight Planner (Python + React)
 ```bash
-cd apps/flightplanner
+cd apps/flight-planner
 # Backend
 python3 -m venv .venv
 .venv/bin/pip install -r requirements.txt
@@ -167,6 +168,14 @@ npm test
 
 ## 📦 Applications
 
+### [Aviation Accident Tracker](apps/aviation-accident-tracker/)
+Comprehensive aviation accident and incident tracking system with automated data ingestion, geospatial visualization, and flexible APIs.
+
+- **Tech Stack:** Node.js, TypeScript, Express, SQLite, React, Leaflet
+- **Features:** Automated ingestion (ASN, AVHerald), interactive map, filters, REST & GraphQL APIs, data export
+- **Ports:** Backend 3002, Frontend 5173
+- **Documentation:** [API Guide](apps/aviation-accident-tracker/API_DOCUMENTATION.md), [GraphQL API](apps/aviation-accident-tracker/GRAPHQL_API.md), [Deployment](apps/aviation-accident-tracker/DEPLOYMENT.md)
+
 ### [Aviation Missions App](apps/aviation-missions-app/)
 Mission management system for general aviation training with comprehensive catalog, community features, and administrative tools.
 
@@ -174,7 +183,7 @@ Mission management system for general aviation training with comprehensive catal
 - **Features:** Mission catalog, ratings, comments, admin panel
 - **Port:** 3000
 
-### [Flight Planner](apps/flightplanner/)
+### [Flight Planner](apps/flight-planner/)
 Unified VFR flight planning with route planning, terrain checks, and weather integration.
 
 - **Tech Stack:** Python, FastAPI, React, TypeScript, Leaflet

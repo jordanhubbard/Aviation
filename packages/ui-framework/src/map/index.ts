@@ -2,7 +2,7 @@
  * Aviation Map Components and Utilities
  * 
  * Provides types, utilities, and helpers for building aviation maps.
- * Extracted from flightplanner for shared use across aviation apps.
+ * Extracted from flight-planner for shared use across aviation apps.
  * 
  * @module @aviation/ui-framework/map
  * 

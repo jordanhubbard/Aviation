@@ -2,7 +2,7 @@
  * Distance Calculations for Aviation
  * 
  * Provides haversine distance calculations in various units (NM, km, miles).
- * Extracted from flightplanner for shared use.
+ * Extracted from flight-planner for shared use.
  */
 
 /**

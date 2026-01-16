@@ -1,0 +1,59 @@
+# Node modules
+node_modules
+**/node_modules
+
+# Build output
+dist
+build
+
+# Logs
+logs
+*.log
+npm-debug.log*
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Testing
+coverage
+.nyc_output
+
+# IDE
+.vscode
+.idea
+*.swp
+*.swo
+*~
+
+# Git
+.git
+.gitignore
+.gitattributes
+
+# Documentation
+*.md
+!README.md
+docs
+
+# Test files
+**/*.test.ts
+**/*.spec.ts
+tests
+
+# CI/CD
+.github
+
+# macOS
+.DS_Store
+
+# Docker
+Dockerfile*
+docker-compose*
+.dockerignore
+
+# Temporary files
+tmp
+temp
+*.tmp

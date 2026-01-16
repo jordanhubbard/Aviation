@@ -2,7 +2,7 @@
  * Map Utility Functions
  * 
  * Utility functions for map operations.
- * Extracted from flightplanner for shared use.
+ * Extracted from flight-planner for shared use.
  */
 
 import type { MapPosition, MapBounds } from './types';

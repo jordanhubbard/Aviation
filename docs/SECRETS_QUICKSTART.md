@@ -65,7 +65,7 @@ const config = {
 |-------------|-------------|
 | Aviation Missions | `aviation-missions` |
 | ForeFlight Dashboard | `foreflight-dashboard` |
-| Flight Planner | `flightplanner` |
+| Flight Planner | `flight-planner` |
 | Flight School | `flightschool` |
 | Flight Tracker | `flight-tracker` |
 | Weather Briefing | `weather-briefing` |

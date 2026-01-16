@@ -335,7 +335,7 @@ import 'leaflet/dist/leaflet.css'; // or import from @aviation/ui-framework
 
 ## Examples
 
-See the [flightplanner app](../../apps/flightplanner) for real-world usage examples.
+See the [flight-planner app](../../apps/flight-planner) for real-world usage examples.
 
 ## License
 

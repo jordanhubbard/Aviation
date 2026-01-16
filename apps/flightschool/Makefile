@@ -1,4 +1,4 @@
-.PHONY: help env init run test clean lint format db-migrate db-upgrade db-downgrade test-data check-aircraft-images frontend-test
+.PHONY: help env init run test clean lint format db-migrate db-upgrade db-downgrade test-data check-aircraft-images frontend-test docker-build docker-up docker-down docker-test test-docker docker-logs
 
 # Default target when just running 'make'
 .DEFAULT_GOAL := help
@@ -15,26 +15,35 @@ COVERAGE = $(VENV)/bin/coverage
 export FLASK_APP = app
 export FLASK_ENV = development
 export PYTHONPATH = $(shell pwd)
-PORT ?= 5001  # Default port, can be overridden with make run PORT=xxxx
+PORT ?= 5000  # Default port, can be overridden with make run PORT=xxxx
 TYPE ?= "Aircraft"
 
 help:
 	@echo "Available commands:"
+	@echo ""
+	@echo "Local Development:"
 	@echo "  make help         - Show this help message"
-	@echo "  make demo         - Do all steps necessary to bring up a demo
-	@echo "  make env         - Create and activate Python virtual environment"
-	@echo "  make init        - Initialize the application (create venv, install deps, init db)"
-	@echo "  make run         - Run the Flask application in development mode"
-	@echo "  make test        - Run all tests with pytest"
-	@echo "  make clean       - Remove all build, test, and coverage artifacts"
-	@echo "  make lint        - Check code style with flake8"
-	@echo "  make format      - Format code with black"
-	@echo "  make db-migrate  - Generate a new database migration"
-	@echo "  make db-upgrade  - Apply all database migrations"
-	@echo "  make db-downgrade- Revert last database migration"
-	@echo "  make test-data   - Load sample data into the database"
+	@echo "  make demo         - Do all steps necessary to bring up a demo"
+	@echo "  make env          - Create and activate Python virtual environment"
+	@echo "  make init         - Initialize the application (create venv, install deps, init db)"
+	@echo "  make run          - Run the Flask application in development mode"
+	@echo "  make test         - Run all tests with pytest"
+	@echo "  make clean        - Remove all build, test, and coverage artifacts"
+	@echo "  make lint         - Check code style with flake8"
+	@echo "  make format       - Format code with black"
+	@echo "  make db-migrate   - Generate a new database migration"
+	@echo "  make db-upgrade   - Apply all database migrations"
+	@echo "  make db-downgrade - Revert last database migration"
+	@echo "  make test-data    - Load sample data into the database"
 	@echo "  make check-aircraft-images - Check aircraft images"
-	@echo "  make frontend-test - Run frontend smoke tests against the running demo instance"
+	@echo "  make frontend-test - Run frontend smoke tests"
+	@echo ""
+	@echo "Docker Commands:"
+	@echo "  make docker-build - Build Docker image"
+	@echo "  make docker-up    - Start service in Docker"
+	@echo "  make docker-down  - Stop and remove Docker containers"
+	@echo "  make docker-test  - Run tests in Docker (recommended)"
+	@echo "  make docker-logs  - View Docker container logs"
 
 demo: clean init test-data run
 
@@ -126,6 +135,28 @@ check-aircraft-images:
 frontend-test:
 	@echo "Running frontend smoke tests against the running demo instance..."
 	$(VENV)/bin/python -m pytest tests/frontend_smoke_test.py
+
+# Docker targets
+docker-build:
+	docker-compose build
+
+docker-up:
+	docker-compose up -d
+	@echo "✅ FlightSchool started in Docker!"
+	@echo "🚀 Web UI: http://localhost:$(PORT)"
+
+docker-down:
+	docker-compose down
+
+docker-test: test-docker
+
+test-docker:
+	@echo "🧪 Running tests in Docker..."
+	docker-compose -f docker-compose.test.yml up --build --abort-on-container-exit
+	docker-compose -f docker-compose.test.yml down -v
+
+docker-logs:
+	docker-compose logs -f
 
 # Error if running on Windows
 ifeq ($(OS),Windows_NT)

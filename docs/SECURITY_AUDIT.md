@@ -47,7 +47,7 @@ found 0 vulnerabilities
 ### 2. Python Dependencies (NO ISSUES FOUND)
 
 **Packages Audited:**
-- `apps/flightplanner/requirements.txt` - FastAPI, httpx, pydantic
+- `apps/flight-planner/requirements.txt` - FastAPI, httpx, pydantic
 - `apps/flightschool/requirements.txt` - Flask 3.1.1, SQLAlchemy 1.4.51
 - `apps/foreflight-dashboard/requirements.txt` - FastAPI 0.128.0, pandas 2.2.1
 
@@ -70,7 +70,7 @@ Created `.github/dependabot.yml` with automated security updates for:
 - packages/shared-sdk
 - packages/ui-framework
 - packages/keystore
-- apps/flightplanner/frontend
+- apps/flight-planner/frontend
 - apps/aviation-accident-tracker/frontend
 - apps/aviation-accident-tracker/backend
 - apps/flight-tracker
@@ -78,7 +78,7 @@ Created `.github/dependabot.yml` with automated security updates for:
 - apps/aviation-missions-app/frontend
 
 **Python Packages (3 directories):**
-- apps/flightplanner
+- apps/flight-planner
 - apps/flightschool
 - apps/foreflight-dashboard
 
@@ -191,7 +191,7 @@ All dependencies use permissive licenses (MIT, Apache 2.0, BSD) compatible with 
 - @types/node: ^20.0.0
 
 ### Python (Major Packages)
-- fastapi: 0.128.0 (foreflight-dashboard), latest (flightplanner)
+- fastapi: 0.128.0 (foreflight-dashboard), latest (flight-planner)
 - Flask: 3.1.1 (flightschool)
 - pydantic: 2.12.5 (foreflight-dashboard)
 - pandas: 2.2.1 (foreflight-dashboard)

@@ -55,7 +55,7 @@ make clean
 3. **Serves** the complete application:
    - 🌐 **Main Application**: http://localhost:5051 (FastAPI + React)
    - 📚 **API Documentation**: http://localhost:5051/docs (Interactive API docs)
-   - ⚛️ **React Dev Server**: http://localhost:3001 (Development mode only)
+   - ⚛️ **React Dev Server**: http://localhost:3005 (Development mode only)
 
 ### No User Accounts Required
 This is a **stateless application** - simply:
@@ -208,7 +208,7 @@ This application is designed for **container-first deployment** and can be deplo
 # Application Configuration
 ENVIRONMENT=production         # Set to 'production' for production deployment
 FASTAPI_PORT=5051             # FastAPI application port
-REACT_DEV_PORT=3001           # React dev server port (development only)
+REACT_DEV_PORT=3005           # React dev server port (development only)
 
 # File Storage (temporary session files only)
 UPLOAD_PATH=/app/uploads      # Temporary file upload directory
@@ -261,7 +261,7 @@ CORS_ORIGINS=https://yourdomain.com            # CORS allowed origins
        repo: jordanhubbard/foreflight-dashboard
        branch: main
      dockerfile_path: Dockerfile
-     http_port: 3001
+     http_port: 3005
      instance_count: 1
      instance_size_slug: basic-xxs
      environment_slug: node-js
@@ -336,7 +336,7 @@ CORS_ORIGINS=https://yourdomain.com            # CORS allowed origins
          "image": "123456789012.dkr.ecr.us-east-1.amazonaws.com/foreflight-dashboard:latest",
          "portMappings": [
            {
-             "containerPort": 3001,
+             "containerPort": 3005,
              "protocol": "tcp"
            }
          ],
@@ -372,7 +372,7 @@ CORS_ORIGINS=https://yourdomain.com            # CORS allowed origins
      --platform managed \
      --region us-central1 \
      --allow-unauthenticated \
-     --port 3001 \
+     --port 3005 \
      --set-env-vars ENVIRONMENT=production,SECRET_KEY=your-secret-key
    ```
 
@@ -395,7 +395,7 @@ CORS_ORIGINS=https://yourdomain.com            # CORS allowed origins
      --resource-group foreflight-rg \
      --name foreflight-dashboard \
      --image your-registry/foreflight-dashboard:latest \
-     --ports 3001 \
+     --ports 3005 \
      --environment-variables ENVIRONMENT=production SECRET_KEY=your-secret-key \
      --cpu 1 \
      --memory 1
@@ -432,7 +432,7 @@ CORS_ORIGINS=https://yourdomain.com            # CORS allowed origins
    ENVIRONMENT=production
    SECRET_KEY=$(openssl rand -base64 32)
    FASTAPI_PORT=5051
-   REACT_DEV_PORT=3001
+   REACT_DEV_PORT=3005
    EOF
    
    # Deploy with Docker Compose
@@ -446,7 +446,7 @@ CORS_ORIGINS=https://yourdomain.com            # CORS allowed origins
        server_name yourdomain.com;
        
        location / {
-           proxy_pass http://localhost:3001;
+          proxy_pass http://localhost:3005;
            proxy_set_header Host $host;
            proxy_set_header X-Real-IP $remote_addr;
            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
@@ -530,7 +530,7 @@ services:
 
 **Common Issues**:
 
-1. **Port Conflicts**: Ensure ports 3001 and 5051 are available
+1. **Port Conflicts**: Ensure ports 3005 and 5051 are available
 2. **Memory Issues**: Increase container memory to 1GB+
 3. **Database Permissions**: Ensure write permissions for `/app/data`
 4. **File Upload Issues**: Ensure write permissions for `/app/uploads`
@@ -544,7 +544,7 @@ docker-compose exec foreflight-dashboard tail -f /app/logs/foreflight.log
 **Getting Help**:
 - Check the [GitHub Issues](https://github.com/jordanhubbard/foreflight-dashboard/issues)
 - Review container logs: `docker-compose logs -f`
-- Verify health check: `curl http://localhost:3001/health`
+- Verify health check: `curl http://localhost:3005/health`
 
 ## License
 

@@ -337,4 +337,4 @@ MIT
 - [@aviation/shared-sdk](../../packages/shared-sdk/) - Weather services and utilities
 - [@aviation/keystore](../../packages/keystore/) - Encrypted secret management
 - [flight-tracker](../flight-tracker/) - Real-time flight tracking
-- [flightplanner](../flightplanner/) - VFR flight planning
+- [flight-planner](../flight-planner/) - VFR flight planning
