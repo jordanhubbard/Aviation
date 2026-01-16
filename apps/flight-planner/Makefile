@@ -1,7 +1,7 @@
 .PHONY: help start stop \
 	dev-up dev-down dev-logs dev-build \
 	prod-up prod-down prod-logs prod-build \
-	backend-test backend-format backend-format-check backend-lint backend-typecheck \
+	backend-setup backend-test backend-format backend-format-check backend-lint backend-typecheck \
 	frontend-install frontend-typecheck frontend-lint frontend-test frontend-e2e frontend-format frontend-format-check \
 	clean
 
@@ -43,7 +43,13 @@ prod-logs:
 prod-build:
 	docker compose -f docker-compose.prod.yml build
 
-backend-test:
+backend-setup:
+	@if [ ! -d .venv ]; then \
+		python3 -m venv .venv; \
+	fi
+	.venv/bin/python -m pip install -r requirements.txt
+
+backend-test: backend-setup
 	.venv/bin/python -m pytest
 
 backend-format:

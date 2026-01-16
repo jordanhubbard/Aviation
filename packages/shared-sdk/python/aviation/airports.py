@@ -12,6 +12,8 @@ import re
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Set, Tuple
 
+from .navigation import haversine_distance as _haversine_distance
+
 
 class Airport(Dict[str, Any]):
     """Airport data structure (dictionary with typed access)."""
@@ -398,9 +400,51 @@ def search_airports(query: str, limit: int = 20) -> List[Airport]:
     return get_airport_database().search(query, limit)
 
 
+def search_airports_advanced(
+    *,
+    query: Optional[str] = None,
+    lat: Optional[float] = None,
+    lon: Optional[float] = None,
+    radius_nm: Optional[float] = None,
+    limit: int = 20,
+) -> List[Airport]:
+    """Search airports using text and/or proximity filters."""
+    return get_airport_database().search_airports(
+        query=query,
+        limit=limit,
+        latitude=lat,
+        longitude=lon,
+        radius_nm=radius_nm,
+    )
+
+
 def get_airport_by_code(code: str) -> Optional[Airport]:
     """Get airport by ICAO or IATA code using the default database."""
     return get_airport_database().get_airport_coordinates(code)
+
+
+def get_airport(code: str) -> Optional[Airport]:
+    """Get airport by ICAO or IATA code, returning None for empty inputs."""
+    if not code or not str(code).strip():
+        return None
+    return get_airport_by_code(code)
+
+
+def load_airport_cache() -> List[Dict[str, Any]]:
+    """Load the raw airport cache data for consumers needing full records."""
+    database = get_airport_database()
+    database._load_airports()
+    return list(database.airports)
+
+
+def haversine_distance(
+    lat1: float,
+    lon1: float,
+    lat2: float,
+    lon2: float,
+) -> float:
+    """Calculate haversine distance in nautical miles."""
+    return _haversine_distance(lat1, lon1, lat2, lon2, "NM")
 
 
 def find_nearby_airports(
