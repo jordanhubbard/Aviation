@@ -4,18 +4,33 @@ Secrets management for ForeFlight Dashboard.
 This module provides centralized secret loading using the Aviation keystore.
 """
 
+import os
 import sys
 from pathlib import Path
 
 # Add keystore Python client to path
-keystore_python = Path(__file__).resolve().parents[4] / "packages" / "keystore" / "python"
+def _packages_root() -> Path:
+    for parent in Path(__file__).resolve().parents:
+        candidate = parent / "packages"
+        if candidate.exists():
+            return candidate
+    return Path("/packages")
+
+
+keystore_python = _packages_root() / "keystore" / "python"
 if str(keystore_python) not in sys.path:
     sys.path.insert(0, str(keystore_python))
 
-from keystore import create_secret_loader, SecretNotFoundError
+try:
+    from keystore import create_secret_loader, SecretNotFoundError
 
-# Create secret loader for this service
-secrets = create_secret_loader('foreflight-dashboard')
+    # Create secret loader for this service
+    secrets = create_secret_loader('foreflight-dashboard')
+    KEYSTORE_AVAILABLE = True
+except Exception as e:
+    print(f"Warning: Keystore not available: {e}")
+    secrets = None
+    KEYSTORE_AVAILABLE = False
 
 
 def get_secret(key: str, default=None, required: bool = False):
@@ -33,6 +48,12 @@ def get_secret(key: str, default=None, required: bool = False):
     Raises:
         SecretNotFoundError: If required=True and secret not found
     """
+    if not KEYSTORE_AVAILABLE:
+        value = os.getenv(key, default)
+        if required and value is None:
+            raise ValueError(f"Required secret not found: {key}")
+        return value
+
     if required:
         return secrets.get_required(key)
     elif default is not None:
@@ -48,23 +69,23 @@ def _load_secrets():
     global SMTP_SERVER, SMTP_USERNAME, SMTP_PASSWORD, REDIS_URL, SENTRY_DSN
     
     # Required secrets
-    SECRET_KEY = secrets.get('SECRET_KEY')
+    SECRET_KEY = get_secret('SECRET_KEY')
     
     # Optional secrets with defaults
-    DATABASE_URL = secrets.get_with_default('DATABASE_URL', 'sqlite:///logbook.db')
+    DATABASE_URL = get_secret('DATABASE_URL', default='sqlite:///logbook.db')
     
     # External API secrets
-    FOREFLIGHT_API_KEY = secrets.get('FOREFLIGHT_API_KEY')
-    FOREFLIGHT_API_SECRET = secrets.get('FOREFLIGHT_API_SECRET')
+    FOREFLIGHT_API_KEY = get_secret('FOREFLIGHT_API_KEY')
+    FOREFLIGHT_API_SECRET = get_secret('FOREFLIGHT_API_SECRET')
     
     # Email configuration
-    SMTP_SERVER = secrets.get('SMTP_SERVER')
-    SMTP_USERNAME = secrets.get('SMTP_USERNAME')
-    SMTP_PASSWORD = secrets.get('SMTP_PASSWORD')
+    SMTP_SERVER = get_secret('SMTP_SERVER')
+    SMTP_USERNAME = get_secret('SMTP_USERNAME')
+    SMTP_PASSWORD = get_secret('SMTP_PASSWORD')
     
     # External services
-    REDIS_URL = secrets.get('REDIS_URL')
-    SENTRY_DSN = secrets.get('SENTRY_DSN')
+    REDIS_URL = get_secret('REDIS_URL')
+    SENTRY_DSN = get_secret('SENTRY_DSN')
 
 
 # Load secrets on module import

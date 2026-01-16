@@ -4,14 +4,11 @@ Secrets management for Flight Planner.
 This module provides centralized secret loading using the Aviation keystore.
 """
 
-import sys
-from pathlib import Path
 from typing import Optional
 
-# Add keystore Python client to path
-keystore_python = Path(__file__).resolve().parents[5] / "packages" / "keystore" / "python"
-if str(keystore_python) not in sys.path:
-    sys.path.insert(0, str(keystore_python))
+from app.utils.paths import add_package_path
+
+add_package_path("keystore/python")
 
 try:
     from keystore import create_secret_loader, SecretNotFoundError

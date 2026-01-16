@@ -9,7 +9,15 @@ from pathlib import Path
 from typing import Optional
 
 # Add keystore Python client to path
-keystore_python = Path(__file__).resolve().parents[2] / "packages" / "keystore" / "python"
+def _packages_root() -> Path:
+    for parent in Path(__file__).resolve().parents:
+        candidate = parent / "packages"
+        if candidate.exists():
+            return candidate
+    return Path("/packages")
+
+
+keystore_python = _packages_root() / "keystore" / "python"
 if str(keystore_python) not in sys.path:
     sys.path.insert(0, str(keystore_python))
 
