@@ -15,7 +15,7 @@ else
 
     # Start FastAPI application (replaces both Flask and old FastAPI)
     # On Railway Docker deployments, routing is tied to the container's exposed port (FASTAPI_PORT).
-    API_PORT=${FASTAPI_PORT:-5051}
+    API_PORT=${PORT:-${FASTAPI_PORT:-5051}}
     echo "Starting FastAPI application on port ${API_PORT}..."
 
     UVICORN_ARGS=(--host=0.0.0.0 --port=${API_PORT})

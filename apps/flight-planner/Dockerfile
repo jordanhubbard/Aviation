@@ -62,6 +62,8 @@ ENV REPO_URL=$REPO_URL \
     BUILD_TIME_UTC=$BUILD_TIME_UTC
 
 COPY --from=builder /opt/venv /opt/venv
+COPY packages/shared-sdk/python /packages/shared-sdk/python
+COPY packages/keystore/python /packages/keystore/python
 
 # Optional: include Beads issue tracker and CLI for local error auto-reporting.
 ARG INSTALL_BD=false
@@ -87,4 +89,4 @@ ENV UVICORN_HOST=0.0.0.0
 # PORT env var here to prevent mismatches.
 ENV UVICORN_PORT=8000
 
-CMD ["sh", "-c", "uvicorn main:app --host ${UVICORN_HOST:-0.0.0.0} --port ${UVICORN_PORT:-8000} --workers ${UVICORN_WORKERS:-1}"]
+CMD ["sh", "-c", "uvicorn main:app --host ${UVICORN_HOST:-0.0.0.0} --port ${PORT:-${UVICORN_PORT:-8000}} --workers ${UVICORN_WORKERS:-1}"]

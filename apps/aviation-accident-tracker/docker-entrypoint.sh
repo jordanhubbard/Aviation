@@ -14,7 +14,7 @@ else
     cd /app
     
     # Start backend API (Express)
-    BACKEND_PORT=${BACKEND_PORT:-3002}
+    BACKEND_PORT=${PORT:-${BACKEND_PORT:-3002}}
     echo "Starting Express API on port ${BACKEND_PORT}..."
     cd /app/backend
     

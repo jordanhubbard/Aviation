@@ -12,6 +12,12 @@ def index():
     return render_template('main/index.html')
 
 
+@main_bp.route('/health')
+def health():
+    """Lightweight health check endpoint."""
+    return {"status": "ok"}
+
+
 @main_bp.route('/profile')
 @login_required
 def profile():

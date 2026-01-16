@@ -45,10 +45,10 @@ EXPOSE 5000
 
 # Set healthcheck
 HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
-  CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:5000/')" || exit 1
+  CMD python -c "import os, urllib.request; urllib.request.urlopen('http://localhost:%s/' % os.getenv('PORT','5000'))" || exit 1
 
 # Start Flask development server
-CMD ["flask", "run", "--host=0.0.0.0", "--port=5000"]
+CMD ["sh", "-c", "flask run --host=0.0.0.0 --port ${PORT:-5000}"]
 
 # Testing stage
 FROM development AS testing
@@ -81,10 +81,10 @@ EXPOSE 5000
 
 # Set healthcheck
 HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
-  CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:5000/')" || exit 1
+  CMD python -c "import os, urllib.request; urllib.request.urlopen('http://localhost:%s/' % os.getenv('PORT','5000'))" || exit 1
 
 # Use gunicorn for production
 RUN pip install gunicorn
 
 # Start with gunicorn
-CMD ["gunicorn", "--bind", "0.0.0.0:5000", "--workers", "4", "--timeout", "60", "app:create_app()"]
+CMD ["sh", "-c", "gunicorn --bind 0.0.0.0:${PORT:-5000} --workers 4 --timeout 60 app:create_app()"]
