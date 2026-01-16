@@ -16,7 +16,7 @@ ENV NODE_ENV=development \
     PYTHONUNBUFFERED=1
 
 # Copy package files for dependency installation
-COPY apps/weather-briefing/package*.json ./
+COPY package*.json ./
 COPY package-lock.json ./
 
 # Copy shared packages source code (needed for workspace resolution)
@@ -37,8 +37,8 @@ RUN cd packages/keystore && npm run build && cd ../..
 RUN cd packages/ui-framework && npm run build && cd ../..
 
 # Copy source code
-COPY apps/weather-briefing/src ./src
-COPY apps/weather-briefing/tsconfig.json ./
+COPY src ./src
+COPY tsconfig.json ./
 
 # Build TypeScript (now shared-sdk dist folder exists and workspace links work)
 RUN npm run build
@@ -79,7 +79,7 @@ RUN npm ci --omit=dev
 
 # Copy built app code from development stage
 COPY --from=development /app/dist ./dist
-COPY apps/weather-briefing/package*.json ./
+COPY package*.json ./
 
 # Create necessary directories
 RUN mkdir -p logs

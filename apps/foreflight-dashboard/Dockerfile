@@ -26,14 +26,14 @@ ENV PYTHONPATH=/app \
     PIP_NO_CACHE_DIR=1
 
 # Copy entrypoint script
-COPY apps/foreflight-dashboard/docker-entrypoint.sh /docker-entrypoint.sh
+COPY docker-entrypoint.sh /docker-entrypoint.sh
 RUN chmod +x /docker-entrypoint.sh
 
 # Create necessary directories
 RUN mkdir -p uploads logs
 
 # Copy requirements first for better caching
-COPY apps/foreflight-dashboard/requirements.txt .
+COPY requirements.txt .
 
 # Development stage with testing tools
 FROM base AS development
@@ -52,7 +52,7 @@ RUN pip install pytest pytest-cov flake8 black isort
 RUN pip install -r requirements.txt
 
 # Copy the application code
-COPY apps/foreflight-dashboard/ .
+COPY . .
 
 # Build frontend (skip if build fails during testing)
 # Note: Cache mounts removed for cloud deployment compatibility
@@ -94,9 +94,9 @@ ENV FLASK_ENV=${FLASK_ENV}
 RUN pip install -r requirements.txt
 
 # Copy only necessary files for production
-COPY apps/foreflight-dashboard/src/ /app/src/
-COPY apps/foreflight-dashboard/frontend/ /app/frontend/
-COPY apps/foreflight-dashboard/docker-entrypoint.sh /docker-entrypoint.sh
+COPY src/ /app/src/
+COPY frontend/ /app/frontend/
+COPY docker-entrypoint.sh /docker-entrypoint.sh
 RUN chmod +x /docker-entrypoint.sh
 
 # Build frontend for production (install all deps including devDeps for build)
