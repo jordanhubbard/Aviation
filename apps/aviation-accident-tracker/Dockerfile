@@ -65,7 +65,7 @@ RUN npm run build
 
 # Build frontend assets for production
 WORKDIR /app/frontend
-RUN npm run build
+RUN ROLLUP_DISABLE_NATIVE=1 npm run build
 
 # Return to app directory
 WORKDIR /app
