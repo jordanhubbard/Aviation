@@ -1,0 +1,204 @@
+.meta-app {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.meta-app-header {
+  background: rgba(255, 255, 255, 0.95);
+  padding: 2rem;
+  text-align: center;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.meta-app-title {
+  font-size: 2.5rem;
+  margin: 0;
+  color: #2d3748;
+  font-weight: 700;
+}
+
+.meta-app-subtitle {
+  margin: 0.5rem 0 0 0;
+  color: #718096;
+  font-size: 1.1rem;
+}
+
+.meta-app-tabs {
+  display: flex;
+  gap: 0.5rem;
+  padding: 1rem 2rem;
+  background: rgba(255, 255, 255, 0.9);
+  overflow-x: auto;
+  border-bottom: 2px solid #e2e8f0;
+}
+
+.aviation-tab {
+  display: flex;
+  align-items: center;
+  border-radius: 8px 8px 0 0;
+  background: #f7fafc;
+  transition: all 0.2s ease;
+  border: 2px solid transparent;
+}
+
+.aviation-tab:hover {
+  background: #edf2f7;
+  transform: translateY(-2px);
+}
+
+.aviation-tab.active {
+  background: white;
+  border-color: #667eea;
+  box-shadow: 0 -2px 8px rgba(102, 126, 234, 0.2);
+}
+
+.aviation-tab-button {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.25rem;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  font-size: 1rem;
+  font-weight: 500;
+  color: #4a5568;
+  transition: color 0.2s ease;
+}
+
+.aviation-tab.active .aviation-tab-button {
+  color: #667eea;
+  font-weight: 600;
+}
+
+.aviation-tab-icon {
+  font-size: 1.5rem;
+}
+
+.aviation-tab-title {
+  white-space: nowrap;
+}
+
+.meta-app-main {
+  flex: 1;
+  padding: 2rem;
+  overflow-y: auto;
+}
+
+.meta-app-pane {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+  min-height: 500px;
+  animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.pane-content {
+  padding: 3rem;
+  text-align: center;
+}
+
+.pane-content h1 {
+  font-size: 2rem;
+  margin: 0 0 1rem 0;
+  color: #2d3748;
+}
+
+.pane-content p {
+  font-size: 1.1rem;
+  color: #718096;
+  margin: 0 0 2rem 0;
+  line-height: 1.6;
+}
+
+.pane-content a {
+  display: inline-block;
+  padding: 0.75rem 2rem;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  text-decoration: none;
+  border-radius: 8px;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+}
+
+.pane-content a:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(102, 126, 234, 0.4);
+}
+
+.meta-app-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 400px;
+  color: #a0aec0;
+  font-size: 1.2rem;
+}
+
+.meta-app-footer {
+  background: rgba(255, 255, 255, 0.95);
+  padding: 1rem 2rem;
+  text-align: center;
+  color: #718096;
+  border-top: 1px solid #e2e8f0;
+}
+
+.meta-app-footer p {
+  margin: 0;
+  font-size: 0.9rem;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .meta-app-header {
+    padding: 1.5rem;
+  }
+
+  .meta-app-title {
+    font-size: 2rem;
+  }
+
+  .meta-app-subtitle {
+    font-size: 1rem;
+  }
+
+  .meta-app-tabs {
+    padding: 0.75rem 1rem;
+  }
+
+  .aviation-tab-button {
+    padding: 0.5rem 1rem;
+    font-size: 0.9rem;
+  }
+
+  .meta-app-main {
+    padding: 1rem;
+  }
+
+  .pane-content {
+    padding: 2rem 1rem;
+  }
+
+  .pane-content h1 {
+    font-size: 1.5rem;
+  }
+
+  .pane-content p {
+    font-size: 1rem;
+  }
+}

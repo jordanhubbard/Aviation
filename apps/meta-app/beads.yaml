@@ -1,0 +1,22 @@
+version: "1.0"
+
+beads:
+  - name: app-component
+    description: Main React app component
+    path: src/App.tsx
+    dependencies: []
+    parallel: true
+    
+  - name: pane-components
+    description: Placeholder pane components for each aviation app
+    path: src/App.tsx
+    dependencies: []
+    parallel: true
+
+execution_groups:
+  - name: ui
+    beads: [app-component, pane-components]
+
+ci:
+  test_strategy: parallel
+  max_parallel: 2
