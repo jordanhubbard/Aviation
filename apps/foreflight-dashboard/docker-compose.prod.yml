@@ -4,7 +4,8 @@
 services:
   foreflight-dashboard:
     build:
-      dockerfile: Dockerfile  # Use production Dockerfile
+      context: ../..
+      dockerfile: apps/foreflight-dashboard/Dockerfile  # Use production Dockerfile
       target: production
     environment:
       - PYTHONPATH=/app

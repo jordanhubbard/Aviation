@@ -4,8 +4,8 @@ services:
   flightschool-test:
     image: flightschool:test
     build:
-      context: .
-      dockerfile: ${DOCKERFILE:-Dockerfile}
+      context: ../..
+      dockerfile: ${DOCKERFILE:-apps/flightschool/Dockerfile}
       target: testing
       args:
         PYTHON_VERSION: ${PYTHON_VERSION:-3.11}

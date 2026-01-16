@@ -4,8 +4,8 @@ services:
   flight-tracker-test:
     image: flight-tracker:test
     build:
-      context: .
-      dockerfile: ${DOCKERFILE:-Dockerfile}
+      context: ../..
+      dockerfile: ${DOCKERFILE:-apps/flight-tracker/Dockerfile}
       target: testing
       args:
         NODE_VERSION: ${NODE_VERSION:-20}

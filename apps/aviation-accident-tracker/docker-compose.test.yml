@@ -4,8 +4,8 @@ services:
   accident-tracker-test:
     image: aviation-accident-tracker:test
     build:
-      context: .
-      dockerfile: ${DOCKERFILE:-Dockerfile}
+      context: ../..
+      dockerfile: ${DOCKERFILE:-apps/aviation-accident-tracker/Dockerfile}
       target: testing
       args:
         NODE_VERSION: ${NODE_VERSION:-20}

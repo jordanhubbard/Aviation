@@ -4,8 +4,8 @@ services:
   weather-briefing:
     image: weather-briefing:dev
     build:
-      context: .
-      dockerfile: ${DOCKERFILE:-Dockerfile}
+      context: ../..
+      dockerfile: ${DOCKERFILE:-apps/weather-briefing/Dockerfile}
       target: development
       args:
         NODE_VERSION: ${NODE_VERSION:-20}

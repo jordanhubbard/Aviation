@@ -2,8 +2,8 @@ services:
   aviation-missions:
     image: aviation-missions:latest
     build:
-      context: .
-      dockerfile: Dockerfile
+      context: ../..
+      dockerfile: apps/aviation-missions-app/Dockerfile
       target: production
     ports:
       - "${PORT:-8080}:3000"

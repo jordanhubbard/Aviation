@@ -2,8 +2,8 @@ services:
   foreflight-dashboard:
     image: foreflight-dashboard:dev
     build:
-      context: .
-      dockerfile: ${DOCKERFILE:-Dockerfile}
+      context: ../..
+      dockerfile: ${DOCKERFILE:-apps/foreflight-dashboard/Dockerfile}
       target: development
       args:
         PYTHON_VERSION: ${PYTHON_VERSION:-3.11}

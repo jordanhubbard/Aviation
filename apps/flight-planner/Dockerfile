@@ -1,10 +1,10 @@
 FROM node:20-alpine AS frontend-build
 
 WORKDIR /app/frontend
-COPY frontend/package.json frontend/package-lock.json ./
+COPY apps/flight-planner/frontend/package.json apps/flight-planner/frontend/package-lock.json ./
 RUN npm ci
 
-COPY frontend/ ./
+COPY apps/flight-planner/frontend/ ./
 RUN npm run build
 
 
@@ -29,7 +29,7 @@ RUN apt-get update \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /build
-COPY requirements.txt ./requirements.txt
+COPY apps/flight-planner/requirements.txt ./requirements.txt
 COPY packages/shared-sdk/python /packages/shared-sdk/python
 
 RUN python -m venv /opt/venv \
@@ -72,10 +72,10 @@ RUN if [ "$INSTALL_BD" = "true" ]; then \
     fi
 
 WORKDIR /app
-COPY .beads/ ./.beads/
+COPY apps/flight-planner/.beads/ ./.beads/
 
 WORKDIR /app/backend
-COPY backend/ ./
+COPY apps/flight-planner/backend/ ./
 COPY --from=frontend-build /app/frontend/dist/ /app/backend/static/
 
 EXPOSE 8000

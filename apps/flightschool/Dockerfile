@@ -24,7 +24,7 @@ ENV PYTHONPATH=/app \
 RUN mkdir -p instance uploads static/photos logs
 
 # Copy requirements first for better caching
-COPY requirements.txt .
+COPY apps/flightschool/requirements.txt .
 
 # Development stage
 FROM base AS development
@@ -33,7 +33,7 @@ FROM base AS development
 RUN pip install -r requirements.txt
 
 # Copy application code
-COPY . .
+COPY apps/flightschool/ .
 
 # Set Flask environment variables
 ENV FLASK_APP=app \
@@ -67,9 +67,9 @@ FROM base AS production
 RUN pip install -r requirements.txt
 
 # Copy application code
-COPY app ./app
-COPY config.py app_secrets.py ./
-COPY app/static ./static
+COPY apps/flightschool/app ./app
+COPY apps/flightschool/config.py apps/flightschool/app_secrets.py ./
+COPY apps/flightschool/app/static ./static
 
 # Set Flask environment variables for production
 ENV FLASK_APP=app \

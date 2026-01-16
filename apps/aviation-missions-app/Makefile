@@ -50,7 +50,7 @@ help:
 .PHONY: build
 build:
 	@echo "🔨 Building Aviation Mission Management Docker image..."
-	docker build -t $(IMAGE_NAME):latest .
+	docker build -t $(IMAGE_NAME):latest -f ../../apps/aviation-missions-app/Dockerfile ../..
 
 # Generate missions.json from missions.txt using backend parser
 .PHONY: generate-missions-json
@@ -162,7 +162,7 @@ clean: stop
 test:
 	@echo "🧪 Testing application in Docker containers..."
 	@echo "Building and running comprehensive test suite..."
-	docker build --target testing -t $(IMAGE_NAME):test .
+	docker build --target testing -t $(IMAGE_NAME):test -f ../../apps/aviation-missions-app/Dockerfile ../..
 	@echo "✅ All tests completed successfully!"
 	@echo ""
 	@echo "Test coverage includes:"
