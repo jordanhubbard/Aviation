@@ -15,7 +15,7 @@ RUN apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
 # Set environment variables
-ENV PYTHONPATH=/app \
+ENV PYTHONPATH=/app:/packages/shared-sdk/python \
     PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     PIP_NO_CACHE_DIR=1
@@ -34,6 +34,7 @@ RUN pip install -r requirements.txt
 
 # Copy application code
 COPY apps/flightschool/ .
+COPY packages/shared-sdk/python /packages/shared-sdk/python
 
 # Set Flask environment variables
 ENV FLASK_APP=app \
@@ -70,6 +71,7 @@ RUN pip install -r requirements.txt
 COPY apps/flightschool/app ./app
 COPY apps/flightschool/config.py apps/flightschool/app_secrets.py ./
 COPY apps/flightschool/app/static ./static
+COPY packages/shared-sdk/python /packages/shared-sdk/python
 
 # Set Flask environment variables for production
 ENV FLASK_APP=app \
