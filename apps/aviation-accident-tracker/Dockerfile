@@ -64,8 +64,10 @@ WORKDIR /app/backend
 RUN npm run build
 
 # Build frontend assets for production
+WORKDIR /app
+RUN npm install --no-save --no-package-lock @rollup/rollup-linux-x64-musl
 WORKDIR /app/frontend
-RUN ROLLUP_DISABLE_NATIVE=1 npm run build
+RUN npm run build
 
 # Return to app directory
 WORKDIR /app
