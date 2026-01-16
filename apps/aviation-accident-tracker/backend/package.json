@@ -35,7 +35,10 @@
     "dataloader": "^2.2.2",
     "@graphql-tools/schema": "^10.0.2",
     "graphql-validation-complexity": "^0.4.2",
-    "express-rate-limit": "^7.1.5"
+    "express-rate-limit": "^7.1.5",
+    "pdfkit": "^0.15.0",
+    "xlsx": "^0.18.5",
+    "yaml": "^2.6.1"
   },
   "devDependencies": {
     "typescript": "^5.0.0",
@@ -49,6 +52,7 @@
     "tsx": "^4.7.0",
     "swagger-jsdoc": "^6.2.8",
     "supertest": "^6.3.4",
-    "@types/supertest": "^6.0.2"
+    "@types/supertest": "^6.0.2",
+    "@types/pdfkit": "^0.13.5"
   }
 }

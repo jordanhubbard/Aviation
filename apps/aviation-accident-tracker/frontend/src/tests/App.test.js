@@ -9,17 +9,18 @@ describe('App Component', () => {
         vi.clearAllMocks();
         // Setup default fetch mocks
         global.fetch = vi.fn((url) => {
-            if (url.includes('/api/events')) {
+            const urlString = url.toString();
+            if (urlString.includes('/api/events')) {
                 return Promise.resolve({
                     json: () => Promise.resolve({ data: mockEvents }),
                 });
             }
-            if (url.includes('/api/airports')) {
+            if (urlString.includes('/api/airports')) {
                 return Promise.resolve({
                     json: () => Promise.resolve(mockAirports),
                 });
             }
-            if (url.includes('/api/filters/options')) {
+            if (urlString.includes('/api/filters/options')) {
                 return Promise.resolve({
                     json: () => Promise.resolve(mockFilterOptions),
                 });

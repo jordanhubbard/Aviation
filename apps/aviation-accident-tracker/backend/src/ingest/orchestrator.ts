@@ -16,6 +16,7 @@ export interface IngestionResult {
   eventsProcessed: number;
   eventsCreated: number;
   eventsUpdated: number;
+  eventsIngested: number; // Total events ingested (created + updated)
   errors: number;
 }
 
@@ -70,6 +71,7 @@ export class IngestionOrchestrator {
       eventsProcessed: 0,
       eventsCreated: 0,
       eventsUpdated: 0,
+      eventsIngested: 0,
       errors: 0
     };
 
@@ -119,6 +121,9 @@ export class IngestionOrchestrator {
       });
       result.errors++;
     }
+
+    // Calculate total ingested
+    result.eventsIngested = result.eventsCreated + result.eventsUpdated;
 
     return result;
   }

@@ -21,6 +21,7 @@ type EventRecord = {
   lon?: number;
   summary?: string;
   narrative?: string;
+  status?: string;
   sources: { sourceName: string; url: string }[];
 };
 

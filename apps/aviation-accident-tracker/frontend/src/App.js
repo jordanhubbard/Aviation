@@ -35,6 +35,24 @@ export function App() {
     const [from, setFrom] = useState('');
     const [to, setTo] = useState('');
     const [options, setOptions] = useState({ countries: [], regions: [] });
+    const [exportFormat, setExportFormat] = useState('csv');
+    const [exportAll, setExportAll] = useState(false);
+    const [exporting, setExporting] = useState(false);
+    const [exportError, setExportError] = useState(null);
+    const exportColumns = useMemo(() => [
+        'dateZ',
+        'registration',
+        'aircraftType',
+        'operator',
+        'category',
+        'airportIcao',
+        'country',
+        'region',
+        'fatalities',
+        'injuries',
+        'summary'
+    ], []);
+    const [selectedColumns, setSelectedColumns] = useState(exportColumns);
     const fetchAirports = useMemo(() => debounce((q) => {
         if (!q.trim())
             return setAirportOptions([]);
@@ -84,6 +102,52 @@ export function App() {
             .then((data) => setOptions(data))
             .catch(() => setOptions({ countries: [], regions: [] }));
     }, []);
+    const handleExport = async () => {
+        setExportError(null);
+        setExporting(true);
+        try {
+            const payload = exportAll
+                ? { format: exportFormat, columns: selectedColumns, exportAll: true }
+                : {
+                    format: exportFormat,
+                    columns: selectedColumns,
+                    exportAll: false,
+                    search,
+                    category,
+                    airport: airportQuery,
+                    country,
+                    region,
+                    from,
+                    to
+                };
+            const response = await fetch('/api/events/export', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            if (!response.ok) {
+                const errorText = await response.text();
+                throw new Error(errorText || `Export failed (${response.status})`);
+            }
+            const blob = await response.blob();
+            const extension = exportFormat === 'xlsx' ? 'xlsx' : exportFormat;
+            const filename = `accidents_export.${extension}`;
+            const url = window.URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = filename;
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+            window.URL.revokeObjectURL(url);
+        }
+        catch (err) {
+            setExportError(err instanceof Error ? err.message : 'Export failed.');
+        }
+        finally {
+            setExporting(false);
+        }
+    };
     const positioned = useMemo(() => events.filter((e) => typeof e.lat === 'number' && typeof e.lon === 'number'), [events]);
     return (_jsxs("div", { style: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, padding: 16 }, children: [_jsxs("div", { style: { gridColumn: '1 / span 2' }, children: [_jsx("h1", { children: "Aviation Accident Tracker" }), loading && _jsx("p", { children: "Loading events\u2026" }), error && _jsxs("p", { style: { color: 'red' }, children: ["Error: ", error] }), !loading && events.length === 0 && _jsx("p", { children: "No events yet. Run backend seed or ingestion." })] }), _jsxs("div", { style: { gridColumn: '1 / span 2', display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }, children: [_jsxs("label", { children: ["Search:", ' ', _jsx("input", { value: search, onChange: (e) => {
                                     setPage(0);
@@ -126,7 +190,12 @@ export function App() {
                                 region && 'region',
                                 from && 'from',
                                 to && 'to',
-                            ].filter(Boolean).length || '0'] })] }), _jsx("div", { style: { height: 480, minHeight: 400 }, children: _jsxs(MapContainer, { center: [20, 0], zoom: 2, style: { height: '100%', width: '100%' }, children: [_jsx(TileLayer, { url: "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", attribution: "\u00A9 OpenStreetMap contributors" }), _jsx(MarkerClusterGroup, { chunkedLoading: true, children: positioned.map((e) => (_jsx(Marker, { position: [e.lat, e.lon], icon: icon, eventHandlers: { click: () => setSelected(e) }, children: _jsxs(Popup, { children: [_jsx("strong", { children: e.registration }), " (", e.aircraftType || 'Aircraft', ")", _jsx("br", {}), formatDate(e.dateZ), " \u2014 ", e.summary || 'No summary', _jsx("br", {}), e.operator || 'Unknown operator'] }) }, e.id))) })] }) }), _jsxs("div", { children: [loading ? (_jsx("p", { children: "Loading\u2026" })) : events.length === 0 ? (_jsx("p", { children: "No events found for current filters." })) : (_jsxs("table", { style: { width: '100%', borderCollapse: 'collapse' }, children: [_jsx("thead", { children: _jsxs("tr", { children: [_jsx("th", { children: "Date (Z)" }), _jsx("th", { children: "Reg" }), _jsx("th", { children: "Operator" }), _jsx("th", { children: "Type" }), _jsx("th", { children: "Airport" }), _jsx("th", { children: "Category" })] }) }), _jsx("tbody", { children: events.map((e) => (_jsxs("tr", { onClick: () => setSelected(e), style: { cursor: 'pointer' }, children: [_jsx("td", { children: formatDate(e.dateZ) }), _jsx("td", { children: e.registration }), _jsx("td", { children: e.operator || '—' }), _jsx("td", { children: e.aircraftType || '—' }), _jsx("td", { children: e.airportIcao || e.airportIata || '—' }), _jsx("td", { children: _jsx(Badge, { color: e.category === 'commercial' ? '#e3f2fd' : e.category === 'general' ? '#e8f5e9' : '#eee', border: "#ccc", children: e.category }) })] }, e.id))) })] })), _jsxs("div", { style: { marginTop: 8, display: 'flex', gap: 8, alignItems: 'center' }, children: [_jsx("button", { disabled: page === 0, onClick: () => setPage((p) => Math.max(0, p - 1)), children: "Prev" }), _jsxs("span", { children: ["Page ", page + 1] }), _jsx("button", { onClick: () => setPage((p) => p + 1), children: "Next" })] })] }), selected && (_jsx("div", { style: {
+                            ].filter(Boolean).length || '0'] })] }), _jsxs("div", { style: { gridColumn: '1 / span 2', display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }, children: [_jsxs("label", { children: ["Export format:", ' ', _jsxs("select", { value: exportFormat, onChange: (e) => setExportFormat(e.target.value), children: [_jsx("option", { value: "csv", children: "CSV" }), _jsx("option", { value: "json", children: "JSON" }), _jsx("option", { value: "xlsx", children: "Excel (XLSX)" }), _jsx("option", { value: "pdf", children: "PDF" })] })] }), _jsxs("label", { children: [_jsx("input", { type: "checkbox", checked: exportAll, onChange: (e) => setExportAll(e.target.checked) }), "Export all data"] }), _jsx("button", { onClick: handleExport, disabled: exporting || selectedColumns.length === 0, children: exporting ? 'Exporting…' : 'Export' }), exportError && _jsxs("span", { style: { color: 'red' }, children: ["Export error: ", exportError] })] }), _jsxs("div", { style: { gridColumn: '1 / span 2', display: 'flex', gap: 12, flexWrap: 'wrap' }, children: [_jsx("strong", { children: "Columns:" }), _jsx("button", { type: "button", onClick: () => setSelectedColumns(exportColumns), disabled: selectedColumns.length === exportColumns.length, children: "Select all" }), _jsx("button", { type: "button", onClick: () => setSelectedColumns([]), disabled: selectedColumns.length === 0, children: "Clear" }), exportColumns.map((col) => (_jsxs("label", { style: { display: 'flex', alignItems: 'center', gap: 4 }, children: [_jsx("input", { type: "checkbox", checked: selectedColumns.includes(col), onChange: (e) => {
+                                    const next = e.target.checked
+                                        ? [...selectedColumns, col]
+                                        : selectedColumns.filter((c) => c !== col);
+                                    setSelectedColumns(next);
+                                } }), col] }, col)))] }), _jsx("div", { style: { height: 480, minHeight: 400 }, children: _jsxs(MapContainer, { center: [20, 0], zoom: 2, style: { height: '100%', width: '100%' }, children: [_jsx(TileLayer, { url: "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", attribution: "\u00A9 OpenStreetMap contributors" }), _jsx(MarkerClusterGroup, { chunkedLoading: true, children: positioned.map((e) => (_jsx(Marker, { position: [e.lat, e.lon], icon: icon, eventHandlers: { click: () => setSelected(e) }, children: _jsxs(Popup, { children: [_jsx("strong", { children: e.registration }), " (", e.aircraftType || 'Aircraft', ")", _jsx("br", {}), formatDate(e.dateZ), " \u2014 ", e.summary || 'No summary', _jsx("br", {}), e.operator || 'Unknown operator'] }) }, e.id))) })] }) }), _jsxs("div", { children: [loading ? (_jsx("p", { children: "Loading\u2026" })) : events.length === 0 ? (_jsx("p", { children: "No events found for current filters." })) : (_jsxs("table", { style: { width: '100%', borderCollapse: 'collapse' }, children: [_jsx("thead", { children: _jsxs("tr", { children: [_jsx("th", { children: "Date (Z)" }), _jsx("th", { children: "Reg" }), _jsx("th", { children: "Operator" }), _jsx("th", { children: "Type" }), _jsx("th", { children: "Airport" }), _jsx("th", { children: "Category" })] }) }), _jsx("tbody", { children: events.map((e) => (_jsxs("tr", { onClick: () => setSelected(e), style: { cursor: 'pointer' }, children: [_jsx("td", { children: formatDate(e.dateZ) }), _jsx("td", { children: e.registration }), _jsx("td", { children: e.operator || '—' }), _jsx("td", { children: e.aircraftType || '—' }), _jsx("td", { children: e.airportIcao || e.airportIata || '—' }), _jsx("td", { children: _jsx(Badge, { color: e.category === 'commercial' ? '#e3f2fd' : e.category === 'general' ? '#e8f5e9' : '#eee', border: "#ccc", children: e.category }) })] }, e.id))) })] })), _jsxs("div", { style: { marginTop: 8, display: 'flex', gap: 8, alignItems: 'center' }, children: [_jsx("button", { disabled: page === 0, onClick: () => setPage((p) => Math.max(0, p - 1)), children: "Prev" }), _jsxs("span", { children: ["Page ", page + 1] }), _jsx("button", { onClick: () => setPage((p) => p + 1), children: "Next" })] })] }), selected && (_jsx("div", { style: {
                     position: 'fixed',
                     inset: 0,
                     background: 'rgba(0,0,0,0.4)',

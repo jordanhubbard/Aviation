@@ -209,7 +209,7 @@ export class EventRepository {
   /**
    * List events with pagination and filters
    */
-  async listEvents(params: ListEventsParams): Promise<EventRecord[]> {
+  async listEvents(params: ListEventsParams): Promise<{ events: EventRecord[]; total: number }> {
     const conditions: string[] = [];
     const sqlParams: any[] = [];
 
@@ -267,8 +267,14 @@ export class EventRepository {
 
     const rows: DbEvent[] = await this.dbAll(sql, sqlParams);
     
+    // Get total count
+    const total = await this.countEvents(params);
+    
     // For list view, we don't include sources (performance)
-    return rows.map(row => this.dbEventToRecord(row, []));
+    return {
+      events: rows.map(row => this.dbEventToRecord(row, [])),
+      total
+    };
   }
 
   /**
@@ -374,6 +380,58 @@ export class EventRepository {
 
     const result = await this.dbGet(sql, sqlParams);
     return result.count;
+  }
+
+  /**
+   * Get event detail by ID (alias for getEventWithSources)
+   */
+  async getEventDetail(id: string | number): Promise<EventRecord | null> {
+    return this.getEventWithSources(String(id));
+  }
+
+  /**
+   * Get statistics (simplified implementation)
+   */
+  async getStatistics(params: ListEventsParams): Promise<{ category?: string; country?: string; count: number }[]> {
+    let sql = 'SELECT ';
+    let groupBy = '';
+    
+    if (params.category && params.category !== 'all') {
+      sql += 'category';
+      groupBy = 'category';
+    } else if (params.country) {
+      sql += 'country';
+      groupBy = 'country';
+    } else {
+      sql += 'category';
+      groupBy = 'category';
+    }
+    
+    sql += ', COUNT(*) as count FROM events';
+    
+    const conditions: string[] = [];
+    const sqlParams: any[] = [];
+    
+    if (params.from) {
+      conditions.push('date_z >= ?');
+      sqlParams.push(params.from);
+    }
+    if (params.to) {
+      conditions.push('date_z <= ?');
+      sqlParams.push(params.to);
+    }
+    
+    if (conditions.length > 0) {
+      sql += ' WHERE ' + conditions.join(' AND ');
+    }
+    
+    sql += ` GROUP BY ${groupBy}`;
+    
+    const rows = await this.dbAll(sql, sqlParams);
+    return rows.map((row: any) => ({
+      [groupBy]: row[groupBy],
+      count: row.count
+    }));
   }
 
   /**

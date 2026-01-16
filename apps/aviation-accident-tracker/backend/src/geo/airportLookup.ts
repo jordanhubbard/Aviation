@@ -5,35 +5,21 @@
  * from the local JSON file.
  */
 
-import fs from 'fs';
 import path from 'path';
 import {
   Airport,
-  loadAirportData,
-  findAirport as sdkFindAirport,
-  findNearestAirport,
+  AirportDatabase,
+  getAirportByCode,
   searchAirports as sdkSearchAirports,
+  findNearbyAirports,
 } from '@aviation/shared-sdk';
 
 // Re-export Airport type for backward compatibility
 export type AirportRecord = Airport;
 
-// Load airport data from local JSON file
+// Create airport database instance
 const dataPath = path.resolve(path.dirname(new URL(import.meta.url).pathname), '../../data/airports.json');
-
-try {
-  const raw = fs.readFileSync(dataPath, 'utf-8');
-  const airports = JSON.parse(raw) as Airport[];
-  loadAirportData(airports);
-  console.log(`[geo] Loaded ${airports.length} airports from ${dataPath}`);
-} catch (err) {
-  console.warn('[geo] Failed to load airports.json, using fallback sample data', err);
-  // Load minimal fallback data
-  loadAirportData([
-    { icao: 'KSFO', iata: 'SFO', name: 'San Francisco Intl', country: 'US', region: 'CA', latitude: 37.6188, longitude: -122.375 },
-    { icao: 'KJFK', iata: 'JFK', name: 'John F Kennedy Intl', country: 'US', region: 'NY', latitude: 40.6413, longitude: -73.7781 },
-  ]);
-}
+const db = new AirportDatabase(dataPath);
 
 /**
  * Find an airport by ICAO or IATA code
@@ -41,7 +27,7 @@ try {
  * @returns Airport record or undefined if not found
  */
 export function findAirport(code: string): AirportRecord | undefined {
-  return sdkFindAirport(code);
+  return getAirportByCode(code);
 }
 
 /**
@@ -61,5 +47,6 @@ export function searchAirports(query: string, limit = 10): AirportRecord[] {
  * @returns Nearest airport or undefined
  */
 export function reverseLookup(lat: number, lon: number): AirportRecord | undefined {
-  return findNearestAirport(lat, lon);
+  const nearby = findNearbyAirports(lat, lon, 50, 1); // 50nm radius, 1 result
+  return nearby.length > 0 ? nearby[0] : undefined;
 }

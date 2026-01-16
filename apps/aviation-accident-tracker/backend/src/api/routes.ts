@@ -8,7 +8,6 @@ import { logger } from '../logger.js';
 import { IngestionOrchestrator } from '../ingest/orchestrator.js';
 import type { ListEventsParams } from '../types.js';
 import { searchAirports } from '../geo/airportLookup.js';
-import airportsData from '../data/airports.json' assert { type: 'json' };
 import { getCache } from '../cache.js';
 
 const router = express.Router();
@@ -16,7 +15,6 @@ const router = express.Router();
 // Lazy-init repository (shared across requests)
 let repository: EventRepository | null = null;
 let orchestrator: IngestionOrchestrator | null = null;
-const exportRequestsByIp = new Map<string, number[]>();
 const exportRequestsByIp = new Map<string, number[]>();
 
 function getRepository(): EventRepository {
@@ -89,8 +87,7 @@ function buildExportRow(event: any, columns: ExportColumn[]): Record<string, str
 
 function csvEscape(value: string | number | null): string {
   const str = value === null ? '' : String(value);
-  if (str.includes('"') || str.includes(',') || str.includes('
-')) {
+  if (str.includes('"') || str.includes(',') || str.includes('\n')) {
     return `"${str.replace(/"/g, '""')}"`;
   }
   return str;
@@ -227,13 +224,11 @@ router.post('/events/export', async (req, res, next) => {
       res.setHeader('Content-Type', 'text/csv');
       res.setHeader('Content-Disposition', `attachment; filename="${fileBase}.csv"`);
 
-      res.write(columns.join(',') + '
-');
+      res.write(columns.join(',') + '\n');
       for (const event of events) {
         const row = buildExportRow(event, columns);
         const line = columns.map((col) => csvEscape(row[col])).join(',');
-        res.write(line + '
-');
+        res.write(line + '\n');
       }
       res.end();
       return;
@@ -449,8 +444,9 @@ router.get('/filters/options', (_req, res) => {
       res.setHeader('Cache-Control', 'private, max-age=300');
       return res.json(cached);
     }
-    const countries = Array.from(new Set((airportsData as any[]).map((a) => a.country).filter(Boolean))).sort();
-    const regions = Array.from(new Set((airportsData as any[]).map((a) => a.region).filter(Boolean))).sort();
+    // TODO: Get countries and regions from database
+    const countries: string[] = [];
+    const regions: string[] = [];
     const payload = { countries, regions };
     cache.set(cacheKey, payload, 300).catch(() => undefined);
     res.setHeader('Cache-Control', 'private, max-age=300');

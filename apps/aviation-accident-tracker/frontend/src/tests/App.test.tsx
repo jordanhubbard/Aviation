@@ -8,24 +8,25 @@ describe('App Component', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     // Setup default fetch mocks
-    global.fetch = vi.fn((url: string) => {
-      if (url.includes('/api/events')) {
+    global.fetch = vi.fn((url: RequestInfo | URL) => {
+      const urlString = url.toString();
+      if (urlString.includes('/api/events')) {
         return Promise.resolve({
           json: () => Promise.resolve({ data: mockEvents }),
         } as Response);
       }
-      if (url.includes('/api/airports')) {
+      if (urlString.includes('/api/airports')) {
         return Promise.resolve({
           json: () => Promise.resolve(mockAirports),
         } as Response);
       }
-      if (url.includes('/api/filters/options')) {
+      if (urlString.includes('/api/filters/options')) {
         return Promise.resolve({
           json: () => Promise.resolve(mockFilterOptions),
         } as Response);
       }
       return Promise.reject(new Error('Unknown URL'));
-    });
+    }) as typeof fetch;
   });
 
   describe('Initial Rendering', () => {
