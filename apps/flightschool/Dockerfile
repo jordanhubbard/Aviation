@@ -87,4 +87,4 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
 RUN pip install gunicorn
 
 # Start with gunicorn
-CMD ["sh", "-c", "gunicorn --bind 0.0.0.0:${PORT:-5000} --workers 4 --timeout 60 app:create_app()"]
+CMD ["sh", "-c", "gunicorn --bind 0.0.0.0:${PORT:-5000} --workers 4 --timeout 60 'app:create_app()'"]

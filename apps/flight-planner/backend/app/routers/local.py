@@ -1,10 +1,11 @@
 from __future__ import annotations
 
-from app.utils.paths import add_package_path
-
-add_package_path("shared-sdk/python")
-
-from aviation import get_airport, search_airports_advanced, haversine_distance, load_airport_cache
+from app.models.airport import (
+    get_airport_coordinates,
+    search_airports_advanced,
+    haversine_distance,
+    load_airport_cache,
+)
 
 from datetime import datetime, timezone
 import math
@@ -72,7 +73,7 @@ def local_plan(req: LocalPlanRequest) -> LocalPlanResponse:
     radius_nm = float(req.radius_nm) if req.radius_nm is not None else 50.0
     planned_at_utc = datetime.now(timezone.utc)
 
-    center = get_airport(req.airport)
+    center = get_airport_coordinates(req.airport)
     if not center:
         raise HTTPException(status_code=404, detail=f"Unknown airport '{req.airport}'")
 

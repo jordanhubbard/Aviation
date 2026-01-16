@@ -2,7 +2,7 @@
 set -e
 
 # Create necessary directories
-mkdir -p data logs
+mkdir -p data logs backend/data
 
 # Check if we're running tests
 if [ "$1" = "npm" ] && [ "$2" = "test" ]; then

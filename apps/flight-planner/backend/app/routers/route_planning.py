@@ -1,10 +1,11 @@
 from __future__ import annotations
 
-from app.utils.paths import add_package_path
-
-add_package_path("shared-sdk/python")
-
-from aviation import get_airport, search_airports_advanced, haversine_distance, load_airport_cache
+from app.models.airport import (
+    get_airport_coordinates,
+    search_airports_advanced,
+    haversine_distance,
+    load_airport_cache,
+)
 
 from typing import List, Literal, Optional, Tuple
 
@@ -48,7 +49,7 @@ class RouteResponse(BaseModel):
 
 @router.get("/airport/{code}")
 def airport_lookup(code: str) -> dict:
-    airport = get_airport(code)
+    airport = get_airport_coordinates(code)
     if not airport:
         raise HTTPException(status_code=404, detail=f"Airport {code} not found")
     return airport
@@ -56,8 +57,8 @@ def airport_lookup(code: str) -> dict:
 
 @router.post("/route", response_model=RouteResponse)
 def calculate_route(req: RouteRequest) -> RouteResponse:
-    origin = get_airport(req.origin)
-    dest = get_airport(req.destination)
+    origin = get_airport_coordinates(req.origin)
+    dest = get_airport_coordinates(req.destination)
     if not origin or not dest:
         raise HTTPException(status_code=400, detail="Invalid origin or destination code")
 

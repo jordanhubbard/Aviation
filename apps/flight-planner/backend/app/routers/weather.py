@@ -1,10 +1,11 @@
 from __future__ import annotations
 
-from app.utils.paths import add_package_path
-
-add_package_path("shared-sdk/python")
-
-from aviation import get_airport, search_airports_advanced, haversine_distance, load_airport_cache
+from app.models.airport import (
+    get_airport_coordinates,
+    search_airports_advanced,
+    haversine_distance,
+    load_airport_cache,
+)
 
 from typing import List, Tuple
 
@@ -128,7 +129,7 @@ def weather_route(req: RouteWeatherRequest) -> RouteWeatherResponse:
     description="Daily forecast from Open-Meteo (1-16 days).",
 )
 def weather_forecast(code: str, days: int = 7) -> ForecastResponse:
-    coords = get_airport(code)
+    coords = get_airport_coordinates(code)
     if not coords:
         raise HTTPException(status_code=404, detail=f"Unknown airport '{code}'")
 
@@ -154,7 +155,7 @@ def weather_forecast(code: str, days: int = 7) -> ForecastResponse:
     description="Current conditions from OpenWeatherMap enriched with METAR parsing when available.",
 )
 def weather_for_airport(code: str) -> dict:
-    coords = get_airport(code)
+    coords = get_airport_coordinates(code)
     if not coords:
         raise HTTPException(status_code=404, detail=f"Unknown airport '{code}'")
 
@@ -211,7 +212,7 @@ def weather_for_airport(code: str) -> dict:
     description="VFR/IFR suitability (best-effort) and suggested departure windows using Open-Meteo hourly data.",
 )
 def weather_recommendations(code: str) -> WeatherRecommendationsResponse:
-    coords = get_airport(code)
+    coords = get_airport_coordinates(code)
     if not coords:
         raise HTTPException(status_code=404, detail=f"Unknown airport '{code}'")
 

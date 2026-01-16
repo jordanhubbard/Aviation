@@ -2,11 +2,7 @@ from __future__ import annotations
 
 from fastapi import APIRouter, HTTPException, Query
 
-from app.utils.paths import add_package_path
-
-add_package_path("shared-sdk/python")
-
-from aviation import get_airport, search_airports_advanced
+from app.models.airport import get_airport, search_airports_advanced
 
 
 router = APIRouter()

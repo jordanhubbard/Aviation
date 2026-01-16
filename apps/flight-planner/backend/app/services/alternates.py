@@ -3,11 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import List, Optional, Sequence, Set
 
-from app.utils.paths import add_package_path
-
-add_package_path("shared-sdk/python")
-
-from aviation import search_airports_advanced
+from app.models.airport import search_airports_advanced
 from app.schemas.route import AlternateAirport, AlternateWeather
 from app.services import metar
 
