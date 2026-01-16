@@ -17,7 +17,7 @@
     "react-dom": "^18.2.0",
     "react-router-dom": "^7.11.0",
     "leaflet": "^1.9.4",
-    "react-leaflet": "^4.2.1",
+    "react-leaflet": "^5.0.0",
     "lodash.debounce": "^4.0.8"
   },
   "devDependencies": {

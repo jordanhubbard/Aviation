@@ -34,7 +34,7 @@
   "dependencies": {
     "@aviation/shared-sdk": "*",
     "leaflet": "^1.9.4",
-    "react-leaflet": "^4.2.1"
+    "react-leaflet": "^5.0.0"
   },
   "peerDependencies": {
     "react": "^18.2.0",
