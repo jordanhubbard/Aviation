@@ -16,7 +16,11 @@ from .airports import (
 )
 
 # Import sub-packages for convenient access
-from . import weather
+try:
+    from . import weather
+except (ModuleNotFoundError, ImportError):
+    weather = None
+
 from . import integrations
 
 __all__ = [
@@ -31,6 +35,8 @@ __all__ = [
     "haversine_distance",
     "load_airport_cache",
     # Modules
-    "weather",
     "integrations",
 ]
+
+if weather is not None:
+    __all__.append("weather")
