@@ -3,14 +3,15 @@ import cors from 'cors';
 import fs from 'fs';
 import path from 'path';
 import swaggerUi from 'swagger-ui-express';
-import router from './api/routes.js';
+import { createRouter } from './api/routes.js';
 import { getLastRun } from './scheduler.js';
 import { logger } from './logger.js';
 import { config } from './config.js';
+import { EventRepository } from './db/repository.js';
 
 const SERVICE_VERSION = '0.1.0';
 
-export function createApp() {
+export function createApp(repository: EventRepository) {
   const app = express();
 
   // Middleware
@@ -44,7 +45,7 @@ export function createApp() {
   });
 
   // API routes
-  app.use('/api', router);
+  app.use('/api', createRouter(repository));
 
   const frontendDistPath = path.resolve(process.cwd(), '..', 'frontend', 'dist');
   const frontendIndexPath = path.join(frontendDistPath, 'index.html');

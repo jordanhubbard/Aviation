@@ -2,6 +2,9 @@ import type { ComponentType } from 'react';
 
 export type PaneRenderer = ComponentType<any>;
 
+export type TabReorderDirection = 'left' | 'right';
+export type TabTheme = 'light' | 'dark';
+
 /**
  * Pane configuration for multi-tab interfaces
  */
@@ -24,4 +27,6 @@ export interface IMultiTabWebUI {
   getAllPanes(): PaneConfig[];
   getActivePane(): PaneConfig | null;
   setActivePane(id: string): void;
+  closePane(id: string): void;
+  reorderPane(id: string, direction: TabReorderDirection): void;
 }

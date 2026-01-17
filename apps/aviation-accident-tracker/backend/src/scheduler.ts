@@ -2,6 +2,7 @@ import cron from 'node-cron';
 import { runRecentIngest } from './ingest/ingestService.js';
 import { config } from './config.js';
 import { logger } from './logger.js';
+import { EventRepository } from './db/repository.js';
 
 interface RunSummary {
   started: string;
@@ -14,7 +15,7 @@ interface RunSummary {
 let lastRun: RunSummary | null = null;
 let started = false;
 
-export function startScheduler() {
+export function startScheduler(repository?: EventRepository) {
   if (!config.ingestion.enabled) {
     logger.info('[scheduler] disabled via ENABLE_CRON=false');
     return;
@@ -34,7 +35,7 @@ export function startScheduler() {
     const startedAt = new Date().toISOString();
     lastRun = { started: startedAt };
     try {
-      const result = await runRecentIngest();
+      const result = await runRecentIngest(repository);
       lastRun.finished = new Date().toISOString();
       lastRun.inserted = result.inserted;
       lastRun.updated = result.updated;

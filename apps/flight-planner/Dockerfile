@@ -63,6 +63,7 @@ ENV REPO_URL=$REPO_URL \
 
 COPY --from=builder /opt/venv /opt/venv
 COPY packages/shared-sdk/python /packages/shared-sdk/python
+COPY packages/shared-sdk/data /packages/shared-sdk/data
 COPY packages/keystore/python /packages/keystore/python
 
 # Optional: include Beads issue tracker and CLI for local error auto-reporting.

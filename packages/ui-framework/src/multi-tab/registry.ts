@@ -1,5 +1,5 @@
-import type { IMultiTabWebUI, PaneConfig } from './types';
-import { sortPanes } from './state';
+import type { IMultiTabWebUI, PaneConfig, TabReorderDirection } from './types';
+import { movePane, sortPanes } from './state';
 
 /**
  * In-memory registry for multi-tab panes
@@ -31,5 +31,15 @@ export class MultiTabWebUI implements IMultiTabWebUI {
     if (this.panes.has(id)) {
       this.activeId = id;
     }
+  }
+
+  closePane(id: string): void {
+    this.unregisterPane(id);
+  }
+
+  reorderPane(id: string, direction: TabReorderDirection): void {
+    const orderedPanes = sortPanes(Array.from(this.panes.values()));
+    const reordered = movePane(orderedPanes, id, direction);
+    this.panes = new Map(reordered.map((pane) => [pane.id, pane]));
   }
 }

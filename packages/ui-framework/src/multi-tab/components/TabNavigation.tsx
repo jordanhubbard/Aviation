@@ -1,12 +1,17 @@
 import * as React from 'react';
-import type { PaneConfig } from '../types';
+import type { PaneConfig, TabReorderDirection, TabTheme } from '../types';
 import { getRelativePaneId, isPaneCloseable } from '../state';
+import { ensureMultiTabStyles } from '../styles';
 
 export interface TabNavigationProps {
   panes: PaneConfig[];
   activeId?: string | null;
   onTabSelect?: (id: string) => void;
   onTabClose?: (id: string) => void;
+  onTabReorder?: (id: string, direction: TabReorderDirection) => void;
+  showReorderControls?: boolean;
+  theme?: TabTheme;
+  useDefaultStyles?: boolean;
   className?: string;
 }
 
@@ -15,8 +20,18 @@ export const TabNavigation: React.FC<TabNavigationProps> = ({
   activeId,
   onTabSelect,
   onTabClose,
+  onTabReorder,
+  showReorderControls = true,
+  theme = 'light',
+  useDefaultStyles = true,
   className,
 }) => {
+  React.useEffect(() => {
+    if (useDefaultStyles) {
+      ensureMultiTabStyles();
+    }
+  }, [useDefaultStyles]);
+
   const handleKeyDown = (event: React.KeyboardEvent<HTMLButtonElement>) => {
     if (!onTabSelect) {
       return;
@@ -39,11 +54,26 @@ export const TabNavigation: React.FC<TabNavigationProps> = ({
     }
   };
 
+  const handleReorder = (paneId: string, direction: TabReorderDirection) => {
+    onTabReorder?.(paneId, direction);
+  };
+
+  const navClassName = ['aviation-tab-nav', className].filter(Boolean).join(' ');
+  const showReorder = Boolean(onTabReorder) && showReorderControls;
+
   return (
-    <nav className={className || 'aviation-tab-nav'} role="tablist">
+    <nav
+      className={navClassName}
+      role="tablist"
+      data-theme={theme}
+      data-default-styles={useDefaultStyles ? 'true' : undefined}
+    >
       {panes.map((pane) => {
         const isActive = pane.id === activeId;
         const canClose = isPaneCloseable(pane) && Boolean(onTabClose);
+        const canMoveLeft = showReorder && index > 0;
+        const canMoveRight = showReorder && index < panes.length - 1;
+        const showActions = showReorder || canClose;
         return (
           <div
             key={pane.id}
@@ -61,15 +91,41 @@ export const TabNavigation: React.FC<TabNavigationProps> = ({
               {pane.icon ? <span className="aviation-tab-icon">{pane.icon}</span> : null}
               <span className="aviation-tab-title">{pane.title}</span>
             </button>
-            {canClose ? (
-              <button
-                type="button"
-                className="aviation-tab-close"
-                aria-label={`Close ${pane.title}`}
-                onClick={() => onTabClose?.(pane.id)}
-              >
-                ×
-              </button>
+            {showActions ? (
+              <span className="aviation-tab-actions">
+                {showReorder ? (
+                  <>
+                    <button
+                      type="button"
+                      className="aviation-tab-control aviation-tab-move"
+                      aria-label={`Move ${pane.title} left`}
+                      disabled={!canMoveLeft}
+                      onClick={() => handleReorder(pane.id, 'left')}
+                    >
+                      ◀
+                    </button>
+                    <button
+                      type="button"
+                      className="aviation-tab-control aviation-tab-move"
+                      aria-label={`Move ${pane.title} right`}
+                      disabled={!canMoveRight}
+                      onClick={() => handleReorder(pane.id, 'right')}
+                    >
+                      ▶
+                    </button>
+                  </>
+                ) : null}
+                {canClose ? (
+                  <button
+                    type="button"
+                    className="aviation-tab-control aviation-tab-close"
+                    aria-label={`Close ${pane.title}`}
+                    onClick={() => onTabClose?.(pane.id)}
+                  >
+                    ×
+                  </button>
+                ) : null}
+              </span>
             ) : null}
           </div>
         );

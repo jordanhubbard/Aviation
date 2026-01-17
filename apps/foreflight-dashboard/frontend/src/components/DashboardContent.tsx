@@ -154,6 +154,12 @@ const DashboardContent: React.FC<DashboardContentProps> = ({ logbookData }) => {
     return time.toFixed(1)
   }
 
+  const formatPilotRole = (role: string | undefined): string => {
+    if (!role) return 'PIC'
+    if (role.toUpperCase() === 'STUDENT') return 'DUAL'
+    return role.toUpperCase()
+  }
+
   const formatDate = (dateString: string): string => {
     try {
       return new Date(dateString).toLocaleDateString()
@@ -613,7 +619,7 @@ const DashboardContent: React.FC<DashboardContentProps> = ({ logbookData }) => {
                             color: entry.pilot_role === 'PIC' ? '#1976d2' : 'inherit'
                           }}
                         >
-                          {entry.pilot_role || 'PIC'}
+                          {formatPilotRole(entry.pilot_role)}
                         </Typography>
                       </TableCell>
                       <TableCell align="right" sx={{ fontFamily: 'monospace', fontSize: '0.875rem' }}>

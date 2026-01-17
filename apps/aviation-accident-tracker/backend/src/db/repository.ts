@@ -195,6 +195,17 @@ export class EventRepository {
   }
 
   /**
+   * Find existing event ID by unique key (date_z, registration)
+   */
+  async findEventId(dateZ: string, registration: string): Promise<string | null> {
+    const existing = await this.dbGet(
+      'SELECT id FROM events WHERE date_z = ? AND registration = ?',
+      [dateZ, registration]
+    );
+    return existing ? String(existing.id) : null;
+  }
+
+  /**
    * Add a source entry for an event
    */
   async addSource(eventId: string, source: SourceAttribution): Promise<string> {

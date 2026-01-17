@@ -8,6 +8,7 @@ Extracted from flight-planner for shared use across the monorepo.
 import difflib
 import json
 import math
+import os
 import re
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Set, Tuple
@@ -59,6 +60,32 @@ class Airport(Dict[str, Any]):
         return self.get('distance_nm')
 
 
+def _resolve_airport_data_path(data_path: Optional[str]) -> Path:
+    if data_path:
+        return Path(data_path)
+
+    env_path = os.environ.get("AVIATION_AIRPORTS_DATA_PATH") or os.environ.get("AIRPORTS_DATA_PATH")
+    if env_path:
+        env_candidate = Path(env_path)
+        if env_candidate.exists():
+            return env_candidate
+
+    default_path = Path(__file__).parent.parent.parent / "data" / "airports_cache.json"
+    if default_path.exists():
+        return default_path
+
+    candidates = [
+        Path.cwd() / "data" / "airports_cache.json",
+        Path.cwd() / "backend" / "data" / "airports_cache.json",
+        Path.cwd().parent / "data" / "airports_cache.json",
+    ]
+    for candidate in candidates:
+        if candidate.exists():
+            return candidate
+
+    return default_path
+
+
 class AirportDatabase:
     """Airport database for loading, caching, and searching airports."""
     
@@ -67,13 +94,9 @@ class AirportDatabase:
         Initialize airport database.
         
         Args:
-            data_path: Path to airports_cache.json file. If None, uses default location.
+            data_path: Path to airports_cache.json file. If None, uses default or fallback locations.
         """
-        if data_path:
-            self.data_path = Path(data_path)
-        else:
-            # Default: packages/shared-sdk/data/airports_cache.json
-            self.data_path = Path(__file__).parent.parent.parent / 'data' / 'airports_cache.json'
+        self.data_path = _resolve_airport_data_path(data_path)
         
         self.airports: List[Dict[str, Any]] = []
         self.loaded = False

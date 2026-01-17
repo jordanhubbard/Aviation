@@ -160,6 +160,7 @@ function App() {
             panes={aviationPanes}
             activeId={activeId}
             onTabSelect={setActiveId}
+            useDefaultStyles={false}
             className="meta-app-tabs"
           />
 
@@ -167,6 +168,7 @@ function App() {
             <PaneContainer
               activePane={activePane}
               className="meta-app-pane"
+              useDefaultStyles={false}
               emptyState={
                 <div className="meta-app-empty">
                   <p>No application selected</p>
