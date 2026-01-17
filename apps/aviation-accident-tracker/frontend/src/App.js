@@ -1,7 +1,7 @@
 import { jsx as _jsx, jsxs as _jsxs } from "react/jsx-runtime";
 import { useEffect, useMemo, useState } from 'react';
 import 'leaflet/dist/leaflet.css';
-import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Popup, useMapEvents } from 'react-leaflet';
 import L from 'leaflet';
 // import MarkerClusterGroup from 'react-leaflet-cluster'; // Package doesn't exist, clustering temporarily disabled
 import debounce from 'lodash.debounce';
@@ -23,6 +23,26 @@ function formatInputDate(date) {
     const month = String(date.getMonth() + 1).padStart(2, '0');
     const day = String(date.getDate()).padStart(2, '0');
     return `${year}-${month}-${day}`;
+}
+function toRadians(value) {
+    return (value * Math.PI) / 180;
+}
+function distanceKm(lat1, lon1, lat2, lon2) {
+    const dLat = toRadians(lat2 - lat1);
+    const dLon = toRadians(lon2 - lon1);
+    const rLat1 = toRadians(lat1);
+    const rLat2 = toRadians(lat2);
+    const a = Math.sin(dLat / 2) ** 2 + Math.cos(rLat1) * Math.cos(rLat2) * Math.sin(dLon / 2) ** 2;
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    return 6371 * c;
+}
+function MapClickHandler({ onMapClick }) {
+    useMapEvents({
+        click: (event) => {
+            onMapClick(event.latlng.lat, event.latlng.lng);
+        },
+    });
+    return null;
 }
 export function App() {
     const [events, setEvents] = useState([]);
@@ -120,6 +140,42 @@ export function App() {
             onClickId: e.id,
         }
     })), [positioned]);
+    const countryCentroids = useMemo(() => {
+        const totals = new Map();
+        events.forEach((event) => {
+            if (typeof event.lat !== 'number' || typeof event.lon !== 'number' || !event.country)
+                return;
+            const current = totals.get(event.country) ?? { lat: 0, lon: 0, count: 0 };
+            totals.set(event.country, {
+                lat: current.lat + event.lat,
+                lon: current.lon + event.lon,
+                count: current.count + 1,
+            });
+        });
+        return Array.from(totals.entries()).map(([countryCode, totalsForCountry]) => ({
+            country: countryCode,
+            lat: totalsForCountry.lat / totalsForCountry.count,
+            lon: totalsForCountry.lon / totalsForCountry.count,
+        }));
+    }, [events]);
+    const handleMapClick = (lat, lon) => {
+        if (!countryCentroids.length)
+            return;
+        let nearest = null;
+        let nearestDistance = Number.POSITIVE_INFINITY;
+        for (const entry of countryCentroids) {
+            const candidateDistance = distanceKm(lat, lon, entry.lat, entry.lon);
+            if (candidateDistance < nearestDistance) {
+                nearestDistance = candidateDistance;
+                nearest = entry;
+            }
+        }
+        if (!nearest)
+            return;
+        setCountry(nearest.country);
+        setSelected(null);
+        setPage(0);
+    };
     return (_jsxs("div", { style: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, padding: 16 }, children: [_jsxs("div", { style: { gridColumn: '1 / span 2' }, children: [_jsx("h1", { children: "Aviation Accident Tracker" }), loading && _jsx("p", { children: "Loading events\u2026" }), error && _jsxs("p", { style: { color: 'red' }, children: ["Error: ", error] }), !loading && events.length === 0 && _jsx("p", { children: "No events yet. Run backend seed or ingestion." })] }), _jsxs("div", { style: { gridColumn: '1 / span 2', display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }, children: [_jsxs("label", { children: ["Search:", ' ', _jsx("input", { value: search, onChange: (e) => {
                                     setPage(0);
                                     setSearch(e.target.value);
@@ -134,7 +190,7 @@ export function App() {
                             setPage(0);
                         }, children: [_jsx("option", { value: "", children: "All" }), options.regions.map((r) => (_jsx("option", { value: r, children: r }, r)))] })] }), _jsxs("label", { children: ["Range:", ' ', _jsxs("select", { value: rangePreset, onChange: (e) => {
                                     applyPresetRange(e.target.value);
-                                }, children: [_jsx("option", { value: "", children: "Custom" }), _jsx("option", { value: "7", children: "Last 7 days" }), _jsx("option", { value: "30", children: "Last 30 days" }), _jsx("option", { value: "90", children: "Last 90 days" }), _jsx("option", { value: "365", children: "Last 365 days" })] })] }), _jsxs("label", { children: ["From:", ' ', _jsx("input", { type: "date", value: from, max: today, onChange: (e) => {
+                        }, children: [_jsx("option", { value: "", children: "Custom" }), _jsx("option", { value: "1", children: "Last day" }), _jsx("option", { value: "30", children: "Last 30 days" }), _jsx("option", { value: "90", children: "Last 90 days" }), _jsx("option", { value: "365", children: "Last 365 days" })] })] }), _jsxs("label", { children: ["From:", ' ', _jsx("input", { type: "date", value: from, max: today, onChange: (e) => {
                                     setFrom(clampToToday(e.target.value));
                                     setRangePreset('');
                                     setSelected(null);
@@ -168,7 +224,7 @@ export function App() {
                                 region && 'region',
                                 from && 'from',
                                 to && 'to',
-                            ].filter(Boolean).length || '0'] })] }), _jsx("div", { style: { height: 480, minHeight: 400 }, children: _jsxs(MapContainer, { center: [20, 0], zoom: 2, style: { height: '100%', width: '100%' }, children: [_jsx(TileLayer, { url: "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", attribution: "\u00A9 OpenStreetMap contributors" }), markers.map((m) => {
+                            ].filter(Boolean).length || '0'] })] }), _jsx("div", { style: { height: 480, minHeight: 400 }, children: _jsxs(MapContainer, { center: [20, 0], zoom: 2, style: { height: '100%', width: '100%' }, children: [_jsx(TileLayer, { url: "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", attribution: "\u00A9 OpenStreetMap contributors" }), _jsx(MapClickHandler, { onMapClick: handleMapClick }), markers.map((m) => {
                             const evt = m.payload?.onClickId ? eventMap.get(m.payload.onClickId) : undefined;
                             return (_jsx(Marker, { position: m.position, icon: icon, eventHandlers: { click: () => evt && setSelected(evt) }, children: _jsxs(Popup, { children: [_jsx("strong", { children: evt?.registration || 'Unknown' }), " (", evt?.aircraftType || 'Aircraft', ")", _jsx("br", {}), evt ? formatDate(evt.dateZ) : '', " \u2014 ", evt?.summary || 'No summary', _jsx("br", {}), evt?.operator || 'Unknown operator'] }) }, m.id));
                         })] }) }), _jsxs("div", { children: [loading ? (_jsx("p", { children: "Loading\u2026" })) : events.length === 0 ? (_jsx("p", { children: "No events found for current filters." })) : (_jsxs("table", { style: { width: '100%', borderCollapse: 'collapse' }, children: [_jsx("thead", { children: _jsxs("tr", { children: [_jsx("th", { children: "Date (Z)" }), _jsx("th", { children: "Reg" }), _jsx("th", { children: "Operator" }), _jsx("th", { children: "Type" }), _jsx("th", { children: "Airport" }), _jsx("th", { children: "Category" })] }) }), _jsx("tbody", { children: events.map((e) => (_jsxs("tr", { onClick: () => setSelected(e), style: { cursor: 'pointer' }, children: [_jsx("td", { children: formatDate(e.dateZ) }), _jsx("td", { children: e.registration }), _jsx("td", { children: e.operator || '—' }), _jsx("td", { children: e.aircraftType || '—' }), _jsx("td", { children: e.airportIcao || e.airportIata || '—' }), _jsx("td", { children: _jsx(Badge, { color: e.category === 'commercial' ? '#e3f2fd' : e.category === 'general' ? '#e8f5e9' : '#eee', border: "#ccc", children: e.category }) })] }, e.id))) })] })), _jsxs("div", { style: { marginTop: 8, display: 'flex', gap: 8, alignItems: 'center' }, children: [_jsx("button", { disabled: page === 0, onClick: () => setPage((p) => Math.max(0, p - 1)), children: "Prev" }), _jsxs("span", { children: ["Page ", page + 1] }), _jsx("button", { onClick: () => setPage((p) => p + 1), children: "Next" })] })] }), selected && (_jsx("div", { style: {

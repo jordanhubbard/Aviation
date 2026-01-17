@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import 'leaflet/dist/leaflet.css';
-import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Popup, useMapEvents } from 'react-leaflet';
 import L from 'leaflet';
 // import MarkerClusterGroup from 'react-leaflet-cluster'; // Package doesn't exist, clustering temporarily disabled
 import debounce from 'lodash.debounce';
@@ -28,6 +28,12 @@ type EventRecord = {
   sources: { sourceName: string; url: string }[];
 };
 
+type CountryCentroid = {
+  country: string;
+  lat: number;
+  lon: number;
+};
+
 const icon = L.icon({
   iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
   iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
@@ -47,6 +53,29 @@ function formatInputDate(date: Date) {
   const month = String(date.getMonth() + 1).padStart(2, '0');
   const day = String(date.getDate()).padStart(2, '0');
   return `${year}-${month}-${day}`;
+}
+
+function toRadians(value: number) {
+  return (value * Math.PI) / 180;
+}
+
+function distanceKm(lat1: number, lon1: number, lat2: number, lon2: number) {
+  const dLat = toRadians(lat2 - lat1);
+  const dLon = toRadians(lon2 - lon1);
+  const rLat1 = toRadians(lat1);
+  const rLat2 = toRadians(lat2);
+  const a = Math.sin(dLat / 2) ** 2 + Math.cos(rLat1) * Math.cos(rLat2) * Math.sin(dLon / 2) ** 2;
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return 6371 * c;
+}
+
+function MapClickHandler({ onMapClick }: { onMapClick: (lat: number, lon: number) => void }) {
+  useMapEvents({
+    click: (event) => {
+      onMapClick(event.latlng.lat, event.latlng.lng);
+    },
+  });
+  return null;
 }
 
 export function App() {
@@ -152,6 +181,40 @@ export function App() {
       })),
     [positioned]
   );
+  const countryCentroids = useMemo(() => {
+    const totals = new Map<string, { lat: number; lon: number; count: number }>();
+    events.forEach((event) => {
+      if (typeof event.lat !== 'number' || typeof event.lon !== 'number' || !event.country) return;
+      const current = totals.get(event.country) ?? { lat: 0, lon: 0, count: 0 };
+      totals.set(event.country, {
+        lat: current.lat + event.lat,
+        lon: current.lon + event.lon,
+        count: current.count + 1,
+      });
+    });
+    return Array.from(totals.entries()).map(([countryCode, totalsForCountry]) => ({
+      country: countryCode,
+      lat: totalsForCountry.lat / totalsForCountry.count,
+      lon: totalsForCountry.lon / totalsForCountry.count,
+    }));
+  }, [events]);
+
+  const handleMapClick = (lat: number, lon: number) => {
+    if (!countryCentroids.length) return;
+    let nearest: CountryCentroid | null = null;
+    let nearestDistance = Number.POSITIVE_INFINITY;
+    for (const entry of countryCentroids) {
+      const candidateDistance = distanceKm(lat, lon, entry.lat, entry.lon);
+      if (candidateDistance < nearestDistance) {
+        nearestDistance = candidateDistance;
+        nearest = entry;
+      }
+    }
+    if (!nearest) return;
+    setCountry(nearest.country);
+    setSelected(null);
+    setPage(0);
+  };
 
   return (
     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, padding: 16 }}>
@@ -232,7 +295,7 @@ export function App() {
             }}
           >
             <option value="">Custom</option>
-            <option value="7">Last 7 days</option>
+            <option value="1">Last day</option>
             <option value="30">Last 30 days</option>
             <option value="90">Last 90 days</option>
             <option value="365">Last 365 days</option>
@@ -321,6 +384,7 @@ export function App() {
       <div style={{ height: 480, minHeight: 400 }}>
         <MapContainer center={[20, 0]} zoom={2} style={{ height: '100%', width: '100%' }}>
           <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" attribution="© OpenStreetMap contributors" />
+          <MapClickHandler onMapClick={handleMapClick} />
           {/* Marker clustering temporarily disabled due to missing package */}
           {markers.map((m) => {
             const evt = m.payload?.onClickId ? eventMap.get(m.payload.onClickId as string) : undefined;
