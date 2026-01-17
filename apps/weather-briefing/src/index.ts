@@ -21,6 +21,23 @@ async function main() {
   await service.start();
 
   const port = Number(process.env.PORT ?? '3003');
+  const allowedForecastDays = new Set([1, 3, 5, 7]);
+  const parseForecastDays = (value: string | null): number => {
+    if (!value) {
+      return 0;
+    }
+
+    const parsed = value
+      .split(',')
+      .map((part) => Number(part.trim()))
+      .filter((day) => allowedForecastDays.has(day));
+
+    if (parsed.length === 0) {
+      return 0;
+    }
+
+    return Math.min(7, Math.max(...parsed));
+  };
   const server = http.createServer(async (req, res) => {
     const requestUrl = new URL(req.url ?? '/', `http://localhost:${port}`);
 
@@ -32,8 +49,9 @@ async function main() {
 
     if (requestUrl.pathname === '/briefing') {
       const station = requestUrl.searchParams.get('station') ?? 'KSFO';
+      const forecastDays = parseForecastDays(requestUrl.searchParams.get('days'));
       try {
-        const briefing = await service.generateBriefing(station);
+        const briefing = await service.generateBriefing(station, forecastDays);
         res.writeHead(200, { 'Content-Type': 'text/plain; charset=utf-8' });
         res.end(briefing);
       } catch (error) {
@@ -56,17 +74,19 @@ async function main() {
             a { color: #60a5fa; }
             .card { background: #111827; border-radius: 12px; padding: 24px; max-width: 640px; box-shadow: 0 12px 30px rgba(0,0,0,0.25); }
             .row { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
-            select, button { padding: 10px 12px; border-radius: 8px; border: 1px solid #1f2937; background: #0b1224; color: #f8fafc; font-size: 14px; }
+            select, input[type="text"], button { padding: 10px 12px; border-radius: 8px; border: 1px solid #1f2937; background: #0b1224; color: #f8fafc; font-size: 14px; }
             button { background: #2563eb; border-color: #2563eb; cursor: pointer; }
             button:disabled { background: #1f2937; border-color: #1f2937; cursor: not-allowed; }
             pre { background: #0b1224; border-radius: 12px; padding: 16px; white-space: pre-wrap; margin-top: 16px; }
             .muted { color: #94a3b8; }
+            .forecast { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; margin-top: 12px; }
+            .forecast label { display: flex; align-items: center; gap: 6px; font-size: 14px; }
           </style>
         </head>
         <body>
           <div class="card">
             <h1>✈️ Aviation Weather Briefing</h1>
-            <p class="muted">Select an airport to generate a briefing.</p>
+            <p class="muted">Select an airport or enter a custom code, then choose a forecast range.</p>
             <form id="briefing-form" class="row">
               <label for="station">Airport:</label>
               <select id="station" name="station">
@@ -81,24 +101,49 @@ async function main() {
                 <option value="KBOS">KBOS - Boston</option>
                 <option value="KMIA">KMIA - Miami</option>
               </select>
+              <input id="station-input" name="station-input" type="text" placeholder="Enter ICAO/IATA (e.g., KPAO)" />
               <button type="submit" id="submit-btn">Get Briefing</button>
             </form>
-            <pre id="briefing-output">Select an airport and click “Get Briefing”.</pre>
+            <div class="forecast">
+              <span class="muted">Forecast days:</span>
+              <label><input type="checkbox" name="forecast-day" value="1" />1 day</label>
+              <label><input type="checkbox" name="forecast-day" value="3" />3 days</label>
+              <label><input type="checkbox" name="forecast-day" value="5" />5 days</label>
+              <label><input type="checkbox" name="forecast-day" value="7" />7 days</label>
+            </div>
+            <pre id="briefing-output">Select an airport or enter a code, then click “Get Briefing”.</pre>
             <p class="muted">Other endpoints: <code>/health</code> and <code>/briefing?station=KSFO</code></p>
           </div>
           <script>
             const form = document.getElementById('briefing-form');
             const output = document.getElementById('briefing-output');
             const submitBtn = document.getElementById('submit-btn');
+            const stationSelect = document.getElementById('station');
+            const stationInput = document.getElementById('station-input');
+
+            const getSelectedDays = () => {
+              const selections = Array.from(document.querySelectorAll('input[name="forecast-day"]'))
+                .filter((input) => input.checked)
+                .map((input) => Number(input.value))
+                .filter((value) => !Number.isNaN(value));
+              return selections;
+            };
 
             form.addEventListener('submit', async (event) => {
               event.preventDefault();
-              const station = document.getElementById('station').value;
+              const manualStation = stationInput.value.trim().toUpperCase();
+              const station = manualStation || stationSelect.value;
+              const selectedDays = getSelectedDays();
+              const params = new URLSearchParams();
+              params.set('station', station);
+              if (selectedDays.length > 0) {
+                params.set('days', selectedDays.join(','));
+              }
               output.textContent = 'Loading briefing for ' + station + '...';
               submitBtn.disabled = true;
 
               try {
-                const response = await fetch('/briefing?station=' + encodeURIComponent(station));
+                const response = await fetch('/briefing?' + params.toString());
                 if (!response.ok) {
                   const message = await response.text();
                   throw new Error(message || ('Request failed with status ' + response.status));

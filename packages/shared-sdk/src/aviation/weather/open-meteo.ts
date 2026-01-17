@@ -160,7 +160,8 @@ export async function getHourlyForecast(
     url.searchParams.set('latitude', lat.toString());
     url.searchParams.set('longitude', lon.toString());
     url.searchParams.set('hourly', 'visibility,cloudcover,precipitation,windspeed_10m');
-    url.searchParams.set('forecast_days', '2');
+    const forecastDays = Math.min(7, Math.max(1, Math.ceil(hours / 24) + 1));
+    url.searchParams.set('forecast_days', forecastDays.toString());
     url.searchParams.set('timezone', 'UTC');
     url.searchParams.set('windspeed_unit', 'kn');
 
