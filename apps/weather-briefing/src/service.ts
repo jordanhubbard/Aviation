@@ -246,7 +246,7 @@ export class WeatherBriefingService extends BackgroundService {
 
     for (const entry of hourly) {
       const date = entry.time.split('T')[0];
-      if (date <= today) {
+      if (date < today) {
         continue;
       }
       const bucket = byDate.get(date);
