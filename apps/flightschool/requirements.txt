@@ -30,7 +30,7 @@ filetype
 duckduckgo-search
 Pillow
 pytz==2024.1
-tzlocal==5.0.1
+tzlocal==5.3.1
 
 # Development and Testing
 pytest==9.0.2
