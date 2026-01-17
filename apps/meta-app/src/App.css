@@ -100,7 +100,6 @@
   padding: 2rem;
   border-radius: 16px;
   background: rgba(255, 255, 255, 0.98);
-  text-decoration: none;
   color: inherit;
   border: 1px solid #e2e8f0;
   box-shadow: 0 8px 20px rgba(15, 23, 42, 0.12);
@@ -135,9 +134,23 @@
   line-height: 1.6;
 }
 
+.launcher-card-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  align-items: center;
+}
+
 .launcher-card-cta {
   font-weight: 600;
   color: #667eea;
+  text-decoration: none;
+}
+
+.launcher-card-source {
+  font-weight: 500;
+  color: #475569;
+  text-decoration: underline;
 }
 
 .meta-app-pane {
@@ -177,7 +190,14 @@
   line-height: 1.6;
 }
 
-.pane-content a {
+.pane-links {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.pane-link {
   display: inline-block;
   padding: 0.75rem 2rem;
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
@@ -189,9 +209,19 @@
   box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
 }
 
-.pane-content a:hover {
+.pane-link:hover {
   transform: translateY(-2px);
   box-shadow: 0 6px 16px rgba(102, 126, 234, 0.4);
+}
+
+.pane-link-secondary {
+  background: #e2e8f0;
+  color: #4a5568;
+  box-shadow: none;
+}
+
+.pane-link-secondary:hover {
+  box-shadow: 0 4px 12px rgba(148, 163, 184, 0.4);
 }
 
 .meta-app-empty {

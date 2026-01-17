@@ -12,12 +12,14 @@ type AppLink = {
   localUrl: string;
   productionUrl: string;
   envUrl?: string;
+  sourceUrl: string;
 };
 
 type ResolvedAppLink = AppLink & { url: string };
 
 const metaAppMode = import.meta.env.VITE_META_APP_MODE ?? 'tabs';
 const isLauncher = metaAppMode === 'launcher';
+const repoBaseUrl = 'https://github.com/jordanhubbard/Aviation/tree/main/apps';
 
 const appLinks: AppLink[] = [
   {
@@ -29,6 +31,7 @@ const appLinks: AppLink[] = [
     localUrl: 'http://localhost:8080',
     productionUrl: 'https://aviation-accidents-production.up.railway.app/',
     envUrl: import.meta.env.VITE_ACCIDENT_TRACKER_URL,
+    sourceUrl: `${repoBaseUrl}/aviation-accident-tracker`,
   },
   {
     id: 'missions',
@@ -39,6 +42,7 @@ const appLinks: AppLink[] = [
     localUrl: 'http://localhost:3000',
     productionUrl: 'https://aviation-missions-production.up.railway.app/',
     envUrl: import.meta.env.VITE_MISSIONS_URL,
+    sourceUrl: `${repoBaseUrl}/aviation-missions-app`,
   },
   {
     id: 'flight-planner',
@@ -49,6 +53,7 @@ const appLinks: AppLink[] = [
     localUrl: 'http://localhost:5001',
     productionUrl: 'https://flight-planner-production.up.railway.app/',
     envUrl: import.meta.env.VITE_FLIGHT_PLANNER_URL,
+    sourceUrl: `${repoBaseUrl}/flight-planner`,
   },
   {
     id: 'flight-school',
@@ -59,6 +64,7 @@ const appLinks: AppLink[] = [
     localUrl: 'http://localhost:5000',
     productionUrl: 'https://flightschool-production.up.railway.app/',
     envUrl: import.meta.env.VITE_FLIGHT_SCHOOL_URL,
+    sourceUrl: `${repoBaseUrl}/flightschool`,
   },
   {
     id: 'foreflight',
@@ -69,6 +75,7 @@ const appLinks: AppLink[] = [
     localUrl: 'http://localhost:3001',
     productionUrl: 'https://foreflight-dashboard-production.up.railway.app/',
     envUrl: import.meta.env.VITE_FOREFLIGHT_URL,
+    sourceUrl: `${repoBaseUrl}/foreflight-dashboard`,
   },
   {
     id: 'tracker',
@@ -79,6 +86,7 @@ const appLinks: AppLink[] = [
     localUrl: 'http://localhost:3002',
     productionUrl: 'https://flight-tracker-production-384f.up.railway.app/',
     envUrl: import.meta.env.VITE_FLIGHT_TRACKER_URL,
+    sourceUrl: `${repoBaseUrl}/flight-tracker`,
   },
   {
     id: 'weather',
@@ -89,6 +97,7 @@ const appLinks: AppLink[] = [
     localUrl: 'http://localhost:3003',
     productionUrl: 'https://weather-briefing-production.up.railway.app/',
     envUrl: import.meta.env.VITE_WEATHER_BRIEFING_URL,
+    sourceUrl: `${repoBaseUrl}/weather-briefing`,
   },
 ];
 
@@ -111,9 +120,14 @@ function AppPane({ app }: { app: ResolvedAppLink }) {
     <div className="pane-content">
       <h1>{app.title}</h1>
       <p>{app.description}</p>
-      <a href={app.url} target="_blank" rel="noopener noreferrer">
-        Open {app.tabTitle} →
-      </a>
+      <div className="pane-links">
+        <a className="pane-link" href={app.url} target="_blank" rel="noopener noreferrer">
+          Open {app.tabTitle} →
+        </a>
+        <a className="pane-link pane-link-secondary" href={app.sourceUrl} target="_blank" rel="noopener noreferrer">
+          View source
+        </a>
+      </div>
     </div>
   );
 }
@@ -137,20 +151,34 @@ function App() {
         <main className="meta-app-main">
           <div className="launcher-grid">
             {resolvedApps.map((app) => (
-              <a
+              <div
                 key={app.id}
                 className="launcher-card"
-                href={app.url}
-                target="_blank"
-                rel="noopener noreferrer"
               >
                 <div className="launcher-card-header">
                   <span className="launcher-card-icon">{app.icon}</span>
                   <h2 className="launcher-card-title">{app.title}</h2>
                 </div>
                 <p className="launcher-card-description">{app.description}</p>
-                <span className="launcher-card-cta">Open {app.tabTitle} →</span>
-              </a>
+                <div className="launcher-card-actions">
+                  <a
+                    className="launcher-card-cta"
+                    href={app.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    Open {app.tabTitle} →
+                  </a>
+                  <a
+                    className="launcher-card-source"
+                    href={app.sourceUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    Source
+                  </a>
+                </div>
+              </div>
             ))}
           </div>
         </main>

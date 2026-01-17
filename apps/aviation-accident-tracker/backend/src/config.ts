@@ -44,7 +44,7 @@ export const config: AppConfig = {
   databasePath: getEnv('DATABASE_PATH', path.join(__dirname, '../../data/events.db')),
   logLevel: (getEnv('LOG_LEVEL', 'info') as AppConfig['logLevel']),
   ingestion: {
-    windowDays: getEnvNumber('INGESTION_WINDOW_DAYS', 40),
+    windowDays: getEnvNumber('INGESTION_WINDOW_DAYS', 400),
     rateLimitMs: getEnvNumber('INGESTION_RATE_LIMIT_MS', 1000),
     maxRetries: getEnvNumber('INGESTION_MAX_RETRIES', 3),
     cron: getEnv('INGESTION_CRON', '0 */6 * * *'),
