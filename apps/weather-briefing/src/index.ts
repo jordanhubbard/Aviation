@@ -98,7 +98,7 @@ async function main() {
               submitBtn.disabled = true;
 
               try {
-                const response = await fetch(`/briefing?station=${encodeURIComponent(station)}`);
+                const response = await fetch('/briefing?station=' + encodeURIComponent(station));
                 if (!response.ok) {
                   const message = await response.text();
                   throw new Error(message || ('Request failed with status ' + response.status));
