@@ -24,6 +24,7 @@ google-api-python-client==2.187.0
 
 # Validation and Utilities
 email-validator==2.1.0.post1
+httpx
 requests
 filetype
 duckduckgo-search
