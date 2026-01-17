@@ -101,6 +101,7 @@ export function App() {
     start.setDate(start.getDate() - (days - 1));
     setFrom(formatInputDate(start));
     setTo(formatInputDate(end));
+    setSelected(null);
     setPage(0);
   };
 
@@ -246,6 +247,7 @@ export function App() {
             onChange={(e) => {
               setFrom(clampToToday(e.target.value));
               setRangePreset('');
+              setSelected(null);
               setPage(0);
             }}
           />
@@ -259,6 +261,7 @@ export function App() {
             onChange={(e) => {
               setTo(clampToToday(e.target.value));
               setRangePreset('');
+              setSelected(null);
               setPage(0);
             }}
           />

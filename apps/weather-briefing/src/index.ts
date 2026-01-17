@@ -106,10 +106,10 @@ async function main() {
             </form>
             <div class="forecast">
               <span class="muted">Forecast days:</span>
-              <label><input type="checkbox" name="forecast-day" value="1" />1 day</label>
-              <label><input type="checkbox" name="forecast-day" value="3" />3 days</label>
-              <label><input type="checkbox" name="forecast-day" value="5" />5 days</label>
-              <label><input type="checkbox" name="forecast-day" value="7" />7 days</label>
+              <label><input type="radio" name="forecast-day" value="1" />1 day</label>
+              <label><input type="radio" name="forecast-day" value="3" />3 days</label>
+              <label><input type="radio" name="forecast-day" value="5" />5 days</label>
+              <label><input type="radio" name="forecast-day" value="7" />7 days</label>
             </div>
             <pre id="briefing-output">Select an airport or enter a code, then click “Get Briefing”.</pre>
             <p class="muted">Other endpoints: <code>/health</code> and <code>/briefing?station=KSFO</code></p>
@@ -121,23 +121,27 @@ async function main() {
             const stationSelect = document.getElementById('station');
             const stationInput = document.getElementById('station-input');
 
-            const getSelectedDays = () => {
-              const selections = Array.from(document.querySelectorAll('input[name="forecast-day"]'))
-                .filter((input) => input.checked)
-                .map((input) => Number(input.value))
-                .filter((value) => !Number.isNaN(value));
-              return selections;
+            const getSelectedDay = () => {
+              const selection = document.querySelector('input[name="forecast-day"]:checked');
+              if (!selection) return null;
+              const value = Number(selection.value);
+              return Number.isNaN(value) ? null : value;
             };
 
-            form.addEventListener('submit', async (event) => {
-              event.preventDefault();
+            const getStation = () => {
               const manualStation = stationInput.value.trim().toUpperCase();
-              const station = manualStation || stationSelect.value;
-              const selectedDays = getSelectedDays();
+              return manualStation || stationSelect.value;
+            };
+
+            let hasBriefing = false;
+
+            const requestBriefing = async () => {
+              const station = getStation();
+              const selectedDay = getSelectedDay();
               const params = new URLSearchParams();
               params.set('station', station);
-              if (selectedDays.length > 0) {
-                params.set('days', selectedDays.join(','));
+              if (selectedDay) {
+                params.set('days', String(selectedDay));
               }
               output.textContent = 'Loading briefing for ' + station + '...';
               submitBtn.disabled = true;
@@ -150,11 +154,24 @@ async function main() {
                 }
                 const briefing = await response.text();
                 output.textContent = briefing;
+                hasBriefing = true;
               } catch (error) {
                 output.textContent = 'Failed to fetch briefing: ' + (error?.message ?? 'Unknown error');
               } finally {
                 submitBtn.disabled = false;
               }
+            };
+
+            form.addEventListener('submit', async (event) => {
+              event.preventDefault();
+              await requestBriefing();
+            });
+
+            Array.from(document.querySelectorAll('input[name="forecast-day"]')).forEach((input) => {
+              input.addEventListener('change', () => {
+                if (!hasBriefing) return;
+                void requestBriefing();
+              });
             });
           </script>
         </body>

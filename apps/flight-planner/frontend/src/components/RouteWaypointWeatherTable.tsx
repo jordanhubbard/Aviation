@@ -97,6 +97,18 @@ const RouteWaypointWeatherTable: React.FC<Props> = ({ plan }) => {
     [plan.route],
   )
 
+  const legs = useMemo(
+    () =>
+      waypoints.length > 1
+        ? waypoints.slice(0, -1).map((from, idx) => ({
+            leg: idx + 1,
+            from,
+            to: waypoints[idx + 1],
+          }))
+        : [],
+    [waypoints],
+  )
+
   const weatherQueries = useQueries(
     waypoints.map((code) => ({
       queryKey: ['weather', code, 'summary'],
@@ -118,23 +130,23 @@ const RouteWaypointWeatherTable: React.FC<Props> = ({ plan }) => {
   }, [weatherQueries, waypoints])
 
   const rows = useMemo<Row[]>(() => {
-    return waypoints.map((wp, idx) => {
-      const w = weatherByCode.get(wp)
+    return legs.map((leg, idx) => {
+      const w = weatherByCode.get(leg.to)
       const cat = toCategory(w?.flight_category ?? null)
 
       return {
-        id: `${idx}-${wp}`,
-        leg: idx,
-        from: idx > 0 ? waypoints[idx - 1] : '—',
-        waypoint: wp,
+        id: `${leg.leg}-${leg.from}-${leg.to}`,
+        leg: leg.leg,
+        from: leg.from,
+        waypoint: leg.to,
         category: cat,
-        conditions: w?.conditions || (weatherQueries[idx]?.isLoading ? 'Loading…' : 'Unavailable'),
+        conditions: w?.conditions || (weatherQueries[idx + 1]?.isLoading ? 'Loading…' : 'Unavailable'),
         wind: fmtWind(w),
         vis: fmtVis(w),
         ceiling: fmtCeiling(w),
       }
     })
-  }, [waypoints, weatherByCode, weatherQueries])
+  }, [legs, weatherByCode, weatherQueries])
 
   const columns = useMemo<GridColDef<Row>[]>(() => {
     const wxCol: GridColDef<Row> = {
@@ -184,7 +196,7 @@ const RouteWaypointWeatherTable: React.FC<Props> = ({ plan }) => {
     if (isSmall) {
       return [
         { field: 'leg', headerName: '#', width: 60 },
-        { field: 'waypoint', headerName: 'WP', width: 90 },
+        { field: 'waypoint', headerName: 'To', width: 90 },
         catCol,
         { field: 'wind', headerName: 'Wind', width: 130 },
       ]

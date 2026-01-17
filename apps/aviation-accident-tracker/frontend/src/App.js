@@ -69,6 +69,7 @@ export function App() {
         start.setDate(start.getDate() - (days - 1));
         setFrom(formatInputDate(start));
         setTo(formatInputDate(end));
+        setSelected(null);
         setPage(0);
     };
     useEffect(() => {
@@ -136,10 +137,12 @@ export function App() {
                                 }, children: [_jsx("option", { value: "", children: "Custom" }), _jsx("option", { value: "7", children: "Last 7 days" }), _jsx("option", { value: "30", children: "Last 30 days" }), _jsx("option", { value: "90", children: "Last 90 days" }), _jsx("option", { value: "365", children: "Last 365 days" })] })] }), _jsxs("label", { children: ["From:", ' ', _jsx("input", { type: "date", value: from, max: today, onChange: (e) => {
                                     setFrom(clampToToday(e.target.value));
                                     setRangePreset('');
+                                    setSelected(null);
                                     setPage(0);
                                 } })] }), _jsxs("label", { children: ["To:", ' ', _jsx("input", { type: "date", value: to, max: today, onChange: (e) => {
                                     setTo(clampToToday(e.target.value));
                                     setRangePreset('');
+                                    setSelected(null);
                                     setPage(0);
                                 } })] }), _jsxs("label", { children: ["Airport:", ' ', _jsx("input", { value: airportQuery, onChange: (e) => {
                                     const q = e.target.value;
