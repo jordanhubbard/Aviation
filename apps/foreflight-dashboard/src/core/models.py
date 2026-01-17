@@ -120,26 +120,19 @@ class LogbookEntry(BaseModel):
     
     @validator('date')
     def validate_date_not_future(cls, v):
-        """Ensure flight date is not in the future."""
-        if v.date() > datetime.now().date():
-            raise ValueError('Flight date cannot be in the future')
+        """Allow date values to be validated in validate_entry."""
         return v
     
     @validator('pic_time', 'dual_received', 'solo_time')
     def validate_flight_times(cls, v, values):
-        """Ensure flight times don't exceed total time."""
-        if 'total_time' in values:
-            total_time = values['total_time']
-            if v > total_time:
-                raise ValueError(f'Flight time component ({v}) cannot exceed total time ({total_time})')
+        """Allow flight times to be validated in validate_entry."""
         return v
     
     @validator('pilot_role')
     def validate_pilot_role(cls, v):
-        """Ensure pilot role is valid."""
-        valid_roles = ['PIC', 'SIC', 'Dual', 'Solo', 'Instructor', 'STUDENT']
-        if v not in valid_roles:
-            raise ValueError(f'Pilot role must be one of: {", ".join(valid_roles)}')
+        """Normalize pilot role without raising validation errors."""
+        if isinstance(v, str):
+            return v.upper()
         return v
     
     # Running totals
@@ -244,15 +237,23 @@ class LogbookEntry(BaseModel):
 
     @validator('date')
     def validate_date_not_future(cls, v):
-        """Validate that the date is not in the future using UTC."""
-        current_utc = datetime.now(timezone.utc)
-        if v.replace(tzinfo=timezone.utc) > current_utc:
-            raise ValueError("Flight date cannot be in the future")
+        """Allow date values to be validated in validate_entry."""
         return v
 
     def validate_entry(self) -> None:
         """Validate the entry and set error explanation if issues are found."""
         issues = []
+
+        if self.error_explanation:
+            issues.extend([
+                issue.strip()
+                for issue in self.error_explanation.split(";")
+                if issue.strip()
+            ])
+
+        current_utc = datetime.now(timezone.utc)
+        if self.date.replace(tzinfo=timezone.utc) > current_utc:
+            issues.append("Flight date cannot be in the future")
         
         # Check for missing airports (only for actual flights, not ground training)
         if self.total_time > 0:  # Only validate airports if there's flight time
@@ -274,7 +275,7 @@ class LogbookEntry(BaseModel):
                 issues.append(get_validation_error_message(self.aircraft.icao_type_code))
             
         # Validate pilot role
-        valid_roles = ["PIC", "SIC", "STUDENT", "INSTRUCTOR", "SPLIT"]
+        valid_roles = ["PIC", "SIC", "STUDENT", "INSTRUCTOR", "SPLIT", "DUAL", "SOLO"]
         if self.pilot_role not in valid_roles:
             issues.append(f"Invalid pilot role (must be one of: {', '.join(valid_roles)})")
             

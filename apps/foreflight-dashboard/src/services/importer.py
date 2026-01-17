@@ -1,7 +1,7 @@
 """Importer for ForeFlight logbook CSV exports."""
 
 import pandas as pd
-from datetime import datetime, time
+from datetime import datetime, time, timezone
 from typing import List, Dict, Any
 from ..core.models import LogbookEntry, Aircraft, Airport, FlightConditions
 
@@ -149,92 +149,134 @@ class ForeFlightImporter:
 
     def import_entries(self) -> List[LogbookEntry]:
         """Import all logbook entries from the CSV."""
-        try:
-            entries = []
-            aircraft_dict = self._create_aircraft_dict()
-            
-            for idx, row in self.flights_df.iterrows():
-                try:
-                    # Validate required fields
-                    if pd.isna(row['Date']):
-                        raise ValueError(f"Missing date in flight {idx + 1}")
-                    
-                    # Create airports
-                    departure = Airport(identifier=row['From'].strip() if isinstance(row['From'], str) else None) if pd.notna(row['From']) else None
-                    destination = Airport(identifier=row['To'].strip() if isinstance(row['To'], str) else None) if pd.notna(row['To']) else None
-                    
-                    # No TimeOut/TimeIn in ForeFlight CSV: set times to None
-                    departure_time = None
-                    arrival_time = None
-                    
-                    # Clean numeric values with better error handling
-                    total_time = self._clean_float(row['TotalTime'])
-                    night_time = self._clean_float(row['Night'])
-                    actual_inst = self._clean_float(row['ActualInstrument'])
-                    sim_inst = self._clean_float(row['SimulatedInstrument'])
-                    cross_country = self._clean_float(row['CrossCountry'])
-                    dual_given = self._clean_float(row['DualGiven'])
-                    pic_time = self._clean_float(row['PIC'])
-                    sic_time = self._clean_float(row['SIC'])
-                    dual_received = self._clean_float(row.get('DualReceived', 0.0))
-                    solo_time = self._clean_float(row.get('Solo', 0.0))
-                    
-                    # Determine pilot role
-                    if dual_given > 0:
-                        pilot_role = "INSTRUCTOR"
-                    elif dual_received > 0:
-                        pilot_role = "STUDENT"
-                    elif pic_time > 0:
-                        pilot_role = "PIC"
-                    elif sic_time > 0:
-                        pilot_role = "SIC"
-                    else:
-                        pilot_role = "PIC"  # Default to PIC
-                    
-                    # Create flight conditions
-                    conditions = FlightConditions(
-                        night=night_time,
-                        day=total_time - night_time,
-                        actual_instrument=actual_inst,
-                        simulated_instrument=sim_inst,
-                        cross_country=cross_country
-                    )
-                    
-                    # Aircraft mapping (robust):
-                    aircraft_id = str(row['AircraftID']).strip() if pd.notna(row['AircraftID']) else ''
-                    if aircraft_id in aircraft_dict:
-                        aircraft_obj = aircraft_dict[aircraft_id]
-                    else:
-                        aircraft_obj = Aircraft(registration=aircraft_id or 'UNKNOWN', type='UNKNOWN', category_class='UNKNOWN', gear_type='UNKNOWN')
+        entries = []
+        aircraft_dict = self._create_aircraft_dict()
 
-                    entry = LogbookEntry(
-                        date=datetime.strptime(str(row['Date']).strip(), "%Y-%m-%d"),
-                        departure_time=departure_time,
-                        arrival_time=arrival_time,
-                        total_time=total_time,
-                        aircraft=aircraft_obj,
-                        departure=departure,
-                        destination=destination,
-                        conditions=conditions,
-                        pilot_role=pilot_role,
-                        landings_day=self._clean_numeric(row['DayLandingsFullStop']),
-                        landings_night=self._clean_numeric(row['NightLandingsFullStop']),
-                        remarks=f"Distance: {self._clean_float(row.get('Distance', 0.0))}nm\n{str(row['PilotComments']) if pd.notna(row['PilotComments']) else None or str(row['InstructorComments']) if pd.notna(row['InstructorComments']) else None or 'No remarks'}",
-                        instructor_comments=str(row['InstructorComments']) if pd.notna(row['InstructorComments']) else None,
-                        dual_received=dual_received,
-                        pic_time=pic_time,
-                        solo_time=solo_time
-                    )
-                    
-                    entries.append(entry)
-                    
-                except Exception as e:
-                    raise ValueError(f"Error processing flight {idx + 1}: {str(e)}")
-                
-            if not entries:
-                raise ValueError("No valid entries found in the logbook")
-            
-            return entries
-            
-        except Exception as e:
-            raise ValueError(f"Error importing entries: {str(e)}")
+        for idx, row in self.flights_df.iterrows():
+            row_issues = []
+            raw_date = row.get('Date')
+            if pd.isna(raw_date):
+                row_issues.append("Missing date")
+                date_value = datetime.now(timezone.utc)
+            else:
+                try:
+                    date_value = datetime.strptime(str(raw_date).strip(), "%Y-%m-%d")
+                except Exception:
+                    row_issues.append(f"Invalid date format: {raw_date}")
+                    date_value = datetime.now(timezone.utc)
+
+            from_value = row.get('From')
+            to_value = row.get('To')
+            departure = Airport(identifier=str(from_value).strip()) if pd.notna(from_value) else None
+            destination = Airport(identifier=str(to_value).strip()) if pd.notna(to_value) else None
+
+            departure_time = None
+            arrival_time = None
+
+            total_time = self._clean_float(row.get('TotalTime', 0.0))
+            night_time = self._clean_float(row.get('Night', 0.0))
+            actual_inst = self._clean_float(row.get('ActualInstrument', 0.0))
+            sim_inst = self._clean_float(row.get('SimulatedInstrument', 0.0))
+            cross_country = self._clean_float(row.get('CrossCountry', 0.0))
+            dual_given = self._clean_float(row.get('DualGiven', 0.0))
+            pic_time = self._clean_float(row.get('PIC', 0.0))
+            sic_time = self._clean_float(row.get('SIC', 0.0))
+            dual_received = self._clean_float(row.get('DualReceived', 0.0))
+            solo_time = self._clean_float(row.get('Solo', 0.0))
+
+            if total_time < 0:
+                row_issues.append("Total time cannot be negative")
+                total_time = 0.0
+            if night_time < 0:
+                row_issues.append("Night time cannot be negative")
+                night_time = 0.0
+            if actual_inst < 0:
+                row_issues.append("Actual instrument time cannot be negative")
+                actual_inst = 0.0
+            if sim_inst < 0:
+                row_issues.append("Simulated instrument time cannot be negative")
+                sim_inst = 0.0
+            if cross_country < 0:
+                row_issues.append("Cross-country time cannot be negative")
+                cross_country = 0.0
+            if dual_given < 0:
+                row_issues.append("Dual given time cannot be negative")
+                dual_given = 0.0
+            if pic_time < 0:
+                row_issues.append("PIC time cannot be negative")
+                pic_time = 0.0
+            if sic_time < 0:
+                row_issues.append("SIC time cannot be negative")
+                sic_time = 0.0
+            if dual_received < 0:
+                row_issues.append("Dual received time cannot be negative")
+                dual_received = 0.0
+            if solo_time < 0:
+                row_issues.append("Solo time cannot be negative")
+                solo_time = 0.0
+
+            if dual_given > 0:
+                pilot_role = "INSTRUCTOR"
+            elif dual_received > 0:
+                pilot_role = "STUDENT"
+            elif pic_time > 0:
+                pilot_role = "PIC"
+            elif sic_time > 0:
+                pilot_role = "SIC"
+            else:
+                pilot_role = "PIC"
+
+            day_time = total_time - night_time
+            if day_time < 0:
+                row_issues.append("Night time exceeds total time")
+                day_time = 0.0
+
+            conditions = FlightConditions(
+                night=night_time,
+                day=day_time,
+                actual_instrument=actual_inst,
+                simulated_instrument=sim_inst,
+                cross_country=cross_country
+            )
+
+            aircraft_id = str(row.get('AircraftID', '')).strip() if pd.notna(row.get('AircraftID', '')) else ''
+            if aircraft_id in aircraft_dict:
+                aircraft_obj = aircraft_dict[aircraft_id]
+            else:
+                aircraft_obj = Aircraft(registration=aircraft_id or 'UNKNOWN', type='UNKNOWN', category_class='UNKNOWN', gear_type='UNKNOWN')
+
+            pilot_comments = row.get('PilotComments')
+            instructor_comments = row.get('InstructorComments')
+            remarks_text = (
+                str(pilot_comments)
+                if pd.notna(pilot_comments)
+                else str(instructor_comments)
+                if pd.notna(instructor_comments)
+                else 'No remarks'
+            )
+
+            entry = LogbookEntry(
+                date=date_value,
+                departure_time=departure_time,
+                arrival_time=arrival_time,
+                total_time=total_time,
+                aircraft=aircraft_obj,
+                departure=departure,
+                destination=destination,
+                conditions=conditions,
+                pilot_role=pilot_role,
+                landings_day=self._clean_numeric(row.get('DayLandingsFullStop', 0)),
+                landings_night=self._clean_numeric(row.get('NightLandingsFullStop', 0)),
+                remarks=f"Distance: {self._clean_float(row.get('Distance', 0.0))}nm\n{remarks_text}",
+                instructor_comments=str(instructor_comments) if pd.notna(instructor_comments) else None,
+                dual_received=dual_received,
+                pic_time=pic_time,
+                solo_time=solo_time
+            )
+
+            if row_issues:
+                entry.error_explanation = "; ".join(row_issues)
+
+            entries.append(entry)
+
+        return entries
