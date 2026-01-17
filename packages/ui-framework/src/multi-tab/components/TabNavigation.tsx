@@ -68,7 +68,7 @@ export const TabNavigation: React.FC<TabNavigationProps> = ({
       data-theme={theme}
       data-default-styles={useDefaultStyles ? 'true' : undefined}
     >
-      {panes.map((pane) => {
+      {panes.map((pane, index) => {
         const isActive = pane.id === activeId;
         const canClose = isPaneCloseable(pane) && Boolean(onTabClose);
         const canMoveLeft = showReorder && index > 0;
