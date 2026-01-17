@@ -49,15 +49,26 @@ interface DbSource {
 
 export class EventRepository {
   private db: sqlite3.Database;
-  private dbRun: (sql: string, params?: any[]) => Promise<any>;
+  private dbRun: (sql: string, params?: any[]) => Promise<{ lastID: number; changes: number }>;
   private dbGet: (sql: string, params?: any[]) => Promise<any>;
   private dbAll: (sql: string, params?: any[]) => Promise<any[]>;
+  private dbExec: (sql: string) => Promise<void>;
 
   constructor(dbPath: string) {
     this.db = new Database(dbPath);
-    this.dbRun = promisify(this.db.run.bind(this.db));
+    this.dbRun = (sql, params = []) =>
+      new Promise((resolve, reject) => {
+        this.db.run(sql, params, function (err) {
+          if (err) {
+            reject(err);
+            return;
+          }
+          resolve({ lastID: this.lastID ?? 0, changes: this.changes ?? 0 });
+        });
+      });
     this.dbGet = promisify(this.db.get.bind(this.db));
     this.dbAll = promisify(this.db.all.bind(this.db));
+    this.dbExec = promisify(this.db.exec.bind(this.db));
   }
 
   /**
@@ -70,7 +81,7 @@ export class EventRepository {
     const schemaPath = path.join(__dirname, '../../src/db/schema.sql');
     const schema = await fs.readFile(schemaPath, 'utf-8');
     
-    await this.dbRun(schema);
+    await this.dbExec(schema);
   }
 
   /**

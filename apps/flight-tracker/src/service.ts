@@ -101,6 +101,10 @@ export class FlightTrackerService extends BackgroundService {
   private readonly maxTrackPoints = Number(process.env.FLIGHT_TRACK_MAX_POINTS ?? '60');
   private readonly livePollMs = Number(process.env.FLIGHT_LIVE_POLL_MS ?? '10000');
   private readonly liveMinFetchMs = Number(process.env.FLIGHT_LIVE_MIN_FETCH_MS ?? '9000');
+  private liveThrottleUntil = 0;
+  private readonly liveBaseBackoffMs = Number(process.env.FLIGHT_LIVE_BACKOFF_MS ?? '15000');
+  private readonly liveMaxBackoffMs = Number(process.env.FLIGHT_LIVE_MAX_BACKOFF_MS ?? '120000');
+  private liveBackoffMs = this.liveBaseBackoffMs;
 
   constructor(config: ServiceConfig) {
     super(config);
@@ -203,6 +207,9 @@ export class FlightTrackerService extends BackgroundService {
 
   private async refreshLiveFlights(): Promise<void> {
     const now = Date.now();
+    if (this.liveThrottleUntil && now < this.liveThrottleUntil) {
+      return;
+    }
     if (this.isLiveFetchInProgress) {
       return;
     }
@@ -243,16 +250,40 @@ export class FlightTrackerService extends BackgroundService {
     }
 
     const response = await fetch(url.toString(), { headers });
+    if (response.status === 429) {
+      const retryMs = this.parseRetryAfterMs(response.headers.get('retry-after')) ?? this.liveBackoffMs;
+      const backoffMs = Math.min(retryMs, this.liveMaxBackoffMs);
+      this.liveThrottleUntil = Date.now() + backoffMs;
+      this.liveBackoffMs = Math.min(this.liveBackoffMs * 2, this.liveMaxBackoffMs);
+      console.warn(`⚠️  OpenSky rate limited. Backing off for ${Math.round(backoffMs / 1000)}s.`);
+      return [];
+    }
     if (!response.ok) {
       throw new Error(`OpenSky error: ${response.status}`);
     }
     const payload = (await response.json()) as { states?: unknown[] };
+    this.liveBackoffMs = this.liveBaseBackoffMs;
     if (!payload.states) {
       return [];
     }
     return payload.states
       .map((state) => this.mapOpenSkyState(state))
       .filter((state): state is FlightState => Boolean(state));
+  }
+
+  private parseRetryAfterMs(value: string | null): number | null {
+    if (!value) {
+      return null;
+    }
+    const seconds = Number(value);
+    if (!Number.isNaN(seconds)) {
+      return Math.max(seconds * 1000, 0);
+    }
+    const dateMs = Date.parse(value);
+    if (!Number.isNaN(dateMs)) {
+      return Math.max(dateMs - Date.now(), 0);
+    }
+    return null;
   }
 
   private mapOpenSkyState(state: unknown): FlightState | null {
