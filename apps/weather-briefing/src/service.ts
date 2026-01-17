@@ -15,6 +15,21 @@ import {
   type HourlyForecast,
   type Airport,
 } from '@aviation/shared-sdk';
+import { monitoredStations } from './regions';
+
+export type StationSnapshot = {
+  code: string;
+  name: string;
+  latitude: number;
+  longitude: number;
+  category: FlightCategory;
+  visibility_sm: number | null;
+  ceiling_ft: number | null;
+  wind_speed_kt: number | null;
+  wind_direction: number | null;
+  temperature_f: number | null;
+  updatedAt: string;
+};
 
 /**
  * Weather Briefing Service
@@ -27,6 +42,7 @@ export class WeatherBriefingService extends BackgroundService {
   private intervalId?: NodeJS.Timeout;
   private lastUpdate?: Date;
   private cachedBriefings: Map<string, { data: MetarData; raw: string; category: FlightCategory; timestamp: Date }>;
+  private cacheTtlMs = 5 * 60 * 1000;
 
   constructor(config: ServiceConfig) {
     super(config);
@@ -76,7 +92,7 @@ export class WeatherBriefingService extends BackgroundService {
     console.log(`[${timestamp.toISOString()}] Updating weather briefings...`);
 
     // Example stations (in production, these would come from configuration or user preferences)
-    const stations = ['KSFO', 'KJFK', 'KORD', 'KLAX', 'KDFW'];
+    const stations = monitoredStations;
 
     let updated = 0;
     let errors = 0;
@@ -221,6 +237,81 @@ export class WeatherBriefingService extends BackgroundService {
       console.error('Error generating briefing:', error);
       return `Error generating weather briefing for "${location}": ${error}`;
     }
+  }
+
+  async getStationSummaries(codes: string[]): Promise<StationSnapshot[]> {
+    const summaries: StationSnapshot[] = [];
+
+    for (const code of codes) {
+      const summary = await this.getStationSnapshot(code);
+      if (summary) {
+        summaries.push(summary);
+      }
+    }
+
+    return summaries;
+  }
+
+  async getStationSnapshot(code: string): Promise<StationSnapshot | null> {
+    const station = code.trim().toUpperCase();
+    if (!station) {
+      return null;
+    }
+
+    const airport = searchAirports(station, 1)[0];
+    if (!airport) {
+      return null;
+    }
+
+    const cached = this.cachedBriefings.get(station);
+    const isFresh = cached ? Date.now() - cached.timestamp.getTime() < this.cacheTtlMs : false;
+
+    let data: MetarData | undefined;
+    let category: FlightCategory | undefined;
+    let timestamp: Date;
+
+    if (cached && isFresh) {
+      data = cached.data;
+      category = cached.category;
+      timestamp = cached.timestamp;
+    } else {
+      const raw = await fetchMetarRaw(station);
+      if (!raw) {
+        return null;
+      }
+
+      data = parseMetar(raw);
+      category = flightCategory(
+        data.visibility_sm ?? null,
+        data.ceiling_ft ?? null
+      );
+      timestamp = new Date();
+
+      this.cachedBriefings.set(station, {
+        data,
+        raw,
+        category,
+        timestamp,
+      });
+    }
+
+    if (!data || !category) {
+      return null;
+    }
+
+    return {
+      code: station,
+      name: airport.name,
+      latitude: airport.latitude,
+      longitude: airport.longitude,
+      category,
+      visibility_sm: data.visibility_sm ?? null,
+      ceiling_ft: data.ceiling_ft ?? null,
+      wind_speed_kt: data.wind_speed_kt ?? null,
+      wind_direction: data.wind_direction ?? null,
+      temperature_f: data.temperature_f ?? null,
+      updatedAt: timestamp.toISOString(),
+    };
   }
 
   private async buildForecastOutlook(
