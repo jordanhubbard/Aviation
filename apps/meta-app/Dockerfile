@@ -34,7 +34,7 @@ COPY apps/meta-app/tsconfig.json ./
 COPY apps/meta-app/tsconfig.node.json ./
 COPY apps/meta-app/src ./src
 
-RUN npm install --no-save --no-package-lock @rollup/rollup-linux-x64-musl
+RUN npm install --no-save @rollup/rollup-linux-x64-musl
 
 RUN npm run build
 
