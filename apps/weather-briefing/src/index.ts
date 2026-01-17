@@ -276,20 +276,20 @@ async function main() {
                 .map((station) => {
                   const color = CATEGORY_COLORS[station.category] || CATEGORY_COLORS.UNKNOWN;
                   const badgeStyle = 'background:' + color + ';';
-                  return `
-                    <div class="station-card">
-                      <div class="station-meta">
-                        <h3>${station.code}</h3>
-                        <span class="station-badge" style="${badgeStyle}">${station.category}</span>
-                      </div>
-                      <p>${station.name}</p>
-                      <p>Wind: ${formatWind(station)}</p>
-                      <p>Visibility: ${formatValue(station.visibility_sm, ' SM')}</p>
-                      <p>Ceiling: ${formatValue(station.ceiling_ft, ' ft')}</p>
-                      <p>Temp: ${formatValue(station.temperature_f, '°F')}</p>
-                      <div class="station-updated">Updated ${station.updatedAt.split('T')[1].slice(0, 5)}Z</div>
-                    </div>
-                  `;
+                return [
+                  '<div class="station-card">',
+                  '  <div class="station-meta">',
+                  '    <h3>' + station.code + '</h3>',
+                  '    <span class="station-badge" style="' + badgeStyle + '">' + station.category + '</span>',
+                  '  </div>',
+                  '  <p>' + station.name + '</p>',
+                  '  <p>Wind: ' + formatWind(station) + '</p>',
+                  '  <p>Visibility: ' + formatValue(station.visibility_sm, ' SM') + '</p>',
+                  '  <p>Ceiling: ' + formatValue(station.ceiling_ft, ' ft') + '</p>',
+                  '  <p>Temp: ' + formatValue(station.temperature_f, '°F') + '</p>',
+                  '  <div class="station-updated">Updated ' + station.updatedAt.split('T')[1].slice(0, 5) + 'Z</div>',
+                  '</div>',
+                ].join('');
                 })
                 .join('');
             };
@@ -306,15 +306,15 @@ async function main() {
                   weight: 2,
                 });
 
-                const popupContent = `
-                  <div>
-                    <strong>${station.code}</strong> - ${station.name}<br />
-                    Category: ${station.category}<br />
-                    Wind: ${formatWind(station)}<br />
-                    Visibility: ${formatValue(station.visibility_sm, ' SM')}<br />
-                    Ceiling: ${formatValue(station.ceiling_ft, ' ft')}
-                  </div>
-                `;
+                const popupContent = [
+                  '<div>',
+                  '  <strong>' + station.code + '</strong> - ' + station.name + '<br />',
+                  '  Category: ' + station.category + '<br />',
+                  '  Wind: ' + formatWind(station) + '<br />',
+                  '  Visibility: ' + formatValue(station.visibility_sm, ' SM') + '<br />',
+                  '  Ceiling: ' + formatValue(station.ceiling_ft, ' ft'),
+                  '</div>',
+                ].join('');
 
                 marker.bindPopup(popupContent);
                 marker.on('click', () => {
