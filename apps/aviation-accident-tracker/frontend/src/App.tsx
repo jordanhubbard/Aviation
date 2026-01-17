@@ -42,6 +42,13 @@ function formatDate(iso: string) {
   return new Date(iso).toISOString().slice(0, 10);
 }
 
+function formatInputDate(date: Date) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
 export function App() {
   const [events, setEvents] = useState<EventRecord[]>([]);
   const [loading, setLoading] = useState(false);
@@ -59,7 +66,9 @@ export function App() {
   const [region, setRegion] = useState('');
   const [from, setFrom] = useState('');
   const [to, setTo] = useState('');
+  const [rangePreset, setRangePreset] = useState('');
   const [options, setOptions] = useState<{ countries: string[]; regions: string[] }>({ countries: [], regions: [] });
+  const today = formatInputDate(new Date());
 
   const fetchAirports = useMemo(
     () =>
@@ -79,6 +88,21 @@ export function App() {
       }, 300),
     []
   );
+
+  const clampToToday = (value: string) => (value && value > today ? today : value);
+
+  const applyPresetRange = (value: string) => {
+    setRangePreset(value);
+    if (!value) return;
+    const days = Number(value);
+    if (!Number.isFinite(days) || days <= 0) return;
+    const end = new Date();
+    const start = new Date(end);
+    start.setDate(start.getDate() - (days - 1));
+    setFrom(formatInputDate(start));
+    setTo(formatInputDate(end));
+    setPage(0);
+  };
 
   useEffect(() => {
     setLoading(true);
@@ -199,12 +223,29 @@ export function App() {
           </select>
         </label>
         <label>
+          Range:{' '}
+          <select
+            value={rangePreset}
+            onChange={(e) => {
+              applyPresetRange(e.target.value);
+            }}
+          >
+            <option value="">Custom</option>
+            <option value="7">Last 7 days</option>
+            <option value="30">Last 30 days</option>
+            <option value="90">Last 90 days</option>
+            <option value="365">Last 365 days</option>
+          </select>
+        </label>
+        <label>
           From:{' '}
           <input
             type="date"
             value={from}
+            max={today}
             onChange={(e) => {
-              setFrom(e.target.value);
+              setFrom(clampToToday(e.target.value));
+              setRangePreset('');
               setPage(0);
             }}
           />
@@ -214,8 +255,10 @@ export function App() {
           <input
             type="date"
             value={to}
+            max={today}
             onChange={(e) => {
-              setTo(e.target.value);
+              setTo(clampToToday(e.target.value));
+              setRangePreset('');
               setPage(0);
             }}
           />
@@ -252,6 +295,7 @@ export function App() {
             setRegion('');
             setFrom('');
             setTo('');
+            setRangePreset('');
             setPage(0);
           }}
         >

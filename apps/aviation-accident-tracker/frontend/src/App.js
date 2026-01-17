@@ -18,6 +18,12 @@ const icon = L.icon({
 function formatDate(iso) {
     return new Date(iso).toISOString().slice(0, 10);
 }
+function formatInputDate(date) {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+}
 export function App() {
     const [events, setEvents] = useState([]);
     const [loading, setLoading] = useState(false);
@@ -34,7 +40,9 @@ export function App() {
     const [region, setRegion] = useState('');
     const [from, setFrom] = useState('');
     const [to, setTo] = useState('');
+    const [rangePreset, setRangePreset] = useState('');
     const [options, setOptions] = useState({ countries: [], regions: [] });
+    const today = formatInputDate(new Date());
     const fetchAirports = useMemo(() => debounce((q) => {
         if (!q.trim())
             return setAirportOptions([]);
@@ -48,6 +56,21 @@ export function App() {
         })
             .catch(() => setAirportOptions([]));
     }, 300), []);
+    const clampToToday = (value) => (value && value > today ? today : value);
+    const applyPresetRange = (value) => {
+        setRangePreset(value);
+        if (!value)
+            return;
+        const days = Number(value);
+        if (!Number.isFinite(days) || days <= 0)
+            return;
+        const end = new Date();
+        const start = new Date(end);
+        start.setDate(start.getDate() - (days - 1));
+        setFrom(formatInputDate(start));
+        setTo(formatInputDate(end));
+        setPage(0);
+    };
     useEffect(() => {
         setLoading(true);
         const params = new URLSearchParams();
@@ -106,13 +129,17 @@ export function App() {
                                     setCountry(e.target.value);
                                     setPage(0);
                                 }, children: [_jsx("option", { value: "", children: "All" }), options.countries.map((c) => (_jsx("option", { value: c, children: c }, c)))] })] }), _jsxs("label", { children: ["Region:", ' ', _jsxs("select", { value: region, onChange: (e) => {
-                                    setRegion(e.target.value);
+                            setRegion(e.target.value);
+                            setPage(0);
+                        }, children: [_jsx("option", { value: "", children: "All" }), options.regions.map((r) => (_jsx("option", { value: r, children: r }, r)))] })] }), _jsxs("label", { children: ["Range:", ' ', _jsxs("select", { value: rangePreset, onChange: (e) => {
+                                    applyPresetRange(e.target.value);
+                                }, children: [_jsx("option", { value: "", children: "Custom" }), _jsx("option", { value: "7", children: "Last 7 days" }), _jsx("option", { value: "30", children: "Last 30 days" }), _jsx("option", { value: "90", children: "Last 90 days" }), _jsx("option", { value: "365", children: "Last 365 days" })] })] }), _jsxs("label", { children: ["From:", ' ', _jsx("input", { type: "date", value: from, max: today, onChange: (e) => {
+                                    setFrom(clampToToday(e.target.value));
+                                    setRangePreset('');
                                     setPage(0);
-                                }, children: [_jsx("option", { value: "", children: "All" }), options.regions.map((r) => (_jsx("option", { value: r, children: r }, r)))] })] }), _jsxs("label", { children: ["From:", ' ', _jsx("input", { type: "date", value: from, onChange: (e) => {
-                                    setFrom(e.target.value);
-                                    setPage(0);
-                                } })] }), _jsxs("label", { children: ["To:", ' ', _jsx("input", { type: "date", value: to, onChange: (e) => {
-                                    setTo(e.target.value);
+                                } })] }), _jsxs("label", { children: ["To:", ' ', _jsx("input", { type: "date", value: to, max: today, onChange: (e) => {
+                                    setTo(clampToToday(e.target.value));
+                                    setRangePreset('');
                                     setPage(0);
                                 } })] }), _jsxs("label", { children: ["Airport:", ' ', _jsx("input", { value: airportQuery, onChange: (e) => {
                                     const q = e.target.value;
@@ -128,6 +155,7 @@ export function App() {
                             setRegion('');
                             setFrom('');
                             setTo('');
+                            setRangePreset('');
                             setPage(0);
                         }, children: "Clear" }), _jsxs(Badge, { children: ["Filters active:", ' ', [
                                 search && 'search',
