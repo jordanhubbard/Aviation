@@ -122,11 +122,13 @@ function extractOperator(text: string): string | undefined {
 }
 
 function parseAsnListPage(html: string, fetchedAt: string): RawEvent[] {
-  const rows = [...html.matchAll(/<tr class="list">([\\s\\S]*?)<\\/tr>/g)];
+  const rowPattern = new RegExp('<tr class="list">([\\s\\S]*?)</tr>', 'g');
+  const cellPattern = new RegExp('<td class="list">([\\s\\S]*?)</td>', 'g');
+  const rows = [...html.matchAll(rowPattern)];
   const events: RawEvent[] = [];
 
   for (const row of rows) {
-    const cells = [...row[1].matchAll(/<td class="list">([\\s\\S]*?)<\\/td>/g)].map((m) => m[1]);
+    const cells = [...row[1].matchAll(cellPattern)].map((m) => m[1]);
     if (cells.length < 6) continue;
 
     const dateCell = cells[0];

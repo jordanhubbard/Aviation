@@ -339,12 +339,12 @@ async function main() {
 
             const formatAltitude = (meters) => {
               if (meters == null) return '—';
-              return `${Math.round(meters * 3.28084).toLocaleString()} ft`;
+              return Math.round(meters * 3.28084).toLocaleString() + ' ft';
             };
 
             const formatSpeed = (metersPerSecond) => {
               if (metersPerSecond == null) return '—';
-              return `${Math.round(metersPerSecond * 1.94384)} kt`;
+              return Math.round(metersPerSecond * 1.94384) + ' kt';
             };
 
             const buildIcon = (flight, isTracked) => {
@@ -352,7 +352,12 @@ async function main() {
               const colorClass = isTracked ? 'tracked' : '';
               return L.divIcon({
                 className: 'aircraft-marker',
-                html: `<div class="aircraft-icon ${colorClass}" style="transform: rotate(${rotation}deg)">✈︎</div>`,
+                html:
+                  '<div class="aircraft-icon ' +
+                  colorClass +
+                  '" style="transform: rotate(' +
+                  rotation +
+                  'deg)">✈︎</div>',
                 iconSize: [20, 20],
               });
             };
@@ -367,7 +372,9 @@ async function main() {
                 marker.setLatLng([flight.latitude, flight.longitude]);
                 marker.setIcon(buildIcon(flight, isTracked));
                 marker.bindTooltip(
-                  `${flight.callsign || flight.icao24} • ${formatAltitude(flight.geoAltitude ?? flight.baroAltitude)}`,
+                  (flight.callsign || flight.icao24) +
+                    ' • ' +
+                    formatAltitude(flight.geoAltitude ?? flight.baroAltitude),
                   { direction: 'top', opacity: 0.9 }
                 );
                 if (!existing) {
@@ -414,7 +421,7 @@ async function main() {
 
             const renderTrackedTable = () => {
               trackedBody.innerHTML = '';
-              trackedSummary.textContent = `${trackedFlights.length} flights tracked`;
+              trackedSummary.textContent = trackedFlights.length + ' flights tracked';
               emptyState.style.display = trackedFlights.length ? 'none' : 'block';
 
               trackedFlights.forEach((flight) => {
@@ -461,7 +468,7 @@ async function main() {
             };
 
             const removeTracked = async (icao24) => {
-              await fetch(`/api/tracked/${icao24}`, { method: 'DELETE' });
+              await fetch('/api/tracked/' + icao24, { method: 'DELETE' });
               await refreshTracked();
             };
 
@@ -473,14 +480,14 @@ async function main() {
                 lamax: bounds.getNorth().toFixed(4),
                 lomax: bounds.getEast().toFixed(4),
               });
-              const response = await fetch(`/api/flights?${params.toString()}`);
+              const response = await fetch('/api/flights?' + params.toString());
               if (!response.ok) {
                 statusEl.textContent = 'Flight feed unavailable';
                 return;
               }
               const data = await response.json();
               latestFlights = data.flights || [];
-              statusEl.textContent = `Live flights: ${data.total}`;
+              statusEl.textContent = 'Live flights: ' + data.total;
               updateMarkers(latestFlights);
             };
 
