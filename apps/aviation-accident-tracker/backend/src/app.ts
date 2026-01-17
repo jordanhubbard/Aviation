@@ -46,6 +46,20 @@ export function createApp() {
   // API routes
   app.use('/api', router);
 
+  const frontendDistPath = path.resolve(process.cwd(), '..', 'frontend', 'dist');
+  const frontendIndexPath = path.join(frontendDistPath, 'index.html');
+
+  if (fs.existsSync(frontendIndexPath)) {
+    app.use(express.static(frontendDistPath));
+
+    app.get('*', (req, res, next) => {
+      if (req.path.startsWith('/api')) {
+        return next();
+      }
+      res.sendFile(frontendIndexPath);
+    });
+  }
+
   // Swagger UI if spec exists
   const specPath = path.resolve(path.dirname(new URL(import.meta.url).pathname), './dist/openapi.json');
   if (fs.existsSync(specPath)) {

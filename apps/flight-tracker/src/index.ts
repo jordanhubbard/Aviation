@@ -1,3 +1,4 @@
+import http from 'http';
 import { FlightTrackerService } from './service';
 
 /**
@@ -17,17 +18,58 @@ async function main() {
   // Start the service
   await service.start();
 
-  // Handle graceful shutdown
-  process.on('SIGINT', async () => {
-    console.log('\nShutting down Flight Tracker...');
-    await service.stop();
-    process.exit(0);
+  const port = Number(process.env.PORT ?? '3001');
+  const server = http.createServer((req, res) => {
+    const requestUrl = new URL(req.url ?? '/', `http://localhost:${port}`);
+
+    if (requestUrl.pathname === '/health') {
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ status: 'ok' }));
+      return;
+    }
+
+    res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
+    res.end(`
+      <html>
+        <head>
+          <title>Flight Tracker</title>
+          <style>
+            body { font-family: Arial, sans-serif; margin: 40px; background: #0b1f3a; color: #f8fafc; }
+            h1 { margin-bottom: 8px; }
+            code { background: #1e293b; padding: 4px 8px; border-radius: 6px; }
+          </style>
+        </head>
+        <body>
+          <h1>✈️ Flight Tracker</h1>
+          <p>Service is running. Try:</p>
+          <ul>
+            <li><code>/health</code></li>
+          </ul>
+        </body>
+      </html>
+    `);
   });
 
-  process.on('SIGTERM', async () => {
+  server.listen(port, '0.0.0.0', () => {
+    console.log(`HTTP server listening on port ${port}`);
+  });
+
+  // Handle graceful shutdown
+  const shutdown = async () => {
     console.log('\nShutting down Flight Tracker...');
     await service.stop();
+    await new Promise<void>((resolve) => {
+      server.close(() => resolve());
+    });
     process.exit(0);
+  };
+
+  process.on('SIGINT', () => {
+    void shutdown();
+  });
+
+  process.on('SIGTERM', () => {
+    void shutdown();
   });
 
   console.log('Flight Tracker is running. Press Ctrl+C to stop.');
