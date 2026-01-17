@@ -3,180 +3,182 @@ import { TabNavigation, PaneContainer } from '@aviation/ui-framework';
 import type { PaneConfig } from '@aviation/ui-framework';
 import './App.css';
 
-// Placeholder pane components for each aviation app
-// These will be replaced with actual implementations from each app
+type AppLink = {
+  id: string;
+  title: string;
+  tabTitle: string;
+  description: string;
+  icon: string;
+  localUrl: string;
+  productionUrl: string;
+  envUrl?: string;
+};
 
-function AccidentTrackerPane() {
-  return (
-    <div className="pane-content">
-      <h1>Aviation Accident Tracker</h1>
-      <p>Track and visualize aviation accidents/incidents with provenance and classification.</p>
-      <a href="http://localhost:8080" target="_blank" rel="noopener noreferrer">
-        Open Accident Tracker →
-      </a>
-    </div>
-  );
-}
+type ResolvedAppLink = AppLink & { url: string };
 
-function MissionsAppPane() {
-  return (
-    <div className="pane-content">
-      <h1>Aviation Missions</h1>
-      <p>Mission management and tracking system.</p>
-      <a href="http://localhost:3000" target="_blank" rel="noopener noreferrer">
-        Open Missions App →
-      </a>
-    </div>
-  );
-}
+const metaAppMode = import.meta.env.VITE_META_APP_MODE ?? 'tabs';
+const isLauncher = metaAppMode === 'launcher';
 
-function FlightPlannerPane() {
-  return (
-    <div className="pane-content">
-      <h1>Flight Planner</h1>
-      <p>VFR flight planning with terrain analysis and weather integration.</p>
-      <a href="http://localhost:5001" target="_blank" rel="noopener noreferrer">
-        Open Flight Planner →
-      </a>
-    </div>
-  );
-}
-
-function FlightSchoolPane() {
-  return (
-    <div className="pane-content">
-      <h1>Flight School</h1>
-      <p>Flight school management with booking and scheduling.</p>
-      <a href="http://localhost:5000" target="_blank" rel="noopener noreferrer">
-        Open Flight School →
-      </a>
-    </div>
-  );
-}
-
-function ForeFlightDashboardPane() {
-  return (
-    <div className="pane-content">
-      <h1>ForeFlight Dashboard</h1>
-      <p>Logbook analysis and statistics dashboard.</p>
-      <a href="http://localhost:3001" target="_blank" rel="noopener noreferrer">
-        Open ForeFlight Dashboard →
-      </a>
-    </div>
-  );
-}
-
-function FlightTrackerPane() {
-  return (
-    <div className="pane-content">
-      <h1>Flight Tracker</h1>
-      <p>Real-time flight tracking service.</p>
-      <a href="http://localhost:3002" target="_blank" rel="noopener noreferrer">
-        Open Flight Tracker →
-      </a>
-    </div>
-  );
-}
-
-function WeatherBriefingPane() {
-  return (
-    <div className="pane-content">
-      <h1>Weather Briefing</h1>
-      <p>Aviation weather briefing service.</p>
-      <a href="http://localhost:3003" target="_blank" rel="noopener noreferrer">
-        Open Weather Briefing →
-      </a>
-    </div>
-  );
-}
-
-// Define all aviation app panes
-const aviationPanes: PaneConfig[] = [
+const appLinks: AppLink[] = [
   {
     id: 'accident-tracker',
-    title: 'Accident Tracker',
+    title: 'Aviation Accident Tracker',
+    tabTitle: 'Accident Tracker',
+    description: 'Track and visualize aviation accidents with provenance and classification.',
     icon: '⚠️',
-    component: AccidentTrackerPane,
-    order: 1,
-    defaultOpen: true,
+    localUrl: 'http://localhost:8080',
+    productionUrl: 'https://aviation-accidents-production.up.railway.app/',
+    envUrl: import.meta.env.VITE_ACCIDENT_TRACKER_URL,
   },
   {
     id: 'missions',
-    title: 'Missions',
+    title: 'Aviation Missions',
+    tabTitle: 'Missions',
+    description: 'Mission management and tracking system.',
     icon: '📋',
-    component: MissionsAppPane,
-    order: 2,
+    localUrl: 'http://localhost:3000',
+    productionUrl: 'https://aviation-missions-production.up.railway.app/',
+    envUrl: import.meta.env.VITE_MISSIONS_URL,
   },
   {
     id: 'flight-planner',
     title: 'Flight Planner',
+    tabTitle: 'Flight Planner',
+    description: 'VFR flight planning with terrain analysis and weather integration.',
     icon: '🗺️',
-    component: FlightPlannerPane,
-    order: 3,
+    localUrl: 'http://localhost:5001',
+    productionUrl: 'https://flight-planner-production.up.railway.app/',
+    envUrl: import.meta.env.VITE_FLIGHT_PLANNER_URL,
   },
   {
     id: 'flight-school',
     title: 'Flight School',
+    tabTitle: 'Flight School',
+    description: 'Flight school management with booking and scheduling.',
     icon: '🎓',
-    component: FlightSchoolPane,
-    order: 4,
+    localUrl: 'http://localhost:5000',
+    productionUrl: 'https://flightschool-production.up.railway.app/',
+    envUrl: import.meta.env.VITE_FLIGHT_SCHOOL_URL,
   },
   {
     id: 'foreflight',
-    title: 'ForeFlight',
+    title: 'ForeFlight Dashboard',
+    tabTitle: 'ForeFlight',
+    description: 'Logbook analysis and statistics dashboard.',
     icon: '📊',
-    component: ForeFlightDashboardPane,
-    order: 5,
+    localUrl: 'http://localhost:3001',
+    productionUrl: 'https://foreflight-dashboard-production.up.railway.app/',
+    envUrl: import.meta.env.VITE_FOREFLIGHT_URL,
   },
   {
     id: 'tracker',
-    title: 'Tracker',
+    title: 'Flight Tracker',
+    tabTitle: 'Tracker',
+    description: 'Real-time flight tracking service.',
     icon: '✈️',
-    component: FlightTrackerPane,
-    order: 6,
+    localUrl: 'http://localhost:3002',
+    productionUrl: 'https://flight-tracker-production-384f.up.railway.app/',
+    envUrl: import.meta.env.VITE_FLIGHT_TRACKER_URL,
   },
   {
     id: 'weather',
-    title: 'Weather',
+    title: 'Weather Briefing',
+    tabTitle: 'Weather',
+    description: 'Aviation weather briefing service.',
     icon: '🌤️',
-    component: WeatherBriefingPane,
-    order: 7,
+    localUrl: 'http://localhost:3003',
+    productionUrl: 'https://weather-briefing-production.up.railway.app/',
+    envUrl: import.meta.env.VITE_WEATHER_BRIEFING_URL,
   },
 ];
 
+const resolvedApps: ResolvedAppLink[] = appLinks.map((app) => ({
+  ...app,
+  url: app.envUrl || (isLauncher ? app.productionUrl : app.localUrl),
+}));
+
+const aviationPanes: PaneConfig[] = resolvedApps.map((app, index) => ({
+  id: app.id,
+  title: app.tabTitle,
+  icon: app.icon,
+  component: () => <AppPane app={app} />,
+  order: index + 1,
+  defaultOpen: index === 0,
+}));
+
+function AppPane({ app }: { app: ResolvedAppLink }) {
+  return (
+    <div className="pane-content">
+      <h1>{app.title}</h1>
+      <p>{app.description}</p>
+      <a href={app.url} target="_blank" rel="noopener noreferrer">
+        Open {app.tabTitle} →
+      </a>
+    </div>
+  );
+}
+
 function App() {
-  const [activeId, setActiveId] = useState<string>('accident-tracker');
+  const [activeId, setActiveId] = useState<string>(resolvedApps[0]?.id ?? '');
 
   const activePane = aviationPanes.find((p) => p.id === activeId) || null;
+  const subtitle = isLauncher
+    ? 'Launch aviation apps on demand'
+    : 'Unified aviation application dashboard';
 
   return (
     <div className="meta-app">
       <header className="meta-app-header">
         <h1 className="meta-app-title">🛩️ Aviation Suite</h1>
-        <p className="meta-app-subtitle">Unified aviation application dashboard</p>
+        <p className="meta-app-subtitle">{subtitle}</p>
       </header>
 
-      <TabNavigation
-        panes={aviationPanes}
-        activeId={activeId}
-        onTabSelect={setActiveId}
-        className="meta-app-tabs"
-      />
+      {isLauncher ? (
+        <main className="meta-app-main">
+          <div className="launcher-grid">
+            {resolvedApps.map((app) => (
+              <a
+                key={app.id}
+                className="launcher-card"
+                href={app.url}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <div className="launcher-card-header">
+                  <span className="launcher-card-icon">{app.icon}</span>
+                  <h2 className="launcher-card-title">{app.title}</h2>
+                </div>
+                <p className="launcher-card-description">{app.description}</p>
+                <span className="launcher-card-cta">Open {app.tabTitle} →</span>
+              </a>
+            ))}
+          </div>
+        </main>
+      ) : (
+        <>
+          <TabNavigation
+            panes={aviationPanes}
+            activeId={activeId}
+            onTabSelect={setActiveId}
+            className="meta-app-tabs"
+          />
 
-      <main className="meta-app-main">
-        <PaneContainer
-          activePane={activePane}
-          className="meta-app-pane"
-          emptyState={
-            <div className="meta-app-empty">
-              <p>No application selected</p>
-            </div>
-          }
-        />
-      </main>
+          <main className="meta-app-main">
+            <PaneContainer
+              activePane={activePane}
+              className="meta-app-pane"
+              emptyState={
+                <div className="meta-app-empty">
+                  <p>No application selected</p>
+                </div>
+              }
+            />
+          </main>
+        </>
+      )}
 
       <footer className="meta-app-footer">
-        <p>Aviation Monorepo Meta App • {aviationPanes.length} Applications</p>
+        <p>Aviation Monorepo Meta App • {resolvedApps.length} Applications</p>
       </footer>
     </div>
   );

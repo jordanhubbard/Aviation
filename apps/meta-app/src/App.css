@@ -87,6 +87,59 @@
   overflow-y: auto;
 }
 
+.launcher-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 1.5rem;
+}
+
+.launcher-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 2rem;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.98);
+  text-decoration: none;
+  color: inherit;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 8px 20px rgba(15, 23, 42, 0.12);
+  transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
+}
+
+.launcher-card:hover {
+  transform: translateY(-4px);
+  border-color: #667eea;
+  box-shadow: 0 12px 28px rgba(102, 126, 234, 0.2);
+}
+
+.launcher-card-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.launcher-card-icon {
+  font-size: 2rem;
+}
+
+.launcher-card-title {
+  margin: 0;
+  font-size: 1.25rem;
+  color: #1f2937;
+}
+
+.launcher-card-description {
+  margin: 0;
+  color: #64748b;
+  line-height: 1.6;
+}
+
+.launcher-card-cta {
+  font-weight: 600;
+  color: #667eea;
+}
+
 .meta-app-pane {
   background: white;
   border-radius: 12px;
@@ -196,6 +249,10 @@
 
   .pane-content h1 {
     font-size: 1.5rem;
+  }
+
+  .launcher-card {
+    padding: 1.5rem;
   }
 
   .pane-content p {
