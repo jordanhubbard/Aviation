@@ -2,7 +2,7 @@
 # Provides unified build, clean, test, and run targets for all applications and packages
 
 PYTHON_AUDIT := $(shell command -v python3.12 || command -v python3)
-.PHONY: help build clean test test-docker
+.PHONY: help build clean test test-docker release
 .PHONY: build-node build-python build-clojure
 .PHONY: clean-node clean-python clean-clojure
 .PHONY: test-node test-python test-clojure
@@ -44,6 +44,7 @@ help:
 	@echo "  make test-docker-python  - Test Python apps in Docker"
 	@echo "  make test-docker-clojure - Test Clojure apps in Docker"
 	@echo "  make audit               - Run security audits (Node.js + Python)"
+	@echo "  make release             - Run release workflow (tests, changelog, tag, push, GitHub release)"
 	@echo ""
 
 #
@@ -261,6 +262,13 @@ audit-python:
 	@./.venv-audit/bin/pip-audit -r /tmp/flight-planner-requirements.txt || \
 		echo "⚠️  pip-audit failed for flight-planner"
 	@echo "✅ Python audit complete"
+
+#
+# RELEASE TARGET
+#
+
+release:
+	@./scripts/release.sh
 
 
 #
