@@ -94,19 +94,19 @@ async function main() {
             form.addEventListener('submit', async (event) => {
               event.preventDefault();
               const station = document.getElementById('station').value;
-              output.textContent = `Loading briefing for ${station}...`;
+              output.textContent = 'Loading briefing for ' + station + '...';
               submitBtn.disabled = true;
 
               try {
                 const response = await fetch(`/briefing?station=${encodeURIComponent(station)}`);
                 if (!response.ok) {
                   const message = await response.text();
-                  throw new Error(message || `Request failed with status ${response.status}`);
+                  throw new Error(message || ('Request failed with status ' + response.status));
                 }
                 const briefing = await response.text();
                 output.textContent = briefing;
               } catch (error) {
-                output.textContent = `Failed to fetch briefing: ${error?.message ?? 'Unknown error'}`;
+                output.textContent = 'Failed to fetch briefing: ' + (error?.message ?? 'Unknown error');
               } finally {
                 submitBtn.disabled = false;
               }
