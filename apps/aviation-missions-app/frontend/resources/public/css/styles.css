@@ -1264,3 +1264,69 @@ body {
     padding: 16px;
   }
 }
+
+/* Secondary button styling for Suggest Edit */
+.btn-mission.secondary {
+  background: #64748b;
+  border-color: #64748b;
+  color: white;
+  font-size: 12px;
+  padding: 8px 12px;
+  margin-left: 8px;
+}
+
+.btn-mission.secondary:hover {
+  background: #475569;
+  border-color: #475569;
+}
+
+/* Form styling for edit suggestion */
+.mission-form-modal {
+  max-width: 700px;
+  max-height: 85vh;
+  overflow-y: auto;
+}
+
+.mission-form-modal .form-group {
+  margin-bottom: 16px;
+}
+
+.mission-form-modal label {
+  display: block;
+  margin-bottom: 6px;
+  font-weight: 600;
+  color: #334155;
+}
+
+.mission-form-modal input[type="text"],
+.mission-form-modal input[type="email"],
+.mission-form-modal input[type="number"],
+.mission-form-modal select,
+.mission-form-modal textarea {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  font-size: 14px;
+  font-family: inherit;
+  box-sizing: border-box;
+}
+
+.mission-form-modal input:focus,
+.mission-form-modal select:focus,
+.mission-form-modal textarea:focus {
+  outline: none;
+  border-color: #1976d2;
+  box-shadow: 0 0 0 3px rgba(25, 118, 210, 0.1);
+}
+
+.mission-form-modal textarea {
+  resize: vertical;
+  min-height: 80px;
+}
+
+.mission-form-modal .muted {
+  color: #64748b;
+  font-size: 14px;
+  margin-bottom: 20px;
+}

@@ -369,6 +369,9 @@ class AviationMissionApp {
                         <button class="btn-mission primary" onclick="event.stopPropagation(); app.viewMission(${mission.id})">
                             BRIEF
                         </button>
+                        <button class="btn-mission secondary" onclick="event.stopPropagation(); app.suggestEdit(${mission.id})" title="Suggest improvements to this mission">
+                            ✏️ EDIT
+                        </button>
                     </div>
                 </div>
             </div>
@@ -640,9 +643,145 @@ class AviationMissionApp {
         }
     }
 
-    editMission(id) {
-        console.log('✏️ Edit mission:', id);
-        // TODO: Implement mission editing
+    async suggestEdit(id) {
+        console.log('✏️ Suggest edit for mission:', id);
+        
+        // Find the mission
+        const mission = this.missions.find(m => m.id === id);
+        if (!mission) {
+            alert('Mission not found');
+            return;
+        }
+
+        const modal = document.createElement('div');
+        modal.className = 'modal-overlay';
+        modal.innerHTML = `
+            <div class="modal-content mission-form-modal">
+                <div class="modal-header">
+                    <h2>✏️ Suggest Mission Edit</h2>
+                    <button class="modal-close" onclick="this.closest('.modal-overlay').remove()">×</button>
+                </div>
+                <div class="modal-body">
+                    <p class="muted">Suggest improvements to this mission. Your changes will be reviewed by admins before being applied.</p>
+                    <form id="editSuggestionForm">
+                        <div class="form-group">
+                            <label for="edit-title">Mission Title</label>
+                            <input type="text" id="edit-title" name="title" value="${this.escapeHtml(mission.title || '')}" maxlength="255">
+                        </div>
+                        <div class="form-group">
+                            <label for="edit-category">Category</label>
+                            <select id="edit-category" name="category">
+                                <option value="Training" ${mission.category === 'Training' ? 'selected' : ''}>Training</option>
+                                <option value="Proficiency" ${mission.category === 'Proficiency' ? 'selected' : ''}>Proficiency</option>
+                                <option value="Cross-Country" ${mission.category === 'Cross-Country' ? 'selected' : ''}>Cross-Country</option>
+                                <option value="Emergency" ${mission.category === 'Emergency' ? 'selected' : ''}>Emergency</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="edit-difficulty">Difficulty (1-10)</label>
+                            <input type="number" id="edit-difficulty" name="difficulty" value="${mission.difficulty || 1}" min="1" max="10">
+                        </div>
+                        <div class="form-group">
+                            <label for="edit-route">Route</label>
+                            <input type="text" id="edit-route" name="route" value="${this.escapeHtml(mission.route || '')}" placeholder="e.g., KPAO → KSFO">
+                        </div>
+                        <div class="form-group">
+                            <label for="edit-objective">Learning Objective</label>
+                            <textarea id="edit-objective" name="objective" rows="2">${this.escapeHtml(mission.objective || '')}</textarea>
+                        </div>
+                        <div class="form-group">
+                            <label for="edit-description">Mission Description</label>
+                            <textarea id="edit-description" name="mission_description" rows="4">${this.escapeHtml(mission.mission_description || '')}</textarea>
+                        </div>
+                        <div class="form-group">
+                            <label for="edit-why">Why This Mission?</label>
+                            <textarea id="edit-why" name="why_description" rows="3">${this.escapeHtml(mission.why_description || '')}</textarea>
+                        </div>
+                        <div class="form-group">
+                            <label for="edit-challenges">Special Challenges</label>
+                            <textarea id="edit-challenges" name="special_challenges" rows="3">${this.escapeHtml(mission.special_challenges || '')}</textarea>
+                        </div>
+                        <div class="form-group">
+                            <label for="edit-notes">Notes & Tips</label>
+                            <textarea id="edit-notes" name="notes" rows="3">${this.escapeHtml(mission.notes || '')}</textarea>
+                        </div>
+                        <div class="form-group">
+                            <label for="edit-submitter-name">Your Name</label>
+                            <input type="text" id="edit-submitter-name" name="submitter_name" placeholder="Your name" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="edit-submitter-email">Your Email (optional)</label>
+                            <input type="email" id="edit-submitter-email" name="submitter_email" placeholder="your@email.com">
+                        </div>
+                        <button type="submit" class="btn-mission primary">Submit Suggestion</button>
+                    </form>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(modal);
+
+        const form = modal.querySelector('#editSuggestionForm');
+        form.addEventListener('submit', (e) => this.handleEditSuggestionSubmit(e, id));
+
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) {
+                modal.remove();
+            }
+        });
+    }
+
+    async handleEditSuggestionSubmit(e, missionId) {
+        e.preventDefault();
+
+        const form = e.target;
+        const formData = new FormData(form);
+
+        const suggestionData = {
+            title: formData.get('title'),
+            category: formData.get('category'),
+            difficulty: parseInt(formData.get('difficulty')),
+            route: formData.get('route'),
+            objective: formData.get('objective'),
+            mission_description: formData.get('mission_description'),
+            why_description: formData.get('why_description'),
+            special_challenges: formData.get('special_challenges'),
+            notes: formData.get('notes'),
+            submitter_name: formData.get('submitter_name'),
+            submitter_email: formData.get('submitter_email') || null
+        };
+
+        try {
+            const response = await fetch(`${this.apiBaseUrl}/missions/${missionId}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(suggestionData)
+            });
+
+            if (!response.ok) {
+                let errorMessage = `Failed to submit suggestion (${response.status})`;
+                try {
+                    const errorData = await response.json();
+                    if (errorData.error) {
+                        errorMessage = errorData.error;
+                    }
+                } catch (e) {
+                    errorMessage = `Failed to submit suggestion: ${response.statusText}`;
+                }
+                throw new Error(errorMessage);
+            }
+
+            const result = await response.json();
+            console.log('✅ Edit suggestion submitted:', result);
+
+            // Close modal
+            document.querySelector('.modal-overlay')?.remove();
+            alert('Thank you! Your edit suggestion has been submitted for admin review.');
+        } catch (error) {
+            console.error('❌ Failed to submit edit suggestion:', error);
+            alert('Failed to submit suggestion:\n\n' + error.message);
+        }
     }
 
     async deleteMission(id) {
