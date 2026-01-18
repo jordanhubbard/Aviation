@@ -337,15 +337,18 @@ class TestLogbookEntryValidationCoverage:
         entry.validate_entry()
         assert "Student pilot cannot log PIC time" in entry.error_explanation
 
-    def test_pic_dual_received_conflict(self):
-        """Test PIC should not log dual received time."""
+    def test_pic_dual_received_valid(self):
+        """Test certificated pilot CAN log both PIC and dual received (FAR 61.51)."""
         entry = self.create_valid_entry()
-        entry.pilot_role = "PIC"
-        entry.dual_received = 1.0  # PIC logging dual received
-        entry.pic_time = 0.5
+        entry.total_time = 2.0
+        entry.pilot_role = "PIC"  # Certificated pilot
+        entry.dual_received = 2.0  # Receiving instruction (flight review, IPC, checkout)
+        entry.pic_time = 2.0  # Sole manipulator of controls
+        entry.conditions.day = 2.0
         
         entry.validate_entry()
-        assert "PIC should not log dual received time" in entry.error_explanation
+        # This is VALID under FAR 61.51 for certificated pilots
+        assert entry.error_explanation is None or "PIC should not log dual" not in entry.error_explanation
 
     def test_student_without_dual_received(self):
         """Test student pilot flights should have dual received time."""

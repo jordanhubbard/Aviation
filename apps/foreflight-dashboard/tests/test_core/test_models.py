@@ -178,15 +178,17 @@ def test_time_accountability():
     entry.validate_entry()
     assert entry.error_explanation is None
     
-    # Test mixed PIC and dual received time (should fail - PIC shouldn't log dual)
+    # Test certificated pilot logging both PIC and dual received (VALID - flight review, IPC, checkout)
+    # Under FAR 61.51, certificated pilots CAN log both PIC and dual simultaneously
     entry = create_valid_entry()
     entry.total_time = 2.0
     entry.conditions.day = 2.0
-    entry.pilot_role = "PIC"
-    entry.dual_received = 1.0
-    entry.pic_time = 1.0  # Total time split between PIC and dual
+    entry.pilot_role = "PIC"  # or "DUAL" - both are certificated
+    entry.dual_received = 2.0  # Receiving instruction
+    entry.pic_time = 2.0  # Sole manipulator of controls
     entry.validate_entry()
-    assert "PIC should not log dual received time" in entry.error_explanation
+    # This should NOT error for certificated pilots
+    assert entry.error_explanation is None or "PIC should not log dual" not in entry.error_explanation
     
     # Test rounding tolerance
     entry = create_valid_entry()

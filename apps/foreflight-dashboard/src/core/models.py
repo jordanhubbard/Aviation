@@ -308,24 +308,36 @@ class LogbookEntry(BaseModel):
         if self.dual_received > self.total_time:
             issues.append(f"Dual received time ({self.dual_received}) exceeds flight time ({self.total_time})")
             
-        # Check that total time matches PIC time plus dual received time
+        # Check time accountability based on pilot role
         if self.total_time > 0:
             # If role is PIC and no PIC time is set, use total time
-            if self.pilot_role == "PIC" and self.pic_time == 0:
+            if self.pilot_role == "PIC" and self.pic_time == 0 and self.dual_received == 0:
                 self.pic_time = self.total_time
             
-            total_accounted_time = self.dual_received + self.pic_time
-            
-            # Check time accountability for all flights
-            if abs(total_accounted_time - self.total_time) > 0.1:  # Allow 0.1 hour difference for rounding
-                issues.append(f"Total time ({self.total_time:.1f}) should equal sum of PIC time ({self.pic_time:.1f}) and dual received time ({self.dual_received:.1f})")
+            # For certificated pilots logging both PIC and dual:
+            # Both should equal total time (NOT summed) - e.g., flight review, IPC, checkout
+            if self.pic_time > 0 and self.dual_received > 0 and self.pilot_role != "STUDENT":
+                # Both PIC and dual should equal total time
+                if abs(self.pic_time - self.total_time) > 0.1:
+                    issues.append(f"PIC time ({self.pic_time:.1f}) should equal total time ({self.total_time:.1f})")
+                if abs(self.dual_received - self.total_time) > 0.1:
+                    issues.append(f"Dual received ({self.dual_received:.1f}) should equal total time ({self.total_time:.1f})")
+            # For student pilots or single-type logging: PIC + dual should equal total
+            elif self.pilot_role == "STUDENT" or (self.pic_time > 0 and self.dual_received == 0) or (self.pic_time == 0 and self.dual_received > 0):
+                total_accounted_time = self.dual_received + self.pic_time + self.solo_time
+                if abs(total_accounted_time - self.total_time) > 0.1:  # Allow 0.1 hour difference for rounding
+                    issues.append(f"Total time ({self.total_time:.1f}) should equal sum of PIC time ({self.pic_time:.1f}), dual received ({self.dual_received:.1f}), and solo time ({self.solo_time:.1f})")
 
         # Check pilot role vs time logging conflicts
         if self.pilot_role == "STUDENT" and self.pic_time > 0:
             issues.append("Student pilot cannot log PIC time")
         
-        if self.pilot_role == "PIC" and self.dual_received > 0:
-            issues.append("PIC should not log dual received time (except for complex/high-performance checkout)")
+        # For certificated pilots (role=PIC or DUAL), logging both PIC and dual received is LEGAL
+        # under FAR 61.51 when:
+        # - Sole manipulator of controls (rated in aircraft)
+        # - Receiving instruction (flight review, IPC, checkout, advanced training)
+        # This should NOT be flagged as an error for certificated pilots
+        # Only student pilots cannot log PIC time while receiving dual
             
         if self.pilot_role == "STUDENT" and self.dual_received == 0 and self.total_time > 0:
             issues.append("Student pilot flights should typically log dual received time")
