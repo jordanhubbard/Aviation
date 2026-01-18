@@ -30,8 +30,18 @@ const FitBounds: React.FC<{ points: Array<[number, number]> }> = ({ points }) =>
 
   React.useEffect(() => {
     if (points.length < 2) return
-    const bounds = L.latLngBounds(points.map(([lat, lon]) => [lat, lon]))
-    map.fitBounds(bounds.pad(0.25), { animate: true })
+    
+    // Guard against map not being initialized
+    if (!map || !map.fitBounds) {
+      return
+    }
+    
+    try {
+      const bounds = L.latLngBounds(points.map(([lat, lon]) => [lat, lon]))
+      map.fitBounds(bounds.pad(0.25), { animate: true })
+    } catch (error) {
+      console.error('Error fitting map bounds:', error)
+    }
   }, [map, points])
 
   return null

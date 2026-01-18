@@ -23,8 +23,17 @@ const FitToCircle: React.FC<{ center: [number, number]; radiusM: number }> = ({
   const map = useMap()
 
   React.useEffect(() => {
-    const bounds = L.circle(L.latLng(center[0], center[1]), { radius: radiusM }).getBounds()
-    map.fitBounds(bounds.pad(0.15), { animate: true })
+    // Guard against map not being initialized
+    if (!map || !map.fitBounds) {
+      return
+    }
+    
+    try {
+      const bounds = L.circle(L.latLng(center[0], center[1]), { radius: radiusM }).getBounds()
+      map.fitBounds(bounds.pad(0.15), { animate: true })
+    } catch (error) {
+      console.error('Error fitting map bounds:', error)
+    }
   }, [map, center, radiusM])
 
   return null
