@@ -68,8 +68,8 @@ jobs:
           lein deps
           lein test
 
-  # Test flightplanner
-  test-flightplanner:
+  # Test flight-planner
+  test-flight-planner:
     name: Test Flight Planner
     runs-on: ubuntu-latest
     steps:
@@ -86,25 +86,25 @@ jobs:
           node-version: '20'
       
       - name: Install Python dependencies
-        working-directory: apps/flightplanner
+        working-directory: apps/flight-planner
         run: |
           pip install -r requirements.txt
           pip install pytest pytest-cov
       
       - name: Run Python tests
-        working-directory: apps/flightplanner
+        working-directory: apps/flight-planner
         run: pytest
       
       - name: Install frontend dependencies
-        working-directory: apps/flightplanner/frontend
+        working-directory: apps/flight-planner/frontend
         run: npm ci
       
       - name: Type check frontend
-        working-directory: apps/flightplanner/frontend
+        working-directory: apps/flight-planner/frontend
         run: npm run type-check
       
       - name: Lint frontend
-        working-directory: apps/flightplanner/frontend
+        working-directory: apps/flight-planner/frontend
         run: npm run lint
 
   # Test flightschool
