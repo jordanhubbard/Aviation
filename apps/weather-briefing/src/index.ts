@@ -85,6 +85,25 @@ async function main() {
       return;
     }
 
+    if (requestUrl.pathname === '/station') {
+      const code = requestUrl.searchParams.get('code') ?? '';
+      try {
+        const station = await service.getStationSnapshot(code);
+        if (!station) {
+          res.writeHead(404, { 'Content-Type': 'application/json; charset=utf-8' });
+          res.end(JSON.stringify({ error: 'station_not_found', message: 'Station not found.' }));
+          return;
+        }
+        res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
+        res.end(JSON.stringify({ station }));
+      } catch (error) {
+        const message = error instanceof Error ? error.message : 'Unexpected error';
+        res.writeHead(500, { 'Content-Type': 'application/json; charset=utf-8' });
+        res.end(JSON.stringify({ error: 'station_failed', message }));
+      }
+      return;
+    }
+
     res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
     res.end(`
       <html>
@@ -195,6 +214,62 @@ async function main() {
               LIFR: '#a855f7',
               UNKNOWN: '#94a3b8',
             };
+            const CUSTOM_STATIONS_KEY = 'weather-briefing.customStations';
+
+            const normalizeStation = (value) => value.trim().toUpperCase();
+            const isValidStationCode = (value) => /^[A-Z]{3,4}$/.test(value);
+
+            const builtInStations = new Set(Array.from(stationSelect.options).map((option) => option.value));
+            const customStations = new Set();
+
+            const saveCustomStations = () => {
+              try {
+                localStorage.setItem(CUSTOM_STATIONS_KEY, JSON.stringify(Array.from(customStations)));
+              } catch (error) {
+                // Ignore storage errors.
+              }
+            };
+
+            const addCustomStation = (code) => {
+              if (builtInStations.has(code)) {
+                return;
+              }
+              if (!customStations.has(code)) {
+                customStations.add(code);
+                saveCustomStations();
+              }
+            };
+
+            const ensureStationOption = (code) => {
+              const existing = Array.from(stationSelect.options).find((option) => option.value === code);
+              if (existing) {
+                return existing;
+              }
+              const option = document.createElement('option');
+              option.value = code;
+              option.textContent = code + ' - Custom';
+              stationSelect.appendChild(option);
+              return option;
+            };
+
+            const loadCustomStations = () => {
+              try {
+                const stored = JSON.parse(localStorage.getItem(CUSTOM_STATIONS_KEY) ?? '[]');
+                if (!Array.isArray(stored)) {
+                  return;
+                }
+                stored.forEach((code) => {
+                  const normalized = normalizeStation(String(code));
+                  if (!isValidStationCode(normalized)) {
+                    return;
+                  }
+                  customStations.add(normalized);
+                  ensureStationOption(normalized);
+                });
+              } catch (error) {
+                // Ignore storage errors.
+              }
+            };
 
             const getSelectedDay = () => {
               const selection = document.querySelector('input[name="forecast-day"]:checked');
@@ -203,10 +278,23 @@ async function main() {
               return Number.isNaN(value) ? null : value;
             };
 
-            const getStation = () => {
-              const manualStation = stationInput.value.trim().toUpperCase();
-              return manualStation || stationSelect.value;
+            const getStation = () => stationSelect.value;
+
+            const applyStationSelection = (code) => {
+              const normalized = normalizeStation(code);
+              if (!isValidStationCode(normalized)) {
+                return null;
+              }
+              ensureStationOption(normalized);
+              stationSelect.value = normalized;
+              stationInput.value = normalized;
+              addCustomStation(normalized);
+              void updateMapForStation(normalized);
+              return normalized;
             };
+
+            loadCustomStations();
+            stationInput.value = stationSelect.value;
 
             let hasBriefing = false;
 
@@ -265,6 +353,66 @@ async function main() {
             }).addTo(map);
 
             const markersLayer = L.layerGroup().addTo(map);
+            const highlightLayer = L.layerGroup().addTo(map);
+            let currentStations = [];
+
+            const highlightStation = (station) => {
+              highlightLayer.clearLayers();
+              if (!station) {
+                return;
+              }
+              const marker = L.circleMarker([station.latitude, station.longitude], {
+                radius: 9,
+                color: '#facc15',
+                fillColor: '#facc15',
+                fillOpacity: 0.9,
+                weight: 2,
+              });
+              marker.addTo(highlightLayer);
+            };
+
+            const focusOnStation = (code, stations = currentStations) => {
+              const station = stations.find((entry) => entry.code === code);
+              if (!station) {
+                return false;
+              }
+              highlightStation(station);
+              map.setView([station.latitude, station.longitude], 6);
+              return true;
+            };
+
+            const fetchStationSnapshot = async (code) => {
+              try {
+                const response = await fetch('/station?code=' + encodeURIComponent(code));
+                if (!response.ok) {
+                  return null;
+                }
+                const payload = await response.json();
+                return payload.station ?? null;
+              } catch (error) {
+                return null;
+              }
+            };
+
+            const updateMapForStation = async (code) => {
+              const normalized = normalizeStation(code);
+              if (!isValidStationCode(normalized)) {
+                return;
+              }
+              if (focusOnStation(normalized)) {
+                return;
+              }
+              const regionWithStation = REGION_CONFIGS.find((entry) => entry.stations.includes(normalized));
+              if (regionWithStation && regionWithStation.id !== regionSelect.value) {
+                await loadRegion(regionWithStation.id, normalized);
+                return;
+              }
+              const snapshot = await fetchStationSnapshot(normalized);
+              if (snapshot) {
+                highlightStation(snapshot);
+                map.setView([snapshot.latitude, snapshot.longitude], 6);
+              }
+            };
 
             const renderStationList = (stations) => {
               if (!stations.length) {
@@ -318,14 +466,14 @@ async function main() {
 
                 marker.bindPopup(popupContent);
                 marker.on('click', () => {
-                  stationInput.value = station.code;
+                  applyStationSelection(station.code);
                   void requestBriefing();
                 });
                 marker.addTo(markersLayer);
               });
             };
 
-            const loadRegion = async (regionId) => {
+            const loadRegion = async (regionId, focusStationCode = null) => {
               const region = REGION_CONFIGS.find((entry) => entry.id === regionId) || REGION_CONFIGS[0];
               regionSelect.value = region.id;
               stationList.innerHTML = '<p class="muted">Loading region weather...</p>';
@@ -336,8 +484,13 @@ async function main() {
                 }
                 const payload = await response.json();
                 const stations = payload.stations || [];
+                currentStations = stations;
                 renderMarkers(stations);
                 renderStationList(stations);
+                if (focusStationCode && focusOnStation(focusStationCode, stations)) {
+                  return;
+                }
+                highlightStation(null);
                 if (region.bounds) {
                   map.fitBounds(region.bounds, { padding: [24, 24] });
                 }
@@ -348,6 +501,12 @@ async function main() {
 
             form.addEventListener('submit', async (event) => {
               event.preventDefault();
+              const manualStation = normalizeStation(stationInput.value);
+              if (manualStation && isValidStationCode(manualStation)) {
+                applyStationSelection(manualStation);
+              } else {
+                stationInput.value = stationSelect.value;
+              }
               await requestBriefing();
             });
 
@@ -360,6 +519,17 @@ async function main() {
 
             regionSelect.addEventListener('change', () => {
               void loadRegion(regionSelect.value);
+            });
+
+            stationSelect.addEventListener('change', () => {
+              applyStationSelection(stationSelect.value);
+            });
+
+            stationInput.addEventListener('blur', () => {
+              const manualStation = normalizeStation(stationInput.value);
+              if (manualStation && isValidStationCode(manualStation)) {
+                applyStationSelection(manualStation);
+              }
             });
 
             refreshMapBtn.addEventListener('click', () => {
