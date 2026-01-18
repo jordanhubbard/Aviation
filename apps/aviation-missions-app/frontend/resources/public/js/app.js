@@ -828,21 +828,40 @@ class AviationMissionApp {
             });
 
             if (!response.ok) {
-                throw new Error(`Failed to create mission: ${response.statusText}`);
+                // Try to get detailed error message from response body
+                let errorMessage = `Failed to create mission (${response.status})`;
+                try {
+                    const errorData = await response.json();
+                    if (errorData.error) {
+                        errorMessage = errorData.error;
+                        if (errorData.details) {
+                            errorMessage += `\n\nDetails: ${errorData.details}`;
+                        }
+                    }
+                } catch (e) {
+                    // If JSON parsing fails, use status text
+                    errorMessage = `Failed to create mission: ${response.statusText}`;
+                }
+                throw new Error(errorMessage);
             }
 
             const result = await response.json();
             console.log('✅ Mission created:', result);
 
             // Close modal and reload missions
-                this.closeModal();
+            this.closeModal();
             await this.loadMissions();
             this.render();
 
-            alert('Mission created successfully!');
+            // Show appropriate success message
+            if (result.message) {
+                alert(result.message);  // e.g., "Mission submitted for approval"
+            } else {
+                alert('Mission created successfully!');
+            }
         } catch (error) {
             console.error('❌ Failed to create mission:', error);
-            alert('Failed to create mission: ' + error.message);
+            alert('Failed to create mission:\n\n' + error.message);
         }
     }
 

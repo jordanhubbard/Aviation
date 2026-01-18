@@ -18,12 +18,17 @@
 (s/def ::why_description ::non-empty-string)
 (s/def ::notes (s/nilable string?))
 (s/def ::route (s/nilable string?))
+(s/def ::suggested_route (s/nilable string?))
 (s/def ::pilot_experience (s/nilable string?))
+(s/def ::special_challenges (s/nilable string?))
+(s/def ::submitter_name (s/nilable string?))
+(s/def ::submitter_email (s/nilable string?))
 
 (s/def ::mission-data
   (s/keys :req-un [::title ::category ::difficulty ::objective
                    ::mission_description ::why_description]
-          :opt-un [::notes ::route ::pilot_experience]))
+          :opt-un [::notes ::route ::suggested_route ::pilot_experience 
+                   ::special_challenges ::submitter_name ::submitter_email]))
 
 ;; Utility functions
 (defn- extract-auth-token
