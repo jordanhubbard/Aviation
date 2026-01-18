@@ -354,17 +354,17 @@ class AviationMissionApp {
                     <div class="pilot-experience">MIN EXP: ${experienceLevel}</div>
 
                     <div class="mission-stats">
-                        <div class="stat-item">
+                        <button class="stat-item stat-button" onclick="event.stopPropagation(); app.viewComments(${mission.id})" title="View and add comments">
                             <span class="stat-icon">💬</span>
                             <span class="stat-count">${mission.comment_count || 0}</span>
                             <span class="stat-label">Comments</span>
-                        </div>
+                        </button>
 
-                        <div class="stat-item">
+                        <button class="stat-item stat-button" onclick="event.stopPropagation(); app.markCompleted(${mission.id})" title="Mark mission as completed">
                             <span class="stat-icon">✓</span>
                             <span class="stat-count">${mission.completion_count || 0}</span>
                             <span class="stat-label">Completed</span>
-                        </div>
+                        </button>
 
                         <button class="btn-mission primary" onclick="event.stopPropagation(); app.viewMission(${mission.id})">
                             BRIEF
@@ -472,9 +472,172 @@ class AviationMissionApp {
     }
 
     // Mission actions
-    viewMission(id) {
+    async viewMission(id) {
         console.log('👁️ View mission:', id);
-        // TODO: Implement mission detail view
+        try {
+            const response = await fetch(`${this.apiBaseUrl}/missions/${id}`);
+            if (!response.ok) {
+                throw new Error('Failed to fetch mission details');
+            }
+            const mission = await response.json();
+            this.showMissionDetailModal(mission);
+        } catch (error) {
+            console.error('Error fetching mission:', error);
+            alert('Failed to load mission details. Please try again.');
+        }
+    }
+
+    async viewComments(id) {
+        console.log('💬 View comments for mission:', id);
+        try {
+            const response = await fetch(`${this.apiBaseUrl}/missions/${id}/comments`);
+            if (!response.ok) {
+                throw new Error('Failed to fetch comments');
+            }
+            const data = await response.json();
+            this.showCommentsModal(id, data.comments || []);
+        } catch (error) {
+            console.error('Error fetching comments:', error);
+            alert('Failed to load comments. Please try again.');
+        }
+    }
+
+    async markCompleted(id) {
+        console.log('✓ Mark mission completed:', id);
+        const pilotName = prompt('Enter your name to mark this mission as completed:');
+        if (!pilotName || pilotName.trim() === '') {
+            return;
+        }
+
+        try {
+            const response = await fetch(`${this.apiBaseUrl}/missions/${id}/completed`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    pilot_name: pilotName.trim(),
+                    completion_date: new Date().toISOString().split('T')[0],
+                    notes: ''
+                })
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to mark mission as completed');
+            }
+
+            alert(`Mission marked as completed! Great job, ${pilotName}!`);
+            this.loadMissions(); // Refresh the mission list
+        } catch (error) {
+            console.error('Error marking mission completed:', error);
+            alert('Failed to mark mission as completed. Please try again.');
+        }
+    }
+
+    showMissionDetailModal(mission) {
+        const modal = document.createElement('div');
+        modal.className = 'modal-overlay';
+        modal.innerHTML = `
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2>${this.escapeHtml(mission.title)}</h2>
+                    <button class="modal-close" onclick="this.closest('.modal-overlay').remove()">×</button>
+                </div>
+                <div class="modal-body">
+                    <div class="mission-detail">
+                        <p><strong>Category:</strong> ${this.escapeHtml(mission.category)}</p>
+                        <p><strong>Difficulty:</strong> ${this.getDifficultyLabel(mission.difficulty || 1)}</p>
+                        <p><strong>Route:</strong> ${this.escapeHtml(mission.route || 'See description')}</p>
+                        <p><strong>Objective:</strong> ${this.escapeHtml(mission.objective || mission.mission_description)}</p>
+                        ${mission.description ? `<p><strong>Description:</strong> ${this.escapeHtml(mission.description)}</p>` : ''}
+                        ${mission.notes ? `<p><strong>Notes:</strong> ${this.escapeHtml(mission.notes)}</p>` : ''}
+                        ${mission.special_challenges ? `<p><strong>Special Challenges:</strong> ${this.escapeHtml(mission.special_challenges)}</p>` : ''}
+                    </div>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(modal);
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) {
+                modal.remove();
+            }
+        });
+    }
+
+    showCommentsModal(missionId, comments) {
+        const modal = document.createElement('div');
+        modal.className = 'modal-overlay';
+        
+        const commentsHtml = comments.length > 0
+            ? comments.map(c => `
+                <div class="comment">
+                    <div class="comment-author">${this.escapeHtml(c.author_name)}</div>
+                    <div class="comment-content">${this.escapeHtml(c.content)}</div>
+                    <div class="comment-date">${new Date(c.created_at).toLocaleDateString()}</div>
+                </div>
+            `).join('')
+            : '<p class="no-comments">No comments yet. Be the first to comment!</p>';
+
+        modal.innerHTML = `
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2>💬 Comments</h2>
+                    <button class="modal-close" onclick="this.closest('.modal-overlay').remove()">×</button>
+                </div>
+                <div class="modal-body">
+                    <div class="comments-list">
+                        ${commentsHtml}
+                    </div>
+                    <div class="add-comment">
+                        <h3>Add a Comment</h3>
+                        <input type="text" id="comment-author" placeholder="Your name" class="form-input">
+                        <textarea id="comment-content" placeholder="Your comment..." class="form-textarea" rows="4"></textarea>
+                        <button class="btn-mission primary" onclick="app.submitComment(${missionId})">Post Comment</button>
+                    </div>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(modal);
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) {
+                modal.remove();
+            }
+        });
+    }
+
+    async submitComment(missionId) {
+        const author = document.getElementById('comment-author')?.value.trim();
+        const content = document.getElementById('comment-content')?.value.trim();
+
+        if (!author || !content) {
+            alert('Please fill in both name and comment fields.');
+            return;
+        }
+
+        try {
+            const response = await fetch(`${this.apiBaseUrl}/missions/${missionId}/comments`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    author_name: author,
+                    content: content
+                })
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to post comment');
+            }
+
+            // Close modal and refresh
+            document.querySelector('.modal-overlay')?.remove();
+            alert('Comment posted successfully!');
+            this.loadMissions(); // Refresh to show updated comment count
+        } catch (error) {
+            console.error('Error posting comment:', error);
+            alert('Failed to post comment. Please try again.');
+        }
     }
 
     editMission(id) {
