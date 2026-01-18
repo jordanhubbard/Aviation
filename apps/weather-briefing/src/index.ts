@@ -179,7 +179,6 @@ async function main() {
                 <label><input type="radio" name="forecast-day" value="5" />5 days</label>
                 <label><input type="radio" name="forecast-day" value="7" />7 days</label>
               </div>
-              <pre id="briefing-output">Select an airport or enter a code, then click “Get Briefing”.</pre>
               <p class="muted">Other endpoints: <code>/health</code>, <code>/briefing?station=KSFO</code>, and <code>/stations?region=us</code></p>
             </div>
             <div class="card">
@@ -198,6 +197,11 @@ async function main() {
               </div>
               <div id="map"></div>
               <div id="station-list" class="station-list"></div>
+            </div>
+            <div class="card">
+              <h2>Decoded Weather Briefing</h2>
+              <p class="muted">Detailed METAR information and flight conditions appear here after selecting an airport.</p>
+              <pre id="briefing-output">Select an airport or enter a code, then click "Get Briefing" to see detailed weather information.</pre>
             </div>
           </div>
           <script
