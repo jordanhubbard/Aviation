@@ -5,6 +5,7 @@ import L from 'leaflet';
 // import MarkerClusterGroup from 'react-leaflet-cluster'; // Package doesn't exist, clustering temporarily disabled
 import debounce from 'lodash.debounce';
 import { Badge } from './components/Badge';
+import { reportFrontendErrorToBeads } from './utils/beadsReporting';
 // import { normalizeMarkers, defaultClusterOptions } from '@aviation/ui-framework';
 
 type EventRecord = {
@@ -25,7 +26,7 @@ type EventRecord = {
   summary?: string;
   narrative?: string;
   status?: string;
-  sources: { sourceName: string; url: string }[];
+  sources: { sourceName: string; url: string; fetchedAt?: string }[];
 };
 
 type CountryCentroid = {
@@ -89,6 +90,8 @@ export function App() {
 
   // For detail modal
   const [selected, setSelected] = useState<EventRecord | null>(null);
+  const [selectedLoading, setSelectedLoading] = useState(false);
+  const [selectedError, setSelectedError] = useState<string | null>(null);
   const [airportQuery, setAirportQuery] = useState('');
   const [airportOptions, setAirportOptions] = useState<{ label: string; code: string }[]>([]);
   const [country, setCountry] = useState('');
@@ -113,7 +116,13 @@ export function App() {
               }))
             );
           })
-          .catch(() => setAirportOptions([]));
+          .catch((err) => {
+            void reportFrontendErrorToBeads(err, {
+              kind: 'fetch',
+              extra: { endpoint: '/api/airports', query: q },
+            });
+            setAirportOptions([]);
+          });
       }, 300),
     []
   );
@@ -153,6 +162,10 @@ export function App() {
         setLoading(false);
       })
       .catch((err) => {
+        void reportFrontendErrorToBeads(err, {
+          kind: 'fetch',
+          extra: { endpoint: '/api/events', query: params.toString() },
+        });
         setError(String(err));
         setLoading(false);
       });
@@ -162,8 +175,54 @@ export function App() {
     fetch('/api/filters/options')
       .then((r) => r.json())
       .then((data) => setOptions(data))
-      .catch(() => setOptions({ countries: [], regions: [] }));
+      .catch((err) => {
+        void reportFrontendErrorToBeads(err, { kind: 'fetch', extra: { endpoint: '/api/filters/options' } });
+        setOptions({ countries: [], regions: [] });
+      });
   }, []);
+
+  useEffect(() => {
+    if (!selected) {
+      setSelectedLoading(false);
+      setSelectedError(null);
+      return;
+    }
+
+    // List payload intentionally omits sources for performance; hydrate from detail endpoint.
+    if (selected.sources && selected.sources.length > 0) {
+      setSelectedLoading(false);
+      return;
+    }
+
+    const controller = new AbortController();
+    setSelectedLoading(true);
+    setSelectedError(null);
+
+    fetch(`/api/events/${encodeURIComponent(selected.id)}`, { signal: controller.signal })
+      .then(async (r) => {
+        if (!r.ok) {
+          throw new Error(`Failed to load event detail (HTTP ${r.status})`);
+        }
+        return r.json();
+      })
+      .then((detail: EventRecord) => {
+        setEvents((prev) => prev.map((e) => (e.id === detail.id ? { ...e, ...detail } : e)));
+        setSelected((prev) => (prev && prev.id === detail.id ? { ...prev, ...detail } : prev));
+        setSelectedLoading(false);
+      })
+      .catch((err) => {
+        if (controller.signal.aborted) return;
+
+        void reportFrontendErrorToBeads(err, {
+          kind: 'fetch',
+          extra: { endpoint: `/api/events/${selected.id}` },
+        });
+        setSelectedError(String(err));
+        setSelectedLoading(false);
+      });
+
+    return () => controller.abort();
+  }, [selected?.id]);
 
   const positioned = useMemo(() => events.filter((e) => typeof e.lat === 'number' && typeof e.lon === 'number'), [events]);
   const eventMap = useMemo(() => new Map(events.map((e) => [e.id, e])), [events]);
@@ -393,7 +452,13 @@ export function App() {
                 key={m.id}
                 position={m.position as [number, number]}
                 icon={icon}
-                eventHandlers={{ click: () => evt && setSelected(evt) }}
+                eventHandlers={{
+                  click: () => {
+                    if (!evt) return;
+                    setSelected(evt);
+                    setSelectedError(null);
+                  },
+                }}
               >
                 <Popup>
                   <strong>{evt?.registration || 'Unknown'}</strong> ({evt?.aircraftType || 'Aircraft'})
@@ -427,7 +492,14 @@ export function App() {
             </thead>
             <tbody>
               {events.map((e) => (
-                <tr key={e.id} onClick={() => setSelected(e)} style={{ cursor: 'pointer' }}>
+                <tr
+                  key={e.id}
+                  onClick={() => {
+                    setSelected(e);
+                    setSelectedError(null);
+                  }}
+                  style={{ cursor: 'pointer' }}
+                >
                   <td>{formatDate(e.dateZ)}</td>
                   <td>{e.registration}</td>
                   <td>{e.operator || '—'}</td>
@@ -480,8 +552,14 @@ export function App() {
               <strong>Status:</strong> {selected.status || 'n/a'}
             </p>
             <p>
+              <strong>Fatalities:</strong> {selected.fatalities ?? '—'} | <strong>Injuries:</strong> {selected.injuries ?? '—'}
+            </p>
+            <p>
               <strong>Location:</strong> {selected.airportIcao || selected.airportIata || 'Unknown'} ({selected.country || '—'},{' '}
-              {selected.region || '—'}) {selected.lat && selected.lon ? `@ ${selected.lat.toFixed(3)}, ${selected.lon.toFixed(3)}` : ''}
+              {selected.region || '—'}){' '}
+              {typeof selected.lat === 'number' && typeof selected.lon === 'number'
+                ? `@ ${selected.lat.toFixed(3)}, ${selected.lon.toFixed(3)}`
+                : ''}
             </p>
             <p>
               <strong>Type:</strong> {selected.aircraftType || '—'}
@@ -490,18 +568,28 @@ export function App() {
               <strong>Summary:</strong> {selected.summary || '—'}
             </p>
             <p>
-              <strong>Narrative:</strong> {selected.narrative || '—'}
+              <strong>Narrative:</strong>{' '}
+              {selected.narrative
+                ? selected.summary && selected.narrative.trim() === selected.summary.trim()
+                  ? `${selected.narrative} (see sources for details)`
+                  : selected.narrative
+                : '—'}
             </p>
             <p>
               <strong>Sources:</strong>{' '}
-              {selected.sources?.map((s) => (
-                <span key={s.url} style={{ marginRight: 8 }}>
-                  <a href={s.url} target="_blank" rel="noreferrer">
-                    {s.sourceName || 'source'}
-                  </a>
-                </span>
-              ))}
+              {selectedLoading
+                ? 'Loading…'
+                : selected.sources?.length
+                  ? selected.sources.map((s) => (
+                      <span key={s.url} style={{ marginRight: 8 }}>
+                        <a href={s.url} target="_blank" rel="noreferrer">
+                          {s.sourceName || 'source'}
+                        </a>
+                      </span>
+                    ))
+                  : '—'}
             </p>
+            {selectedError && <p style={{ color: 'red' }}>Failed to load event detail: {selectedError}</p>}
             <button onClick={() => setSelected(null)}>Close</button>
           </div>
         </div>

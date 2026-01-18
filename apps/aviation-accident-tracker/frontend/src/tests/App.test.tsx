@@ -167,8 +167,8 @@ describe('App Component', () => {
       render(<App />);
       
       await waitFor(() => {
-        const generalBadge = screen.getByText('general');
-        expect(generalBadge).toBeInTheDocument();
+        const generalBadges = screen.getAllByText('general');
+        expect(generalBadges.length).toBeGreaterThan(0);
         
         const commercialBadge = screen.getByText('commercial');
         expect(commercialBadge).toBeInTheDocument();
@@ -230,9 +230,6 @@ describe('App Component', () => {
         // Map container should be present
         expect(screen.getByTestId('map-container')).toBeInTheDocument();
         
-        // Marker cluster should be present
-        expect(screen.getByTestId('marker-cluster')).toBeInTheDocument();
-        
         // Should have markers (mockEvents has 2 positioned events)
         const markers = screen.getAllByTestId('marker');
         expect(markers.length).toBeGreaterThan(0);
@@ -263,11 +260,14 @@ describe('App Component', () => {
       await user.click(row!);
       
       await waitFor(() => {
+        const modal = screen.getByRole('button', { name: 'Close' }).closest('div');
+        expect(modal).toBeInTheDocument();
+
         // Check all detail fields
         expect(screen.getByText(/N12345 — Private Owner/)).toBeInTheDocument();
         expect(screen.getByText(/Engine failure on approach/)).toBeInTheDocument();
-        expect(screen.getByText(/KSFO/)).toBeInTheDocument();
-        expect(screen.getByText(/Cessna 172/)).toBeInTheDocument();
+        expect(within(modal!).getByText(/KSFO/)).toBeInTheDocument();
+        expect(within(modal!).getByText(/Cessna 172/)).toBeInTheDocument();
         
         // Check source link
         const sourceLink = screen.getByRole('link', { name: /ASN/i });
@@ -327,6 +327,63 @@ describe('App Component', () => {
         expect(screen.queryByText(/Engine failure on approach/)).not.toBeInTheDocument();
       });
     });
+
+    it('hydrates sources from the detail endpoint when the list payload has none', async () => {
+      const user = userEvent.setup();
+
+      const listEvent = { ...mockEvents[0], sources: [] };
+      const detailEvent = mockEvents[0];
+
+      global.fetch = vi.fn((url: RequestInfo | URL) => {
+        const urlString = url.toString();
+        if (urlString.includes('/api/events?')) {
+          return Promise.resolve({
+            ok: true,
+            status: 200,
+            json: () => Promise.resolve({ data: [listEvent] }),
+          } as Response);
+        }
+        if (urlString.endsWith(`/api/events/${detailEvent.id}`)) {
+          return Promise.resolve({
+            ok: true,
+            status: 200,
+            json: () => Promise.resolve(detailEvent),
+          } as Response);
+        }
+        if (urlString.includes('/api/filters/options')) {
+          return Promise.resolve({
+            ok: true,
+            status: 200,
+            json: () => Promise.resolve(mockFilterOptions),
+          } as Response);
+        }
+        if (urlString.includes('/api/airports')) {
+          return Promise.resolve({
+            ok: true,
+            status: 200,
+            json: () => Promise.resolve(mockAirports),
+          } as Response);
+        }
+        return Promise.reject(new Error(`Unknown URL: ${urlString}`));
+      }) as typeof fetch;
+
+      render(<App />);
+
+      const row = await screen.findByText(listEvent.registration);
+      await user.click(row.closest('tr')!);
+
+      await waitFor(() => {
+        expect(global.fetch).toHaveBeenCalledWith(
+          expect.stringContaining(`/api/events/${detailEvent.id}`),
+          expect.any(Object)
+        );
+      });
+
+      await waitFor(() => {
+        const sourceLink = screen.getByRole('link', { name: /ASN/i });
+        expect(sourceLink).toHaveAttribute('href', detailEvent.sources[0].url);
+      });
+    });
   });
 
   describe('Error Handling', () => {
@@ -341,11 +398,25 @@ describe('App Component', () => {
     });
 
     it('shows no events message when empty data returned', async () => {
-      global.fetch = vi.fn(() =>
-        Promise.resolve({
-          json: () => Promise.resolve({ data: [] }),
-        } as Response)
-      );
+      global.fetch = vi.fn((url: RequestInfo | URL) => {
+        const urlString = url.toString();
+        if (urlString.includes('/api/events')) {
+          return Promise.resolve({
+            json: () => Promise.resolve({ data: [] }),
+          } as Response);
+        }
+        if (urlString.includes('/api/filters/options')) {
+          return Promise.resolve({
+            json: () => Promise.resolve(mockFilterOptions),
+          } as Response);
+        }
+        if (urlString.includes('/api/airports')) {
+          return Promise.resolve({
+            json: () => Promise.resolve(mockAirports),
+          } as Response);
+        }
+        return Promise.reject(new Error(`Unknown URL: ${urlString}`));
+      }) as typeof fetch;
       
       render(<App />);
       

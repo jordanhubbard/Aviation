@@ -5,9 +5,13 @@ import { EventRepository } from './db/repository.js';
 import { logger } from './logger.js';
 import { createServer } from 'http';
 import { runRecentIngest } from './ingest/ingestService.js';
+import { installNodeProcessErrorReporting } from '@aviation/shared-sdk';
+import { beadsIssueCreator } from './beads.js';
 
 async function start() {
   try {
+    installNodeProcessErrorReporting({ service: 'aviation-accident-tracker-backend', issueCreator: beadsIssueCreator });
+
     // Initialize database
     logger.info('Initializing database...', { path: config.databasePath });
     const repository = new EventRepository(config.databasePath);
@@ -48,6 +52,14 @@ async function start() {
     process.on('SIGINT', shutdown);
   } catch (error) {
     logger.error('Failed to start server', error instanceof Error ? error : new Error(String(error)));
+
+    const err = error instanceof Error ? error : new Error(String(error));
+    beadsIssueCreator.createAutoFiledIssue({
+      title: `[backend][startup] accident-tracker: ${err.message}`.slice(0, 180),
+      description: `Where: startup\n\nMessage:\n${err.message}\n\nStack:\n${err.stack ?? '(no stack)'}`,
+      priority: 1,
+      autoFiledComment: 'backend failed to start',
+    });
     process.exit(1);
   }
 }

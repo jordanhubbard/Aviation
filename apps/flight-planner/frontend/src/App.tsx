@@ -9,11 +9,37 @@ import Navigation from './components/Navigation'
 import { ErrorBoundary } from './components/ErrorBoundary'
 import { LoadingState } from './components/shared'
 import { getRuntimeEnv, githubNewIssueUrl } from './utils'
+import { reportFrontendErrorToBeads } from './utils/beadsReporting'
 
 // Code splitting with React.lazy for better performance
 const FlightPlannerPage = lazy(() => import('./pages/FlightPlannerPage'))
 const WeatherPage = lazy(() => import('./pages/WeatherPage'))
 const AirportsPage = lazy(() => import('./pages/AirportsPage'))
+
+function MissingRoute() {
+  const location = useLocation()
+
+  useEffect(() => {
+    void reportFrontendErrorToBeads(new Error(`Missing route: ${location.pathname}`), {
+      kind: 'missing-route',
+      extra: {
+        pathname: location.pathname,
+        search: location.search,
+      },
+    })
+  }, [location.pathname, location.search])
+
+  return (
+    <Box>
+      <Typography variant="h5" sx={{ mb: 1 }}>
+        Page not found
+      </Typography>
+      <Typography variant="body1" color="text.secondary">
+        {location.pathname}
+      </Typography>
+    </Box>
+  )
+}
 
 // Animation variants for page transitions
 const pageVariants = {
@@ -137,6 +163,7 @@ function App() {
                   <Route path="/" element={<FlightPlannerPage />} />
                   <Route path="/weather" element={<WeatherPage />} />
                   <Route path="/airports" element={<AirportsPage />} />
+                  <Route path="*" element={<MissingRoute />} />
                 </Routes>
               </motion.div>
             </AnimatePresence>

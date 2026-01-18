@@ -4,6 +4,9 @@ export * from './service';
 // Caching
 export * from './cache';
 
+// Beads error/issue reporting
+export * from './beads';
+
 // Aviation data services
 export {
   AirportDatabase,

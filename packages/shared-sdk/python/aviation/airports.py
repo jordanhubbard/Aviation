@@ -270,7 +270,6 @@ class AirportDatabase:
         for airport in self.airports:
             icao_code = (airport.get("icao") or airport.get("icaoCode") or "").upper()
             iata_code = (airport.get("iata") or airport.get("iataCode") or "").upper()
-            alt_codes = self._candidate_codes(icao_code)
             name = str(airport.get("name") or "")
             city = str(airport.get("city") or "")
             country = str(airport.get("country") or "")
@@ -286,65 +285,71 @@ class AirportDatabase:
                 if radius_nm is not None and dist_nm > float(radius_nm):
                     continue
             
-            # Normalize airport data
-            normalized = Airport({
-                "icao": icao_code,
-                "iata": iata_code,
-                "name": airport.get("name") or "",
-                "city": airport.get("city") or "",
-                "country": airport.get("country") or "",
-                "latitude": float(lat_v),
-                "longitude": float(lon_v),
-                "elevation": airport.get("elevation"),
-                "type": airport.get("type") or "",
-            })
-            
-            # Deduplicate by key
-            key = (
-                normalized["icao"]
-                or normalized["iata"]
-                or f"{normalized['latitude']},{normalized['longitude']}"
-            )
-            if key in seen:
-                continue
-            seen.add(key)
-            
             # Calculate search score if query provided
             score = 0.0
             if q:
-                code_hay = " ".join(sorted({icao_code, iata_code, *alt_codes})).lower()
-                text_hay = f"{code_hay} {name} {city} {country}".lower()
+                icao_l = icao_code.lower()
+                iata_l = iata_code.lower()
+                name_l = name.lower()
+                city_l = city.lower()
+                country_l = country.lower()
+
+                alt_codes: Set[str] = set()
+                if len(q) <= 4 and q.isalnum() and icao_code:
+                    alt_codes = self._candidate_codes(icao_code)
+                alt_codes_l = {c.lower() for c in alt_codes}
                 
                 # Exact code match
-                if q in {c.lower() for c in {icao_code, iata_code, *alt_codes} if c}:
+                if q == icao_l or q == iata_l or q in alt_codes_l:
                     score = 1.0
                 # ICAO starts with query
-                elif icao_code.lower().startswith(q):
+                elif icao_l.startswith(q):
                     score = 0.95
                 # IATA starts with query
-                elif iata_code.lower().startswith(q):
+                elif iata_l.startswith(q):
                     score = 0.9
                 # Code contains query
-                elif q in code_hay:
+                elif q in icao_l or q in iata_l:
                     score = 0.85
                 # Text contains query
-                elif q in text_hay:
+                elif q in name_l or q in city_l or q in country_l:
                     score = 0.65
                 # Fuzzy match
                 else:
+                    if " " in q:
+                        continue
                     ratio = max(
-                        difflib.SequenceMatcher(None, q, icao_code.lower()).ratio(),
-                        difflib.SequenceMatcher(None, q, iata_code.lower()).ratio(),
-                        difflib.SequenceMatcher(None, q, name.lower()).ratio(),
+                        difflib.SequenceMatcher(None, q, name_l).ratio(),
+                        difflib.SequenceMatcher(None, q, city_l).ratio(),
                     )
                     if ratio < 0.6:
                         continue  # Skip low-quality matches
                     score = 0.5 + (ratio - 0.6) * 0.5
             
+            # Only materialize/dedupe candidates that actually match.
+            key = icao_code or iata_code or f"{lat_v},{lon_v}"
+            if key in seen:
+                continue
+            seen.add(key)
+
+            normalized = Airport(
+                {
+                    "icao": icao_code,
+                    "iata": iata_code,
+                    "name": airport.get("name") or "",
+                    "city": airport.get("city") or "",
+                    "country": airport.get("country") or "",
+                    "latitude": float(lat_v),
+                    "longitude": float(lon_v),
+                    "elevation": airport.get("elevation"),
+                    "type": airport.get("type") or "",
+                }
+            )
+
             # Add distance to result if available
             if dist_nm is not None:
                 normalized["distance_nm"] = round(dist_nm, 2)
-            
+
             candidates.append((score, dist_nm if dist_nm is not None else float("inf"), normalized))
         
         # Sort by score (descending) then distance (ascending)

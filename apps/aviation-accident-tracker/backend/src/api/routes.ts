@@ -5,10 +5,82 @@ import { runRecentIngest } from '../ingest/ingestService.js';
 import { searchAirports } from '../geo/airportLookup.js';
 import { EventRepository } from '../db/repository.js';
 import { config } from '../config.js';
+import { beadsIssueCreator } from '../beads.js';
+
+type BeadsErrorReport = {
+  source: 'frontend' | 'backend' | 'log' | string;
+  message: string;
+  stack?: string | null;
+  url?: string | null;
+  user_agent?: string | null;
+  context?: Record<string, unknown>;
+};
 
 export function createRouter(repository: EventRepository) {
   const router = express.Router();
   const useMemoryRepo = config.env === 'test';
+
+  router.get('/beads/enabled', (_req, res) => {
+    res.json({ enabled: beadsIssueCreator.enabled(), created: false });
+  });
+
+  router.post('/beads/report', (req, res) => {
+    const enabled = beadsIssueCreator.enabled();
+    if (!enabled) {
+      return res.json({ enabled: false, created: false, reason: 'beads autoreport disabled' });
+    }
+
+    const payload = req.body as BeadsErrorReport;
+    const titlePrefix =
+      payload.source === 'frontend'
+        ? '[frontend]'
+        : payload.source === 'backend'
+          ? '[backend]'
+          : payload.source === 'log'
+            ? '[log]'
+            : '[error]';
+
+    const firstLine = String(payload.message ?? 'Error').split('\n')[0];
+    const title = `${titlePrefix} ${firstLine.slice(0, 100)}`.trim();
+
+    const context = {
+      ...(payload.context ?? {}),
+      client: req.ip,
+      url: payload.url ?? undefined,
+      user_agent: payload.user_agent ?? undefined,
+    };
+
+    let description = String(payload.message ?? '');
+    if (Object.keys(context).length) {
+      description +=
+        '\n\nContext:\n' +
+        Object.entries(context)
+          .sort(([a], [b]) => a.localeCompare(b))
+          .map(([k, v]) => `- ${k}: ${String(v)}`)
+          .join('\n');
+    }
+    if (payload.stack) {
+      description += `\n\nStack:\n${payload.stack}`;
+    }
+
+    const kind = payload.context && typeof payload.context === 'object' ? (payload.context as any).kind : undefined;
+    const autoFiledComment = `error report (source=${payload.source}, kind=${kind ?? 'unknown'})`;
+
+    const result = beadsIssueCreator.createAutoFiledIssue({
+      title,
+      description,
+      issueType: 'bug',
+      priority: 1,
+      autoFiledComment,
+    });
+
+    return res.json({
+      enabled: true,
+      created: result.created,
+      issue_id: result.issueId,
+      reason: result.reason,
+    });
+  });
 
   /**
    * @openapi

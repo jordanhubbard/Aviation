@@ -64,6 +64,13 @@ beads:
     dependencies: [story-fe-table, epic-api]
     parallel: true
 
+  - name: story-fe-detail-sources-details
+    description: Fetch full event detail on selection and render sources + incident details in the modal
+    path: frontend/src/App.tsx
+    test_path: frontend/src/tests/App.test.tsx
+    dependencies: [story-fe-detail, story-api-detail]
+    parallel: true
+
   - name: epic-backend
     description: Node/TypeScript service scaffolding, ingestion orchestrator, business logic
     path: backend/

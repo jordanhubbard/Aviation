@@ -12,6 +12,41 @@ if [ "$1" = "npm" ] && [ "$2" = "test" ]; then
 else
     echo "🛩️  Starting Aviation Accident Tracker"
     cd /app
+
+    report_child_exit() {
+        PROC_NAME="$1"
+        EXIT_CODE="$2"
+
+        if [ "$EXIT_CODE" -eq 0 ]; then
+            return
+        fi
+
+        if command -v node >/dev/null 2>&1; then
+            node - <<'NODE'
+const procName = process.env.AVIATION_CHILD_NAME || 'child';
+const exitCode = process.env.AVIATION_CHILD_EXIT_CODE || 'unknown';
+
+try {
+  // shared-sdk is part of the monorepo workspace build.
+  const { BeadsIssueCreator } = require('@aviation/shared-sdk');
+  const creator = new BeadsIssueCreator({
+    defaultParent: process.env.BEADS_AUTOREPORT_PARENT || 'Aviation-hd5',
+    requireDebug: true,
+    debug: String(process.env.NODE_ENV || '').toLowerCase() !== 'production',
+  });
+
+  creator.createAutoFiledIssue({
+    title: `[supervisor] accident-tracker ${procName} exited ${exitCode}`.slice(0, 180),
+    description: `Supervisor detected a non-zero child exit.\n\nProcess: ${procName}\nExit code: ${exitCode}\n`,
+    priority: 1,
+    autoFiledComment: `non-zero child exit (${procName}=${exitCode})`,
+  });
+} catch {
+  // ignore
+}
+NODE
+        fi
+    }
     
     # Start backend API (Express)
     BACKEND_PORT=${PORT:-${BACKEND_PORT:-3002}}
@@ -57,11 +92,36 @@ else
         echo "🔧 Backend API: http://localhost:${BACKEND_PORT:-3002}"
         echo "📚 API Docs: http://localhost:${BACKEND_PORT:-3002}/api-docs"
         echo "🔍 GraphQL: http://localhost:${BACKEND_PORT:-3002}/graphql"
-        wait $BACKEND_PID $FRONTEND_PID
+        set +e
+        wait $BACKEND_PID
+        BACKEND_EXIT=$?
+        wait $FRONTEND_PID
+        FRONTEND_EXIT=$?
+        set -e
+
+        if [ "$BACKEND_EXIT" -ne 0 ]; then
+            AVIATION_CHILD_NAME=backend AVIATION_CHILD_EXIT_CODE=$BACKEND_EXIT report_child_exit backend $BACKEND_EXIT
+        fi
+        if [ "$FRONTEND_EXIT" -ne 0 ]; then
+            AVIATION_CHILD_NAME=frontend AVIATION_CHILD_EXIT_CODE=$FRONTEND_EXIT report_child_exit frontend $FRONTEND_EXIT
+        fi
+
+        if [ "$BACKEND_EXIT" -ne 0 ]; then
+            exit $BACKEND_EXIT
+        fi
+        exit $FRONTEND_EXIT
     else
         echo "🌐 Backend API: http://localhost:${BACKEND_PORT:-3002}"
         echo "📚 API Docs: http://localhost:${BACKEND_PORT:-3002}/api-docs"
         echo "🔍 GraphQL: http://localhost:${BACKEND_PORT:-3002}/graphql"
+        set +e
         wait $BACKEND_PID
+        BACKEND_EXIT=$?
+        set -e
+
+        if [ "$BACKEND_EXIT" -ne 0 ]; then
+            AVIATION_CHILD_NAME=backend AVIATION_CHILD_EXIT_CODE=$BACKEND_EXIT report_child_exit backend $BACKEND_EXIT
+        fi
+        exit $BACKEND_EXIT
     fi
 fi

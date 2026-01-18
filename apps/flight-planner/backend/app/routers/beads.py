@@ -45,11 +45,14 @@ def report_beads_issue(payload: BeadsErrorReport, request: Request) -> BeadsRepo
     if payload.stack:
         description += "\n\nStack:\n" + payload.stack
 
-    res = beads_issue_creator.create_issue(
+    kind = (payload.context or {}).get("kind")
+    auto_comment = f"frontend error report (kind={kind or 'unknown'})"
+    res = beads_issue_creator.create_auto_filed_issue(
         title=title,
         description=description,
         issue_type="bug",
-        priority=2,
+        priority=1,
+        auto_filed_comment=auto_comment,
     )
 
     return BeadsReportResponse(

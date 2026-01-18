@@ -3,13 +3,7 @@ type BeadsEnabledResponse = {
 }
 
 type FrontendErrorContext = {
-  kind:
-    | 'window.onerror'
-    | 'unhandledrejection'
-    | 'react-error-boundary'
-    | 'api-client'
-    | 'missing-route'
-  componentStack?: string
+  kind: 'window.onerror' | 'unhandledrejection' | 'fetch'
   extra?: Record<string, unknown>
 }
 
@@ -74,7 +68,6 @@ export const reportFrontendErrorToBeads = async (
     user_agent: navigator.userAgent,
     context: {
       kind: ctx.kind,
-      componentStack: ctx.componentStack,
       ...ctx.extra,
     },
   }

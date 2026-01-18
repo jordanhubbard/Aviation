@@ -33,7 +33,7 @@ vi.mock('react-leaflet', () => {
     MapContainer: ({ children }: any) => React.createElement('div', { 'data-testid': 'map-container' }, children),
     TileLayer: () => React.createElement('div', { 'data-testid': 'tile-layer' }),
     Marker: ({ children }: any) => React.createElement('div', { 'data-testid': 'marker' }, children),
-    Popup: ({ children }: any) => React.createElement('div', { 'data-testid': 'popup' }, children),
+    Popup: () => React.createElement('div', { 'data-testid': 'popup' }),
     useMapEvents: vi.fn(() => ({})),
   };
 });
