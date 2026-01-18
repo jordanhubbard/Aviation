@@ -120,7 +120,12 @@ class LogbookEntry(BaseModel):
     
     @validator('date')
     def validate_date_not_future(cls, v):
-        """Allow date values to be validated in validate_entry."""
+        """Validate that the flight date is not in the future."""
+        current_utc = datetime.now(timezone.utc)
+        # Ensure the date has timezone info for comparison
+        date_to_check = v.replace(tzinfo=timezone.utc) if v.tzinfo is None else v
+        if date_to_check > current_utc:
+            raise ValueError("Flight date cannot be in the future")
         return v
     
     @validator('pic_time', 'dual_received', 'solo_time')

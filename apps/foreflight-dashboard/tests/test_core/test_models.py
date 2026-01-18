@@ -217,6 +217,7 @@ def test_future_date():
         LogbookEntry(
             date=future_date,
             total_time=1.5,
+            pic_time=1.5,
             aircraft=Aircraft(
                 registration="N12345",
                 type="C172",
@@ -232,6 +233,8 @@ def test_future_date():
                 cross_country=0.0
             ),
             pilot_role="PIC",
+            landings_day=1,
+            landings_night=0,
             dual_received=0.0,
             solo_time=0.0
         ) 

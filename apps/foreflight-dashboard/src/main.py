@@ -419,7 +419,10 @@ async def process_logbook(
         
         try:
             # Validate CSV format
-            validate_csv(temp_filepath)
+            validation_result = validate_csv(temp_filepath)
+            if not validation_result['success']:
+                error_msg = validation_result.get('error', 'Unknown validation error')
+                raise ValueError(f"CSV validation failed: {error_msg}")
             
             # Process logbook data
             importer = ForeFlightImporter(temp_filepath)
