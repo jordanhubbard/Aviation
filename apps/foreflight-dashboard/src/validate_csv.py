@@ -33,9 +33,36 @@ def parse_int(value, default=0):
 
 def determine_pilot_role(row):
     """Determine the pilot role based on flight data."""
-    if parse_float(row.get('DualReceived', 0)) > 0:
+    dual_given = parse_float(row.get('DualGiven', 0))
+    dual_received = parse_float(row.get('DualReceived', 0))
+    pic_time = parse_float(row.get('PIC', 0))
+    
+    # CRITICAL: Cannot have both dual given and dual received
+    # This indicates corrupted/invalid data - attempt to intelligently fix it
+    if dual_given > 0 and dual_received > 0:
+        # Try to determine correct role from other fields
+        instructor_name = str(row.get('InstructorName', '')).strip()
+        pilot_comments = str(row.get('PilotComments', '')).strip().lower()
+        total_time = parse_float(row.get('TotalTime', 0))
+        
+        # If there's an instructor name, this is likely a dual received flight
+        if instructor_name:
+            return "STUDENT"
+        # If PIC time equals total time and no instructor, this is likely solo PIC
+        elif pic_time > 0 and abs(pic_time - total_time) < 0.01:
+            return "PIC"
+        # Check comments for clues
+        elif 'solo' in pilot_comments or 'currency' in pilot_comments:
+            return "PIC"
+        else:
+            # Default to PIC if we can't determine
+            return "PIC"
+    
+    if dual_given > 0:
+        return "INSTRUCTOR"
+    elif dual_received > 0:
         return "STUDENT"
-    elif parse_float(row.get('PIC', 0)) > 0:
+    elif pic_time > 0:
         return "PIC"
     elif parse_float(row.get('SIC', 0)) > 0:
         return "SIC"

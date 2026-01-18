@@ -215,16 +215,53 @@ class ForeFlightImporter:
                 row_issues.append("Solo time cannot be negative")
                 solo_time = 0.0
 
-            if dual_given > 0:
-                pilot_role = "INSTRUCTOR"
-            elif dual_received > 0:
-                pilot_role = "STUDENT"
-            elif pic_time > 0:
-                pilot_role = "PIC"
-            elif sic_time > 0:
-                pilot_role = "SIC"
+            # CRITICAL: Validate that both dual_given and dual_received cannot be non-zero
+            # This indicates corrupted/invalid data - attempt to intelligently fix it
+            if dual_given > 0 and dual_received > 0:
+                row_issues.append(
+                    f"DATA CORRUPTION WARNING: Both DualGiven ({dual_given}) and DualReceived ({dual_received}) "
+                    "are non-zero, which is impossible. Attempting to auto-correct based on other fields."
+                )
+                
+                # Try to determine correct role from other fields
+                instructor_name = str(row.get('InstructorName', '')).strip()
+                pilot_comments = str(row.get('PilotComments', '')).strip().lower()
+                
+                # If there's an instructor name, this is likely a dual received flight
+                if instructor_name:
+                    dual_given = 0.0
+                    pilot_role = "STUDENT"
+                    row_issues.append("Auto-corrected to STUDENT role (instructor name present)")
+                # If PIC time equals total time and no instructor, this is likely solo PIC
+                elif pic_time > 0 and abs(pic_time - total_time) < 0.01:
+                    dual_received = 0.0
+                    dual_given = 0.0
+                    pilot_role = "PIC"
+                    row_issues.append("Auto-corrected to PIC role (PIC time = total time, no instructor)")
+                # Check comments for clues
+                elif 'solo' in pilot_comments or 'currency' in pilot_comments:
+                    dual_received = 0.0
+                    dual_given = 0.0
+                    pilot_role = "PIC"
+                    row_issues.append("Auto-corrected to PIC role (solo/currency flight detected in comments)")
+                else:
+                    # Default to PIC if we can't determine
+                    dual_received = 0.0
+                    dual_given = 0.0
+                    pilot_role = "PIC"
+                    row_issues.append("Auto-corrected to PIC role (unable to determine correct role)")
             else:
-                pilot_role = "PIC"
+                # Normal role determination for valid data
+                if dual_given > 0:
+                    pilot_role = "INSTRUCTOR"
+                elif dual_received > 0:
+                    pilot_role = "STUDENT"
+                elif pic_time > 0:
+                    pilot_role = "PIC"
+                elif sic_time > 0:
+                    pilot_role = "SIC"
+                else:
+                    pilot_role = "PIC"
 
             day_time = total_time - night_time
             if day_time < 0:
