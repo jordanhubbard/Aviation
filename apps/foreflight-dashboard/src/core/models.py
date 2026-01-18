@@ -240,11 +240,6 @@ class LogbookEntry(BaseModel):
             }
         }
 
-    @validator('date')
-    def validate_date_not_future(cls, v):
-        """Allow date values to be validated in validate_entry."""
-        return v
-
     def validate_entry(self) -> None:
         """Validate the entry and set error explanation if issues are found."""
         issues = []
@@ -315,13 +310,21 @@ class LogbookEntry(BaseModel):
                 self.pic_time = self.total_time
             
             # For certificated pilots logging both PIC and dual:
-            # Both should equal total time (NOT summed) - e.g., flight review, IPC, checkout
+            # If both PIC and dual equal total time, it's valid (flight review, IPC, checkout)
+            # Otherwise, they should sum to total time (mixed logging)
             if self.pic_time > 0 and self.dual_received > 0 and self.pilot_role != "STUDENT":
-                # Both PIC and dual should equal total time
-                if abs(self.pic_time - self.total_time) > 0.1:
-                    issues.append(f"PIC time ({self.pic_time:.1f}) should equal total time ({self.total_time:.1f})")
-                if abs(self.dual_received - self.total_time) > 0.1:
-                    issues.append(f"Dual received ({self.dual_received:.1f}) should equal total time ({self.total_time:.1f})")
+                pic_equals_total = abs(self.pic_time - self.total_time) <= 0.1
+                dual_equals_total = abs(self.dual_received - self.total_time) <= 0.1
+                
+                # Valid scenario: Both equal total time (certificated pilot receiving dual)
+                if pic_equals_total and dual_equals_total:
+                    # This is valid - no error
+                    pass
+                else:
+                    # Otherwise, they should sum to total (mixed logging)
+                    total_accounted_time = self.dual_received + self.pic_time + self.solo_time
+                    if abs(total_accounted_time - self.total_time) > 0.1:
+                        issues.append(f"Total time ({self.total_time:.1f}) should equal sum of PIC time ({self.pic_time:.1f}), dual received ({self.dual_received:.1f}), and solo time ({self.solo_time:.1f})")
             # For student pilots or single-type logging: PIC + dual should equal total
             elif self.pilot_role == "STUDENT" or (self.pic_time > 0 and self.dual_received == 0) or (self.pic_time == 0 and self.dual_received > 0):
                 total_accounted_time = self.dual_received + self.pic_time + self.solo_time
