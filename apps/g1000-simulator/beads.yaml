@@ -1,0 +1,685 @@
+version: "1.0"
+
+# Epic-level beads for the Garmin G1000 Simulator
+# Each epic owns related story beads for the comprehensive avionics simulation
+
+beads:
+  # Parent Epic - Overall Project
+  - name: epic-plan
+    description: Comprehensive work plan and architecture for G1000 Simulator
+    path: PLAN.md
+    dependencies: []
+    parallel: true
+
+  # Foundation Phase
+  - name: story-project-setup
+    description: Project scaffolding, directory structure, and initial configuration
+    path: PLAN.md
+    dependencies: [epic-plan]
+    parallel: true
+
+  - name: story-backend-scaffold
+    description: Python/FastAPI + TypeScript/Node.js backend service skeleton
+    path: backend/
+    dependencies: [story-project-setup]
+    parallel: true
+
+  - name: story-frontend-scaffold
+    description: React + TypeScript + Vite frontend application setup
+    path: frontend/
+    dependencies: [story-project-setup]
+    parallel: true
+
+  - name: story-websocket-comms
+    description: WebSocket server and client for real-time data streaming
+    path: backend/websocket/
+    dependencies: [story-backend-scaffold, story-frontend-scaffold]
+    parallel: false
+
+  - name: story-flight-model-basic
+    description: Basic aircraft model (Cessna 172) with initial parameters
+    path: backend/models/
+    dependencies: [story-backend-scaffold]
+    parallel: true
+
+  # New SDK Development - Avionics SDK
+  - name: epic-avionics-sdk
+    description: Core avionics simulation library (AHRS, ADC, GPS, NAV radios, autopilot)
+    path: ../../packages/avionics-sdk/
+    dependencies: [epic-plan]
+    parallel: true
+
+  - name: story-ahrs-adc
+    description: AHRS (attitude) and ADC (air data) simulation modules
+    path: ../../packages/avionics-sdk/src/ahrs/
+    dependencies: [epic-avionics-sdk]
+    parallel: true
+
+  - name: story-gps-simulation
+    description: GPS receiver with WAAS and RAIM simulation
+    path: ../../packages/avionics-sdk/src/gps/
+    dependencies: [epic-avionics-sdk]
+    parallel: true
+
+  - name: story-nav-radios
+    description: VOR/ILS/ADF/DME simulation
+    path: ../../packages/avionics-sdk/src/nav-radios/
+    dependencies: [epic-avionics-sdk]
+    parallel: true
+
+  - name: story-autopilot-controllers
+    description: PID controllers and autopilot mode logic
+    path: ../../packages/avionics-sdk/src/autopilot/
+    dependencies: [epic-avionics-sdk, story-ahrs-adc]
+    parallel: false
+
+  # New SDK Development - G1000 Rendering
+  - name: epic-g1000-rendering
+    description: Canvas rendering library for G1000 displays (PFD, MFD)
+    path: ../../packages/g1000-rendering/
+    dependencies: [epic-plan]
+    parallel: true
+
+  - name: story-rendering-primitives
+    description: Basic drawing functions (tapes, attitude sphere, compass, arcs)
+    path: ../../packages/g1000-rendering/src/primitives/
+    dependencies: [epic-g1000-rendering]
+    parallel: true
+
+  - name: story-pfd-rendering
+    description: PFD layout engine and component rendering
+    path: ../../packages/g1000-rendering/src/pfd/
+    dependencies: [epic-g1000-rendering, story-rendering-primitives]
+    parallel: false
+
+  - name: story-mfd-rendering
+    description: MFD map, terrain, weather, and engine display rendering
+    path: ../../packages/g1000-rendering/src/mfd/
+    dependencies: [epic-g1000-rendering, story-rendering-primitives]
+    parallel: false
+
+  - name: story-display-themes
+    description: Day/night/high-contrast visual themes
+    path: ../../packages/g1000-rendering/src/themes/
+    dependencies: [epic-g1000-rendering]
+    parallel: true
+
+  # New SDK Development - Flight Dynamics
+  - name: epic-flight-dynamics
+    description: Physics-based flight simulation library (6-DOF, aerodynamics, propulsion)
+    path: ../../packages/flight-dynamics/
+    dependencies: [epic-plan]
+    parallel: true
+
+  - name: story-aircraft-models
+    description: Aircraft configuration files (C172, C182, SR22) with mass/aero data
+    path: ../../packages/flight-dynamics/aviation_flight_dynamics/aircraft/models/
+    dependencies: [epic-flight-dynamics]
+    parallel: true
+
+  - name: story-flight-physics
+    description: 6-DOF equations of motion and aerodynamic calculations
+    path: ../../packages/flight-dynamics/aviation_flight_dynamics/physics/
+    dependencies: [epic-flight-dynamics, story-aircraft-models]
+    parallel: false
+
+  - name: story-atmosphere-model
+    description: ISA atmosphere, wind, and turbulence models
+    path: ../../packages/flight-dynamics/aviation_flight_dynamics/atmosphere/
+    dependencies: [epic-flight-dynamics]
+    parallel: true
+
+  - name: story-performance-calcs
+    description: Takeoff, climb, cruise, and fuel consumption calculations
+    path: ../../packages/flight-dynamics/aviation_flight_dynamics/performance/
+    dependencies: [epic-flight-dynamics, story-flight-physics]
+    parallel: false
+
+  # New SDK Development - Navigation Data
+  - name: epic-nav-data
+    description: Navigation database (airports, VORs, intersections, airways, procedures)
+    path: ../../packages/nav-data/
+    dependencies: [epic-plan]
+    parallel: true
+
+  - name: story-nav-database
+    description: Import and structure navigation data from open sources
+    path: ../../packages/nav-data/data/
+    dependencies: [epic-nav-data]
+    parallel: true
+
+  - name: story-nav-search
+    description: Search and query API for navigation database
+    path: ../../packages/nav-data/src/
+    dependencies: [epic-nav-data, story-nav-database]
+    parallel: false
+
+  # New SDK Development - G1000 Protocols
+  - name: epic-g1000-protocols
+    description: Communication protocols and message formats (WebSocket, REST API, flight plan formats)
+    path: ../../packages/g1000-protocols/
+    dependencies: [epic-plan]
+    parallel: true
+
+  - name: story-websocket-protocol
+    description: WebSocket message types and serialization
+    path: ../../packages/g1000-protocols/src/websocket/
+    dependencies: [epic-g1000-protocols]
+    parallel: true
+
+  - name: story-api-types
+    description: TypeScript types for REST API requests/responses
+    path: ../../packages/g1000-protocols/src/api/
+    dependencies: [epic-g1000-protocols]
+    parallel: true
+
+  - name: story-flight-plan-formats
+    description: Flight plan import/export (FPL, GPX, KML)
+    path: ../../packages/g1000-protocols/src/formats/
+    dependencies: [epic-g1000-protocols]
+    parallel: true
+
+  # Backend Services
+  - name: epic-backend-services
+    description: Backend services (flight dynamics, navigation, weather, real-time streaming)
+    path: backend/
+    dependencies: [epic-flight-dynamics, epic-nav-data, epic-avionics-sdk]
+    parallel: false
+
+  - name: story-flight-dynamics-service
+    description: Flight dynamics service with aircraft physics simulation
+    path: backend/services/flight_dynamics.py
+    dependencies: [epic-backend-services, story-flight-physics]
+    parallel: false
+
+  - name: story-navigation-service
+    description: Navigation service with flight plan management and routing
+    path: backend/services/navigation.py
+    dependencies: [epic-backend-services, story-nav-search]
+    parallel: false
+
+  - name: story-weather-integration
+    description: Weather service integration (reuse from weather-briefing)
+    path: backend/services/weather.py
+    dependencies: [epic-backend-services]
+    parallel: true
+
+  - name: story-realtime-streaming
+    description: Real-time data streaming service with WebSocket
+    path: backend/services/streaming.ts
+    dependencies: [epic-backend-services, story-websocket-protocol]
+    parallel: false
+
+  - name: story-demo-scenarios
+    description: Demo flight service with pre-recorded scenarios
+    path: backend/services/demo.py
+    dependencies: [epic-backend-services]
+    parallel: true
+
+  # Frontend Components - Input System
+  - name: epic-input-system
+    description: Button/knob interaction system with mouse, keyboard, and touch support
+    path: frontend/src/controls/
+    dependencies: [story-frontend-scaffold]
+    parallel: true
+
+  - name: story-knob-controllers
+    description: Rotary knob simulation (FMS, range, heading, altitude)
+    path: frontend/src/controls/KnobController.tsx
+    dependencies: [epic-input-system]
+    parallel: true
+
+  - name: story-button-panel
+    description: Push button simulation (softkeys, direct-to, menu, CLR, ENT)
+    path: frontend/src/controls/ButtonPanel.tsx
+    dependencies: [epic-input-system]
+    parallel: true
+
+  - name: story-keyboard-shortcuts
+    description: Keyboard binding system for G1000 controls
+    path: frontend/src/controls/KeyboardShortcuts.tsx
+    dependencies: [epic-input-system]
+    parallel: true
+
+  # Frontend Components - Softkey Framework
+  - name: epic-softkey-framework
+    description: Softkey support with context-sensitive menus
+    path: frontend/src/displays/Shared/
+    dependencies: [story-frontend-scaffold]
+    parallel: true
+
+  - name: story-softkey-menus
+    description: Multi-level menu system with softkey navigation
+    path: frontend/src/displays/Shared/SoftkeyBar.tsx
+    dependencies: [epic-softkey-framework]
+    parallel: true
+
+  # Frontend Components - PFD Display
+  - name: epic-pfd-display
+    description: Primary Flight Display with attitude, airspeed, altitude, heading, navigation
+    path: frontend/src/displays/PFD/
+    dependencies: [story-pfd-rendering, epic-input-system]
+    parallel: false
+
+  - name: story-pfd-attitude
+    description: Attitude indicator with pitch ladder and roll pointer
+    path: frontend/src/displays/PFD/AttitudeIndicator.tsx
+    dependencies: [epic-pfd-display]
+    parallel: true
+
+  - name: story-pfd-airspeed
+    description: Airspeed tape with V-speeds and TAS display
+    path: frontend/src/displays/PFD/AirspeedTape.tsx
+    dependencies: [epic-pfd-display]
+    parallel: true
+
+  - name: story-pfd-altimeter
+    description: Altimeter tape with VSI and baro setting
+    path: frontend/src/displays/PFD/AltimeterTape.tsx
+    dependencies: [epic-pfd-display]
+    parallel: true
+
+  - name: story-pfd-hsi
+    description: Horizontal situation indicator with CDI and navigation data
+    path: frontend/src/displays/PFD/HSI.tsx
+    dependencies: [epic-pfd-display]
+    parallel: true
+
+  - name: story-pfd-alerts
+    description: Alert overlay with master warning/caution annunciators
+    path: frontend/src/displays/PFD/AlertOverlay.tsx
+    dependencies: [epic-pfd-display]
+    parallel: true
+
+  # Frontend Components - MFD Display
+  - name: epic-mfd-display
+    description: Multi-Function Display with map, terrain, weather, engine data
+    path: frontend/src/displays/MFD/
+    dependencies: [story-mfd-rendering, epic-input-system]
+    parallel: false
+
+  - name: story-mfd-map
+    description: Moving map with flight plan, airports, navaids, airspace
+    path: frontend/src/displays/MFD/MapDisplay.tsx
+    dependencies: [epic-mfd-display]
+    parallel: true
+
+  - name: story-map-overlays
+    description: Map overlays (terrain, weather, traffic)
+    path: frontend/src/displays/MFD/
+    dependencies: [epic-mfd-display, story-mfd-map]
+    parallel: false
+
+  - name: story-mfd-engine
+    description: Engine display with parameters and fuel management
+    path: frontend/src/displays/MFD/EngineDisplay.tsx
+    dependencies: [epic-mfd-display]
+    parallel: true
+
+  - name: story-mfd-menu-system
+    description: MFD menu system for settings and options
+    path: frontend/src/displays/MFD/MenuSystem.tsx
+    dependencies: [epic-mfd-display, epic-softkey-framework]
+    parallel: false
+
+  # Frontend Components - Flight Plan Management
+  - name: epic-flight-plan-mgmt
+    description: Flight plan creation, editing, activation, and storage
+    path: frontend/src/services/
+    dependencies: [story-navigation-service, epic-mfd-display]
+    parallel: false
+
+  - name: story-flight-plan-crud
+    description: Flight plan create, read, update, delete operations
+    path: frontend/src/services/flight-plan-api.ts
+    dependencies: [epic-flight-plan-mgmt]
+    parallel: true
+
+  - name: story-flight-plan-activation
+    description: Flight plan activation, direct-to, suspend/resume
+    path: frontend/src/stores/navStore.ts
+    dependencies: [epic-flight-plan-mgmt, story-flight-plan-crud]
+    parallel: false
+
+  - name: story-procedures
+    description: SID/STAR/approach selection and execution
+    path: frontend/src/services/
+    dependencies: [epic-flight-plan-mgmt, story-nav-search]
+    parallel: false
+
+  # Frontend Components - Autopilot
+  - name: epic-autopilot-ui
+    description: Autopilot UI with mode selection and annunciations
+    path: frontend/src/
+    dependencies: [story-autopilot-controllers, epic-pfd-display]
+    parallel: false
+
+  - name: story-autopilot-lateral
+    description: Lateral autopilot modes (ROL, HDG, NAV, APR, BC)
+    path: frontend/src/stores/autopilotStore.ts
+    dependencies: [epic-autopilot-ui]
+    parallel: true
+
+  - name: story-autopilot-vertical
+    description: Vertical autopilot modes (PIT, VS, ALT, ALTS, GS, GP)
+    path: frontend/src/stores/autopilotStore.ts
+    dependencies: [epic-autopilot-ui]
+    parallel: true
+
+  - name: story-approaches
+    description: GPS and ILS approach procedures with autopilot coupling
+    path: frontend/src/
+    dependencies: [epic-autopilot-ui, story-procedures]
+    parallel: false
+
+  # Frontend Components - Alerts System
+  - name: epic-alerts
+    description: Alert and annunciation workflow with priority system
+    path: frontend/src/services/
+    dependencies: [story-pfd-alerts]
+    parallel: false
+
+  - name: story-alert-manager
+    description: Alert manager with priority queue and acknowledgment
+    path: frontend/src/services/alert-manager.ts
+    dependencies: [epic-alerts]
+    parallel: true
+
+  - name: story-aural-alerts
+    description: Simulated aural alert system (beeps, warnings)
+    path: frontend/src/services/audio.ts
+    dependencies: [epic-alerts]
+    parallel: true
+
+  # Documentation
+  - name: epic-documentation
+    description: Comprehensive user and developer documentation
+    path: docs/
+    dependencies: [epic-plan]
+    parallel: true
+
+  - name: story-user-manual
+    description: User manual for G1000 operations
+    path: docs/user-manual.md
+    dependencies: [epic-documentation]
+    parallel: true
+
+  - name: story-tutorials
+    description: Tutorial scenarios and getting started guide
+    path: docs/tutorials.md
+    dependencies: [epic-documentation]
+    parallel: true
+
+  - name: story-api-reference
+    description: REST API and WebSocket protocol documentation
+    path: docs/api-reference.md
+    dependencies: [epic-documentation, epic-g1000-protocols]
+    parallel: false
+
+  - name: story-sdk-docs
+    description: SDK documentation for new packages
+    path: docs/sdk-documentation.md
+    dependencies: [epic-documentation, epic-avionics-sdk, epic-g1000-rendering, epic-flight-dynamics]
+    parallel: false
+
+  # Testing
+  - name: epic-tests
+    description: Unit, integration, and end-to-end tests
+    path: tests/
+    dependencies: [epic-backend-services, epic-pfd-display, epic-mfd-display]
+    parallel: false
+
+  - name: story-unit-tests-backend
+    description: Unit tests for backend services and SDKs
+    path: tests/backend/
+    dependencies: [epic-tests]
+    parallel: true
+
+  - name: story-unit-tests-frontend
+    description: Unit tests for frontend components and rendering
+    path: tests/frontend/
+    dependencies: [epic-tests]
+    parallel: true
+
+  - name: story-integration-tests
+    description: Integration tests for API and WebSocket communication
+    path: tests/integration/
+    dependencies: [epic-tests]
+    parallel: true
+
+  - name: story-e2e-tests
+    description: End-to-end tests for complete flight scenarios
+    path: tests/e2e/
+    dependencies: [epic-tests]
+    parallel: true
+
+  - name: story-performance-tests
+    description: Performance tests (frame rate, latency, memory)
+    path: tests/performance/
+    dependencies: [epic-tests]
+    parallel: true
+
+  # Polish and Optimization
+  - name: epic-polish
+    description: UI polish, theming, and performance optimization
+    path: frontend/
+    dependencies: [epic-pfd-display, epic-mfd-display]
+    parallel: false
+
+  - name: story-ui-polish
+    description: Visual polish and refinement of displays
+    path: frontend/src/
+    dependencies: [epic-polish]
+    parallel: true
+
+  - name: story-performance-opt
+    description: Performance optimization for rendering and data streaming
+    path: frontend/src/
+    dependencies: [epic-polish]
+    parallel: true
+
+# Bead execution groups for parallel processing
+execution_groups:
+  # Group 1: Planning and SDK design (parallel)
+  - name: planning
+    beads: [epic-plan]
+
+  # Group 2: New SDK development (parallel)
+  - name: sdk-development
+    beads: [epic-avionics-sdk, epic-g1000-rendering, epic-flight-dynamics, epic-nav-data, epic-g1000-protocols]
+    depends_on: [planning]
+
+  # Group 3: Foundation (parallel where possible)
+  - name: foundation
+    beads: [story-project-setup, story-backend-scaffold, story-frontend-scaffold, story-flight-model-basic]
+    depends_on: [planning]
+
+  # Group 4: SDK implementation (parallel within each SDK)
+  - name: sdk-implementation
+    beads: [
+      story-ahrs-adc, story-gps-simulation, story-nav-radios,
+      story-rendering-primitives, story-display-themes,
+      story-aircraft-models, story-atmosphere-model,
+      story-nav-database, story-websocket-protocol, story-api-types, story-flight-plan-formats
+    ]
+    depends_on: [sdk-development, foundation]
+
+  # Group 5: Advanced SDK features (depends on basic SDK implementation)
+  - name: sdk-advanced
+    beads: [
+      story-autopilot-controllers, story-pfd-rendering, story-mfd-rendering,
+      story-flight-physics, story-performance-calcs, story-nav-search
+    ]
+    depends_on: [sdk-implementation]
+
+  # Group 6: Backend services
+  - name: backend-services
+    beads: [
+      epic-backend-services, story-flight-dynamics-service, story-navigation-service,
+      story-weather-integration, story-realtime-streaming, story-demo-scenarios
+    ]
+    depends_on: [sdk-advanced]
+
+  # Group 7: Frontend input systems (parallel)
+  - name: frontend-input
+    beads: [
+      epic-input-system, story-knob-controllers, story-button-panel,
+      story-keyboard-shortcuts, epic-softkey-framework, story-softkey-menus
+    ]
+    depends_on: [foundation]
+
+  # Group 8: PFD implementation (parallel where possible)
+  - name: pfd-implementation
+    beads: [
+      epic-pfd-display, story-pfd-attitude, story-pfd-airspeed,
+      story-pfd-altimeter, story-pfd-hsi, story-pfd-alerts
+    ]
+    depends_on: [sdk-advanced, frontend-input]
+
+  # Group 9: MFD implementation (parallel where possible)
+  - name: mfd-implementation
+    beads: [
+      epic-mfd-display, story-mfd-map, story-map-overlays,
+      story-mfd-engine, story-mfd-menu-system
+    ]
+    depends_on: [sdk-advanced, frontend-input]
+
+  # Group 10: Navigation features
+  - name: navigation-features
+    beads: [
+      epic-flight-plan-mgmt, story-flight-plan-crud,
+      story-flight-plan-activation, story-procedures
+    ]
+    depends_on: [backend-services, mfd-implementation]
+
+  # Group 11: Autopilot features
+  - name: autopilot-features
+    beads: [
+      epic-autopilot-ui, story-autopilot-lateral,
+      story-autopilot-vertical, story-approaches
+    ]
+    depends_on: [backend-services, pfd-implementation, navigation-features]
+
+  # Group 12: Alerts system
+  - name: alerts-system
+    beads: [epic-alerts, story-alert-manager, story-aural-alerts]
+    depends_on: [pfd-implementation]
+
+  # Group 13: Documentation and testing (parallel)
+  - name: quality-assurance
+    beads: [
+      epic-documentation, story-user-manual, story-tutorials,
+      story-api-reference, story-sdk-docs,
+      epic-tests, story-unit-tests-backend, story-unit-tests-frontend,
+      story-integration-tests, story-e2e-tests, story-performance-tests
+    ]
+    depends_on: [autopilot-features, alerts-system]
+
+  # Group 14: Polish and optimization (final phase)
+  - name: polish
+    beads: [epic-polish, story-ui-polish, story-performance-opt]
+    depends_on: [quality-assurance]
+
+# Development workflow
+workflows:
+  # Full development workflow
+  - name: full-dev
+    description: Complete development workflow from planning to deployment
+    steps:
+      - group: planning
+        parallel: false
+      - group: sdk-development
+        parallel: true
+      - group: foundation
+        parallel: true
+      - group: sdk-implementation
+        parallel: true
+      - group: sdk-advanced
+        parallel: true
+      - group: backend-services
+        parallel: true
+      - group: frontend-input
+        parallel: true
+      - group: pfd-implementation
+        parallel: true
+      - group: mfd-implementation
+        parallel: true
+      - group: navigation-features
+        parallel: false
+      - group: autopilot-features
+        parallel: false
+      - group: alerts-system
+        parallel: false
+      - group: quality-assurance
+        parallel: true
+      - group: polish
+        parallel: true
+
+  # Backend-only workflow
+  - name: backend-dev
+    description: Backend services development
+    steps:
+      - group: planning
+        parallel: false
+      - group: sdk-development
+        beads: [epic-flight-dynamics, epic-nav-data, epic-avionics-sdk, epic-g1000-protocols]
+        parallel: true
+      - group: sdk-implementation
+        beads: [story-aircraft-models, story-atmosphere-model, story-nav-database, story-websocket-protocol]
+        parallel: true
+      - group: sdk-advanced
+        beads: [story-flight-physics, story-performance-calcs, story-nav-search, story-autopilot-controllers]
+        parallel: true
+      - group: backend-services
+        parallel: true
+
+  # Frontend-only workflow
+  - name: frontend-dev
+    description: Frontend UI development
+    steps:
+      - group: planning
+        parallel: false
+      - group: sdk-development
+        beads: [epic-g1000-rendering, epic-g1000-protocols]
+        parallel: true
+      - group: foundation
+        beads: [story-frontend-scaffold]
+        parallel: false
+      - group: sdk-implementation
+        beads: [story-rendering-primitives, story-display-themes]
+        parallel: true
+      - group: sdk-advanced
+        beads: [story-pfd-rendering, story-mfd-rendering]
+        parallel: true
+      - group: frontend-input
+        parallel: true
+      - group: pfd-implementation
+        parallel: true
+      - group: mfd-implementation
+        parallel: true
+
+# CI/CD integration
+ci:
+  # Parallel test execution strategy
+  test_strategy: parallel
+  max_parallel: 6
+
+  # Test groups for CI pipeline
+  test_groups:
+    - name: unit-tests-backend
+      beads: [story-unit-tests-backend]
+
+    - name: unit-tests-frontend
+      beads: [story-unit-tests-frontend]
+
+    - name: integration-tests
+      beads: [story-integration-tests]
+      depends_on: [unit-tests-backend, unit-tests-frontend]
+
+    - name: e2e-tests
+      beads: [story-e2e-tests]
+      depends_on: [integration-tests]
+
+    - name: performance-tests
+      beads: [story-performance-tests]
+      depends_on: [integration-tests]
