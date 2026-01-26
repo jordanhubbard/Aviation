@@ -1,10 +1,13 @@
 services:
   backend:
     build:
-      context: .
-      dockerfile: backend/Dockerfile
+      context: ../..
+      dockerfile: apps/flight-planner/backend/Dockerfile
     environment:
       - PYTHONUNBUFFERED=1
+    labels:
+      com.aviation.app: "flight-planner"
+      com.aviation.components: "backend"
     env_file:
       - .env
     volumes:
@@ -23,6 +26,9 @@ services:
       - CHOKIDAR_USEPOLLING=true
       - WATCHPACK_POLLING=true
       - VITE_OPENWEATHERMAP_API_KEY=${OPENWEATHERMAP_API_KEY:-}
+    labels:
+      com.aviation.app: "flight-planner"
+      com.aviation.components: "frontend"
     volumes:
       - ./frontend:/app
       - frontend_node_modules:/app/node_modules

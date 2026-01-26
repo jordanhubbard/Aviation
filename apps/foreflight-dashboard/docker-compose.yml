@@ -27,6 +27,9 @@ services:
       - ENVIRONMENT=development
       - BUILDKIT_PROGRESS=plain
       - DOCKER_BUILDKIT=1
+    labels:
+      com.aviation.app: "foreflight-dashboard"
+      com.aviation.components: "backend,frontend"
     # Use tty and stdin_open for interactive debugging if needed
     tty: true
     stdin_open: true

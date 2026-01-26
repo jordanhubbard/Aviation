@@ -18,7 +18,9 @@ RUN apt-get update && apt-get install -y \
 ENV PYTHONPATH=/app:/packages/shared-sdk/python \
     PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
-    PIP_NO_CACHE_DIR=1
+    PIP_NO_CACHE_DIR=1 \
+    PIP_DEFAULT_TIMEOUT=120 \
+    PIP_RETRIES=5
 
 # Create necessary directories
 RUN mkdir -p instance uploads static/photos logs

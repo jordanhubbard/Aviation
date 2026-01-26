@@ -13,6 +13,9 @@ services:
       - PORT=${PORT:-5051}
       - SECRET_KEY=${SECRET_KEY:-change-this-in-production}
       - DATABASE_URL=${DATABASE_URL:-sqlite:///./data/app.db}
+    labels:
+      com.aviation.app: "foreflight-dashboard"
+      com.aviation.components: "backend,frontend"
     ports:
       - "${PORT:-5051}:${PORT:-5051}"  # Single port for production
     volumes:

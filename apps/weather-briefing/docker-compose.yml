@@ -25,6 +25,9 @@ services:
       - LOG_LEVEL=debug
       - BUILDKIT_PROGRESS=plain
       - DOCKER_BUILDKIT=1
+    labels:
+      com.aviation.app: "weather-briefing"
+      com.aviation.components: "weather-service"
     tty: true
     stdin_open: true
     healthcheck:

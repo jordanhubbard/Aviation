@@ -30,6 +30,9 @@ services:
       - LOG_LEVEL=debug
       - BUILDKIT_PROGRESS=plain
       - DOCKER_BUILDKIT=1
+    labels:
+      com.aviation.app: "aviation-accident-tracker"
+      com.aviation.components: "backend,frontend"
     tty: true
     stdin_open: true
     healthcheck:

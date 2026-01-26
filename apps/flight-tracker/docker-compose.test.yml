@@ -13,6 +13,9 @@ services:
       - NODE_ENV=test
       - LOG_LEVEL=error
     command: ["npm", "test"]
+    labels:
+      com.aviation.app: "flight-tracker"
+      com.aviation.components: "tracker-service"
     volumes:
       - ./src:/app/src
       - ./tests:/app/tests

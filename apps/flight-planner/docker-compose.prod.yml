@@ -1,10 +1,13 @@
 services:
   backend:
     build:
-      context: .
-      dockerfile: backend/Dockerfile
+      context: ../..
+      dockerfile: apps/flight-planner/backend/Dockerfile
     environment:
       - PYTHONUNBUFFERED=1
+    labels:
+      com.aviation.app: "flight-planner"
+      com.aviation.components: "backend"
     env_file:
       - .env
     expose:
@@ -32,11 +35,14 @@ services:
 
   frontend:
     build:
-      context: .
-      dockerfile: frontend/Dockerfile
+      context: ../..
+      dockerfile: apps/flight-planner/frontend/Dockerfile
     environment:
       - BACKEND_URL=http://backend:8000
       - OPENWEATHERMAP_API_KEY=${OPENWEATHERMAP_API_KEY:-}
+    labels:
+      com.aviation.app: "flight-planner"
+      com.aviation.components: "frontend"
     ports:
       - "3004:80"
     depends_on:

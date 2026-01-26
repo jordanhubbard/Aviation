@@ -89,6 +89,17 @@ const appLinks: AppLink[] = [
     sourceUrl: `${repoBaseUrl}/flight-tracker`,
   },
   {
+    id: 'g1000-simulator',
+    title: 'G1000 Simulator',
+    tabTitle: 'G1000',
+    description: 'Glass cockpit simulator with live telemetry and autopilot targets.',
+    icon: '🖥️',
+    localUrl: 'http://localhost:8000',
+    productionUrl: 'https://g1000-simulator-production.up.railway.app/',
+    envUrl: import.meta.env.VITE_G1000_SIMULATOR_URL,
+    sourceUrl: `${repoBaseUrl}/g1000-simulator`,
+  },
+  {
     id: 'weather',
     title: 'Weather Briefing',
     tabTitle: 'Weather',
@@ -103,7 +114,7 @@ const appLinks: AppLink[] = [
 
 const resolvedApps: ResolvedAppLink[] = appLinks.map((app) => ({
   ...app,
-  url: app.envUrl || (isLauncher ? app.productionUrl : app.localUrl),
+  url: app.envUrl || app.productionUrl,
 }));
 
 const aviationPanes: PaneConfig[] = resolvedApps.map((app, index) => ({

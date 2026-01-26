@@ -24,7 +24,9 @@ RUN apt-get update && apt-get install -y \
 ENV PYTHONPATH=/app \
     PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
-    PIP_NO_CACHE_DIR=1
+    PIP_NO_CACHE_DIR=1 \
+    PIP_DEFAULT_TIMEOUT=120 \
+    PIP_RETRIES=5
 
 # Copy entrypoint script
 COPY apps/foreflight-dashboard/docker-entrypoint.sh /docker-entrypoint.sh

@@ -1,7 +1,9 @@
 FROM python:3.12-slim AS base
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
-    PYTHONUNBUFFERED=1
+    PYTHONUNBUFFERED=1 \
+    PIP_DEFAULT_TIMEOUT=120 \
+    PIP_RETRIES=5
 
 
 FROM base AS builder
@@ -19,7 +21,8 @@ RUN apt-get update \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /build
-COPY requirements.txt ./requirements.txt
+COPY apps/flight-planner/requirements.txt ./requirements.txt
+COPY packages/shared-sdk/python /packages/shared-sdk/python
 
 RUN python -m venv /opt/venv \
     && /opt/venv/bin/pip install --upgrade pip \
@@ -62,9 +65,10 @@ RUN if [ "$INSTALL_BD" = "true" ]; then \
 
 WORKDIR /app
 COPY .beads/ ./.beads/
+COPY packages/shared-sdk/python /packages/shared-sdk/python
 
 WORKDIR /app/backend
-COPY backend/ ./
+COPY apps/flight-planner/backend/ ./
 
 EXPOSE 8000
 

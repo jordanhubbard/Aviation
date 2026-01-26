@@ -18,6 +18,9 @@ services:
       - API_PORT=3000
       # Ensure database is stored in persistent volume
       - DATABASE_URL=./data/aviation-missions
+    labels:
+      com.aviation.app: "aviation-missions-app"
+      com.aviation.components: "backend,frontend"
     # Set healthcheck to ensure container is running properly
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:3000/health"]

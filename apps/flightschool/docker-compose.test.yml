@@ -10,10 +10,13 @@ services:
       args:
         PYTHON_VERSION: ${PYTHON_VERSION:-3.11}
     environment:
-      - FLASK_ENV=testing
-      - FLASK_DEBUG=0
-      - PYTHONPATH=/app
-      - DATABASE_URL=sqlite:///:memory:
+      FLASK_ENV: testing
+      FLASK_DEBUG: 0
+      PYTHONPATH: /app
+      DATABASE_URL: "sqlite:///:memory:"
+    labels:
+      com.aviation.app: "flightschool"
+      com.aviation.components: "backend"
     command: ["pytest", "tests/", "-v", "--tb=short"]
     volumes:
       - ./app:/app/app

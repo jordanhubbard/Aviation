@@ -38,6 +38,9 @@ services:
       - MAIL_PORT=${MAIL_PORT:-587}
       - MAIL_USERNAME=${MAIL_USERNAME:-}
       - MAIL_PASSWORD=${MAIL_PASSWORD:-}
+    labels:
+      com.aviation.app: "flightschool"
+      com.aviation.components: "backend"
     tty: true
     stdin_open: true
     healthcheck:
