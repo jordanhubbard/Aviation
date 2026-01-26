@@ -1,4 +1,4 @@
-import { render, screen, within } from '@testing-library/react'
+import { fireEvent, render, screen, within } from '@testing-library/react'
 
 import App from './App'
 
@@ -70,5 +70,13 @@ describe('App', () => {
     expect(screen.getByText('Input Controls')).toBeInTheDocument()
     expect(screen.getByText('Heading Bug')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'RESET' })).toBeInTheDocument()
+  })
+
+  it('allows softkey menu navigation', () => {
+    render(<App />)
+    const mfdPanel = screen.getByText('Multi-Function Display').closest('section')
+    const panelQueries = within(mfdPanel as HTMLElement)
+    fireEvent.click(panelQueries.getByRole('button', { name: 'MENU' }))
+    expect(panelQueries.getByRole('button', { name: 'BACK' })).toBeInTheDocument()
   })
 })

@@ -743,13 +743,15 @@ body {
   background: #0f1720;
 }
 
-.mfd__menu {
+.mfd__menu,
+.softkeys {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(72px, 1fr));
   gap: 8px;
 }
 
-.mfd__menu-key {
+.mfd__menu-key,
+.softkeys__key {
   padding: 10px 0;
   border-radius: 8px;
   border: 1px solid #223241;
@@ -758,12 +760,28 @@ body {
   font-size: 11px;
   letter-spacing: 0.14em;
   text-transform: uppercase;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  cursor: pointer;
 }
 
-.mfd__menu-key--active {
+.mfd__menu-key--active,
+.softkeys__key--active {
   border-color: #4bb2e5;
   color: #e6edf3;
   background: rgba(75, 178, 229, 0.12);
+}
+
+.softkeys__key-label {
+  font-size: 11px;
+}
+
+.softkeys__key-sublabel {
+  font-size: 10px;
+  letter-spacing: 0.16em;
+  color: #7c93a6;
 }
 
 @media (max-width: 1100px) {
