@@ -64,4 +64,11 @@ describe('App', () => {
     expect(panelQueries.getByText(/Map - Navigation/i)).toBeInTheDocument()
     expect(panelQueries.getByText('Engine')).toBeInTheDocument()
   })
+
+  it('renders the input controls panel', () => {
+    render(<App />)
+    expect(screen.getByText('Input Controls')).toBeInTheDocument()
+    expect(screen.getByText('Heading Bug')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'RESET' })).toBeInTheDocument()
+  })
 })
