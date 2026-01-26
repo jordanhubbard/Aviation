@@ -13,6 +13,7 @@
     "build": "npm run build --workspaces --if-present",
     "dev": "npm run dev --workspaces --if-present",
     "test": "npm run test --workspaces --if-present",
+    "lint": "npm run lint --workspaces --if-present",
     "clean": "npm run clean --workspaces --if-present",
     "secrets:migrate": "ts-node scripts/migrate-secrets.ts",
     "keystore": "ts-node scripts/keystore-cli.ts",
