@@ -79,4 +79,13 @@ describe('App', () => {
     fireEvent.click(panelQueries.getByRole('button', { name: 'MENU' }))
     expect(panelQueries.getByRole('button', { name: 'BACK' })).toBeInTheDocument()
   })
+
+  it('updates autopilot annunciations when modes change', () => {
+    render(<App />)
+    const autopilotPanel = screen.getByText('Autopilot Modes').closest('.autopilot')
+    const autopilotQueries = within(autopilotPanel as HTMLElement)
+    fireEvent.click(autopilotQueries.getByRole('button', { name: 'HDG' }))
+    const status = screen.getByTestId('autopilot-status')
+    expect(within(status).getByText('LAT HDG')).toBeInTheDocument()
+  })
 })

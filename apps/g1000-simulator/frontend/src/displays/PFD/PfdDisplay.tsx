@@ -2,6 +2,7 @@ import type { SocketStatus, TelemetrySnapshot } from '../../hooks/useTelemetrySo
 import { AirspeedTape } from './AirspeedTape'
 import { AlertOverlay } from './AlertOverlay'
 import { AltimeterTape } from './AltimeterTape'
+import { AutopilotStatus } from './AutopilotStatus'
 import { AttitudeIndicator } from './AttitudeIndicator'
 import { HSI } from './HSI'
 import { formatCoordinate, formatNumber, formatSigned, normalizeHeading } from './formatters'
@@ -35,6 +36,7 @@ export function PfdDisplay({ telemetry, socketStatus }: PfdDisplayProps) {
         <span className="pfd__topbar-item">ALT {altitude}</span>
         <span className="pfd__topbar-item">VS {verticalSpeed}</span>
       </div>
+      <AutopilotStatus />
       <AlertOverlay socketStatus={socketStatus} telemetry={telemetry} />
       <div className="pfd__main">
         <AirspeedTape airspeed={airspeed} targetAirspeed={targetAirspeed} />
