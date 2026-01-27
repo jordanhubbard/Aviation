@@ -28,3 +28,20 @@ export type {
   NavNavaid,
   NavProcedure,
 } from "./storage";
+export { NavDatabase } from "./database";
+export {
+  searchAirports,
+  searchAirspaces,
+  searchNavaids,
+} from "./search";
+export type {
+  AirspaceSearchOptions,
+  AirportSearchOptions,
+  NavSearchResult,
+  NavaidSearchOptions,
+  PaginationOptions,
+  ProximityOptions,
+  SearchMatch,
+} from "./search";
+export { listProceduresForAirport } from "./procedures";
+export type { ProcedureQueryOptions } from "./procedures";
