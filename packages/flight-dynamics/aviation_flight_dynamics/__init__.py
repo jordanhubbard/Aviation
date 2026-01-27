@@ -36,6 +36,9 @@ from .physics import (
     SixDofIntegrator,
     StateDerivative,
     Vector3,
+    WindComponents,
+    WindModel,
+    WindModelConfig,
 )
 
 __all__ = [
@@ -73,5 +76,8 @@ __all__ = [
     "SimpleForceModel",
     "SixDofIntegrator",
     "StateDerivative",
+    "WindComponents",
+    "WindModel",
+    "WindModelConfig",
     "Vector3",
 ]

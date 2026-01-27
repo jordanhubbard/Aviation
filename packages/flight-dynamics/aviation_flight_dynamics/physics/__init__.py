@@ -14,6 +14,7 @@ from .architecture import (
 from .atmosphere import IsaAtmosphereConfig, IsaAtmosphereModel
 from .force_model import ForceComponents, SimpleForceModel
 from .integrator import SixDofIntegrator, StateDerivative
+from .wind import WindComponents, WindModel, WindModelConfig
 
 __all__ = [
     "AircraftState",
@@ -32,5 +33,8 @@ __all__ = [
     "SimpleForceModel",
     "SixDofIntegrator",
     "StateDerivative",
+    "WindComponents",
+    "WindModel",
+    "WindModelConfig",
     "Vector3",
 ]
