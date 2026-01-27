@@ -1,11 +1,7 @@
-import { TelemetrySnapshot } from '../../hooks/useTelemetrySocket'
+import type { MfdDisplayProps } from '../types'
 import { EngineDisplay } from './EngineDisplay'
 import { MapDisplay } from './MapDisplay'
 import { MenuSystem } from './MenuSystem'
-
-type MfdDisplayProps = {
-  telemetry: TelemetrySnapshot | null
-}
 
 export const MfdDisplay = ({ telemetry }: MfdDisplayProps) => {
   const rangeNm = telemetry ? Math.round(Math.max(5, telemetry.velocity.airspeed_kt / 2)) : 25

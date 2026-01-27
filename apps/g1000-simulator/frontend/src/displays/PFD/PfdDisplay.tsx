@@ -1,4 +1,4 @@
-import type { SocketStatus, TelemetrySnapshot } from '../../hooks/useTelemetrySocket'
+import type { PfdDisplayProps } from '../types'
 import { AirspeedTape } from './AirspeedTape'
 import { AlertOverlay } from './AlertOverlay'
 import { AltimeterTape } from './AltimeterTape'
@@ -6,11 +6,6 @@ import { AutopilotStatus } from './AutopilotStatus'
 import { AttitudeIndicator } from './AttitudeIndicator'
 import { HSI } from './HSI'
 import { formatCoordinate, formatNumber, formatSigned, normalizeHeading } from './formatters'
-
-type PfdDisplayProps = {
-  telemetry: TelemetrySnapshot | null
-  socketStatus: SocketStatus
-}
 
 export function PfdDisplay({ telemetry, socketStatus }: PfdDisplayProps) {
   const heading = normalizeHeading(telemetry?.attitude.heading_deg)
