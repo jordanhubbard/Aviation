@@ -6,6 +6,7 @@ import time
 from typing import Dict
 
 from app.models.aircraft_state import default_c172_state
+from app.services.ahrs import compute_ahrs
 
 
 def clamp(value: float, minimum: float, maximum: float) -> float:
@@ -120,17 +121,22 @@ class FlightDynamicsSimulator:
         return self.snapshot()
 
     def snapshot(self) -> Dict[str, Dict[str, float]]:
+        ahrs = compute_ahrs(
+            heading_deg=self.state.heading_deg,
+            pitch_deg=self.state.pitch_deg,
+            roll_deg=self.state.roll_deg,
+            turn_rate_dps=self.state.turn_rate_dps,
+            airspeed_kt=self.state.airspeed_kt,
+            latitude_deg=self.state.latitude_deg,
+            longitude_deg=self.state.longitude_deg,
+        )
         return {
             "position": {
                 "latitude_deg": self.state.latitude_deg,
                 "longitude_deg": self.state.longitude_deg,
                 "altitude_ft": self.state.altitude_ft,
             },
-            "attitude": {
-                "heading_deg": self.state.heading_deg,
-                "pitch_deg": self.state.pitch_deg,
-                "roll_deg": self.state.roll_deg,
-            },
+            "attitude": ahrs.to_dict(),
             "velocity": {
                 "airspeed_kt": self.state.airspeed_kt,
                 "vertical_speed_fpm": self.state.vertical_speed_fpm,

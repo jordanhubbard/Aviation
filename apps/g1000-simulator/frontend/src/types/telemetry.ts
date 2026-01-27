@@ -8,6 +8,10 @@ export type TelemetrySnapshot = {
     heading_deg: number
     pitch_deg: number
     roll_deg: number
+    true_heading_deg?: number
+    yaw_deg?: number
+    slip_skid_deg?: number
+    magnetic_variation_deg?: number
   }
   velocity: {
     airspeed_kt: number
