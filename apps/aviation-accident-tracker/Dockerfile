@@ -65,7 +65,7 @@ RUN npm run build
 
 # Build frontend assets for production
 WORKDIR /app
-RUN npm install --no-save --no-package-lock @rollup/rollup-linux-x64-musl
+RUN npm install --no-save --no-package-lock --legacy-peer-deps @rollup/rollup-linux-x64-musl
 WORKDIR /app/frontend
 RUN npm run build
 
