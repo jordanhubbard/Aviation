@@ -10,6 +10,7 @@ from .aircraft_model import (
     PerformanceConfig,
     WingGeometry,
 )
+from .models import C172_CONFIG, load_c172_config
 from .mass_properties import CGLimits, InertiaTensor, MassProperties
 
 __all__ = [
@@ -20,6 +21,8 @@ __all__ = [
     "AircraftVariant",
     "CGLimits",
     "ControlSurfaceCoefficients",
+    "C172_CONFIG",
+    "load_c172_config",
     "EngineConfig",
     "FuelSystemConfig",
     "InertiaTensor",

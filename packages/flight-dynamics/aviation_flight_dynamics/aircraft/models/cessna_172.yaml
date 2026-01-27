@@ -1,0 +1,79 @@
+{
+  "aircraft_id": "cessna-172",
+  "name": "Cessna 172 Skyhawk",
+  "manufacturer": "Cessna",
+  "mass_properties": {
+    "empty_weight_lbs": 1691.0,
+    "max_gross_weight_lbs": 2550.0,
+    "reference_cg_in": 41.0,
+    "max_payload_lbs": 859.0,
+    "cg_limits_in": {
+      "forward_in": 35.0,
+      "aft_in": 47.3
+    },
+    "inertia": {
+      "ix_slug_ft2": 948.0,
+      "iy_slug_ft2": 1346.0,
+      "iz_slug_ft2": 1967.0,
+      "ixz_slug_ft2": 0.0
+    }
+  },
+  "aerodynamics": {
+    "geometry": {
+      "wing_area_sqft": 174.0,
+      "wing_span_ft": 36.1,
+      "mean_aerodynamic_chord_ft": 4.9
+    },
+    "coefficients": {
+      "lift_coefficient_zero": 0.2,
+      "lift_curve_slope_per_rad": 5.1,
+      "lift_coefficient_max": 1.5,
+      "drag_coefficient_zero": 0.03,
+      "induced_drag_factor": 0.045,
+      "moment_coefficient_zero": 0.02,
+      "moment_coefficient_alpha_per_rad": -1.0,
+      "side_force_beta": 0.0,
+      "roll_moment_beta": 0.0,
+      "yaw_moment_beta": 0.0
+    },
+    "control_surface_effects": {
+      "aileron_effectiveness": 0.08,
+      "elevator_effectiveness": 0.9,
+      "rudder_effectiveness": 0.1,
+      "flap_lift_increment": 0.5,
+      "flap_drag_increment": 0.08
+    }
+  },
+  "engine": {
+    "engine_type": "piston",
+    "max_power_hp": 180.0,
+    "max_rpm": 2700.0,
+    "idle_rpm": 700.0,
+    "redline_rpm": 2700.0,
+    "propeller_diameter_ft": 6.25,
+    "fuel_flow_gph_at_max_power": 10.0,
+    "specific_fuel_consumption_lb_hp_hr": 0.42
+  },
+  "fuel": {
+    "capacity_gal": 53.0,
+    "unusable_gal": 3.0,
+    "fuel_density_lbs_per_gal": 6.0
+  },
+  "limits": {
+    "never_exceed_speed_kt": 163.0,
+    "max_operating_speed_kt": 129.0,
+    "maneuvering_speed_kt": 105.0,
+    "stall_speed_clean_kt": 48.0,
+    "stall_speed_landing_kt": 40.0,
+    "max_bank_angle_deg": 60.0,
+    "max_pitch_angle_deg": 30.0
+  },
+  "performance": {
+    "cruise_speed_kt": 122.0,
+    "climb_rate_fpm": 720.0,
+    "service_ceiling_ft": 14000.0,
+    "takeoff_distance_ft": 1630.0,
+    "landing_distance_ft": 1350.0
+  },
+  "variants": {}
+}
