@@ -23,6 +23,8 @@ const defaultState: FlightState = {
 }
 
 const hasNumber = (value: unknown): value is number => typeof value === 'number'
+const hasString = (value: unknown): value is string => typeof value === 'string'
+const hasBoolean = (value: unknown): value is boolean => typeof value === 'boolean'
 
 const isFullTelemetry = (payload: TelemetrySnapshot | TelemetryUpdate): payload is TelemetrySnapshot => {
   return (
@@ -45,6 +47,14 @@ const isFullTelemetry = (payload: TelemetrySnapshot | TelemetryUpdate): payload 
     hasNumber(payload.gps?.altitude_ft) &&
     hasNumber(payload.gps?.ground_speed_kt) &&
     hasNumber(payload.gps?.track_deg) &&
+    hasNumber(payload.adf?.tuned_frequency_khz) &&
+    hasString(payload.adf?.station_ident) &&
+    hasString(payload.adf?.station_name) &&
+    hasNumber(payload.adf?.bearing_deg) &&
+    hasNumber(payload.adf?.relative_bearing_deg) &&
+    hasNumber(payload.adf?.distance_nm) &&
+    hasNumber(payload.adf?.signal_strength) &&
+    hasBoolean(payload.adf?.receiving) &&
     hasNumber(payload.velocity?.airspeed_kt) &&
     hasNumber(payload.velocity?.vertical_speed_fpm) &&
     hasNumber(payload.velocity?.turn_rate_dps) &&
@@ -90,6 +100,10 @@ export const useFlightStore = create<FlightState & FlightActions>((set) => ({
         gps: {
           ...state.telemetry.gps,
           ...(telemetryUpdate.gps ?? {}),
+        },
+        adf: {
+          ...state.telemetry.adf,
+          ...(telemetryUpdate.adf ?? {}),
         },
         velocity: {
           ...state.telemetry.velocity,

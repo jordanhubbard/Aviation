@@ -9,6 +9,7 @@ from app.models.aircraft_state import default_c172_state
 from app.services.ahrs import compute_ahrs
 from app.services.adc import compute_adc
 from app.services.gps import compute_gps
+from app.services.nav_radios import DEFAULT_ADF_FREQUENCY_KHZ, compute_adf
 
 
 def clamp(value: float, minimum: float, maximum: float) -> float:
@@ -69,6 +70,7 @@ class FlightDynamicsSimulator:
     config: FlightDynamicsConfig = field(default_factory=FlightDynamicsConfig)
     state: FlightState = field(init=False)
     targets: AutopilotTargets = field(init=False)
+    adf_frequency_khz: float = field(init=False)
     _last_update: float = field(init=False, default_factory=time.monotonic)
 
     def __post_init__(self) -> None:
@@ -93,6 +95,7 @@ class FlightDynamicsSimulator:
             altitude_ft=self.state.altitude_ft,
             airspeed_kt=self.state.airspeed_kt,
         )
+        self.adf_frequency_khz = DEFAULT_ADF_FREQUENCY_KHZ
         self._last_update = time.monotonic()
 
     def set_targets(
@@ -107,6 +110,11 @@ class FlightDynamicsSimulator:
             self.targets.altitude_ft = altitude_ft
         if airspeed_kt is not None:
             self.targets.airspeed_kt = max(0.0, airspeed_kt)
+
+    def set_adf_frequency(self, frequency_khz: float | None) -> None:
+        if frequency_khz is None:
+            return
+        self.adf_frequency_khz = max(0.0, frequency_khz)
 
     def step(self) -> Dict[str, Dict[str, float]]:
         now = time.monotonic()
@@ -145,6 +153,12 @@ class FlightDynamicsSimulator:
             track_deg=self.state.heading_deg,
             timestamp=self.state.timestamp,
         )
+        adf = compute_adf(
+            latitude_deg=self.state.latitude_deg,
+            longitude_deg=self.state.longitude_deg,
+            heading_deg=self.state.heading_deg,
+            tuned_frequency_khz=self.adf_frequency_khz,
+        )
         return {
             "position": {
                 "latitude_deg": self.state.latitude_deg,
@@ -154,6 +168,7 @@ class FlightDynamicsSimulator:
             "attitude": ahrs.to_dict(),
             "adc": adc.to_dict(),
             "gps": gps.to_dict(),
+            "adf": adf.to_dict(),
             "velocity": {
                 "airspeed_kt": self.state.airspeed_kt,
                 "vertical_speed_fpm": self.state.vertical_speed_fpm,

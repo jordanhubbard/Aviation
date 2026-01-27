@@ -14,6 +14,10 @@ export type CommandMessage =
         airspeed_kt?: number
       }
     }
+  | {
+      type: 'set_adf'
+      frequency_khz: number
+    }
 
 const resolveCommandSocketUrl = () => {
   if (typeof window === 'undefined') return null
