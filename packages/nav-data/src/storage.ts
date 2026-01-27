@@ -3,6 +3,7 @@ import {
   GeoPoint,
   NavDataSnapshot,
   NavaidType,
+  ProcedureLeg,
   ProcedureType,
 } from "./ingestion";
 
@@ -42,7 +43,9 @@ export interface NavProcedure {
   airportIcao?: string;
   type: ProcedureType;
   name?: string;
+  transition?: string;
   fixes?: string[];
+  legs?: ProcedureLeg[];
   rawRecords?: string[];
   sources: string[];
 }
@@ -130,14 +133,18 @@ export function buildNavDataStore(snapshot: NavDataSnapshot): NavDataStore {
         existing.rawRecords.push(procedure.rawRecord);
       }
       existing.name ||= procedure.name;
+      existing.transition ||= procedure.transition;
       existing.fixes = existing.fixes ?? procedure.fixes;
+      existing.legs = existing.legs ?? procedure.legs;
     } else {
       existingList.push({
         identifier: procedure.identifier,
         airportIcao: procedure.airportIcao,
         type: procedure.type,
         name: procedure.name,
+        transition: procedure.transition,
         fixes: procedure.fixes,
+        legs: procedure.legs,
         rawRecords: procedure.rawRecord ? [procedure.rawRecord] : undefined,
         sources: [procedure.source],
       });

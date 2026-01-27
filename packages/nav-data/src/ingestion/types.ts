@@ -12,6 +12,13 @@ export type NavaidType = "VOR" | "NDB" | "DME" | "FIX" | "TACAN" | "OTHER";
 
 export type ProcedureType = "SID" | "STAR" | "APPROACH" | "OTHER";
 
+export type ProcedureAltitudeConstraintType =
+  | "AT"
+  | "AT_OR_ABOVE"
+  | "AT_OR_BELOW";
+
+export type ProcedureSpeedConstraintType = "AT" | "AT_OR_BELOW";
+
 export interface GeoPoint {
   latitude: number;
   longitude: number;
@@ -55,9 +62,28 @@ export interface NormalizedProcedure {
   airportIcao?: string;
   type: ProcedureType;
   name?: string;
+  transition?: string;
   fixes?: string[];
+  legs?: ProcedureLeg[];
   rawRecord?: string;
   source: string;
+}
+
+export interface ProcedureAltitudeConstraint {
+  type: ProcedureAltitudeConstraintType;
+  altitudeFt: number;
+}
+
+export interface ProcedureSpeedConstraint {
+  type: ProcedureSpeedConstraintType;
+  speedKts: number;
+}
+
+export interface ProcedureLeg {
+  fix: string;
+  pathType?: string;
+  altitudeConstraint?: ProcedureAltitudeConstraint;
+  speedConstraint?: ProcedureSpeedConstraint;
 }
 
 export interface NavDataSnapshot {
