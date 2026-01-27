@@ -71,12 +71,39 @@ export type PfdRenderLoopConfig = {
   maxFrameSkipMs: number;
 };
 
+export type PfdPerformanceSample = {
+  frameStartMs: number;
+  frameEndMs: number;
+  renderDurationMs: number;
+  cadenceMs: number;
+  targetIntervalMs: number;
+  frameOverrunMs: number;
+};
+
+export type PfdPerformanceStats = {
+  frameCount: number;
+  droppedFrames: number;
+  lastCadenceMs: number;
+  lastRenderDurationMs: number;
+  averageCadenceMs: number;
+  averageRenderDurationMs: number;
+  maxCadenceMs: number;
+  maxRenderDurationMs: number;
+};
+
+export type PfdPerformanceHooks = {
+  onSample?: (sample: PfdPerformanceSample, stats: PfdPerformanceStats) => void;
+  logSample?: (message: string, sample: PfdPerformanceSample, stats: PfdPerformanceStats) => void;
+  logEveryNFrames?: number;
+};
+
 export type PfdPipelineOptions = {
   ctx: CanvasRenderingContext2D;
   viewport: Viewport;
   telemetry: PfdTelemetry;
   sceneGraph?: PfdSceneGraph;
   loop?: Partial<PfdRenderLoopConfig>;
+  performance?: PfdPerformanceHooks;
   onFrameRendered?: (frame: PfdFrame) => void;
 };
 
@@ -88,6 +115,8 @@ export type PfdPipeline = {
   setViewport: (viewport: Viewport) => void;
   setSceneGraph: (sceneGraph: PfdSceneGraph) => void;
   getSceneGraph: () => PfdSceneGraph;
+  getPerformanceStats: () => PfdPerformanceStats;
+  resetPerformanceStats: () => void;
 };
 
 export const DEFAULT_PFD_LAYER_ORDER: PfdLayerId[] = [
@@ -127,6 +156,17 @@ const resolveLoopConfig = (loop?: Partial<PfdRenderLoopConfig>): PfdRenderLoopCo
   ...(loop ?? {}),
 });
 
+const createPerformanceStats = (intervalMs: number): PfdPerformanceStats => ({
+  frameCount: 0,
+  droppedFrames: 0,
+  lastCadenceMs: intervalMs,
+  lastRenderDurationMs: 0,
+  averageCadenceMs: 0,
+  averageRenderDurationMs: 0,
+  maxCadenceMs: 0,
+  maxRenderDurationMs: 0,
+});
+
 const renderSceneGraph = (
   ctx: CanvasRenderingContext2D,
   frame: PfdFrame,
@@ -145,9 +185,51 @@ export const createPfdPipeline = (options: PfdPipelineOptions): PfdPipeline => {
   const loopConfig = resolveLoopConfig(options.loop);
   const intervalMs = 1000 / loopConfig.targetHz;
   let lastFrameMs = 0;
+  let lastFrameStartMs = 0;
   let running = false;
   let rafId: number | null = null;
   let timerId: ReturnType<typeof setTimeout> | null = null;
+  let performanceStats = createPerformanceStats(intervalMs);
+  const performanceHooks = options.performance;
+  const logEveryNFrames = performanceHooks?.logEveryNFrames ?? 1;
+
+  const updatePerformanceStats = (sample: PfdPerformanceSample) => {
+    const nextFrameCount = performanceStats.frameCount + 1;
+    const averageCadenceMs =
+      nextFrameCount === 1
+        ? sample.cadenceMs
+        : (performanceStats.averageCadenceMs * (nextFrameCount - 1) + sample.cadenceMs) /
+          nextFrameCount;
+    const averageRenderDurationMs =
+      nextFrameCount === 1
+        ? sample.renderDurationMs
+        : (performanceStats.averageRenderDurationMs * (nextFrameCount - 1) +
+            sample.renderDurationMs) /
+          nextFrameCount;
+    const droppedFrames =
+      performanceStats.droppedFrames + (sample.cadenceMs > intervalMs * 1.5 ? 1 : 0);
+
+    performanceStats = {
+      frameCount: nextFrameCount,
+      droppedFrames,
+      lastCadenceMs: sample.cadenceMs,
+      lastRenderDurationMs: sample.renderDurationMs,
+      averageCadenceMs,
+      averageRenderDurationMs,
+      maxCadenceMs: Math.max(performanceStats.maxCadenceMs, sample.cadenceMs),
+      maxRenderDurationMs: Math.max(performanceStats.maxRenderDurationMs, sample.renderDurationMs),
+    };
+
+    performanceHooks?.onSample?.(sample, performanceStats);
+    if (performanceHooks?.logSample && logEveryNFrames > 0) {
+      if (performanceStats.frameCount % logEveryNFrames === 0) {
+        const message = `PFD perf: render=${sample.renderDurationMs.toFixed(
+          2
+        )}ms cadence=${sample.cadenceMs.toFixed(2)}ms`;
+        performanceHooks.logSample(message, sample, performanceStats);
+      }
+    }
+  };
 
   const scheduleNext = () => {
     if (!running) return;
@@ -171,15 +253,27 @@ export const createPfdPipeline = (options: PfdPipelineOptions): PfdPipeline => {
     } else {
       lastFrameMs = currentMs;
     }
+    const cadenceMs = lastFrameStartMs === 0 ? intervalMs : currentMs - lastFrameStartMs;
+    lastFrameStartMs = currentMs;
     const frame: PfdFrame = {
       nowMs: currentMs,
       deltaMs,
       viewport,
       telemetry,
     };
+    const renderStartMs = nowMs();
     options.ctx.clearRect(viewport.x, viewport.y, viewport.width, viewport.height);
     renderSceneGraph(options.ctx, frame, sceneGraph);
     options.onFrameRendered?.(frame);
+    const renderEndMs = nowMs();
+    updatePerformanceStats({
+      frameStartMs: currentMs,
+      frameEndMs: renderEndMs,
+      renderDurationMs: renderEndMs - renderStartMs,
+      cadenceMs,
+      targetIntervalMs: intervalMs,
+      frameOverrunMs: Math.max(0, cadenceMs - intervalMs),
+    });
     scheduleNext();
   };
 
@@ -188,6 +282,8 @@ export const createPfdPipeline = (options: PfdPipelineOptions): PfdPipeline => {
       if (running) return;
       running = true;
       lastFrameMs = 0;
+      lastFrameStartMs = 0;
+      performanceStats = createPerformanceStats(intervalMs);
       scheduleNext();
     },
     stop: () => {
@@ -214,5 +310,9 @@ export const createPfdPipeline = (options: PfdPipelineOptions): PfdPipeline => {
       sceneGraph = nextSceneGraph;
     },
     getSceneGraph: () => sceneGraph,
+    getPerformanceStats: () => performanceStats,
+    resetPerformanceStats: () => {
+      performanceStats = createPerformanceStats(intervalMs);
+    },
   };
 };
