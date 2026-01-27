@@ -31,6 +31,14 @@ body {
   gap: 16px;
 }
 
+.app__header-controls {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
 .app__subtitle {
   margin: 0 0 8px;
   font-size: 14px;
@@ -52,6 +60,35 @@ body {
   background: #131d26;
   font-size: 13px;
   color: #9fb3c8;
+}
+
+.theme-selector {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 12px;
+  color: #9fb3c8;
+}
+
+.theme-selector__label {
+  font-size: 10px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: #7c93a6;
+}
+
+.theme-selector__select {
+  border-radius: 8px;
+  padding: 6px 10px;
+  border: 1px solid #223241;
+  background: #0c141b;
+  color: #e6edf3;
+  font-size: 12px;
+}
+
+.theme-selector__select:focus {
+  outline: 2px solid #4bb2e5;
+  outline-offset: 1px;
 }
 
 .app__main {

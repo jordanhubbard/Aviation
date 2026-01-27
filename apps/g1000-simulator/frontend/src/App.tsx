@@ -4,12 +4,14 @@ import { AutopilotPanel } from './controls/AutopilotPanel'
 import { ButtonPanel } from './controls/ButtonPanel'
 import { KeyboardShortcuts } from './controls/KeyboardShortcuts'
 import { KnobController } from './controls/KnobController'
+import { ThemeSelector } from './controls/ThemeSelector'
 import { DisplayShell } from './displays/DisplayShell'
 import { MfdDisplay } from './displays/MFD/MfdDisplay'
 import { PfdDisplay } from './displays/PFD/PfdDisplay'
 import { useCommandSocket } from './hooks/useCommandSocket'
 import { useTelemetrySocket } from './hooks/useTelemetrySocket'
 import { AutopilotProvider } from './stores/autopilotStore'
+import { useThemePreference } from './stores/uiStore'
 
 const DEFAULT_TARGETS = {
   heading_deg: 90,
@@ -23,6 +25,7 @@ export default function App() {
   const { status: socketStatus, telemetry } = useTelemetrySocket()
   const { status: commandStatus, sendCommand } = useCommandSocket()
   const [lastInput, setLastInput] = useState('---')
+  const theme = useThemePreference()
 
   const telemetryItems = [
     {
@@ -109,7 +112,7 @@ export default function App() {
 
   return (
     <AutopilotProvider>
-      <div className="app">
+      <div className="app" data-theme={theme}>
         <KeyboardShortcuts
           onHeadingStep={handleHeadingStep}
           onAltitudeStep={handleAltitudeStep}
@@ -122,8 +125,11 @@ export default function App() {
             <p className="app__subtitle">Garmin G1000 Simulator</p>
             <h1 className="app__title">Flight Deck Preview</h1>
           </div>
-          <div className="app__status">
-            Backend: /api/health · Telemetry: {socketStatus} · Commands: {commandStatus}
+          <div className="app__header-controls">
+            <ThemeSelector />
+            <div className="app__status">
+              Backend: /api/health · Telemetry: {socketStatus} · Commands: {commandStatus}
+            </div>
           </div>
         </header>
         <main className="app__main">
