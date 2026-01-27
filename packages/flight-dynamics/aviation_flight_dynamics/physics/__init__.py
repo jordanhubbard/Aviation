@@ -11,6 +11,7 @@ from .architecture import (
     RigidBodyState,
     Vector3,
 )
+from .atmosphere import IsaAtmosphereConfig, IsaAtmosphereModel
 from .force_model import ForceComponents, SimpleForceModel
 from .integrator import SixDofIntegrator, StateDerivative
 
@@ -18,6 +19,8 @@ __all__ = [
     "AircraftState",
     "AtmosphereState",
     "ControlInputs",
+    "IsaAtmosphereConfig",
+    "IsaAtmosphereModel",
     "ForceModel",
     "ForceMoment",
     "ForceComponents",
