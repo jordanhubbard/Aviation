@@ -1,4 +1,6 @@
 import type { Viewport } from '../primitives';
+import type { G1000Theme, G1000ThemeManager, G1000ThemeSource } from '../themes';
+import { resolveG1000Theme } from '../themes';
 
 export type PfdTelemetry = {
   attitude: {
@@ -41,6 +43,7 @@ export type PfdFrame = {
   deltaMs: number;
   viewport: Viewport;
   telemetry: PfdTelemetry;
+  theme: G1000Theme;
 };
 
 export type PfdLayerId =
@@ -104,6 +107,8 @@ export type PfdPipelineOptions = {
   sceneGraph?: PfdSceneGraph;
   loop?: Partial<PfdRenderLoopConfig>;
   performance?: PfdPerformanceHooks;
+  theme?: G1000ThemeSource;
+  themeManager?: G1000ThemeManager;
   onFrameRendered?: (frame: PfdFrame) => void;
 };
 
@@ -115,6 +120,8 @@ export type PfdPipeline = {
   setViewport: (viewport: Viewport) => void;
   setSceneGraph: (sceneGraph: PfdSceneGraph) => void;
   getSceneGraph: () => PfdSceneGraph;
+  setTheme: (theme: G1000ThemeSource) => void;
+  getTheme: () => G1000Theme;
   getPerformanceStats: () => PfdPerformanceStats;
   resetPerformanceStats: () => void;
 };
@@ -182,6 +189,7 @@ export const createPfdPipeline = (options: PfdPipelineOptions): PfdPipeline => {
   let viewport = options.viewport;
   let telemetry = options.telemetry;
   let sceneGraph = options.sceneGraph ?? createDefaultPfdSceneGraph();
+  let theme: G1000Theme = resolveG1000Theme(options.theme ?? options.themeManager?.getTheme());
   const loopConfig = resolveLoopConfig(options.loop);
   const intervalMs = 1000 / loopConfig.targetHz;
   let lastFrameMs = 0;
@@ -192,6 +200,13 @@ export const createPfdPipeline = (options: PfdPipelineOptions): PfdPipeline => {
   let performanceStats = createPerformanceStats(intervalMs);
   const performanceHooks = options.performance;
   const logEveryNFrames = performanceHooks?.logEveryNFrames ?? 1;
+  const themeManager = options.themeManager;
+  themeManager?.subscribe((nextTheme) => {
+    theme = nextTheme;
+  });
+  if (themeManager && options.theme) {
+    themeManager.setTheme(options.theme);
+  }
 
   const updatePerformanceStats = (sample: PfdPerformanceSample) => {
     const nextFrameCount = performanceStats.frameCount + 1;
@@ -260,6 +275,7 @@ export const createPfdPipeline = (options: PfdPipelineOptions): PfdPipeline => {
       deltaMs,
       viewport,
       telemetry,
+      theme,
     };
     const renderStartMs = nowMs();
     options.ctx.clearRect(viewport.x, viewport.y, viewport.width, viewport.height);
@@ -311,6 +327,14 @@ export const createPfdPipeline = (options: PfdPipelineOptions): PfdPipeline => {
     },
     getSceneGraph: () => sceneGraph,
     getPerformanceStats: () => performanceStats,
+    setTheme: (nextTheme: G1000ThemeSource) => {
+      if (themeManager) {
+        themeManager.setTheme(nextTheme);
+        return;
+      }
+      theme = resolveG1000Theme(nextTheme);
+    },
+    getTheme: () => theme,
     resetPerformanceStats: () => {
       performanceStats = createPerformanceStats(intervalMs);
     },

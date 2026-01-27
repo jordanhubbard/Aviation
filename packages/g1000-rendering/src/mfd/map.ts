@@ -1,4 +1,5 @@
 import type { Viewport } from '../primitives';
+import type { G1000Theme } from '../themes';
 import {
   DEFAULT_TEXT_OPTIONS,
   drawArcIndicator,
@@ -31,6 +32,7 @@ export type MfdMapConfig = {
   style?: Partial<MfdMapStyle>;
   overlays?: MfdMapOverlayRenderer[];
   includeBackground?: boolean;
+  theme?: G1000Theme;
 };
 
 export const DEFAULT_MFD_MAP_STYLE: MfdMapStyle = {
@@ -45,10 +47,24 @@ export const DEFAULT_MFD_MAP_STYLE: MfdMapStyle = {
   aircraftSizePx: 14,
 };
 
-const resolveMapStyle = (style?: Partial<MfdMapStyle>): MfdMapStyle => ({
-  ...DEFAULT_MFD_MAP_STYLE,
-  ...(style ?? {}),
-});
+const resolveMapStyle = (style?: Partial<MfdMapStyle>, theme?: G1000Theme): MfdMapStyle => {
+  const themeDefaults = theme
+    ? {
+        backgroundColor: theme.palette.background,
+        ringColor: theme.palette.mapRing,
+        ringLabelColor: theme.palette.mapLabel,
+        ringLabelFont: theme.typography.small,
+        aircraftColor: theme.palette.mapAircraft,
+        aircraftStrokeColor: theme.palette.mapAircraftStroke,
+      }
+    : {};
+
+  return {
+    ...DEFAULT_MFD_MAP_STYLE,
+    ...themeDefaults,
+    ...(style ?? {}),
+  };
+};
 
 const resolveMapRotation = (frame: MfdFrame): number => {
   const orientation = frame.telemetry.map?.orientation ?? 'north-up';
@@ -98,7 +114,7 @@ export const drawMfdMap = (
   viewport: Viewport,
   config?: MfdMapConfig
 ): void => {
-  const style = resolveMapStyle(config?.style);
+  const style = resolveMapStyle(config?.style, frame.theme ?? config?.theme);
   const includeBackground = config?.includeBackground ?? true;
   const rangeNm = frame.telemetry.map?.range_nm ?? 20;
   const centerX = viewport.x + viewport.width / 2;

@@ -1,4 +1,6 @@
 import type { Viewport } from '../primitives';
+import type { G1000Theme, G1000ThemeManager, G1000ThemeSource } from '../themes';
+import { resolveG1000Theme } from '../themes';
 
 export type MfdTelemetry = {
   position?: {
@@ -44,6 +46,7 @@ export type MfdFrame = {
   viewport: Viewport;
   telemetry: MfdTelemetry;
   activePage: MfdPageId;
+  theme: G1000Theme;
 };
 
 export type MfdPageId =
@@ -97,6 +100,8 @@ export type MfdPipelineOptions = {
   pages?: Partial<MfdPageRegistry>;
   initialPage?: MfdPageId;
   loop?: Partial<MfdRenderLoopConfig>;
+  theme?: G1000ThemeSource;
+  themeManager?: G1000ThemeManager;
   onFrameRendered?: (frame: MfdFrame) => void;
   onPageChanged?: (nextPage: MfdPageId, previousPage: MfdPageId) => void;
 };
@@ -112,6 +117,8 @@ export type MfdPipeline = {
   setPageSceneGraph: (page: MfdPageId, sceneGraph: MfdSceneGraph) => void;
   getPageSceneGraph: (page: MfdPageId) => MfdSceneGraph;
   getPages: () => MfdPageRegistry;
+  setTheme: (theme: G1000ThemeSource) => void;
+  getTheme: () => G1000Theme;
 };
 
 export const DEFAULT_MFD_LAYER_ORDER: MfdLayerId[] = [
@@ -200,6 +207,7 @@ export const createMfdPipeline = (options: MfdPipelineOptions): MfdPipeline => {
   let telemetry = options.telemetry;
   let pages = resolvePageRegistry(options.pages);
   let activePage = resolvePageId(options.initialPage, pages);
+  let theme: G1000Theme = resolveG1000Theme(options.theme ?? options.themeManager?.getTheme());
   const loopConfig = resolveLoopConfig(options.loop);
   const intervalMs = 1000 / loopConfig.targetHz;
   let lastFrameMs = 0;
@@ -207,6 +215,13 @@ export const createMfdPipeline = (options: MfdPipelineOptions): MfdPipeline => {
   let rafId: number | null = null;
   let timerId: ReturnType<typeof setTimeout> | null = null;
   const fallbackSceneGraph = createDefaultMfdSceneGraph();
+  const themeManager = options.themeManager;
+  themeManager?.subscribe((nextTheme) => {
+    theme = nextTheme;
+  });
+  if (themeManager && options.theme) {
+    themeManager.setTheme(options.theme);
+  }
 
   const scheduleNext = () => {
     if (!running) return;
@@ -236,6 +251,7 @@ export const createMfdPipeline = (options: MfdPipelineOptions): MfdPipeline => {
       viewport,
       telemetry,
       activePage,
+      theme,
     };
     const sceneGraph = pages[activePage]?.sceneGraph ?? fallbackSceneGraph;
     options.ctx.clearRect(viewport.x, viewport.y, viewport.width, viewport.height);
@@ -293,5 +309,13 @@ export const createMfdPipeline = (options: MfdPipelineOptions): MfdPipeline => {
     },
     getPageSceneGraph: (page) => pages[page]?.sceneGraph ?? fallbackSceneGraph,
     getPages: () => pages,
+    setTheme: (nextTheme: G1000ThemeSource) => {
+      if (themeManager) {
+        themeManager.setTheme(nextTheme);
+        return;
+      }
+      theme = resolveG1000Theme(nextTheme);
+    },
+    getTheme: () => theme,
   };
 };

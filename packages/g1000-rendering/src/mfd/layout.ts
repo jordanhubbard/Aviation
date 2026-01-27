@@ -1,4 +1,5 @@
 import type { Viewport } from '../primitives';
+import type { G1000Theme } from '../themes';
 import { DEFAULT_TEXT_OPTIONS, drawText } from '../primitives';
 import type { MfdFrame, MfdLayer, MfdSceneGraph } from './pipeline';
 
@@ -26,6 +27,7 @@ export type MfdEngineLayoutConfig = {
   headerFont: string;
   labelFont: string;
   valueFont: string;
+  theme?: G1000Theme;
   gauges?: MfdEngineGaugeDefinition[];
   footerText?: (frame: MfdFrame) => string;
 };
@@ -58,6 +60,7 @@ export type MfdUtilitiesLayoutConfig = {
   headerFont: string;
   sectionFont: string;
   footerFont: string;
+  theme?: G1000Theme;
   sections?: MfdUtilitiesSection[];
   footerText?: (frame: MfdFrame) => string;
 };
@@ -155,19 +158,52 @@ const DEFAULT_MFD_UTILITIES_LAYOUT_CONFIG: MfdUtilitiesLayoutConfig = {
 
 const resolveEngineConfig = (
   config?: Partial<MfdEngineLayoutConfig>
-): MfdEngineLayoutConfig => ({
-  ...DEFAULT_MFD_ENGINE_LAYOUT_CONFIG,
-  ...(config ?? {}),
-  gauges: config?.gauges ?? DEFAULT_MFD_ENGINE_GAUGES,
-});
+): MfdEngineLayoutConfig => {
+  const theme = config?.theme;
+  const themeDefaults = theme
+    ? {
+        backgroundColor: theme.palette.background,
+        borderColor: theme.palette.border,
+        labelColor: theme.palette.textSecondary,
+        valueColor: theme.palette.textPrimary,
+        headerColor: theme.palette.textPrimary,
+        headerFont: theme.typography.large,
+        labelFont: theme.typography.small,
+        valueFont: theme.typography.title,
+      }
+    : {};
+
+  return {
+    ...DEFAULT_MFD_ENGINE_LAYOUT_CONFIG,
+    ...themeDefaults,
+    ...(config ?? {}),
+    gauges: config?.gauges ?? DEFAULT_MFD_ENGINE_GAUGES,
+  };
+};
 
 const resolveUtilitiesConfig = (
   config?: Partial<MfdUtilitiesLayoutConfig>
-): MfdUtilitiesLayoutConfig => ({
-  ...DEFAULT_MFD_UTILITIES_LAYOUT_CONFIG,
-  ...(config ?? {}),
-  sections: config?.sections ?? DEFAULT_MFD_UTILITIES_SECTIONS,
-});
+): MfdUtilitiesLayoutConfig => {
+  const theme = config?.theme;
+  const themeDefaults = theme
+    ? {
+        backgroundColor: theme.palette.background,
+        borderColor: theme.palette.border,
+        labelColor: theme.palette.textSecondary,
+        headerColor: theme.palette.textPrimary,
+        headerFont: theme.typography.large,
+        sectionFont: theme.typography.medium,
+        footerFont: theme.typography.small,
+      }
+    : {};
+
+  return {
+    ...DEFAULT_MFD_UTILITIES_LAYOUT_CONFIG,
+    ...themeDefaults,
+    ...(config ?? {}),
+    sections: config?.sections ?? DEFAULT_MFD_UTILITIES_SECTIONS,
+  };
+};
 
 const computeGrid = (
   viewport: Viewport,
@@ -295,12 +331,11 @@ const drawPanelBorder = (ctx: CanvasRenderingContext2D, viewport: Viewport, colo
 export const createMfdEngineSceneGraph = (
   config?: Partial<MfdEngineLayoutConfig>
 ): MfdSceneGraph => {
-  const resolved = resolveEngineConfig(config);
-
   const backgroundLayer: MfdLayer = {
     id: 'base',
     order: 0,
     render: (ctx, frame) => {
+      const resolved = resolveEngineConfig({ ...config, theme: frame.theme });
       ctx.save();
       ctx.fillStyle = resolved.backgroundColor;
       ctx.fillRect(frame.viewport.x, frame.viewport.y, frame.viewport.width, frame.viewport.height);
@@ -312,6 +347,7 @@ export const createMfdEngineSceneGraph = (
     id: 'engine',
     order: 5,
     render: (ctx, frame) => {
+      const resolved = resolveEngineConfig({ ...config, theme: frame.theme });
       const layout = computeMfdEngineLayout(frame.viewport, resolved);
       const gauges = resolved.gauges ?? [];
 
@@ -377,12 +413,11 @@ export const createMfdEngineSceneGraph = (
 export const createMfdUtilitiesSceneGraph = (
   config?: Partial<MfdUtilitiesLayoutConfig>
 ): MfdSceneGraph => {
-  const resolved = resolveUtilitiesConfig(config);
-
   const backgroundLayer: MfdLayer = {
     id: 'base',
     order: 0,
     render: (ctx, frame) => {
+      const resolved = resolveUtilitiesConfig({ ...config, theme: frame.theme });
       ctx.save();
       ctx.fillStyle = resolved.backgroundColor;
       ctx.fillRect(frame.viewport.x, frame.viewport.y, frame.viewport.width, frame.viewport.height);
@@ -394,6 +429,7 @@ export const createMfdUtilitiesSceneGraph = (
     id: 'overlays',
     order: 7,
     render: (ctx, frame) => {
+      const resolved = resolveUtilitiesConfig({ ...config, theme: frame.theme });
       const layout = computeMfdUtilitiesLayout(frame.viewport, resolved);
       const sections = resolved.sections ?? [];
 

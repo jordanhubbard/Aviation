@@ -33,6 +33,8 @@ export type G1000Theme = {
   typography: G1000Typography;
 };
 
+export type G1000ThemeSource = G1000ThemeId | G1000Theme;
+
 export const DEFAULT_G1000_TYPOGRAPHY: G1000Typography = {
   small: '11px "Fira Sans", sans-serif',
   medium: '12px "Fira Sans", sans-serif',
@@ -112,6 +114,44 @@ export const G1000_THEMES: Record<G1000ThemeId, G1000Theme> = {
 
 export const DEFAULT_G1000_THEME = G1000_THEMES.day;
 
-export const getG1000Theme = (id: G1000ThemeId): G1000Theme => {
-  return G1000_THEMES[id] ?? DEFAULT_G1000_THEME;
+export const resolveG1000Theme = (theme?: G1000ThemeSource): G1000Theme => {
+  if (!theme) return DEFAULT_G1000_THEME;
+  if (typeof theme === 'string') {
+    return G1000_THEMES[theme] ?? DEFAULT_G1000_THEME;
+  }
+  return theme;
+};
+
+export type G1000ThemeListener = (theme: G1000Theme) => void;
+
+export type G1000ThemeManager = {
+  getTheme: () => G1000Theme;
+  setTheme: (theme: G1000ThemeSource) => void;
+  subscribe: (listener: G1000ThemeListener) => () => void;
+};
+
+export const createG1000ThemeManager = (
+  initialTheme?: G1000ThemeSource
+): G1000ThemeManager => {
+  let activeTheme = resolveG1000Theme(initialTheme);
+  const listeners = new Set<G1000ThemeListener>();
+
+  return {
+    getTheme: () => activeTheme,
+    setTheme: (theme: G1000ThemeSource) => {
+      activeTheme = resolveG1000Theme(theme);
+      listeners.forEach((listener) => listener(activeTheme));
+    },
+    subscribe: (listener: G1000ThemeListener) => {
+      listeners.add(listener);
+      listener(activeTheme);
+      return () => {
+        listeners.delete(listener);
+      };
+    },
+  };
+};
+
+export const getG1000Theme = (theme?: G1000ThemeSource): G1000Theme => {
+  return resolveG1000Theme(theme);
 };

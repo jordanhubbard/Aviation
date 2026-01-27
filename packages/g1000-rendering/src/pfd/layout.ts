@@ -1,4 +1,5 @@
 import type { Viewport, TapeStyle } from '../primitives'
+import type { G1000Theme } from '../themes'
 import {
   DEFAULT_ATTITUDE_OPTIONS,
   DEFAULT_COMPASS_OPTIONS,
@@ -32,6 +33,7 @@ export type PfdLayoutConfig = {
   labelColor: string
   highlightColor: string
   tapeStyle: TapeStyle
+  theme?: G1000Theme
 }
 
 export const DEFAULT_PFD_LAYOUT_CONFIG: PfdLayoutConfig = {
@@ -48,14 +50,36 @@ export const DEFAULT_PFD_LAYOUT_CONFIG: PfdLayoutConfig = {
   tapeStyle: DEFAULT_TAPE_STYLE,
 }
 
-const resolveConfig = (config?: Partial<PfdLayoutConfig>): PfdLayoutConfig => ({
-  ...DEFAULT_PFD_LAYOUT_CONFIG,
-  ...(config ?? {}),
-  tapeStyle: {
-    ...DEFAULT_TAPE_STYLE,
-    ...(config?.tapeStyle ?? {}),
-  },
-})
+const resolveConfig = (config?: Partial<PfdLayoutConfig>): PfdLayoutConfig => {
+  const theme = config?.theme
+  const themeDefaults = theme
+    ? {
+        backgroundColor: theme.palette.background,
+        borderColor: theme.palette.border,
+        labelColor: theme.palette.textSecondary,
+        highlightColor: theme.palette.warning,
+        tapeStyle: {
+          ...DEFAULT_TAPE_STYLE,
+          backgroundColor: theme.palette.background,
+          tickColor: theme.palette.textSecondary,
+          textColor: theme.palette.textPrimary,
+          accentColor: theme.palette.accent,
+          font: theme.typography.medium,
+        },
+      }
+    : {}
+
+  return {
+    ...DEFAULT_PFD_LAYOUT_CONFIG,
+    ...themeDefaults,
+    ...(config ?? {}),
+    tapeStyle: {
+      ...DEFAULT_TAPE_STYLE,
+      ...(themeDefaults.tapeStyle ?? {}),
+      ...(config?.tapeStyle ?? {}),
+    },
+  }
+}
 
 export const computePfdLayout = (
   viewport: Viewport,
@@ -125,13 +149,14 @@ const formatHeading = (heading: number): string =>
 export const createPfdLayoutSceneGraph = (
   config?: Partial<PfdLayoutConfig>
 ): PfdSceneGraph => {
-  const resolved = resolveConfig(config)
-  const getLayout = (frame: PfdFrame) => computePfdLayout(frame.viewport, resolved)
+  const getLayout = (frame: PfdFrame) =>
+    computePfdLayout(frame.viewport, { ...config, theme: frame.theme })
 
   const backgroundLayer: PfdLayer = {
     id: 'background',
     order: 0,
     render: (ctx, frame) => {
+      const resolved = resolveConfig({ ...config, theme: frame.theme })
       ctx.save()
       ctx.fillStyle = resolved.backgroundColor
       ctx.fillRect(frame.viewport.x, frame.viewport.y, frame.viewport.width, frame.viewport.height)
@@ -144,12 +169,21 @@ export const createPfdLayoutSceneGraph = (
     order: 1,
     render: (ctx, frame) => {
       const layout = getLayout(frame)
+      const resolved = resolveConfig({ ...config, theme: frame.theme })
+      const attitudeOptions = frame.theme
+        ? {
+            ...DEFAULT_ATTITUDE_OPTIONS,
+            skyColor: frame.theme.palette.sky,
+            groundColor: frame.theme.palette.ground,
+            horizonColor: frame.theme.palette.horizon,
+          }
+        : DEFAULT_ATTITUDE_OPTIONS
       ctx.save()
       ctx.beginPath()
       ctx.rect(layout.attitude.x, layout.attitude.y, layout.attitude.width, layout.attitude.height)
       ctx.clip()
       drawAttitudeSphere(ctx, layout.attitude, {
-        ...DEFAULT_ATTITUDE_OPTIONS,
+        ...attitudeOptions,
         pitchDeg: frame.telemetry.attitude.pitch_deg,
         rollDeg: frame.telemetry.attitude.roll_deg,
       })
@@ -163,6 +197,7 @@ export const createPfdLayoutSceneGraph = (
     order: 2,
     render: (ctx, frame) => {
       const layout = getLayout(frame)
+      const resolved = resolveConfig({ ...config, theme: frame.theme })
       drawTape(ctx, layout.airspeed, {
         ...DEFAULT_TAPE_OPTIONS,
         value: frame.telemetry.adc.ias_kt,
@@ -194,9 +229,17 @@ export const createPfdLayoutSceneGraph = (
     order: 3,
     render: (ctx, frame) => {
       const layout = getLayout(frame)
+      const resolved = resolveConfig({ ...config, theme: frame.theme })
+      const compassOptions = frame.theme
+        ? {
+            ...DEFAULT_COMPASS_OPTIONS,
+            color: frame.theme.palette.textSecondary,
+            font: frame.theme.typography.medium,
+          }
+        : DEFAULT_COMPASS_OPTIONS
       const radius = Math.max(Math.min(layout.hsi.width, layout.hsi.height) / 2 - 8, 10)
       drawCompassRose(ctx, layout.hsi, {
-        ...DEFAULT_COMPASS_OPTIONS,
+        ...compassOptions,
         headingDeg: frame.telemetry.attitude.heading_deg,
         radiusPx: radius,
         color: resolved.labelColor,
@@ -219,6 +262,7 @@ export const createPfdLayoutSceneGraph = (
     order: 8,
     render: (ctx, frame) => {
       const layout = getLayout(frame)
+      const resolved = resolveConfig({ ...config, theme: frame.theme })
       const headingText = formatHeading(frame.telemetry.attitude.heading_deg)
       drawText(ctx, {
         ...DEFAULT_TEXT_OPTIONS,
