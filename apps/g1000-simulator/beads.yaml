@@ -472,6 +472,12 @@ beads:
     dependencies: [epic-polish]
     parallel: true
 
+  - name: story-ui-reference-comparison
+    description: P0 visual review by capturing web UI screenshots and comparing to real G1000 references
+    path: frontend/
+    dependencies: [epic-polish]
+    parallel: true
+
   - name: story-performance-opt
     description: Performance optimization for rendering and data streaming
     path: frontend/src/
@@ -577,7 +583,7 @@ execution_groups:
 
   # Group 14: Polish and optimization (final phase)
   - name: polish
-    beads: [epic-polish, story-ui-polish, story-performance-opt]
+    beads: [epic-polish, story-ui-polish, story-ui-reference-comparison, story-performance-opt]
     depends_on: [quality-assurance]
 
 # Development workflow
