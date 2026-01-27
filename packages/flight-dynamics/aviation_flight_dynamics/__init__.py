@@ -18,6 +18,19 @@ from .aircraft import (
     validate_aircraft_config,
     WingGeometry,
 )
+from .physics import (
+    AircraftState,
+    AtmosphereState,
+    ControlInputs,
+    ForceModel,
+    ForceMoment,
+    IntegratorConfig,
+    IntegratorMethod,
+    PhysicsIntegrator,
+    Quaternion,
+    RigidBodyState,
+    Vector3,
+)
 
 __all__ = [
     "AerodynamicCoefficients",
@@ -38,4 +51,15 @@ __all__ = [
     "ValidationReport",
     "validate_aircraft_config",
     "WingGeometry",
+    "AircraftState",
+    "AtmosphereState",
+    "ControlInputs",
+    "ForceModel",
+    "ForceMoment",
+    "IntegratorConfig",
+    "IntegratorMethod",
+    "PhysicsIntegrator",
+    "Quaternion",
+    "RigidBodyState",
+    "Vector3",
 ]
