@@ -9,7 +9,12 @@ from app.models.aircraft_state import default_c172_state
 from app.services.ahrs import compute_ahrs
 from app.services.adc import compute_adc
 from app.services.gps import compute_gps
-from app.services.nav_radios import DEFAULT_ADF_FREQUENCY_KHZ, compute_adf
+from app.services.nav_radios import (
+    DEFAULT_ADF_FREQUENCY_KHZ,
+    DEFAULT_DME_FREQUENCY_MHZ,
+    compute_adf,
+    compute_dme,
+)
 
 
 def clamp(value: float, minimum: float, maximum: float) -> float:
@@ -71,6 +76,7 @@ class FlightDynamicsSimulator:
     state: FlightState = field(init=False)
     targets: AutopilotTargets = field(init=False)
     adf_frequency_khz: float = field(init=False)
+    dme_frequency_mhz: float = field(init=False)
     _last_update: float = field(init=False, default_factory=time.monotonic)
 
     def __post_init__(self) -> None:
@@ -96,6 +102,7 @@ class FlightDynamicsSimulator:
             airspeed_kt=self.state.airspeed_kt,
         )
         self.adf_frequency_khz = DEFAULT_ADF_FREQUENCY_KHZ
+        self.dme_frequency_mhz = DEFAULT_DME_FREQUENCY_MHZ
         self._last_update = time.monotonic()
 
     def set_targets(
@@ -115,6 +122,11 @@ class FlightDynamicsSimulator:
         if frequency_khz is None:
             return
         self.adf_frequency_khz = max(0.0, frequency_khz)
+
+    def set_dme_frequency(self, frequency_mhz: float | None) -> None:
+        if frequency_mhz is None:
+            return
+        self.dme_frequency_mhz = max(0.0, frequency_mhz)
 
     def step(self) -> Dict[str, Dict[str, float]]:
         now = time.monotonic()
@@ -159,6 +171,14 @@ class FlightDynamicsSimulator:
             heading_deg=self.state.heading_deg,
             tuned_frequency_khz=self.adf_frequency_khz,
         )
+        dme = compute_dme(
+            latitude_deg=self.state.latitude_deg,
+            longitude_deg=self.state.longitude_deg,
+            altitude_ft=self.state.altitude_ft,
+            track_deg=self.state.heading_deg,
+            ground_speed_kt=self.state.airspeed_kt,
+            tuned_frequency_mhz=self.dme_frequency_mhz,
+        )
         return {
             "position": {
                 "latitude_deg": self.state.latitude_deg,
@@ -169,6 +189,7 @@ class FlightDynamicsSimulator:
             "adc": adc.to_dict(),
             "gps": gps.to_dict(),
             "adf": adf.to_dict(),
+            "dme": dme.to_dict(),
             "velocity": {
                 "airspeed_kt": self.state.airspeed_kt,
                 "vertical_speed_fpm": self.state.vertical_speed_fpm,

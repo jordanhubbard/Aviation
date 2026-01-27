@@ -55,6 +55,13 @@ const isFullTelemetry = (payload: TelemetrySnapshot | TelemetryUpdate): payload 
     hasNumber(payload.adf?.distance_nm) &&
     hasNumber(payload.adf?.signal_strength) &&
     hasBoolean(payload.adf?.receiving) &&
+    hasNumber(payload.dme?.tuned_frequency_mhz) &&
+    hasString(payload.dme?.station_ident) &&
+    hasString(payload.dme?.station_name) &&
+    hasNumber(payload.dme?.slant_range_nm) &&
+    hasNumber(payload.dme?.ground_speed_kt) &&
+    hasNumber(payload.dme?.signal_strength) &&
+    hasBoolean(payload.dme?.receiving) &&
     hasNumber(payload.velocity?.airspeed_kt) &&
     hasNumber(payload.velocity?.vertical_speed_fpm) &&
     hasNumber(payload.velocity?.turn_rate_dps) &&
@@ -104,6 +111,10 @@ export const useFlightStore = create<FlightState & FlightActions>((set) => ({
         adf: {
           ...state.telemetry.adf,
           ...(telemetryUpdate.adf ?? {}),
+        },
+        dme: {
+          ...state.telemetry.dme,
+          ...(telemetryUpdate.dme ?? {}),
         },
         velocity: {
           ...state.telemetry.velocity,

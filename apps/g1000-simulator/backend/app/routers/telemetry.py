@@ -64,6 +64,9 @@ async def command_socket(websocket: WebSocket) -> None:
             if message.get("type") == "set_adf":
                 frequency_khz = _coerce_float(message.get("frequency_khz"))
                 simulator.set_adf_frequency(frequency_khz)
+            if message.get("type") == "set_dme":
+                frequency_mhz = _coerce_float(message.get("frequency_mhz"))
+                simulator.set_dme_frequency(frequency_mhz)
             await websocket.send_json(
                 {"type": "ack", "status": "updated", "targets": simulator.targets.to_dict()}
             )

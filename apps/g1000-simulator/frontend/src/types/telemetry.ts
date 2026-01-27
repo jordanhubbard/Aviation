@@ -46,6 +46,15 @@ export type TelemetrySnapshot = {
     signal_strength: number
     receiving: boolean
   }
+  dme: {
+    tuned_frequency_mhz: number
+    station_ident: string
+    station_name: string
+    slant_range_nm: number
+    ground_speed_kt: number
+    signal_strength: number
+    receiving: boolean
+  }
   velocity: {
     airspeed_kt: number
     vertical_speed_fpm: number
@@ -65,6 +74,7 @@ export type TelemetryUpdate = {
   adc?: Partial<TelemetrySnapshot['adc']>
   gps?: Partial<TelemetrySnapshot['gps']>
   adf?: Partial<TelemetrySnapshot['adf']>
+  dme?: Partial<TelemetrySnapshot['dme']>
   velocity?: Partial<TelemetrySnapshot['velocity']>
   targets?: Partial<TelemetrySnapshot['targets']>
   timestamp?: number

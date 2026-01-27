@@ -18,6 +18,10 @@ export type CommandMessage =
       type: 'set_adf'
       frequency_khz: number
     }
+  | {
+      type: 'set_dme'
+      frequency_mhz: number
+    }
 
 const resolveCommandSocketUrl = () => {
   if (typeof window === 'undefined') return null
