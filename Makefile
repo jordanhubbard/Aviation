@@ -9,6 +9,7 @@ PYTHON_AUDIT := $(shell command -v python3.12 || command -v python3)
 .PHONY: test-docker-node test-docker-python test-docker-clojure
 .PHONY: run-aviation-missions run-flight-planner run-flight-school
 .PHONY: run-foreflight-dashboard run-flight-tracker run-weather-briefing
+.PHONY: run-g1000-simulator
 .PHONY: stop-all
 
 # Default target
@@ -28,6 +29,7 @@ help:
 	@echo "  make run-foreflight-dashboard - Run ForeFlight Dashboard (port 5051)"
 	@echo "  make run-flight-tracker       - Run Flight Tracker (port 3001)"
 	@echo "  make run-weather-briefing     - Run Weather Briefing (port 3002)"
+	@echo "  make run-g1000-simulator      - Run G1000 Simulator (backend + frontend)"
 	@echo "  make stop-all                 - Stop all running applications"
 	@echo ""
 	@echo "Component targets:"
@@ -311,6 +313,12 @@ run-weather-briefing:
 	@echo ""
 	cd apps/weather-briefing && $(MAKE) start
 
+run-g1000-simulator:
+	@echo "🚀 Starting G1000 Simulator..."
+	@echo "This will show how to start backend and frontend locally"
+	@echo ""
+	cd apps/g1000-simulator && $(MAKE) start
+
 run-aviation-accident-tracker:
 	@echo "🚀 Starting Aviation Accident Tracker (backend placeholder)..."
 	@echo ""
@@ -336,5 +344,8 @@ stop-all:
 	@echo ""
 	@echo "Stopping Weather Briefing..."
 	@cd apps/weather-briefing && $(MAKE) stop 2>/dev/null || true
+	@echo ""
+	@echo "Stopping G1000 Simulator..."
+	@cd apps/g1000-simulator && $(MAKE) stop 2>/dev/null || true
 	@echo ""
 	@echo "✅ All applications stopped!"

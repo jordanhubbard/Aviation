@@ -7,7 +7,8 @@
     "packages/*",
     "apps/*",
     "apps/aviation-accident-tracker/backend",
-    "apps/aviation-accident-tracker/frontend"
+    "apps/aviation-accident-tracker/frontend",
+    "apps/g1000-simulator/frontend"
   ],
   "scripts": {
     "build": "npm run build --workspaces --if-present",
