@@ -171,7 +171,7 @@ jobs:
       - name: Build and push
         uses: docker/build-push-action@v5
         with:
-          context: ./apps/flight-planner
+          context: .
           file: ./apps/flight-planner/Dockerfile
           push: true
           tags: ${{ steps.meta.outputs.tags }}
@@ -213,7 +213,8 @@ jobs:
       - name: Build and push
         uses: docker/build-push-action@v5
         with:
-          context: ./apps/flightschool
+          context: .
+          file: ./apps/flightschool/Dockerfile
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
@@ -254,7 +255,7 @@ jobs:
       - name: Build and push
         uses: docker/build-push-action@v5
         with:
-          context: ./apps/foreflight-dashboard
+          context: .
           file: ./apps/foreflight-dashboard/Dockerfile
           push: true
           tags: ${{ steps.meta.outputs.tags }}
