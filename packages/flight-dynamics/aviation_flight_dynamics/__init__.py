@@ -19,6 +19,8 @@ from .aircraft import (
     WingGeometry,
 )
 from .performance import (
+    CruisePerformance,
+    compute_cruise_performance,
     TakeoffClimbPerformance,
     compute_takeoff_climb_performance,
 )
@@ -68,6 +70,8 @@ __all__ = [
     "WingGeometry",
     "TakeoffClimbPerformance",
     "compute_takeoff_climb_performance",
+    "CruisePerformance",
+    "compute_cruise_performance",
     "AircraftState",
     "AtmosphereState",
     "ControlInputs",
