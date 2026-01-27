@@ -6,6 +6,7 @@ export type MfdTelemetry = {
     longitude_deg: number;
     ground_track_deg?: number;
     ground_speed_kt?: number;
+    heading_deg?: number;
   };
   map?: {
     range_nm?: number;
