@@ -18,6 +18,10 @@ from .aircraft import (
     validate_aircraft_config,
     WingGeometry,
 )
+from .performance import (
+    TakeoffClimbPerformance,
+    compute_takeoff_climb_performance,
+)
 from .physics import (
     AircraftState,
     AtmosphereState,
@@ -62,6 +66,8 @@ __all__ = [
     "ValidationReport",
     "validate_aircraft_config",
     "WingGeometry",
+    "TakeoffClimbPerformance",
+    "compute_takeoff_climb_performance",
     "AircraftState",
     "AtmosphereState",
     "ControlInputs",
