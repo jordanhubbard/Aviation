@@ -419,14 +419,14 @@ export const resolvers = {
      * Subscribe to new events
      */
     eventAdded: {
-      subscribe: () => pubsub.asyncIterator([EVENT_ADDED]),
+      subscribe: () => pubsub.asyncIterableIterator([EVENT_ADDED]),
     },
 
     /**
      * Subscribe to ingestion status
      */
     ingestionStatus: {
-      subscribe: () => pubsub.asyncIterator([INGESTION_STATUS]),
+      subscribe: () => pubsub.asyncIterableIterator([INGESTION_STATUS]),
     },
   },
 };
