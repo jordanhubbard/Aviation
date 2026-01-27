@@ -8,6 +8,7 @@ from typing import Dict
 from app.models.aircraft_state import default_c172_state
 from app.services.ahrs import compute_ahrs
 from app.services.adc import compute_adc
+from app.services.autopilot import PidConfig, PidController
 from app.services.gps import compute_gps
 from app.services.nav_radios import (
     DEFAULT_ADF_FREQUENCY_KHZ,
@@ -63,11 +64,29 @@ class FlightDynamicsConfig:
     max_climb_rate_fpm: float = 700.0
     max_turn_rate_dps: float = 3.0
     max_accel_kt_per_sec: float = 5.0
-    altitude_gain: float = 0.5
-    heading_gain: float = 0.8
     speed_gain: float = 0.5
-    roll_gain: float = 7.0
-    pitch_gain: float = 10.0
+    roll_pid: PidConfig = field(
+        default_factory=lambda: PidConfig(
+            kp=0.6,
+            ki=0.02,
+            kd=0.1,
+            integrator_min=-20.0,
+            integrator_max=20.0,
+            output_min=-25.0,
+            output_max=25.0,
+        )
+    )
+    pitch_pid: PidConfig = field(
+        default_factory=lambda: PidConfig(
+            kp=0.02,
+            ki=0.005,
+            kd=0.01,
+            integrator_min=-10.0,
+            integrator_max=10.0,
+            output_min=-10.0,
+            output_max=10.0,
+        )
+    )
 
 
 @dataclass
@@ -77,6 +96,8 @@ class FlightDynamicsSimulator:
     targets: AutopilotTargets = field(init=False)
     adf_frequency_khz: float = field(init=False)
     dme_frequency_mhz: float = field(init=False)
+    roll_pid: PidController = field(init=False)
+    pitch_pid: PidController = field(init=False)
     _last_update: float = field(init=False, default_factory=time.monotonic)
 
     def __post_init__(self) -> None:
@@ -103,6 +124,8 @@ class FlightDynamicsSimulator:
         )
         self.adf_frequency_khz = DEFAULT_ADF_FREQUENCY_KHZ
         self.dme_frequency_mhz = DEFAULT_DME_FREQUENCY_MHZ
+        self.roll_pid = PidController(self.config.roll_pid)
+        self.pitch_pid = PidController(self.config.pitch_pid)
         self._last_update = time.monotonic()
 
     def set_targets(
@@ -113,8 +136,10 @@ class FlightDynamicsSimulator:
     ) -> None:
         if heading_deg is not None:
             self.targets.heading_deg = normalize_heading(heading_deg)
+            self.roll_pid.reset()
         if altitude_ft is not None:
             self.targets.altitude_ft = altitude_ft
+            self.pitch_pid.reset()
         if airspeed_kt is not None:
             self.targets.airspeed_kt = max(0.0, airspeed_kt)
 
@@ -201,8 +226,10 @@ class FlightDynamicsSimulator:
 
     def _update_heading(self, delta: float) -> None:
         heading_error = heading_difference(self.targets.heading_deg, self.state.heading_deg)
+        roll_command = self.roll_pid.update(heading_error, delta)
+        max_roll = max(abs(self.config.roll_pid.output_min), abs(self.config.roll_pid.output_max), 1e-6)
         desired_turn_rate = clamp(
-            heading_error * self.config.heading_gain,
+            (roll_command / max_roll) * self.config.max_turn_rate_dps,
             -self.config.max_turn_rate_dps,
             self.config.max_turn_rate_dps,
         )
@@ -210,26 +237,20 @@ class FlightDynamicsSimulator:
         self.state.heading_deg = normalize_heading(
             self.state.heading_deg + desired_turn_rate * delta
         )
-        self.state.roll_deg = clamp(
-            desired_turn_rate * self.config.roll_gain,
-            -25.0,
-            25.0,
-        )
+        self.state.roll_deg = roll_command
 
     def _update_altitude(self, delta: float) -> None:
         altitude_error = self.targets.altitude_ft - self.state.altitude_ft
+        pitch_command = self.pitch_pid.update(altitude_error, delta)
+        max_pitch = max(abs(self.config.pitch_pid.output_min), abs(self.config.pitch_pid.output_max), 1e-6)
         desired_vs = clamp(
-            altitude_error * self.config.altitude_gain,
+            (pitch_command / max_pitch) * self.config.max_climb_rate_fpm,
             -self.config.max_climb_rate_fpm,
             self.config.max_climb_rate_fpm,
         )
         self.state.vertical_speed_fpm = desired_vs
         self.state.altitude_ft += desired_vs * delta / 60.0
-        self.state.pitch_deg = clamp(
-            (desired_vs / self.config.max_climb_rate_fpm) * self.config.pitch_gain,
-            -10.0,
-            10.0,
-        )
+        self.state.pitch_deg = pitch_command
 
     def _update_speed(self, delta: float) -> None:
         speed_error = self.targets.airspeed_kt - self.state.airspeed_kt
