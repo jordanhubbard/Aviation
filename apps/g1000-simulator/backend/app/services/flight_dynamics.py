@@ -8,6 +8,7 @@ from typing import Dict
 from app.models.aircraft_state import default_c172_state
 from app.services.ahrs import compute_ahrs
 from app.services.adc import compute_adc
+from app.services.gps import compute_gps
 
 
 def clamp(value: float, minimum: float, maximum: float) -> float:
@@ -136,6 +137,14 @@ class FlightDynamicsSimulator:
             airspeed_kt=self.state.airspeed_kt,
             vertical_speed_fpm=self.state.vertical_speed_fpm,
         )
+        gps = compute_gps(
+            latitude_deg=self.state.latitude_deg,
+            longitude_deg=self.state.longitude_deg,
+            altitude_ft=self.state.altitude_ft,
+            ground_speed_kt=self.state.airspeed_kt,
+            track_deg=self.state.heading_deg,
+            timestamp=self.state.timestamp,
+        )
         return {
             "position": {
                 "latitude_deg": self.state.latitude_deg,
@@ -144,6 +153,7 @@ class FlightDynamicsSimulator:
             },
             "attitude": ahrs.to_dict(),
             "adc": adc.to_dict(),
+            "gps": gps.to_dict(),
             "velocity": {
                 "airspeed_kt": self.state.airspeed_kt,
                 "vertical_speed_fpm": self.state.vertical_speed_fpm,

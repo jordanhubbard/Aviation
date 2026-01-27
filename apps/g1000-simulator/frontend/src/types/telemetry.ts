@@ -22,6 +22,17 @@ export type TelemetrySnapshot = {
     vertical_speed_fpm: number
     oat_c: number
   }
+  gps: {
+    latitude_deg: number
+    longitude_deg: number
+    altitude_ft: number
+    ground_speed_kt: number
+    track_deg: number
+    waas_available: boolean
+    waas_enabled: boolean
+    horizontal_accuracy_m: number
+    vertical_accuracy_m: number
+  }
   velocity: {
     airspeed_kt: number
     vertical_speed_fpm: number
@@ -39,6 +50,7 @@ export type TelemetryUpdate = {
   position?: Partial<TelemetrySnapshot['position']>
   attitude?: Partial<TelemetrySnapshot['attitude']>
   adc?: Partial<TelemetrySnapshot['adc']>
+  gps?: Partial<TelemetrySnapshot['gps']>
   velocity?: Partial<TelemetrySnapshot['velocity']>
   targets?: Partial<TelemetrySnapshot['targets']>
   timestamp?: number

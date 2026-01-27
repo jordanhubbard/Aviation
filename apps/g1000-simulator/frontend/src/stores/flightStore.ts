@@ -40,6 +40,11 @@ const isFullTelemetry = (payload: TelemetrySnapshot | TelemetryUpdate): payload 
     hasNumber(payload.adc?.density_altitude_ft) &&
     hasNumber(payload.adc?.vertical_speed_fpm) &&
     hasNumber(payload.adc?.oat_c) &&
+    hasNumber(payload.gps?.latitude_deg) &&
+    hasNumber(payload.gps?.longitude_deg) &&
+    hasNumber(payload.gps?.altitude_ft) &&
+    hasNumber(payload.gps?.ground_speed_kt) &&
+    hasNumber(payload.gps?.track_deg) &&
     hasNumber(payload.velocity?.airspeed_kt) &&
     hasNumber(payload.velocity?.vertical_speed_fpm) &&
     hasNumber(payload.velocity?.turn_rate_dps) &&
@@ -81,6 +86,10 @@ export const useFlightStore = create<FlightState & FlightActions>((set) => ({
         adc: {
           ...state.telemetry.adc,
           ...(telemetryUpdate.adc ?? {}),
+        },
+        gps: {
+          ...state.telemetry.gps,
+          ...(telemetryUpdate.gps ?? {}),
         },
         velocity: {
           ...state.telemetry.velocity,
