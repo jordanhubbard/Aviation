@@ -21,3 +21,11 @@ export type TelemetrySnapshot = {
   }
   timestamp: number
 }
+
+export type TelemetryUpdate = {
+  position?: Partial<TelemetrySnapshot['position']>
+  attitude?: Partial<TelemetrySnapshot['attitude']>
+  velocity?: Partial<TelemetrySnapshot['velocity']>
+  targets?: Partial<TelemetrySnapshot['targets']>
+  timestamp?: number
+}

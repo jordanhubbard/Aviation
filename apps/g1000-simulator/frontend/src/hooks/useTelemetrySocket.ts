@@ -1,6 +1,6 @@
 import { useEffect } from 'react'
 
-import type { TelemetrySnapshot } from '../types/telemetry'
+import type { TelemetrySnapshot, TelemetryUpdate } from '../types/telemetry'
 import { useFlightStore } from '../stores/flightStore'
 import { useWebSocketClient } from './useWebSocketClient'
 
@@ -16,7 +16,7 @@ const resolveWebSocketUrl = () => {
 
 export const useTelemetrySocket = () => {
   const telemetry = useFlightStore((state) => state.telemetry)
-  const setStoreTelemetry = useFlightStore((state) => state.setTelemetry)
+  const applyTelemetryUpdate = useFlightStore((state) => state.applyTelemetryUpdate)
   const setSocketStatus = useFlightStore((state) => state.setSocketStatus)
   const flightSocketStatus = useFlightStore((state) => state.socketStatus)
   const url = resolveWebSocketUrl()
@@ -25,12 +25,18 @@ export const useTelemetrySocket = () => {
     url,
     onMessage: (data) => {
       try {
-        const message = JSON.parse(data)
+        const message = JSON.parse(data) as {
+          type?: string
+          payload?: TelemetrySnapshot | TelemetryUpdate
+        }
         if (message?.type === 'telemetry' && message.payload) {
-          setStoreTelemetry(message.payload as TelemetrySnapshot)
+          applyTelemetryUpdate(message.payload)
+        }
+        if (message?.type === 'telemetry_delta' && message.payload) {
+          applyTelemetryUpdate(message.payload)
         }
       } catch (error) {
-        setStoreTelemetry(null)
+        applyTelemetryUpdate(null)
       }
     },
   })
