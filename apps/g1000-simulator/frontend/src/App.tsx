@@ -4,6 +4,7 @@ import { AutopilotPanel } from './controls/AutopilotPanel'
 import { ButtonPanel } from './controls/ButtonPanel'
 import { KeyboardShortcuts } from './controls/KeyboardShortcuts'
 import { KnobController } from './controls/KnobController'
+import { DisplayShell } from './displays/DisplayShell'
 import { MfdDisplay } from './displays/MFD/MfdDisplay'
 import { PfdDisplay } from './displays/PFD/PfdDisplay'
 import { useCommandSocket } from './hooks/useCommandSocket'
@@ -126,10 +127,9 @@ export default function App() {
           </div>
         </header>
         <main className="app__main">
-          <section className="panel panel--pfd">
-            <h2 className="panel__title">Primary Flight Display</h2>
+          <DisplayShell title="Primary Flight Display" className="panel--pfd">
             <PfdDisplay telemetry={telemetry} socketStatus={socketStatus} />
-          </section>
+          </DisplayShell>
           <section className="panel panel--telemetry">
             <h2 className="panel__title">Live Telemetry</h2>
             <div className="telemetry-grid">
@@ -181,10 +181,9 @@ export default function App() {
             </div>
             <AutopilotPanel />
           </section>
-          <section className="panel panel--mfd">
-            <h2 className="panel__title">Multi-Function Display</h2>
+          <DisplayShell title="Multi-Function Display" className="panel--mfd">
             <MfdDisplay telemetry={telemetry} />
-          </section>
+          </DisplayShell>
         </main>
       </div>
     </AutopilotProvider>

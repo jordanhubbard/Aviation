@@ -73,6 +73,36 @@ body {
   box-shadow: 0 18px 30px rgba(8, 12, 16, 0.4);
 }
 
+.display-shell {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.display-shell__body {
+  position: relative;
+  flex: 1;
+  min-height: 320px;
+}
+
+.display-shell__canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border-radius: 12px;
+  border: 1px dashed #2a3a48;
+  background: radial-gradient(circle at 20% 20%, rgba(32, 48, 64, 0.6), rgba(12, 20, 28, 0.2));
+  opacity: 0.25;
+  pointer-events: none;
+}
+
+.display-shell__content {
+  position: relative;
+  z-index: 1;
+  height: 100%;
+}
+
 .panel--telemetry {
   grid-area: telemetry;
   min-height: 220px;
