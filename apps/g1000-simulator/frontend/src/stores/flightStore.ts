@@ -33,6 +33,13 @@ const isFullTelemetry = (payload: TelemetrySnapshot | TelemetryUpdate): payload 
     hasNumber(payload.attitude?.heading_deg) &&
     hasNumber(payload.attitude?.pitch_deg) &&
     hasNumber(payload.attitude?.roll_deg) &&
+    hasNumber(payload.adc?.ias_kt) &&
+    hasNumber(payload.adc?.cas_kt) &&
+    hasNumber(payload.adc?.tas_kt) &&
+    hasNumber(payload.adc?.pressure_altitude_ft) &&
+    hasNumber(payload.adc?.density_altitude_ft) &&
+    hasNumber(payload.adc?.vertical_speed_fpm) &&
+    hasNumber(payload.adc?.oat_c) &&
     hasNumber(payload.velocity?.airspeed_kt) &&
     hasNumber(payload.velocity?.vertical_speed_fpm) &&
     hasNumber(payload.velocity?.turn_rate_dps) &&
@@ -70,6 +77,10 @@ export const useFlightStore = create<FlightState & FlightActions>((set) => ({
         attitude: {
           ...state.telemetry.attitude,
           ...telemetryUpdate.attitude,
+        },
+        adc: {
+          ...state.telemetry.adc,
+          ...(telemetryUpdate.adc ?? {}),
         },
         velocity: {
           ...state.telemetry.velocity,
