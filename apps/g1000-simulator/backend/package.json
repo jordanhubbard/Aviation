@@ -22,6 +22,7 @@
   "dependencies": {
     "@aviation/shared-sdk": "*",
     "@aviation/keystore": "*",
+    "@aviation/ui-framework": "*",
     "ws": "^8.16.0"
   },
   "devDependencies": {

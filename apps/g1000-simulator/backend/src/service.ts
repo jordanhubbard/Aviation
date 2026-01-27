@@ -1,4 +1,5 @@
 import { BackgroundService, ServiceConfig } from '@aviation/shared-sdk';
+import { createSecretLoader } from '@aviation/keystore';
 import { RawData, WebSocket, WebSocketServer } from 'ws';
 
 type ClientState = {
@@ -11,12 +12,21 @@ export class G1000StreamingService extends BackgroundService {
   private clients = new Map<WebSocket, ClientState>();
   private broadcastInterval?: NodeJS.Timeout;
   private clientCounter = 0;
+  private secrets = createSecretLoader('g1000-simulator');
 
   constructor(config: ServiceConfig) {
     super(config);
   }
 
   protected async onStart(): Promise<void> {
+    const streamToken =
+      this.secrets.get('G1000_STREAM_API_KEY') ??
+      this.secrets.get('G1000_SIMULATOR_API_KEY') ??
+      process.env.G1000_STREAM_API_KEY ??
+      process.env.G1000_SIMULATOR_API_KEY;
+    if (!streamToken) {
+      console.warn('No G1000 stream API key found; running without auth gating.');
+    }
     const port = Number(process.env.G1000_STREAM_PORT ?? this.config.port ?? 9010);
     this.server = new WebSocketServer({ port, path: '/ws' });
     this.server.on('connection', (socket: WebSocket) => this.handleConnection(socket));

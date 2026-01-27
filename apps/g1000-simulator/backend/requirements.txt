@@ -6,5 +6,7 @@ python-dotenv
 httpx
 requests
 
+-e ../../packages/shared-sdk/python
+
 pytest
 pytest-asyncio
