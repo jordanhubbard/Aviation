@@ -34,6 +34,7 @@ export type {
   NavProcedure,
 } from "./storage";
 export { NavDatabase } from "./database";
+export { NavDatabaseCache } from "./cache";
 export {
   searchAirports,
   searchAirspaces,
@@ -48,5 +49,6 @@ export type {
   ProximityOptions,
   SearchMatch,
 } from "./search";
+export type { NavCacheMetrics, NavCacheOptions } from "./cache";
 export { listProceduresForAirport } from "./procedures";
 export type { ProcedureQueryOptions } from "./procedures";
