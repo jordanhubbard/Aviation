@@ -29,6 +29,8 @@ from .physics import (
     PhysicsIntegrator,
     Quaternion,
     RigidBodyState,
+    SixDofIntegrator,
+    StateDerivative,
     Vector3,
 )
 
@@ -61,5 +63,7 @@ __all__ = [
     "PhysicsIntegrator",
     "Quaternion",
     "RigidBodyState",
+    "SixDofIntegrator",
+    "StateDerivative",
     "Vector3",
 ]

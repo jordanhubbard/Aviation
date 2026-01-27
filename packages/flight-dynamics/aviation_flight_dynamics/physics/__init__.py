@@ -11,6 +11,7 @@ from .architecture import (
     RigidBodyState,
     Vector3,
 )
+from .integrator import SixDofIntegrator, StateDerivative
 
 __all__ = [
     "AircraftState",
@@ -23,5 +24,7 @@ __all__ = [
     "PhysicsIntegrator",
     "Quaternion",
     "RigidBodyState",
+    "SixDofIntegrator",
+    "StateDerivative",
     "Vector3",
 ]
