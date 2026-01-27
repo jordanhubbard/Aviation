@@ -1,32 +1,11 @@
-import { useEffect, useState } from 'react'
+import { useEffect } from 'react'
 
+import type { TelemetrySnapshot } from '../types/telemetry'
+import { useFlightStore } from '../stores/flightStore'
 import { useWebSocketClient } from './useWebSocketClient'
 
 export type { SocketStatus } from './useWebSocketClient'
-
-export type TelemetrySnapshot = {
-  position: {
-    latitude_deg: number
-    longitude_deg: number
-    altitude_ft: number
-  }
-  attitude: {
-    heading_deg: number
-    pitch_deg: number
-    roll_deg: number
-  }
-  velocity: {
-    airspeed_kt: number
-    vertical_speed_fpm: number
-    turn_rate_dps: number
-  }
-  targets: {
-    heading_deg: number
-    altitude_ft: number
-    airspeed_kt: number
-  }
-  timestamp: number
-}
+export type { TelemetrySnapshot } from '../types/telemetry'
 
 const resolveWebSocketUrl = () => {
   if (typeof window === 'undefined') return null
@@ -36,7 +15,10 @@ const resolveWebSocketUrl = () => {
 }
 
 export const useTelemetrySocket = () => {
-  const [telemetry, setTelemetry] = useState<TelemetrySnapshot | null>(null)
+  const telemetry = useFlightStore((state) => state.telemetry)
+  const setStoreTelemetry = useFlightStore((state) => state.setTelemetry)
+  const setSocketStatus = useFlightStore((state) => state.setSocketStatus)
+  const flightSocketStatus = useFlightStore((state) => state.socketStatus)
   const url = resolveWebSocketUrl()
 
   const { status, send } = useWebSocketClient({
@@ -45,13 +27,17 @@ export const useTelemetrySocket = () => {
       try {
         const message = JSON.parse(data)
         if (message?.type === 'telemetry' && message.payload) {
-          setTelemetry(message.payload as TelemetrySnapshot)
+          setStoreTelemetry(message.payload as TelemetrySnapshot)
         }
       } catch (error) {
-        setTelemetry(null)
+        setStoreTelemetry(null)
       }
     },
   })
+
+  useEffect(() => {
+    setSocketStatus(status)
+  }, [setSocketStatus, status])
 
   useEffect(() => {
     if (status !== 'connected') {
@@ -67,5 +53,5 @@ export const useTelemetrySocket = () => {
     }
   }, [status, send])
 
-  return { status, telemetry }
+  return { status: flightSocketStatus, telemetry }
 }
