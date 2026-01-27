@@ -221,7 +221,7 @@ export class RedisCache {
   async extend(key: string, seconds: number): Promise<boolean> {
     try {
       const result = await this.client.expire(this.key(key), seconds);
-      return result;
+      return result > 0;
     } catch (error) {
       console.error('Cache extend error:', error);
       return false;
