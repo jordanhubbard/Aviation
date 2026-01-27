@@ -5,6 +5,8 @@ import math
 import time
 from typing import Dict
 
+from app.models.aircraft_state import default_c172_state
+
 
 def clamp(value: float, minimum: float, maximum: float) -> float:
     return max(minimum, min(maximum, value))
@@ -70,17 +72,18 @@ class FlightDynamicsSimulator:
         self.reset()
 
     def reset(self) -> None:
+        initial_state = default_c172_state()
         self.state = FlightState(
-            latitude_deg=37.6213,
-            longitude_deg=-122.3790,
-            altitude_ft=4500.0,
-            heading_deg=90.0,
-            airspeed_kt=110.0,
-            vertical_speed_fpm=0.0,
+            latitude_deg=initial_state.position.latitude_deg,
+            longitude_deg=initial_state.position.longitude_deg,
+            altitude_ft=initial_state.position.altitude_ft,
+            heading_deg=initial_state.attitude.heading_deg,
+            airspeed_kt=initial_state.speeds.airspeed_kt,
+            vertical_speed_fpm=initial_state.speeds.vertical_speed_fpm,
             turn_rate_dps=0.0,
-            pitch_deg=0.0,
-            roll_deg=0.0,
-            timestamp=time.time(),
+            pitch_deg=initial_state.attitude.pitch_deg,
+            roll_deg=initial_state.attitude.roll_deg,
+            timestamp=initial_state.timestamp,
         )
         self.targets = AutopilotTargets(
             heading_deg=self.state.heading_deg,
