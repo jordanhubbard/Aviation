@@ -1,0 +1,23 @@
+{
+  "name": "@aviation/nav-data",
+  "version": "0.1.0",
+  "description": "Navigation data sources and ingestion utilities",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "clean": "rm -rf dist"
+  },
+  "keywords": [
+    "aviation",
+    "navigation",
+    "navdata"
+  ],
+  "author": "Jordan Hubbard",
+  "license": "MIT",
+  "devDependencies": {
+    "@types/node": "^25.0.3",
+    "typescript": "^5.0.0"
+  }
+}
