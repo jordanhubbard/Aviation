@@ -1,5 +1,7 @@
 import { ReactNode } from 'react'
 
+import { DisplayCanvas } from '../rendering/DisplayCanvas'
+
 type DisplayShellProps = {
   title: string
   className?: string
@@ -13,7 +15,7 @@ export const DisplayShell = ({ title, className, children }: DisplayShellProps) 
     <section className={classes}>
       <h2 className="panel__title">{title}</h2>
       <div className="display-shell__body">
-        <canvas className="display-shell__canvas" aria-hidden="true" />
+        <DisplayCanvas className="display-shell__canvas" />
         <div className="display-shell__content">{children}</div>
       </div>
     </section>
