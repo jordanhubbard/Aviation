@@ -120,7 +120,7 @@ jobs:
       - name: Build and push backend
         uses: docker/build-push-action@v5
         with:
-          context: ./apps/aviation-accident-tracker
+          context: .
           file: ./apps/aviation-accident-tracker/Dockerfile
           push: true
           tags: ${{ steps.meta.outputs.tags }}
