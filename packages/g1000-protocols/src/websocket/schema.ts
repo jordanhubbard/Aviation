@@ -21,7 +21,8 @@ export type CommandTopic =
   | "command.radio"
   | "command.audio"
   | "command.transponder"
-  | "command.flight_plan";
+  | "command.flight_plan"
+  | "command.simulator";
 
 export type SystemTopic = "system.status" | "system.alert";
 
@@ -92,6 +93,7 @@ export const WEBSOCKET_TOPICS = {
     audio: "command.audio" as CommandTopic,
     transponder: "command.transponder" as CommandTopic,
     flightPlan: "command.flight_plan" as CommandTopic,
+    simulator: "command.simulator" as CommandTopic,
   },
   system: {
     status: "system.status" as SystemTopic,
