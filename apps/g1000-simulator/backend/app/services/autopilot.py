@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from typing import Dict
 
 
 def clamp(value: float, minimum: float, maximum: float) -> float:
@@ -54,3 +55,33 @@ class PidController:
         self.state.integrator = integrator
         self.state.previous_error = error
         return output
+
+
+LATERAL_MODES = ("ROL", "HDG", "NAV", "APR", "BC")
+VERTICAL_MODES = ("PIT", "VS", "ALT", "ALTS", "GS", "GP")
+
+
+@dataclass
+class AutopilotStatus:
+    master_on: bool
+    lateral_mode: str
+    vertical_mode: str
+    lateral_armed: str
+    vertical_armed: str
+    target_vertical_speed_fpm: float
+    bank_limit_active: bool
+    pitch_limit_active: bool
+    disconnect_reason: str
+
+    def to_dict(self) -> Dict[str, float | str | bool]:
+        return {
+            "master_on": self.master_on,
+            "lateral_mode": self.lateral_mode,
+            "vertical_mode": self.vertical_mode,
+            "lateral_armed": self.lateral_armed,
+            "vertical_armed": self.vertical_armed,
+            "target_vertical_speed_fpm": self.target_vertical_speed_fpm,
+            "bank_limit_active": self.bank_limit_active,
+            "pitch_limit_active": self.pitch_limit_active,
+            "disconnect_reason": self.disconnect_reason,
+        }

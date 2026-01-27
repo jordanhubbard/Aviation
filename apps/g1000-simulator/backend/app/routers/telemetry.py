@@ -67,8 +67,22 @@ async def command_socket(websocket: WebSocket) -> None:
             if message.get("type") == "set_dme":
                 frequency_mhz = _coerce_float(message.get("frequency_mhz"))
                 simulator.set_dme_frequency(frequency_mhz)
+            if message.get("type") == "set_autopilot":
+                simulator.set_autopilot(
+                    master_on=_coerce_bool(message.get("master_on")),
+                    lateral_mode=_coerce_str(message.get("lateral_mode")),
+                    vertical_mode=_coerce_str(message.get("vertical_mode")),
+                    target_vertical_speed_fpm=_coerce_float(
+                        message.get("target_vertical_speed_fpm")
+                    ),
+                )
             await websocket.send_json(
-                {"type": "ack", "status": "updated", "targets": simulator.targets.to_dict()}
+                {
+                    "type": "ack",
+                    "status": "updated",
+                    "targets": simulator.targets.to_dict(),
+                    "autopilot": simulator.autopilot.to_dict(),
+                }
             )
     except WebSocketDisconnect:
         return
@@ -77,4 +91,16 @@ async def command_socket(websocket: WebSocket) -> None:
 def _coerce_float(value: object) -> float | None:
     if isinstance(value, (int, float)):
         return float(value)
+    return None
+
+
+def _coerce_bool(value: object) -> bool | None:
+    if isinstance(value, bool):
+        return value
+    return None
+
+
+def _coerce_str(value: object) -> str | None:
+    if isinstance(value, str):
+        return value
     return None

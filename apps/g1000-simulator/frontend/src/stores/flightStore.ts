@@ -62,6 +62,15 @@ const isFullTelemetry = (payload: TelemetrySnapshot | TelemetryUpdate): payload 
     hasNumber(payload.dme?.ground_speed_kt) &&
     hasNumber(payload.dme?.signal_strength) &&
     hasBoolean(payload.dme?.receiving) &&
+    hasBoolean(payload.autopilot?.master_on) &&
+    hasString(payload.autopilot?.lateral_mode) &&
+    hasString(payload.autopilot?.vertical_mode) &&
+    hasString(payload.autopilot?.lateral_armed) &&
+    hasString(payload.autopilot?.vertical_armed) &&
+    hasNumber(payload.autopilot?.target_vertical_speed_fpm) &&
+    hasBoolean(payload.autopilot?.bank_limit_active) &&
+    hasBoolean(payload.autopilot?.pitch_limit_active) &&
+    hasString(payload.autopilot?.disconnect_reason) &&
     hasNumber(payload.velocity?.airspeed_kt) &&
     hasNumber(payload.velocity?.vertical_speed_fpm) &&
     hasNumber(payload.velocity?.turn_rate_dps) &&
@@ -115,6 +124,10 @@ export const useFlightStore = create<FlightState & FlightActions>((set) => ({
         dme: {
           ...state.telemetry.dme,
           ...(telemetryUpdate.dme ?? {}),
+        },
+        autopilot: {
+          ...state.telemetry.autopilot,
+          ...(telemetryUpdate.autopilot ?? {}),
         },
         velocity: {
           ...state.telemetry.velocity,

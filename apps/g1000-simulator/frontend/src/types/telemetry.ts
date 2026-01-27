@@ -55,6 +55,17 @@ export type TelemetrySnapshot = {
     signal_strength: number
     receiving: boolean
   }
+  autopilot: {
+    master_on: boolean
+    lateral_mode: string
+    vertical_mode: string
+    lateral_armed: string
+    vertical_armed: string
+    target_vertical_speed_fpm: number
+    bank_limit_active: boolean
+    pitch_limit_active: boolean
+    disconnect_reason: string
+  }
   velocity: {
     airspeed_kt: number
     vertical_speed_fpm: number
@@ -75,6 +86,7 @@ export type TelemetryUpdate = {
   gps?: Partial<TelemetrySnapshot['gps']>
   adf?: Partial<TelemetrySnapshot['adf']>
   dme?: Partial<TelemetrySnapshot['dme']>
+  autopilot?: Partial<TelemetrySnapshot['autopilot']>
   velocity?: Partial<TelemetrySnapshot['velocity']>
   targets?: Partial<TelemetrySnapshot['targets']>
   timestamp?: number

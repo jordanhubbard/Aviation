@@ -22,6 +22,13 @@ export type CommandMessage =
       type: 'set_dme'
       frequency_mhz: number
     }
+  | {
+      type: 'set_autopilot'
+      master_on?: boolean
+      lateral_mode?: string
+      vertical_mode?: string
+      target_vertical_speed_fpm?: number
+    }
 
 const resolveCommandSocketUrl = () => {
   if (typeof window === 'undefined') return null
