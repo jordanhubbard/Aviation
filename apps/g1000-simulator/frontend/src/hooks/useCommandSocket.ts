@@ -1,6 +1,6 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback } from 'react'
 
-import type { SocketStatus } from './useTelemetrySocket'
+import { useWebSocketClient } from './useWebSocketClient'
 
 export type CommandMessage =
   | {
@@ -23,46 +23,12 @@ const resolveCommandSocketUrl = () => {
 }
 
 export const useCommandSocket = () => {
-  const [status, setStatus] = useState<SocketStatus>('connecting')
-  const socketRef = useRef<WebSocket | null>(null)
+  const url = resolveCommandSocketUrl()
+  const { status, send } = useWebSocketClient({ url })
 
   const sendCommand = useCallback((message: CommandMessage) => {
-    if (socketRef.current?.readyState === WebSocket.OPEN) {
-      socketRef.current.send(JSON.stringify(message))
-    }
-  }, [])
-
-  useEffect(() => {
-    if (typeof window === 'undefined' || !('WebSocket' in window)) {
-      setStatus('unsupported')
-      return
-    }
-
-    const url = resolveCommandSocketUrl()
-    if (!url) {
-      setStatus('error')
-      return
-    }
-
-    const socket = new WebSocket(url)
-    socketRef.current = socket
-    setStatus('connecting')
-
-    socket.onopen = () => {
-      setStatus('connected')
-    }
-    socket.onclose = () => {
-      setStatus('closed')
-    }
-    socket.onerror = () => {
-      setStatus('error')
-    }
-
-    return () => {
-      socketRef.current = null
-      socket.close()
-    }
-  }, [])
+    send(message)
+  }, [send])
 
   return { status, sendCommand }
 }

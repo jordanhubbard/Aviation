@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react'
 
-export type SocketStatus = 'unsupported' | 'connecting' | 'connected' | 'closed' | 'error'
+import { useWebSocketClient } from './useWebSocketClient'
+
+export type { SocketStatus } from './useWebSocketClient'
 
 export type TelemetrySnapshot = {
   position: {
@@ -34,65 +36,36 @@ const resolveWebSocketUrl = () => {
 }
 
 export const useTelemetrySocket = () => {
-  const [status, setStatus] = useState<SocketStatus>('connecting')
   const [telemetry, setTelemetry] = useState<TelemetrySnapshot | null>(null)
+  const url = resolveWebSocketUrl()
 
-  useEffect(() => {
-    if (typeof window === 'undefined' || !('WebSocket' in window)) {
-      setStatus('unsupported')
-      return
-    }
-
-    const url = resolveWebSocketUrl()
-    if (!url) {
-      setStatus('error')
-      return
-    }
-
-    const socket = new WebSocket(url)
-    setStatus('connecting')
-
-    let pingTimer: number | null = null
-
-    socket.onopen = () => {
-      setStatus('connected')
-      pingTimer = window.setInterval(() => {
-        if (socket.readyState === WebSocket.OPEN) {
-          socket.send(JSON.stringify({ type: 'ping' }))
-        }
-      }, 5000)
-    }
-    socket.onmessage = (event) => {
-      if (typeof event.data !== 'string') return
+  const { status, send } = useWebSocketClient({
+    url,
+    onMessage: (data) => {
       try {
-        const message = JSON.parse(event.data)
+        const message = JSON.parse(data)
         if (message?.type === 'telemetry' && message.payload) {
           setTelemetry(message.payload as TelemetrySnapshot)
         }
       } catch (error) {
-        setStatus('error')
+        setTelemetry(null)
       }
-    }
-    socket.onclose = () => {
-      if (pingTimer) {
-        window.clearInterval(pingTimer)
-      }
-      setStatus('closed')
-    }
-    socket.onerror = () => {
-      if (pingTimer) {
-        window.clearInterval(pingTimer)
-      }
-      setStatus('error')
+    },
+  })
+
+  useEffect(() => {
+    if (status !== 'connected') {
+      return
     }
 
+    const pingTimer = window.setInterval(() => {
+      send({ type: 'ping' })
+    }, 5000)
+
     return () => {
-      if (pingTimer) {
-        window.clearInterval(pingTimer)
-      }
-      socket.close()
+      window.clearInterval(pingTimer)
     }
-  }, [])
+  }, [status, send])
 
   return { status, telemetry }
 }
