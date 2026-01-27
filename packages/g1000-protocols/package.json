@@ -1,0 +1,25 @@
+{
+  "name": "@aviation/g1000-protocols",
+  "version": "0.1.0",
+  "description": "G1000 protocol schemas and message formats",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "clean": "rm -rf dist"
+  },
+  "keywords": [
+    "aviation",
+    "g1000",
+    "protocols",
+    "websocket",
+    "api"
+  ],
+  "author": "Jordan Hubbard",
+  "license": "MIT",
+  "devDependencies": {
+    "@types/node": "^25.0.3",
+    "typescript": "^5.0.0"
+  }
+}
