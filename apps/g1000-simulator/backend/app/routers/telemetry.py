@@ -76,12 +76,30 @@ async def command_socket(websocket: WebSocket) -> None:
                         message.get("target_vertical_speed_fpm")
                     ),
                 )
+            if message.get("type") == "set_audio_panel":
+                simulator.set_audio_panel(
+                    com1_enabled=_coerce_bool(message.get("com1_enabled")),
+                    com2_enabled=_coerce_bool(message.get("com2_enabled")),
+                    nav1_enabled=_coerce_bool(message.get("nav1_enabled")),
+                    nav2_enabled=_coerce_bool(message.get("nav2_enabled")),
+                    adf_enabled=_coerce_bool(message.get("adf_enabled")),
+                    marker_enabled=_coerce_bool(message.get("marker_enabled")),
+                    speaker_enabled=_coerce_bool(message.get("speaker_enabled")),
+                    headphone_enabled=_coerce_bool(message.get("headphone_enabled")),
+                    com1_volume=_coerce_float(message.get("com1_volume")),
+                    com2_volume=_coerce_float(message.get("com2_volume")),
+                    nav1_volume=_coerce_float(message.get("nav1_volume")),
+                    nav2_volume=_coerce_float(message.get("nav2_volume")),
+                    adf_volume=_coerce_float(message.get("adf_volume")),
+                    marker_volume=_coerce_float(message.get("marker_volume")),
+                )
             await websocket.send_json(
                 {
                     "type": "ack",
                     "status": "updated",
                     "targets": simulator.targets.to_dict(),
                     "autopilot": simulator.autopilot.to_dict(),
+                    "audio_panel": simulator.audio_panel.to_dict(),
                 }
             )
     except WebSocketDisconnect:

@@ -66,6 +66,27 @@ export type TelemetrySnapshot = {
     pitch_limit_active: boolean
     disconnect_reason: string
   }
+  audio_panel: {
+    com1_enabled: boolean
+    com2_enabled: boolean
+    nav1_enabled: boolean
+    nav2_enabled: boolean
+    adf_enabled: boolean
+    marker_enabled: boolean
+    speaker_enabled: boolean
+    headphone_enabled: boolean
+    com1_volume: number
+    com2_volume: number
+    nav1_volume: number
+    nav2_volume: number
+    adf_volume: number
+    marker_volume: number
+    adf_audio_level: number
+    marker_audio_level: number
+    marker_outer_active: boolean
+    marker_middle_active: boolean
+    marker_inner_active: boolean
+  }
   velocity: {
     airspeed_kt: number
     vertical_speed_fpm: number
@@ -87,6 +108,7 @@ export type TelemetryUpdate = {
   adf?: Partial<TelemetrySnapshot['adf']>
   dme?: Partial<TelemetrySnapshot['dme']>
   autopilot?: Partial<TelemetrySnapshot['autopilot']>
+  audio_panel?: Partial<TelemetrySnapshot['audio_panel']>
   velocity?: Partial<TelemetrySnapshot['velocity']>
   targets?: Partial<TelemetrySnapshot['targets']>
   timestamp?: number

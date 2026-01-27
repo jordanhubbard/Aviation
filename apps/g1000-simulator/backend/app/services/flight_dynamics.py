@@ -15,6 +15,7 @@ from app.services.autopilot import (
     PidController,
     VERTICAL_MODES,
 )
+from app.services.audio_panel import AudioPanelState, compute_marker_beacons
 from app.services.gps import compute_gps
 from app.services.nav_radios import (
     DEFAULT_ADF_FREQUENCY_KHZ,
@@ -108,6 +109,7 @@ class FlightDynamicsSimulator:
     roll_pid: PidController = field(init=False)
     pitch_pid: PidController = field(init=False)
     autopilot: AutopilotStatus = field(init=False)
+    audio_panel: AudioPanelState = field(init=False)
     _roll_hold_deg: float = field(init=False, default=0.0)
     _pitch_hold_deg: float = field(init=False, default=0.0)
     _limit_timer: float = field(init=False, default=0.0)
@@ -149,6 +151,22 @@ class FlightDynamicsSimulator:
             bank_limit_active=False,
             pitch_limit_active=False,
             disconnect_reason="",
+        )
+        self.audio_panel = AudioPanelState(
+            com1_enabled=True,
+            com2_enabled=False,
+            nav1_enabled=False,
+            nav2_enabled=False,
+            adf_enabled=False,
+            marker_enabled=True,
+            speaker_enabled=True,
+            headphone_enabled=False,
+            com1_volume=0.8,
+            com2_volume=0.7,
+            nav1_volume=0.7,
+            nav2_volume=0.7,
+            adf_volume=0.6,
+            marker_volume=0.7,
         )
         self._roll_hold_deg = self.state.roll_deg
         self._pitch_hold_deg = self.state.pitch_deg
@@ -213,6 +231,52 @@ class FlightDynamicsSimulator:
         elif vertical_mode == "VS":
             self.autopilot.target_vertical_speed_fpm = self.state.vertical_speed_fpm
 
+    def set_audio_panel(
+        self,
+        com1_enabled: bool | None = None,
+        com2_enabled: bool | None = None,
+        nav1_enabled: bool | None = None,
+        nav2_enabled: bool | None = None,
+        adf_enabled: bool | None = None,
+        marker_enabled: bool | None = None,
+        speaker_enabled: bool | None = None,
+        headphone_enabled: bool | None = None,
+        com1_volume: float | None = None,
+        com2_volume: float | None = None,
+        nav1_volume: float | None = None,
+        nav2_volume: float | None = None,
+        adf_volume: float | None = None,
+        marker_volume: float | None = None,
+    ) -> None:
+        if com1_enabled is not None:
+            self.audio_panel.com1_enabled = com1_enabled
+        if com2_enabled is not None:
+            self.audio_panel.com2_enabled = com2_enabled
+        if nav1_enabled is not None:
+            self.audio_panel.nav1_enabled = nav1_enabled
+        if nav2_enabled is not None:
+            self.audio_panel.nav2_enabled = nav2_enabled
+        if adf_enabled is not None:
+            self.audio_panel.adf_enabled = adf_enabled
+        if marker_enabled is not None:
+            self.audio_panel.marker_enabled = marker_enabled
+        if speaker_enabled is not None:
+            self.audio_panel.speaker_enabled = speaker_enabled
+        if headphone_enabled is not None:
+            self.audio_panel.headphone_enabled = headphone_enabled
+        if com1_volume is not None:
+            self.audio_panel.com1_volume = clamp(com1_volume, 0.0, 1.0)
+        if com2_volume is not None:
+            self.audio_panel.com2_volume = clamp(com2_volume, 0.0, 1.0)
+        if nav1_volume is not None:
+            self.audio_panel.nav1_volume = clamp(nav1_volume, 0.0, 1.0)
+        if nav2_volume is not None:
+            self.audio_panel.nav2_volume = clamp(nav2_volume, 0.0, 1.0)
+        if adf_volume is not None:
+            self.audio_panel.adf_volume = clamp(adf_volume, 0.0, 1.0)
+        if marker_volume is not None:
+            self.audio_panel.marker_volume = clamp(marker_volume, 0.0, 1.0)
+
     def set_adf_frequency(self, frequency_khz: float | None) -> None:
         if frequency_khz is None:
             return
@@ -223,7 +287,7 @@ class FlightDynamicsSimulator:
             return
         self.dme_frequency_mhz = max(0.0, frequency_mhz)
 
-    def step(self) -> Dict[str, Dict[str, float]]:
+    def step(self) -> Dict[str, object]:
         now = time.monotonic()
         delta = max(0.0, now - self._last_update)
         if delta == 0:
@@ -247,7 +311,7 @@ class FlightDynamicsSimulator:
         self.state.timestamp = time.time()
         return self.snapshot()
 
-    def snapshot(self) -> Dict[str, Dict[str, float]]:
+    def snapshot(self) -> Dict[str, object]:
         ahrs = compute_ahrs(
             heading_deg=self.state.heading_deg,
             pitch_deg=self.state.pitch_deg,
@@ -284,6 +348,13 @@ class FlightDynamicsSimulator:
             ground_speed_kt=self.state.airspeed_kt,
             tuned_frequency_mhz=self.dme_frequency_mhz,
         )
+        marker_status = compute_marker_beacons(
+            self.state.latitude_deg,
+            self.state.longitude_deg,
+            self.state.altitude_ft,
+        )
+        adf_signal = adf.signal_strength if adf.receiving else 0.0
+        audio_panel = self.audio_panel.to_status(adf_signal, marker_status)
         return {
             "position": {
                 "latitude_deg": self.state.latitude_deg,
@@ -296,6 +367,7 @@ class FlightDynamicsSimulator:
             "adf": adf.to_dict(),
             "dme": dme.to_dict(),
             "autopilot": self.autopilot.to_dict(),
+            "audio_panel": audio_panel,
             "velocity": {
                 "airspeed_kt": self.state.airspeed_kt,
                 "vertical_speed_fpm": self.state.vertical_speed_fpm,

@@ -71,6 +71,25 @@ const isFullTelemetry = (payload: TelemetrySnapshot | TelemetryUpdate): payload 
     hasBoolean(payload.autopilot?.bank_limit_active) &&
     hasBoolean(payload.autopilot?.pitch_limit_active) &&
     hasString(payload.autopilot?.disconnect_reason) &&
+    hasBoolean(payload.audio_panel?.com1_enabled) &&
+    hasBoolean(payload.audio_panel?.com2_enabled) &&
+    hasBoolean(payload.audio_panel?.nav1_enabled) &&
+    hasBoolean(payload.audio_panel?.nav2_enabled) &&
+    hasBoolean(payload.audio_panel?.adf_enabled) &&
+    hasBoolean(payload.audio_panel?.marker_enabled) &&
+    hasBoolean(payload.audio_panel?.speaker_enabled) &&
+    hasBoolean(payload.audio_panel?.headphone_enabled) &&
+    hasNumber(payload.audio_panel?.com1_volume) &&
+    hasNumber(payload.audio_panel?.com2_volume) &&
+    hasNumber(payload.audio_panel?.nav1_volume) &&
+    hasNumber(payload.audio_panel?.nav2_volume) &&
+    hasNumber(payload.audio_panel?.adf_volume) &&
+    hasNumber(payload.audio_panel?.marker_volume) &&
+    hasNumber(payload.audio_panel?.adf_audio_level) &&
+    hasNumber(payload.audio_panel?.marker_audio_level) &&
+    hasBoolean(payload.audio_panel?.marker_outer_active) &&
+    hasBoolean(payload.audio_panel?.marker_middle_active) &&
+    hasBoolean(payload.audio_panel?.marker_inner_active) &&
     hasNumber(payload.velocity?.airspeed_kt) &&
     hasNumber(payload.velocity?.vertical_speed_fpm) &&
     hasNumber(payload.velocity?.turn_rate_dps) &&
@@ -128,6 +147,10 @@ export const useFlightStore = create<FlightState & FlightActions>((set) => ({
         autopilot: {
           ...state.telemetry.autopilot,
           ...(telemetryUpdate.autopilot ?? {}),
+        },
+        audio_panel: {
+          ...state.telemetry.audio_panel,
+          ...(telemetryUpdate.audio_panel ?? {}),
         },
         velocity: {
           ...state.telemetry.velocity,
