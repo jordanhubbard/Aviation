@@ -1,0 +1,23 @@
+{
+  "name": "@aviation/g1000-rendering",
+  "version": "0.1.0",
+  "description": "G1000 rendering primitives and display layouts",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "clean": "rm -rf dist"
+  },
+  "keywords": [
+    "aviation",
+    "g1000",
+    "rendering"
+  ],
+  "author": "Jordan Hubbard",
+  "license": "MIT",
+  "devDependencies": {
+    "@types/node": "^25.0.3",
+    "typescript": "^5.0.0"
+  }
+}
