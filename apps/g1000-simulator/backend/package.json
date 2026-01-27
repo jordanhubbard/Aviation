@@ -1,0 +1,32 @@
+{
+  "name": "@aviation/g1000-simulator-backend",
+  "version": "0.1.0",
+  "description": "G1000 simulator realtime streaming service",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "test": "npm run build",
+    "dev": "tsc --watch",
+    "start": "node dist/index.js",
+    "clean": "rm -rf dist"
+  },
+  "keywords": [
+    "aviation",
+    "g1000",
+    "simulator",
+    "streaming"
+  ],
+  "author": "Jordan Hubbard",
+  "license": "MIT",
+  "dependencies": {
+    "@aviation/shared-sdk": "*",
+    "@aviation/keystore": "*",
+    "ws": "^8.16.0"
+  },
+  "devDependencies": {
+    "@types/node": "^25.0.3",
+    "@types/ws": "^8.5.10",
+    "typescript": "^5.0.0"
+  }
+}
