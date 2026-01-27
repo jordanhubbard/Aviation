@@ -23,6 +23,7 @@ from app.services.nav_radios import (
     compute_adf,
     compute_dme,
 )
+from app.services.transponder import TRANSPONDER_MODES, TransponderState, normalize_squawk
 
 
 def clamp(value: float, minimum: float, maximum: float) -> float:
@@ -110,6 +111,7 @@ class FlightDynamicsSimulator:
     pitch_pid: PidController = field(init=False)
     autopilot: AutopilotStatus = field(init=False)
     audio_panel: AudioPanelState = field(init=False)
+    transponder: TransponderState = field(init=False)
     _roll_hold_deg: float = field(init=False, default=0.0)
     _pitch_hold_deg: float = field(init=False, default=0.0)
     _limit_timer: float = field(init=False, default=0.0)
@@ -167,6 +169,12 @@ class FlightDynamicsSimulator:
             nav2_volume=0.7,
             adf_volume=0.6,
             marker_volume=0.7,
+        )
+        self.transponder = TransponderState(
+            mode="C",
+            squawk_code="1200",
+            ident_active=False,
+            ident_remaining_sec=0.0,
         )
         self._roll_hold_deg = self.state.roll_deg
         self._pitch_hold_deg = self.state.pitch_deg
@@ -277,6 +285,23 @@ class FlightDynamicsSimulator:
         if marker_volume is not None:
             self.audio_panel.marker_volume = clamp(marker_volume, 0.0, 1.0)
 
+    def set_transponder(
+        self,
+        mode: str | None = None,
+        squawk_code: str | int | None = None,
+        ident: bool | None = None,
+    ) -> None:
+        if mode and mode in TRANSPONDER_MODES:
+            self.transponder.mode = mode
+        if squawk_code is not None:
+            normalized = normalize_squawk(squawk_code)
+            if normalized is not None:
+                self.transponder.squawk_code = normalized
+        if ident is True:
+            self.transponder.trigger_ident()
+        elif ident is False:
+            self.transponder.clear_ident()
+
     def set_adf_frequency(self, frequency_khz: float | None) -> None:
         if frequency_khz is None:
             return
@@ -294,6 +319,7 @@ class FlightDynamicsSimulator:
             return self.snapshot()
 
         self._last_update = now
+        self.transponder.update(delta)
         if not self.autopilot.master_on:
             self._limit_timer = 0.0
             self.autopilot.bank_limit_active = False
@@ -368,6 +394,7 @@ class FlightDynamicsSimulator:
             "dme": dme.to_dict(),
             "autopilot": self.autopilot.to_dict(),
             "audio_panel": audio_panel,
+            "transponder": self.transponder.to_dict(),
             "velocity": {
                 "airspeed_kt": self.state.airspeed_kt,
                 "vertical_speed_fpm": self.state.vertical_speed_fpm,

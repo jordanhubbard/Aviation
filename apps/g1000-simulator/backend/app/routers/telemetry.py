@@ -93,6 +93,12 @@ async def command_socket(websocket: WebSocket) -> None:
                     adf_volume=_coerce_float(message.get("adf_volume")),
                     marker_volume=_coerce_float(message.get("marker_volume")),
                 )
+            if message.get("type") == "set_transponder":
+                simulator.set_transponder(
+                    mode=_coerce_str(message.get("mode")),
+                    squawk_code=message.get("squawk_code"),
+                    ident=_coerce_bool(message.get("ident")),
+                )
             await websocket.send_json(
                 {
                     "type": "ack",
@@ -100,6 +106,7 @@ async def command_socket(websocket: WebSocket) -> None:
                     "targets": simulator.targets.to_dict(),
                     "autopilot": simulator.autopilot.to_dict(),
                     "audio_panel": simulator.audio_panel.to_dict(),
+                    "transponder": simulator.transponder.to_dict(),
                 }
             )
     except WebSocketDisconnect:

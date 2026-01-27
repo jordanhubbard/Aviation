@@ -87,6 +87,12 @@ export type TelemetrySnapshot = {
     marker_middle_active: boolean
     marker_inner_active: boolean
   }
+  transponder: {
+    mode: string
+    squawk_code: string
+    ident_active: boolean
+    ident_remaining_sec: number
+  }
   velocity: {
     airspeed_kt: number
     vertical_speed_fpm: number
@@ -109,6 +115,7 @@ export type TelemetryUpdate = {
   dme?: Partial<TelemetrySnapshot['dme']>
   autopilot?: Partial<TelemetrySnapshot['autopilot']>
   audio_panel?: Partial<TelemetrySnapshot['audio_panel']>
+  transponder?: Partial<TelemetrySnapshot['transponder']>
   velocity?: Partial<TelemetrySnapshot['velocity']>
   targets?: Partial<TelemetrySnapshot['targets']>
   timestamp?: number

@@ -90,6 +90,10 @@ const isFullTelemetry = (payload: TelemetrySnapshot | TelemetryUpdate): payload 
     hasBoolean(payload.audio_panel?.marker_outer_active) &&
     hasBoolean(payload.audio_panel?.marker_middle_active) &&
     hasBoolean(payload.audio_panel?.marker_inner_active) &&
+    hasString(payload.transponder?.mode) &&
+    hasString(payload.transponder?.squawk_code) &&
+    hasBoolean(payload.transponder?.ident_active) &&
+    hasNumber(payload.transponder?.ident_remaining_sec) &&
     hasNumber(payload.velocity?.airspeed_kt) &&
     hasNumber(payload.velocity?.vertical_speed_fpm) &&
     hasNumber(payload.velocity?.turn_rate_dps) &&
@@ -151,6 +155,10 @@ export const useFlightStore = create<FlightState & FlightActions>((set) => ({
         audio_panel: {
           ...state.telemetry.audio_panel,
           ...(telemetryUpdate.audio_panel ?? {}),
+        },
+        transponder: {
+          ...state.telemetry.transponder,
+          ...(telemetryUpdate.transponder ?? {}),
         },
         velocity: {
           ...state.telemetry.velocity,

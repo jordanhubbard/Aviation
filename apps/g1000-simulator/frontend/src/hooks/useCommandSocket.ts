@@ -46,6 +46,12 @@ export type CommandMessage =
       adf_volume?: number
       marker_volume?: number
     }
+  | {
+      type: 'set_transponder'
+      mode?: string
+      squawk_code?: string | number
+      ident?: boolean
+    }
 
 const resolveCommandSocketUrl = () => {
   if (typeof window === 'undefined') return null
