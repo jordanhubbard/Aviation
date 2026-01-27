@@ -128,15 +128,6 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
       
-      - name: Build and push frontend
-        uses: docker/build-push-action@v5
-        with:
-          context: ./apps/aviation-accident-tracker/frontend
-          push: true
-          tags: ${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/accident-tracker-frontend:${{ github.sha }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-
   build-flightplanner:
     name: Build Flight Planner
     needs: determine-deployments
