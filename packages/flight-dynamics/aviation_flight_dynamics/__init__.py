@@ -13,6 +13,9 @@ from .aircraft import (
     load_c172_config,
     MassProperties,
     PerformanceConfig,
+    ValidationIssue,
+    ValidationReport,
+    validate_aircraft_config,
     WingGeometry,
 )
 
@@ -31,5 +34,8 @@ __all__ = [
     "load_c172_config",
     "MassProperties",
     "PerformanceConfig",
+    "ValidationIssue",
+    "ValidationReport",
+    "validate_aircraft_config",
     "WingGeometry",
 ]
