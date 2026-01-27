@@ -19,10 +19,14 @@ from .aircraft import (
     WingGeometry,
 )
 from .performance import (
+    C172_PERFORMANCE_REFERENCE,
     CruisePerformance,
     compute_cruise_performance,
+    PerformanceReference,
     TakeoffClimbPerformance,
     compute_takeoff_climb_performance,
+    validate_cruise_performance,
+    validate_takeoff_climb_performance,
 )
 from .physics import (
     AircraftState,
@@ -68,10 +72,14 @@ __all__ = [
     "ValidationReport",
     "validate_aircraft_config",
     "WingGeometry",
+    "C172_PERFORMANCE_REFERENCE",
     "TakeoffClimbPerformance",
     "compute_takeoff_climb_performance",
     "CruisePerformance",
     "compute_cruise_performance",
+    "PerformanceReference",
+    "validate_cruise_performance",
+    "validate_takeoff_climb_performance",
     "AircraftState",
     "AtmosphereState",
     "ControlInputs",
