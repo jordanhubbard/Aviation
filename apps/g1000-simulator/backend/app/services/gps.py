@@ -8,6 +8,7 @@ WAAS_HORIZONTAL_ACCURACY_M = 3.0
 WAAS_VERTICAL_ACCURACY_M = 5.0
 GPS_HORIZONTAL_ACCURACY_M = 15.0
 GPS_VERTICAL_ACCURACY_M = 25.0
+RAIM_FAILURE_MULTIPLIER = 4.0
 
 
 @dataclass
@@ -19,6 +20,9 @@ class GpsSolution:
     track_deg: float
     waas_available: bool
     waas_enabled: bool
+    raim_available: bool
+    raim_ok: bool
+    fix_valid: bool
     horizontal_accuracy_m: float
     vertical_accuracy_m: float
 
@@ -31,6 +35,9 @@ class GpsSolution:
             "track_deg": self.track_deg,
             "waas_available": self.waas_available,
             "waas_enabled": self.waas_enabled,
+            "raim_available": self.raim_available,
+            "raim_ok": self.raim_ok,
+            "fix_valid": self.fix_valid,
             "horizontal_accuracy_m": self.horizontal_accuracy_m,
             "vertical_accuracy_m": self.vertical_accuracy_m,
         }
@@ -44,6 +51,13 @@ def _accuracy_for_waas(waas_enabled: bool) -> tuple[float, float]:
     if waas_enabled:
         return WAAS_HORIZONTAL_ACCURACY_M, WAAS_VERTICAL_ACCURACY_M
     return GPS_HORIZONTAL_ACCURACY_M, GPS_VERTICAL_ACCURACY_M
+
+
+def _raim_status(timestamp: float) -> tuple[bool, bool]:
+    raim_available = True
+    failure_window = int(timestamp) % 300
+    raim_ok = failure_window >= 15
+    return raim_available, raim_ok
 
 
 def _apply_position_error(
@@ -74,6 +88,10 @@ def compute_gps(
     waas_available = is_waas_available(latitude_deg, longitude_deg)
     waas_enabled = waas_available
     horizontal_accuracy_m, vertical_accuracy_m = _accuracy_for_waas(waas_enabled)
+    raim_available, raim_ok = _raim_status(timestamp)
+    if not raim_ok:
+        horizontal_accuracy_m *= RAIM_FAILURE_MULTIPLIER
+        vertical_accuracy_m *= RAIM_FAILURE_MULTIPLIER
     gps_lat, gps_lon, gps_alt = _apply_position_error(
         latitude_deg,
         longitude_deg,
@@ -90,6 +108,9 @@ def compute_gps(
         track_deg=track_deg,
         waas_available=waas_available,
         waas_enabled=waas_enabled,
+        raim_available=raim_available,
+        raim_ok=raim_ok,
+        fix_valid=raim_ok,
         horizontal_accuracy_m=horizontal_accuracy_m,
         vertical_accuracy_m=vertical_accuracy_m,
     )

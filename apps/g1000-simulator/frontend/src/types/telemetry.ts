@@ -30,6 +30,9 @@ export type TelemetrySnapshot = {
     track_deg: number
     waas_available: boolean
     waas_enabled: boolean
+    raim_available: boolean
+    raim_ok: boolean
+    fix_valid: boolean
     horizontal_accuracy_m: number
     vertical_accuracy_m: number
   }
