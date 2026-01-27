@@ -12,6 +12,7 @@ from .architecture import (
     Vector3,
 )
 from .atmosphere import IsaAtmosphereConfig, IsaAtmosphereModel
+from .environment import EnvironmentModel, EnvironmentSnapshot
 from .force_model import ForceComponents, SimpleForceModel
 from .integrator import SixDofIntegrator, StateDerivative
 from .wind import WindComponents, WindModel, WindModelConfig
@@ -22,6 +23,8 @@ __all__ = [
     "ControlInputs",
     "IsaAtmosphereConfig",
     "IsaAtmosphereModel",
+    "EnvironmentModel",
+    "EnvironmentSnapshot",
     "ForceModel",
     "ForceMoment",
     "ForceComponents",
