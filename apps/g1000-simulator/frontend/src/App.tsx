@@ -2,6 +2,7 @@ import { useState } from 'react'
 
 import { AutopilotPanel } from './controls/AutopilotPanel'
 import { ButtonPanel } from './controls/ButtonPanel'
+import type { PushButtonDefinition } from './controls/pushButtonMap'
 import { JoystickPanel } from './controls/JoystickPanel'
 import { KeymapPanel } from './controls/KeymapPanel'
 import { KeyboardShortcutLegend } from './controls/KeyboardShortcutLegend'
@@ -104,16 +105,16 @@ export default function App() {
     setLastInput('SYNC')
   }
 
-  const handleButtonPress = (id: string) => {
-    if (id === 'reset') {
+  const handleButtonPress = (button: PushButtonDefinition) => {
+    if (button.action === 'reset-targets') {
       handleReset()
       return
     }
-    if (id === 'sync') {
+    if (button.action === 'sync-targets') {
       handleSync()
       return
     }
-    setLastInput(id.toUpperCase())
+    setLastInput(button.label)
   }
 
   return (

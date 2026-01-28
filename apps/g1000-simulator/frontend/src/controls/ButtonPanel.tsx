@@ -1,20 +1,8 @@
-type ButtonPanelButton = {
-  id: string
-  label: string
-}
-
-const BUTTONS: ButtonPanelButton[] = [
-  { id: 'direct-to', label: 'DIR' },
-  { id: 'menu', label: 'MENU' },
-  { id: 'clr', label: 'CLR' },
-  { id: 'ent', label: 'ENT' },
-  { id: 'sync', label: 'SYNC' },
-  { id: 'reset', label: 'RESET' },
-]
+import { PUSH_BUTTONS, PushButtonDefinition, PushButtonId } from './pushButtonMap'
 
 type ButtonPanelProps = {
-  onPress: (id: string) => void
-  activeButtons?: string[]
+  onPress: (button: PushButtonDefinition) => void
+  activeButtons?: PushButtonId[]
 }
 
 export const ButtonPanel = ({ onPress, activeButtons = [] }: ButtonPanelProps) => {
@@ -22,12 +10,12 @@ export const ButtonPanel = ({ onPress, activeButtons = [] }: ButtonPanelProps) =
 
   return (
     <div className="controls__buttons">
-      {BUTTONS.map((button) => (
+      {PUSH_BUTTONS.map((button) => (
         <button
           key={button.id}
           className={`controls__button${activeSet.has(button.id) ? ' controls__button--active' : ''}`}
           type="button"
-          onClick={() => onPress(button.id)}
+          onClick={() => onPress(button)}
         >
           {button.label}
         </button>
