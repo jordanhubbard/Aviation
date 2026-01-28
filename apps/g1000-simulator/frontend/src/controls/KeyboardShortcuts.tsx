@@ -2,6 +2,7 @@ import { useMemo } from 'react'
 
 import { KeyboardBinding, useKeyboardBindings } from '../hooks/useKeyboardBindings'
 import { useKeymapStore } from '../stores/keymapStore'
+import { ROTARY_KNOB_MAP } from './rotaryKnobMap'
 
 type KeyboardShortcutsProps = {
   onHeadingStep: (delta: number) => void
@@ -20,6 +21,9 @@ export const KeyboardShortcuts = ({
 }: KeyboardShortcutsProps) => {
   const keymapEntries = useKeymapStore((state) => state.entries)
   const isEditing = useKeymapStore((state) => state.editingId !== null)
+  const headingKnob = ROTARY_KNOB_MAP.heading
+  const altitudeKnob = ROTARY_KNOB_MAP.altitude
+  const airspeedKnob = ROTARY_KNOB_MAP.airspeed
 
   const bindings = useMemo<KeyboardBinding[]>(() => {
     const keymap = new Map(keymapEntries.map((entry) => [entry.id, entry.binding]))
@@ -35,7 +39,7 @@ export const KeyboardShortcuts = ({
         description: 'Heading decrease fine',
         chord: resolveChord('heading-decrease', { key: 'h' }),
         allowRepeat: true,
-        handler: () => onHeadingStep(-1),
+        handler: () => onHeadingStep(-headingKnob.fineStep),
       },
       {
         id: 'heading-decrease-coarse',
@@ -43,14 +47,14 @@ export const KeyboardShortcuts = ({
         chord: resolveChord('heading-decrease-coarse', { key: 'h', shift: true }),
         allowRepeat: true,
         priority: 2,
-        handler: () => onHeadingStep(-10),
+        handler: () => onHeadingStep(-headingKnob.coarseStep),
       },
       {
         id: 'heading-increase',
         description: 'Heading increase fine',
         chord: resolveChord('heading-increase', { key: 'l' }),
         allowRepeat: true,
-        handler: () => onHeadingStep(1),
+        handler: () => onHeadingStep(headingKnob.fineStep),
       },
       {
         id: 'heading-increase-coarse',
@@ -58,14 +62,14 @@ export const KeyboardShortcuts = ({
         chord: resolveChord('heading-increase-coarse', { key: 'l', shift: true }),
         allowRepeat: true,
         priority: 2,
-        handler: () => onHeadingStep(10),
+        handler: () => onHeadingStep(headingKnob.coarseStep),
       },
       {
         id: 'altitude-increase',
         description: 'Altitude increase fine',
         chord: resolveChord('altitude-increase', { key: 'a' }),
         allowRepeat: true,
-        handler: () => onAltitudeStep(100),
+        handler: () => onAltitudeStep(altitudeKnob.fineStep),
       },
       {
         id: 'altitude-increase-coarse',
@@ -73,14 +77,14 @@ export const KeyboardShortcuts = ({
         chord: resolveChord('altitude-increase-coarse', { key: 'a', shift: true }),
         allowRepeat: true,
         priority: 2,
-        handler: () => onAltitudeStep(500),
+        handler: () => onAltitudeStep(altitudeKnob.coarseStep),
       },
       {
         id: 'altitude-decrease',
         description: 'Altitude decrease fine',
         chord: resolveChord('altitude-decrease', { key: 'z' }),
         allowRepeat: true,
-        handler: () => onAltitudeStep(-100),
+        handler: () => onAltitudeStep(-altitudeKnob.fineStep),
       },
       {
         id: 'altitude-decrease-coarse',
@@ -88,14 +92,14 @@ export const KeyboardShortcuts = ({
         chord: resolveChord('altitude-decrease-coarse', { key: 'z', shift: true }),
         allowRepeat: true,
         priority: 2,
-        handler: () => onAltitudeStep(-500),
+        handler: () => onAltitudeStep(-altitudeKnob.coarseStep),
       },
       {
         id: 'airspeed-increase',
         description: 'Airspeed increase fine',
         chord: resolveChord('airspeed-increase', { key: 's' }),
         allowRepeat: true,
-        handler: () => onAirspeedStep(1),
+        handler: () => onAirspeedStep(airspeedKnob.fineStep),
       },
       {
         id: 'airspeed-increase-coarse',
@@ -103,14 +107,14 @@ export const KeyboardShortcuts = ({
         chord: resolveChord('airspeed-increase-coarse', { key: 's', shift: true }),
         allowRepeat: true,
         priority: 2,
-        handler: () => onAirspeedStep(5),
+        handler: () => onAirspeedStep(airspeedKnob.coarseStep),
       },
       {
         id: 'airspeed-decrease',
         description: 'Airspeed decrease fine',
         chord: resolveChord('airspeed-decrease', { key: 'x' }),
         allowRepeat: true,
-        handler: () => onAirspeedStep(-1),
+        handler: () => onAirspeedStep(-airspeedKnob.fineStep),
       },
       {
         id: 'airspeed-decrease-coarse',
@@ -118,7 +122,7 @@ export const KeyboardShortcuts = ({
         chord: resolveChord('airspeed-decrease-coarse', { key: 'x', shift: true }),
         allowRepeat: true,
         priority: 2,
-        handler: () => onAirspeedStep(-5),
+        handler: () => onAirspeedStep(-airspeedKnob.coarseStep),
       },
       {
         id: 'reset',
@@ -133,7 +137,17 @@ export const KeyboardShortcuts = ({
         handler: () => onSync(),
       },
     ]
-  }, [keymapEntries, onAirspeedStep, onAltitudeStep, onHeadingStep, onReset, onSync])
+  }, [
+    airspeedKnob,
+    altitudeKnob,
+    headingKnob,
+    keymapEntries,
+    onAirspeedStep,
+    onAltitudeStep,
+    onHeadingStep,
+    onReset,
+    onSync,
+  ])
 
   useKeyboardBindings(bindings, { enabled: !isEditing })
 

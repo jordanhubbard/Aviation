@@ -273,11 +273,19 @@ body {
   color: #e6edf3;
   font-size: 12px;
   cursor: pointer;
+  touch-action: none;
+  user-select: none;
 }
 
 .controls__knob-button--fine {
   border-color: #2e4658;
   color: #9fb3c8;
+}
+
+.controls__knob-button--active {
+  border-color: #4bb2e5;
+  color: #e6edf3;
+  background: rgba(75, 178, 229, 0.12);
 }
 
 .controls__buttons {

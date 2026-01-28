@@ -12,6 +12,7 @@ import { KeymapPanel } from './controls/KeymapPanel'
 import { KeyboardShortcutLegend } from './controls/KeyboardShortcutLegend'
 import { KeyboardShortcuts } from './controls/KeyboardShortcuts'
 import { KnobController } from './controls/KnobController'
+import { ROTARY_KNOB_MAP } from './controls/rotaryKnobMap'
 import { ThemeSelector } from './controls/ThemeSelector'
 import { DisplayShell } from './displays/DisplayShell'
 import { MfdDisplay } from './displays/MFD/MfdDisplay'
@@ -192,25 +193,19 @@ export default function App() {
                 <KnobController
                   label="Heading Bug"
                   value={telemetry ? Math.round(telemetry.targets.heading_deg) : null}
-                  unit="°"
-                  coarseStep={10}
-                  fineStep={1}
+                  knob={ROTARY_KNOB_MAP.heading}
                   onStep={handleHeadingStep}
                 />
                 <KnobController
                   label="Altitude Bug"
                   value={telemetry ? Math.round(telemetry.targets.altitude_ft) : null}
-                  unit=" ft"
-                  coarseStep={500}
-                  fineStep={100}
+                  knob={ROTARY_KNOB_MAP.altitude}
                   onStep={handleAltitudeStep}
                 />
                 <KnobController
                   label="Airspeed Bug"
                   value={telemetry ? Math.round(telemetry.targets.airspeed_kt) : null}
-                  unit=" kt"
-                  coarseStep={5}
-                  fineStep={1}
+                  knob={ROTARY_KNOB_MAP.airspeed}
                   onStep={handleAirspeedStep}
                 />
               </div>
