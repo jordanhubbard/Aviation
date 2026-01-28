@@ -3,6 +3,7 @@ import { useState } from 'react'
 import { AutopilotPanel } from './controls/AutopilotPanel'
 import { ButtonPanel } from './controls/ButtonPanel'
 import { JoystickPanel } from './controls/JoystickPanel'
+import { KeymapPanel } from './controls/KeymapPanel'
 import { KeyboardShortcutLegend } from './controls/KeyboardShortcutLegend'
 import { KeyboardShortcuts } from './controls/KeyboardShortcuts'
 import { KnobController } from './controls/KnobController'
@@ -187,6 +188,7 @@ export default function App() {
                 activeButtons={commandStatus === 'connected' ? ['sync'] : []}
               />
               <JoystickPanel />
+              <KeymapPanel />
               <KeyboardShortcutLegend />
             </div>
             <AutopilotPanel />

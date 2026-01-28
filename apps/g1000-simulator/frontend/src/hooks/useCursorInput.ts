@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useRef } from 'react'
 
 import { useCursorStore } from '../stores/cursorStore'
-import { KeyboardBinding, KeyboardShortcutLegendItem, useKeyboardBindings } from './useKeyboardBindings'
+import { useKeymapStore } from '../stores/keymapStore'
+import { KeyboardBinding, useKeyboardBindings } from './useKeyboardBindings'
 
 const applyDeadzone = (value: number, deadzone: number) => {
   const magnitude = Math.abs(value)
@@ -9,13 +10,6 @@ const applyDeadzone = (value: number, deadzone: number) => {
   const normalized = (magnitude - deadzone) / (1 - deadzone)
   return Math.sign(value) * normalized
 }
-
-export const CURSOR_SHORTCUTS: KeyboardShortcutLegendItem[] = [
-  { id: 'cursor', label: 'Arrows', description: 'cursor (shift=fast)' },
-  { id: 'cursor-select', label: 'Enter/Space', description: 'select' },
-  { id: 'cursor-cancel', label: 'Esc', description: 'cancel' },
-  { id: 'cursor-center', label: 'G then C', description: 'center cursor' },
-]
 
 export const useCursorInput = () => {
   const {
@@ -37,7 +31,20 @@ export const useCursorInput = () => {
     cancelCursor: state.cancelCursor,
     centerCursor: state.centerCursor,
   }))
+  const keymapEntries = useKeymapStore((state) => state.entries)
+  const isEditing = useKeymapStore((state) => state.editingId !== null)
   const bindings = useMemo<KeyboardBinding[]>(() => {
+    const keymap = new Map(keymapEntries.map((entry) => [entry.id, entry.binding]))
+    const resolveChord = (id: string, fallback: KeyboardBinding['chord']) => {
+      const binding = keymap.get(id)
+      if (binding?.kind === 'chord') return binding.chord
+      return fallback
+    }
+    const resolveSequence = (id: string, fallback: KeyboardBinding['sequence']) => {
+      const binding = keymap.get(id)
+      if (binding?.kind === 'sequence') return binding.sequence
+      return fallback
+    }
     const stepBase = config.speed * calibration.sensitivity
     const fastStep = stepBase * config.acceleration
 
@@ -56,14 +63,14 @@ export const useCursorInput = () => {
       {
         id: 'cursor-up',
         description: 'Move cursor up',
-        chord: { key: 'arrowup' },
+        chord: resolveChord('cursor-up', { key: 'arrowup' }),
         allowRepeat: true,
         handler: () => moveWith(0, -stepBase),
       },
       {
         id: 'cursor-up-fast',
         description: 'Move cursor up fast',
-        chord: { key: 'arrowup', shift: true },
+        chord: resolveChord('cursor-up-fast', { key: 'arrowup', shift: true }),
         allowRepeat: true,
         priority: 2,
         handler: () => moveWith(0, -fastStep),
@@ -71,14 +78,14 @@ export const useCursorInput = () => {
       {
         id: 'cursor-down',
         description: 'Move cursor down',
-        chord: { key: 'arrowdown' },
+        chord: resolveChord('cursor-down', { key: 'arrowdown' }),
         allowRepeat: true,
         handler: () => moveWith(0, stepBase),
       },
       {
         id: 'cursor-down-fast',
         description: 'Move cursor down fast',
-        chord: { key: 'arrowdown', shift: true },
+        chord: resolveChord('cursor-down-fast', { key: 'arrowdown', shift: true }),
         allowRepeat: true,
         priority: 2,
         handler: () => moveWith(0, fastStep),
@@ -86,14 +93,14 @@ export const useCursorInput = () => {
       {
         id: 'cursor-left',
         description: 'Move cursor left',
-        chord: { key: 'arrowleft' },
+        chord: resolveChord('cursor-left', { key: 'arrowleft' }),
         allowRepeat: true,
         handler: () => moveWith(-stepBase, 0),
       },
       {
         id: 'cursor-left-fast',
         description: 'Move cursor left fast',
-        chord: { key: 'arrowleft', shift: true },
+        chord: resolveChord('cursor-left-fast', { key: 'arrowleft', shift: true }),
         allowRepeat: true,
         priority: 2,
         handler: () => moveWith(-fastStep, 0),
@@ -101,14 +108,14 @@ export const useCursorInput = () => {
       {
         id: 'cursor-right',
         description: 'Move cursor right',
-        chord: { key: 'arrowright' },
+        chord: resolveChord('cursor-right', { key: 'arrowright' }),
         allowRepeat: true,
         handler: () => moveWith(stepBase, 0),
       },
       {
         id: 'cursor-right-fast',
         description: 'Move cursor right fast',
-        chord: { key: 'arrowright', shift: true },
+        chord: resolveChord('cursor-right-fast', { key: 'arrowright', shift: true }),
         allowRepeat: true,
         priority: 2,
         handler: () => moveWith(fastStep, 0),
@@ -116,7 +123,7 @@ export const useCursorInput = () => {
       {
         id: 'cursor-select',
         description: 'Select cursor focus',
-        chord: { key: 'enter' },
+        chord: resolveChord('cursor-select', { key: 'enter' }),
         handler: () => {
           if (mode === 'inactive') {
             setCursorMode('active')
@@ -128,7 +135,7 @@ export const useCursorInput = () => {
       {
         id: 'cursor-select-space',
         description: 'Select cursor focus',
-        chord: { key: 'space' },
+        chord: resolveChord('cursor-select-space', { key: 'space' }),
         handler: () => {
           if (mode === 'inactive') {
             setCursorMode('active')
@@ -140,22 +147,33 @@ export const useCursorInput = () => {
       {
         id: 'cursor-cancel',
         description: 'Cancel cursor mode',
-        chord: { key: 'escape' },
+        chord: resolveChord('cursor-cancel', { key: 'escape' }),
         handler: () => cancelCursor(),
       },
       {
         id: 'cursor-center',
         description: 'Center cursor',
-        sequence: [{ key: 'g' }, { key: 'c' }],
+        sequence: resolveSequence('cursor-center', [{ key: 'g' }, { key: 'c' }]),
         handler: () => {
           setCursorMode('active')
           centerCursor()
         },
       },
     ]
-  }, [calibration.sensitivity, cancelCursor, centerCursor, config.acceleration, config.speed, mode, moveCursor, selectTarget, setCursorMode])
+  }, [
+    calibration.sensitivity,
+    cancelCursor,
+    centerCursor,
+    config.acceleration,
+    config.speed,
+    keymapEntries,
+    mode,
+    moveCursor,
+    selectTarget,
+    setCursorMode,
+  ])
 
-  useKeyboardBindings(bindings)
+  useKeyboardBindings(bindings, { enabled: !isEditing })
 
   const rafRef = useRef<number | null>(null)
   const prevButtonsRef = useRef<boolean[]>([])

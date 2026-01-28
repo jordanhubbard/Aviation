@@ -1,12 +1,21 @@
-import { CURSOR_SHORTCUTS } from '../hooks/useCursorInput'
-import type { KeyboardShortcutLegendItem } from '../hooks/useKeyboardBindings'
+import { useMemo } from 'react'
 
-import { AUTOPILOT_SHORTCUTS } from './KeyboardShortcuts'
+import { formatKeymapBinding } from '../hooks/keyboardUtils'
+import { useKeymapStore } from '../stores/keymapStore'
 
-const formatShortcut = (shortcut: KeyboardShortcutLegendItem) =>
-  `${shortcut.label} ${shortcut.description}`
+const formatLegendItem = (label: string, description: string) =>
+  description ? `${label} (${description})` : label
 
 export const KeyboardShortcutLegend = () => {
-  const items = [...AUTOPILOT_SHORTCUTS, ...CURSOR_SHORTCUTS]
-  return <div className="controls__shortcuts">{items.map(formatShortcut).join(' · ')}</div>
+  const keymapEntries = useKeymapStore((state) => state.entries)
+
+  const legendItems = useMemo(() => {
+    return keymapEntries
+      .filter((entry) => entry.legend)
+      .map((entry) => `${formatKeymapBinding(entry.binding)} ${formatLegendItem(entry.label, entry.description)}`)
+  }, [keymapEntries])
+
+  if (legendItems.length === 0) return null
+
+  return <div className="controls__shortcuts">Shortcuts: {legendItems.join(' · ')}</div>
 }

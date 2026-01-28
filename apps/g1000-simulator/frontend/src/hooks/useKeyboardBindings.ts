@@ -1,5 +1,7 @@
 import { useEffect, useRef } from 'react'
 
+import { buildChordToken, eventToChord, normalizeKey } from './keyboardUtils'
+
 export type KeyboardChord = {
   key: string
   shift?: boolean
@@ -29,30 +31,6 @@ type KeyboardBindingOptions = {
   enabled?: boolean
   sequenceTimeoutMs?: number
 }
-
-const normalizeKey = (key: string) => {
-  if (key === ' ') return 'space'
-  return key.toLowerCase()
-}
-
-const buildChordToken = (chord: KeyboardChord) => {
-  const parts = [
-    chord.ctrl ? 'ctrl' : null,
-    chord.alt ? 'alt' : null,
-    chord.shift ? 'shift' : null,
-    chord.meta ? 'meta' : null,
-    normalizeKey(chord.key),
-  ].filter(Boolean)
-  return parts.join('+')
-}
-
-const eventToChord = (event: KeyboardEvent): KeyboardChord => ({
-  key: normalizeKey(event.key),
-  shift: event.shiftKey,
-  alt: event.altKey,
-  ctrl: event.ctrlKey,
-  meta: event.metaKey,
-})
 
 const matchesChord = (event: KeyboardEvent, chord: KeyboardChord) => {
   const normalizedKey = normalizeKey(event.key)

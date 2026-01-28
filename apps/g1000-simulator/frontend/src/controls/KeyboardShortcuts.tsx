@@ -1,6 +1,7 @@
 import { useMemo } from 'react'
 
-import { KeyboardBinding, KeyboardShortcutLegendItem, useKeyboardBindings } from '../hooks/useKeyboardBindings'
+import { KeyboardBinding, useKeyboardBindings } from '../hooks/useKeyboardBindings'
+import { useKeymapStore } from '../stores/keymapStore'
 
 type KeyboardShortcutsProps = {
   onHeadingStep: (delta: number) => void
@@ -10,14 +11,6 @@ type KeyboardShortcutsProps = {
   onSync: () => void
 }
 
-export const AUTOPILOT_SHORTCUTS: KeyboardShortcutLegendItem[] = [
-  { id: 'heading', label: 'H/L', description: 'heading (shift=coarse)' },
-  { id: 'altitude', label: 'A/Z', description: 'altitude (shift=coarse)' },
-  { id: 'airspeed', label: 'S/X', description: 'speed (shift=coarse)' },
-  { id: 'reset', label: 'R', description: 'reset' },
-  { id: 'sync', label: 'T', description: 'sync' },
-]
-
 export const KeyboardShortcuts = ({
   onHeadingStep,
   onAltitudeStep,
@@ -25,19 +18,29 @@ export const KeyboardShortcuts = ({
   onReset,
   onSync,
 }: KeyboardShortcutsProps) => {
-  const bindings = useMemo<KeyboardBinding[]>(
-    () => [
+  const keymapEntries = useKeymapStore((state) => state.entries)
+  const isEditing = useKeymapStore((state) => state.editingId !== null)
+
+  const bindings = useMemo<KeyboardBinding[]>(() => {
+    const keymap = new Map(keymapEntries.map((entry) => [entry.id, entry.binding]))
+    const resolveChord = (id: string, fallback: KeyboardBinding['chord']) => {
+      const binding = keymap.get(id)
+      if (binding?.kind === 'chord') return binding.chord
+      return fallback
+    }
+
+    return [
       {
         id: 'heading-decrease',
         description: 'Heading decrease fine',
-        chord: { key: 'h' },
+        chord: resolveChord('heading-decrease', { key: 'h' }),
         allowRepeat: true,
         handler: () => onHeadingStep(-1),
       },
       {
         id: 'heading-decrease-coarse',
         description: 'Heading decrease coarse',
-        chord: { key: 'h', shift: true },
+        chord: resolveChord('heading-decrease-coarse', { key: 'h', shift: true }),
         allowRepeat: true,
         priority: 2,
         handler: () => onHeadingStep(-10),
@@ -45,14 +48,14 @@ export const KeyboardShortcuts = ({
       {
         id: 'heading-increase',
         description: 'Heading increase fine',
-        chord: { key: 'l' },
+        chord: resolveChord('heading-increase', { key: 'l' }),
         allowRepeat: true,
         handler: () => onHeadingStep(1),
       },
       {
         id: 'heading-increase-coarse',
         description: 'Heading increase coarse',
-        chord: { key: 'l', shift: true },
+        chord: resolveChord('heading-increase-coarse', { key: 'l', shift: true }),
         allowRepeat: true,
         priority: 2,
         handler: () => onHeadingStep(10),
@@ -60,14 +63,14 @@ export const KeyboardShortcuts = ({
       {
         id: 'altitude-increase',
         description: 'Altitude increase fine',
-        chord: { key: 'a' },
+        chord: resolveChord('altitude-increase', { key: 'a' }),
         allowRepeat: true,
         handler: () => onAltitudeStep(100),
       },
       {
         id: 'altitude-increase-coarse',
         description: 'Altitude increase coarse',
-        chord: { key: 'a', shift: true },
+        chord: resolveChord('altitude-increase-coarse', { key: 'a', shift: true }),
         allowRepeat: true,
         priority: 2,
         handler: () => onAltitudeStep(500),
@@ -75,14 +78,14 @@ export const KeyboardShortcuts = ({
       {
         id: 'altitude-decrease',
         description: 'Altitude decrease fine',
-        chord: { key: 'z' },
+        chord: resolveChord('altitude-decrease', { key: 'z' }),
         allowRepeat: true,
         handler: () => onAltitudeStep(-100),
       },
       {
         id: 'altitude-decrease-coarse',
         description: 'Altitude decrease coarse',
-        chord: { key: 'z', shift: true },
+        chord: resolveChord('altitude-decrease-coarse', { key: 'z', shift: true }),
         allowRepeat: true,
         priority: 2,
         handler: () => onAltitudeStep(-500),
@@ -90,14 +93,14 @@ export const KeyboardShortcuts = ({
       {
         id: 'airspeed-increase',
         description: 'Airspeed increase fine',
-        chord: { key: 's' },
+        chord: resolveChord('airspeed-increase', { key: 's' }),
         allowRepeat: true,
         handler: () => onAirspeedStep(1),
       },
       {
         id: 'airspeed-increase-coarse',
         description: 'Airspeed increase coarse',
-        chord: { key: 's', shift: true },
+        chord: resolveChord('airspeed-increase-coarse', { key: 's', shift: true }),
         allowRepeat: true,
         priority: 2,
         handler: () => onAirspeedStep(5),
@@ -105,14 +108,14 @@ export const KeyboardShortcuts = ({
       {
         id: 'airspeed-decrease',
         description: 'Airspeed decrease fine',
-        chord: { key: 'x' },
+        chord: resolveChord('airspeed-decrease', { key: 'x' }),
         allowRepeat: true,
         handler: () => onAirspeedStep(-1),
       },
       {
         id: 'airspeed-decrease-coarse',
         description: 'Airspeed decrease coarse',
-        chord: { key: 'x', shift: true },
+        chord: resolveChord('airspeed-decrease-coarse', { key: 'x', shift: true }),
         allowRepeat: true,
         priority: 2,
         handler: () => onAirspeedStep(-5),
@@ -120,20 +123,19 @@ export const KeyboardShortcuts = ({
       {
         id: 'reset',
         description: 'Reset targets',
-        chord: { key: 'r' },
+        chord: resolveChord('reset', { key: 'r' }),
         handler: () => onReset(),
       },
       {
         id: 'sync',
         description: 'Sync targets',
-        chord: { key: 't' },
+        chord: resolveChord('sync', { key: 't' }),
         handler: () => onSync(),
       },
-    ],
-    [onAirspeedStep, onAltitudeStep, onHeadingStep, onReset, onSync],
-  )
+    ]
+  }, [keymapEntries, onAirspeedStep, onAltitudeStep, onHeadingStep, onReset, onSync])
 
-  useKeyboardBindings(bindings)
+  useKeyboardBindings(bindings, { enabled: !isEditing })
 
   return null
 }

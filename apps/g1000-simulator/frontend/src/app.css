@@ -307,6 +307,9 @@ body {
 .controls__shortcuts {
   font-size: 11px;
   color: #7c93a6;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 12px;
 }
 
 .controls__joystick {
@@ -374,6 +377,134 @@ body {
   font-variant-numeric: tabular-nums;
   font-size: 11px;
   color: #e6edf3;
+}
+
+.controls__keymap {
+  border-radius: 12px;
+  border: 1px solid #223241;
+  background: #0f1720;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.controls__keymap-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.controls__keymap-title {
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  font-size: 12px;
+  color: #7c93a6;
+}
+
+.controls__keymap-reset {
+  padding: 4px 8px;
+  border-radius: 6px;
+  border: 1px solid #2e4658;
+  background: #0c141b;
+  color: #9fb3c8;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.controls__keymap-hint {
+  font-size: 11px;
+  color: #9fb3c8;
+}
+
+.controls__keymap-section {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.controls__keymap-section-title {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: #7c93a6;
+}
+
+.controls__keymap-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.controls__keymap-row {
+  border-radius: 10px;
+  border: 1px solid #223241;
+  background: #0c141b;
+  padding: 8px 10px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
+.controls__keymap-row--conflict {
+  border-color: #7f3a3a;
+  background: rgba(127, 58, 58, 0.12);
+}
+
+.controls__keymap-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.controls__keymap-label {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: #9fb3c8;
+}
+
+.controls__keymap-description {
+  font-size: 11px;
+  color: #7c93a6;
+}
+
+.controls__keymap-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.controls__keymap-keys {
+  font-size: 11px;
+  color: #e6edf3;
+  font-variant-numeric: tabular-nums;
+  padding: 4px 6px;
+  border-radius: 6px;
+  border: 1px solid #2b3f51;
+  background: #0f1720;
+}
+
+.controls__keymap-button {
+  padding: 4px 8px;
+  border-radius: 6px;
+  border: 1px solid #2e4658;
+  background: #0c141b;
+  color: #9fb3c8;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.controls__keymap-button--active {
+  border-color: #4bb2e5;
+  color: #e6edf3;
+  background: rgba(75, 178, 229, 0.12);
 }
 
 .pfd {
