@@ -6,6 +6,9 @@ class AviationMissionApp {
         this.apiBaseUrl = '';
         this.missions = [];
         this.filteredMissions = [];
+        this.submissions = [];
+        this.submissionsError = null;
+        this.isAdmin = false;
         this.filters = {
             search: '',
             category: 'all',
@@ -53,6 +56,8 @@ class AviationMissionApp {
                         </div>
                     </div>
                 </header>
+
+                <div class="admin-dashboard" id="adminDashboard" style="display: none;"></div>
 
                 <div class="filters-panel" id="filtersPanel" style="display: none;">
                     <div class="search-container">
@@ -174,6 +179,38 @@ class AviationMissionApp {
             this.isLoading = false;
             this.error = error.message;
             this.updateLoadingState();
+        }
+    }
+
+    async loadSubmissions() {
+        const token = this.getAdminToken();
+        if (!token) {
+            this.submissions = [];
+            this.submissionsError = null;
+            this.renderAdminDashboard();
+            return;
+        }
+
+        try {
+            const response = await fetch(`${this.apiBaseUrl}/submissions`, {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            }
+
+            const data = await response.json();
+            this.submissions = data.submissions || [];
+            this.submissionsError = null;
+            this.renderAdminDashboard();
+        } catch (error) {
+            console.error('❌ Failed to load submissions:', error);
+            this.submissions = [];
+            this.submissionsError = error.message;
+            this.renderAdminDashboard();
         }
     }
 
@@ -437,6 +474,146 @@ class AviationMissionApp {
         `;
     }
 
+    renderAdminDashboard() {
+        const dashboard = document.getElementById('adminDashboard');
+        if (!dashboard) return;
+
+        if (!this.isAdmin) {
+            dashboard.style.display = 'none';
+            dashboard.innerHTML = '';
+            return;
+        }
+
+        const pendingSubmissions = this.submissions.filter(submission => submission.status === 'pending');
+        const pendingCount = pendingSubmissions.length;
+
+        dashboard.style.display = 'block';
+        dashboard.innerHTML = `
+            <div class="admin-header">
+                <h2>Admin Dashboard</h2>
+                <span class="badge">${pendingCount} Pending</span>
+            </div>
+            <div class="admin-sections">
+                <div class="admin-section">
+                    <h3>Pending Mission Submissions</h3>
+                    ${this.submissionsError ? `
+                        <div class="empty-message">Failed to load submissions: ${this.escapeHtml(this.submissionsError)}</div>
+                    ` : pendingCount === 0 ? `
+                        <div class="empty-message">No pending submissions.</div>
+                    ` : `
+                        <div class="submissions-list">
+                            ${pendingSubmissions.map(submission => this.renderSubmissionCard(submission)).join('')}
+                        </div>
+                    `}
+                </div>
+            </div>
+        `;
+    }
+
+    renderSubmissionCard(submission) {
+        const submittedAt = this.formatDate(submission.created_at);
+        const submitterEmail = submission.submitter_email
+            ? ` (${this.escapeHtml(submission.submitter_email)})`
+            : '';
+
+        return `
+            <div class="submission-card">
+                <h4>${this.escapeHtml(submission.title)}</h4>
+                <p><strong>Route:</strong> ${this.escapeHtml(submission.route || 'Not provided')}</p>
+                <p><strong>Category:</strong> ${this.escapeHtml(submission.category)} · <strong>Difficulty:</strong> ${submission.difficulty}</p>
+                <p><strong>Objective:</strong> ${this.escapeHtml(submission.objective)}</p>
+                <p><strong>Description:</strong> ${this.escapeHtml(submission.mission_description)}</p>
+                <p><strong>Submitted by:</strong> ${this.escapeHtml(submission.submitter_name || 'Unknown')}${submitterEmail}</p>
+                <p><strong>Submitted:</strong> ${submittedAt}</p>
+                <div class="submission-actions">
+                    <button class="btn btn-primary btn-sm" onclick="app.approveSubmission(${submission.id})">Approve</button>
+                    <button class="btn btn-danger btn-sm" onclick="app.rejectSubmission(${submission.id})">Reject</button>
+                </div>
+            </div>
+        `;
+    }
+
+    async approveSubmission(id) {
+        if (!confirm('Approve this mission submission and publish it?')) {
+            return;
+        }
+
+        const token = this.getAdminToken();
+        if (!token) {
+            alert('Admin authentication required.');
+            return;
+        }
+
+        try {
+            const response = await fetch(`${this.apiBaseUrl}/submissions/${id}/approve`, {
+                method: 'PUT',
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+
+            if (!response.ok) {
+                let errorMessage = `Failed to approve submission (${response.status})`;
+                try {
+                    const errorData = await response.json();
+                    if (errorData.error) {
+                        errorMessage = errorData.error;
+                    }
+                } catch (e) {
+                    errorMessage = `Failed to approve submission: ${response.statusText}`;
+                }
+                throw new Error(errorMessage);
+            }
+
+            await this.loadSubmissions();
+            await this.loadMissions();
+            alert('Submission approved and mission created.');
+        } catch (error) {
+            console.error('❌ Failed to approve submission:', error);
+            alert('Failed to approve submission:\n\n' + error.message);
+        }
+    }
+
+    async rejectSubmission(id) {
+        if (!confirm('Reject this mission submission?')) {
+            return;
+        }
+
+        const token = this.getAdminToken();
+        if (!token) {
+            alert('Admin authentication required.');
+            return;
+        }
+
+        try {
+            const response = await fetch(`${this.apiBaseUrl}/submissions/${id}/reject`, {
+                method: 'PUT',
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+
+            if (!response.ok) {
+                let errorMessage = `Failed to reject submission (${response.status})`;
+                try {
+                    const errorData = await response.json();
+                    if (errorData.error) {
+                        errorMessage = errorData.error;
+                    }
+                } catch (e) {
+                    errorMessage = `Failed to reject submission: ${response.statusText}`;
+                }
+                throw new Error(errorMessage);
+            }
+
+            await this.loadSubmissions();
+            alert('Submission rejected.');
+        } catch (error) {
+            console.error('❌ Failed to reject submission:', error);
+            alert('Failed to reject submission:\n\n' + error.message);
+        }
+    }
+
     getDifficultyLabel(level) {
         if (level <= 1) return 'EASY';
         if (level <= 2) return 'MEDIUM';
@@ -467,6 +644,64 @@ class AviationMissionApp {
         const div = document.createElement('div');
         div.textContent = text;
         return div.innerHTML;
+    }
+
+    getAdminToken() {
+        return localStorage.getItem('admin_token');
+    }
+
+    normalizeField(value) {
+        if (value === null || value === undefined) return null;
+        const trimmed = String(value).trim();
+        return trimmed.length > 0 ? trimmed : null;
+    }
+
+    normalizeWaypoints(value) {
+        const normalized = this.normalizeField(value);
+        if (!normalized) return null;
+        return normalized.toUpperCase().replace(/\s+/g, ' ');
+    }
+
+    isValidRoute(route) {
+        if (!route) return false;
+        const trimmed = route.trim();
+        const routePattern = /^\s*[A-Za-z]{4}\s*(->|→|-)\s*[A-Za-z]{4}\s*$/;
+        if (routePattern.test(trimmed)) return true;
+        const codes = trimmed.toUpperCase().match(/[A-Z]{4}/g);
+        return codes && codes.length >= 2;
+    }
+
+    findInvalidWaypoints(suggestedRoute) {
+        if (!suggestedRoute) return [];
+        const waypoints = suggestedRoute.trim().toUpperCase().split(/\s+/).filter(Boolean);
+        return waypoints.filter(waypoint => !/^[A-Z]{4}$/.test(waypoint));
+    }
+
+    validateMissionSubmission(mission) {
+        const validCategories = ['Training', 'Proficiency', 'Cross-Country', 'Emergency'];
+
+        if (!mission.title) return 'Mission title is required';
+        if (!mission.category) return 'Category is required';
+        if (!validCategories.includes(mission.category)) {
+            return 'Category must be Training, Proficiency, Cross-Country, or Emergency';
+        }
+        if (!Number.isInteger(mission.difficulty)) return 'Difficulty is required';
+        if (mission.difficulty < 1 || mission.difficulty > 10) {
+            return 'Difficulty must be between 1 and 10';
+        }
+        if (!mission.objective) return 'Learning objective is required';
+        if (!mission.mission_description) return 'Mission description is required';
+        if (!mission.why_description) return 'Why this mission is required';
+        if (!this.isValidRoute(mission.route)) return 'Route is required (format: KPAO -> KSFO)';
+        if (!mission.submitter_name) return 'Your name is required to submit missions';
+
+        const invalidWaypoints = this.findInvalidWaypoints(mission.suggested_route);
+        if (invalidWaypoints.length > 0) {
+            const suffix = invalidWaypoints.length > 1 ? 's' : '';
+            return `Invalid waypoint code${suffix}: ${invalidWaypoints.join(', ')} (must be 4-letter ICAO codes)`;
+        }
+
+        return null;
     }
 
     showError(message) {
@@ -885,9 +1120,9 @@ class AviationMissionApp {
                             <h3>Route Information</h3>
 
                 <div class="form-group">
-                                <label for="route">Route Description</label>
-                                <input type="text" id="route" name="route" maxlength="500"
-                                    placeholder="e.g., KPAO → coastal route south → LAX Bravo → KTOA">
+                                <label for="route">Route Description *</label>
+                                <input type="text" id="route" name="route" required maxlength="500"
+                                    placeholder="e.g., KPAO -> KSFO (coastal route)">
                 </div>
 
                 <div class="form-group">
@@ -911,6 +1146,22 @@ class AviationMissionApp {
                                 <label for="notes">Notes & Tips</label>
                                 <textarea id="notes" name="notes" rows="3"
                                     placeholder="Additional notes, tips, and considerations for pilots"></textarea>
+                            </div>
+                        </div>
+
+                        <div class="form-section">
+                            <h3>Submission Details</h3>
+
+                            <div class="form-group">
+                                <label for="submitter_name">Your Name *</label>
+                                <input type="text" id="submitter_name" name="submitter_name" required maxlength="100"
+                                    placeholder="Your name">
+                            </div>
+
+                            <div class="form-group">
+                                <label for="submitter_email">Your Email (optional)</label>
+                                <input type="email" id="submitter_email" name="submitter_email" maxlength="255"
+                                    placeholder="you@example.com">
                             </div>
                         </div>
 
@@ -941,24 +1192,33 @@ class AviationMissionApp {
 
         const form = e.target;
         const formData = new FormData(form);
+        const difficultyValue = parseInt(formData.get('difficulty'), 10);
 
         // Build mission object
         const mission = {
-            title: formData.get('title'),
-            category: formData.get('category'),
-            difficulty: parseInt(formData.get('difficulty')),
-            objective: formData.get('objective'),
-            mission_description: formData.get('mission_description'),
-            why_description: formData.get('why_description'),
-            route: formData.get('route') || null,
-            suggested_route: formData.get('suggested_route') || null,
-            pilot_experience: formData.get('pilot_experience') || null,
-            special_challenges: formData.get('special_challenges') || null,
-            notes: formData.get('notes') || null
+            title: this.normalizeField(formData.get('title')),
+            category: this.normalizeField(formData.get('category')),
+            difficulty: Number.isNaN(difficultyValue) ? null : difficultyValue,
+            objective: this.normalizeField(formData.get('objective')),
+            mission_description: this.normalizeField(formData.get('mission_description')),
+            why_description: this.normalizeField(formData.get('why_description')),
+            route: this.normalizeField(formData.get('route')),
+            suggested_route: this.normalizeWaypoints(formData.get('suggested_route')),
+            pilot_experience: this.normalizeField(formData.get('pilot_experience')),
+            special_challenges: this.normalizeField(formData.get('special_challenges')),
+            notes: this.normalizeField(formData.get('notes')),
+            submitter_name: this.normalizeField(formData.get('submitter_name')),
+            submitter_email: this.normalizeField(formData.get('submitter_email'))
         };
 
+        const validationError = this.validateMissionSubmission(mission);
+        if (validationError) {
+            alert(validationError);
+            return;
+        }
+
         try {
-            const response = await fetch(`${this.apiBaseUrl}/missions`, {
+            const response = await fetch(`${this.apiBaseUrl}/submissions`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
@@ -994,9 +1254,9 @@ class AviationMissionApp {
 
             // Show appropriate success message
             if (result.message) {
-                alert(result.message);  // e.g., "Mission submitted for approval"
+                alert(result.message);
             } else {
-                alert('Mission created successfully!');
+                alert('Mission submitted for admin review.');
             }
         } catch (error) {
             console.error('❌ Failed to create mission:', error);
@@ -1111,17 +1371,28 @@ class AviationMissionApp {
         const headerActions = document.querySelector('.header-actions');
         if (!headerActions) return;
 
-        if (isAdmin && adminName) {
+        this.isAdmin = isAdmin;
+        const displayName = adminName || localStorage.getItem('admin_name') || 'Admin';
+
+        if (isAdmin) {
             headerActions.innerHTML = `
-                <span class="admin-status">👤 Admin: ${this.escapeHtml(adminName)}</span>
+                <span class="admin-status">👤 Admin: ${this.escapeHtml(displayName)}</span>
                 <button class="btn btn-primary" onclick="app.showNewMissionForm()">Create Mission</button>
                 <button class="btn btn-secondary" onclick="app.handleAdminLogout()">Logout</button>
             `;
-            } else {
+        } else {
             headerActions.innerHTML = `
                 <button class="btn btn-primary" onclick="app.showNewMissionForm()">Create Mission</button>
                 <button class="btn btn-secondary" onclick="app.showAdminLogin()">Admin Login</button>
             `;
+        }
+
+        if (isAdmin) {
+            this.loadSubmissions();
+        } else {
+            this.submissions = [];
+            this.submissionsError = null;
+            this.renderAdminDashboard();
         }
     }
 
@@ -1129,6 +1400,7 @@ class AviationMissionApp {
         if (confirm('Are you sure you want to logout?')) {
             localStorage.removeItem('admin_token');
             localStorage.removeItem('admin_name');
+            this.isAdmin = false;
             this.updateAdminUI(false);
             console.log('👋 Admin logged out');
             alert('You have been logged out.');
@@ -1136,7 +1408,7 @@ class AviationMissionApp {
     }
 
     async checkAdminStatus() {
-        const token = localStorage.getItem('admin_token');
+        const token = this.getAdminToken();
         const adminName = localStorage.getItem('admin_name');
 
         if (!token) {

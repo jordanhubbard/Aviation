@@ -94,13 +94,14 @@
                        :objective "Test submission"
                        :mission_description "Test non-admin submission"
                        :why_description "Test submission process"
+                       :route "KPAO -> KSFO"
                        :submitter_name "Test User"}
           response (app (json-request :post "/missions" mission-data))]
 
       (is (= 201 (:status response)))
       (let [body (parse-json-response response)]
         (is (contains? body :message))
-        (is (.contains (:message body) "submitted for approval")))))
+        (is (.contains (:message body) "submitted for admin review")))))
 
   (testing "GET /missions/:id returns specific mission"
     ;; First create a mission
@@ -278,6 +279,7 @@
                           :objective "Test workflow"
                           :mission_description "Test submission workflow"
                           :why_description "Test why workflow"
+                          :route "KPAO -> KSFO"
                           :submitter_name "Test Submitter"}
           response (app (json-request :post "/submissions" submission-data))]
 

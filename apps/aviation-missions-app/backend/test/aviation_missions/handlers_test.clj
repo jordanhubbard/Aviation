@@ -123,11 +123,13 @@
                        :difficulty 3
                        :objective "Test submission"
                        :mission_description "Testing submission"
-                       :why_description "To test submission"}
+                       :why_description "To test submission"
+                       :route "KPAO -> KSFO"
+                       :submitter_name "Test Submitter"}
           request (mock-request :post "/missions" :body mission-data)
           response (handlers/create-mission request)]
       (is (= 201 (:status response)))
-      (is (= "Mission submitted for approval" (get-in response [:body :message])))))
+      (is (= "Mission submitted for admin review" (get-in response [:body :message])))))
   
   (testing "create-mission handler with missing fields"
     (let [mission-data {:title "Incomplete Mission"}
@@ -288,6 +290,7 @@
                           :objective "Test"
                           :mission_description "Test"
                           :why_description "Test"
+                          :route "KPAO -> KSFO"
                           :submitter_name "Test User"}
           request (mock-request :post "/submissions" :body submission-data)
           response (handlers/create-submission request)]

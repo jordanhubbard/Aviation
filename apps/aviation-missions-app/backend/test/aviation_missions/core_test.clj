@@ -217,6 +217,7 @@
                           :objective "Test submission"
                           :mission_description "Testing submission"
                           :why_description "To test the flow"
+                          :route "KPAO -> KSFO"
                           :submitter_name "Test User"}]
       
       ; Submit mission

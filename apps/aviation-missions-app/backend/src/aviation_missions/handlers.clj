@@ -30,6 +30,91 @@
           :opt-un [::notes ::route ::suggested_route ::pilot_experience 
                    ::special_challenges ::submitter_name ::submitter_email]))
 
+(def ^:private route-pattern
+  #"(?i)^\s*[A-Z]{4}\s*(->|→|-)\s*[A-Z]{4}\s*$")
+
+(defn- normalize-text
+  [value]
+  (cond
+    (nil? value) nil
+    (string? value) (let [trimmed (str/trim value)]
+                      (when-not (str/blank? trimmed)
+                        trimmed))
+    :else nil))
+
+(defn- normalize-uppercase
+  [value]
+  (let [trimmed (normalize-text value)]
+    (when (string? trimmed)
+      (str/upper-case trimmed))))
+
+(defn- normalize-submission-data
+  [submission-data]
+  (-> submission-data
+      (update :title normalize-text)
+      (update :category normalize-text)
+      (update :objective normalize-text)
+      (update :mission_description normalize-text)
+      (update :why_description normalize-text)
+      (update :notes normalize-text)
+      (update :route normalize-text)
+      (update :suggested_route normalize-uppercase)
+      (update :pilot_experience normalize-text)
+      (update :special_challenges normalize-text)
+      (update :submitter_name normalize-text)
+      (update :submitter_email normalize-text)))
+
+(defn- valid-icao-code?
+  [code]
+  (boolean (re-matches #"(?i)^[A-Z]{4}$" (str/trim code))))
+
+(defn- valid-route?
+  [route]
+  (let [trimmed (normalize-text route)]
+    (when (string? trimmed)
+      (let [codes (re-seq #"[A-Z]{4}" (str/upper-case trimmed))]
+        (or (re-matches route-pattern trimmed)
+            (and codes (>= (count codes) 2)))))))
+
+(defn- validate-route
+  [route]
+  (when-not (valid-route? route)
+    "Route is required (format: KPAO -> KSFO)"))
+
+(defn- invalid-waypoints
+  [suggested-route]
+  (let [route (normalize-uppercase suggested-route)]
+    (when route
+      (let [waypoints (->> (str/split route #"\s+")
+                           (remove str/blank?))
+            invalid (remove valid-icao-code? waypoints)]
+        (when (seq invalid)
+          invalid)))))
+
+(defn- validate-submission-data
+  [submission-data]
+  (let [difficulty (:difficulty submission-data)
+        route-error (validate-route (:route submission-data))
+        invalid-waypoints (invalid-waypoints (:suggested_route submission-data))]
+    (cond
+      (str/blank? (:title submission-data)) "Mission title is required"
+      (str/blank? (:category submission-data)) "Category is required"
+      (not (s/valid? ::category (:category submission-data)))
+      "Category must be Training, Proficiency, Cross-Country, or Emergency"
+      (nil? difficulty) "Difficulty is required"
+      (or (not (integer? difficulty)) (< difficulty 1) (> difficulty 10))
+      "Difficulty must be between 1 and 10"
+      (str/blank? (:objective submission-data)) "Learning objective is required"
+      (str/blank? (:mission_description submission-data)) "Mission description is required"
+      (str/blank? (:why_description submission-data)) "Why this mission is required"
+      route-error route-error
+      (str/blank? (:submitter_name submission-data)) "Your name is required to submit missions"
+      invalid-waypoints
+      (format "Invalid waypoint code%s: %s (must be 4-letter ICAO codes)"
+              (if (> (count invalid-waypoints) 1) "s" "")
+              (str/join ", " invalid-waypoints))
+      :else nil)))
+
 ;; Utility functions
 (defn- extract-auth-token
   "Extract bearer token from authorization header"
@@ -105,26 +190,30 @@
   "Create a new mission (admin) or submit for approval (user)"
   [request]
   (try
-    (let [mission-data (:body request)
+    (let [mission-data (normalize-submission-data (:body request))
           token (extract-auth-token (:headers request))
           is-admin (and token (db/validate-admin-session token))
-          validation-error (validate-mission-data mission-data)]
+          validation-error (when is-admin (validate-mission-data mission-data))
+          submission-error (when-not is-admin (validate-submission-data mission-data))]
 
-      (if validation-error
+      (cond
+        validation-error
         (handle-error 400 "Invalid mission data" validation-error)
-        (if is-admin
-          ;; Admin can create directly
-          (let [new-mission (db/create-mission! mission-data)]
-            (storage/persist-missions-json!)
-            (log/info "Admin created mission:" (:title mission-data))
-            (handle-success {:mission new-mission} 201))
-          ;; Non-admin submits for approval
-          (let [submission-data (assoc mission-data
-                                       :submitter_name (or (:submitter_name mission-data) "Anonymous")
-                                       :submitter_email (:submitter_email mission-data))]
-            (db/create-submission! submission-data)
-            (log/info "User submitted mission for approval:" (:title mission-data))
-            (handle-success {:message "Mission submitted for approval"} 201)))))
+
+        submission-error
+        (handle-error 400 submission-error)
+
+        is-admin
+        (let [new-mission (db/create-mission! mission-data)]
+          (storage/persist-missions-json!)
+          (log/info "Admin created mission:" (:title mission-data))
+          (handle-success {:mission new-mission} 201))
+
+        :else
+        (let [submission-data (assoc mission-data :status "pending")]
+          (db/create-submission! submission-data)
+          (log/info "User submitted mission for admin review:" (:title mission-data))
+          (handle-success {:message "Mission submitted for admin review"} 201))))
     (catch Exception e
       (handle-error 500 "Failed to create mission" (.getMessage e)))))
 
@@ -323,23 +412,15 @@
   "Create a new mission submission"
   [request]
   (try
-    (let [submission-data (:body request)]
-      (if (and (:title submission-data)
-               (:category submission-data)
-               (:difficulty submission-data)
-               (:objective submission-data)
-               (:mission_description submission-data)
-               (:why_description submission-data)
-               (:submitter_name submission-data))
+    (let [submission-data (normalize-submission-data (:body request))
+          validation-error (validate-submission-data submission-data)]
+      (if validation-error
+        (handle-error 400 validation-error)
         (do
-          (db/create-submission! submission-data)
-          (-> (response {:message "Mission submission created successfully"})
-              (status 201)))
-        (-> (response {:error "Missing required fields"})
-            (status 400))))
+          (db/create-submission! (assoc submission-data :status "pending"))
+          (handle-success {:message "Mission submitted for admin review"} 201))))
     (catch Exception e
-      (-> (response {:error "Failed to create submission" :details (.getMessage e)})
-          (status 500)))))
+      (handle-error 500 "Failed to create submission" (.getMessage e)))))
 
 (defn approve-submission
   "Approve a mission submission"
