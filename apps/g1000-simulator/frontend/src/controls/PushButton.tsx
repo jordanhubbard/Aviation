@@ -1,12 +1,14 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 
-import type { PushButtonDefinition } from './pushButtonMap'
+import type { PushButtonAnnunciator, PushButtonDefinition } from './pushButtonMap'
 
 type PushButtonProps = {
   button: PushButtonDefinition
   active?: boolean
+  backlit?: boolean
   disabled?: boolean
   guarded?: boolean
+  annunciator?: PushButtonAnnunciator
   holdDelayMs?: number
   onPress: (button: PushButtonDefinition) => void
   onLongPress?: (button: PushButtonDefinition) => void
@@ -15,8 +17,10 @@ type PushButtonProps = {
 export const PushButton = ({
   button,
   active = false,
+  backlit = false,
   disabled = false,
   guarded = false,
+  annunciator,
   holdDelayMs = 650,
   onPress,
   onLongPress,
@@ -92,11 +96,21 @@ export const PushButton = ({
     return () => clearHoldTimeout()
   }, [clearHoldTimeout])
 
+  const className = [
+    'controls__button',
+    backlit && 'controls__button--backlit',
+    active && 'controls__button--active',
+    pressed && 'controls__button--pressed',
+    guarded && 'controls__button--guarded',
+    annunciator && 'controls__button--annunciator',
+    annunciator && `controls__button--annunciator-${annunciator}`,
+  ]
+    .filter(Boolean)
+    .join(' ')
+
   return (
     <button
-      className={`controls__button${active ? ' controls__button--active' : ''}${
-        pressed ? ' controls__button--pressed' : ''
-      }${guarded ? ' controls__button--guarded' : ''}`}
+      className={className}
       type="button"
       onPointerDown={handlePressStart}
       onPointerUp={handlePressEnd}

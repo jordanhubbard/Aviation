@@ -298,6 +298,13 @@ body {
   cursor: pointer;
 }
 
+.controls__button--backlit {
+  border-color: #2b3f52;
+  background: #0f1822;
+  color: #c6d6e6;
+  box-shadow: inset 0 0 6px rgba(96, 165, 250, 0.08);
+}
+
 .controls__button--pressed {
   border-color: #7dd3fc;
   color: #e6edf3;
@@ -308,6 +315,30 @@ body {
   border-color: #4bb2e5;
   color: #e6edf3;
   background: rgba(75, 178, 229, 0.12);
+}
+
+.controls__button--annunciator {
+  color: #f8fafc;
+}
+
+.controls__button--annunciator-info {
+  border-color: #60a5fa;
+  background: rgba(96, 165, 250, 0.2);
+  box-shadow: 0 0 8px rgba(96, 165, 250, 0.4);
+}
+
+.controls__button--annunciator-caution {
+  border-color: #fbbf24;
+  background: rgba(251, 191, 36, 0.22);
+  color: #fff4d6;
+  box-shadow: 0 0 8px rgba(251, 191, 36, 0.45);
+}
+
+.controls__button--annunciator-warning {
+  border-color: #f87171;
+  background: rgba(248, 113, 113, 0.22);
+  color: #ffe4e6;
+  box-shadow: 0 0 8px rgba(248, 113, 113, 0.45);
 }
 
 .controls__button--guarded {

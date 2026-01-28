@@ -1,8 +1,12 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 
 import { AutopilotPanel } from './controls/AutopilotPanel'
 import { ButtonPanel } from './controls/ButtonPanel'
-import type { PushButtonEvent } from './controls/pushButtonMap'
+import {
+  PUSH_BUTTONS,
+  PushButtonAnnunciator,
+  PushButtonEvent,
+} from './controls/pushButtonMap'
 import { JoystickPanel } from './controls/JoystickPanel'
 import { KeymapPanel } from './controls/KeymapPanel'
 import { KeyboardShortcutLegend } from './controls/KeyboardShortcutLegend'
@@ -15,6 +19,7 @@ import { PfdDisplay } from './displays/PFD/PfdDisplay'
 import { useCursorInput } from './hooks/useCursorInput'
 import { useCommandSocket } from './hooks/useCommandSocket'
 import { useTelemetrySocket } from './hooks/useTelemetrySocket'
+import { AlertManager } from './services/alert-manager'
 import { AutopilotProvider } from './stores/autopilotStore'
 import { useThemePreference } from './stores/uiStore'
 
@@ -31,6 +36,7 @@ export default function App() {
   const { status: commandStatus, sendCommand } = useCommandSocket()
   const [lastInput, setLastInput] = useState('---')
   const theme = useThemePreference()
+  const alertManager = useMemo(() => new AlertManager(), [])
 
   useCursorInput()
 
@@ -121,6 +127,26 @@ export default function App() {
     setLastInput(event.button.label)
   }
 
+  const alerts = alertManager.getAlerts({ telemetry, socketStatus })
+  const highestAlert = alertManager.getHighestLevel(alerts)
+  const annunciatorButtons = useMemo(() => {
+    if (highestAlert === 'ok') {
+      return {}
+    }
+    return { clr: highestAlert as PushButtonAnnunciator }
+  }, [highestAlert])
+
+  const backlitButtons = useMemo(
+    () =>
+      PUSH_BUTTONS.filter((button) => {
+        if (button.group === 'system') {
+          return commandStatus === 'connected'
+        }
+        return socketStatus === 'connected'
+      }).map((button) => button.id),
+    [commandStatus, socketStatus]
+  )
+
   return (
     <AutopilotProvider>
       <div className="app" data-theme={theme}>
@@ -191,6 +217,8 @@ export default function App() {
               <ButtonPanel
                 onEvent={handleButtonEvent}
                 activeButtons={commandStatus === 'connected' ? ['sync'] : []}
+                backlitButtons={backlitButtons}
+                annunciatorButtons={annunciatorButtons}
                 guardedButtons={['reset']}
               />
               <JoystickPanel />

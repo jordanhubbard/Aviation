@@ -40,6 +40,8 @@ export type PushButtonDefinition = {
 
 export type PushButtonEventType = 'press' | 'long-press'
 
+export type PushButtonAnnunciator = 'info' | 'caution' | 'warning'
+
 export type PushButtonEvent = {
   button: PushButtonDefinition
   type: PushButtonEventType
