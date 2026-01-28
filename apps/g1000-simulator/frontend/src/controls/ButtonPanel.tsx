@@ -1,24 +1,35 @@
-import { PUSH_BUTTONS, PushButtonDefinition, PushButtonId } from './pushButtonMap'
+import { PushButton } from './PushButton'
+import { PUSH_BUTTONS, PushButtonEvent, PushButtonId } from './pushButtonMap'
 
 type ButtonPanelProps = {
-  onPress: (button: PushButtonDefinition) => void
+  onEvent: (event: PushButtonEvent) => void
   activeButtons?: PushButtonId[]
+  disabledButtons?: PushButtonId[]
+  guardedButtons?: PushButtonId[]
 }
 
-export const ButtonPanel = ({ onPress, activeButtons = [] }: ButtonPanelProps) => {
+export const ButtonPanel = ({
+  onEvent,
+  activeButtons = [],
+  disabledButtons = [],
+  guardedButtons = [],
+}: ButtonPanelProps) => {
   const activeSet = new Set(activeButtons)
+  const disabledSet = new Set(disabledButtons)
+  const guardedSet = new Set(guardedButtons)
 
   return (
     <div className="controls__buttons">
       {PUSH_BUTTONS.map((button) => (
-        <button
+        <PushButton
           key={button.id}
-          className={`controls__button${activeSet.has(button.id) ? ' controls__button--active' : ''}`}
-          type="button"
-          onClick={() => onPress(button)}
-        >
-          {button.label}
-        </button>
+          button={button}
+          active={activeSet.has(button.id)}
+          disabled={disabledSet.has(button.id)}
+          guarded={guardedSet.has(button.id)}
+          onPress={(entry) => onEvent({ button: entry, type: 'press' })}
+          onLongPress={(entry) => onEvent({ button: entry, type: 'long-press' })}
+        />
       ))}
     </div>
   )

@@ -2,7 +2,7 @@ import { useState } from 'react'
 
 import { AutopilotPanel } from './controls/AutopilotPanel'
 import { ButtonPanel } from './controls/ButtonPanel'
-import type { PushButtonDefinition } from './controls/pushButtonMap'
+import type { PushButtonEvent } from './controls/pushButtonMap'
 import { JoystickPanel } from './controls/JoystickPanel'
 import { KeymapPanel } from './controls/KeymapPanel'
 import { KeyboardShortcutLegend } from './controls/KeyboardShortcutLegend'
@@ -105,16 +105,20 @@ export default function App() {
     setLastInput('SYNC')
   }
 
-  const handleButtonPress = (button: PushButtonDefinition) => {
-    if (button.action === 'reset-targets') {
+  const handleButtonEvent = (event: PushButtonEvent) => {
+    if (event.type === 'long-press') {
+      setLastInput(`${event.button.label} HOLD`)
+      return
+    }
+    if (event.button.action === 'reset-targets') {
       handleReset()
       return
     }
-    if (button.action === 'sync-targets') {
+    if (event.button.action === 'sync-targets') {
       handleSync()
       return
     }
-    setLastInput(button.label)
+    setLastInput(event.button.label)
   }
 
   return (
@@ -185,8 +189,9 @@ export default function App() {
                 />
               </div>
               <ButtonPanel
-                onPress={handleButtonPress}
+                onEvent={handleButtonEvent}
                 activeButtons={commandStatus === 'connected' ? ['sync'] : []}
+                guardedButtons={['reset']}
               />
               <JoystickPanel />
               <KeymapPanel />

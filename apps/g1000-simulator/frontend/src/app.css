@@ -298,10 +298,27 @@ body {
   cursor: pointer;
 }
 
+.controls__button--pressed {
+  border-color: #7dd3fc;
+  color: #e6edf3;
+  background: rgba(125, 211, 252, 0.18);
+}
+
 .controls__button--active {
   border-color: #4bb2e5;
   color: #e6edf3;
   background: rgba(75, 178, 229, 0.12);
+}
+
+.controls__button--guarded {
+  border-style: dashed;
+  border-color: #d98b1a;
+  color: #f6d7a0;
+}
+
+.controls__button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 .controls__shortcuts {

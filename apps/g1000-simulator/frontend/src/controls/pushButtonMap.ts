@@ -38,6 +38,13 @@ export type PushButtonDefinition = {
   group: PushButtonGroup
 }
 
+export type PushButtonEventType = 'press' | 'long-press'
+
+export type PushButtonEvent = {
+  button: PushButtonDefinition
+  type: PushButtonEventType
+}
+
 export const PUSH_BUTTONS: PushButtonDefinition[] = [
   {
     id: 'direct-to',
