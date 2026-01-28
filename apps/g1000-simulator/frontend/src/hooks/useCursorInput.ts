@@ -1,12 +1,7 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useMemo, useRef } from 'react'
 
 import { useCursorStore } from '../stores/cursorStore'
-
-const isEditableTarget = (target: EventTarget | null) => {
-  if (!(target instanceof HTMLElement)) return false
-  const tagName = target.tagName
-  return tagName === 'INPUT' || tagName === 'TEXTAREA' || tagName === 'SELECT'
-}
+import { KeyboardBinding, KeyboardShortcutLegendItem, useKeyboardBindings } from './useKeyboardBindings'
 
 const applyDeadzone = (value: number, deadzone: number) => {
   const magnitude = Math.abs(value)
@@ -14,6 +9,13 @@ const applyDeadzone = (value: number, deadzone: number) => {
   const normalized = (magnitude - deadzone) / (1 - deadzone)
   return Math.sign(value) * normalized
 }
+
+export const CURSOR_SHORTCUTS: KeyboardShortcutLegendItem[] = [
+  { id: 'cursor', label: 'Arrows', description: 'cursor (shift=fast)' },
+  { id: 'cursor-select', label: 'Enter/Space', description: 'select' },
+  { id: 'cursor-cancel', label: 'Esc', description: 'cancel' },
+  { id: 'cursor-center', label: 'G then C', description: 'center cursor' },
+]
 
 export const useCursorInput = () => {
   const {
@@ -24,6 +26,7 @@ export const useCursorInput = () => {
     moveCursor,
     selectTarget,
     cancelCursor,
+    centerCursor,
   } = useCursorStore((state) => ({
     mode: state.mode,
     calibration: state.calibration,
@@ -32,58 +35,127 @@ export const useCursorInput = () => {
     moveCursor: state.moveCursor,
     selectTarget: state.selectTarget,
     cancelCursor: state.cancelCursor,
+    centerCursor: state.centerCursor,
   }))
+  const bindings = useMemo<KeyboardBinding[]>(() => {
+    const stepBase = config.speed * calibration.sensitivity
+    const fastStep = stepBase * config.acceleration
 
-  useEffect(() => {
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (isEditableTarget(event.target)) return
+    const activateCursor = () => {
+      if (mode === 'inactive') {
+        setCursorMode('active')
+      }
+    }
 
-      const stepBase = config.speed * calibration.sensitivity
-      const step = event.shiftKey ? stepBase * config.acceleration : stepBase
+    const moveWith = (dx: number, dy: number) => {
+      activateCursor()
+      moveCursor(dx, dy)
+    }
 
-      switch (event.key) {
-        case 'ArrowUp':
-          event.preventDefault()
-          if (mode === 'inactive') setCursorMode('active')
-          moveCursor(0, -step)
-          return
-        case 'ArrowDown':
-          event.preventDefault()
-          if (mode === 'inactive') setCursorMode('active')
-          moveCursor(0, step)
-          return
-        case 'ArrowLeft':
-          event.preventDefault()
-          if (mode === 'inactive') setCursorMode('active')
-          moveCursor(-step, 0)
-          return
-        case 'ArrowRight':
-          event.preventDefault()
-          if (mode === 'inactive') setCursorMode('active')
-          moveCursor(step, 0)
-          return
-        case 'Enter':
-        case ' ': {
-          event.preventDefault()
+    return [
+      {
+        id: 'cursor-up',
+        description: 'Move cursor up',
+        chord: { key: 'arrowup' },
+        allowRepeat: true,
+        handler: () => moveWith(0, -stepBase),
+      },
+      {
+        id: 'cursor-up-fast',
+        description: 'Move cursor up fast',
+        chord: { key: 'arrowup', shift: true },
+        allowRepeat: true,
+        priority: 2,
+        handler: () => moveWith(0, -fastStep),
+      },
+      {
+        id: 'cursor-down',
+        description: 'Move cursor down',
+        chord: { key: 'arrowdown' },
+        allowRepeat: true,
+        handler: () => moveWith(0, stepBase),
+      },
+      {
+        id: 'cursor-down-fast',
+        description: 'Move cursor down fast',
+        chord: { key: 'arrowdown', shift: true },
+        allowRepeat: true,
+        priority: 2,
+        handler: () => moveWith(0, fastStep),
+      },
+      {
+        id: 'cursor-left',
+        description: 'Move cursor left',
+        chord: { key: 'arrowleft' },
+        allowRepeat: true,
+        handler: () => moveWith(-stepBase, 0),
+      },
+      {
+        id: 'cursor-left-fast',
+        description: 'Move cursor left fast',
+        chord: { key: 'arrowleft', shift: true },
+        allowRepeat: true,
+        priority: 2,
+        handler: () => moveWith(-fastStep, 0),
+      },
+      {
+        id: 'cursor-right',
+        description: 'Move cursor right',
+        chord: { key: 'arrowright' },
+        allowRepeat: true,
+        handler: () => moveWith(stepBase, 0),
+      },
+      {
+        id: 'cursor-right-fast',
+        description: 'Move cursor right fast',
+        chord: { key: 'arrowright', shift: true },
+        allowRepeat: true,
+        priority: 2,
+        handler: () => moveWith(fastStep, 0),
+      },
+      {
+        id: 'cursor-select',
+        description: 'Select cursor focus',
+        chord: { key: 'enter' },
+        handler: () => {
           if (mode === 'inactive') {
             setCursorMode('active')
             return
           }
           selectTarget()
-          return
-        }
-        case 'Escape':
-          event.preventDefault()
-          cancelCursor()
-          return
-        default:
-          return
-      }
-    }
+        },
+      },
+      {
+        id: 'cursor-select-space',
+        description: 'Select cursor focus',
+        chord: { key: 'space' },
+        handler: () => {
+          if (mode === 'inactive') {
+            setCursorMode('active')
+            return
+          }
+          selectTarget()
+        },
+      },
+      {
+        id: 'cursor-cancel',
+        description: 'Cancel cursor mode',
+        chord: { key: 'escape' },
+        handler: () => cancelCursor(),
+      },
+      {
+        id: 'cursor-center',
+        description: 'Center cursor',
+        sequence: [{ key: 'g' }, { key: 'c' }],
+        handler: () => {
+          setCursorMode('active')
+          centerCursor()
+        },
+      },
+    ]
+  }, [calibration.sensitivity, cancelCursor, centerCursor, config.acceleration, config.speed, mode, moveCursor, selectTarget, setCursorMode])
 
-    window.addEventListener('keydown', handleKeyDown)
-    return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [calibration.sensitivity, cancelCursor, config.acceleration, config.speed, mode, moveCursor, selectTarget, setCursorMode])
+  useKeyboardBindings(bindings)
 
   const rafRef = useRef<number | null>(null)
   const prevButtonsRef = useRef<boolean[]>([])
