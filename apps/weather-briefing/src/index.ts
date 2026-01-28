@@ -131,6 +131,8 @@ async function main() {
             a { color: #60a5fa; }
             .layout { display: flex; flex-direction: column; gap: 24px; max-width: 1200px; margin: 0 auto; }
             .card { background: #111827; border-radius: 12px; padding: 24px; box-shadow: 0 12px 30px rgba(0,0,0,0.25); }
+            .airport-selector-card { position: sticky; top: 16px; z-index: 10; }
+            .weather-map-card { min-height: 520px; }
             .row { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
             select, input[type="text"], button { padding: 10px 12px; border-radius: 8px; border: 1px solid #1f2937; background: #0b1224; color: #f8fafc; font-size: 14px; }
             button { background: #2563eb; border-color: #2563eb; cursor: pointer; }
@@ -148,11 +150,16 @@ async function main() {
             .station-badge { display: inline-flex; align-items: center; gap: 6px; padding: 2px 8px; border-radius: 999px; font-size: 12px; font-weight: 600; color: #0f172a; }
             .station-meta { display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
             .station-updated { font-size: 11px; color: #94a3b8; }
+            @media (max-width: 768px) {
+              .airport-selector-card { position: static; }
+              .weather-map-card { min-height: 360px; }
+              #map { height: 320px; }
+            }
           </style>
         </head>
         <body>
           <div class="layout">
-            <div class="card">
+            <section class="card airport-selector-card">
               <h1>✈️ Aviation Weather Briefing</h1>
               <p class="muted">Select an airport or enter a custom code, then choose a forecast range.</p>
               <form id="briefing-form" class="row">
@@ -180,8 +187,8 @@ async function main() {
                 <label><input type="radio" name="forecast-day" value="7" />7 days</label>
               </div>
               <p class="muted">Other endpoints: <code>/health</code>, <code>/briefing?station=KSFO</code>, and <code>/stations?region=us</code></p>
-            </div>
-            <div class="card">
+            </section>
+            <section class="card weather-map-card">
               <div class="map-header">
                 <div>
                   <h2>Global Weather Map</h2>
@@ -197,12 +204,12 @@ async function main() {
               </div>
               <div id="map"></div>
               <div id="station-list" class="station-list"></div>
-            </div>
-            <div class="card">
-              <h2>Decoded Weather Briefing</h2>
+            </section>
+            <section class="card">
+              <h2>Aviation Weather Briefing</h2>
               <p class="muted">Detailed METAR information and flight conditions appear here after selecting an airport.</p>
               <pre id="briefing-output">Select an airport or enter a code, then click "Get Briefing" to see detailed weather information.</pre>
-            </div>
+            </section>
           </div>
           <script
             src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
