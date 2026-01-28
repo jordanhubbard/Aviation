@@ -2,12 +2,14 @@ import { useState } from 'react'
 
 import { AutopilotPanel } from './controls/AutopilotPanel'
 import { ButtonPanel } from './controls/ButtonPanel'
+import { JoystickPanel } from './controls/JoystickPanel'
 import { KeyboardShortcuts } from './controls/KeyboardShortcuts'
 import { KnobController } from './controls/KnobController'
 import { ThemeSelector } from './controls/ThemeSelector'
 import { DisplayShell } from './displays/DisplayShell'
 import { MfdDisplay } from './displays/MFD/MfdDisplay'
 import { PfdDisplay } from './displays/PFD/PfdDisplay'
+import { useCursorInput } from './hooks/useCursorInput'
 import { useCommandSocket } from './hooks/useCommandSocket'
 import { useTelemetrySocket } from './hooks/useTelemetrySocket'
 import { AutopilotProvider } from './stores/autopilotStore'
@@ -26,6 +28,8 @@ export default function App() {
   const { status: commandStatus, sendCommand } = useCommandSocket()
   const [lastInput, setLastInput] = useState('---')
   const theme = useThemePreference()
+
+  useCursorInput()
 
   const telemetryItems = [
     {
@@ -181,6 +185,7 @@ export default function App() {
                 onPress={handleButtonPress}
                 activeButtons={commandStatus === 'connected' ? ['sync'] : []}
               />
+              <JoystickPanel />
               <div className="controls__shortcuts">
                 Shortcuts: H/L heading · A/Z altitude · S/X speed · R reset · T sync
               </div>
