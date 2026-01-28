@@ -31,7 +31,7 @@ def parse_int(value, default=0):
     except (ValueError, TypeError):
         return default
 
-def determine_pilot_role(row):
+def determine_pilot_role(row, is_student_pilot: bool = False):
     """Determine the pilot role based on flight data."""
     dual_given = parse_float(row.get('DualGiven', 0))
     dual_received = parse_float(row.get('DualReceived', 0))
@@ -47,7 +47,7 @@ def determine_pilot_role(row):
         
         # If there's an instructor name, this is likely a dual received flight
         if instructor_name:
-            return "STUDENT"
+            return "STUDENT" if is_student_pilot else "DUAL"
         # If PIC time equals total time and no instructor, this is likely solo PIC
         elif pic_time > 0 and abs(pic_time - total_time) < 0.01:
             return "PIC"
@@ -61,7 +61,7 @@ def determine_pilot_role(row):
     if dual_given > 0:
         return "INSTRUCTOR"
     elif dual_received > 0:
-        return "STUDENT"
+        return "STUDENT" if is_student_pilot else "DUAL"
     elif pic_time > 0:
         return "PIC"
     elif parse_float(row.get('SIC', 0)) > 0:
@@ -69,7 +69,7 @@ def determine_pilot_role(row):
     else:
         return "PIC"
 
-def validate_logbook(csv_path):
+def validate_logbook(csv_path, is_student_pilot: bool = False):
     """Validate all entries in the logbook CSV file."""
     with open(csv_path, 'r') as f:
         content = f.readlines()
@@ -164,7 +164,7 @@ def validate_logbook(csv_path):
                     simulated_instrument=parse_float(row.get('SimulatedInstrument', 0)),
                     cross_country=parse_float(row.get('CrossCountry', 0))
                 ),
-                pilot_role=determine_pilot_role(row),
+                pilot_role=determine_pilot_role(row, is_student_pilot=is_student_pilot),
                 landings_day=parse_int(row.get('DayLandingsFullStop', 0)),
                 landings_night=night_landings,
                 remarks=f"Distance: {parse_float(row.get('Distance', '0.0'))}nm\n{row.get('PilotComments') or row.get('InstructorComments') or 'No remarks'}",

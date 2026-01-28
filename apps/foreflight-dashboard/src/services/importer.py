@@ -8,9 +8,10 @@ from ..core.models import LogbookEntry, Aircraft, Airport, FlightConditions
 class ForeFlightImporter:
     """Importer for ForeFlight logbook CSV exports."""
     
-    def __init__(self, csv_path: str):
+    def __init__(self, csv_path: str, student_pilot: bool = False):
         """Initialize importer with CSV file path and parse both Aircraft and Flights tables."""
         self.csv_path = csv_path
+        self.student_pilot = student_pilot
         self.aircraft_df, self.flights_df = self._parse_foreflight_csv(csv_path)
 
     def _parse_foreflight_csv(self, csv_path: str):
@@ -151,6 +152,7 @@ class ForeFlightImporter:
         """Import all logbook entries from the CSV."""
         entries = []
         aircraft_dict = self._create_aircraft_dict()
+        is_student_pilot = self.student_pilot
 
         for idx, row in self.flights_df.iterrows():
             row_issues = []
@@ -230,8 +232,9 @@ class ForeFlightImporter:
                 # If there's an instructor name, this is likely a dual received flight
                 if instructor_name:
                     dual_given = 0.0
-                    pilot_role = "STUDENT"
-                    row_issues.append("Auto-corrected to STUDENT role (instructor name present)")
+                    pilot_role = "STUDENT" if is_student_pilot else "DUAL"
+                    role_label = "STUDENT" if is_student_pilot else "DUAL"
+                    row_issues.append(f"Auto-corrected to {role_label} role (instructor name present)")
                 # If PIC time equals total time and no instructor, this is likely solo PIC
                 elif pic_time > 0 and abs(pic_time - total_time) < 0.01:
                     dual_received = 0.0
@@ -255,7 +258,7 @@ class ForeFlightImporter:
                 if dual_given > 0:
                     pilot_role = "INSTRUCTOR"
                 elif dual_received > 0:
-                    pilot_role = "STUDENT"
+                    pilot_role = "STUDENT" if is_student_pilot else "DUAL"
                 elif pic_time > 0:
                     pilot_role = "PIC"
                 elif sic_time > 0:

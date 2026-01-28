@@ -7,7 +7,7 @@ import pandas as pd
 
 from src.services.importer import ForeFlightImporter
 
-def validate_csv(csv_path: str) -> Dict[str, Any]:
+def validate_csv(csv_path: str, student_pilot: bool = False) -> Dict[str, Any]:
     """Validate a ForeFlight CSV file and return detailed validation results.
     
     Args:
@@ -87,7 +87,7 @@ def validate_csv(csv_path: str) -> Dict[str, Any]:
             
         # Try parsing with importer
         try:
-            importer = ForeFlightImporter(csv_path)
+            importer = ForeFlightImporter(csv_path, student_pilot=student_pilot)
             
             # Add DataFrame info to results
             if importer.aircraft_df is not None:
