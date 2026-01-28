@@ -8,6 +8,8 @@ class AviationMissionApp {
         this.filteredMissions = [];
         this.submissions = [];
         this.submissionsError = null;
+        this.missionUpdates = [];
+        this.missionUpdatesError = null;
         this.isAdmin = false;
         this.filters = {
             search: '',
@@ -28,6 +30,7 @@ class AviationMissionApp {
             this.bindEventListeners();
             await this.checkAdminStatus(); // Check if user is already logged in
             await this.loadMissions();
+            await this.checkEditSuggestionNotifications();
             this.render();
             console.log('✅ Aviation Mission App initialized successfully');
         } catch (error) {
@@ -210,6 +213,38 @@ class AviationMissionApp {
             console.error('❌ Failed to load submissions:', error);
             this.submissions = [];
             this.submissionsError = error.message;
+            this.renderAdminDashboard();
+        }
+    }
+
+    async loadMissionUpdates() {
+        const token = this.getAdminToken();
+        if (!token) {
+            this.missionUpdates = [];
+            this.missionUpdatesError = null;
+            this.renderAdminDashboard();
+            return;
+        }
+
+        try {
+            const response = await fetch(`${this.apiBaseUrl}/updates`, {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            }
+
+            const data = await response.json();
+            this.missionUpdates = data.updates || [];
+            this.missionUpdatesError = null;
+            this.renderAdminDashboard();
+        } catch (error) {
+            console.error('❌ Failed to load mission updates:', error);
+            this.missionUpdates = [];
+            this.missionUpdatesError = error.message;
             this.renderAdminDashboard();
         }
     }
@@ -485,7 +520,8 @@ class AviationMissionApp {
         }
 
         const pendingSubmissions = this.submissions.filter(submission => submission.status === 'pending');
-        const pendingCount = pendingSubmissions.length;
+        const pendingUpdates = this.missionUpdates.filter(update => update.status === 'pending');
+        const pendingCount = pendingSubmissions.length + pendingUpdates.length;
 
         dashboard.style.display = 'block';
         dashboard.innerHTML = `
@@ -498,11 +534,23 @@ class AviationMissionApp {
                     <h3>Pending Mission Submissions</h3>
                     ${this.submissionsError ? `
                         <div class="empty-message">Failed to load submissions: ${this.escapeHtml(this.submissionsError)}</div>
-                    ` : pendingCount === 0 ? `
+                    ` : pendingSubmissions.length === 0 ? `
                         <div class="empty-message">No pending submissions.</div>
                     ` : `
                         <div class="submissions-list">
                             ${pendingSubmissions.map(submission => this.renderSubmissionCard(submission)).join('')}
+                        </div>
+                    `}
+                </div>
+                <div class="admin-section">
+                    <h3>Pending Mission Edit Suggestions</h3>
+                    ${this.missionUpdatesError ? `
+                        <div class="empty-message">Failed to load updates: ${this.escapeHtml(this.missionUpdatesError)}</div>
+                    ` : pendingUpdates.length === 0 ? `
+                        <div class="empty-message">No pending edit suggestions.</div>
+                    ` : `
+                        <div class="submissions-list">
+                            ${pendingUpdates.map(update => this.renderUpdateCard(update)).join('')}
                         </div>
                     `}
                 </div>
@@ -531,6 +579,117 @@ class AviationMissionApp {
                 </div>
             </div>
         `;
+    }
+
+    renderUpdateCard(update) {
+        const submittedAt = this.formatDate(update.created_at);
+        const submitterEmail = update.submitter_email
+            ? ` (${this.escapeHtml(update.submitter_email)})`
+            : '';
+        const originalMission = this.getOriginalMissionForUpdate(update);
+        const missionTitle = originalMission?.title || update.original_title || update.title || 'Mission';
+
+        return `
+            <div class="submission-card update-card">
+                <h4>${this.escapeHtml(missionTitle)}</h4>
+                <p><strong>Submitted by:</strong> ${this.escapeHtml(update.submitter_name || 'Unknown')}${submitterEmail}</p>
+                <p><strong>Submitted:</strong> ${submittedAt}</p>
+                <div class="update-diff">
+                    <h5>Proposed Changes</h5>
+                    ${this.renderUpdateDiff(update, originalMission)}
+                </div>
+                <div class="submission-actions">
+                    <button class="btn btn-primary btn-sm" onclick="app.approveMissionUpdate(${update.id})">Approve</button>
+                    <button class="btn btn-danger btn-sm" onclick="app.rejectMissionUpdate(${update.id})">Reject</button>
+                </div>
+            </div>
+        `;
+    }
+
+    renderUpdateDiff(update, originalMission) {
+        const original = originalMission || this.buildOriginalMissionFromUpdate(update);
+        const fields = [
+            { key: 'title', label: 'Title' },
+            { key: 'category', label: 'Category' },
+            { key: 'difficulty', label: 'Difficulty' },
+            { key: 'route', label: 'Route' },
+            { key: 'suggested_route', label: 'Suggested Route' },
+            { key: 'pilot_experience', label: 'Pilot Experience' },
+            { key: 'objective', label: 'Objective' },
+            { key: 'mission_description', label: 'Description' },
+            { key: 'why_description', label: 'Why Description' },
+            { key: 'special_challenges', label: 'Special Challenges' },
+            { key: 'notes', label: 'Notes' }
+        ];
+
+        const diffs = fields
+            .map(field => {
+                const originalValue = original ? original[field.key] : null;
+                const proposedValue = update[field.key];
+                const normalizedOriginal = this.normalizeDiffValue(originalValue);
+                const normalizedProposed = this.normalizeDiffValue(proposedValue);
+
+                if (normalizedOriginal === normalizedProposed) {
+                    return null;
+                }
+
+                return {
+                    label: field.label,
+                    original: this.formatUpdateValue(originalValue),
+                    proposed: this.formatUpdateValue(proposedValue)
+                };
+            })
+            .filter(Boolean);
+
+        if (diffs.length === 0) {
+            return '<div class="empty-message">No changes detected.</div>';
+        }
+
+        return `
+            <ul class="update-diff-list">
+                ${diffs.map(diff => `
+                    <li class="update-diff-item">
+                        <div class="update-diff-label">${this.escapeHtml(diff.label)}</div>
+                        <div class="update-diff-values">
+                            <span class="update-diff-original">Original: ${this.escapeHtml(diff.original)}</span>
+                            <span class="update-diff-proposed">Suggested: ${this.escapeHtml(diff.proposed)}</span>
+                        </div>
+                    </li>
+                `).join('')}
+            </ul>
+        `;
+    }
+
+    buildOriginalMissionFromUpdate(update) {
+        return {
+            title: update.original_title,
+            category: update.original_category,
+            difficulty: update.original_difficulty,
+            route: update.original_route,
+            suggested_route: update.original_suggested_route,
+            pilot_experience: update.original_pilot_experience,
+            objective: update.original_objective,
+            mission_description: update.original_mission_description,
+            why_description: update.original_why_description,
+            special_challenges: update.original_special_challenges,
+            notes: update.original_notes
+        };
+    }
+
+    getOriginalMissionForUpdate(update) {
+        return this.missions.find(mission => mission.id === update.mission_id) || null;
+    }
+
+    normalizeDiffValue(value) {
+        if (value === null || value === undefined) return '';
+        return String(value).trim();
+    }
+
+    formatUpdateValue(value) {
+        if (value === null || value === undefined || value === '') {
+            return 'Not provided';
+        }
+        return String(value);
     }
 
     async approveSubmission(id) {
@@ -611,6 +770,96 @@ class AviationMissionApp {
         } catch (error) {
             console.error('❌ Failed to reject submission:', error);
             alert('Failed to reject submission:\n\n' + error.message);
+        }
+    }
+
+    async approveMissionUpdate(id) {
+        if (!confirm('Approve this edit suggestion and update the mission?')) {
+            return;
+        }
+
+        const token = this.getAdminToken();
+        if (!token) {
+            alert('Admin authentication required.');
+            return;
+        }
+
+        try {
+            const response = await fetch(`${this.apiBaseUrl}/updates/${id}/approve`, {
+                method: 'PUT',
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+
+            if (!response.ok) {
+                let errorMessage = `Failed to approve update (${response.status})`;
+                try {
+                    const errorData = await response.json();
+                    if (errorData.error) {
+                        errorMessage = errorData.error;
+                    }
+                } catch (e) {
+                    errorMessage = `Failed to approve update: ${response.statusText}`;
+                }
+                throw new Error(errorMessage);
+            }
+
+            await this.loadMissionUpdates();
+            await this.loadMissions();
+            alert('Edit suggestion approved and mission updated.');
+        } catch (error) {
+            console.error('❌ Failed to approve update:', error);
+            alert('Failed to approve update:\n\n' + error.message);
+        }
+    }
+
+    async rejectMissionUpdate(id) {
+        const adminNotes = prompt('Optional: Add a rejection note for the submitter.', '');
+        if (adminNotes === null) {
+            return;
+        }
+
+        if (!confirm('Reject this edit suggestion?')) {
+            return;
+        }
+
+        const token = this.getAdminToken();
+        if (!token) {
+            alert('Admin authentication required.');
+            return;
+        }
+
+        try {
+            const response = await fetch(`${this.apiBaseUrl}/updates/${id}/reject`, {
+                method: 'PUT',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    admin_notes: this.normalizeField(adminNotes)
+                })
+            });
+
+            if (!response.ok) {
+                let errorMessage = `Failed to reject update (${response.status})`;
+                try {
+                    const errorData = await response.json();
+                    if (errorData.error) {
+                        errorMessage = errorData.error;
+                    }
+                } catch (e) {
+                    errorMessage = `Failed to reject update: ${response.statusText}`;
+                }
+                throw new Error(errorMessage);
+            }
+
+            await this.loadMissionUpdates();
+            alert('Edit suggestion rejected.');
+        } catch (error) {
+            console.error('❌ Failed to reject update:', error);
+            alert('Failed to reject update:\n\n' + error.message);
         }
     }
 
@@ -702,6 +951,65 @@ class AviationMissionApp {
         }
 
         return null;
+    }
+
+    getStoredEditSuggestions() {
+        try {
+            const stored = localStorage.getItem('mission_edit_suggestions');
+            return stored ? JSON.parse(stored) : [];
+        } catch (error) {
+            return [];
+        }
+    }
+
+    setStoredEditSuggestions(suggestions) {
+        localStorage.setItem('mission_edit_suggestions', JSON.stringify(suggestions));
+    }
+
+    trackEditSuggestion(suggestion) {
+        if (!suggestion?.id) return;
+        const suggestions = this.getStoredEditSuggestions();
+        const updatedSuggestions = suggestions.filter(item => item.id !== suggestion.id);
+        updatedSuggestions.push({
+            id: suggestion.id,
+            mission_id: suggestion.mission_id,
+            title: suggestion.title,
+            status: suggestion.status || 'pending'
+        });
+        this.setStoredEditSuggestions(updatedSuggestions);
+    }
+
+    async checkEditSuggestionNotifications() {
+        const suggestions = this.getStoredEditSuggestions();
+        if (suggestions.length === 0) return;
+
+        const remainingSuggestions = [];
+        for (const suggestion of suggestions) {
+            try {
+                const response = await fetch(`${this.apiBaseUrl}/updates/${suggestion.id}/status`);
+                if (!response.ok) {
+                    remainingSuggestions.push(suggestion);
+                    continue;
+                }
+
+                const data = await response.json();
+                const status = data.status || 'pending';
+
+                if (status === 'pending') {
+                    remainingSuggestions.push({ ...suggestion, status });
+                    continue;
+                }
+
+                const missionTitle = data.mission_title || suggestion.title || 'a mission';
+                const decision = status === 'approved' ? 'approved' : 'rejected';
+                const notes = data.admin_notes ? `\n\nAdmin notes: ${data.admin_notes}` : '';
+                alert(`Edit suggestion for "${missionTitle}" was ${decision}.${notes}`);
+            } catch (error) {
+                remainingSuggestions.push(suggestion);
+            }
+        }
+
+        this.setStoredEditSuggestions(remainingSuggestions);
     }
 
     showError(message) {
@@ -917,8 +1225,22 @@ class AviationMissionApp {
                             <input type="number" id="edit-difficulty" name="difficulty" value="${mission.difficulty || 1}" min="1" max="10">
                         </div>
                         <div class="form-group">
-                            <label for="edit-route">Route</label>
-                            <input type="text" id="edit-route" name="route" value="${this.escapeHtml(mission.route || '')}" placeholder="e.g., KPAO → KSFO">
+                            <label for="edit-pilot-experience">Pilot Experience</label>
+                            <select id="edit-pilot-experience" name="pilot_experience">
+                                <option value="">Not specified</option>
+                                <option value="Beginner (< 100 hours)" ${mission.pilot_experience === 'Beginner (< 100 hours)' ? 'selected' : ''}>Beginner (< 100 hours)</option>
+                                <option value="Intermediate (100-500 hours)" ${mission.pilot_experience === 'Intermediate (100-500 hours)' ? 'selected' : ''}>Intermediate (100-500 hours)</option>
+                                <option value="Advanced (500+ hours)" ${mission.pilot_experience === 'Advanced (500+ hours)' ? 'selected' : ''}>Advanced (500+ hours)</option>
+                                <option value="CFI/CFII" ${mission.pilot_experience === 'CFI/CFII' ? 'selected' : ''}>CFI/CFII</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="edit-route">Route *</label>
+                            <input type="text" id="edit-route" name="route" value="${this.escapeHtml(mission.route || '')}" placeholder="e.g., KPAO → KSFO" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="edit-suggested-route">Suggested Route Waypoints</label>
+                            <input type="text" id="edit-suggested-route" name="suggested_route" value="${this.escapeHtml(mission.suggested_route || '')}" placeholder="KPAO KSFO KSQL">
                         </div>
                         <div class="form-group">
                             <label for="edit-objective">Learning Objective</label>
@@ -970,20 +1292,28 @@ class AviationMissionApp {
 
         const form = e.target;
         const formData = new FormData(form);
-
+        const difficultyValue = parseInt(formData.get('difficulty'), 10);
         const suggestionData = {
-            title: formData.get('title'),
-            category: formData.get('category'),
-            difficulty: parseInt(formData.get('difficulty')),
-            route: formData.get('route'),
-            objective: formData.get('objective'),
-            mission_description: formData.get('mission_description'),
-            why_description: formData.get('why_description'),
-            special_challenges: formData.get('special_challenges'),
-            notes: formData.get('notes'),
-            submitter_name: formData.get('submitter_name'),
-            submitter_email: formData.get('submitter_email') || null
+            title: this.normalizeField(formData.get('title')),
+            category: this.normalizeField(formData.get('category')),
+            difficulty: Number.isNaN(difficultyValue) ? null : difficultyValue,
+            route: this.normalizeField(formData.get('route')),
+            suggested_route: this.normalizeWaypoints(formData.get('suggested_route')),
+            pilot_experience: this.normalizeField(formData.get('pilot_experience')),
+            objective: this.normalizeField(formData.get('objective')),
+            mission_description: this.normalizeField(formData.get('mission_description')),
+            why_description: this.normalizeField(formData.get('why_description')),
+            special_challenges: this.normalizeField(formData.get('special_challenges')),
+            notes: this.normalizeField(formData.get('notes')),
+            submitter_name: this.normalizeField(formData.get('submitter_name')),
+            submitter_email: this.normalizeField(formData.get('submitter_email'))
         };
+
+        const validationError = this.validateMissionSubmission(suggestionData);
+        if (validationError) {
+            alert(validationError);
+            return;
+        }
 
         try {
             const response = await fetch(`${this.apiBaseUrl}/missions/${missionId}`, {
@@ -1009,6 +1339,16 @@ class AviationMissionApp {
 
             const result = await response.json();
             console.log('✅ Edit suggestion submitted:', result);
+
+            if (result.update_id) {
+                const mission = this.missions.find(item => item.id === missionId);
+                this.trackEditSuggestion({
+                    id: result.update_id,
+                    mission_id: missionId,
+                    title: suggestionData.title || mission?.title,
+                    status: result.status || 'pending'
+                });
+            }
 
             // Close modal
             document.querySelector('.modal-overlay')?.remove();
@@ -1389,9 +1729,12 @@ class AviationMissionApp {
 
         if (isAdmin) {
             this.loadSubmissions();
+            this.loadMissionUpdates();
         } else {
             this.submissions = [];
             this.submissionsError = null;
+            this.missionUpdates = [];
+            this.missionUpdatesError = null;
             this.renderAdminDashboard();
         }
     }

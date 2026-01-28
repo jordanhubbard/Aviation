@@ -93,9 +93,10 @@
   (PUT "/submissions/:id/reject" [id :as request] ((handlers/admin-required (fn [_] (handlers/reject-submission id))) request))
 
   ;; Mission update endpoints
+  (GET "/updates/:id/status" [id] (handlers/get-mission-update-status id))
   (GET "/updates" request ((handlers/admin-required handlers/get-mission-updates) request))
   (PUT "/updates/:id/approve" [id :as request] ((handlers/admin-required (fn [_] (handlers/approve-mission-update id))) request))
-  (PUT "/updates/:id/reject" [id :as request] ((handlers/admin-required (fn [_] (handlers/reject-mission-update id))) request))
+  (PUT "/updates/:id/reject" [id :as request] ((handlers/admin-required (fn [_] (handlers/reject-mission-update id request))) request))
 
   ;; Admin endpoints
   (POST "/admin/login" request (handlers/admin-login request))

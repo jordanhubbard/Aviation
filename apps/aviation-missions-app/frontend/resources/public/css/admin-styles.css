@@ -242,6 +242,55 @@
     color: #333;
 }
 
+.update-diff {
+    margin-top: 1rem;
+}
+
+.update-diff h5 {
+    margin: 0 0 0.5rem 0;
+    color: #1a365d;
+    font-size: 1rem;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+}
+
+.update-diff-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.update-diff-item {
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    padding: 0.75rem;
+    background: #fff;
+}
+
+.update-diff-label {
+    font-weight: 600;
+    color: #1a365d;
+    margin-bottom: 0.35rem;
+}
+
+.update-diff-values {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    font-size: 0.9rem;
+}
+
+.update-diff-original {
+    color: #7c2d12;
+}
+
+.update-diff-proposed {
+    color: #166534;
+}
+
 .submission-actions {
     display: flex;
     gap: 0.75rem;

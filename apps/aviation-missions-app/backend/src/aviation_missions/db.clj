@@ -442,27 +442,67 @@
     ["id = ?" id]))
 
 ;; Mission update operations
+
+(defn get-mission-update-by-id [id]
+  (first (jdbc/query db-spec
+    ["SELECT mu.*, 
+             m.title as original_title,
+             m.category as original_category,
+             m.difficulty as original_difficulty,
+             m.objective as original_objective,
+             m.mission_description as original_mission_description,
+             m.why_description as original_why_description,
+             m.notes as original_notes,
+             m.route as original_route,
+             m.suggested_route as original_suggested_route,
+             m.pilot_experience as original_pilot_experience,
+             m.special_challenges as original_special_challenges
+      FROM mission_updates mu
+      LEFT JOIN missions m ON mu.mission_id = m.id
+      WHERE mu.id = ?" id])))
+
 (defn create-mission-update! [mission-id update-data]
-  (jdbc/insert! db-spec :mission_updates
-    (assoc update-data 
-           :mission_id mission-id
-           :created_at (coerce/to-timestamp (time/now)))))
+  (let [result (jdbc/insert! db-spec :mission_updates
+                 (assoc update-data 
+                        :mission_id mission-id
+                        :status "pending"
+                        :created_at (coerce/to-timestamp (time/now))))
+        new-id (generated-id result)]
+    (get-mission-update-by-id new-id)))
 
 (defn get-all-mission-updates []
   (jdbc/query db-spec
-    ["SELECT mu.*, m.title as original_title 
+    ["SELECT mu.*, 
+             m.title as original_title,
+             m.category as original_category,
+             m.difficulty as original_difficulty,
+             m.objective as original_objective,
+             m.mission_description as original_mission_description,
+             m.why_description as original_why_description,
+             m.notes as original_notes,
+             m.route as original_route,
+             m.suggested_route as original_suggested_route,
+             m.pilot_experience as original_pilot_experience,
+             m.special_challenges as original_special_challenges
       FROM mission_updates mu 
-      JOIN missions m ON mu.mission_id = m.id 
+      LEFT JOIN missions m ON mu.mission_id = m.id 
       ORDER BY mu.created_at DESC"]))
 
 (defn approve-mission-update! [id]
   (let [update (first (jdbc/query db-spec ["SELECT * FROM mission_updates WHERE id = ?" id]))]
     (when update
       ;; Apply the update to the original mission
-      (jdbc/update! db-spec :missions
-        (select-keys update [:title :category :difficulty :objective 
-                            :mission_description :why_description :notes :route])
-        ["id = ?" (:mission_id update)])
+      (let [existing (get-mission-by-id (:mission_id update))
+            update-row (-> (select-keys update [:title :category :difficulty :objective 
+                                               :mission_description :why_description :notes :route
+                                               :suggested_route :pilot_experience :special_challenges])
+                           (assoc :pilot_experience (or (:pilot_experience update)
+                                                        (:pilot_experience existing)
+                                                        default-pilot-experience)
+                                  :updated_at (monotonic-updated-at (:updated_at existing))))]
+        (jdbc/update! db-spec :missions
+          update-row
+          ["id = ?" (:mission_id update)]))
       ;; Mark update as approved
       (jdbc/update! db-spec :mission_updates 
         {:status "approved" :reviewed_at (coerce/to-timestamp (time/now))}

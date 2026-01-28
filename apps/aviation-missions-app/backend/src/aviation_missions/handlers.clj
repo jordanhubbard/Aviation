@@ -222,32 +222,34 @@
   [id request]
   (try
     (let [mission-id (Integer/parseInt id)
-          mission-data (:body request)
-          headers (:headers request)
-          auth-header (or (get headers "authorization") (get headers "Authorization"))
-          token (when auth-header (str/replace auth-header #"Bearer " ""))
-          is-admin (and token (db/validate-admin-session token))]
+          raw-mission-data (:body request)
+          token (extract-auth-token (:headers request))
+          is-admin (and token (db/validate-admin-session token))
+          mission-data (if is-admin raw-mission-data (normalize-submission-data raw-mission-data))
+          submission-error (when-not is-admin (validate-submission-data mission-data))]
       (if (db/get-mission-by-id mission-id)
-        (if is-admin
-          ;; Admin can update directly
+        (cond
+          is-admin
           (let [updated-mission (db/update-mission! mission-id mission-data)]
             (storage/persist-missions-json!)
             (response {:mission updated-mission}))
-          ;; Non-admin submits update for approval
-          (do
-            (db/create-mission-update! mission-id (assoc mission-data 
-                                                         :submitter_name (or (:submitter_name mission-data) "Anonymous")
-                                                         :submitter_email (:submitter_email mission-data)))
-            (-> (response {:message "Mission update submitted for approval"})
-                (status 201))))
-        (-> (response {:error "Mission not found"})
-            (status 404))))
+
+          submission-error
+          (handle-error 400 submission-error)
+
+          :else
+          (let [update-record (db/create-mission-update! mission-id (assoc mission-data 
+                                                                           :submitter_name (or (:submitter_name mission-data) "Anonymous")
+                                                                           :submitter_email (:submitter_email mission-data)))
+                update-id (:id update-record)]
+            (handle-success {:message "Mission update submitted for admin review"
+                             :update_id update-id
+                             :status "pending"} 201)))
+        (handle-error 404 "Mission not found")))
     (catch NumberFormatException _e
-      (-> (response {:error "Invalid mission ID"})
-          (status 400)))
+      (handle-error 400 "Invalid mission ID"))
     (catch Exception e
-      (-> (response {:error "Failed to update mission" :details (.getMessage e)})
-          (status 500)))))
+      (handle-error 500 "Failed to update mission" (.getMessage e)))))
 
 (defn delete-mission
   "Delete a mission"
@@ -612,6 +614,25 @@
           (status 500)))))
 
 ;; Mission update approval handlers
+(defn get-mission-update-status
+  "Get the status of a mission update"
+  [id]
+  (try
+    (let [update-id (Integer/parseInt id)
+          update (db/get-mission-update-by-id update-id)]
+      (if update
+        (response {:update_id update-id
+                   :mission_id (:mission_id update)
+                   :mission_title (:original_title update)
+                   :status (:status update)
+                   :admin_notes (:admin_notes update)
+                   :reviewed_at (:reviewed_at update)})
+        (handle-error 404 "Mission update not found")))
+    (catch NumberFormatException _e
+      (handle-error 400 "Invalid update ID"))
+    (catch Exception e
+      (handle-error 500 "Failed to fetch update status" (.getMessage e)))))
+
 (defn get-mission-updates
   "Get all pending mission updates"
   [_request]
@@ -636,10 +657,12 @@
 
 (defn reject-mission-update
   "Reject a mission update"
-  [id]
+  [id request]
   (try
-    (let [update-id (Integer/parseInt id)]
-      (db/reject-mission-update! update-id "Rejected by admin")
+    (let [update-id (Integer/parseInt id)
+          admin-notes (get-in request [:body :admin_notes])
+          rejection-notes (if (str/blank? admin-notes) "Rejected by admin" admin-notes)]
+      (db/reject-mission-update! update-id rejection-notes)
       (response {:message "Mission update rejected"}))
     (catch Exception e
       (-> (response {:error "Failed to reject update" :details (.getMessage e)})

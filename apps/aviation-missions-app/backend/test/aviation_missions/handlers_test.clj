@@ -155,6 +155,31 @@
       (is (some? (:id mission)))
       (is (= 200 (:status response)))
       (is (contains? (:body response) :mission))))
+
+  (testing "update-mission handler as non-admin (suggest edit)"
+    (let [mission (db/create-mission! {:title "Original Title"
+                                      :category "Training"
+                                      :difficulty 5
+                                      :objective "Test"
+                                      :mission_description "Test"
+                                      :why_description "Test"
+                                      :route "KPAO -> KSFO"})
+          update-data {:title "Updated Title"
+                      :category "Training"
+                      :difficulty 4
+                      :objective "Updated objective"
+                      :mission_description "Updated description"
+                      :why_description "Updated why"
+                      :route "KPAO -> KSFO"
+                      :submitter_name "Test Pilot"}
+          request (mock-request :put "/missions/1"
+                               :body update-data)
+          mission-id (str (:id mission))
+          response (handlers/update-mission mission-id request)]
+      (is (some? mission))
+      (is (= 201 (:status response)))
+      (is (= "Mission update submitted for admin review" (get-in response [:body :message])))
+      (is (number? (get-in response [:body :update_id])))))
   
   (testing "delete-mission handler"
     (let [mission (db/create-mission! {:title "To Delete"

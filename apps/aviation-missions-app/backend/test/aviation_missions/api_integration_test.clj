@@ -154,6 +154,36 @@
         (is (= (get-in body [:mission :difficulty]) 8))
         (is (= (get-in body [:mission :notes]) "Added notes via API")))))
 
+  (testing "PUT /missions/:id submits update suggestion as non-admin"
+    (let [mission (db/create-mission! {:title "Original Title"
+                                      :category "Training"
+                                      :difficulty 4
+                                      :objective "Original objective"
+                                      :mission_description "Original description"
+                                      :why_description "Original why"
+                                      :route "KPAO -> KSFO"})
+          mission-id (:id mission)
+          update-data {:title "Updated Title"
+                      :category "Training"
+                      :difficulty 6
+                      :objective "Updated objective"
+                      :mission_description "Updated description"
+                      :why_description "Updated why"
+                      :route "KPAO -> KSFO"
+                      :submitter_name "Test Pilot"}
+          response (app (json-request :put (str "/missions/" mission-id) update-data))]
+
+      (is (= 201 (:status response)))
+      (let [body (parse-json-response response)]
+        (is (= "Mission update submitted for admin review" (:message body)))
+        (is (number? (:update_id body)))
+
+        (let [status-response (app (mock/request :get (str "/updates/" (:update_id body) "/status")))
+              status-body (parse-json-response status-response)]
+          (is (= 200 (:status status-response)))
+          (is (= "pending" (:status status-body)))
+          (is (= mission-id (:mission_id status-body)))))))
+
   (testing "DELETE /missions/:id removes mission as admin"
     ;; Create a mission first
     (let [mission (db/create-mission! {:title "To Be Deleted"

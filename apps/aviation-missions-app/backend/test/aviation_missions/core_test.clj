@@ -103,6 +103,7 @@
     (is (fn? handlers/get-submissions))
     (is (fn? handlers/approve-submission))
     (is (fn? handlers/reject-submission))
+    (is (fn? handlers/get-mission-update-status))
     (is (fn? handlers/get-mission-updates))
     (is (fn? handlers/approve-mission-update))
     (is (fn? handlers/reject-mission-update))
