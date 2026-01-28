@@ -6,6 +6,7 @@ import { AutopilotStatus } from './AutopilotStatus'
 import { AttitudeIndicator } from './AttitudeIndicator'
 import { HSI } from './HSI'
 import { formatCoordinate, formatNumber, formatSigned, normalizeHeading } from './formatters'
+import { SoftkeyMenuSystem } from '../Shared/SoftkeyMenuSystem'
 
 export function PfdDisplay({ telemetry, socketStatus }: PfdDisplayProps) {
   const heading = normalizeHeading(telemetry?.attitude.heading_deg)
@@ -56,6 +57,7 @@ export function PfdDisplay({ telemetry, socketStatus }: PfdDisplayProps) {
         <span>SPD {airspeed}</span>
         <span>ALT SEL {targetAltitude}</span>
       </div>
+      <SoftkeyMenuSystem context="pfd" ariaLabel="PFD softkeys" />
     </div>
   )
 }
