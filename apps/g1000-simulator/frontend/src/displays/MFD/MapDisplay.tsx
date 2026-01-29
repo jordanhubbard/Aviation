@@ -3,6 +3,7 @@ import type { PointerEvent as ReactPointerEvent } from 'react'
 
 import { TelemetrySnapshot } from '../../hooks/useTelemetrySocket'
 import { useCursorStore } from '../../stores/cursorStore'
+import { useFlightPlanStore } from '../../stores/flightPlanStore'
 import { useMfdStore, MAP_RANGE_OPTIONS } from '../../stores/mfdStore'
 import { useRotaryKnobStore } from '../../stores/rotaryKnobStore'
 import { useSoftkeyToggle } from '../../stores/softkeyStore'
@@ -29,6 +30,13 @@ type AirspaceRing = {
   lat: number
   lon: number
   radiusNm: number
+}
+
+type FlightPlanPoint = {
+  id: string
+  lat: number
+  lon: number
+  active: boolean
 }
 
 type WeatherCell = {
@@ -118,6 +126,10 @@ export const MapDisplay = ({ telemetry }: MapDisplayProps) => {
       setFocusTarget: state.setFocusTarget,
     }),
   )
+  const { plan, activeLegIndex } = useFlightPlanStore((state) => ({
+    plan: state.plan,
+    activeLegIndex: state.plan.activeLegIndex,
+  }))
   const mapRangeIndex = useMfdStore((state) => state.mapRangeIndex)
   const mapOrientation = useMfdStore((state) => state.mapOrientation)
   const stepRange = useMfdStore((state) => state.stepRange)
@@ -304,14 +316,28 @@ export const MapDisplay = ({ telemetry }: MapDisplayProps) => {
   const flightPlan = useMemo(() => {
     const baseLat = latitude ?? 37.618805
     const baseLon = longitude ?? -122.375416
-    const offsets = [
-      { eastNm: -18, northNm: -12 },
-      { eastNm: -6, northNm: -4 },
-      { eastNm: 4, northNm: 2 },
-      { eastNm: 16, northNm: 10 },
-    ]
-    return offsets.map((offset) => offsetCoordinates(baseLat, baseLon, offset.eastNm, offset.northNm))
-  }, [latitude, longitude])
+    const points = [
+      plan.origin ? { id: plan.origin } : null,
+      ...plan.waypoints,
+      plan.destination ? { id: plan.destination } : null,
+    ].filter(Boolean) as Array<{ id: string; latitude_deg?: number; longitude_deg?: number }>
+    if (points.length === 0) return [] as FlightPlanPoint[]
+    const midpoint = (points.length - 1) / 2
+    const activePointIndex = Math.min(points.length - 1, Math.max(0, activeLegIndex + 1))
+    return points.map((point, index) => {
+      const offset = {
+        eastNm: (index - midpoint) * 8,
+        northNm: (index - midpoint) * 5,
+      }
+      const derived = offsetCoordinates(baseLat, baseLon, offset.eastNm, offset.northNm)
+      return {
+        id: point.id,
+        lat: point.latitude_deg ?? derived.lat,
+        lon: point.longitude_deg ?? derived.lon,
+        active: index === activePointIndex,
+      }
+    })
+  }, [activeLegIndex, latitude, longitude, plan.destination, plan.origin, plan.waypoints])
 
   const weatherCells = useMemo(() => {
     const baseLat = latitude ?? 37.618805
@@ -540,8 +566,10 @@ export const MapDisplay = ({ telemetry }: MapDisplayProps) => {
               if (!point) return null
               return (
                 <circle
-                  key={`fpl-${index}`}
-                  className={index === 1 ? 'mfd__map-fpl-point mfd__map-fpl-point--active' : 'mfd__map-fpl-point'}
+                  key={`fpl-${waypoint.id}-${index}`}
+                  className={
+                    waypoint.active ? 'mfd__map-fpl-point mfd__map-fpl-point--active' : 'mfd__map-fpl-point'
+                  }
                   cx={point.x}
                   cy={point.y}
                   r={1.4}
