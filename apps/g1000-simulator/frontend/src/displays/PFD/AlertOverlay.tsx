@@ -17,6 +17,8 @@ export function AlertOverlay({ socketStatus, telemetry }: AlertOverlayProps) {
   const alerts = managerRef.current.getAlerts({ telemetry, socketStatus })
   const visibleAlerts = alerts.slice(0, 4)
   const highestLevel = managerRef.current.getHighestLevel(alerts)
+  const warningActive = highestLevel === 'warning'
+  const cautionActive = highestLevel === 'caution'
 
   useEffect(() => {
     const last = lastToneRef.current
@@ -35,6 +37,22 @@ export function AlertOverlay({ socketStatus, telemetry }: AlertOverlayProps) {
 
   return (
     <div className="pfd__alerts">
+      <div className="pfd__alert-master" role="status" aria-live="polite">
+        <span
+          className={`pfd__alert-master-light pfd__alert-master-light--warning${
+            warningActive ? ' pfd__alert-master-light--active' : ''
+          }`}
+        >
+          WARN
+        </span>
+        <span
+          className={`pfd__alert-master-light pfd__alert-master-light--caution${
+            cautionActive ? ' pfd__alert-master-light--active' : ''
+          }`}
+        >
+          CAUT
+        </span>
+      </div>
       {visibleAlerts.map((alert) => (
         <button
           key={alert.id}
