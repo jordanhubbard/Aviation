@@ -16,6 +16,12 @@ type SoftkeyStoreState = {
   pressItem: (context: SoftkeyContext, itemId: string) => void
   goBack: (context: SoftkeyContext) => void
   goHome: (context: SoftkeyContext) => void
+  setToggleState: (
+    context: SoftkeyContext,
+    menuId: string,
+    itemId: string,
+    nextState: boolean,
+  ) => void
 }
 
 const buildToggleKey = (context: SoftkeyContext, menuId: string, itemId: string) =>
@@ -119,6 +125,24 @@ export const useSoftkeyStore = create<SoftkeyStoreState>((set, get) => ({
       }
     })
   },
+  setToggleState: (context, menuId, itemId, nextState) => {
+    set((state) => {
+      const contextState = state.contexts[context]
+      const toggleKey = buildToggleKey(context, menuId, itemId)
+      return {
+        contexts: {
+          ...state.contexts,
+          [context]: {
+            ...contextState,
+            toggleStates: {
+              ...contextState.toggleStates,
+              [toggleKey]: nextState,
+            },
+          },
+        },
+      }
+    })
+  },
 }))
 
 const buildDisplayItems = (
@@ -190,3 +214,9 @@ export const useSoftkeyMenu = (context: SoftkeyContext) => {
     [context, contextState, goBack, goHome, pressItem],
   )
 }
+
+export const useSoftkeyToggle = (context: SoftkeyContext, menuId: string, itemId: string) =>
+  useSoftkeyStore((state) => {
+    const key = buildToggleKey(context, menuId, itemId)
+    return state.contexts[context].toggleStates[key] ?? false
+  })

@@ -1343,6 +1343,14 @@ body {
   gap: 16px;
 }
 
+.mfd__content--map {
+  grid-template-columns: minmax(280px, 2.4fr) minmax(240px, 1fr);
+}
+
+.mfd__content--single {
+  grid-template-columns: 1fr;
+}
+
 .mfd__map {
   position: relative;
   min-height: 260px;
@@ -1503,6 +1511,245 @@ body {
   text-transform: uppercase;
 }
 
+.mfd__map-rotating {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.2s ease;
+}
+
+.mfd__map-svg {
+  width: 100%;
+  height: 100%;
+}
+
+.mfd__map-terrain {
+  opacity: 0.85;
+}
+
+.mfd__terrain-cell {
+  stroke: rgba(15, 23, 32, 0.2);
+  stroke-width: 0.2;
+}
+
+.mfd__terrain-cell--normal {
+  fill: rgba(26, 74, 38, 0.8);
+}
+
+.mfd__terrain-cell--advisory {
+  fill: rgba(112, 118, 39, 0.85);
+}
+
+.mfd__terrain-cell--caution {
+  fill: rgba(140, 86, 32, 0.85);
+}
+
+.mfd__terrain-cell--warning {
+  fill: rgba(143, 40, 40, 0.9);
+}
+
+.mfd__map-airspace-ring {
+  fill: none;
+  stroke: rgba(75, 178, 229, 0.8);
+  stroke-width: 0.35;
+  stroke-dasharray: 3 3;
+}
+
+.mfd__map-airspace-label {
+  fill: rgba(75, 178, 229, 0.9);
+  font-size: 3px;
+  text-anchor: middle;
+  dominant-baseline: middle;
+}
+
+.mfd__map-fpl-line {
+  fill: none;
+  stroke: #9be6ff;
+  stroke-width: 0.5;
+}
+
+.mfd__map-fpl-point {
+  fill: #9be6ff;
+}
+
+.mfd__map-fpl-point--active {
+  fill: #f8f4d0;
+}
+
+.mfd__map-feature-icon {
+  fill: rgba(11, 18, 24, 0.9);
+  stroke: #9fb3c8;
+  stroke-width: 0.4;
+}
+
+.mfd__map-feature--airport .mfd__map-feature-icon {
+  stroke: #6fd4ff;
+}
+
+.mfd__map-feature--vor .mfd__map-feature-icon {
+  stroke: #9af4b8;
+}
+
+.mfd__map-feature--ndb .mfd__map-feature-icon {
+  stroke: #f8f4d0;
+}
+
+.mfd__map-feature--fix .mfd__map-feature-icon {
+  stroke: #e6edf3;
+}
+
+.mfd__map-feature-label {
+  font-size: 3px;
+  fill: #d9e6f2;
+}
+
+.mfd__map-weather-cell {
+  opacity: 0.55;
+}
+
+.mfd__map-weather-cell--1 {
+  fill: rgba(62, 168, 76, 0.6);
+}
+
+.mfd__map-weather-cell--2 {
+  fill: rgba(235, 180, 45, 0.6);
+}
+
+.mfd__map-weather-cell--3 {
+  fill: rgba(220, 64, 64, 0.65);
+}
+
+.mfd__map-metar-icon {
+  stroke: #0f1720;
+  stroke-width: 0.4;
+}
+
+.mfd__map-metar-icon--vfr {
+  fill: #48c774;
+}
+
+.mfd__map-metar-icon--mvfr {
+  fill: #f7b731;
+}
+
+.mfd__map-metar-icon--ifr {
+  fill: #ff6b6b;
+}
+
+.mfd__map-wind line {
+  stroke: #c6d7e5;
+  stroke-width: 0.5;
+}
+
+.mfd__map-wind-label {
+  font-size: 3px;
+  fill: #e6edf3;
+}
+
+.mfd__map-lightning-icon {
+  font-size: 4px;
+  fill: #ffdc5c;
+}
+
+.mfd__map-traffic-target rect {
+  fill: rgba(15, 23, 32, 0.85);
+  stroke: #9fb3c8;
+  stroke-width: 0.5;
+}
+
+.mfd__map-traffic-target--ta rect {
+  stroke: #f7b731;
+  fill: rgba(247, 183, 49, 0.25);
+}
+
+.mfd__map-traffic-target--ra rect {
+  stroke: #ff6b6b;
+  fill: rgba(255, 107, 107, 0.3);
+}
+
+.mfd__map-traffic-label {
+  font-size: 3px;
+  fill: #e6edf3;
+}
+
+.mfd__map-obstacle path {
+  fill: rgba(233, 196, 106, 0.9);
+}
+
+.mfd__map-obstacle--warning path {
+  fill: rgba(255, 107, 107, 0.9);
+}
+
+.mfd__map-range-ring {
+  fill: none;
+  stroke: rgba(248, 244, 208, 0.6);
+  stroke-width: 0.35;
+  stroke-dasharray: 2 2;
+}
+
+.mfd__map-aircraft path {
+  fill: #f8f4d0;
+}
+
+.mfd__map-status-panel {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: rgba(11, 18, 24, 0.85);
+  border: 1px solid rgba(35, 53, 68, 0.8);
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #9fb3c8;
+}
+
+.mfd__map-scale {
+  position: absolute;
+  bottom: 12px;
+  left: 12px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: rgba(11, 18, 24, 0.85);
+  border: 1px solid rgba(35, 53, 68, 0.8);
+  font-size: 10px;
+  color: #9fb3c8;
+}
+
+.mfd__map-scale-bar {
+  display: inline-block;
+  width: 48px;
+  height: 2px;
+  background: #9fb3c8;
+}
+
+.mfd__panel {
+  border-radius: 12px;
+  border: 1px solid #223241;
+  background: #0f1720;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.mfd__panel-title {
+  margin: 0;
+  font-size: 14px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: #7c93a6;
+}
+
 .mfd__engine {
   border-radius: 12px;
   border: 1px solid #223241;
@@ -1559,6 +1806,429 @@ body {
   margin: 0;
   font-size: 13px;
   color: #9fb3c8;
+}
+
+.mfd__engine--full {
+  min-height: 520px;
+}
+
+.mfd__engine-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.mfd__engine-alert {
+  padding: 4px 8px;
+  border-radius: 999px;
+  border: 1px solid #223241;
+  font-size: 10px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: #9fb3c8;
+}
+
+.mfd__engine-alert--caution {
+  border-color: rgba(247, 183, 49, 0.8);
+  color: #f7b731;
+}
+
+.mfd__engine-alert--warn {
+  border-color: rgba(255, 107, 107, 0.85);
+  color: #ff6b6b;
+}
+
+.mfd__engine-gauges {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 10px;
+}
+
+.mfd__engine-gauge {
+  padding: 10px;
+  border-radius: 10px;
+  border: 1px solid #1c2a37;
+  background: #0c141b;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.mfd__engine-bar {
+  height: 4px;
+  border-radius: 999px;
+  background: rgba(35, 50, 65, 0.6);
+  overflow: hidden;
+}
+
+.mfd__engine-bar span {
+  display: block;
+  height: 100%;
+  background: linear-gradient(90deg, #4bb2e5, #9be6ff);
+}
+
+.mfd__engine-section-header {
+  font-size: 11px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: #7c93a6;
+}
+
+.mfd__engine-temps {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.mfd__engine-cylinder-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(70px, 1fr));
+  gap: 8px;
+}
+
+.mfd__engine-cylinder {
+  padding: 6px;
+  border-radius: 8px;
+  border: 1px solid #1c2a37;
+  background: #0c141b;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+
+.mfd__engine-cylinder-label {
+  font-size: 9px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: #9fb3c8;
+}
+
+.mfd__engine-cylinder-bars {
+  display: flex;
+  align-items: flex-end;
+  gap: 4px;
+  height: 48px;
+}
+
+.mfd__engine-cylinder-bar {
+  width: 8px;
+  border-radius: 4px 4px 0 0;
+  background: #f7b731;
+}
+
+.mfd__engine-cylinder-bar--cht {
+  background: #4bb2e5;
+}
+
+.mfd__engine-cylinder-value {
+  font-size: 10px;
+  color: #e6edf3;
+}
+
+.mfd__engine-fuel,
+.mfd__engine-electrical {
+  padding: 10px;
+  border-radius: 10px;
+  border: 1px solid #1c2a37;
+  background: #0c141b;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.mfd__engine-fuel-grid,
+.mfd__engine-electrical-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 8px;
+}
+
+.mfd__engine-lean {
+  padding: 10px;
+  border-radius: 10px;
+  border: 1px solid #1c2a37;
+  background: #0c141b;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+
+.mfd__menu-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.mfd__menu-section {
+  padding: 12px;
+  border-radius: 12px;
+  border: 1px solid #223241;
+  background: #0f1720;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.mfd__menu-heading {
+  font-size: 11px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: #7c93a6;
+}
+
+.mfd__menu-list {
+  display: grid;
+  gap: 8px;
+}
+
+.mfd__menu-list--toggle {
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+}
+
+.mfd__menu-item {
+  padding: 10px;
+  border-radius: 8px;
+  border: 1px solid #1c2a37;
+  background: #0c141b;
+  color: #9fb3c8;
+  font-size: 12px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.mfd__menu-item--active {
+  border-color: #4bb2e5;
+  color: #e6edf3;
+  background: rgba(75, 178, 229, 0.12);
+}
+
+.mfd__menu-controls {
+  display: grid;
+  gap: 12px;
+}
+
+.mfd__menu-label {
+  font-size: 10px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: #9fb3c8;
+}
+
+.mfd__menu-control-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: #e6edf3;
+}
+
+.mfd__menu-control-row button {
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  border: 1px solid #223241;
+  background: #0c141b;
+  color: #e6edf3;
+  cursor: pointer;
+}
+
+.mfd__trip {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.mfd__trip-section {
+  padding: 14px;
+  border-radius: 12px;
+  border: 1px solid #223241;
+  background: #0f1720;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.mfd__trip-title {
+  margin: 0;
+  font-size: 13px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: #7c93a6;
+}
+
+.mfd__trip-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 10px;
+}
+
+.mfd__trip-grid--weights {
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+}
+
+.mfd__trip-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 10px;
+  color: #9fb3c8;
+}
+
+.mfd__trip-field input {
+  padding: 6px 8px;
+  border-radius: 6px;
+  border: 1px solid #223241;
+  background: #0c141b;
+  color: #e6edf3;
+  font-size: 12px;
+}
+
+.mfd__trip-result {
+  padding: 8px;
+  border-radius: 8px;
+  border: 1px solid #1c2a37;
+  background: #0c141b;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 11px;
+  color: #9fb3c8;
+}
+
+.mfd__trip-result strong {
+  color: #e6edf3;
+  font-size: 13px;
+}
+
+.mfd__trip-result--warn strong {
+  color: #ff6b6b;
+}
+
+.mfd__nearest-header {
+  display: flex;
+  justify-content: space-between;
+  font-size: 11px;
+  color: #9fb3c8;
+}
+
+.mfd__nearest-list {
+  display: grid;
+  gap: 8px;
+}
+
+.mfd__nearest-row {
+  padding: 8px 10px;
+  border-radius: 8px;
+  border: 1px solid #1c2a37;
+  background: #0c141b;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
+.mfd__nearest-id {
+  font-weight: 600;
+  color: #e6edf3;
+}
+
+.mfd__nearest-type {
+  font-size: 10px;
+  color: #7c93a6;
+  text-transform: uppercase;
+}
+
+.mfd__nearest-meta {
+  display: flex;
+  flex-direction: column;
+  font-size: 11px;
+  color: #9fb3c8;
+}
+
+.mfd__nearest-info {
+  font-size: 11px;
+  color: #cbd5e1;
+}
+
+.mfd__fpl-list {
+  display: grid;
+  gap: 6px;
+}
+
+.mfd__fpl-row {
+  display: grid;
+  grid-template-columns: 32px 80px 1fr;
+  gap: 8px;
+  align-items: center;
+  font-size: 12px;
+  color: #e6edf3;
+}
+
+.mfd__fpl-index {
+  padding: 4px 6px;
+  border-radius: 6px;
+  background: #0c141b;
+  border: 1px solid #223241;
+  text-align: center;
+  font-size: 10px;
+  color: #9fb3c8;
+}
+
+.mfd__fpl-name {
+  color: #9fb3c8;
+  font-size: 11px;
+}
+
+.mfd__fpl-legs {
+  display: grid;
+  gap: 6px;
+}
+
+.mfd__fpl-leg {
+  display: flex;
+  justify-content: space-between;
+  padding: 6px 8px;
+  border-radius: 8px;
+  border: 1px solid #1c2a37;
+  background: #0c141b;
+  font-size: 11px;
+  color: #9fb3c8;
+}
+
+.mfd__fpl-leg--active {
+  border-color: rgba(75, 178, 229, 0.8);
+  color: #e6edf3;
+  background: rgba(75, 178, 229, 0.12);
+}
+
+.mfd__proc-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 12px;
+}
+
+.mfd__proc-title {
+  font-size: 11px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: #7c93a6;
+}
+
+.mfd__proc-item {
+  margin-top: 6px;
+  padding: 6px 8px;
+  border-radius: 6px;
+  border: 1px solid #1c2a37;
+  background: #0c141b;
+  font-size: 11px;
+  color: #e6edf3;
 }
 
 .mfd__footer {

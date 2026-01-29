@@ -1,3 +1,5 @@
+import { useMfdStore } from '../stores/mfdStore'
+
 export type SoftkeyContext = 'pfd' | 'mfd'
 
 export type SoftkeyMenuItem = {
@@ -29,6 +31,10 @@ const linkMenus = (menu: SoftkeyMenu) => {
   return menu
 }
 
+const setMfdPage = (page: 'map' | 'engine' | 'nearest' | 'flight-plan' | 'procedures' | 'trip' | 'menu') => {
+  useMfdStore.getState().setActivePage(page)
+}
+
 const mapSettingsMenu: SoftkeyMenu = {
   id: 'mfd-map-settings',
   title: 'Map Settings',
@@ -37,6 +43,8 @@ const mapSettingsMenu: SoftkeyMenu = {
     { id: 'airspace', label: 'AIRSPC', toggle: true, state: false },
     { id: 'data', label: 'DATA', toggle: true, state: true },
     { id: 'declutter', label: 'DECLUT', toggle: true, state: false },
+    { id: 'wind', label: 'WIND', toggle: true, state: false },
+    { id: 'ltng', label: 'LTNG', toggle: true, state: false },
   ],
 }
 
@@ -77,10 +85,10 @@ const nearestMenu: SoftkeyMenu = {
   id: 'mfd-nrst',
   title: 'Nearest',
   items: [
-    { id: 'airport', label: 'APT', actionId: 'mfd-nrst-airport' },
-    { id: 'vor', label: 'VOR', actionId: 'mfd-nrst-vor' },
-    { id: 'ndb', label: 'NDB', actionId: 'mfd-nrst-ndb' },
-    { id: 'int', label: 'INT', actionId: 'mfd-nrst-int' },
+    { id: 'airport', label: 'APT', actionId: 'mfd-nrst-airport', action: () => setMfdPage('nearest') },
+    { id: 'vor', label: 'VOR', actionId: 'mfd-nrst-vor', action: () => setMfdPage('nearest') },
+    { id: 'ndb', label: 'NDB', actionId: 'mfd-nrst-ndb', action: () => setMfdPage('nearest') },
+    { id: 'int', label: 'INT', actionId: 'mfd-nrst-int', action: () => setMfdPage('nearest') },
   ],
 }
 
@@ -88,10 +96,10 @@ const flightPlanMenu: SoftkeyMenu = {
   id: 'mfd-fpl',
   title: 'Flight Plan',
   items: [
-    { id: 'new', label: 'NEW', actionId: 'mfd-fpl-new' },
-    { id: 'activate', label: 'ACTV', actionId: 'mfd-fpl-activate' },
-    { id: 'edit', label: 'EDIT', actionId: 'mfd-fpl-edit' },
-    { id: 'load', label: 'LOAD', actionId: 'mfd-fpl-load' },
+    { id: 'new', label: 'NEW', actionId: 'mfd-fpl-new', action: () => setMfdPage('flight-plan') },
+    { id: 'activate', label: 'ACTV', actionId: 'mfd-fpl-activate', action: () => setMfdPage('flight-plan') },
+    { id: 'edit', label: 'EDIT', actionId: 'mfd-fpl-edit', action: () => setMfdPage('flight-plan') },
+    { id: 'load', label: 'LOAD', actionId: 'mfd-fpl-load', action: () => setMfdPage('flight-plan') },
   ],
 }
 
@@ -99,10 +107,10 @@ const proceduresMenu: SoftkeyMenu = {
   id: 'mfd-proc',
   title: 'Procedures',
   items: [
-    { id: 'departure', label: 'DEP', actionId: 'mfd-proc-departure' },
-    { id: 'arrival', label: 'ARR', actionId: 'mfd-proc-arrival' },
-    { id: 'approach', label: 'APR', actionId: 'mfd-proc-approach' },
-    { id: 'activate', label: 'ACTV', actionId: 'mfd-proc-activate' },
+    { id: 'departure', label: 'DEP', actionId: 'mfd-proc-departure', action: () => setMfdPage('procedures') },
+    { id: 'arrival', label: 'ARR', actionId: 'mfd-proc-arrival', action: () => setMfdPage('procedures') },
+    { id: 'approach', label: 'APR', actionId: 'mfd-proc-approach', action: () => setMfdPage('procedures') },
+    { id: 'activate', label: 'ACTV', actionId: 'mfd-proc-activate', action: () => setMfdPage('procedures') },
   ],
 }
 
@@ -110,10 +118,11 @@ const menuMenu: SoftkeyMenu = {
   id: 'mfd-menu',
   title: 'Menu',
   items: [
-    { id: 'pfd', label: 'PFD', actionId: 'mfd-menu-pfd' },
-    { id: 'mfd', label: 'MFD', actionId: 'mfd-menu-mfd' },
+    { id: 'pfd', label: 'PFD', actionId: 'mfd-menu-pfd', action: () => setMfdPage('map') },
+    { id: 'mfd', label: 'MFD', actionId: 'mfd-menu-mfd', action: () => setMfdPage('menu') },
     { id: 'audio', label: 'AUDIO', actionId: 'mfd-menu-audio' },
     { id: 'alerts', label: 'ALERTS', actionId: 'mfd-menu-alerts' },
+    { id: 'aux', label: 'AUX', actionId: 'mfd-menu-aux', action: () => setMfdPage('trip') },
   ],
 }
 
@@ -121,12 +130,12 @@ const MFD_ROOT_MENU: SoftkeyMenu = linkMenus({
   id: 'mfd-root',
   title: 'MFD',
   items: [
-    { id: 'map', label: 'MAP', submenu: mapMenu },
-    { id: 'engine', label: 'ENGINE', submenu: engineMenu },
-    { id: 'nrst', label: 'NRST', submenu: nearestMenu },
-    { id: 'fpl', label: 'FPL', submenu: flightPlanMenu },
-    { id: 'proc', label: 'PROC', submenu: proceduresMenu },
-    { id: 'menu', label: 'MENU', submenu: menuMenu },
+    { id: 'map', label: 'MAP', submenu: mapMenu, action: () => setMfdPage('map') },
+    { id: 'engine', label: 'ENGINE', submenu: engineMenu, action: () => setMfdPage('engine') },
+    { id: 'nrst', label: 'NRST', submenu: nearestMenu, action: () => setMfdPage('nearest') },
+    { id: 'fpl', label: 'FPL', submenu: flightPlanMenu, action: () => setMfdPage('flight-plan') },
+    { id: 'proc', label: 'PROC', submenu: proceduresMenu, action: () => setMfdPage('procedures') },
+    { id: 'menu', label: 'MENU', submenu: menuMenu, action: () => setMfdPage('menu') },
   ],
 })
 
