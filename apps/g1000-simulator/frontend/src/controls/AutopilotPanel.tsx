@@ -4,7 +4,22 @@ const lateralModes = ['ROL', 'HDG', 'NAV', 'APR', 'BC'] as const
 const verticalModes = ['PIT', 'VS', 'ALT', 'ALTS', 'GS', 'GP'] as const
 
 export const AutopilotPanel = () => {
-  const { state, toggleMaster, setLateralMode, setVerticalMode, resetModes } = useAutopilot()
+  const {
+    state,
+    navAvailable,
+    toggleMaster,
+    setLateralMode,
+    setVerticalMode,
+    toggleApproachArmed,
+    resetModes,
+  } = useAutopilot()
+
+  const isLateralDisabled = (mode: (typeof lateralModes)[number]) => {
+    if (mode === 'NAV') return !navAvailable
+    if (mode === 'APR') return !navAvailable || !state.approachArmed
+    if (mode === 'BC') return !navAvailable || !state.approachArmed || state.lateralMode !== 'APR'
+    return false
+  }
 
   return (
     <div className="autopilot">
@@ -29,6 +44,7 @@ export const AutopilotPanel = () => {
                   state.lateralMode === mode ? ' autopilot__button--active' : ''
                 }`}
                 type="button"
+                disabled={isLateralDisabled(mode)}
                 onClick={() => setLateralMode(mode)}
               >
                 {mode}
@@ -52,6 +68,20 @@ export const AutopilotPanel = () => {
               </button>
             ))}
           </div>
+        </div>
+      </div>
+      <div className="autopilot__section">
+        <span className="autopilot__label">Nav Inputs</span>
+        <div className="autopilot__nav-controls">
+          <span className={`autopilot__chip${navAvailable ? ' autopilot__chip--active' : ''}`}>FPL</span>
+          <button
+            type="button"
+            className={`autopilot__button${state.approachArmed ? ' autopilot__button--active' : ''}`}
+            onClick={toggleApproachArmed}
+            disabled={!navAvailable}
+          >
+            APR ARM
+          </button>
         </div>
       </div>
       <button className="autopilot__reset" type="button" onClick={resetModes}>

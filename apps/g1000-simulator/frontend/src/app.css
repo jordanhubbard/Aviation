@@ -845,7 +845,36 @@ body {
   cursor: pointer;
 }
 
+.autopilot__button:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
 .autopilot__button--active {
+  border-color: #4bb2e5;
+  color: #e6edf3;
+  background: rgba(75, 178, 229, 0.12);
+}
+
+.autopilot__nav-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+}
+
+.autopilot__chip {
+  padding: 4px 8px;
+  border-radius: 999px;
+  border: 1px solid #223241;
+  background: #0c141b;
+  color: #7c93a6;
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.autopilot__chip--active {
   border-color: #4bb2e5;
   color: #e6edf3;
   background: rgba(75, 178, 229, 0.12);
