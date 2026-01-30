@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import asdict, dataclass, field
 import math
 import time
 from typing import Dict
@@ -10,10 +10,13 @@ from app.services.ahrs import compute_ahrs
 from app.services.adc import compute_adc
 from app.services.autopilot import (
     AutopilotStatus,
+    DEFAULT_PITCH_PID,
+    DEFAULT_ROLL_PID,
     LATERAL_MODES,
     PidConfig,
     PidController,
     VERTICAL_MODES,
+    get_autopilot_tuning,
 )
 from app.services.audio_panel import AudioPanelState, compute_marker_beacons
 from app.services.gps import compute_gps
@@ -76,28 +79,10 @@ class FlightDynamicsConfig:
     altitude_capture_ft: float = 80.0
     autopilot_disconnect_seconds: float = 4.0
     heading_capture_deg: float = 3.0
-    roll_pid: PidConfig = field(
-        default_factory=lambda: PidConfig(
-            kp=0.6,
-            ki=0.02,
-            kd=0.1,
-            integrator_min=-20.0,
-            integrator_max=20.0,
-            output_min=-25.0,
-            output_max=25.0,
-        )
-    )
-    pitch_pid: PidConfig = field(
-        default_factory=lambda: PidConfig(
-            kp=0.02,
-            ki=0.005,
-            kd=0.01,
-            integrator_min=-10.0,
-            integrator_max=10.0,
-            output_min=-10.0,
-            output_max=10.0,
-        )
-    )
+    roll_pid: PidConfig = field(default_factory=lambda: PidConfig(**asdict(DEFAULT_ROLL_PID)))
+    pitch_pid: PidConfig = field(default_factory=lambda: PidConfig(**asdict(DEFAULT_PITCH_PID)))
+    roll_pid_override: PidConfig | None = None
+    pitch_pid_override: PidConfig | None = None
 
 
 @dataclass
@@ -122,6 +107,13 @@ class FlightDynamicsSimulator:
 
     def reset(self) -> None:
         initial_state = default_c172_state()
+        tuning = get_autopilot_tuning(
+            initial_state.aircraft_id,
+            roll_pid_override=self.config.roll_pid_override,
+            pitch_pid_override=self.config.pitch_pid_override,
+        )
+        self.config.roll_pid = tuning.roll_pid
+        self.config.pitch_pid = tuning.pitch_pid
         self.state = FlightState(
             latitude_deg=initial_state.position.latitude_deg,
             longitude_deg=initial_state.position.longitude_deg,
