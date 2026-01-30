@@ -25,7 +25,7 @@
     "dataloader": "^2.2.2",
     "dotenv": "^17.2.3",
     "express": "^4.19.2",
-    "express-rate-limit": "^7.1.5",
+    "express-rate-limit": "^8.2.1",
     "graphql": "^16.8.1",
     "graphql-subscriptions": "^3.0.0",
     "graphql-validation-complexity": "^0.4.2",
