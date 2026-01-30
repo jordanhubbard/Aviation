@@ -7,6 +7,8 @@ export const AutopilotPanel = () => {
   const {
     state,
     navAvailable,
+    selectedAltitude,
+    altitudeCaptureArmed,
     toggleMaster,
     setLateralMode,
     setVerticalMode,
@@ -20,6 +22,20 @@ export const AutopilotPanel = () => {
     if (mode === 'BC') return !navAvailable || !state.approachArmed || state.lateralMode !== 'APR'
     return false
   }
+
+  const isVerticalDisabled = (mode: (typeof verticalModes)[number]) => {
+    if (mode === 'ALTS') return !altitudeCaptureArmed
+    if (mode === 'GS' || mode === 'GP') {
+      return (
+        !navAvailable ||
+        !state.approachArmed ||
+        !(state.verticalMode === 'VS' || state.verticalMode === 'ALTS' || state.verticalMode === mode)
+      )
+    }
+    return false
+  }
+
+  const altitudeLabel = selectedAltitude !== null ? Math.round(selectedAltitude).toString() : '---'
 
   return (
     <div className="autopilot">
@@ -62,6 +78,7 @@ export const AutopilotPanel = () => {
                   state.verticalMode === mode ? ' autopilot__button--active' : ''
                 }`}
                 type="button"
+                disabled={isVerticalDisabled(mode)}
                 onClick={() => setVerticalMode(mode)}
               >
                 {mode}
@@ -82,6 +99,21 @@ export const AutopilotPanel = () => {
           >
             APR ARM
           </button>
+        </div>
+      </div>
+      <div className="autopilot__section">
+        <span className="autopilot__label">Altitude Capture</span>
+        <div className="autopilot__nav-controls">
+          <span
+            className={`autopilot__chip${altitudeCaptureArmed ? ' autopilot__chip--active' : ''}`}
+          >
+            ALT SEL {altitudeLabel}
+          </span>
+          <span
+            className={`autopilot__chip${state.verticalMode === 'ALT' ? ' autopilot__chip--active' : ''}`}
+          >
+            ALT CAP
+          </span>
         </div>
       </div>
       <button className="autopilot__reset" type="button" onClick={resetModes}>
