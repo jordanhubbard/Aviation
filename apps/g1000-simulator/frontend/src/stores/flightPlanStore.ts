@@ -29,9 +29,19 @@ export type FlightPlanDraft = {
   activeLegIndex: number
 }
 
+export type FlightPlanNavigation = {
+  isActive: boolean
+  isSuspended: boolean
+  cdiSource: 'FPL' | 'DIR'
+  directToTargetId: string | null
+  directToResumeLegIndex: number | null
+  directToPanelOpen: boolean
+}
+
 type FlightPlanState = {
   plan: FlightPlanDraft
   nextWaypointIndex: number
+  navigation: FlightPlanNavigation
 }
 
 type FlightPlanActions = {
@@ -42,6 +52,13 @@ type FlightPlanActions = {
   resetPlan: () => void
   loadSamplePlan: () => void
   setActiveLegIndex: (index: number) => void
+  activatePlan: () => void
+  invertPlan: () => void
+  suspendPlan: () => void
+  resumePlan: () => void
+  activateDirectTo: (targetId: string, targetLegIndex: number) => void
+  cancelDirectTo: () => void
+  setDirectToPanelOpen: (open: boolean) => void
 }
 
 const buildPlan = (): FlightPlanDraft => ({
@@ -70,6 +87,15 @@ const buildSamplePlan = (): FlightPlanDraft => ({
   activeLegIndex: 0,
 })
 
+const buildNavigation = (): FlightPlanNavigation => ({
+  isActive: false,
+  isSuspended: false,
+  cdiSource: 'FPL',
+  directToTargetId: null,
+  directToResumeLegIndex: null,
+  directToPanelOpen: false,
+})
+
 const buildWaypoint = (
   state: FlightPlanState,
   waypoint: Partial<FlightPlanWaypoint>,
@@ -92,6 +118,7 @@ const clampIndex = (index: number, max: number) => Math.max(0, Math.min(max, ind
 export const useFlightPlanStore = create<FlightPlanState & FlightPlanActions>((set) => ({
   plan: buildPlan(),
   nextWaypointIndex: 1,
+  navigation: buildNavigation(),
   setField: (field, value) => {
     set((state) => ({ plan: { ...state.plan, [field]: value } }))
   },
@@ -119,18 +146,130 @@ export const useFlightPlanStore = create<FlightPlanState & FlightPlanActions>((s
   },
   removeWaypoint: (index) => {
     set((state) => {
+      const removed = state.plan.waypoints[index]
       const waypoints = state.plan.waypoints.filter((_, waypointIndex) => waypointIndex !== index)
-      const activeLegIndex = clampIndex(state.plan.activeLegIndex, Math.max(0, waypoints.length - 1))
-      return { plan: { ...state.plan, waypoints, activeLegIndex } }
+      const activeLegIndex = clampIndex(state.plan.activeLegIndex, Math.max(0, waypoints.length))
+      const navigation =
+        removed && removed.id === state.navigation.directToTargetId
+          ? {
+              ...state.navigation,
+              directToTargetId: null,
+              directToResumeLegIndex: null,
+              cdiSource: 'FPL',
+              directToPanelOpen: false,
+            }
+          : state.navigation
+      return { plan: { ...state.plan, waypoints, activeLegIndex }, navigation }
     })
   },
-  resetPlan: () => set({ plan: buildPlan(), nextWaypointIndex: 1 }),
-  loadSamplePlan: () => set({ plan: buildSamplePlan(), nextWaypointIndex: 1 }),
+  resetPlan: () => set({ plan: buildPlan(), nextWaypointIndex: 1, navigation: buildNavigation() }),
+  loadSamplePlan: () =>
+    set({ plan: buildSamplePlan(), nextWaypointIndex: 1, navigation: buildNavigation() }),
   setActiveLegIndex: (index) =>
     set((state) => ({
       plan: {
         ...state.plan,
         activeLegIndex: clampIndex(index, Math.max(0, state.plan.waypoints.length)),
+      },
+      navigation: {
+        ...state.navigation,
+        directToTargetId: null,
+        directToResumeLegIndex: null,
+        cdiSource: 'FPL',
+      },
+    })),
+  activatePlan: () =>
+    set((state) => ({
+      plan: {
+        ...state.plan,
+        activeLegIndex: clampIndex(0, Math.max(0, state.plan.waypoints.length)),
+      },
+      navigation: {
+        ...state.navigation,
+        isActive: true,
+        isSuspended: false,
+        directToTargetId: null,
+        directToResumeLegIndex: null,
+        cdiSource: 'FPL',
+        directToPanelOpen: false,
+      },
+    })),
+  invertPlan: () =>
+    set((state) => {
+      const waypoints = [...state.plan.waypoints].reverse()
+      return {
+        plan: {
+          ...state.plan,
+          origin: state.plan.destination,
+          destination: state.plan.origin,
+          waypoints,
+          activeLegIndex: 0,
+        },
+        navigation: {
+          ...state.navigation,
+          isSuspended: false,
+          directToTargetId: null,
+          directToResumeLegIndex: null,
+          cdiSource: 'FPL',
+          directToPanelOpen: false,
+        },
+      }
+    }),
+  suspendPlan: () =>
+    set((state) => ({
+      navigation: {
+        ...state.navigation,
+        isActive: true,
+        isSuspended: true,
+      },
+    })),
+  resumePlan: () =>
+    set((state) => ({
+      navigation: {
+        ...state.navigation,
+        isActive: true,
+        isSuspended: false,
+      },
+    })),
+  activateDirectTo: (targetId, targetLegIndex) =>
+    set((state) => ({
+      plan: {
+        ...state.plan,
+        activeLegIndex: clampIndex(targetLegIndex, Math.max(0, state.plan.waypoints.length)),
+      },
+      navigation: {
+        ...state.navigation,
+        isActive: true,
+        isSuspended: false,
+        cdiSource: 'DIR',
+        directToTargetId: targetId,
+        directToResumeLegIndex: state.plan.activeLegIndex,
+        directToPanelOpen: false,
+      },
+    })),
+  cancelDirectTo: () =>
+    set((state) => {
+      if (!state.navigation.directToTargetId) return state
+      const resumeIndex = state.navigation.directToResumeLegIndex ?? state.plan.activeLegIndex
+      return {
+        plan: {
+          ...state.plan,
+          activeLegIndex: clampIndex(resumeIndex, Math.max(0, state.plan.waypoints.length)),
+        },
+        navigation: {
+          ...state.navigation,
+          directToTargetId: null,
+          directToResumeLegIndex: null,
+          cdiSource: 'FPL',
+          directToPanelOpen: false,
+        },
+      }
+    }),
+  setDirectToPanelOpen: (open) =>
+    set((state) => ({
+      navigation: {
+        ...state.navigation,
+        directToPanelOpen: open,
       },
     })),
 }))

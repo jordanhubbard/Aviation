@@ -22,6 +22,8 @@ import { useCommandSocket } from './hooks/useCommandSocket'
 import { useTelemetrySocket } from './hooks/useTelemetrySocket'
 import { AlertManager } from './services/alert-manager'
 import { AutopilotProvider } from './stores/autopilotStore'
+import { useFlightPlanStore } from './stores/flightPlanStore'
+import { useMfdStore } from './stores/mfdStore'
 import { useThemePreference } from './stores/uiStore'
 
 const DEFAULT_TARGETS = {
@@ -38,6 +40,8 @@ export default function App() {
   const [lastInput, setLastInput] = useState('---')
   const theme = useThemePreference()
   const alertManager = useMemo(() => new AlertManager(), [])
+  const setMfdPage = useMfdStore((state) => state.setActivePage)
+  const setDirectToPanelOpen = useFlightPlanStore((state) => state.setDirectToPanelOpen)
 
   useCursorInput()
 
@@ -115,6 +119,17 @@ export default function App() {
   const handleButtonEvent = (event: PushButtonEvent) => {
     if (event.type === 'long-press') {
       setLastInput(`${event.button.label} HOLD`)
+      return
+    }
+    if (event.button.action === 'open-flight-plan') {
+      setMfdPage('flight-plan')
+      setLastInput(event.button.label)
+      return
+    }
+    if (event.button.action === 'open-direct-to') {
+      setMfdPage('flight-plan')
+      setDirectToPanelOpen(true)
+      setLastInput(event.button.label)
       return
     }
     if (event.button.action === 'reset-targets') {

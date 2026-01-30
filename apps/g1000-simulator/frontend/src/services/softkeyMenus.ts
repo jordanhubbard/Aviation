@@ -98,7 +98,9 @@ const flightPlanMenu: SoftkeyMenu = {
   items: [
     { id: 'new', label: 'NEW', actionId: 'mfd-fpl-new', action: () => setMfdPage('flight-plan') },
     { id: 'activate', label: 'ACTV', actionId: 'mfd-fpl-activate', action: () => setMfdPage('flight-plan') },
-    { id: 'edit', label: 'EDIT', actionId: 'mfd-fpl-edit', action: () => setMfdPage('flight-plan') },
+    { id: 'direct', label: 'DIR', actionId: 'mfd-fpl-direct', action: () => setMfdPage('flight-plan') },
+    { id: 'invert', label: 'INVT', actionId: 'mfd-fpl-invert', action: () => setMfdPage('flight-plan') },
+    { id: 'suspend', label: 'SUSP', actionId: 'mfd-fpl-suspend', action: () => setMfdPage('flight-plan') },
     { id: 'load', label: 'LOAD', actionId: 'mfd-fpl-load', action: () => setMfdPage('flight-plan') },
   ],
 }

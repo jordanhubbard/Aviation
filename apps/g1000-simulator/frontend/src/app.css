@@ -2172,6 +2172,7 @@ body {
 .mfd__fpl-actions {
   display: flex;
   gap: 6px;
+  flex-wrap: wrap;
 }
 
 .mfd__fpl-button {
@@ -2186,6 +2187,22 @@ body {
   cursor: pointer;
 }
 
+.mfd__fpl-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.mfd__fpl-button--active {
+  border-color: rgba(75, 178, 229, 0.8);
+  background: rgba(75, 178, 229, 0.12);
+}
+
+.mfd__fpl-button--danger {
+  border-color: rgba(255, 107, 107, 0.65);
+  background: rgba(255, 107, 107, 0.12);
+  color: #ff9b9b;
+}
+
 .mfd__fpl-button:hover {
   border-color: rgba(75, 178, 229, 0.8);
 }
@@ -2197,8 +2214,89 @@ body {
   gap: 8px;
 }
 
+.mfd__fpl-status {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 8px;
+}
+
+.mfd__fpl-status-card {
+  padding: 8px 10px;
+  border-radius: 8px;
+  border: 1px solid #223241;
+  background: #0f1720;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 10px;
+  color: #9fb3c8;
+}
+
+.mfd__fpl-status-card strong {
+  font-size: 12px;
+  color: #e6edf3;
+}
+
+.mfd__fpl-sequence {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 8px;
+}
+
+.mfd__fpl-sequence-item {
+  padding: 6px 8px;
+  border-radius: 8px;
+  border: 1px dashed #223241;
+  background: #0c141b;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 10px;
+  color: #9fb3c8;
+}
+
 .mfd__fpl-add {
   align-items: end;
+}
+
+.mfd__fpl-direct {
+  display: grid;
+  gap: 8px;
+  padding: 10px;
+  border-radius: 10px;
+  border: 1px solid #223241;
+  background: #0f1720;
+}
+
+.mfd__fpl-direct-header {
+  display: flex;
+  justify-content: space-between;
+  text-transform: uppercase;
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  color: #7c93a6;
+}
+
+.mfd__fpl-direct-title {
+  font-weight: 600;
+}
+
+.mfd__fpl-direct-state {
+  color: #e6edf3;
+}
+
+.mfd__fpl-direct-controls {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 8px;
+  align-items: end;
+}
+
+.mfd__fpl-direct-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
 }
 
 .mfd__fpl-field {
@@ -2240,6 +2338,11 @@ body {
 .mfd__fpl-row--active {
   border-color: rgba(75, 178, 229, 0.8);
   background: rgba(75, 178, 229, 0.12);
+}
+
+.mfd__fpl-row--direct {
+  border-color: rgba(255, 193, 7, 0.6);
+  background: rgba(255, 193, 7, 0.08);
 }
 
 .mfd__fpl-index {

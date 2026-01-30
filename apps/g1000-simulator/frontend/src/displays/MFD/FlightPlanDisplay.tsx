@@ -51,6 +51,7 @@ const calcDistanceNm = (lat1: number, lon1: number, lat2: number, lon2: number) 
 export const FlightPlanDisplay = ({ telemetry }: FlightPlanDisplayProps) => {
   const {
     plan,
+    navigation,
     addWaypoint,
     updateWaypoint,
     removeWaypoint,
@@ -58,8 +59,16 @@ export const FlightPlanDisplay = ({ telemetry }: FlightPlanDisplayProps) => {
     loadSamplePlan,
     setField,
     setActiveLegIndex,
+    activatePlan,
+    invertPlan,
+    suspendPlan,
+    resumePlan,
+    activateDirectTo,
+    cancelDirectTo,
+    setDirectToPanelOpen,
   } = useFlightPlanStore((state) => ({
     plan: state.plan,
+    navigation: state.navigation,
     addWaypoint: state.addWaypoint,
     updateWaypoint: state.updateWaypoint,
     removeWaypoint: state.removeWaypoint,
@@ -67,6 +76,13 @@ export const FlightPlanDisplay = ({ telemetry }: FlightPlanDisplayProps) => {
     loadSamplePlan: state.loadSamplePlan,
     setField: state.setField,
     setActiveLegIndex: state.setActiveLegIndex,
+    activatePlan: state.activatePlan,
+    invertPlan: state.invertPlan,
+    suspendPlan: state.suspendPlan,
+    resumePlan: state.resumePlan,
+    activateDirectTo: state.activateDirectTo,
+    cancelDirectTo: state.cancelDirectTo,
+    setDirectToPanelOpen: state.setDirectToPanelOpen,
   }))
   const lastAction = useSoftkeyStore((state) => state.contexts.mfd.lastAction)
   const [newIdent, setNewIdent] = useState('')
@@ -75,6 +91,7 @@ export const FlightPlanDisplay = ({ telemetry }: FlightPlanDisplayProps) => {
   const [newAltitude, setNewAltitude] = useState('')
   const [newSpeed, setNewSpeed] = useState('')
   const [insertAfter, setInsertAfter] = useState('-1')
+  const [directToSelection, setDirectToSelection] = useState('')
 
   useEffect(() => {
     if (lastAction === 'mfd-fpl-new') {
@@ -84,9 +101,32 @@ export const FlightPlanDisplay = ({ telemetry }: FlightPlanDisplayProps) => {
       loadSamplePlan()
     }
     if (lastAction === 'mfd-fpl-activate') {
-      setActiveLegIndex(0)
+      activatePlan()
     }
-  }, [lastAction, loadSamplePlan, resetPlan, setActiveLegIndex])
+    if (lastAction === 'mfd-fpl-direct') {
+      setDirectToPanelOpen(true)
+    }
+    if (lastAction === 'mfd-fpl-invert') {
+      invertPlan()
+    }
+    if (lastAction === 'mfd-fpl-suspend') {
+      if (navigation.isSuspended) {
+        resumePlan()
+      } else {
+        suspendPlan()
+      }
+    }
+  }, [
+    activatePlan,
+    invertPlan,
+    lastAction,
+    loadSamplePlan,
+    navigation.isSuspended,
+    resetPlan,
+    resumePlan,
+    setDirectToPanelOpen,
+    suspendPlan,
+  ])
 
   useEffect(() => {
     if (plan.waypoints.length === 0 && insertAfter !== '-1') {
@@ -134,10 +174,50 @@ export const FlightPlanDisplay = ({ telemetry }: FlightPlanDisplayProps) => {
     })
   }, [plan.activeLegIndex, routePoints])
 
+  const directToCandidates = useMemo(() => {
+    if (routePoints.length === 0) return [] as Array<{ id: string; index: number; label: string }>
+    return routePoints.map((point, index) => {
+      const label =
+        index === 0
+          ? `${point.id} (ORIG)`
+          : index === routePoints.length - 1
+            ? `${point.id} (DEST)`
+            : `${point.id} (WPT ${index})`
+      return { id: point.id, index, label }
+    })
+  }, [routePoints])
+
+  const activeLeg = legs[plan.activeLegIndex]
+  const previousLeg = plan.activeLegIndex > 0 ? legs[plan.activeLegIndex - 1] : null
+  const nextLeg = plan.activeLegIndex < legs.length - 1 ? legs[plan.activeLegIndex + 1] : null
+  const directToActive = Boolean(navigation.directToTargetId)
+  const directToOpen = navigation.directToPanelOpen || directToActive
+
+  useEffect(() => {
+    if (!directToOpen) return
+    if (navigation.directToTargetId) {
+      setDirectToSelection(navigation.directToTargetId)
+      return
+    }
+    const defaultCandidate =
+      directToCandidates[plan.activeLegIndex + 1]?.id ?? directToCandidates[0]?.id ?? ''
+    if (defaultCandidate && defaultCandidate !== directToSelection) {
+      setDirectToSelection(defaultCandidate)
+    }
+  }, [
+    directToCandidates,
+    directToOpen,
+    directToSelection,
+    navigation.directToTargetId,
+    plan.activeLegIndex,
+  ])
+
   const totalDistance = useMemo(
     () => legs.reduce((total, leg) => total + leg.distance, 0),
     [legs],
   )
+  const statusLabel = navigation.isActive ? (navigation.isSuspended ? 'SUSP' : 'ACTIVE') : 'STBY'
+  const cdiLabel = navigation.cdiSource === 'DIR' ? 'DIR' : 'FPL'
 
   const handleAddWaypoint = () => {
     const normalizedIdent = sanitizeIdentifier(newIdent)
@@ -159,6 +239,13 @@ export const FlightPlanDisplay = ({ telemetry }: FlightPlanDisplayProps) => {
     setInsertAfter(String(Math.min(plan.waypoints.length, insertAfterIndex + 1)))
   }
 
+  const handleActivateDirectTo = () => {
+    const candidate = directToCandidates.find((option) => option.id === directToSelection)
+    if (!candidate) return
+    const targetLegIndex = Math.max(0, candidate.index - 1)
+    activateDirectTo(candidate.id, targetLegIndex)
+  }
+
   return (
     <div className="mfd__panel mfd__fpl">
       <div className="mfd__fpl-header">
@@ -167,12 +254,63 @@ export const FlightPlanDisplay = ({ telemetry }: FlightPlanDisplayProps) => {
           <button type="button" className="mfd__fpl-button" onClick={resetPlan}>
             New
           </button>
-          <button type="button" className="mfd__fpl-button" onClick={() => setActiveLegIndex(0)}>
+          <button
+            type="button"
+            className={`mfd__fpl-button ${navigation.isActive ? 'mfd__fpl-button--active' : ''}`}
+            onClick={activatePlan}
+          >
             Activate
+          </button>
+          <button
+            type="button"
+            className={`mfd__fpl-button ${directToActive ? 'mfd__fpl-button--active' : ''}`}
+            onClick={() => setDirectToPanelOpen(true)}
+          >
+            Direct-To
+          </button>
+          <button type="button" className="mfd__fpl-button" onClick={invertPlan}>
+            Invert
+          </button>
+          <button
+            type="button"
+            className={`mfd__fpl-button ${navigation.isSuspended ? 'mfd__fpl-button--active' : ''}`}
+            onClick={navigation.isSuspended ? resumePlan : suspendPlan}
+          >
+            {navigation.isSuspended ? 'Resume' : 'Suspend'}
           </button>
           <button type="button" className="mfd__fpl-button" onClick={loadSamplePlan}>
             Load
           </button>
+        </div>
+      </div>
+
+      <div className="mfd__fpl-status">
+        <div className="mfd__fpl-status-card">
+          <span>Status</span>
+          <strong>{statusLabel}</strong>
+          <span>{navigation.isActive ? 'Plan Active' : 'Plan Standby'}</span>
+        </div>
+        <div className="mfd__fpl-status-card">
+          <span>CDI Source</span>
+          <strong>{cdiLabel}</strong>
+          <span>{directToActive ? `DIR ${navigation.directToTargetId}` : 'Flight Plan'}</span>
+        </div>
+        <div className="mfd__fpl-status-card">
+          <span>Active Leg</span>
+          <strong>{activeLeg ? `${activeLeg.from} → ${activeLeg.to}` : '---'}</strong>
+          <span>{activeLeg ? `${activeLeg.distance.toFixed(1)} NM` : '--'}</span>
+        </div>
+      </div>
+      <div className="mfd__fpl-sequence">
+        <div className="mfd__fpl-sequence-item">
+          <span>Prev</span>
+          <strong>{previousLeg ? `${previousLeg.from} → ${previousLeg.to}` : '---'}</strong>
+          <span>{previousLeg ? `${previousLeg.distance.toFixed(1)} NM` : '--'}</span>
+        </div>
+        <div className="mfd__fpl-sequence-item">
+          <span>Next</span>
+          <strong>{nextLeg ? `${nextLeg.from} → ${nextLeg.to}` : '---'}</strong>
+          <span>{nextLeg ? `${nextLeg.distance.toFixed(1)} NM` : '--'}</span>
         </div>
       </div>
 
@@ -203,6 +341,51 @@ export const FlightPlanDisplay = ({ telemetry }: FlightPlanDisplayProps) => {
           />
         </label>
       </div>
+
+      {directToOpen ? (
+        <div className="mfd__fpl-direct">
+          <div className="mfd__fpl-direct-header">
+            <span className="mfd__fpl-direct-title">Direct-To</span>
+            <span className="mfd__fpl-direct-state">{directToActive ? 'ACTIVE' : 'READY'}</span>
+          </div>
+          <div className="mfd__fpl-direct-controls">
+            <label className="mfd__fpl-field">
+              <span>Target</span>
+              <select value={directToSelection} onChange={(event) => setDirectToSelection(event.target.value)}>
+                {directToCandidates.length === 0 ? <option value="">No Waypoints</option> : null}
+                {directToCandidates.map((option) => (
+                  <option key={`direct-${option.id}-${option.index}`} value={option.id}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <div className="mfd__fpl-direct-actions">
+              <button
+                type="button"
+                className="mfd__fpl-button"
+                onClick={handleActivateDirectTo}
+                disabled={!directToSelection}
+              >
+                Activate DIR
+              </button>
+              {directToActive ? (
+                <button type="button" className="mfd__fpl-button mfd__fpl-button--danger" onClick={cancelDirectTo}>
+                  Cancel DIR
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  className="mfd__fpl-button"
+                  onClick={() => setDirectToPanelOpen(false)}
+                >
+                  Close
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+      ) : null}
 
       <div className="mfd__fpl-add">
         <label className="mfd__fpl-field">
@@ -267,7 +450,9 @@ export const FlightPlanDisplay = ({ telemetry }: FlightPlanDisplayProps) => {
           {plan.waypoints.map((waypoint, index) => (
             <div
               key={`${waypoint.id}-${index}`}
-              className={`mfd__fpl-row ${index === plan.activeLegIndex ? 'mfd__fpl-row--active' : ''}`}
+              className={`mfd__fpl-row ${index === plan.activeLegIndex ? 'mfd__fpl-row--active' : ''} ${
+                waypoint.id === navigation.directToTargetId ? 'mfd__fpl-row--direct' : ''
+              }`}
             >
               <span className="mfd__fpl-index">{index + 1}</span>
               <input
