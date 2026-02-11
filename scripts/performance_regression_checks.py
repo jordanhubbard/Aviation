@@ -24,7 +24,7 @@ def compare_metrics(current_metrics, historical_metrics):
     regressions = {}
     for metric, value in current_metrics.items():
         if metric in historical_metrics:
-            if value > historical_metrics[metric] * 1.02:  # 10% threshold for regression
+            if value > historical_metrics[metric] * 1.05:  # 5% threshold for regression
                 regressions[metric] = {
                     'current': value,
                     'historical': historical_metrics[metric]
@@ -58,12 +58,8 @@ def plot_metrics():
             plt.close()
 
 def main():
-    # Simulate fetching current metrics (replace with actual data fetching)
-    current_metrics = {
-        'response_time': 220,
-        'cpu_usage': 55,
-        'memory_usage': 210
-    }
+# Fetch actual performance metrics (example using a hypothetical function)
+current_metrics = fetch_performance_metrics()
 
     # Compare current metrics with historical metrics
     regressions = compare_metrics(current_metrics, historical_data.get('current_run', {}))

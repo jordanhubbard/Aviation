@@ -20,12 +20,3 @@ def store_metrics(metrics):
     with open(historical_data_path, 'w') as f:
         json.dump(historical_data, f)
 
-if __name__ == '__main__':
-    # Simulate fetching current metrics (replace with actual data fetching)
-    current_metrics = {
-        'response_time': 220,
-        'cpu_usage': 55,
-        'memory_usage': 210
-    }
-
-    store_metrics(current_metrics)
