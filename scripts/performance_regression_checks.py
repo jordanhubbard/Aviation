@@ -5,6 +5,15 @@ import matplotlib.pyplot as plt
 import os
 import json
 
+def fetch_performance_metrics():
+    # Placeholder function to fetch actual performance metrics
+    # Replace this with actual data fetching logic
+    return {
+        'response_time': 220,
+        'cpu_usage': 55,
+        'memory_usage': 210
+    }
+
 # Load historical metrics
 historical_data_path = 'performance_metrics/historical_metrics.json'
 historical_data = {}
@@ -58,8 +67,8 @@ def plot_metrics():
             plt.close()
 
 def main():
-# Fetch actual performance metrics (example using a hypothetical function)
-current_metrics = fetch_performance_metrics()
+    # Fetch actual performance metrics
+    current_metrics = fetch_performance_metrics()
 
     # Compare current metrics with historical metrics
     regressions = compare_metrics(current_metrics, historical_data.get('current_run', {}))
