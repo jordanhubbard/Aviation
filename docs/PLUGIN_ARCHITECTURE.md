@@ -7,6 +7,16 @@
 - Integrate external hardware
 
 ## Plugin Interface
+
+### Lifecycle Hooks
+- **initialize(context: PluginContext): Promise<void>;**: Called when the plugin is initialized.
+- **destroy(): Promise<void>;**: Called when the plugin is destroyed.
+
+### Extension Points
+- **onFlightStateUpdate?(state: FlightState): void;**: Called whenever the flight state updates.
+- **onDisplayRender?(canvas: HTMLCanvasElement, ctx: CanvasRenderingContext2D): void;**: Called when the display needs rendering.
+- **onMenuRegister?(menuManager: MenuManager): void;**: Called to allow the plugin to register menu items.
+
 ```typescript
 interface G1000Plugin {
   id: string;
@@ -19,6 +29,37 @@ interface G1000Plugin {
   onMenuRegister?(menuManager: MenuManager): void;
 }
 ```
+
+## Plugin Manifest Format
+
+Plugins must include a `manifest.json` file that describes the plugin's metadata and capabilities.
+
+### Example `manifest.json`
+```json
+{
+  "id": "traffic-display-plugin",
+  "name": "Traffic Display",
+  "version": "1.0.0",
+  "main": "./TrafficDisplayPlugin.js",
+  "description": "A plugin to display traffic information on the G1000 Simulator",
+  "author": "John Doe",
+  "license": "MIT",
+  "dependencies": {
+    "@aviation/ui-framework": "^1.0.0"
+  }
+}
+```
+
+### Required Fields
+- **id**: A unique identifier for the plugin.
+- **name**: The name of the plugin.
+- **version**: The version of the plugin.
+- **main**: The entry point file of the plugin.
+- **description**: A brief description of the plugin.
+- **author**: The author of the plugin.
+- **license**: The license under which the plugin is distributed.
+- **dependencies**: Any dependencies required by the plugin.
+
 
 ## Example
 Traffic display plugin registers a display and menu item.
