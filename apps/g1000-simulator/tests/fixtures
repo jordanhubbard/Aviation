@@ -1,0 +1,23 @@
+# E2E Test Fixtures and Data
+
+This directory contains seeded flight plans, navigation data, and demo scenarios for end-to-end test runs.
+
+## Flight Plans
+
+- `flight_plan_1.json`
+- `flight_plan_2.json`
+
+## Navigation Data
+
+- `nav_data_1.json`
+- `nav_data_2.json`
+
+## Demo Scenarios
+
+- `scenario_1.json`
+- `scenario_2.json`
+
+## Mock External APIs
+
+- `mock_api_responses.json`
+

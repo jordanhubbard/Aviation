@@ -1,0 +1,8 @@
+{
+  "id": "fp1",
+  "departure": "KJFK",
+  "arrival": "KLAX",
+  "waypoints": ["KPHL", "KORD"],
+  "altitude": 30000,
+  "airspeed": 250
+}

@@ -71,7 +71,7 @@ def main():
     if regressions:
         print('Performance Regressions Detected:')
         for metric, details in regressions.items():
-            print(f'- {metric}: Current={details['current']}, Historical={details['historical']}')
+            print(f'- {metric}: Current={details["current"]}, Historical={details["historical"]}')
         exit(1)  # Fail CI on regression
     else:
         print('No performance regressions detected.')
