@@ -6,44 +6,79 @@ Welcome to the Aviation SDK Integration Guide. This document will help you integ
 ## SDK Modules and Usage
 The SDK is modular and includes the following components:
 
-- **Module A**: Provides functionalities related to mission management.
-- **Module B**: Offers tools for flight tracking and analysis.
-- **Module C**: Facilitates flight planning and scheduling.
+- **Airport Database**: Comprehensive airport database with search and geospatial capabilities.
+- **Navigation Utilities**: Tools for flight planning and navigation calculations.
 
-### Module A
+### Airport Database
 #### Description
-Module A is designed to manage aviation missions efficiently.
+The Airport Database provides comprehensive airport data with search and geospatial capabilities.
 
 #### Usage
-```python
-from shared_sdk.module_a import ModuleA
+**TypeScript:*
+```typescript
+import { searchAirports, getAirportByCode, findNearbyAirports } from '@aviation/shared-sdk';
 
-module_a_instance = ModuleA()
-result = module_a_instance.create_mission()
+// Search by code, name, or city
+const results = searchAirports('SFO', 20);
+
+// Get specific airport
+const airport = getAirportByCode('KSFO');
+
+// Find nearby airports
+const nearby = findNearbyAirports(37.6213, -122.3790, 50, 20);
 ```
 
-### Module B
-#### Description
-Module B provides real-time tracking capabilities for flights.
-
-#### Usage
+**Python:*
 ```python
-from shared_sdk.module_b import ModuleB
+from aviation import search_airports, get_airport_by_code, find_nearby_airports
 
-module_b_instance = ModuleB()
-result = module_b_instance.track_flight(flight_id='12345')
+# Search by code, name, or city
+results = search_airports('SFO', limit=20)
+
+# Get specific airport
+airport = get_airport_by_code('KSFO')
+
+# Find nearby airports
+nearby = find_nearby_airports(37.6213, -122.3790, radius_nm=50, limit=20)
 ```
 
-### Module C
+### Navigation Utilities
 #### Description
-Module C assists in planning and scheduling flights.
+The Navigation Utilities provide comprehensive navigation calculations for flight planning.
 
 #### Usage
-```python
-from shared_sdk.module_c import ModuleC
+**TypeScript:*
+```typescript
+import { distanceNM, initialBearing, fuelRequired, groundSpeed } from '@aviation/shared-sdk';
 
-module_c_instance = ModuleC()
-result = module_c_instance.plan_flight(departure='JFK', arrival='LAX')
+// Calculate distance and bearing from KSFO to KJFK
+const distance = distanceNM(37.6213, -122.3790, 40.6413, -73.7781);
+const bearing = initialBearing(37.6213, -122.3790, 40.6413, -73.7781);
+
+// Calculate fuel required (450 kts GS, 12 GPH)
+const fuel = fuelRequired(distance, 450, 12);
+console.log(`${distance.toFixed(0)} NM at ${bearing.toFixed(0)}°`);
+console.log(`Fuel: ${fuel.gallons.toFixed(1)} gal, Time: ${fuel.hours.toFixed(2)} hrs`);
+
+// Wind correction
+const gs = groundSpeed(450, 90, 270, 25); // TAS 450, course 90°, wind 270@25
+```
+
+**Python:*
+```python
+from aviation.navigation import distance_nm, initial_bearing, fuel_required, ground_speed
+
+# Calculate distance and bearing
+距离 = distance_nm(37.6213, -122.3790, 40.6413, -73.7781)
+bearing = initial_bearing(37.6213, -122.3790, 40.6413, -73.7781)
+
+# Calculate fuel required
+fuel = fuel_required(distance, 450, 12)
+print(f"{distance:.0f} NM at {bearing:.0f}°")
+print(f"Fuel: {fuel['gallons']:.1f} gal, Time: {fuel['hours']:.2f} hrs")
+
+# Wind correction
+gs = ground_speed(450, 90, 270, 25)
 ```
 
 ## Initialization Examples
