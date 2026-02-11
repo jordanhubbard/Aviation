@@ -1,0 +1,1 @@
+console.log('G1000 Simulator Application');
