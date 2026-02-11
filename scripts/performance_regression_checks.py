@@ -24,7 +24,7 @@ def compare_metrics(current_metrics, historical_metrics):
     regressions = {}
     for metric, value in current_metrics.items():
         if metric in historical_metrics:
-            if value > historical_metrics[metric] * 1.1:  # 10% threshold for regression
+            if value > historical_metrics[metric] * 1.05:  # 10% threshold for regression
                 regressions[metric] = {
                     'current': value,
                     'historical': historical_metrics[metric]
