@@ -309,7 +309,14 @@ node --inspect dist/index.js
 
 Happy coding! ✈️
 
-## User Quick Start
+## Quick Start Guide
+
+Welcome to the Aviation monorepo! This guide will help you get up and running quickly.
+
+### Prerequisites
+
+- Node.js 20 or higher
+- npm 9 or higher
 
 ### Setup Steps and First Flight
 
@@ -340,6 +347,24 @@ Happy coding! ✈️
    Starting Flight Tracker Application...
    Starting service: flight-tracker
    No API key found for flight-tracker. Some features may be limited.
+   Flight Tracker Service is now monitoring flights...
+   Service flight-tracker started successfully
+   Flight Tracker is running. Press Ctrl+C to stop.
+   ```
+
+### Control Basics
+
+- **Start Application**: Use `npm start` to begin running the application.
+- **Stop Application**: Press `Ctrl+C` to terminate the application.
+- **Rebuild Application**: Use `npm run build` to rebuild the application after making changes.
+- **Watch Mode**: Use `npm run dev` to watch for changes and rebuild automatically during development.
+
+### Troubleshooting Tips
+
+- **No API Key**: If you encounter a message indicating that no API key is found, ensure you have set the necessary environment variables as described in the [Setting Up API Keys](#setting-up-api-keys) section.
+- **Build Failures**: If the build process fails, check for any error messages and ensure all dependencies are correctly installed.
+- **Application Crashes**: If the application crashes, review the console output for error messages and logs for additional information.
+- **Environment Issues**: Ensure that your Node.js and npm versions meet the prerequisites specified above.o API key found for flight-tracker. Some features may be limited.
    Flight Tracker Service is now monitoring flights...
    Service flight-tracker started successfully
    Flight Tracker is running. Press Ctrl+C to stop.
