@@ -308,3 +308,56 @@ node --inspect dist/index.js
 - Use TypeScript for type safety
 
 Happy coding! ✈️
+
+## User Quick Start
+
+### Setup Steps and First Flight
+
+1. **Clone the Repository**
+   ```bash
+   git clone https://github.com/jordanhubbard/Aviation.git
+   cd Aviation
+   ```
+
+2. **Install Dependencies**
+   ```bash
+   npm install
+   ```
+
+3. **Build All Packages**
+   ```bash
+   npm run build
+   ```
+
+4. **Run Your First Application**
+   Let's start the Flight Tracker application:
+   ```bash
+   cd apps/flight-tracker
+   npm start
+   ```
+   You should see output like:
+   ```
+   Starting Flight Tracker Application...
+   Starting service: flight-tracker
+   No API key found for flight-tracker. Some features may be limited.
+   Flight Tracker Service is now monitoring flights...
+   Service flight-tracker started successfully
+   Flight Tracker is running. Press Ctrl+C to stop.
+   ```
+   Press `Ctrl+C` to stop the application.
+
+### Control Basics
+
+- **Start Application**: Use `npm start` to begin running the application.
+- **Stop Application**: Press `Ctrl+C` to terminate the application.
+- **Rebuild Application**: Use `npm run build` to rebuild the application after making changes.
+- **Watch Mode**: Use `npm run dev` to watch for changes and rebuild automatically during development.
+
+### Troubleshooting Tips
+
+- **No API Key**: If you encounter a message indicating that no API key is found, ensure you have set the necessary environment variables as described in the [Setting Up API Keys](#setting-up-api-keys) section.
+- **Build Failures**: If the build process fails, check for any error messages and ensure all dependencies are correctly installed.
+- **Application Crashes**: If the application crashes, review the console output for error messages and logs for additional information.
+- **Environment Issues**: Ensure that your Node.js and npm versions meet the prerequisites specified above.
+
+For more detailed information, refer to the [Architecture Guide](docs/ARCHITECTURE.md), [Security Best Practices](docs/SECURITY.md), and [UI Modalities](docs/UI_MODALITIES.md).
