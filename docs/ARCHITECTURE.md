@@ -1,198 +1,89 @@
-# Architecture Overview
+# Developer-Facing Architecture Overview
 
-## Design Principles
+## Backend/Frontend/Service Interactions
 
-The Aviation monorepo is designed around several key principles:
+### Backend
 
-1. **Modular Services**: Each aviation application is a self-contained service
-2. **Shared Infrastructure**: Common functionality is provided through shared packages
-3. **Security First**: API keys and secrets are encrypted at rest
-4. **Multi-Modal UI**: Applications support multiple UI paradigms
-5. **AI Integration**: Common AI patterns through shared SDK
+Each aviation application has a backend service that handles business logic, data processing, and AI analysis. The backend services are implemented as TypeScript services that extend the `BackgroundService` class from the shared SDK.
 
-## Component Architecture
+**Key Responsibilities:**
+- Data processing and transformation
+- Integration with external APIs
+- AI analysis using `AIService`
+- Secure key management using `SecureKeyStore`
 
-### Shared SDK (`@aviation/shared-sdk`)
+### Frontend
 
-The shared SDK provides base classes and interfaces for all applications:
+Frontend components are built using React and are responsible for rendering the user interface. They interact with the backend services via RESTful APIs or WebSocket connections for real-time data.
 
-```
-shared-sdk/
-├── ai.ts          # AI provider interfaces and base service
-├── service.ts     # Background service base class
-├── keystore.ts    # Secure key store implementation
-└── index.ts       # Public exports
-```
+**Key Responsibilities:**
+- User interface rendering
+- User input handling
+- Real-time data updates
+- State management
 
-**Key Classes:**
+### Services
 
-- `BackgroundService`: Abstract base for all services
-  - Provides lifecycle management (start/stop)
-  - Status reporting
-  - Configuration management
+Services are the core components of each application that perform the main business logic. They are implemented as TypeScript services that extend the `BackgroundService` class from the shared SDK.
 
-- `AIService`: Abstract base for AI-powered services
-  - Integration with AI providers
-  - Common query patterns
+**Key Responsibilities:**
+- Business logic execution
+- Data processing
+- AI analysis
+- Communication with external systems
 
-- `SecureKeyStore`: Encrypted storage for API keys
-  - AES-256-CBC encryption
-  - Service-specific key namespacing
-  - File-based persistence
+## Key Data Flows
 
-### UI Framework (`@aviation/ui-framework`)
-
-Supports three UI modalities:
-
-1. **Mobile UI**: Self-contained mobile applications
-2. **Multi-Tab Web UI**: Single web app with multiple panes
-3. **Standalone Web UI**: Individual web applications
-
-**Multi-Tab Pattern:**
-
-```typescript
-const webUI = new MultiTabWebUI();
-
-// Register application panes
-webUI.registerPane({
-  id: 'flight-tracker',
-  title: 'Flight Tracker',
-  component: FlightTrackerPane,
-  order: 1
-});
-
-webUI.registerPane({
-  id: 'weather',
-  title: 'Weather',
-  component: WeatherPane,
-  order: 2
-});
-```
-
-### Applications
-
-Each application follows this structure:
+1. **User Interaction**: Users interact with the frontend components via the web or mobile UI.
+2. **Frontend to Backend**: The frontend sends requests to the backend services via RESTful APIs or WebSocket connections.
+3. **Backend Processing**: The backend processes the requests, performs data processing, and returns the results to the frontend.
+4. **External Systems**: The backend interacts with external systems such as databases, message queues, and AI providers.
 
 ```
-app-name/
-├── src/
-│   ├── index.ts      # Entry point
-│   ├── service.ts    # Background service implementation
-│   └── ui/           # UI components (optional)
-├── package.json
-└── tsconfig.json
+Users
+  ↓
+Frontend (React)
+  ↓ (RESTful APIs/WebSocket)
+Backend Services (TypeScript)
+  ↓ (External APIs/Message Queues)
+External Systems
 ```
 
-**Application Lifecycle:**
+## Dependency Graph
 
-1. Initialize SecureKeyStore
-2. Create service instance with configuration
-3. Start background service
-4. Handle graceful shutdown signals (SIGINT, SIGTERM)
-
-## Data Flow
+The dependency graph illustrates how different components and services interact within the Aviation monorepo.
 
 ```
-External APIs
-     ↓ (API Keys from KeyStore)
-Background Service
-     ↓
-Data Processing/AI Analysis
-     ↓
-UI Components
++-------------------+
+| Frontend          |
+| (React)           |
++-------------------+
+         |
+         v
++-------------------+
+| Backend Services  |
+| (TypeScript)      |
++-------------------+
+        /|
+       / |
+      /  |
+     /   |
+    /    v
++---+-----+---+
+| External APIs |   +--------------+
++---------------+   | Message Queues |
+                      +--------------+
+                      /|
+                     / |
+                    /  |
+                   /   |
+                  /    v
+            +------+------+
+            | Databases |   +--------------+
+            +-----------+   | AI Providers   |
+                              +--------------+
 ```
 
-## Security Architecture
+## Conclusion
 
-### Key Storage
-
-API keys are stored encrypted on disk:
-
-1. Master encryption key derived from environment variable or default
-2. Keys stored in `.keystore` file with 0600 permissions
-3. Each secret tagged with service name and key name
-4. Encryption: AES-256-CBC with random IV per encryption
-
-### Key Access Pattern
-
-```typescript
-// Service initialization
-const keystore = new SecureKeyStore();
-const apiKey = keystore.getSecret('service-name', 'api-key-name');
-
-// Use API key
-const response = await fetch(url, {
-  headers: { 'Authorization': `Bearer ${apiKey}` }
-});
-```
-
-## Extensibility
-
-### Adding New Services
-
-1. Create new app directory under `apps/`
-2. Extend `BackgroundService`
-3. Implement `onStart()` and `onStop()` methods
-4. Use SecureKeyStore for API keys
-5. Add to monorepo workspace
-
-### Adding AI Providers
-
-Implement the `AIProvider` interface:
-
-```typescript
-class MyAIProvider implements AIProvider {
-  name = 'my-provider';
-  
-  async initialize(config: AIConfig): Promise<void> {
-    // Setup
-  }
-  
-  async query(prompt: string, options?: AIQueryOptions): Promise<AIResponse> {
-    // Query implementation
-  }
-}
-```
-
-### Adding UI Modalities
-
-Extend base UI classes:
-
-```typescript
-class MyMobileUI extends MobileUI {
-  constructor() {
-    super('my-app', 'My Aviation App');
-  }
-  
-  render(): void {
-    // Mobile-specific rendering
-  }
-}
-```
-
-## Development Workflow
-
-1. **Development**: `npm run dev` (watches for changes)
-2. **Build**: `npm run build` (compiles TypeScript)
-3. **Test**: `npm test` (runs tests if available)
-4. **Clean**: `npm run clean` (removes build artifacts)
-
-## Deployment
-
-Each application can be deployed independently:
-
-1. Build the application: `npm run build`
-2. Set environment variables (especially `KEYSTORE_ENCRYPTION_KEY`)
-3. Run the service: `npm start`
-4. Configure process manager (PM2, systemd, etc.) for production
-
-## Future Enhancements
-
-- Service discovery and inter-service communication
-- Centralized logging and monitoring
-- Health check endpoints
-- API gateway for external access
-- Database integration patterns
-- Message queue for async communication
-- Docker containerization
-- Kubernetes orchestration
+This architecture ensures modularity, scalability, and maintainability of the Aviation applications. By leveraging shared infrastructure and common patterns, we can efficiently develop, deploy, and maintain multiple aviation applications within a single monorepo.
