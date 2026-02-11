@@ -65,7 +65,7 @@ The pilot hardware adapter will serve as the interface between external hardware
 ## Conclusion
 This hardware integration plan outlines the necessary components, tooling, drivers, and validation steps to successfully integrate external hardware devices with our aviation applications. The prototype plan includes detailed steps for each component and tooling. Next steps include prototyping the adapter and conducting initial tests.
 
-## Future Hardware Integrations
+## Hardware Integration Targets
 
 ### Supported Device Types
 - **Yoke**: Supports control surfaces like rudder pedals and control columns.
