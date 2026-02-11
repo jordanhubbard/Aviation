@@ -277,7 +277,7 @@ export const drawCompassRose = (
   const centerX = viewport.x + viewport.width / 2;
   const centerY = viewport.y + viewport.height / 2;
   const labelOffset = 12;
-  const majorTickLength = 10;
+  const majorTickLength = 12;
   const minorTickLength = 6;
   const formatLabel = (degrees: number): string => {
     const heading = normalizeDegrees(degrees);

@@ -53,16 +53,16 @@ backend-test: backend-setup
 	.venv/bin/python -m pytest
 
 backend-format:
-	.venv/bin/python -m black backend tests scripts
+	.venv/bin/python -m black backend services tests scripts
 
 backend-format-check:
-	.venv/bin/python -m black --check backend tests scripts
+	.venv/bin/python -m black --check backend services tests scripts
 
 backend-lint:
-	.venv/bin/python -m flake8 backend tests scripts
+	.venv/bin/python -m flake8 backend services tests scripts
 
 backend-typecheck:
-	.venv/bin/python -m mypy --config-file pyproject.toml backend
+	.venv/bin/python -m mypy --config-file pyproject.toml backend services
 
 frontend-install:
 	cd frontend && npm install

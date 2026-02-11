@@ -53,9 +53,14 @@ help:
 # BUILD TARGETS
 #
 
-build: build-node build-python build-clojure
+build: build-node build-python build-clojure build-go
 	@echo ""
 	@echo "✅ Build complete for all applications!"
+
+build-go:
+	@echo "📦 Building Go applications..."
+	go build -v ./...
+	@echo "✅ Go applications build complete"
 
 build-node:
 	@echo "📦 Building Node.js/TypeScript applications and packages..."

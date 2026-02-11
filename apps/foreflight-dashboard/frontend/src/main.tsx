@@ -6,12 +6,13 @@ import { ThemeProvider, createTheme } from '@mui/material/styles'
 import CssBaseline from '@mui/material/CssBaseline'
 import { Toaster } from 'react-hot-toast'
 import App from './App'
+import { useState } from 'react'
 import './styles/globals.css'
 
 // Create a Material-UI theme with aviation-inspired design
-const theme = createTheme({
+const theme = (mode: string = 'light') => createTheme({
   palette: {
-    mode: 'light',
+    mode: mode,
     primary: {
       main: '#003d5b',      // Deep aviation blue (sky at altitude)
       light: '#0077b6',     // Lighter sky blue
@@ -172,10 +173,12 @@ const queryClient = new QueryClient({
   },
 })
 
+const [selectedTheme, setSelectedTheme] = useState('light');
+
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
     <QueryClientProvider client={queryClient}>
-      <ThemeProvider theme={theme}>
+      <ThemeProvider theme={theme(selectedTheme)}> 
         <CssBaseline />
         <BrowserRouter>
           <App />
@@ -206,5 +209,8 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
         </BrowserRouter>
       </ThemeProvider>
     </QueryClientProvider>
-  </React.StrictMode>,
+        <button onClick={() => setSelectedTheme('light')}>Light Mode</button>
+      <button onClick={() => setSelectedTheme('dark')}>Dark Mode</button>
+      <button onClick={() => setSelectedTheme('high-contrast')}>High Contrast Mode</button>
+    </React.StrictMode>,
 )

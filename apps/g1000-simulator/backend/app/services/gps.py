@@ -86,7 +86,7 @@ def compute_gps(
     timestamp: float,
 ) -> GpsSolution:
     waas_available = is_waas_available(latitude_deg, longitude_deg)
-    waas_enabled = waas_available
+    waas_enabled = True
     horizontal_accuracy_m, vertical_accuracy_m = _accuracy_for_waas(waas_enabled)
     raim_available, raim_ok = _raim_status(timestamp)
     if not raim_ok:

@@ -69,34 +69,48 @@ validate_ts_app() {
     fi
     record_result "$app_name" "structure" "PASS" "package.json exists"
     
-    # Build
-    if npm run build >/dev/null 2>&1; then
-        record_result "$app_name" "build" "PASS" "Built successfully"
+# Build
+if npm run build >/dev/null 2>&1; then
+    record_result "$app_name" "build" "PASS" "Built successfully"
+else
+    record_result "$app_name" "build" "FAIL" "Build failed"
+fi
+
+# Tests (if available)
+if grep -q '"test"' package.json; then
+    if npm test >/dev/null 2>&1; then
+        record_result "$app_name" "tests" "PASS" "Tests passed"
     else
-        record_result "$app_name" "build" "FAIL" "Build failed"
+        record_result "$app_name" "tests" "FAIL" "Tests failed"
     fi
-    
-    # Tests (if available)
-    if grep -q '"test"' package.json; then
-        if npm test >/dev/null 2>&1; then
-            record_result "$app_name" "tests" "PASS" "Tests passed"
-        else
-            record_result "$app_name" "tests" "FAIL" "Tests failed"
-        fi
+else
+    record_result "$app_name" "tests" "SKIP" "No tests defined"
+fi
+
+# Lint (if available)
+if grep -q '"lint"' package.json; then
+    if npm run lint >/dev/null 2>&1; then
+        record_result "$app_name" "lint" "PASS" "Linting passed"
     else
-        record_result "$app_name" "tests" "SKIP" "No tests defined"
+        record_result "$app_name" "lint" "FAIL" "Linting failed"
     fi
-    
-    # Lint (if available)
-    if grep -q '"lint"' package.json; then
-        if npm run lint >/dev/null 2>&1; then
-            record_result "$app_name" "lint" "PASS" "Linting passed"
-        else
-            record_result "$app_name" "lint" "FAIL" "Linting failed"
-        fi
+else
+    record_result "$app_name" "lint" "SKIP" "No lint script"
+fi
+
+# Add custom build and test commands for the project
+if [ "$app_name" = "shared-sdk" ] || [ "$app_name" = "keystore" ] || [ "$app_name" = "ui-framework" ]; then
+    if make build >/dev/null 2>&1; then
+        record_result "$app_name" "custom-build" "PASS" "Custom build succeeded"
     else
-        record_result "$app_name" "lint" "SKIP" "No lint script"
+        record_result "$app_name" "custom-build" "FAIL" "Custom build failed"
     fi
+    if make test >/dev/null 2>&1; then
+        record_result "$app_name" "custom-tests" "PASS" "Custom tests passed"
+    else
+        record_result "$app_name" "custom-tests" "FAIL" "Custom tests failed"
+    fi
+fi
     
     cd "$REPO_ROOT"
 }

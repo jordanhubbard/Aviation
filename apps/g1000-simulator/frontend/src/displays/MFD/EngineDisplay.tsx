@@ -85,7 +85,7 @@ export const EngineDisplay = ({ telemetry, layout = 'summary' }: EngineDisplayPr
       </div>
       <div className="mfd__engine-gauges">
         <div className="mfd__engine-gauge">
-          <span className="mfd__engine-label">RPM</span>
+          <span className="mfd__engine-label" style={{ fontSize: '18px', fontWeight: 'bold' }}>RPM</span>
           <span className="mfd__engine-value">{rpm}</span>
           <div className="mfd__engine-bar">
             <span style={{ width: `${(rpm / 2700) * 100}%` }} />

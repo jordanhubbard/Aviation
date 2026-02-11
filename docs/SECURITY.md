@@ -200,7 +200,23 @@ class HSMKeyStore extends SecureKeyStore {
 
 ### Audit Logging
 
-Add audit logging for key access:
+Audit logging is crucial for compliance and security. The following events require audit logs:
+
+- Access to sensitive data (e.g., API keys, secrets)
+- Changes to configuration settings
+- User authentication and authorization actions
+- Data modifications (e.g., creation, update, deletion of records)
+
+#### Retention and Access Controls
+
+- Logs should be retained for a minimum of 1 year.
+- Access to audit logs should be restricted to authorized personnel only.
+- Logs should be encrypted at rest and in transit.
+
+#### Log Export Needs
+
+- Audit logs should be exportable in a standardized format (e.g., CSV, JSON).
+- Exported logs should include timestamps, event types, and relevant metadata.
 
 ```typescript
 class AuditedKeyStore extends SecureKeyStore {
@@ -236,7 +252,29 @@ function rotateKeys() {
 
 ## Security Checklist
 
-Before deploying to production:
+### Input Validation and API Hardening
+
+- [ ] Validate all user inputs to prevent injection attacks
+- [ ] Use parameterized queries and ORM features to prevent SQL injection
+- [ ] Implement rate limiting on API endpoints to prevent abuse
+- [ ] Use HTTPS for all API communications to encrypt data in transit
+- [ ] Regularly update dependencies to patch known vulnerabilities
+
+### WebSocket Security Considerations
+
+- [ ] Use secure WebSockets (wss://) to encrypt WebSocket traffic
+- [ ] Validate all incoming WebSocket messages to prevent XSS and other attacks
+- [ ] Implement authentication and authorization for WebSocket connections
+- [ ] Limit WebSocket connection duration and enforce timeouts
+
+### CORS and Rate Limits
+
+- [ ] Configure CORS policies to restrict access to trusted origins
+- [ ] Implement rate limiting on all endpoints to prevent DDoS attacks
+- [ ] Use middleware to enforce CORS and rate limit rules
+- [ ] Log and monitor CORS and rate limit violations
+
+### Additional Security Controls
 
 - [ ] Set `KEYSTORE_ENCRYPTION_KEY` environment variable
 - [ ] Verify `.keystore` is in `.gitignore`
@@ -248,6 +286,40 @@ Before deploying to production:
 - [ ] Create backup of encryption key (stored separately)
 - [ ] Review all services' key requirements
 - [ ] Remove any hardcoded keys from source code
+
+### Security Controls Checklist for Simulator
+
+- [ ] Validate all user inputs to prevent injection attacks
+- [ ] Use parameterized queries and ORM features to prevent SQL injection
+- [ ] Implement rate limiting on API endpoints to prevent abuse
+- [ ] Use HTTPS for all API communications to encrypt data in transit
+- [ ] Regularly update dependencies to patch known vulnerabilities
+- [ ] Use secure WebSockets (wss://) to encrypt WebSocket traffic
+- [ ] Validate all incoming WebSocket messages to prevent XSS and other attacks
+- [ ] Implement authentication and authorization for WebSocket connections
+- [ ] Limit WebSocket connection duration and enforce timeouts
+- [ ] Configure CORS policies to restrict access to trusted origins
+- [ ] Implement rate limiting on all endpoints to prevent DDoS attacks
+- [ ] Use middleware to enforce CORS and rate limit rules
+- [ ] Log and monitor CORS and rate limit violations
+
+## Privacy and Data Retention Rules
+
+### Personal Identifiable Information (PII) Handling
+
+- **Data Collected**: Identify any PII data collected by the applications.
+- **Data Processing**: Ensure PII is processed in compliance with relevant regulations (e.g., GDPR).
+- **Data Storage**: PII should be stored securely and only for as long as necessary.
+
+### Retention and Deletion Policies
+
+- **Retention Period**: Define the retention period for all types of data based on business needs and legal requirements.
+- **Deletion Process**: Implement a process for securely deleting data once the retention period has expired.
+
+### Consent Requirements
+
+- **User Consent**: Obtain explicit consent from users before collecting their personal data.
+- **Consent Management**: Maintain records of user consent and provide mechanisms for users to withdraw consent if desired.
 
 ## Troubleshooting
 

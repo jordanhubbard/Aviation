@@ -1,4 +1,3 @@
-export * from './primitives';
-export * from './pfd';
-export * from './mfd';
-export * from './themes';
+export const render = () => {
+  console.log('Rendering G1000 display');
+};

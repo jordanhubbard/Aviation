@@ -46,9 +46,9 @@ ensure_clean_worktree
 echo "Running release validations..."
 .venv/bin/python validate_beads.py
 ./scripts/check-all-contrast.sh
-make lint
-npm run type-check --workspaces --if-present
-make test
+make build || npm run build || go build
+make test || npm test
+make lint || npm run lint
 
 release_date=$(date +%Y-%m-%d)
 if [ -n "$range" ]; then

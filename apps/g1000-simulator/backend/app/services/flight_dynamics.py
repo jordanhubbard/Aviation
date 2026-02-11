@@ -200,7 +200,7 @@ class FlightDynamicsSimulator:
             if master_on:
                 self.autopilot.disconnect_reason = ""
             else:
-                self.autopilot.disconnect_reason = "manual"
+                self.autopilot.disconnect_reason = "Manual Override by User"
                 self.autopilot.lateral_mode = "ROL"
                 self.autopilot.vertical_mode = "PIT"
                 self.autopilot.lateral_armed = ""
@@ -224,7 +224,9 @@ class FlightDynamicsSimulator:
             else:
                 self.autopilot.vertical_armed = ""
             if vertical_mode == "PIT":
-                self._pitch_hold_deg = self.state.pitch_deg
+                self._pitch_hold_deg = self.state.pitch_degitch_deg
+            elif vertical_mode == "VS":
+                self.autopilot.target_vertical_speed_fpm = self.state.vertical_speed_fpm
             self.pitch_pid.reset()
         if target_vertical_speed_fpm is not None:
             self.autopilot.target_vertical_speed_fpm = target_vertical_speed_fpm
