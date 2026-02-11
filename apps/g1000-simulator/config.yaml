@@ -29,7 +29,7 @@ profiles:
     system:
       logging_level: "warn"
 validation_rules:
-  display.resolution: "^\d+x\d+$"
+  display.resolution: "^\\d+x\\d+$"
   display.fullscreen: "boolean"
   control.sensitivity: "number"
   control.inverted_y_axis: "boolean"
