@@ -1,0 +1,31 @@
+simulator_settings:
+  display:
+    resolution: 1920x1080
+    fullscreen: false
+  control:
+    sensitivity: 1.0
+    invert_y_axis: false
+  system:
+    profile: default
+    language: en
+validation_rules:
+  display:
+    resolution:
+      type: string
+      pattern: '^\d+x\d+$'
+    fullscreen:
+      type: boolean
+  control:
+    sensitivity:
+      type: number
+      minimum: 0.1
+      maximum: 2.0
+    invert_y_axis:
+      type: boolean
+  system:
+    profile:
+      type: string
+      enum: [default, advanced]
+    language:
+      type: string
+      enum: [en, es, fr, de]

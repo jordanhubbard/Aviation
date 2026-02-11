@@ -1,0 +1,34 @@
+{
+  "display": {
+    "resolution": "1920x1080",
+    "fullscreen": false,
+    "brightness": 70
+  },
+  "control": {
+    "joystick_sensitivity": 0.5,
+    "keyboard_mapping": "default"
+  },
+  "system": {
+    "language": "en",
+    "timezone": "UTC",
+    "debug_mode": false
+  },
+  "profiles": {
+    "default": {
+      "display": {
+        "resolution": "1920x1080",
+        "fullscreen": false,
+        "brightness": 70
+      },
+      "control": {
+        "joystick_sensitivity": 0.5,
+        "keyboard_mapping": "default"
+      },
+      "system": {
+        "language": "en",
+        "timezone": "UTC",
+        "debug_mode": false
+      }
+    }
+  }
+}

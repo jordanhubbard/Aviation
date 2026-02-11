@@ -1,0 +1,37 @@
+display:
+  resolution: "1920x1080"
+  fullscreen: false
+control:
+  sensitivity: 1.0
+  inverted_y_axis: false
+system:
+  profile: "default"
+  logging_level: "info"
+defaults:
+  display:
+    resolution: "1280x720"
+    fullscreen: true
+  control:
+    sensitivity: 0.8
+    inverted_y_axis: true
+  system:
+    profile: "performance"
+    logging_level: "debug"
+profiles:
+  default:
+    display: *defaults.display
+    control: *defaults.control
+    system: *defaults.system
+  performance:
+    display: *defaults.display
+    control:
+      sensitivity: 1.2
+    system:
+      logging_level: "warn"
+validation_rules:
+  display.resolution: "^\d+x\d+$"
+  display.fullscreen: "boolean"
+  control.sensitivity: "number"
+  control.inverted_y_axis: "boolean"
+  system.profile: "string"
+  system.logging_level: "enum:info,debug,warn,error"
