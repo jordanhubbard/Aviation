@@ -82,6 +82,23 @@ This hardware integration plan outlines the necessary components, tooling, drive
 - **Throttle Driver**: Requires a driver to interpret throttle positions.
 - **Button Panel Library**: Requires a library to handle button press events.
 
+## Hardware Integration Plan Details
+
+### Yoke
+- **Protocols**: Determine suitable communication protocols for yoke integration.
+- **Drivers**: Research and evaluate existing yoke drivers.
+- **Compatibility**: Ensure compatibility with existing applications and hardware.
+
+### Throttle
+- **Protocols**: Determine suitable communication protocols for throttle integration.
+- **Drivers**: Research and evaluate existing throttle drivers.
+- **Compatibility**: Ensure compatibility with existing applications and hardware.
+
+### Button Panels
+- **Protocols**: Determine suitable communication protocols for button panel integration.
+- **Libraries**: Research and evaluate existing libraries for handling button events.
+- **Compatibility**: Ensure compatibility with existing applications and hardware.
+
 ## Research Summary
 
 ### Yoke
