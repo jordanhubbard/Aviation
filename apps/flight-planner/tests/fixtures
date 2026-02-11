@@ -1,0 +1,73 @@
+# Seeded Flight Plans and Nav Data
+
+## Flight Plans
+
+### Flight Plan 1
+- Departure: KJFK
+- Arrival: KLAX
+- Waypoints: KTEAL, KSFO
+- Altitude: 30000 ft
+- Speed: 250 knots
+
+### Flight Plan 2
+- Departure: KORD
+- Arrival: KDEN
+- Waypoints: KFLL, KDFW
+- Altitude: 35000 ft
+- Speed: 275 knots
+
+## Nav Data
+
+### Navaid 1
+- Identifier: KTEAL
+- Type: VOR
+- Frequency: 114.5 MHz
+- Coordinates: 40.6417, -74.1745
+
+### Navaid 2
+- Identifier: KSFO
+- Type: VOR
+- Frequency: 118.3 MHz
+- Coordinates: 37.6189, -122.3750
+
+## Demo Scenarios
+
+### Scenario 1
+- Description: Takeoff from KJFK, fly to KLAX via KTEAL and KSFO.
+- Steps:
+  1. Load Flight Plan 1.
+  2. Start navigation.
+  3. Follow waypoints KTEAL and KSFO.
+  4. Land at KLAX.
+
+### Scenario 2
+- Description: Takeoff from KORD, fly to KDEN via KFLL and KDFW.
+- Steps:
+  1. Load Flight Plan 2.
+  2. Start navigation.
+  3. Follow waypoints KFLL and KDFW.
+  4. Land at KDEN.
+
+## Mock External APIs
+
+### API 1: Weather Service
+- Endpoint: /api/weather
+- Response:
+  ```json
+  {
+    "temperature": 22,
+    "wind_speed": 15,
+    "cloud_cover": "scattered"
+  }
+  ```
+
+### API 2: Navigation Service
+- Endpoint: /api/navigation
+- Response:
+  ```json
+  {
+    "distance": 1200,
+    "time": 30,
+    "fuel_consumption": 200
+  }
+  ```
