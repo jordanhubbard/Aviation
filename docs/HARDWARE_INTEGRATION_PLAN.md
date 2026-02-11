@@ -67,27 +67,35 @@ This hardware integration plan outlines the necessary components, tooling, drive
 
 ## Future Hardware Integrations
 
-### Supported Protocols
-- **GFC/GDU Panels**: Investigate support for ARINC 429, ARINC 664, and other relevant protocols.
-- **Sim Connectors**: Explore support for Microsoft Flight Simulator X SDK, X-Plane SDK, and other simulation platforms.
+### Supported Device Types
+- **Yoke**: Supports control surfaces like rudder pedals and control columns.
+- **Throttle**: Manages throttle controls for engine power.
+- **Button Panels**: Includes various control buttons and switches.
 
-### Driver Availability
-- **ARINC 429 Driver**: Evaluate existing drivers and consider developing custom solutions if necessary.
-- **Sim Connector Libraries**: Research available libraries and APIs for integration with simulation platforms.
+### Input Mappings
+- **Yoke**: Maps physical movements to corresponding control surface commands.
+- **Throttle**: Maps throttle lever positions to engine power commands.
+- **Button Panels**: Maps button presses to specific control actions.
 
-### Compatibility Constraints
-- **GFC/GDU Panels**: Ensure compatibility with existing aviation applications and hardware.
-- **Sim Connectors**: Verify compatibility with different versions of simulation software and hardware interfaces.
+### Driver/Library Requirements
+- **Yoke Driver**: Requires a driver to interpret yoke movements.
+- **Throttle Driver**: Requires a driver to interpret throttle positions.
+- **Button Panel Library**: Requires a library to handle button press events.
 
 ## Research Summary
 
-### GFC/GDU Panels
-- **Protocols**: ARINC 429, ARINC 664
-- **Drivers**: Evaluate existing ARINC 429 drivers; consider custom development if needed.
+### Yoke
+- **Protocols**: Determine suitable communication protocols for yoke integration.
+- **Drivers**: Research and evaluate existing yoke drivers.
 - **Compatibility**: Ensure compatibility with existing applications and hardware.
 
-### Sim Connectors
-- **Protocols**: Microsoft Flight Simulator X SDK, X-Plane SDK
-- **Drivers/Libraries**: Research available libraries and APIs.
-- **Compatibility**: Verify compatibility with different simulation software versions and hardware interfaces.
+### Throttle
+- **Protocols**: Determine suitable communication protocols for throttle integration.
+- **Drivers**: Research and evaluate existing throttle drivers.
+- **Compatibility**: Ensure compatibility with existing applications and hardware.
+
+### Button Panels
+- **Protocols**: Determine suitable communication protocols for button panel integration.
+- **Libraries**: Research and evaluate existing libraries for handling button events.
+- **Compatibility**: Ensure compatibility with existing applications and hardware.
 
