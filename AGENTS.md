@@ -56,7 +56,8 @@ Aviation/
 3. **Security First**: Encrypted keystore for API keys and secrets
 4. **Multi-Modal UI**: Support for web, mobile, and multi-tab interfaces
 5. **Polyglot**: Multiple languages optimized for each use case
-
+6. **Organized**: All user facing documentation must be in docs/
+7, **AI optimized**: All AI generated planning files must be in plans and all work items expressed as beads, not .md files.
 ---
 
 ## Adding New Aviation Applications
