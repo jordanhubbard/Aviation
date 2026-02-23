@@ -12,6 +12,9 @@ class MessageType(str, Enum):
 from .hardware_integration import HardwareIntegrationService, HardwareType
 
 class WebSocketProtocol:
+    def __init__(self, websocket: WebSocket, hardware_integration_service: HardwareIntegrationService):
+        self.websocket = websocket
+        self.hardware_integration_service = hardware_integration_service
     def __init__(self, websocket: WebSocket):
         self.websocket = websocket
 
