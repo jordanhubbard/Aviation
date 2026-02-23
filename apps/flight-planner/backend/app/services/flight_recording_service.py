@@ -49,7 +49,7 @@ def save_flight_recordings():
 
 @router.post("/", response_model=FlightRecording)
 def create_flight_recording(flight_recording: FlightRecording):
-    flight_recordings.append(flight_recording)
+    flight_recordings.append(flight_recording.dict())
     save_flight_recordings()
     return flight_recording
 
