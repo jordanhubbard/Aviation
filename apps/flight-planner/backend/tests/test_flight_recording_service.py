@@ -2,6 +2,9 @@ import unittest
 from app.services.flight_recording_service import router as flight_recording_router
 from fastapi.testclient import TestClient
 from app import app
+from app.services.flight_plan_service import router as flight_plan_router
+
+app.include_router(flight_plan_router, prefix="/flight-plans", tags=["flight-plans"])
 
 client = TestClient(app)
 
