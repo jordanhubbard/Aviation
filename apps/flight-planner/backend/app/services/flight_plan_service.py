@@ -29,6 +29,7 @@ def save_flight_plans():
 @router.post("/", response_model=FlightPlan)
 def create_flight_plan(flight_plan: FlightPlan):
     flight_plans.append(flight_plan)
+    save_flight_plans()
     return flight_plan
 
 @router.get("/{flight_plan_id}", response_model=FlightPlan)
