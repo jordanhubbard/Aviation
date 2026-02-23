@@ -50,7 +50,46 @@ class GPSState:
 
 class GPSSimulationService:
     def simulate_approach(self, approach_type: str) -> None:
-        print(f"Simulating {approach_type} approach")
+        if approach_type == 'LNAV':
+            self.simulate_lnav_approach()
+        elif approach_type == 'LNAV/VNAV':
+            self.simulate_lnav_vnav_approach()
+        elif approach_type == 'LPV':
+            self.simulate_lpv_approach()
+        elif approach_type == 'ILS':
+            self.simulate_ils_approach()
+        elif approach_type == 'LOC':
+            self.simulate_loc_approach()
+        elif approach_type == 'VTF':
+            self.simulate_vtf_approach()
+        elif approach_type == 'Missed':
+            self.simulate_missed_approach()
+        elif approach_type == 'Visual':
+            self.simulate_visual_approach()
+
+    def simulate_lnav_approach(self):
+        print("Simulating LNAV approach")
+
+    def simulate_lnav_vnav_approach(self):
+        print("Simulating LNAV/VNAV approach")
+
+    def simulate_lpv_approach(self):
+        print("Simulating LPV approach")
+
+    def simulate_ils_approach(self):
+        print("Simulating ILS approach")
+
+    def simulate_loc_approach(self):
+        print("Simulating LOC approach")
+
+    def simulate_vtf_approach(self):
+        print("Simulating Vector-to-Final approach")
+
+    def simulate_missed_approach(self):
+        print("Simulating Missed approach")
+
+    def simulate_visual_approach(self):
+        print("Simulating Visual approach")
     def __init__(self, gps_state: GPSState):
         self.gps_state = gps_state
 
