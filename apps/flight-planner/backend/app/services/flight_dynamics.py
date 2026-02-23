@@ -43,6 +43,8 @@ class AircraftState:
     fuel_level: float
 
 
+from .alerts import AlertService, Alert
+
 class FlightDynamicsService:
     def __init__(self, aircraft_state: AircraftState):
         self.aircraft_state = aircraft_state
