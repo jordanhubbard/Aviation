@@ -21,7 +21,7 @@ class AlertManager:
     def add_alert(self, message: str, severity: str):
         alert = Alert(message, severity)
         self.active_alerts.append(alert)
-        self.active_alerts.sort(key=lambda x: (x.severity, x.timestamp), reverse=True)
+        self.active_alerts.sort(key=lambda x: (x.get_priority(), x.timestamp), reverse=True)
 
     def clear_alert(self, alert: Alert):
         if alert in self.active_alerts:
