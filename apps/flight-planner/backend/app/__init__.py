@@ -19,6 +19,10 @@ alert_manager = AlertManager()
 # Initialize HardwareIntegrationService
 hardware_integration_service = HardwareIntegrationService()
 
+# Initialize GPSSimulationService
+initial_gps_state = GPSState(lat=0.0, lon=0.0, alt=0.0, speed=0.0, track=0.0, raim=True, epe=10.0)
+gps_simulation_service = GPSSimulationService(initial_gps_state)
+
 # Example WebSocket endpoint
 from fastapi import WebSocket
 
