@@ -125,10 +125,10 @@ class AviationMissionApp {
     bindEventListeners() {
         // Search input
         const searchInput = document.getElementById('searchInput');
-        searchInput.addEventListener('input', (e) => {
+        searchInput.addEventListener('input', this.debounce((e) => {
             this.filters.search = e.target.value;
             this.filterMissions();
-        });
+        }, 300));
 
         // Filter dropdowns
         const categoryFilter = document.getElementById('categoryFilter');
