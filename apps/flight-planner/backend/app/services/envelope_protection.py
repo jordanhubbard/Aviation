@@ -6,7 +6,7 @@ class EnvelopeProtection:
         self.pitch_limit = 20  # degrees
         self.bank_limit = 25  # degrees
         self.overspeed_limit = 240  # knots
-        self.stall_speed = 60  # knots
+        self.stall_speed = 65  # knots
 
     def check_pitch(self, pitch):
         if abs(pitch) > self.pitch_limit:
