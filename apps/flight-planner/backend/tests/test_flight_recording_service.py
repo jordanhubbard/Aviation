@@ -25,7 +25,7 @@ def test_read_flight_recording(flight_recording):
         client.post("/flight-recordings/", json={"metadata": {"aircraft": "Test Aircraft", "startTime": "2023-01-01T00:00:00Z", "duration": 3600, "departure": "JFK", "destination": "LAX"}, "telemetry": {"timestamp": [], "latitude": [], "longitude": [], "altitude": [], "heading": [], "pitch": [], "roll": [], "speed": []}, "events": []})
         response = client.get("/flight-recordings/1")
         assert response.status_code == 200
-        self.assertEqual(response.json()["name"], "Test Flight")
+        assert response.json()["metadata"]["aircraft"] == "Test Aircraft"
 
     @pytest.mark.parametrize('flight_recording', [{"metadata": {"aircraft": "Test Aircraft", "startTime": "2023-01-01T00:00:00Z", "duration": 3600, "departure": "JFK", "destination": "LAX"}, "telemetry": {"timestamp": [], "latitude": [], "longitude": [], "altitude": [], "heading": [], "pitch": [], "roll": [], "speed": []}, "events": []}])
 def test_update_flight_recording(flight_recording):
