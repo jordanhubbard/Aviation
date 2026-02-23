@@ -26,3 +26,12 @@
 For more details, see [Garmin Trademark Guidelines](https://www.garmin.com/en-US/trademarks/).
 
 By adhering to these guidelines, we ensure compliance with trademark laws and protect the integrity of our products and Garmin's brand.
+
+## Project Files Requiring Disclaimers
+
+The following files reference Garmin or G1000 and include required trademark notices:
+
+- `docs/G1000_simulator_documentation.md`
+- `docs/G1000_simulator_roadmap.md`
+- `docs/G1000_SIMULATOR_DOCUMENTATION_PLAN.md`
+- `apps/flight-planner/backend/config/g1000_configuration.yaml`
