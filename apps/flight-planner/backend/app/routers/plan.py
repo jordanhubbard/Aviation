@@ -39,7 +39,7 @@ PlanRequest = Annotated[Union[PlanRouteRequest, PlanLocalRequest], Field(discrim
 
 
 @router.post(
-    "/plan",
+    "/initialize",
     summary="Plan a flight (route or local)",
     description="Uses a discriminated union request body with `mode` set to `route` or `local`.",
     openapi_extra={
