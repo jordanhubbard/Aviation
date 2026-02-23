@@ -18,7 +18,7 @@ test.describe('Complete Flight Scenarios', () => {
     await page.getByLabel('Destination').fill('KLAX');
     await page.getByRole('button', { name: 'Plan Route' }).click();
     await expect(page.getByRole('heading', { name: 'Flight Plan Details' })).toBeVisible();
-    await page.getByRole('button', { name: 'Activate Flight Plan' }).click();
+    await page.getByRole('button', { name: 'Load Flight Plan' }).click();
     await expect(page.getByText('Flight Plan Activated')).toBeVisible();
   });
 
