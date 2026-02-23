@@ -34,6 +34,13 @@ const G1000Controls = () => {
       <div className="joystick" onMouseMove={(e) => setJoystickPosition({ x: e.clientX, y: e.clientY })}>
         Joystick: {`(${joystickPosition.x}, ${joystickPosition.y})`}
       </div>
+      <div className="softkeys">
+        {['SK1', 'SK2', 'SK3', 'SK4', 'SK5'].map((key) => (
+          <button key={key} onClick={() => console.log(`${key} pressed`)}>
+            {key}
+          </button>
+        ))}
+      </div>
       <button onMouseDown={handleButtonPress} className={buttonPressed ? 'pressed' : ''}>
         Button
       </button>
