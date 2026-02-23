@@ -12,6 +12,9 @@ app = FastAPI()
 app.include_router(flight_plan_router, prefix="/flight-plans", tags=["flight-plans"])
 app.include_router(flight_recording_router, prefix="/flight-recordings", tags=["flight-recordings"])
 
+# Initialize AlertManager
+alert_manager = AlertManager()
+
 # Example WebSocket endpoint
 @app.websocket("/ws")
 async def websocket_endpoint(websocket: WebSocket):
