@@ -46,5 +46,4 @@ class TestADCSimulation(unittest.TestCase):
         # Add test logic for standard_atmosphere_model
         pass
 
-if __name__ == '__main__':
-    unittest.main()
+
