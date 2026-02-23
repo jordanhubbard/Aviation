@@ -20,10 +20,6 @@ if os.path.exists(FLIGHT_RECORDINGS_FILE):
         except json.JSONDecodeError:
             flight_recordings = []
 else:
-        flight_recordings = []
-else:
-    flight_recordings = []
-else:
     flight_recordings = []
 
 # Save flight recordings to file
