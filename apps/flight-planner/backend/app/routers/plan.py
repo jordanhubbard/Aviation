@@ -75,7 +75,7 @@ PlanRequest = Annotated[Union[PlanRouteRequest, PlanLocalRequest], Field(discrim
         }
     },
 )
-def plan(req: PlanRequest) -> Any:
+def initialize_flight(req: PlanRequest) -> Any:
     if req.mode == "route":
         ctx = PlanningContext(deadline_s=time.perf_counter() + planning_total_timeout_s())
         try:
