@@ -73,6 +73,17 @@ class FlightDynamicsService:
         adjusted_velocity = apply_wind_effect(self.aircraft_state.velocity, wind_speed, wind_angle)
         adjusted_velocity = apply_turbulence_effect(adjusted_velocity, turbulence_intensity)
 
+        pitch_output = self.pitch_controller.compute(target_pitch, self.aircraft_state.velocity)
+        roll_output = self.roll_controller.compute(target_roll, self.aircraft_state.velocity)
+        altitude_output = self.altitude_controller.compute(target_altitude, self.aircraft_state.altitude)
+        heading_output = self.heading_controller.compute(target_heading, self.aircraft_state.heading)
+
+        # Apply autopilot outputs to adjust aircraft state
+        self.aircraft_state.velocity += pitch_output
+        self.aircraft_state.velocity += roll_output
+        self.aircraft_state.altitude += altitude_output
+        self.aircraft_state.heading += heading_output
+
         self.aircraft_state.velocity = adjusted_velocity
 
         # Autopilot control
