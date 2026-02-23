@@ -7,7 +7,7 @@ router = APIRouter()
 class FlightPlan(BaseModel):
     id: int
     name: str
-    waypoints: List[dict]
+    waypoints: List[dict] = []
 
 import json
 import os
