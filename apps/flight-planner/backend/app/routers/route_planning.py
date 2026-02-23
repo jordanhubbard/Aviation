@@ -58,8 +58,8 @@ def airport_lookup(code: str) -> dict:
 @router.post("/route", response_model=RouteResponse)
 @router.post("/route/skip_waypoint", response_model=RouteResponse)
 def skip_waypoint_route(req: RouteRequest, waypoint: str) -> RouteResponse:
-    # Logic to skip a waypoint
-    pass
+    updated_points = skip_waypoint(points, waypoint)
+    return calculate_route_response(updated_points, req)
 
 @router.post("/route/insert_waypoint", response_model=RouteResponse)
 def insert_waypoint_route(req: RouteRequest, waypoint: str, position: str) -> RouteResponse:
