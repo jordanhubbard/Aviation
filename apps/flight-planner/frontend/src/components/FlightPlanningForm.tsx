@@ -27,7 +27,29 @@ const optionLabel = (a: Airport) => {
   return code
 }
 
+import { Button, Dialog, DialogActions, DialogContent, DialogTitle, List, ListItem, ListItemText } from '@mui/material';
+import { useEffect } from 'react';
+
 const FlightPlanningForm: React.FC<Props> = ({ isLoading, onSubmit }) => {
+  const [flightPlans, setFlightPlans] = useState<FlightPlan[]>([]);
+  const [open, setOpen] = useState(false);
+
+  useEffect(() => {
+    fetch('/api/flight-plans')
+      .then(response => response.json())
+      .then(data => setFlightPlans(data));
+  }, []);
+
+  const handleLoad = (plan: FlightPlan) => {
+    setOrigin(plan.origin);
+    setDestination(plan.destination);
+    setSpeed(plan.speed);
+    setAltitude(plan.altitude);
+    setOpen(false);
+  };
+
+  const handleOpen = () => setOpen(true);
+  const handleClose = () => setOpen(false);
   const [mode, setMode] = useState<PlanMode>('route')
 
   const [origin, setOrigin] = useState('')
