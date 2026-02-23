@@ -152,6 +152,7 @@ function App() {
           component="main"
           role="main"
         >
+          <CanvasRenderer />
           <Suspense fallback={<LoadingState message="Loading page..." />}>
             <AnimatePresence mode="wait">
               <motion.div
