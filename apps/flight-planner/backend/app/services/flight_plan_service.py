@@ -51,7 +51,7 @@ def read_flight_plan(flight_plan_id: int):
 def update_flight_plan(flight_plan_id: int, flight_plan: FlightPlan):
     for idx, fp in enumerate(flight_plans):
         if fp.id == flight_plan_id:
-            flight_plans[idx] = flight_plan
+            flight_plans[idx] = flight_plan.dict()
             return flight_plan
     raise HTTPException(status_code=404, detail="Flight plan not found")
 
