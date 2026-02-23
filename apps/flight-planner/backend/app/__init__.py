@@ -17,6 +17,8 @@ alert_manager = AlertManager()
 
 # Example WebSocket endpoint
 @app.websocket("/ws")
+from fastapi import WebSocket
+
 async def websocket_endpoint(websocket: WebSocket):
     protocol = WebSocketProtocol(websocket)
     await protocol.connect()
