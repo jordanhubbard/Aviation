@@ -49,6 +49,9 @@ class GPSState:
 
 
 class GPSSimulationService:
+    def __init__(self, gps_state: GPSState):
+        self.gps_state = gps_state
+
     def simulate_approach(self, approach_type: str) -> None:
         if approach_type == 'LNAV':
             self.simulate_lnav_approach()
