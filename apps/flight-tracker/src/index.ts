@@ -28,6 +28,28 @@ dataPublisher.startPublishing();
 
 // Initialize service
 
+  // Load and initialize plugins
+  const plugins: G1000Plugin[] = []; // This would be dynamically loaded
+  for (const plugin of plugins) {
+    await plugin.initialize({ service });
+  }
+
+  // Example plugin usage
+  const examplePlugin: G1000Plugin = {
+    id: 'example-plugin',
+    name: 'Example Plugin',
+    version: '1.0.0',
+    async initialize(context) {
+      console.log(`Initializing plugin: ${this.name}`);
+    },
+    async destroy() {
+      console.log(`Destroying plugin: ${this.name}`);
+    },
+  };
+
+  plugins.push(examplePlugin);
+
+
   // Initialize plugins
   const plugins: G1000Plugin[] = [];
   for (const plugin of plugins) {
