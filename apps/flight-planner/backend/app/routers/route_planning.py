@@ -63,8 +63,8 @@ def skip_waypoint_route(req: RouteRequest, waypoint: str) -> RouteResponse:
 
 @router.post("/route/insert_waypoint", response_model=RouteResponse)
 def insert_waypoint_route(req: RouteRequest, waypoint: str, position: str) -> RouteResponse:
-    # Logic to insert a waypoint
-    pass
+    updated_points = insert_waypoint(points, waypoint, position)
+    return calculate_route_response(updated_points, req)
 
 @router.post("/route/parallel_offset", response_model=RouteResponse)
 def parallel_offset_route(req: RouteRequest, offset_distance: float) -> RouteResponse:
