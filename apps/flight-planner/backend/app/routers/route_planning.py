@@ -68,8 +68,8 @@ def insert_waypoint_route(req: RouteRequest, waypoint: str, position: str) -> Ro
 
 @router.post("/route/parallel_offset", response_model=RouteResponse)
 def parallel_offset_route(req: RouteRequest, offset_distance: float) -> RouteResponse:
-    # Logic for parallel offset
-    pass
+    updated_points = parallel_offset(points, offset_distance)
+    return calculate_route_response(updated_points, req)
 
 @router.post("/route/hold_pattern", response_model=RouteResponse)
 def hold_pattern_route(req: RouteRequest, waypoint: str) -> RouteResponse:
