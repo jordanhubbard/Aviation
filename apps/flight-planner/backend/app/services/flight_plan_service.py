@@ -34,6 +34,20 @@ if os.path.exists(FLIGHT_PLANS_FILE):
 else:
     flight_plans = []
 
+# API Endpoints
+
+@router.get("/api/nav/search")
+def search_navigation(query: str):
+    return nav_database.search(query)
+
+@router.get("/api/procedures/{airport}")
+def get_procedures(airport: str):
+    return {
+        "sids": procedures.get_sids(airport),
+        "stars": procedures.get_stars(airport),
+        "approaches": procedures.get_approaches(airport)
+    }
+
 # Save flight plans to file
 def save_flight_plans():
     with open(FLIGHT_PLANS_FILE, 'w') as file:
