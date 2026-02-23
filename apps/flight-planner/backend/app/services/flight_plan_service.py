@@ -14,7 +14,7 @@ class Waypoint:
 class FlightPlan(BaseModel):
     id: int
     name: str
-    waypoints: List[dict] = []
+    waypoints: List[Waypoint] = []
 
 import json
 import os
