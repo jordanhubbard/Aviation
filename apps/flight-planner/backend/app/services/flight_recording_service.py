@@ -14,7 +14,7 @@ class FlightRecording(BaseModel):
 FLIGHT_RECORDINGS_FILE = 'flight_recordings.json'
 
 if os.path.exists(FLIGHT_RECORDINGS_FILE):
-with open(FLIGHT_RECORDINGS_FILE, 'r') as file:
+    with open(FLIGHT_RECORDINGS_FILE, 'r') as file:
     try:
         flight_recordings = json.load(file)
     except json.JSONDecodeError:
