@@ -3,6 +3,7 @@ from fastapi import FastAPI
 from .services.flight_plan_service import router as flight_plan_router
 from .services.websocket_protocol import WebSocketProtocol, MessageType
 from .services.flight_recording_service import router as flight_recording_router
+from .services.envelope_protection import EnvelopeProtection
 from .services.ahrs_adc_simulation import AHRS, ADC
 from .services.gps_simulation import GPSSimulationService, GPSState
 
