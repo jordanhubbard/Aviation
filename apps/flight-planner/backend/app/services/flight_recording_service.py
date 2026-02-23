@@ -18,7 +18,11 @@ class FlightRecording(BaseModel):
         roll: List[float],
         speed: List[float]
     }
-    events: List[dict]
+    events: List[{
+        time: int,
+        type: str,
+        data: dict
+    }]
 
 FLIGHT_RECORDINGS_FILE = 'flight_recordings.json'
 
