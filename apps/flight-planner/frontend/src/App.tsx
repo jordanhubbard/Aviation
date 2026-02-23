@@ -67,7 +67,32 @@ const pageVariants = {
   },
 }
 
+import { ThemeProvider, createTheme } from '@mui/material/styles';
+
 function App() {
+  const [themeMode, setThemeMode] = useState('light');
+
+  const theme = useMemo(() =>
+    createTheme({
+      palette: {
+        mode: themeMode,
+        ...(themeMode === 'night' && {
+          background: {
+            default: '#2e2e2e',
+            paper: '#424242',
+          },
+          text: {
+            primary: '#ffffff',
+            secondary: '#ffcccb',
+          },
+        }),
+        ...(themeMode === 'high-contrast' && {
+          contrastThreshold: 3,
+          tonalOffset: 0.2,
+        }),
+      },
+    }),
+  [themeMode]);
   const location = useLocation()
   const theme = useTheme()
   const isSmall = useMediaQuery(theme.breakpoints.down('sm'))
