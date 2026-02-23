@@ -44,8 +44,8 @@ def read_flight_recording(flight_recording_id: int):
 @router.put("/{flight_recording_id}", response_model=FlightRecording)
 def update_flight_recording(flight_recording_id: int, flight_recording: FlightRecording):
     for idx, fr in enumerate(flight_recordings):
-        if fr.id == flight_recording_id:
-            flight_recordings[idx] = flight_recording
+        if fr['metadata']['id'] == flight_recording_id:
+            flight_recordings[idx] = flight_recording.dict()
             save_flight_recordings()
             return flight_recording
     raise HTTPException(status_code=404, detail="Flight recording not found")
@@ -53,7 +53,7 @@ def update_flight_recording(flight_recording_id: int, flight_recording: FlightRe
 @router.delete("/{flight_recording_id}")
 def delete_flight_recording(flight_recording_id: int):
     for idx, fr in enumerate(flight_recordings):
-        if fr.id == flight_recording_id:
+        if fr['metadata']['id'] == flight_recording_id:
             del flight_recordings[idx]
             save_flight_recordings()
             return {"message": "Flight recording deleted"}
