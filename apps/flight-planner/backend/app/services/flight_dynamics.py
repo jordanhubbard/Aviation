@@ -14,7 +14,7 @@ def calculate_drag(speed: float, wing_area: float, drag_coefficient: float, air_
     return 0.5 * drag_coefficient * air_density * wing_area * speed ** 2
 
 
-def calculate_thrust(power: float, efficiency: float) -> float:
+def calculate_thrust(power: float, efficiency: float, engine_factor: float = 1.0) -> float:
     """Calculate thrust force."""
     return power * efficiency
 
