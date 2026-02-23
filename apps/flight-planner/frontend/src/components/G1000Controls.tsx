@@ -18,7 +18,7 @@ const G1000Controls = () => {
   };
 
   useEffect(() => {
-    const handleKeyDown = (event) => {
+    const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'ArrowLeft') handleKnobTurn('left');
       if (event.key === 'ArrowRight') handleKnobTurn('right');
     };
