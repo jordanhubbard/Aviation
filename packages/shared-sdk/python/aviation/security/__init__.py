@@ -1,56 +1,45 @@
 """Aviation SDK Security Module.
 
 Provides security utilities for aviation applications:
-- Rate limiting middleware for FastAPI
-- Authentication decorators for admin functions
-- HTTPS enforcement utilities
-- Privacy-compliant data handling
+- Rate limiting middleware
+- API key authentication
+- Admin function protection
+- HTTPS enforcement
 """
 
 from .rate_limiter import (
     RateLimiter,
-    RateLimitMiddleware,
-    rate_limit,
-    InMemoryRateLimitStore,
     RateLimitExceeded,
+    rate_limit,
+    create_rate_limiter,
 )
 from .auth import (
+    APIKeyAuth,
     AdminAuth,
+    require_api_key,
     require_admin,
-    api_key_auth,
-    APIKeyHeader,
+    verify_api_key,
 )
-from .https import (
+from .middleware import (
+    SecurityMiddleware,
     HTTPSRedirectMiddleware,
-    require_https,
-    is_production,
-)
-from .privacy import (
-    PrivacyConfig,
-    require_consent,
-    anonymize_data,
-    DataCollectionScope,
+    setup_security,
 )
 
 __all__ = [
     # Rate limiting
     "RateLimiter",
-    "RateLimitMiddleware",
-    "rate_limit",
-    "InMemoryRateLimitStore",
     "RateLimitExceeded",
+    "rate_limit",
+    "create_rate_limiter",
     # Authentication
+    "APIKeyAuth",
     "AdminAuth",
+    "require_api_key",
     "require_admin",
-    "api_key_auth",
-    "APIKeyHeader",
-    # HTTPS
+    "verify_api_key",
+    # Middleware
+    "SecurityMiddleware",
     "HTTPSRedirectMiddleware",
-    "require_https",
-    "is_production",
-    # Privacy
-    "PrivacyConfig",
-    "require_consent",
-    "anonymize_data",
-    "DataCollectionScope",
+    "setup_security",
 ]
