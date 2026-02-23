@@ -8,7 +8,16 @@ router = APIRouter()
 
 class FlightRecording(BaseModel):
     metadata: dict
-    telemetry: dict
+    telemetry: {
+        timestamp: List[int],
+        latitude: List[float],
+        longitude: List[float],
+        altitude: List[float],
+        heading: List[float],
+        pitch: List[float],
+        roll: List[float],
+        speed: List[float]
+    }
     events: List[dict]
 
 FLIGHT_RECORDINGS_FILE = 'flight_recordings.json'
