@@ -34,6 +34,7 @@ const Navigation: React.FC = () => {
             navigate('/airports')
             event.preventDefault()
             break
+          // Add more shortcuts here for G1000 controls
         }
       }
     }
