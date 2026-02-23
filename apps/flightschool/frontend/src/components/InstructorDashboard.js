@@ -23,6 +23,10 @@ const InstructorDashboard = () => {
   return (
     <div>
       <h1>Instructor Dashboard</h1>
+      <h2>Scenario Builder</h2>
+      <button>Create New Scenario</button>
+      <h2>Performance Tracking</h2>
+      <p>Track student performance over time.</p>
       <h2>Upcoming Lessons</h2>
       <ul>
         {upcomingLessons.map((lesson) => (
