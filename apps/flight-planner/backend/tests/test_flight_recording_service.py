@@ -37,6 +37,4 @@ def test_flight_recording_service(flight_recording):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json()["message"], "Flight recording deleted")
 
-if __name__ == '__main__':
-    import unittest
-    unittest.main(verbosity=2)
+
