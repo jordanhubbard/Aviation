@@ -1,4 +1,4 @@
-import unittest
+import pytest
 from app.services.flight_recording_service import router as flight_recording_router
 from fastapi.testclient import TestClient
 from app import app
