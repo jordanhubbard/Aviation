@@ -171,6 +171,11 @@ function App() {
         </AppBar>
 
         <Navigation />
+        <Box sx={{ display: 'flex', justifyContent: 'center', mb: 2 }}>
+          <Button variant="contained" onClick={() => setThemeMode('light')}>Day Mode</Button>
+          <Button variant="contained" onClick={() => setThemeMode('night')} sx={{ mx: 1 }}>Night Mode</Button>
+          <Button variant="contained" onClick={() => setThemeMode('high-contrast')}>High Contrast Mode</Button>
+        </Box>
         <KeyboardShortcuts />
 
         <Container
