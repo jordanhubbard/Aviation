@@ -144,6 +144,7 @@ function App() {
         </AppBar>
 
         <Navigation />
+        <KeyboardShortcuts />
 
         <Container
           maxWidth="xl"
