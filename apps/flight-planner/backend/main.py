@@ -21,7 +21,7 @@ telemetry_recording_service = TelemetryRecordingService()
 telemetry_recording_service.start_recording()
 
 # Simulate different approaches
-approaches = ['LNAV', 'LNAV/VNAV', 'LPV', 'ILS', 'LOC']
+approaches = ['LNAV', 'LNAV/VNAV', 'LPV', 'ILS', 'LOC', 'VTF', 'Missed', 'Visual']
 for approach in approaches:
     gps_simulation_service.simulate_approach(approach)
 
