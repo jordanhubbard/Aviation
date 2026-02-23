@@ -4,10 +4,14 @@ from typing import List, Dict
 from datetime import datetime
 
 class Alert:
-    def __init__(self, message: str, severity: int, timestamp: datetime = None):
+    def __init__(self, message: str, severity: str, timestamp: datetime = None):
         self.message = message
         self.severity = severity
         self.timestamp = timestamp or datetime.now()
+
+    def get_priority(self) -> int:
+        priority_map = {'Master Warning': 3, 'Master Caution': 2, 'Advisory': 1}
+        return priority_map.get(self.severity, 0)
 
 class AlertManager:
     def __init__(self):
