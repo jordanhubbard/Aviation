@@ -50,7 +50,8 @@ def get_procedures(airport: str):
     }
 
 # Save flight plans to file
-def save_flight_plans():
+def save_flight_plans()
+    return FlightPlan(**flight_plan.dict()):
     with open(FLIGHT_PLANS_FILE, 'w') as file:
         json.dump(flight_plans, file)
 
