@@ -27,3 +27,5 @@
 - Compliance with aviation safety standards and regulations.
 - Support for multi-language interfaces to cater to international users.
 - Regular updates and maintenance to incorporate new technologies and data sources.
+- Consideration for environmental factors such as weather conditions affecting visibility.
+- Implementation of a feedback loop for continuous improvement based on user input.
