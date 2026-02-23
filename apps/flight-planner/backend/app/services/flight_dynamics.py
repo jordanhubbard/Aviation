@@ -58,7 +58,7 @@ class FlightDynamicsService:
         self.aircraft_state = aircraft_state
         self.alert_service = alert_service
 
-    def update_state(self, lift_coefficient: float, drag_coefficient: float, power: float, engine_factor: float = 1.0,
+    def update_state(self, lift_coefficient: float, drag_coefficient: float, power: float, engine_factor: float,
                       fuel_efficiency: float, wind_speed: float, wind_angle: float,
                       turbulence_intensity: float, air_density: float, wing_area: float,
                       target_pitch: float, target_roll: float, target_altitude: float, target_heading: float,
