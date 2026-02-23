@@ -70,6 +70,10 @@ nav_database = NavDatabase()
 routing = Routing()
 procedures = Procedures()
 geo_calculations = GeoCalculations()
+alert_manager = AlertManager()
+
+# Active flight plan tracking for en-route operations
+active_flight_plan_id: Optional[int] = None
 
 @router.post("/", response_model=FlightPlan)
 def create_flight_plan(flight_plan: FlightPlan):
