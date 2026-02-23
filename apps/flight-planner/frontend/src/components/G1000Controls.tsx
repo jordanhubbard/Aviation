@@ -17,6 +17,15 @@ const G1000Controls = () => {
     setTimeout(() => setButtonPressed(false), 200); // Debounce
   };
 
+  useEffect(() => {
+    const handleKeyDown = (event) => {
+      if (event.key === 'ArrowLeft') handleKnobTurn('left');
+      if (event.key === 'ArrowRight') handleKnobTurn('right');
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
   return (
     <div className="g1000-controls">
       <div className="knob" onClick={() => handleKnobTurn('right')} onContextMenu={(e) => { e.preventDefault(); handleKnobTurn('left'); }}>
