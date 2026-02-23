@@ -48,6 +48,7 @@ from .alerts import AlertService, Alert
 class FlightDynamicsService:
     def __init__(self, aircraft_state: AircraftState, alert_service: AlertService):
         self.aircraft_state = aircraft_state
+        self.alert_service = alert_service
 
     def update_state(self, lift_coefficient: float, drag_coefficient: float, power: float,
                       oil_pressure: float, electrical_status: float,
