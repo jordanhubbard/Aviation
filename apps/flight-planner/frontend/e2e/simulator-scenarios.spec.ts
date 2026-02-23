@@ -1,4 +1,5 @@
-import { expect, test } from '@playwright/test'; import { flightPlans, navData, demoScenarios, mockApis } from './fixtures';
+import { expect, test } from '@playwright/test';
+import { flightPlans, navData, demoScenarios, mockApis } from './fixtures';
 
 // E2E test for simulator startup flow
 // This test will cover the startup sequence of the simulator
