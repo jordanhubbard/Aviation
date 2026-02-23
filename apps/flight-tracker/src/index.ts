@@ -27,6 +27,19 @@ const dataPublisher = new DataPublisher(wsServer);
 dataPublisher.startPublishing();
 
 // Initialize service
+
+  // Initialize plugins
+  const plugins: G1000Plugin[] = [];
+  for (const plugin of plugins) {
+    await plugin.initialize({ service });
+  }
+
+  // Handle plugin lifecycle
+  process.on('exit', async () => {
+    for (const plugin of plugins) {
+      await plugin.destroy();
+    }
+  });
 // Note: Service uses createSecretLoader internally for keystore access
 const service = new FlightTrackerService({
   name: 'flight-tracker',
