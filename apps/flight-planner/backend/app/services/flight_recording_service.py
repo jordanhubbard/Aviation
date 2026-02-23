@@ -23,6 +23,8 @@ else:
     flight_recordings = []
 else:
     flight_recordings = []
+else:
+    flight_recordings = []
 
 # Save flight recordings to file
 def save_flight_recordings():
