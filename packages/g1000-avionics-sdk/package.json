@@ -1,0 +1,31 @@
+{
+  "name": "@aviation/g1000-avionics-sdk",
+  "version": "0.1.0",
+  "description": "Core avionics simulation library providing AHRS, ADC, GPS, NAV radios, and autopilot control logic",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "clean": "rm -rf dist",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "keywords": [
+    "aviation",
+    "g1000",
+    "avionics",
+    "ahrs",
+    "adc",
+    "gps",
+    "autopilot",
+    "simulation"
+  ],
+  "author": "Jordan Hubbard",
+  "license": "MIT",
+  "devDependencies": {
+    "@types/node": "^25.0.3",
+    "typescript": "^5.0.0",
+    "vitest": "^1.0.0"
+  }
+}
