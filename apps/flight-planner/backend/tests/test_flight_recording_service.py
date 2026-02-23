@@ -38,7 +38,7 @@ def test_update_flight_recording(flight_recording):
 def test_delete_flight_recording(flight_recording):
         client.post("/flight-recordings/", json=flight_recording)
         response = client.delete("/flight-recordings/1")
-        self.assertEqual(response.status_code, 200)
+        assert response.status_code == 200
         assert response.json()["message"] == "Flight recording deleted"
 
 
