@@ -56,6 +56,25 @@ def airport_lookup(code: str) -> dict:
 
 
 @router.post("/route", response_model=RouteResponse)
+@router.post("/route/skip_waypoint", response_model=RouteResponse)
+def skip_waypoint_route(req: RouteRequest, waypoint: str) -> RouteResponse:
+    # Logic to skip a waypoint
+    pass
+
+@router.post("/route/insert_waypoint", response_model=RouteResponse)
+def insert_waypoint_route(req: RouteRequest, waypoint: str, position: str) -> RouteResponse:
+    # Logic to insert a waypoint
+    pass
+
+@router.post("/route/parallel_offset", response_model=RouteResponse)
+def parallel_offset_route(req: RouteRequest, offset_distance: float) -> RouteResponse:
+    # Logic for parallel offset
+    pass
+
+@router.post("/route/hold_pattern", response_model=RouteResponse)
+def hold_pattern_route(req: RouteRequest, waypoint: str) -> RouteResponse:
+    # Logic for hold pattern
+    pass
 def calculate_route(req: RouteRequest) -> RouteResponse:
     origin = get_airport_coordinates(req.origin)
     dest = get_airport_coordinates(req.destination)
