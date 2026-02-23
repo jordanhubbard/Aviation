@@ -137,7 +137,25 @@ const FlightPlanningForm: React.FC<Props> = ({ isLoading, onSubmit }) => {
   }
 
   return (
-    <FormSection
+    <Button variant="outlined" onClick={handleOpen} disabled={isLoading}>Load Flight Plan</Button>
+
+      <Dialog open={open} onClose={handleClose}>
+        <DialogTitle>Load Flight Plan</DialogTitle>
+        <DialogContent>
+          <List>
+            {flightPlans.map((plan) => (
+              <ListItem button onClick={() => handleLoad(plan)} key={plan.id}>
+                <ListItemText primary={plan.name} />
+              </ListItem>
+            ))}
+          </List>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleClose}>Cancel</Button>
+        </DialogActions>
+      </Dialog>
+
+      <FormSection
       title="Planning"
       onSubmit={submit}
       buttonText={mode === 'route' ? 'Plan Route' : 'Plan Local Flight'}
