@@ -50,6 +50,7 @@ class FlightDynamicsService:
         self.aircraft_state = aircraft_state
 
     def update_state(self, lift_coefficient: float, drag_coefficient: float, power: float,
+                      oil_pressure: float, electrical_status: float,
                       fuel_efficiency: float, wind_speed: float, wind_angle: float,
                       turbulence_intensity: float, air_density: float, wing_area: float) -> None:
         lift = calculate_lift(self.aircraft_state.velocity, wing_area, lift_coefficient, air_density)
