@@ -65,7 +65,7 @@ class FlightDynamicsService:
                       turbulence_intensity: float, air_density: float, wing_area: float) -> None:
         lift = calculate_lift(self.aircraft_state.velocity, wing_area, lift_coefficient, air_density)
         drag = calculate_drag(self.aircraft_state.velocity, wing_area, drag_coefficient, air_density)
-        thrust = calculate_thrust(power, efficiency=0.9)
+        thrust = calculate_thrust(power, efficiency=0.9, engine_factor=engine_factor)
         fuel_consumption = calculate_fuel_consumption(thrust, fuel_efficiency)
 
         adjusted_velocity = apply_wind_effect(self.aircraft_state.velocity, wind_speed, wind_angle)
