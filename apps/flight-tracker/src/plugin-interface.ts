@@ -13,7 +13,7 @@ export interface G1000Plugin {
   onMenuRegister?(menuManager: MenuManager): void;
 }
 
-interface FlightState {
+export interface FlightState {
   icao24: string;
   callsign: string;
   originCountry: string;
@@ -28,6 +28,6 @@ interface FlightState {
   verticalRate: number | null;
 }
 
-interface MenuManager {
+export interface MenuManager {
   registerMenuItem(id: string, label: string, action: () => void): void;
 }
