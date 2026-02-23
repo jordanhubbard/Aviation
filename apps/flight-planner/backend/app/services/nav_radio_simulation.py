@@ -40,6 +40,15 @@ class NavRadioState:
 
 
 class NavRadioSimulationService:
+    # TODO: Implement COM1/COM2 transceivers with frequency selection
+    # TODO: Implement Audio panel simulation (speaker, headphone, intercom)
+    # TODO: Implement Optional simulated ATC communication
+    # TODO: Implement Transponder Mode A/C and Mode S
+    # TODO: Implement Squawk code entry
+    # TODO: Implement Ident function
+    # TODO: Implement Audio Panel Marker beacon lights (outer/middle/inner)
+    # TODO: Implement Volume controls for COM/NAV/ADF
+    # TODO: Implement Intercom and music input simulation
     def __init__(self, nav_radio_state: NavRadioState):
         self.nav_radio_state = nav_radio_state
 
