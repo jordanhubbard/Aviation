@@ -32,6 +32,7 @@ function MissingRoute() {
   }, [location.pathname, location.search])
 
   return (
+    <ThemeProvider theme={theme}>
     <Box>
       <Typography variant="h5" sx={{ mb: 1 }}>
         Page not found
