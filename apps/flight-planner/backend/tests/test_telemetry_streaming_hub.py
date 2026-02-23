@@ -1,6 +1,7 @@
 import pytest
 from fastapi import WebSocket
 from fastapi.testclient import TestClient
+from httpx import AsyncClient
 from app.services.telemetry_streaming_hub import TelemetryStreamingHub, SubscriptionFilter
 from app import app
 
