@@ -7,9 +7,9 @@ import os
 router = APIRouter()
 
 class FlightRecording(BaseModel):
-    id: int
-    name: str
-    data: List[dict]
+    metadata: dict
+    telemetry: dict
+    events: List[dict]
 
 FLIGHT_RECORDINGS_FILE = 'flight_recordings.json'
 
