@@ -49,6 +49,8 @@ class GPSState:
 
 
 class GPSSimulationService:
+    def simulate_approach(self, approach_type: str) -> None:
+        print(f"Simulating {approach_type} approach")
     def __init__(self, gps_state: GPSState):
         self.gps_state = gps_state
 
