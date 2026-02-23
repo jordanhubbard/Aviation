@@ -16,7 +16,7 @@ import unittest
 def test_flight_recording_service(flight_recording):
     def test_create_flight_recording(flight_recording):
         response = client.post("/flight-recordings/", json=flight_recording)
-        self.assertEqual(response.status_code, 200)
+        assert response.status_code == 200
         self.assertEqual(response.json()["name"], "Test Flight")
 
     def test_read_flight_recording(self):
