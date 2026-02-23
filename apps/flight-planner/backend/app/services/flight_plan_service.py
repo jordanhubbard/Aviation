@@ -34,6 +34,8 @@ def save_flight_plans():
         json.dump(flight_plans, file)
 
 
+envelope_protection = EnvelopeProtection()
+
 @router.post("/", response_model=FlightPlan)
 def create_flight_plan(flight_plan: FlightPlan):
     flight_plans.append(flight_plan.dict())
