@@ -13,7 +13,7 @@ import pytest
 
 
 @pytest.mark.parametrize('flight_recording', [{"metadata": {"aircraft": "Test Aircraft", "startTime": "2023-01-01T00:00:00Z", "duration": 3600, "departure": "JFK", "destination": "LAX"}, "telemetry": {"timestamp": [], "latitude": [], "longitude": [], "altitude": [], "heading": [], "pitch": [], "roll": [], "speed": []}, "events": []}])
-def test_flight_recording_service(flight_recording):
+
     def test_create_flight_recording(flight_recording):
         response = client.post("/flight-recordings/", json=flight_recording)
         assert response.status_code == 200
