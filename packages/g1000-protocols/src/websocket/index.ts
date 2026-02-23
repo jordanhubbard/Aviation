@@ -41,25 +41,8 @@ export type {
   TransponderMode,
 } from "./telemetry";
 export { isCommandPayload } from "./commands";
-
-// New WebSocket client implementation
-export class WebSocketClient {
-  constructor(url: string) {
-    // Initialize WebSocket connection
-  }
-
-  sendMessage(message: WebSocketCommandMessage) {
-    // Serialize and send message
-  }
-
-  onMessage(callback: (message: WebSocketTelemetryMessage) => void) {
-    // Handle incoming messages
-  }
-
-  close() {
-    // Close WebSocket connection
-  }
-}
+export { WebSocketClient } from "./client";
+export type { WebSocketClientOptions, WebSocketClientState } from "./client";
 export type {
   CommandMessage,
   CommandName,
