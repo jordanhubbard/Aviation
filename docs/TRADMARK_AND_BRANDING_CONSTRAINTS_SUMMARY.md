@@ -1,5 +1,7 @@
 # Trademark and Branding Constraints Summary
 
+> **IMPORTANT:** This is a summary of the full trademark constraints. See [TRADMARK_AND_BRANDING_CONSTRAINTS.md](TRADMARK_AND_BRANDING_CONSTRAINTS.md) for complete guidelines.
+
 ## Garmin and G1000 Usage Guidelines
 
 - **Prohibited Uses:** Do not imply sponsorship, endorsement, or affiliation with Garmin without permission.
