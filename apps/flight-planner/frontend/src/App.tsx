@@ -96,7 +96,7 @@ function App() {
     }),
   [themeMode]);
   const location = useLocation()
-  const theme = useTheme()
+  // const theme = useTheme()
   const isSmall = useMediaQuery(theme.breakpoints.down('sm'))
 
   const [repoUrl, setRepoUrl] = useState<string | null>(null)
