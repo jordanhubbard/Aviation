@@ -11,4 +11,5 @@ __all__ = [
     "terrain",
     "weather",
     "demo",
+    "autopilot",
 ]
