@@ -1,11 +1,11 @@
 /**
- * Alert types and interfaces for the aviation alert system
+ * Alert types for the aviation alert message stack
  */
 
 /**
  * Alert severity levels following aviation standards
  * - warning: Immediate action required (red)
- * - caution: Awareness required, potential action needed (amber/yellow)
+ * - caution: Awareness required, possible action needed (amber/yellow)
  * - advisory: Information only (blue/white)
  */
 export type AlertLevel = 'warning' | 'caution' | 'advisory';
@@ -19,53 +19,46 @@ export interface Alert {
   message: string;
   timestamp: Date;
   acknowledged: boolean;
+  /** Optional source system that generated the alert */
+  source?: string;
+  /** Optional additional details */
+  details?: string;
+}
+
+/**
+ * Options for creating a new alert
+ */
+export interface CreateAlertOptions {
+  level: AlertLevel;
+  message: string;
+  source?: string;
+  details?: string;
 }
 
 /**
  * Alert manager interface for managing the alert stack
  */
 export interface IAlertManager {
-  /**
-   * Add a new alert to the stack
-   * @param alert - The alert to add (id and timestamp will be auto-generated if not provided)
-   */
-  addAlert(alert: Omit<Alert, 'id' | 'timestamp' | 'acknowledged'> & Partial<Pick<Alert, 'id' | 'timestamp'>>): Alert;
-
-  /**
-   * Acknowledge an alert (dims it in the display)
-   * @param id - The alert ID to acknowledge
-   */
+  /** Add a new alert to the stack */
+  addAlert(options: CreateAlertOptions): Alert;
+  /** Acknowledge an alert by ID */
   acknowledgeAlert(id: string): void;
-
-  /**
-   * Clear/remove an alert from the stack
-   * @param id - The alert ID to clear
-   */
+  /** Clear (remove) an alert by ID */
   clearAlert(id: string): void;
-
-  /**
-   * Clear all alerts
-   */
+  /** Clear all alerts */
   clearAllAlerts(): void;
-
-  /**
-   * Get all alerts sorted by priority (highest first) and timestamp
-   */
+  /** Get all alerts sorted by priority (highest first) */
   getAlerts(): Alert[];
-
-  /**
-   * Get the top N alerts for display
-   * @param count - Number of alerts to return (default: 3)
-   */
-  getVisibleAlerts(count?: number): Alert[];
-
-  /**
-   * Subscribe to alert changes
-   * @param callback - Function called when alerts change
-   * @returns Unsubscribe function
-   */
-  subscribe(callback: (alerts: Alert[]) => void): () => void;
+  /** Get visible alerts (up to maxVisible, highest priority first) */
+  getVisibleAlerts(maxVisible?: number): Alert[];
+  /** Subscribe to alert changes */
+  subscribe(callback: AlertSubscriber): () => void;
 }
+
+/**
+ * Callback type for alert subscriptions
+ */
+export type AlertSubscriber = (alerts: Alert[]) => void;
 
 /**
  * Priority weights for alert levels (higher = more important)
@@ -77,6 +70,6 @@ export const ALERT_PRIORITY: Record<AlertLevel, number> = {
 };
 
 /**
- * Maximum number of alerts to display simultaneously
+ * Default maximum number of visible alerts
  */
-export const MAX_VISIBLE_ALERTS = 3;
+export const DEFAULT_MAX_VISIBLE_ALERTS = 3;
