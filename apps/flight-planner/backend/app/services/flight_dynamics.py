@@ -44,6 +44,7 @@ class AircraftState:
 
 
 from .alerts import AlertService, Alert
+from .autopilot_controller import PitchController, RollController, AltitudeHoldController, HeadingHoldController
 
 from .autopilot_controller import PitchController, RollController, AltitudeHoldController, HeadingHoldController
 
