@@ -6,7 +6,8 @@ from .procedures import Procedures
 from .geo_calculations import GeoCalculations
 from pydantic import BaseModel
 from typing import List, Optional
-from dataclasses import dataclass, Optional
+from dataclasses import dataclass
+from typing import Optional
 from dataclasses import dataclass
 
 router = APIRouter()
