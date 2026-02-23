@@ -37,7 +37,7 @@ def create_flight_recording(flight_recording: FlightRecording):
 @router.get("/{flight_recording_id}", response_model=FlightRecording)
 def read_flight_recording(flight_recording_id: int):
     for flight_recording in flight_recordings:
-        if flight_recording.id == flight_recording_id:
+        if flight_recording['metadata']['id'] == flight_recording_id:
             return flight_recording
     raise HTTPException(status_code=404, detail="Flight recording not found")
 
