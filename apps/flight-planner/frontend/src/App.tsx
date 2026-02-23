@@ -80,17 +80,25 @@ function App() {
         mode: themeMode,
         ...(themeMode === 'night' && {
           background: {
-            default: '#2e2e2e',
-            paper: '#424242',
+            default: '#1e1e1e',
+            paper: '#333333',
           },
           text: {
-            primary: '#ffffff',
+            primary: '#e0e0e0',
             secondary: '#ffcccb',
           },
         }),
         ...(themeMode === 'high-contrast' && {
           contrastThreshold: 3,
           tonalOffset: 0.2,
+          background: {
+            default: '#000000',
+            paper: '#ffffff',
+          },
+          text: {
+            primary: '#000000',
+            secondary: '#ff0000',
+          },
         }),
       },
     }),
