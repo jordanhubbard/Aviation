@@ -26,7 +26,8 @@ import RouteWaypointWeatherTable from '../components/RouteWaypointWeatherTable'
 import WeatherOverlayControls, { type WeatherOverlays } from '../components/WeatherOverlayControls'
 import { useApiMutation } from '../hooks'
 import { flightPlannerService } from '../services'
-import { formatUtcMinute, startPerformanceProfiling } from '../utils/performanceProfiler'
+import { formatUtcMinute } from '../utils'
+import { startPerformanceProfiling } from '../utils/performanceProfiler'
 import type {
   FlightPlan,
   FlightPlanRequest,
