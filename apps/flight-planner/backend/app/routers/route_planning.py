@@ -73,8 +73,8 @@ def parallel_offset_route(req: RouteRequest, offset_distance: float) -> RouteRes
 
 @router.post("/route/hold_pattern", response_model=RouteResponse)
 def hold_pattern_route(req: RouteRequest, waypoint: str) -> RouteResponse:
-    # Logic for hold pattern
-    pass
+    updated_points = hold_pattern(points, waypoint)
+    return calculate_route_response(updated_points, req)
 def calculate_route(req: RouteRequest) -> RouteResponse:
     origin = get_airport_coordinates(req.origin)
     dest = get_airport_coordinates(req.destination)
