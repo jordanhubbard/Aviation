@@ -1,5 +1,5 @@
 import unittest
-from app.services.alerts import AlertService
+from ..app.services.alerts import AlertService
 
 class TestAlertService(unittest.TestCase):
     def setUp(self):
