@@ -178,6 +178,7 @@ function App() {
           <Button variant="contained" onClick={() => setThemeMode('high-contrast')}>High Contrast Mode</Button>
         </Box>
         <KeyboardShortcuts />
+<G1000Controls />
 
         <Container
           maxWidth="xl"
