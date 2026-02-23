@@ -36,6 +36,10 @@ import type {
 } from '../types'
 
 const FlightPlannerPage: React.FC = () => {
+  useEffect(() => {
+    const performanceData = startPerformanceProfiling();
+    console.log('Performance Data:', performanceData);
+  }, []);
   const [lastMode, setLastMode] = useState<'local' | 'route'>('route')
   const [lastRequest, setLastRequest] = useState<FlightPlanRequest | null>(null)
   const [overlays, setOverlays] = useState<WeatherOverlays>({
