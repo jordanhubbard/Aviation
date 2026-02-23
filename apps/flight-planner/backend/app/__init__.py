@@ -7,3 +7,18 @@ from .services.gps_simulation import GPSSimulationService, GPSState
 
 app = FastAPI()
 app.include_router(flight_plan_router, prefix="/flight-plans", tags=["flight-plans"])
+
+# Example WebSocket endpoint
+@app.websocket("/ws")
+async def websocket_endpoint(websocket: WebSocket):
+    protocol = WebSocketProtocol(websocket)
+    await protocol.connect()
+    try:
+        while True:
+            data = await protocol.receive_message()
+            # Handle incoming data
+            await protocol.send_message(MessageType.FLIGHT_STATE_UPDATE, {"status": "received"})
+    except Exception as e:
+        print(f"WebSocket error: {e}")
+    finally:
+        await protocol.disconnect()
