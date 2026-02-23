@@ -8,6 +8,7 @@ from .services.gps_simulation import GPSSimulationService, GPSState
 
 app = FastAPI()
 app.include_router(flight_plan_router, prefix="/flight-plans", tags=["flight-plans"])
+app.include_router(flight_recording_router, prefix="/flight-recordings", tags=["flight-recordings"])
 
 # Example WebSocket endpoint
 @app.websocket("/ws")
