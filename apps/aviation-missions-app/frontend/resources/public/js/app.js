@@ -895,6 +895,21 @@ class AviationMissionApp {
         return div.innerHTML;
     }
 
+    /**
+     * Debounce utility - delays function execution until after wait milliseconds
+     * have elapsed since the last time it was invoked.
+     * @param {Function} func - The function to debounce
+     * @param {number} wait - The number of milliseconds to delay
+     * @returns {Function} - The debounced function
+     */
+    debounce(func, wait) {
+        let timeout;
+        return (...args) => {
+            clearTimeout(timeout);
+            timeout = setTimeout(() => func.apply(this, args), wait);
+        };
+    }
+
     getAdminToken() {
         return localStorage.getItem('admin_token');
     }
