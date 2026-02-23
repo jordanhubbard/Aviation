@@ -1,5 +1,8 @@
 # Simulator Threat Model
 
+## Overview
+This document outlines the threat model and attack surface for the simulator, identifying trust boundaries, data flows, external integrations, and mitigation strategies to ensure the security and integrity of the simulation environment.
+
 ## Trust Boundaries and Data Flows
 
 - **Simulator Core**: The core simulation engine that generates flight scenarios and interacts with user inputs.
