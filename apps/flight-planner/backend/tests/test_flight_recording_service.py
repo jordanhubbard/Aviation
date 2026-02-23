@@ -26,7 +26,7 @@ class TestFlightRecordingService(unittest.TestCase):
 
     def test_update_flight_recording(self):
         client.post("/flight-recordings/", json={"id": 1, "name": "Test Flight", "data": []})
-        response = client.put("/flight-recordings/1", json={"id": 1, "name": "Updated Flight", "data": []})
+        response = client.put("/flight-recordings/1", json={"metadata": {"aircraft": "Test Aircraft", "startTime": "2023-01-01T00:00:00Z", "duration": 3600, "departure": "JFK", "destination": "LAX"}, "telemetry": {"timestamp": [], "latitude": [], "longitude": [], "altitude": [], "heading": [], "pitch": [], "roll": [], "speed": []}, "events": []})
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json()["name"], "Updated Flight")
 
