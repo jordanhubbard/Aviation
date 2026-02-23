@@ -9,7 +9,22 @@ class FlightPlan(BaseModel):
     name: str
     waypoints: List[str]
 
-flight_plans = []
+import json
+import os
+
+FLIGHT_PLANS_FILE = 'flight_plans.json'
+
+if os.path.exists(FLIGHT_PLANS_FILE):
+    with open(FLIGHT_PLANS_FILE, 'r') as file:
+        flight_plans = json.load(file)
+else:
+    flight_plans = []
+
+# Save flight plans to file
+def save_flight_plans():
+    with open(FLIGHT_PLANS_FILE, 'w') as file:
+        json.dump(flight_plans, file)
+
 
 @router.post("/", response_model=FlightPlan)
 def create_flight_plan(flight_plan: FlightPlan):
