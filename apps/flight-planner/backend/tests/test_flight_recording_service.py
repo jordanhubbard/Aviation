@@ -8,6 +8,8 @@ app.include_router(flight_plan_router, prefix="/flight-plans", tags=["flight-pla
 
 client = TestClient(app)
 
+import unittest
+
 class TestFlightRecordingService(unittest.TestCase):
     def test_create_flight_recording(self):
         response = client.post("/flight-recordings/", json={"id": 1, "name": "Test Flight", "data": []})
