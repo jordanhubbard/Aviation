@@ -15,7 +15,7 @@
     "format": "prettier --ignore-path ../.prettierignore --write .",
     "format:check": "prettier --ignore-path ../.prettierignore --check .",
     "e2e": "playwright test --project=chromium",
-    "e2e:ui": "playwright test --ui",
+    "e2e:ui": "playwright test --project=chromium --ui",
     "preview": "vite preview"
   },
   "dependencies": {
