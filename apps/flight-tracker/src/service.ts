@@ -88,7 +88,27 @@ interface AirportConditions {
  * - Weather recommendations
  * - Background service patterns
  */
+import { G1000Plugin } from './plugin-interface';
+
 export class FlightTrackerService extends BackgroundService {
+  private plugins: G1000Plugin[] = [];
+
+  public registerPlugin(plugin: G1000Plugin): void {
+    this.plugins.push(plugin);
+    plugin.initialize({ service: this });
+  }
+
+  private async initializePlugins(): Promise<void> {
+    for (const plugin of this.plugins) {
+      await plugin.initialize({ service: this });
+    }
+  }
+
+  private async destroyPlugins(): Promise<void> {
+    for (const plugin of this.plugins) {
+      await plugin.destroy();
+    }
+  }
   private secrets = createSecretLoader('flight-tracker');
   private intervalId?: NodeJS.Timeout;
   private liveIntervalId?: NodeJS.Timeout;
