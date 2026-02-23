@@ -1,5 +1,9 @@
 # G1000 Configuration
 # Define G1000 settings including version, display, and features
+#
+# TRADEMARK NOTICE: Garmin® and G1000® are registered trademarks of Garmin International Inc.
+# This configuration is for a training simulation only and is not sponsored, endorsed, or
+# certified by Garmin International Inc. Not intended for operational use.
 
 version: "NXi"
 display:
