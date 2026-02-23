@@ -4,6 +4,13 @@ from typing import List
 
 router = APIRouter()
 
+@dataclass
+class Waypoint:
+    latitude: float
+    longitude: float
+    altitude: Optional[float] = None
+    name: Optional[str] = None
+
 class FlightPlan(BaseModel):
     id: int
     name: str
