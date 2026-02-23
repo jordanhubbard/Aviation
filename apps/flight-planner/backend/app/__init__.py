@@ -27,7 +27,7 @@ gps_simulation_service = GPSSimulationService(initial_gps_state)
 from fastapi import WebSocket
 
 @app.websocket("/ws")
-async def websocket_endpoint(websocket: WebSocket, hardware_integration_service: HardwareIntegrationService):
+async def websocket_endpoint(websocket: WebSocket):
     protocol = WebSocketProtocol(websocket, hardware_integration_service)
     await protocol.connect()
     try:
