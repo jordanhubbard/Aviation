@@ -16,16 +16,26 @@ async function main() {
 
   installNodeProcessErrorReporting({ service: 'flight-tracker', issueCreator: beadsIssueCreator });
 
-  // Initialize service
-  // Note: Service uses createSecretLoader internally for keystore access
-  const service = new FlightTrackerService({
-    name: 'flight-tracker',
-    enabled: true,
-    autoStart: true,
-  });
+import { FlightWebSocketServer } from './websocket-server';
+import { DataPublisher } from './data-publisher';
 
-  // Start the service
-  await service.start();
+// Initialize WebSocket server
+const wsServer = new FlightWebSocketServer(8080);
+
+// Initialize Data Publisher
+const dataPublisher = new DataPublisher(wsServer);
+dataPublisher.startPublishing();
+
+// Initialize service
+// Note: Service uses createSecretLoader internally for keystore access
+const service = new FlightTrackerService({
+  name: 'flight-tracker',
+  enabled: true,
+  autoStart: true,
+});
+
+// Start the service
+await service.start();
 
   const port = Number(process.env.PORT ?? '3001');
   const server = http.createServer(async (req, res) => {
