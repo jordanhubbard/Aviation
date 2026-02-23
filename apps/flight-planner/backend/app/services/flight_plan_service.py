@@ -54,5 +54,6 @@ def delete_flight_plan(flight_plan_id: int):
         if fp.id == flight_plan_id:
             del flight_plans[idx]
             save_flight_plans()
+    save_flight_plans()
     return {"message": "Flight plan deleted"}
     raise HTTPException(status_code=404, detail="Flight plan not found")
