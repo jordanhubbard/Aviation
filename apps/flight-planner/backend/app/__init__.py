@@ -23,7 +23,7 @@ hardware_integration_service = HardwareIntegrationService()
 from fastapi import WebSocket
 
 @app.websocket("/ws")
-async def websocket_endpoint(websocket: WebSocket):
+async def websocket_endpoint(websocket: WebSocket, hardware_integration_service: HardwareIntegrationService):
     protocol = WebSocketProtocol(websocket)
     await protocol.connect()
     try:
