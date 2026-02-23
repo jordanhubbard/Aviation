@@ -22,6 +22,9 @@ const G1000Controls = () => {
       <div className="knob" onClick={() => handleKnobTurn('right')} onContextMenu={(e) => { e.preventDefault(); handleKnobTurn('left'); }}>
         Knob: {knobValue}
       </div>
+      <div className="joystick" onMouseMove={(e) => setJoystickPosition({ x: e.clientX, y: e.clientY })}>
+        Joystick: {`(${joystickPosition.x}, ${joystickPosition.y})`}
+      </div>
       <button onMouseDown={handleButtonPress} className={buttonPressed ? 'pressed' : ''}>
         Button
       </button>
