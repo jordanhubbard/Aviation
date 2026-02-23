@@ -76,6 +76,9 @@ def hold_pattern_route(req: RouteRequest, waypoint: str) -> RouteResponse:
     updated_points = hold_pattern(points, waypoint)
     return calculate_route_response(updated_points, req)
 def calculate_route(req: RouteRequest) -> RouteResponse:
+    return calculate_route_response(points, req)
+
+def calculate_route_response(points: List[Tuple[float, float]], req: RouteRequest) -> RouteResponse:
     origin = get_airport_coordinates(req.origin)
     dest = get_airport_coordinates(req.destination)
     if not origin or not dest:
