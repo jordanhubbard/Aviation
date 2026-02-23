@@ -22,7 +22,7 @@ def test_create_flight_recording(flight_recording):
 
     @pytest.mark.parametrize('flight_recording', [{"metadata": {"aircraft": "Test Aircraft", "startTime": "2023-01-01T00:00:00Z", "duration": 3600, "departure": "JFK", "destination": "LAX"}, "telemetry": {"timestamp": [], "latitude": [], "longitude": [], "altitude": [], "heading": [], "pitch": [], "roll": [], "speed": []}, "events": []}])
 def test_read_flight_recording(flight_recording):
-        client.post("/flight-recordings/", json={"metadata": {"aircraft": "Test Aircraft", "startTime": "2023-01-01T00:00:00Z", "duration": 3600, "departure": "JFK", "destination": "LAX"}, "telemetry": {"timestamp": [], "latitude": [], "longitude": [], "altitude": [], "heading": [], "pitch": [], "roll": [], "speed": []}, "events": []})
+        client.post("/flight-recordings/", json=flight_recording)
         response = client.get("/flight-recordings/1")
         assert response.status_code == 200
         assert response.json()["metadata"]["aircraft"] == "Test Aircraft"
