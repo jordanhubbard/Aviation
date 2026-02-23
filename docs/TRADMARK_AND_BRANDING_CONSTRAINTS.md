@@ -31,6 +31,17 @@ For more detailed information on trademark usage, refer to Garmin's official tra
 
 By adhering to these guidelines, we ensure compliance with trademark laws and protect the integrity of our products and Garmin's brand.
 
+## Application to Project Documentation
+
+The following project files reference Garmin or G1000 and must include appropriate disclaimers:
+
+- `docs/G1000_simulator_documentation.md` - Main simulator documentation
+- `docs/G1000_simulator_roadmap.md` - Development roadmap
+- `docs/G1000_SIMULATOR_DOCUMENTATION_PLAN.md` - Documentation plan
+- `apps/flight-planner/backend/config/g1000_configuration.yaml` - Configuration file
+
+All new documentation or code referencing Garmin or G1000 must include the standard disclaimer at the top of the file.
+
 ## Summary of Constraints
 
 - **Prohibited Uses:** Do not use the Garmin logo, G1000 logo, or any other Garmin trademarks in a way that implies sponsorship, endorsement, or affiliation without explicit written permission from Garmin.
