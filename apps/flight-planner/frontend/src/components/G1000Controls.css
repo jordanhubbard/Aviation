@@ -1,0 +1,89 @@
+/* G1000Controls.css */
+/* Styles for the G1000 controls component */
+
+.g1000-controls {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 20px;
+  background-color: #1a1a2e;
+  border-radius: 10px;
+  color: #eaeaea;
+}
+
+.knob {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background: linear-gradient(145deg, #2e2e4e, #1a1a2e);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+  box-shadow: 5px 5px 10px #0d0d1a, -5px -5px 10px #27274a;
+  margin-bottom: 15px;
+  user-select: none;
+}
+
+.knob:hover {
+  background: linear-gradient(145deg, #3a3a5e, #2a2a4e);
+}
+
+.joystick {
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  background: radial-gradient(circle, #3a3a5e, #1a1a2e);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  cursor: crosshair;
+  margin-bottom: 15px;
+  box-shadow: inset 5px 5px 10px #0d0d1a, inset -5px -5px 10px #27274a;
+}
+
+.softkeys {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 15px;
+}
+
+.softkeys button {
+  padding: 10px 15px;
+  background-color: #2e2e4e;
+  border: none;
+  border-radius: 5px;
+  color: #eaeaea;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.softkeys button:hover {
+  background-color: #3a3a5e;
+}
+
+.softkeys button:active {
+  background-color: #4a4a6e;
+}
+
+button.pressed {
+  background-color: #5a5a7e;
+}
+
+button {
+  padding: 15px 30px;
+  background-color: #2e2e4e;
+  border: none;
+  border-radius: 5px;
+  color: #eaeaea;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+button:hover {
+  background-color: #3a3a5e;
+}
+
+button:active {
+  background-color: #4a4a6e;
+}
