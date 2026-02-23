@@ -9,7 +9,7 @@ from .services.envelope_protection import EnvelopeProtection
 from .services.ahrs_adc_simulation import AHRS, ADC
 from .services.gps_simulation import GPSSimulationService, GPSState
 
-app = FastAPI(docs_url=None, redoc_url=None, openapi_url=None)
+app = FastAPI(docs_url=None, redoc_url=None, openapi_url=None, title='Flight Planner API', version='0.1.0')
 app.include_router(flight_plan_router, prefix="/flight-plans", tags=["flight-plans"])
 app.include_router(flight_recording_router, prefix="/flight-recordings", tags=["flight-recordings"])
 
