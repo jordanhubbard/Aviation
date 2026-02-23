@@ -12,6 +12,7 @@ async def websocket_client():
         yield websocket
 
 @pytest.mark.asyncio
+@pytest.mark.usefixtures('websocket_client')
 async def test_connect(websocket_client):
     hub = TelemetryStreamingHub()
     await hub.connect(websocket_client)
