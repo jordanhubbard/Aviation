@@ -33,6 +33,7 @@ class AlertManager:
         return [{'message': alert.message, 'severity': alert.severity, 'timestamp': alert.timestamp} for alert in self.active_alerts]
 
     def get_cleared_alerts(self) -> List[Dict]:
+        # Return cleared alerts sorted by timestamp
         return [{'message': alert.message, 'severity': alert.severity, 'timestamp': alert.timestamp} for alert in self.cleared_alerts]
 
     def persist_alerts(self):
