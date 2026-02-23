@@ -18,7 +18,7 @@ class AlertManager:
         self.active_alerts: List[Alert] = []
         self.cleared_alerts: List[Alert] = []
 
-    def add_alert(self, message: str, severity: int):
+    def add_alert(self, message: str, severity: str):
         alert = Alert(message, severity)
         self.active_alerts.append(alert)
         self.active_alerts.sort(key=lambda x: (x.severity, x.timestamp), reverse=True)
