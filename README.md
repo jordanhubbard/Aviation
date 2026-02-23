@@ -435,6 +435,12 @@ We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) f
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
+## ⚖️ Legal Considerations
+
+- **Educational Use Only**: This software is intended for educational purposes and is not approved for flight training credit.
+- **Data Attribution**: This project uses open data sources such as OurAirports and OpenAIP. Proper attribution is provided where applicable.
+- **Disclaimer**: The information provided by this software is not intended for use in real-world flight operations.
+
 ## 🔗 Links
 
 - **Repository:** https://github.com/jordanhubbard/Aviation
