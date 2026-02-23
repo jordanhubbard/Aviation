@@ -19,7 +19,7 @@ class Settings(BaseSettings):
 
     app_name: str = Field("flight-planner", description="Application name")
     app_version: str = Field("0.1.0", description="Application version")
-    debug: bool = Field(True, description="Debug mode")
+    debug: bool = Field(False, description="Debug mode")
 
     api_prefix: str = Field("/api", description="API prefix")
 
