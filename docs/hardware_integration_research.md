@@ -28,8 +28,8 @@
 - Ensure thorough testing across different hardware configurations.
 
 ## Research Findings for Future Hardware Integrations
-- **GFC/GDU Panels**: Supported via ARINC 429 protocol. Custom drivers may be necessary.
-- **Sim Connectors**: Typically use USB or serial protocols. Existing libraries like `libusb` and `pyserial` can be utilized.
-- **Driver Availability**: Ensure drivers are up-to-date and compatible with target hardware.
-- **Compatibility Constraints**: Pay special attention to timing and signal integrity for ARINC 429 and CAN Bus.
-- **Testing Strategy**: Implement unit tests for each protocol and integration point to ensure reliability.
+- **GFC/GDU Panels**: Supported via ARINC 429 protocol. Custom drivers may be necessary. Consider consulting with manufacturers for specific driver support.
+- **Sim Connectors**: Typically use USB or serial protocols. Existing libraries like `libusb` and `pyserial` can be utilized. Ensure compatibility with the latest hardware models.
+- **Driver Availability**: Ensure drivers are up-to-date and compatible with target hardware. Regularly check for updates from manufacturers.
+- **Compatibility Constraints**: Pay special attention to timing and signal integrity for ARINC 429 and CAN Bus. Verify compatibility with existing systems.
+- **Testing Strategy**: Implement unit tests for each protocol and integration point to ensure reliability. Include stress testing for high-load scenarios.
