@@ -1,5 +1,7 @@
 # G1000 Simulator Development Roadmap
 
+> **Trademark Notice:** Garmin® and G1000® are registered trademarks of Garmin International Inc. This simulator is not sponsored, endorsed, or certified by Garmin International Inc. It is a training simulation for educational purposes only and is not intended for operational use.
+
 ## Phased Delivery Plan
 
 ### Phase 1: Initial Setup
