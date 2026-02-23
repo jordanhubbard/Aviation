@@ -29,7 +29,10 @@ class WebSocketProtocol:
             "type": message_type,
             "data": data
         }
-        await self.websocket.send_json(message)
+        if binary:
+            await self.websocket.send_bytes(json.dumps(message).encode('utf-8'))
+        else:
+            await self.websocket.send_json(message)
 
     async def receive_message(self) -> Dict[str, Any]:
         return await self.websocket.receive_json()
