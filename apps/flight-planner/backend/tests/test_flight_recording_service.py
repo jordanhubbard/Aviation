@@ -8,7 +8,7 @@ app.include_router(flight_plan_router, prefix="/flight-plans", tags=["flight-pla
 
 client = TestClient(app)
 
-import unittest
+import pytest
 
 import unittest
 
