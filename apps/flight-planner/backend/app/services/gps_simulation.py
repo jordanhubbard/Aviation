@@ -93,8 +93,6 @@ class GPSSimulationService:
 
     def simulate_visual_approach(self):
         print("Simulating Visual approach")
-    def __init__(self, gps_state: GPSState):
-        self.gps_state = gps_state
 
     def update_state(self, lat: float, lon: float, alt: float, speed: float, track: float) -> None:
         self.gps_state.lat, self.gps_state.lon, self.gps_state.alt = simulate_position_fix(lat, lon, alt)
