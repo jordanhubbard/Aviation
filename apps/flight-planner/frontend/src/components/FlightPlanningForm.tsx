@@ -167,7 +167,7 @@ const FlightPlanningForm: React.FC<Props> = ({ isLoading, onSubmit }) => {
 
       {mode === 'route' ? (
         <>
-          <Grid item xs={12} sm={6}>
+          <Grid item xs={12} sm={6}><ProcedureSelection airportCode={origin} /></Grid><Grid item xs={12} sm={6}>
             <Autocomplete
               freeSolo
               options={originOptions}
