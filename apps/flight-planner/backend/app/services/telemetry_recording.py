@@ -27,3 +27,6 @@ class TelemetryRecordingService:
 
     def get_snapshots(self) -> List[TelemetrySnapshot]:
         return self.snapshots
+
+    def clear_snapshots(self):
+        self.snapshots.clear()
