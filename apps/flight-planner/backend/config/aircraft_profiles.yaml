@@ -1,0 +1,23 @@
+# Aircraft Profiles Configuration
+# Define aircraft profiles with performance, fuel, weights, and dimensions
+
+- aircraft_id: "A320"
+  name: "Airbus A320"
+  performance:
+    cruise_speed: 828
+    stall_speed: 111
+    max_speed: 871
+    climb_rate: 2400
+    service_ceiling: 39000
+  fuel:
+    capacity: 23858
+    unusable: 200
+    burn_rate: 2400
+  weights:
+    empty: 42600
+    max_gross: 73500
+    useful_load: 30900
+  dimensions:
+    wingspan: 35.8
+    length: 37.57
+    height: 11.76
