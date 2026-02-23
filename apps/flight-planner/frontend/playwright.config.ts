@@ -1,6 +1,11 @@
 import { defineConfig } from '@playwright/test';
 
+import setup from './e2e/setup';
+import teardown from './e2e/teardown';
+
 export default defineConfig({
+  globalSetup: setup,
+  globalTeardown: teardown,
   testDir: './e2e',
   timeout: 30000,
   expect: {
