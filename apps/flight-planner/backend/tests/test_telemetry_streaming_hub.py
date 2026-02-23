@@ -7,7 +7,7 @@ from app import app
 client = TestClient(app)
 
 @pytest.fixture
-async def websocket_client():
+async def websocket_client(event_loop):
     async with client.websocket_connect("/ws") as websocket:
         yield websocket
 
