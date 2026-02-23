@@ -159,6 +159,22 @@ def plan_direct_route(
     return points, _build_segments(points, cruising_altitude_ft)
 
 
+def skip_waypoint(route: List[Tuple[float, float]], waypoint: str) -> List[Tuple[float, float]]:
+    # Logic to skip a waypoint
+    pass
+
+def insert_waypoint(route: List[Tuple[float, float]], waypoint: str, position: str) -> List[Tuple[float, float]]:
+    # Logic to insert a waypoint
+    pass
+
+def parallel_offset(route: List[Tuple[float, float]], offset_distance: float) -> List[Tuple[float, float]]:
+    # Logic for parallel offset
+    pass
+
+def hold_pattern(route: List[Tuple[float, float]], waypoint: str) -> List[Tuple[float, float]]:
+    # Logic for hold pattern
+    pass
+
 def plan_route(
     origin: Tuple[float, float],
     destination: Tuple[float, float],
