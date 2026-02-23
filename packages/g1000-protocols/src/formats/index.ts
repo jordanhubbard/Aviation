@@ -3,6 +3,15 @@ export {
   FLIGHT_PLAN_FORMATS,
   FLIGHT_PLAN_SPECS,
 } from "./flight-plan";
+
+// New format conversion utilities
+export function convertFlightPlanToJson(flightPlan: FlightPlanModel): string {
+  // Convert flight plan to JSON format
+}
+
+export function parseJsonToFlightPlan(json: string): FlightPlanModel {
+  // Parse JSON to flight plan model
+}
 export type {
   FlightPlanFormat,
   FlightPlanFormatSpec,
