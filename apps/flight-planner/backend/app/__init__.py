@@ -28,7 +28,7 @@ from fastapi import WebSocket
 
 @app.websocket("/ws")
 async def websocket_endpoint(websocket: WebSocket):
-    protocol = WebSocketProtocol(websocket, hardware_integration_service)
+    protocol = WebSocketProtocol(websocket)
     await protocol.connect()
     try:
         while True:
