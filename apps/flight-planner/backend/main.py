@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from app import create_app
+import unittest
 from app.config import settings
 
 
