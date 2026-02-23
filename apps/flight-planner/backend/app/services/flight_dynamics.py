@@ -65,5 +65,15 @@ class FlightDynamicsService:
         self.aircraft_state.velocity = adjusted_velocity
         self.aircraft_state.fuel_level -= fuel_consumption
 
+        # Check alerts
+        fuel_alert = self.alert_service.check_fuel_level(self.aircraft_state.fuel_level)
+        oil_alert = self.alert_service.check_oil_pressure(oil_pressure)
+        electrical_alert = self.alert_service.check_electrical_system(electrical_status)
+
+        # Handle alerts
+        for alert in [fuel_alert, oil_alert, electrical_alert]:
+            if alert:
+                print(f"Alert: {alert.message} (Severity: {alert.severity})")
+
     def get_state(self) -> AircraftState:
         return self.aircraft_state
