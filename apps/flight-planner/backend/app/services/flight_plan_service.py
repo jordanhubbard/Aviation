@@ -1,4 +1,5 @@
 from fastapi import APIRouter, HTTPException
+from .envelope_protection import EnvelopeProtection
 from pydantic import BaseModel
 from typing import List
 
