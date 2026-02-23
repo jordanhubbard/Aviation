@@ -38,6 +38,16 @@ envelope_protection = EnvelopeProtection()
 
 @router.post("/", response_model=FlightPlan)
 def create_flight_plan(flight_plan: FlightPlan):
+    # Check envelope protection limits
+    for waypoint in flight_plan.waypoints:
+        pitch_status = envelope_protection.check_pitch(waypoint.altitude)  # Assuming altitude as a proxy for pitch
+        bank_status = envelope_protection.check_bank(waypoint.altitude)   # Assuming altitude as a proxy for bank
+        overspeed_status = envelope_protection.check_overspeed(waypoint.altitude)  # Assuming altitude as a proxy for speed
+        stall_status = envelope_protection.check_stall(waypoint.altitude)  # Assuming altitude as a proxy for speed
+        
+        if "exceeded" in (pitch_status, bank_status, overspeed_status, stall_status):
+            raise HTTPException(status_code=400, detail=f"Envelope protection limit exceeded: {pitch_status}, {bank_status}, {overspeed_status}, {stall_status}")
+
     flight_plans.append(flight_plan.dict())
     save_flight_plans()
     save_flight_plans()
