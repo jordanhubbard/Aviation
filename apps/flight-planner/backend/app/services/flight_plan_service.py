@@ -41,6 +41,10 @@ def save_flight_plans():
 
 
 envelope_protection = EnvelopeProtection()
+nav_database = NavDatabase()
+routing = Routing()
+procedures = Procedures()
+geo_calculations = GeoCalculations()
 
 @router.post("/", response_model=FlightPlan)
 def create_flight_plan(flight_plan: FlightPlan):
