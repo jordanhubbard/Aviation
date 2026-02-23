@@ -1,5 +1,5 @@
 import unittest
-from ..app.services.flight_dynamics import FlightDynamicsService, AircraftState
+from apps.flight-planner.backend.app.services.flight_dynamics import FlightDynamicsService, AircraftState
 from app.services.alerts import AlertService
 
 class TestFlightDynamicsService(unittest.TestCase):
