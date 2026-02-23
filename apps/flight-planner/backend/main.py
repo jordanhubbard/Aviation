@@ -7,6 +7,9 @@ from app.config import settings
 
 app = create_app(settings)
 
+if __name__ == '__main__':
+    unittest.TextTestRunner().run(unittest.defaultTestLoader.discover('apps/flight-planner/backend/tests'))
+
 # Example usage of GPSSimulationService
 from app.services.gps_simulation import GPSSimulationService, GPSState
 
