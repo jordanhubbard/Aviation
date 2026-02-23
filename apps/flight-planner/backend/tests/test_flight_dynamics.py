@@ -1,5 +1,5 @@
 import unittest
-from services.flight_dynamics import (
+from app.services.flight_dynamics import (
     calculate_lift, calculate_drag, calculate_thrust, calculate_fuel_consumption,
     apply_wind_effect, apply_turbulence_effect, AircraftState, FlightDynamicsService
 )
