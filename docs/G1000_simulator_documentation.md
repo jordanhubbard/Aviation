@@ -1,5 +1,7 @@
 # G1000 Simulator Documentation
 
+> **Trademark Notice:** Garmin® and G1000® are registered trademarks of Garmin International Inc. This simulator is not sponsored, endorsed, or certified by Garmin International Inc. It is a training simulation for educational purposes only and is not intended for operational use.
+
 ## Overview
 This document provides comprehensive user and developer documentation for the G1000 simulator, detailing its features, configuration, and usage.
 
