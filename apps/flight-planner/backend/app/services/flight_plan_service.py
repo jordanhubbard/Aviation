@@ -9,7 +9,7 @@ class FlightPlan(BaseModel):
     name: str
     waypoints: List[str]
 
-flight_plans = [{'id': 1, 'name': 'Test Plan', 'waypoints': ['WP1', 'WP2']}]
+flight_plans = []
 
 @router.post("/", response_model=FlightPlan)
 def create_flight_plan(flight_plan: FlightPlan):
