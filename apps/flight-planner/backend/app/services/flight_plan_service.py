@@ -27,7 +27,7 @@ class FlightPlan(BaseModel):
 import json
 import os
 
-FLIGHT_PLANS_FILE = 'flight_plans.json'
+FLIGHT_PLANS_FILE = 'backend/data/flight_plans.json'
 
 if os.path.exists(FLIGHT_PLANS_FILE):
     with open(FLIGHT_PLANS_FILE, 'r') as file:
