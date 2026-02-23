@@ -3,7 +3,7 @@
 class EnvelopeProtection:
     def __init__(self):
         # Define default limits
-        self.pitch_limit = 30  # degrees
+        self.pitch_limit = 20  # degrees
         self.bank_limit = 60  # degrees
         self.overspeed_limit = 250  # knots
         self.stall_speed = 60  # knots
