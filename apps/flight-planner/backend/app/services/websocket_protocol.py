@@ -24,7 +24,7 @@ class WebSocketProtocol:
     async def disconnect(self):
         await self.websocket.close()
 
-    async def send_message(self, message_type: MessageType, data: Dict[str, Any]):
+    async def send_message(self, message_type: MessageType, data: Dict[str, Any], binary: bool = False):
         message = {
             "type": message_type,
             "data": data
