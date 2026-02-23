@@ -19,7 +19,7 @@ help:
 	@echo "Build & Test:"
 	@echo "  make build         - Build all applications and packages"
 	@echo "  make clean         - Clean all build artifacts and dependencies"
-	@echo "  make test          - Run all tests locally"
+	@echo "  pytest apps/flight-planner/backend/tests          - Run all tests locally"
 	@echo "  make test-docker   - Run all tests in Docker containers (recommended)"
 	@echo ""
 	@echo "Run Applications (build + start):"
