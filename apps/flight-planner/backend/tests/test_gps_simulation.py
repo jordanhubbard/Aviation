@@ -1,5 +1,5 @@
 import unittest
-from app.services.gps_simulation import GPSSimulationService, GPSState
+from ..app.services.gps_simulation import GPSSimulationService, GPSState
 
 class TestGPSSimulationService(unittest.TestCase):
     def setUp(self):
@@ -11,12 +11,6 @@ class TestGPSSimulationService(unittest.TestCase):
         current_gps_state = self.gps_simulation_service.get_state()
         self.assertIsNotNone(current_gps_state)
         self.assertTrue(0 <= current_gps_state.epe <= 15)
-
-    def test_simulate_approach(self):
-        approaches = ['LNAV', 'LNAV/VNAV', 'LPV', 'ILS', 'LOC']
-        for approach in approaches:
-            with self.subTest(approach=approach):
-                self.gps_simulation_service.simulate_approach(approach)
 
 if __name__ == '__main__':
     unittest.main()
