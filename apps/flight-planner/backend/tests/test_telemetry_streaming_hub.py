@@ -1,4 +1,12 @@
 import pytest
+from fastapi.testclient import TestClient
+from app import app
+
+@pytest.fixture
+async def websocket_client():
+    client = TestClient(app)
+    async with client.websocket_connect("/ws") as websocket:
+        yield websocket
 from fastapi import WebSocket
 from fastapi.testclient import TestClient
 from httpx import AsyncClient
