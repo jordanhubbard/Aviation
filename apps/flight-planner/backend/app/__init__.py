@@ -16,9 +16,9 @@ app.include_router(flight_recording_router, prefix="/flight-recordings", tags=["
 alert_manager = AlertManager()
 
 # Example WebSocket endpoint
-@app.websocket("/ws")
 from fastapi import WebSocket
 
+@app.websocket("/ws")
 async def websocket_endpoint(websocket: WebSocket):
     protocol = WebSocketProtocol(websocket)
     await protocol.connect()
