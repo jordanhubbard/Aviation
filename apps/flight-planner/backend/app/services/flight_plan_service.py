@@ -2,6 +2,7 @@ from fastapi import APIRouter, HTTPException
 from .envelope_protection import EnvelopeProtection
 from pydantic import BaseModel
 from typing import List, Optional
+from dataclasses import dataclass, Optional
 from dataclasses import dataclass
 
 router = APIRouter()
