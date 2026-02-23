@@ -2,7 +2,7 @@
 
 Provides security utilities for aviation applications:
 - Rate limiting middleware
-- API key authentication
+- Authentication decorators
 - Admin function protection
 - HTTPS enforcement
 """
@@ -14,16 +14,17 @@ from .rate_limiter import (
     create_rate_limiter,
 )
 from .auth import (
-    APIKeyAuth,
-    AdminAuth,
-    require_api_key,
+    require_auth,
     require_admin,
+    AuthenticationError,
+    AuthorizationError,
     verify_api_key,
+    verify_token,
 )
 from .middleware import (
     SecurityMiddleware,
     HTTPSRedirectMiddleware,
-    setup_security,
+    RateLimitMiddleware,
 )
 
 __all__ = [
@@ -33,13 +34,14 @@ __all__ = [
     "rate_limit",
     "create_rate_limiter",
     # Authentication
-    "APIKeyAuth",
-    "AdminAuth",
-    "require_api_key",
+    "require_auth",
     "require_admin",
+    "AuthenticationError",
+    "AuthorizationError",
     "verify_api_key",
+    "verify_token",
     # Middleware
     "SecurityMiddleware",
     "HTTPSRedirectMiddleware",
-    "setup_security",
+    "RateLimitMiddleware",
 ]
