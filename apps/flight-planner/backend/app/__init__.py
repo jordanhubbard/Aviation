@@ -16,6 +16,9 @@ app.include_router(flight_recording_router, prefix="/flight-recordings", tags=["
 # Initialize AlertManager
 alert_manager = AlertManager()
 
+# Initialize HardwareIntegrationService
+hardware_integration_service = HardwareIntegrationService()
+
 # Example WebSocket endpoint
 from fastapi import WebSocket
 

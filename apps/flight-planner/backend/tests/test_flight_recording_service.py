@@ -33,4 +33,5 @@ class TestFlightRecordingService(unittest.TestCase):
         self.assertEqual(response.json()["message"], "Flight recording deleted")
 
 if __name__ == '__main__':
-    unittest.main()
+    import pytest
+    pytest.main()
