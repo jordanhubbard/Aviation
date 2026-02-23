@@ -2,6 +2,7 @@
 
 class AHRS:
     def __init__(self):
+        # Placeholder for implementation
         raise NotImplementedError
 
     def compute_attitude(self, pitch, roll, yaw):
