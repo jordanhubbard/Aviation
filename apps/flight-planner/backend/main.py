@@ -20,6 +20,11 @@ telemetry_recording_service = TelemetryRecordingService()
 # Start telemetry recording
 telemetry_recording_service.start_recording()
 
+# Simulate different approaches
+approaches = ['LNAV', 'LNAV/VNAV', 'LPV', 'ILS', 'LOC']
+for approach in approaches:
+    gps_simulation_service.simulate_approach(approach)
+
 # Update GPS state and capture telemetry
 for _ in range(10):
     gps_simulation_service.update_state(37.7749, -122.4194, 30.0, 100.0, 90.0)
