@@ -9,6 +9,8 @@ class MessageType(str, Enum):
     SYSTEM_STATUS = "system_status"
     ALERT_COMMAND = "alert_command"
 
+from .hardware_integration import HardwareIntegrationService, HardwareType
+
 class WebSocketProtocol:
     def __init__(self, websocket: WebSocket):
         self.websocket = websocket
