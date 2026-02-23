@@ -4,6 +4,7 @@
 import React, { useState } from 'react';
 
 const G1000Controls = () => {
+  const [joystickPosition, setJoystickPosition] = useState({ x: 0, y: 0 });
   const [knobValue, setKnobValue] = useState(0);
   const [buttonPressed, setButtonPressed] = useState(false);
 
