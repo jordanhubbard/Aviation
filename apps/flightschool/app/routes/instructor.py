@@ -37,7 +37,9 @@ def dashboard():
 
     return render_template('instructor/dashboard.html',
                          upcoming_lessons=upcoming_lessons,
-                         pending_requests=pending_requests)
+                         pending_requests=pending_requests,
+                         scenario_builder=True,
+                         performance_tracking=True)
 
 
 @instructor_bp.route('/instructor/schedule')
