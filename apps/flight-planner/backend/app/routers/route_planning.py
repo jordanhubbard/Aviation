@@ -12,7 +12,7 @@ from typing import List, Literal, Optional, Tuple
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, Field
 
-from app.services.xctry_route_planner import haversine_nm, plan_route
+from app.services.xctry_route_planner import haversine_nm, plan_route, skip_waypoint, insert_waypoint, parallel_offset, hold_pattern
 
 
 router = APIRouter()
