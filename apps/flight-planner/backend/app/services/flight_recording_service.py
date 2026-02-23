@@ -38,7 +38,7 @@ else:
 # Save flight recordings to file
 def save_flight_recordings():
     with open(FLIGHT_RECORDINGS_FILE, 'w') as file:
-        json.dump(flight_recordings, file)
+        json.dump([fr.dict() for fr in flight_recordings], file)
 
 
 @router.post("/", response_model=FlightRecording)
