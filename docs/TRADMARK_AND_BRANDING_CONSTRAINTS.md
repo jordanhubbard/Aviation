@@ -1,5 +1,7 @@
 # Trademark and Branding Constraints
 
+> **IMPORTANT NOTICE:** This document defines mandatory trademark and branding requirements for all references to Garmin® and G1000® within this project. All contributors must follow these guidelines.
+
 ## Garmin and G1000 Usage Guidelines
 
 ### Trademark Usage Guidance
