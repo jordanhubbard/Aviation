@@ -75,4 +75,17 @@ class Settings(BaseSettings):
         return v
 
 
+
+import yaml
+
+# Load aircraft profiles configuration
+with open(REPO_ROOT / 'backend' / 'config' / 'aircraft_profiles.yaml', 'r') as file:
+    aircraft_profiles = yaml.safe_load(file)
+
+# Load G1000 configuration
+with open(REPO_ROOT / 'backend' / 'config' / 'g1000_configuration.yaml', 'r') as file:
+    g1000_configuration = yaml.safe_load(file)
+
 settings = Settings()
+settings.aircraft_profiles = aircraft_profiles
+settings.g1000_configuration = g1000_configuration
