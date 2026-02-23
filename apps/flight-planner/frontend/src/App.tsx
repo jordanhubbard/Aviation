@@ -201,6 +201,7 @@ function App() {
         </Container>
       </Box>
     </ErrorBoundary>
+    </ThemeProvider>
   )
 }
 
