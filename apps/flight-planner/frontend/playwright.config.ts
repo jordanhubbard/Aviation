@@ -13,7 +13,7 @@ export default defineConfig({
     actionTimeout: 0,
     ignoreHTTPSErrors: true,
     video: 'on',
-    screenshot: 'only-on-failure',
+    screenshot: 'on',
   },
   projects: [
     {
