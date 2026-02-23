@@ -4,13 +4,19 @@ from .nav_database import NavDatabase
 from .routing import Routing
 from .procedures import Procedures
 from .geo_calculations import GeoCalculations
-from pydantic import BaseModel
-from typing import List, Optional
-from dataclasses import dataclass
-from typing import Optional
-from dataclasses import dataclass
+from .alert_manager import AlertManager
+from pydantic import BaseModel, Field
+from typing import List, Optional, Dict, Any
+from dataclasses import dataclass, field
+from enum import Enum
 
 router = APIRouter()
+
+class WaypointStatus(str, Enum):
+    PENDING = "pending"
+    ACTIVE = "active"
+    PASSED = "passed"
+    SKIPPED = "skipped"
 
 @dataclass
 class Waypoint:
@@ -18,11 +24,14 @@ class Waypoint:
     longitude: float
     altitude: Optional[float] = None
     name: Optional[str] = None
+    status: WaypointStatus = WaypointStatus.PENDING
+    sequence_number: int = 0
 
 class FlightPlan(BaseModel):
     id: int
     name: str
     waypoints: List[Waypoint] = []
+    active_waypoint_index: int = 0
 
 import json
 import os
