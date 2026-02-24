@@ -1,10 +1,10 @@
 /**
- * Aviation UI Framework - Theme Types
+ * Theme Types for Aviation UI Framework
  * 
- * Type definitions for the theming system supporting:
- * - Day mode (default light theme)
+ * Defines the structure for display themes including:
+ * - Day mode (default)
  * - Night mode (red tint for night vision preservation)
- * - High-contrast mode (WCAG AAA accessibility)
+ * - High-contrast mode (accessibility)
  */
 
 /**
@@ -13,7 +13,7 @@
 export type ThemeMode = 'day' | 'night' | 'high-contrast';
 
 /**
- * Color palette for a theme
+ * Color palette structure for themes
  */
 export interface ThemeColors {
   // Primary colors
@@ -62,39 +62,25 @@ export interface ThemeColors {
   
   // Focus indicator
   focus: string;
-  focusRing: string;
 }
 
 /**
- * Typography settings for a theme
+ * Typography settings for themes
  */
 export interface ThemeTypography {
   fontFamily: string;
-  fontFamilyMono: string;
-  
-  // Font sizes
-  fontSizeXs: string;
-  fontSizeSm: string;
   fontSizeBase: string;
-  fontSizeLg: string;
-  fontSizeXl: string;
-  fontSize2xl: string;
-  fontSize3xl: string;
-  
-  // Font weights
-  fontWeightNormal: number;
-  fontWeightMedium: number;
-  fontWeightSemibold: number;
+  fontSizeSmall: string;
+  fontSizeLarge: string;
+  fontSizeXLarge: string;
+  fontWeight: number;
   fontWeightBold: number;
-  
-  // Line heights
+  lineHeight: number;
   lineHeightTight: number;
-  lineHeightNormal: number;
-  lineHeightRelaxed: number;
 }
 
 /**
- * Spacing settings for a theme
+ * Spacing settings for themes
  */
 export interface ThemeSpacing {
   xs: string;
@@ -102,58 +88,30 @@ export interface ThemeSpacing {
   md: string;
   lg: string;
   xl: string;
-  '2xl': string;
-  '3xl': string;
-}
-
-/**
- * Shadow settings for a theme
- */
-export interface ThemeShadows {
-  none: string;
-  sm: string;
-  md: string;
-  lg: string;
-  xl: string;
-}
-
-/**
- * Border radius settings
- */
-export interface ThemeBorderRadius {
-  none: string;
-  sm: string;
-  md: string;
-  lg: string;
-  xl: string;
-  full: string;
-}
-
-/**
- * Transition settings
- */
-export interface ThemeTransitions {
-  fast: string;
-  normal: string;
-  slow: string;
+  xxl: string;
 }
 
 /**
  * Complete theme definition
  */
 export interface Theme {
-  name: string;
   mode: ThemeMode;
+  name: string;
+  description: string;
   colors: ThemeColors;
   typography: ThemeTypography;
   spacing: ThemeSpacing;
-  shadows: ThemeShadows;
-  borderRadius: ThemeBorderRadius;
-  transitions: ThemeTransitions;
+  
+  // Accessibility metadata
+  accessibility: {
+    minContrastRatio: number;
+    supportsReducedMotion: boolean;
+    supportsHighContrast: boolean;
+  };
 }
 
 /**
- * Theme context value for React context
+ * Theme context for React components
  */
 export interface ThemeContextValue {
   theme: Theme;
@@ -163,10 +121,6 @@ export interface ThemeContextValue {
 }
 
 /**
- * Theme provider props
+ * CSS custom properties generated from theme
  */
-export interface ThemeProviderProps {
-  children: React.ReactNode;
-  defaultMode?: ThemeMode;
-  storageKey?: string;
-}
+export type ThemeCSSVariables = Record<string, string>;
