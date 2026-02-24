@@ -5,8 +5,9 @@
  * and autopilot control logic for the G1000 simulator.
  */
 
-// Core types
+// Core types and interfaces
 export * from './types';
+export * from './constants';
 
 // AHRS - Attitude and Heading Reference System
 export * from './ahrs';
@@ -23,5 +24,5 @@ export * from './nav-radios';
 // Autopilot - Flight control system
 export * from './autopilot';
 
-// Utilities
-export * from './utils';
+// Avionics Suite - Integrated system
+export * from './avionics-suite';
