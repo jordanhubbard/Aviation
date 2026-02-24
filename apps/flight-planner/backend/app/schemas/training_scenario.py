@@ -1,9 +1,9 @@
-"""Training scenario schemas for pre-recorded training scenarios."""
+"""Training scenario data models."""
 from __future__ import annotations
 
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import List, Optional, Dict, Any
+from typing import Any
 
 
 class ScenarioType(str, Enum):
@@ -25,14 +25,6 @@ class EventType(str, Enum):
     WAYPOINT_REACHED = "waypoint_reached"
 
 
-class EmergencyType(str, Enum):
-    """Types of emergency scenarios."""
-    ENGINE_FAILURE = "engine_failure"
-    ELECTRICAL_FAILURE = "electrical_failure"
-    LOST_PROCEDURES = "lost_procedures"
-    DIVERSION = "diversion"
-
-
 @dataclass
 class Position:
     """Geographic position."""
@@ -49,69 +41,95 @@ class InitialConditions:
     airspeed: float  # knots
     altitude: float  # feet MSL
     fuel_level: float  # gallons
-    engine_running: bool = True
-    flaps_position: int = 0  # degrees
-    gear_down: bool = True
-    autopilot_engaged: bool = False
-    nav_source: str = "GPS"
-    weather_conditions: Optional[Dict[str, Any]] = None
+    aircraft_type: str = "C172"
+    weather: dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass
 class Waypoint:
-    """Waypoint in a training scenario."""
+    """A waypoint in the scenario route."""
     name: str
     position: Position
-    waypoint_type: str = "FIX"  # FIX, VOR, NDB, AIRPORT, USER
-    altitude_constraint: Optional[float] = None  # feet MSL
-    speed_constraint: Optional[float] = None  # knots
-    hold_pattern: bool = False
-    hold_direction: Optional[str] = None  # LEFT, RIGHT
-    notes: Optional[str] = None
+    altitude_constraint: float | None = None  # feet MSL
+    speed_constraint: float | None = None  # knots
+    waypoint_type: str = "fly_by"  # fly_by, fly_over
+    notes: str = ""
 
 
 @dataclass
 class TimedEvent:
-    """Timed event during scenario playback."""
+    """A timed event during the scenario."""
     time_offset: float  # seconds from scenario start
     event_type: EventType
     message: str
-    data: Optional[Dict[str, Any]] = None
-    audio_file: Optional[str] = None
-    requires_acknowledgment: bool = False
+    data: dict[str, Any] = field(default_factory=dict)
+    audio_file: str | None = None
 
 
 @dataclass
 class TrainingScenario:
-    """Complete training scenario definition."""
+    """A complete training scenario definition."""
     id: str
     title: str
     description: str
     scenario_type: ScenarioType
     difficulty: str  # beginner, intermediate, advanced
-    estimated_duration: int  # minutes
+    duration_minutes: int
     initial_conditions: InitialConditions
-    waypoints: List[Waypoint] = field(default_factory=list)
-    events: List[TimedEvent] = field(default_factory=list)
-    success_criteria: Optional[Dict[str, Any]] = None
-    tags: List[str] = field(default_factory=list)
-    author: str = "Aviation Training Team"
-    version: str = "1.0"
+    waypoints: list[Waypoint]
+    events: list[TimedEvent]
+    objectives: list[str] = field(default_factory=list)
+    success_criteria: dict[str, Any] = field(default_factory=dict)
+    metadata: dict[str, Any] = field(default_factory=dict)
 
-
-@dataclass
-class ScenarioPlaybackState:
-    """Current state of scenario playback."""
-    scenario_id: str
-    is_playing: bool
-    is_paused: bool
-    elapsed_time: float  # seconds
-    current_waypoint_index: int
-    completed_events: List[str]
-    pending_events: List[TimedEvent]
-    current_position: Position
-    current_heading: float
-    current_airspeed: float
-    current_altitude: float
-    score: Optional[float] = None
-    notes: List[str] = field(default_factory=list)
+    def to_dict(self) -> dict[str, Any]:
+        """Convert scenario to dictionary."""
+        return {
+            "id": self.id,
+            "title": self.title,
+            "description": self.description,
+            "scenario_type": self.scenario_type.value,
+            "difficulty": self.difficulty,
+            "duration_minutes": self.duration_minutes,
+            "initial_conditions": {
+                "position": {
+                    "lat": self.initial_conditions.position.lat,
+                    "lon": self.initial_conditions.position.lon,
+                    "alt": self.initial_conditions.position.alt,
+                },
+                "heading": self.initial_conditions.heading,
+                "airspeed": self.initial_conditions.airspeed,
+                "altitude": self.initial_conditions.altitude,
+                "fuel_level": self.initial_conditions.fuel_level,
+                "aircraft_type": self.initial_conditions.aircraft_type,
+                "weather": self.initial_conditions.weather,
+            },
+            "waypoints": [
+                {
+                    "name": wp.name,
+                    "position": {
+                        "lat": wp.position.lat,
+                        "lon": wp.position.lon,
+                        "alt": wp.position.alt,
+                    },
+                    "altitude_constraint": wp.altitude_constraint,
+                    "speed_constraint": wp.speed_constraint,
+                    "waypoint_type": wp.waypoint_type,
+                    "notes": wp.notes,
+                }
+                for wp in self.waypoints
+            ],
+            "events": [
+                {
+                    "time_offset": event.time_offset,
+                    "event_type": event.event_type.value,
+                    "message": event.message,
+                    "data": event.data,
+                    "audio_file": event.audio_file,
+                }
+                for event in self.events
+            ],
+            "objectives": self.objectives,
+            "success_criteria": self.success_criteria,
+            "metadata": self.metadata,
+        }
