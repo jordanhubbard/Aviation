@@ -38,7 +38,7 @@ export interface CreateAlertOptions {
 }
 
 /**
- * Event types emitted by the alert manager
+ * Alert event types for UI layer communication
  */
 export type AlertEventType =
   | 'alert:added'
@@ -48,7 +48,7 @@ export type AlertEventType =
   | 'alerts:changed';
 
 /**
- * Alert event payload for event emissions
+ * Alert event payload for event emission
  */
 export interface AlertEvent {
   type: AlertEventType;
@@ -56,6 +56,11 @@ export interface AlertEvent {
   alerts: Alert[];
   timestamp: Date;
 }
+
+/**
+ * Callback type for alert event subscriptions
+ */
+export type AlertEventListener = (event: AlertEvent) => void;
 
 /**
  * Alert manager interface for managing the alert stack
@@ -81,25 +86,18 @@ export interface IAlertManager {
   getAcknowledgedAlerts(): Alert[];
   /** Get visible alerts (up to maxVisible, highest priority first) */
   getVisibleAlerts(maxVisible?: number): Alert[];
-  /** Subscribe to alert changes */
+  /** Subscribe to alert changes (legacy) */
   subscribe(callback: AlertSubscriber): () => void;
   /** Subscribe to specific alert events */
-  on(eventType: AlertEventType, callback: AlertEventCallback): () => void;
-  /** Get count of unacknowledged alerts */
-  getUnacknowledgedCount(): number;
-  /** Check if there are any unacknowledged alerts */
-  hasUnacknowledgedAlerts(): boolean;
+  on(eventType: AlertEventType, listener: AlertEventListener): () => void;
+  /** Emit an event to all listeners */
+  emit(event: AlertEvent): void;
 }
 
 /**
- * Callback type for alert subscriptions
+ * Callback type for alert subscriptions (legacy)
  */
 export type AlertSubscriber = (alerts: Alert[]) => void;
-
-/**
- * Callback type for alert event subscriptions
- */
-export type AlertEventCallback = (event: AlertEvent) => void;
 
 /**
  * Priority weights for alert levels (higher = more important)
