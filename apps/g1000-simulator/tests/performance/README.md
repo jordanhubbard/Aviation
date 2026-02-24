@@ -1,17 +1,16 @@
 # G1000 Simulator Performance Tests
 
-This directory contains performance tests for the G1000 simulator to ensure it meets
-the required performance targets.
+This directory contains performance tests for the G1000 simulator, measuring:
 
-## Performance Targets
+## Metrics
 
 | Metric | Target | Description |
 |--------|--------|-------------|
 | PFD Frame Rate | 20 Hz | Primary Flight Display update rate |
 | MFD Frame Rate | 5 Hz | Multi-Function Display update rate |
 | WebSocket Latency | < 50ms | Round-trip time for WebSocket messages |
-| Memory Usage | < 500 MB | Maximum memory consumption |
-| CPU Usage | < 40% | Maximum CPU usage on one core |
+| Memory Usage | < 500 MB | Total application memory consumption |
+| CPU Usage | < 40% | CPU utilization on a single core |
 
 ## Running Tests
 
@@ -33,14 +32,19 @@ npm run test:perf
 
 ## Test Structure
 
-- `test_websocket_performance.py` - WebSocket latency and throughput tests
-- `test_resource_usage.py` - Memory and CPU usage tests
-- `frontend/` - Frontend rendering performance tests
+```
+tests/performance/
+├── README.md                    # This file
+├── __init__.py                  # Python package marker
+├── test_websocket_latency.py    # WebSocket latency tests
+├── test_server_resources.py     # Memory and CPU tests (server)
+└── frontend/
+    ├── pfd-framerate.test.ts    # PFD rendering performance
+    ├── mfd-framerate.test.ts    # MFD rendering performance
+    └── resource-usage.test.ts   # Client-side resource tests
+```
 
-## Metrics Collection
+## CI Integration
 
-Tests use the following approaches:
-- **WebSocket Latency**: Measures round-trip time for ping/pong messages
-- **Frame Rate**: Measures time between consecutive render calls
-- **Memory**: Uses process memory monitoring
-- **CPU**: Measures CPU time during simulation loops
+These tests are run as part of the CI pipeline in the `performance-tests` job.
+See `.github/workflows/ci.yml` for configuration.
