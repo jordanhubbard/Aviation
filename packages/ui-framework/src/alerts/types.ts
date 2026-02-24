@@ -38,29 +38,30 @@ export interface CreateAlertOptions {
 }
 
 /**
- * Alert event types for UI layer communication
+ * Event types emitted by the alert manager
  */
-export type AlertEventType =
-  | 'alert:added'
-  | 'alert:acknowledged'
-  | 'alert:cleared'
-  | 'alert:cleared-all'
-  | 'alerts:changed';
+export type AlertEventType = 
+  | 'alert_added'
+  | 'alert_acknowledged'
+  | 'alert_cleared'
+  | 'alerts_cleared_all';
 
 /**
- * Alert event payload for event emission
+ * Alert event payload for UI layer notifications
  */
 export interface AlertEvent {
   type: AlertEventType;
-  alert?: Alert;
-  alerts: Alert[];
   timestamp: Date;
+  /** The alert involved (not present for alerts_cleared_all) */
+  alert?: Alert;
+  /** All current alerts after the event */
+  alerts: Alert[];
 }
 
 /**
  * Callback type for alert event subscriptions
  */
-export type AlertEventListener = (event: AlertEvent) => void;
+export type AlertEventSubscriber = (event: AlertEvent) => void;
 
 /**
  * Alert manager interface for managing the alert stack
@@ -75,9 +76,7 @@ export interface IAlertManager {
   /** Clear (remove) an alert by ID */
   clearAlert(id: string): boolean;
   /** Clear all alerts */
-  clearAllAlerts(): number;
-  /** Clear all acknowledged alerts */
-  clearAcknowledgedAlerts(): number;
+  clearAllAlerts(): void;
   /** Get all alerts sorted by priority (highest first) */
   getAlerts(): Alert[];
   /** Get unacknowledged alerts only */
@@ -88,10 +87,12 @@ export interface IAlertManager {
   getVisibleAlerts(maxVisible?: number): Alert[];
   /** Subscribe to alert changes (legacy) */
   subscribe(callback: AlertSubscriber): () => void;
-  /** Subscribe to specific alert events */
-  on(eventType: AlertEventType, listener: AlertEventListener): () => void;
-  /** Emit an event to all listeners */
-  emit(event: AlertEvent): void;
+  /** Subscribe to alert events with detailed event info */
+  subscribeToEvents(callback: AlertEventSubscriber): () => void;
+  /** Check if there are any unacknowledged alerts */
+  hasUnacknowledgedAlerts(): boolean;
+  /** Get count of unacknowledged alerts */
+  getUnacknowledgedCount(): number;
 }
 
 /**
