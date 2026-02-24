@@ -46,6 +46,7 @@ class AircraftState:
 from .alerts import AlertService, Alert
 from .autopilot_controller import PitchController, RollController, AltitudeHoldController, HeadingHoldController
 
+
 class FlightDynamicsService:
     def __init__(self, aircraft_state: AircraftState, alert_service: AlertService):
         self.aircraft_state = aircraft_state
@@ -54,15 +55,27 @@ class FlightDynamicsService:
         self.roll_controller = RollController()
         self.altitude_controller = AltitudeHoldController()
         self.heading_controller = HeadingHoldController()
-    def __init__(self, aircraft_state: AircraftState, alert_service: AlertService):
-        self.aircraft_state = aircraft_state
-        self.alert_service = alert_service
 
-    def update_state(self, lift_coefficient: float, drag_coefficient: float, power: float, engine_factor: float,
-                      fuel_efficiency: float, wind_speed: float, wind_angle: float,
-                      turbulence_intensity: float, air_density: float, wing_area: float,
-                      target_pitch: float, target_roll: float, target_altitude: float, target_heading: float,
-                      oil_pressure: float, electrical_status: float) -> None:
+    def update_state(
+        self,
+        lift_coefficient: float,
+        drag_coefficient: float,
+        power: float,
+        fuel_efficiency: float,
+        target_pitch: float,
+        target_roll: float,
+        target_altitude: float,
+        target_heading: float,
+        wind_speed: float,
+        wind_angle: float,
+        turbulence_intensity: float,
+        air_density: float,
+        wing_area: float,
+        oil_pressure: float,
+        electrical_status: float,
+        engine_factor: float = 1.0,
+    ) -> None:
+        """Update aircraft state based on flight dynamics calculations."""
         lift = calculate_lift(self.aircraft_state.velocity, wing_area, lift_coefficient, air_density)
         drag = calculate_drag(self.aircraft_state.velocity, wing_area, drag_coefficient, air_density)
         thrust = calculate_thrust(power, efficiency=0.9, engine_factor=engine_factor)
@@ -71,28 +84,16 @@ class FlightDynamicsService:
         adjusted_velocity = apply_wind_effect(self.aircraft_state.velocity, wind_speed, wind_angle)
         adjusted_velocity = apply_turbulence_effect(adjusted_velocity, turbulence_intensity)
 
-        pitch_output = self.pitch_controller.compute(target_pitch, self.aircraft_state.velocity)
-        roll_output = self.roll_controller.compute(target_roll, self.aircraft_state.velocity)
+        # Autopilot control
+        pitch_output = self.pitch_controller.compute(target_pitch, self.aircraft_state.altitude)
+        roll_output = self.roll_controller.compute(target_roll, self.aircraft_state.heading)
         altitude_output = self.altitude_controller.compute(target_altitude, self.aircraft_state.altitude)
         heading_output = self.heading_controller.compute(target_heading, self.aircraft_state.heading)
 
-        # Apply autopilot outputs to adjust aircraft state
-        self.aircraft_state.velocity += pitch_output
-        self.aircraft_state.velocity += roll_output
-        self.aircraft_state.altitude += altitude_output
-        self.aircraft_state.heading += heading_output
-
-        self.aircraft_state.velocity = adjusted_velocity
-
-        # Autopilot control
-        pitch_output = self.pitch_controller.compute(setpoint=5, measured_value=self.aircraft_state.altitude)
-        roll_output = self.roll_controller.compute(setpoint=0, measured_value=self.aircraft_state.heading)
-        altitude_output = self.altitude_controller.compute(setpoint=10000, measured_value=self.aircraft_state.altitude)
-        heading_output = self.heading_controller.compute(setpoint=90, measured_value=self.aircraft_state.heading)
-
         # Apply autopilot outputs to aircraft state
-        self.aircraft_state.altitude += pitch_output
-        self.aircraft_state.heading += roll_output
+        self.aircraft_state.velocity = adjusted_velocity
+        self.aircraft_state.altitude += altitude_output
+        self.aircraft_state.heading = (self.aircraft_state.heading + heading_output) % 360
         self.aircraft_state.fuel_level -= fuel_consumption
 
         # Check alerts
