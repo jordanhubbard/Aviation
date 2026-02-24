@@ -7,7 +7,6 @@
 
 // Core types and interfaces
 export * from './types';
-export * from './constants';
 
 // AHRS - Attitude and Heading Reference System
 export * from './ahrs';
