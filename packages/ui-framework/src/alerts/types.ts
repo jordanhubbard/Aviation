@@ -41,28 +41,21 @@ export interface CreateAlertOptions {
  * Event types emitted by the alert manager
  */
 export type AlertEventType =
-  | 'alert_added'
-  | 'alert_acknowledged'
-  | 'alert_cleared'
-  | 'all_alerts_cleared'
-  | 'all_acknowledged';
+  | 'alert:added'
+  | 'alert:acknowledged'
+  | 'alert:cleared'
+  | 'alert:cleared-all'
+  | 'alerts:changed';
 
 /**
- * Event payload for alert events
+ * Alert event payload for event emissions
  */
 export interface AlertEvent {
   type: AlertEventType;
-  timestamp: Date;
-  /** The alert involved (not present for clearAll events) */
   alert?: Alert;
-  /** All current alerts after the event */
   alerts: Alert[];
+  timestamp: Date;
 }
-
-/**
- * Callback type for alert event subscriptions
- */
-export type AlertEventSubscriber = (event: AlertEvent) => void;
 
 /**
  * Alert manager interface for managing the alert stack
@@ -82,26 +75,31 @@ export interface IAlertManager {
   clearAcknowledgedAlerts(): number;
   /** Get all alerts sorted by priority (highest first) */
   getAlerts(): Alert[];
-  /** Get only unacknowledged alerts */
+  /** Get unacknowledged alerts only */
   getUnacknowledgedAlerts(): Alert[];
-  /** Get only acknowledged alerts */
+  /** Get acknowledged alerts only */
   getAcknowledgedAlerts(): Alert[];
   /** Get visible alerts (up to maxVisible, highest priority first) */
   getVisibleAlerts(maxVisible?: number): Alert[];
-  /** Get the count of unacknowledged alerts */
+  /** Subscribe to alert changes */
+  subscribe(callback: AlertSubscriber): () => void;
+  /** Subscribe to specific alert events */
+  on(eventType: AlertEventType, callback: AlertEventCallback): () => void;
+  /** Get count of unacknowledged alerts */
   getUnacknowledgedCount(): number;
   /** Check if there are any unacknowledged alerts */
   hasUnacknowledgedAlerts(): boolean;
-  /** Subscribe to alert changes (legacy) */
-  subscribe(callback: AlertSubscriber): () => void;
-  /** Subscribe to alert events with detailed event info */
-  subscribeToEvents(callback: AlertEventSubscriber): () => void;
 }
 
 /**
- * Callback type for alert subscriptions (legacy)
+ * Callback type for alert subscriptions
  */
 export type AlertSubscriber = (alerts: Alert[]) => void;
+
+/**
+ * Callback type for alert event subscriptions
+ */
+export type AlertEventCallback = (event: AlertEvent) => void;
 
 /**
  * Priority weights for alert levels (higher = more important)
