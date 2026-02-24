@@ -1,4 +1,4 @@
-"""Autopilot controller module for flight dynamics simulation.
+"""Autopilot module for flight dynamics simulation.
 
 This module provides:
 - PID controllers for pitch, roll, altitude, and heading
@@ -7,8 +7,9 @@ This module provides:
 - Envelope protection (pitch/bank limits, overspeed/stall protection)
 """
 
-from .pid import PIDController, PIDGains
 from .controllers import (
+    PIDController,
+    PIDGains,
     PitchController,
     RollController,
     AltitudeHoldController,
@@ -22,19 +23,27 @@ from .modes import (
     AutopilotState,
     AutopilotModeManager,
 )
-from .envelope import (
+from .autotrim import (
+    AutotrimController,
+    TrimState,
+    TrimAxis,
+)
+from .envelope_protection import (
     EnvelopeProtection,
     EnvelopeLimits,
     ProtectionStatus,
+    ProtectionType,
 )
-from .autotrim import AutotrimController
-from .autopilot import Autopilot, AutopilotConfig, AutopilotOutput
+from .autopilot import (
+    Autopilot,
+    AutopilotConfig,
+    AutopilotOutput,
+)
 
 __all__ = [
-    # PID
+    # Controllers
     "PIDController",
     "PIDGains",
-    # Controllers
     "PitchController",
     "RollController",
     "AltitudeHoldController",
@@ -46,12 +55,15 @@ __all__ = [
     "VerticalMode",
     "AutopilotState",
     "AutopilotModeManager",
+    # Autotrim
+    "AutotrimController",
+    "TrimState",
+    "TrimAxis",
     # Envelope Protection
     "EnvelopeProtection",
     "EnvelopeLimits",
     "ProtectionStatus",
-    # Autotrim
-    "AutotrimController",
+    "ProtectionType",
     # Main Autopilot
     "Autopilot",
     "AutopilotConfig",
