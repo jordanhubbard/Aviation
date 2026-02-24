@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any
+from typing import List, Optional, Dict, Any
 
 
 class ScenarioType(str, Enum):
@@ -18,10 +18,18 @@ class EventType(str, Enum):
     """Types of timed events in scenarios."""
     RADIO_CALL = "radio_call"
     CHECKLIST_REMINDER = "checklist_reminder"
+    INSTRUCTOR_NOTE = "instructor_note"
+    SYSTEM_ALERT = "system_alert"
     WEATHER_UPDATE = "weather_update"
     ATC_INSTRUCTION = "atc_instruction"
-    SYSTEM_ALERT = "system_alert"
-    INSTRUCTOR_NOTE = "instructor_note"
+
+
+class EmergencyType(str, Enum):
+    """Types of emergency scenarios."""
+    ENGINE_FAILURE = "engine_failure"
+    ELECTRICAL_FAILURE = "electrical_failure"
+    LOST_PROCEDURES = "lost_procedures"
+    DIVERSION = "diversion"
 
 
 @dataclass
@@ -31,20 +39,21 @@ class Waypoint:
     lat: float
     lon: float
     alt: float  # feet MSL
-    speed: float = 0.0  # knots
-    heading: float = 0.0  # degrees
-    hold_time: float = 0.0  # seconds to hold at waypoint
-    notes: str = ""
+    speed: Optional[float] = None  # knots
+    heading: Optional[float] = None  # degrees
+    hold_time: Optional[float] = None  # seconds to hold at waypoint
+    notes: Optional[str] = None
 
 
 @dataclass
 class TimedEvent:
-    """A timed event during scenario playback."""
+    """A timed event that occurs during scenario playback."""
     time_offset: float  # seconds from scenario start
     event_type: EventType
     message: str
-    data: dict[str, Any] = field(default_factory=dict)
-    duration: float = 0.0  # how long the event lasts (for alerts)
+    duration: Optional[float] = None  # how long to display (seconds)
+    audio_file: Optional[str] = None  # path to audio file for radio calls
+    metadata: Dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass
@@ -54,13 +63,15 @@ class InitialConditions:
     lon: float
     alt: float  # feet MSL
     heading: float  # degrees
-    airspeed: float  # knots
+    speed: float  # knots
     fuel_level: float  # gallons
-    engine_running: bool = True
-    flaps: int = 0  # degrees
-    gear_down: bool = True
-    autopilot_engaged: bool = False
-    weather: dict[str, Any] = field(default_factory=dict)
+    aircraft_type: str = "C172"
+    weather_conditions: str = "VFR"
+    time_of_day: str = "day"  # day, night, dusk, dawn
+    wind_direction: Optional[float] = None  # degrees
+    wind_speed: Optional[float] = None  # knots
+    visibility: Optional[float] = None  # statute miles
+    ceiling: Optional[float] = None  # feet AGL
 
 
 @dataclass
@@ -71,23 +82,26 @@ class TrainingScenario:
     description: str
     scenario_type: ScenarioType
     difficulty: str  # beginner, intermediate, advanced
-    duration_minutes: int
+    estimated_duration: float  # minutes
     initial_conditions: InitialConditions
-    waypoints: list[Waypoint] = field(default_factory=list)
-    events: list[TimedEvent] = field(default_factory=list)
-    objectives: list[str] = field(default_factory=list)
-    success_criteria: dict[str, Any] = field(default_factory=dict)
-    metadata: dict[str, Any] = field(default_factory=dict)
+    waypoints: List[Waypoint]
+    events: List[TimedEvent]
+    learning_objectives: List[str] = field(default_factory=list)
+    prerequisites: List[str] = field(default_factory=list)
+    emergency_type: Optional[EmergencyType] = None
+    metadata: Dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass
 class ScenarioPlaybackState:
     """Current state during scenario playback."""
     scenario_id: str
-    elapsed_time: float  # seconds
-    current_waypoint_index: int
-    completed_events: list[int]  # indices of completed events
+    current_time: float  # seconds from start
     is_paused: bool
-    is_complete: bool
-    score: float = 0.0
-    deviations: list[dict[str, Any]] = field(default_factory=list)
+    current_waypoint_index: int
+    completed_events: List[int]  # indices of completed events
+    current_position: Dict[str, float]  # lat, lon, alt
+    current_speed: float
+    current_heading: float
+    fuel_remaining: float
+    alerts_active: List[str]
