@@ -1,7 +1,9 @@
-"""Training Scenarios Schema Definitions."""
+"""Training scenario schemas and data models."""
+from __future__ import annotations
+
 from dataclasses import dataclass, field
-from typing import List, Optional, Dict, Any
 from enum import Enum
+from typing import List, Optional, Dict, Any
 
 
 class ScenarioType(str, Enum):
@@ -17,9 +19,17 @@ class EventType(str, Enum):
     RADIO_CALL = "radio_call"
     CHECKLIST_REMINDER = "checklist_reminder"
     INSTRUCTOR_NOTE = "instructor_note"
-    ALERT = "alert"
-    WEATHER_CHANGE = "weather_change"
-    SYSTEM_FAILURE = "system_failure"
+    SYSTEM_ALERT = "system_alert"
+    WEATHER_UPDATE = "weather_update"
+    ATC_INSTRUCTION = "atc_instruction"
+
+
+class EmergencyType(str, Enum):
+    """Types of emergency scenarios."""
+    ENGINE_FAILURE = "engine_failure"
+    ELECTRICAL_FAILURE = "electrical_failure"
+    LOST_PROCEDURES = "lost_procedures"
+    DIVERSION = "diversion"
 
 
 @dataclass
@@ -41,30 +51,35 @@ class InitialConditions:
     flaps: int  # degrees
     gear_down: bool
     engine_running: bool
-    autopilot_engaged: bool
-    nav_source: str  # GPS, VOR, LOC
-    weather: Optional[Dict[str, Any]] = None
+    time_of_day: str  # "day", "night", "dusk", "dawn"
+    weather_conditions: str  # "VFR", "MVFR", "IFR", "LIFR"
+    wind_direction: float  # degrees
+    wind_speed: float  # knots
+    visibility: float  # statute miles
+    ceiling: Optional[float] = None  # feet AGL, None for clear
 
 
 @dataclass
 class Waypoint:
-    """Waypoint in a training scenario."""
+    """A waypoint in the scenario route."""
     name: str
     position: Position
-    altitude_constraint: Optional[float] = None  # feet MSL
-    speed_constraint: Optional[float] = None  # knots
-    waypoint_type: str = "flyover"  # flyover, flyby
+    waypoint_type: str  # "airport", "navaid", "fix", "user"
+    target_altitude: Optional[float] = None
+    target_airspeed: Optional[float] = None
+    hold_pattern: bool = False
     notes: Optional[str] = None
 
 
 @dataclass
 class TimedEvent:
-    """Timed event during scenario playback."""
+    """A timed event during the scenario."""
     time_offset: float  # seconds from scenario start
     event_type: EventType
     message: str
-    severity: str = "info"  # info, warning, caution, emergency
-    data: Optional[Dict[str, Any]] = None
+    audio_file: Optional[str] = None
+    requires_acknowledgment: bool = False
+    metadata: Dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass
@@ -74,26 +89,27 @@ class TrainingScenario:
     title: str
     description: str
     scenario_type: ScenarioType
-    difficulty: str  # beginner, intermediate, advanced
-    duration_minutes: int
+    difficulty: str  # "beginner", "intermediate", "advanced"
+    estimated_duration: int  # minutes
     initial_conditions: InitialConditions
-    waypoints: List[Waypoint] = field(default_factory=list)
-    events: List[TimedEvent] = field(default_factory=list)
-    learning_objectives: List[str] = field(default_factory=list)
-    success_criteria: List[str] = field(default_factory=list)
+    waypoints: List[Waypoint]
+    events: List[TimedEvent]
+    learning_objectives: List[str]
+    success_criteria: List[str]
+    emergency_type: Optional[EmergencyType] = None
+    airport_icao: Optional[str] = None
     tags: List[str] = field(default_factory=list)
-    author: str = "Aviation Training Team"
-    version: str = "1.0"
 
 
 @dataclass
-class ScenarioPlaybackState:
-    """Current state during scenario playback."""
+class ScenarioProgress:
+    """Tracks progress through a scenario."""
     scenario_id: str
-    elapsed_time: float  # seconds
+    current_time: float  # seconds
     current_waypoint_index: int
     completed_events: List[int]  # indices of completed events
     is_paused: bool
-    is_complete: bool
-    score: Optional[float] = None
-    feedback: List[str] = field(default_factory=list)
+    score: float  # 0-100
+    deviations: List[str]  # list of noted deviations
+    started_at: Optional[str] = None
+    completed_at: Optional[str] = None
