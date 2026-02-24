@@ -1,6 +1,6 @@
 # Core FastAPI dependencies
 fastapi==0.133.0
-uvicorn==0.40.0
+uvicorn==0.41.0
 starlette==0.52.1
 python-multipart==0.0.22
 python-dotenv==1.0.1
