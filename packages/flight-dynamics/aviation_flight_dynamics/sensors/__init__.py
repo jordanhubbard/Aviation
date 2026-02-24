@@ -19,13 +19,11 @@ from .adc import (
     ADCSimulator,
     AirspeedType,
     AltitudeType,
-    compute_ias_from_dynamic_pressure,
     compute_cas_from_ias,
     compute_tas_from_cas,
     compute_mach_number,
-    compute_pressure_altitude,
     compute_density_altitude,
-    compute_vertical_speed,
+    compute_pressure_altitude,
 )
 
 __all__ = [
@@ -47,11 +45,9 @@ __all__ = [
     "ADCSimulator",
     "AirspeedType",
     "AltitudeType",
-    "compute_ias_from_dynamic_pressure",
     "compute_cas_from_ias",
     "compute_tas_from_cas",
     "compute_mach_number",
-    "compute_pressure_altitude",
     "compute_density_altitude",
-    "compute_vertical_speed",
+    "compute_pressure_altitude",
 ]
