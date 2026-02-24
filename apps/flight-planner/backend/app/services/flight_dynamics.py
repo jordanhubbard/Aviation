@@ -76,11 +76,13 @@ class FlightDynamicsService:
         engine_factor: float = 1.0,
     ) -> None:
         """Update aircraft state based on flight dynamics calculations."""
+        # Calculate forces
         lift = calculate_lift(self.aircraft_state.velocity, wing_area, lift_coefficient, air_density)
         drag = calculate_drag(self.aircraft_state.velocity, wing_area, drag_coefficient, air_density)
         thrust = calculate_thrust(power, efficiency=0.9, engine_factor=engine_factor)
         fuel_consumption = calculate_fuel_consumption(thrust, fuel_efficiency)
 
+        # Apply environmental effects
         adjusted_velocity = apply_wind_effect(self.aircraft_state.velocity, wind_speed, wind_angle)
         adjusted_velocity = apply_turbulence_effect(adjusted_velocity, turbulence_intensity)
 
@@ -107,4 +109,5 @@ class FlightDynamicsService:
                 print(f"Alert: {alert.message} (Severity: {alert.severity})")
 
     def get_state(self) -> AircraftState:
+        """Return the current aircraft state."""
         return self.aircraft_state
