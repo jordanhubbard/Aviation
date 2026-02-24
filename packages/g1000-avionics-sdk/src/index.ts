@@ -2,13 +2,12 @@
  * G1000 Avionics SDK
  * 
  * Core avionics simulation library providing AHRS, ADC, GPS, NAV radios,
- * and autopilot control logic for the G1000 glass cockpit simulator.
+ * and autopilot control logic for the G1000 simulator.
  */
 
-// Core types and utilities
+// Core types and interfaces
 export * from './types';
-export * from './utils/math';
-export * from './utils/units';
+export * from './constants';
 
 // AHRS - Attitude and Heading Reference System
 export * from './ahrs';
@@ -25,5 +24,5 @@ export * from './nav-radios';
 // Autopilot - Flight control system
 export * from './autopilot';
 
-// Integrated avionics system
-export * from './avionics-system';
+// Avionics Suite - Integrated system
+export * from './avionics-suite';
