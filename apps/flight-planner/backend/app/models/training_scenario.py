@@ -20,17 +20,16 @@ class EventType(str, Enum):
     CHECKLIST_REMINDER = "checklist_reminder"
     WEATHER_UPDATE = "weather_update"
     ATC_INSTRUCTION = "atc_instruction"
-    SYSTEM_FAILURE = "system_failure"
-    ALERT = "alert"
-    WAYPOINT_REACHED = "waypoint_reached"
+    SYSTEM_ALERT = "system_alert"
+    INSTRUCTOR_NOTE = "instructor_note"
 
 
 @dataclass
 class Position:
     """Geographic position."""
-    lat: float
-    lon: float
-    alt: float  # feet MSL
+    latitude: float
+    longitude: float
+    altitude_ft: float
 
 
 @dataclass
@@ -38,15 +37,15 @@ class InitialConditions:
     """Initial conditions for a training scenario."""
     position: Position
     heading: float  # degrees
-    airspeed: float  # knots
-    altitude: float  # feet MSL
-    fuel_level: float  # gallons
-    flaps: int  # degrees
-    gear_down: bool
-    engine_running: bool
-    autopilot_engaged: bool
-    nav_source: str  # GPS, VOR, LOC
-    weather: dict[str, Any] = field(default_factory=dict)
+    airspeed_kts: float
+    vertical_speed_fpm: float = 0.0
+    fuel_gallons: float = 40.0
+    weight_lbs: float = 2400.0
+    flaps_position: int = 0
+    gear_down: bool = True
+    engine_running: bool = True
+    time_of_day: str = "day"  # day, night, dawn, dusk
+    weather_preset: str = "vfr"  # vfr, mvfr, ifr, lifr
 
 
 @dataclass
@@ -54,21 +53,22 @@ class Waypoint:
     """A waypoint in the scenario route."""
     name: str
     position: Position
-    altitude_constraint: float | None = None  # feet MSL
-    speed_constraint: float | None = None  # knots
-    waypoint_type: str = "flyover"  # flyover, flyby
+    waypoint_type: str  # airport, navaid, fix, user
+    target_altitude_ft: float | None = None
+    target_airspeed_kts: float | None = None
+    hold_pattern: bool = False
     notes: str = ""
 
 
 @dataclass
 class TimedEvent:
-    """A timed event that occurs during the scenario."""
-    time_offset: float  # seconds from scenario start
+    """A timed event during the scenario."""
+    time_offset_seconds: float
     event_type: EventType
     message: str
-    data: dict[str, Any] = field(default_factory=dict)
     audio_file: str | None = None
     requires_acknowledgment: bool = False
+    metadata: dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass
@@ -79,24 +79,26 @@ class TrainingScenario:
     description: str
     scenario_type: ScenarioType
     difficulty: str  # beginner, intermediate, advanced
-    duration_minutes: int
+    estimated_duration_minutes: int
     initial_conditions: InitialConditions
     waypoints: list[Waypoint]
     events: list[TimedEvent]
-    success_criteria: dict[str, Any] = field(default_factory=dict)
+    learning_objectives: list[str] = field(default_factory=list)
+    prerequisites: list[str] = field(default_factory=list)
     tags: list[str] = field(default_factory=list)
-    author: str = "Aviation Team"
+    author: str = "Aviation Training Team"
     version: str = "1.0"
 
-    def get_event_at_time(self, elapsed_seconds: float) -> list[TimedEvent]:
-        """Get events that should trigger at the given elapsed time."""
-        return [
-            event for event in self.events
-            if abs(event.time_offset - elapsed_seconds) < 0.5
-        ]
 
-    def get_next_waypoint(self, current_index: int) -> Waypoint | None:
-        """Get the next waypoint after the current index."""
-        if current_index + 1 < len(self.waypoints):
-            return self.waypoints[current_index + 1]
-        return None
+@dataclass
+class ScenarioPlaybackState:
+    """Current state of scenario playback."""
+    scenario_id: str
+    is_playing: bool = False
+    is_paused: bool = False
+    elapsed_seconds: float = 0.0
+    current_waypoint_index: int = 0
+    completed_events: list[int] = field(default_factory=list)
+    current_position: Position | None = None
+    score: float = 100.0
+    notes: list[str] = field(default_factory=list)
