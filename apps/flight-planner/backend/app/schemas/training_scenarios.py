@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import List, Optional, Dict, Any
+from typing import Any
 
 
 class ScenarioType(str, Enum):
@@ -18,10 +18,10 @@ class EventType(str, Enum):
     """Types of timed events in scenarios."""
     RADIO_CALL = "radio_call"
     CHECKLIST_REMINDER = "checklist_reminder"
-    INSTRUCTOR_NOTE = "instructor_note"
-    SYSTEM_FAILURE = "system_failure"
-    WEATHER_CHANGE = "weather_change"
+    WEATHER_UPDATE = "weather_update"
     ATC_INSTRUCTION = "atc_instruction"
+    SYSTEM_ALERT = "system_alert"
+    INSTRUCTOR_NOTE = "instructor_note"
 
 
 @dataclass
@@ -31,20 +31,20 @@ class Waypoint:
     lat: float
     lon: float
     alt: float  # feet MSL
-    speed: Optional[float] = None  # knots
-    heading: Optional[float] = None  # degrees
-    hold_time: Optional[float] = None  # seconds to hold at waypoint
-    notes: Optional[str] = None
+    speed: float = 0.0  # knots
+    heading: float = 0.0  # degrees
+    hold_time: float = 0.0  # seconds to hold at waypoint
+    notes: str = ""
 
 
 @dataclass
 class TimedEvent:
-    """A timed event that occurs during scenario playback."""
+    """A timed event during scenario playback."""
     time_offset: float  # seconds from scenario start
     event_type: EventType
     message: str
-    data: Optional[Dict[str, Any]] = None
-    audio_file: Optional[str] = None  # path to audio file for radio calls
+    data: dict[str, Any] = field(default_factory=dict)
+    duration: float = 0.0  # how long the event lasts (for alerts)
 
 
 @dataclass
@@ -54,11 +54,13 @@ class InitialConditions:
     lon: float
     alt: float  # feet MSL
     heading: float  # degrees
-    speed: float  # knots
+    airspeed: float  # knots
     fuel_level: float  # gallons
-    weather: Optional[Dict[str, Any]] = None
-    time_of_day: Optional[str] = None  # "day", "night", "dusk", "dawn"
-    aircraft_type: Optional[str] = None
+    engine_running: bool = True
+    flaps: int = 0  # degrees
+    gear_down: bool = True
+    autopilot_engaged: bool = False
+    weather: dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass
@@ -68,16 +70,14 @@ class TrainingScenario:
     title: str
     description: str
     scenario_type: ScenarioType
-    difficulty: str  # "beginner", "intermediate", "advanced"
-    estimated_duration: int  # minutes
+    difficulty: str  # beginner, intermediate, advanced
+    duration_minutes: int
     initial_conditions: InitialConditions
-    waypoints: List[Waypoint] = field(default_factory=list)
-    events: List[TimedEvent] = field(default_factory=list)
-    learning_objectives: List[str] = field(default_factory=list)
-    prerequisites: List[str] = field(default_factory=list)
-    tags: List[str] = field(default_factory=list)
-    author: Optional[str] = None
-    version: str = "1.0"
+    waypoints: list[Waypoint] = field(default_factory=list)
+    events: list[TimedEvent] = field(default_factory=list)
+    objectives: list[str] = field(default_factory=list)
+    success_criteria: dict[str, Any] = field(default_factory=dict)
+    metadata: dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass
@@ -86,11 +86,8 @@ class ScenarioPlaybackState:
     scenario_id: str
     elapsed_time: float  # seconds
     current_waypoint_index: int
-    completed_events: List[int]  # indices of completed events
+    completed_events: list[int]  # indices of completed events
     is_paused: bool
     is_complete: bool
-    current_position: Dict[str, float]  # lat, lon, alt
-    current_heading: float
-    current_speed: float
-    score: Optional[float] = None
-    notes: List[str] = field(default_factory=list)
+    score: float = 0.0
+    deviations: list[dict[str, Any]] = field(default_factory=list)
