@@ -13,7 +13,7 @@
 export type ThemeMode = 'day' | 'night' | 'high-contrast';
 
 /**
- * Color palette definition for a theme
+ * Color palette for a theme
  */
 export interface ThemeColors {
   // Primary colors
@@ -84,6 +84,7 @@ export interface ThemeTypography {
   // Font weights
   fontWeightNormal: number;
   fontWeightMedium: number;
+  fontWeightSemibold: number;
   fontWeightBold: number;
   
   // Line heights
@@ -93,7 +94,7 @@ export interface ThemeTypography {
 }
 
 /**
- * Spacing scale for a theme
+ * Spacing settings for a theme
  */
 export interface ThemeSpacing {
   xs: string;
@@ -106,26 +107,53 @@ export interface ThemeSpacing {
 }
 
 /**
- * Complete theme definition
+ * Shadow settings for a theme
  */
-export interface Theme {
-  mode: ThemeMode;
-  name: string;
-  description: string;
-  colors: ThemeColors;
-  typography: ThemeTypography;
-  spacing: ThemeSpacing;
-  
-  // Accessibility metadata
-  accessibility: {
-    minContrastRatio: number;
-    supportsReducedMotion: boolean;
-    supportsHighContrast: boolean;
-  };
+export interface ThemeShadows {
+  none: string;
+  sm: string;
+  md: string;
+  lg: string;
+  xl: string;
 }
 
 /**
- * Theme context for React components
+ * Border radius settings
+ */
+export interface ThemeBorderRadius {
+  none: string;
+  sm: string;
+  md: string;
+  lg: string;
+  xl: string;
+  full: string;
+}
+
+/**
+ * Transition settings
+ */
+export interface ThemeTransitions {
+  fast: string;
+  normal: string;
+  slow: string;
+}
+
+/**
+ * Complete theme definition
+ */
+export interface Theme {
+  name: string;
+  mode: ThemeMode;
+  colors: ThemeColors;
+  typography: ThemeTypography;
+  spacing: ThemeSpacing;
+  shadows: ThemeShadows;
+  borderRadius: ThemeBorderRadius;
+  transitions: ThemeTransitions;
+}
+
+/**
+ * Theme context value for React context
  */
 export interface ThemeContextValue {
   theme: Theme;
@@ -135,10 +163,10 @@ export interface ThemeContextValue {
 }
 
 /**
- * Theme preference storage
+ * Theme provider props
  */
-export interface ThemePreference {
-  mode: ThemeMode;
-  autoDetect: boolean;
-  lastUpdated: string;
+export interface ThemeProviderProps {
+  children: React.ReactNode;
+  defaultMode?: ThemeMode;
+  storageKey?: string;
 }
