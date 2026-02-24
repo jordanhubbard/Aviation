@@ -24,5 +24,5 @@ export * from './nav-radios';
 // Autopilot - Flight control system
 export * from './autopilot';
 
-// Avionics Suite - Integrated system
-export * from './avionics-suite';
+// Avionics System - Integrated system manager
+export * from './avionics-system';
