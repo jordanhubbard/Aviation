@@ -1,11 +1,7 @@
 # Core FastAPI dependencies
 fastapi==0.128.0
 uvicorn==0.40.0
-<<<<<<< HEAD
-starlette==0.50.0
-=======
 starlette==0.52.1
->>>>>>> e25f421f ([WIP] Auto-checkpoint after file changes)
 python-multipart==0.0.22
 python-dotenv==1.0.1
 
