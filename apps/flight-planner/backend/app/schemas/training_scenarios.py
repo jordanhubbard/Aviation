@@ -1,7 +1,9 @@
 """Training Scenarios Schema Definitions."""
+from __future__ import annotations
+
 from dataclasses import dataclass, field
-from typing import List, Optional, Dict, Any
 from enum import Enum
+from typing import List, Optional, Dict, Any
 
 
 class ScenarioType(str, Enum):
@@ -17,8 +19,8 @@ class EventType(str, Enum):
     RADIO_CALL = "radio_call"
     CHECKLIST_REMINDER = "checklist_reminder"
     INSTRUCTOR_NOTE = "instructor_note"
-    SYSTEM_ALERT = "system_alert"
-    WEATHER_UPDATE = "weather_update"
+    SYSTEM_FAILURE = "system_failure"
+    WEATHER_CHANGE = "weather_change"
     ATC_INSTRUCTION = "atc_instruction"
 
 
@@ -37,12 +39,12 @@ class Waypoint:
 
 @dataclass
 class TimedEvent:
-    """A timed event during scenario playback."""
+    """A timed event that occurs during scenario playback."""
     time_offset: float  # seconds from scenario start
     event_type: EventType
     message: str
-    audio_file: Optional[str] = None
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    data: Optional[Dict[str, Any]] = None
+    audio_file: Optional[str] = None  # path to audio file for radio calls
 
 
 @dataclass
@@ -52,10 +54,11 @@ class InitialConditions:
     lon: float
     alt: float  # feet MSL
     heading: float  # degrees
-    airspeed: float  # knots
+    speed: float  # knots
     fuel_level: float  # gallons
-    weather: Dict[str, Any] = field(default_factory=dict)
-    aircraft_config: Dict[str, Any] = field(default_factory=dict)
+    weather: Optional[Dict[str, Any]] = None
+    time_of_day: Optional[str] = None  # "day", "night", "dusk", "dawn"
+    aircraft_type: Optional[str] = None
 
 
 @dataclass
@@ -65,14 +68,15 @@ class TrainingScenario:
     title: str
     description: str
     scenario_type: ScenarioType
-    difficulty: str  # beginner, intermediate, advanced
-    duration_minutes: int
+    difficulty: str  # "beginner", "intermediate", "advanced"
+    estimated_duration: int  # minutes
     initial_conditions: InitialConditions
-    waypoints: List[Waypoint]
-    events: List[TimedEvent]
-    objectives: List[str] = field(default_factory=list)
+    waypoints: List[Waypoint] = field(default_factory=list)
+    events: List[TimedEvent] = field(default_factory=list)
+    learning_objectives: List[str] = field(default_factory=list)
+    prerequisites: List[str] = field(default_factory=list)
     tags: List[str] = field(default_factory=list)
-    author: str = "Aviation Training Team"
+    author: Optional[str] = None
     version: str = "1.0"
 
 
@@ -85,5 +89,8 @@ class ScenarioPlaybackState:
     completed_events: List[int]  # indices of completed events
     is_paused: bool
     is_complete: bool
+    current_position: Dict[str, float]  # lat, lon, alt
+    current_heading: float
+    current_speed: float
     score: Optional[float] = None
-    feedback: List[str] = field(default_factory=list)
+    notes: List[str] = field(default_factory=list)
