@@ -1,9 +1,10 @@
-"""Training scenario data models."""
+"""Training scenario schemas for pre-recorded training scenarios."""
 from __future__ import annotations
 
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any
+from typing import List, Optional, Dict, Any
+from pydantic import BaseModel
 
 
 class ScenarioType(str, Enum):
@@ -20,54 +21,61 @@ class EventType(str, Enum):
     CHECKLIST_REMINDER = "checklist_reminder"
     WEATHER_UPDATE = "weather_update"
     ATC_INSTRUCTION = "atc_instruction"
-    SYSTEM_FAILURE = "system_failure"
-    ALERT = "alert"
-    WAYPOINT_REACHED = "waypoint_reached"
+    SYSTEM_ALERT = "system_alert"
+    INSTRUCTOR_NOTE = "instructor_note"
+    ENGINE_FAILURE = "engine_failure"
+    ELECTRICAL_FAILURE = "electrical_failure"
+    NAVIGATION_FAILURE = "navigation_failure"
 
 
-@dataclass
-class Position:
-    """Geographic position."""
+class WaypointType(str, Enum):
+    """Types of waypoints."""
+    AIRPORT = "airport"
+    VOR = "vor"
+    NDB = "ndb"
+    FIX = "fix"
+    GPS = "gps"
+    PATTERN_POINT = "pattern_point"
+
+
+class Waypoint(BaseModel):
+    """A waypoint in the scenario route."""
+    name: str
     lat: float
     lon: float
     alt: float  # feet MSL
+    waypoint_type: WaypointType = WaypointType.GPS
+    speed: Optional[float] = None  # knots
+    heading: Optional[float] = None  # degrees
+    notes: Optional[str] = None
 
 
-@dataclass
-class InitialConditions:
-    """Initial conditions for a training scenario."""
-    position: Position
-    heading: float  # degrees
-    airspeed: float  # knots
-    altitude: float  # feet MSL
-    fuel_level: float  # gallons
-    aircraft_type: str = "C172"
-    weather: dict[str, Any] = field(default_factory=dict)
-
-
-@dataclass
-class Waypoint:
-    """A waypoint in the scenario route."""
-    name: str
-    position: Position
-    altitude_constraint: float | None = None  # feet MSL
-    speed_constraint: float | None = None  # knots
-    waypoint_type: str = "fly_by"  # fly_by, fly_over
-    notes: str = ""
-
-
-@dataclass
-class TimedEvent:
-    """A timed event during the scenario."""
+class TimedEvent(BaseModel):
+    """A timed event that occurs during scenario playback."""
     time_offset: float  # seconds from scenario start
     event_type: EventType
     message: str
-    data: dict[str, Any] = field(default_factory=dict)
-    audio_file: str | None = None
+    audio_file: Optional[str] = None
+    data: Optional[Dict[str, Any]] = None
+    duration: Optional[float] = None  # seconds
 
 
-@dataclass
-class TrainingScenario:
+class InitialConditions(BaseModel):
+    """Initial conditions for the scenario."""
+    lat: float
+    lon: float
+    alt: float  # feet MSL
+    heading: float  # degrees
+    airspeed: float  # knots
+    fuel_level: float  # gallons
+    engine_running: bool = True
+    flaps: int = 0  # degrees
+    gear_down: bool = True
+    autopilot_engaged: bool = False
+    weather: Optional[Dict[str, Any]] = None
+
+
+class TrainingScenario(BaseModel):
     """A complete training scenario definition."""
     id: str
     title: str
@@ -76,60 +84,33 @@ class TrainingScenario:
     difficulty: str  # beginner, intermediate, advanced
     duration_minutes: int
     initial_conditions: InitialConditions
-    waypoints: list[Waypoint]
-    events: list[TimedEvent]
-    objectives: list[str] = field(default_factory=list)
-    success_criteria: dict[str, Any] = field(default_factory=dict)
-    metadata: dict[str, Any] = field(default_factory=dict)
+    waypoints: List[Waypoint]
+    events: List[TimedEvent]
+    objectives: List[str]
+    success_criteria: Optional[Dict[str, Any]] = None
+    tags: List[str] = []
+    author: str = "Aviation Training Team"
+    version: str = "1.0"
 
-    def to_dict(self) -> dict[str, Any]:
-        """Convert scenario to dictionary."""
-        return {
-            "id": self.id,
-            "title": self.title,
-            "description": self.description,
-            "scenario_type": self.scenario_type.value,
-            "difficulty": self.difficulty,
-            "duration_minutes": self.duration_minutes,
-            "initial_conditions": {
-                "position": {
-                    "lat": self.initial_conditions.position.lat,
-                    "lon": self.initial_conditions.position.lon,
-                    "alt": self.initial_conditions.position.alt,
-                },
-                "heading": self.initial_conditions.heading,
-                "airspeed": self.initial_conditions.airspeed,
-                "altitude": self.initial_conditions.altitude,
-                "fuel_level": self.initial_conditions.fuel_level,
-                "aircraft_type": self.initial_conditions.aircraft_type,
-                "weather": self.initial_conditions.weather,
-            },
-            "waypoints": [
-                {
-                    "name": wp.name,
-                    "position": {
-                        "lat": wp.position.lat,
-                        "lon": wp.position.lon,
-                        "alt": wp.position.alt,
-                    },
-                    "altitude_constraint": wp.altitude_constraint,
-                    "speed_constraint": wp.speed_constraint,
-                    "waypoint_type": wp.waypoint_type,
-                    "notes": wp.notes,
-                }
-                for wp in self.waypoints
-            ],
-            "events": [
-                {
-                    "time_offset": event.time_offset,
-                    "event_type": event.event_type.value,
-                    "message": event.message,
-                    "data": event.data,
-                    "audio_file": event.audio_file,
-                }
-                for event in self.events
-            ],
-            "objectives": self.objectives,
-            "success_criteria": self.success_criteria,
-            "metadata": self.metadata,
-        }
+
+class ScenarioPlaybackState(BaseModel):
+    """Current state of scenario playback."""
+    scenario_id: str
+    is_playing: bool = False
+    is_paused: bool = False
+    current_time: float = 0.0  # seconds
+    current_waypoint_index: int = 0
+    completed_events: List[int] = []
+    score: float = 0.0
+    notes: List[str] = []
+
+
+class ScenarioListItem(BaseModel):
+    """Summary of a scenario for listing."""
+    id: str
+    title: str
+    description: str
+    scenario_type: ScenarioType
+    difficulty: str
+    duration_minutes: int
+    tags: List[str]
