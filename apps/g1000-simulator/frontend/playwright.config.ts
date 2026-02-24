@@ -13,7 +13,10 @@ export default defineConfig({
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,
   workers: process.env.CI ? 1 : undefined,
-  reporter: [['html', { open: 'never' }]],
+  reporter: [
+    ['html', { outputFolder: 'playwright-report' }],
+    ['list'],
+  ],
   use: {
     baseURL: 'http://localhost:5173',
     headless: true,
