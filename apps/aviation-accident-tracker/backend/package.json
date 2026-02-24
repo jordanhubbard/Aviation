@@ -24,7 +24,11 @@
     "cors": "^2.8.6",
     "dataloader": "^2.2.2",
     "dotenv": "^17.2.3",
+<<<<<<< HEAD
     "express": "^5.2.1",
+=======
+    "express": "^4.19.2",
+>>>>>>> 95bb0e25 ([WIP] Auto-checkpoint after file changes)
     "express-rate-limit": "^8.2.1",
     "graphql": "^16.8.1",
     "graphql-subscriptions": "^3.0.0",
@@ -42,8 +46,13 @@
   "devDependencies": {
     "@types/cors": "^2.8.17",
     "@types/express": "^5.0.6",
+<<<<<<< HEAD
     "@types/node": "^25.3.0",
     "@types/pdfkit": "^0.17.5",
+=======
+    "@types/node": "^25.0.3",
+    "@types/pdfkit": "^0.13.5",
+>>>>>>> 95bb0e25 ([WIP] Auto-checkpoint after file changes)
     "@types/supertest": "^6.0.2",
     "@types/uuid": "^11.0.0",
     "nodemon": "^3.1.14",
