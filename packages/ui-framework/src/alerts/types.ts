@@ -40,28 +40,66 @@ export interface CreateAlertOptions {
 /**
  * Event types emitted by the alert manager
  */
-export type AlertEventType = 
+export type AlertEventType =
   | 'alert_added'
   | 'alert_acknowledged'
   | 'alert_cleared'
   | 'alerts_cleared_all';
 
 /**
- * Alert event payload for UI layer notifications
+ * Base alert event interface
  */
-export interface AlertEvent {
+export interface AlertEventBase {
   type: AlertEventType;
   timestamp: Date;
-  /** The alert involved (not present for alerts_cleared_all) */
-  alert?: Alert;
-  /** All current alerts after the event */
-  alerts: Alert[];
 }
+
+/**
+ * Event emitted when a new alert is added
+ */
+export interface AlertAddedEvent extends AlertEventBase {
+  type: 'alert_added';
+  alert: Alert;
+}
+
+/**
+ * Event emitted when an alert is acknowledged
+ */
+export interface AlertAcknowledgedEvent extends AlertEventBase {
+  type: 'alert_acknowledged';
+  alertId: string;
+  alert: Alert;
+}
+
+/**
+ * Event emitted when a single alert is cleared
+ */
+export interface AlertClearedEvent extends AlertEventBase {
+  type: 'alert_cleared';
+  alertId: string;
+}
+
+/**
+ * Event emitted when all alerts are cleared
+ */
+export interface AlertsClearedAllEvent extends AlertEventBase {
+  type: 'alerts_cleared_all';
+  clearedCount: number;
+}
+
+/**
+ * Union type for all alert events
+ */
+export type AlertEvent =
+  | AlertAddedEvent
+  | AlertAcknowledgedEvent
+  | AlertClearedEvent
+  | AlertsClearedAllEvent;
 
 /**
  * Callback type for alert event subscriptions
  */
-export type AlertEventSubscriber = (event: AlertEvent) => void;
+export type AlertEventListener = (event: AlertEvent) => void;
 
 /**
  * Alert manager interface for managing the alert stack
@@ -76,7 +114,9 @@ export interface IAlertManager {
   /** Clear (remove) an alert by ID */
   clearAlert(id: string): boolean;
   /** Clear all alerts */
-  clearAllAlerts(): void;
+  clearAllAlerts(): number;
+  /** Clear all acknowledged alerts */
+  clearAcknowledgedAlerts(): number;
   /** Get all alerts sorted by priority (highest first) */
   getAlerts(): Alert[];
   /** Get unacknowledged alerts only */
@@ -85,18 +125,20 @@ export interface IAlertManager {
   getAcknowledgedAlerts(): Alert[];
   /** Get visible alerts (up to maxVisible, highest priority first) */
   getVisibleAlerts(maxVisible?: number): Alert[];
-  /** Subscribe to alert changes (legacy) */
-  subscribe(callback: AlertSubscriber): () => void;
-  /** Subscribe to alert events with detailed event info */
-  subscribeToEvents(callback: AlertEventSubscriber): () => void;
+  /** Get alert by ID */
+  getAlert(id: string): Alert | undefined;
   /** Check if there are any unacknowledged alerts */
   hasUnacknowledgedAlerts(): boolean;
   /** Get count of unacknowledged alerts */
   getUnacknowledgedCount(): number;
+  /** Subscribe to alert list changes */
+  subscribe(callback: AlertSubscriber): () => void;
+  /** Subscribe to alert events (for UI layer integration) */
+  onEvent(listener: AlertEventListener): () => void;
 }
 
 /**
- * Callback type for alert subscriptions (legacy)
+ * Callback type for alert subscriptions
  */
 export type AlertSubscriber = (alerts: Alert[]) => void;
 
