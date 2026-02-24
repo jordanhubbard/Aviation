@@ -5,7 +5,7 @@
  * and autopilot control logic for the G1000 glass cockpit simulator.
  */
 
-// Core types and interfaces
+// Core types
 export * from './types';
 
 // AHRS - Attitude and Heading Reference System
