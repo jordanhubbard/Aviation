@@ -12,6 +12,8 @@ from .ahrs import (
     ned_to_body,
     ned_to_ecef,
     ecef_to_ned,
+    quaternion_to_euler,
+    euler_to_quaternion,
 )
 from .adc import (
     ADCConfig,
@@ -41,6 +43,8 @@ __all__ = [
     "ned_to_body",
     "ned_to_ecef",
     "ecef_to_ned",
+    "quaternion_to_euler",
+    "euler_to_quaternion",
     # ADC
     "ADCConfig",
     "ADCOutput",
