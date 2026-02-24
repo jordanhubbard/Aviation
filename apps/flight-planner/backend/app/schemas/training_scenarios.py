@@ -1,9 +1,7 @@
-"""Training scenario schemas for pre-recorded training scenarios."""
-from __future__ import annotations
-
+"""Training Scenarios Schema Definitions."""
 from dataclasses import dataclass, field
-from enum import Enum
 from typing import List, Optional, Dict, Any
+from enum import Enum
 
 
 class ScenarioType(str, Enum):
@@ -24,60 +22,40 @@ class EventType(str, Enum):
     ATC_INSTRUCTION = "atc_instruction"
 
 
-class EmergencyType(str, Enum):
-    """Types of emergency scenarios."""
-    ENGINE_FAILURE = "engine_failure"
-    ELECTRICAL_FAILURE = "electrical_failure"
-    LOST_PROCEDURES = "lost_procedures"
-    DIVERSION = "diversion"
-
-
 @dataclass
-class Position:
-    """Geographic position."""
+class Waypoint:
+    """A waypoint in a training scenario."""
+    name: str
     lat: float
     lon: float
     alt: float  # feet MSL
+    speed: Optional[float] = None  # knots
+    heading: Optional[float] = None  # degrees
+    hold_time: Optional[float] = None  # seconds to hold at waypoint
+    notes: Optional[str] = None
+
+
+@dataclass
+class TimedEvent:
+    """A timed event during scenario playback."""
+    time_offset: float  # seconds from scenario start
+    event_type: EventType
+    message: str
+    audio_file: Optional[str] = None
+    metadata: Dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass
 class InitialConditions:
     """Initial conditions for a training scenario."""
-    position: Position
+    lat: float
+    lon: float
+    alt: float  # feet MSL
     heading: float  # degrees
     airspeed: float  # knots
-    altitude: float  # feet MSL
     fuel_level: float  # gallons
-    aircraft_type: str = "C172"
-    weather_conditions: str = "VFR"
-    time_of_day: str = "day"  # day, night, dusk, dawn
-    wind_direction: float = 0.0  # degrees
-    wind_speed: float = 0.0  # knots
-    visibility: float = 10.0  # statute miles
-    ceiling: Optional[float] = None  # feet AGL, None = clear
-
-
-@dataclass
-class Waypoint:
-    """A waypoint in the training scenario."""
-    name: str
-    position: Position
-    waypoint_type: str = "fix"  # fix, airport, navaid, user
-    altitude_constraint: Optional[float] = None  # feet MSL
-    speed_constraint: Optional[float] = None  # knots
-    hold_pattern: bool = False
-    notes: str = ""
-
-
-@dataclass
-class TimedEvent:
-    """A timed event during the scenario."""
-    time_offset: float  # seconds from scenario start
-    event_type: EventType
-    message: str
-    audio_file: Optional[str] = None
-    requires_acknowledgment: bool = False
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    weather: Dict[str, Any] = field(default_factory=dict)
+    aircraft_config: Dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass
@@ -88,36 +66,24 @@ class TrainingScenario:
     description: str
     scenario_type: ScenarioType
     difficulty: str  # beginner, intermediate, advanced
-    estimated_duration: int  # minutes
+    duration_minutes: int
     initial_conditions: InitialConditions
     waypoints: List[Waypoint]
     events: List[TimedEvent]
-    learning_objectives: List[str] = field(default_factory=list)
-    prerequisites: List[str] = field(default_factory=list)
+    objectives: List[str] = field(default_factory=list)
     tags: List[str] = field(default_factory=list)
     author: str = "Aviation Training Team"
     version: str = "1.0"
 
 
 @dataclass
-class ScenarioProgress:
-    """Tracks progress through a training scenario."""
+class ScenarioPlaybackState:
+    """Current state during scenario playback."""
     scenario_id: str
-    current_time: float  # seconds
+    elapsed_time: float  # seconds
     current_waypoint_index: int
     completed_events: List[int]  # indices of completed events
-    is_paused: bool = False
-    is_complete: bool = False
+    is_paused: bool
+    is_complete: bool
     score: Optional[float] = None
-    notes: List[str] = field(default_factory=list)
-
-
-@dataclass
-class ScenarioResult:
-    """Results from completing a training scenario."""
-    scenario_id: str
-    completion_time: float  # seconds
-    score: float  # 0-100
-    objectives_met: Dict[str, bool]
-    deviations: List[str]
-    instructor_feedback: str = ""
+    feedback: List[str] = field(default_factory=list)
