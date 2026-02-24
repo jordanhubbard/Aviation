@@ -18,10 +18,14 @@ export default defineConfig({
     ['list'],
   ],
   use: {
-    baseURL: process.env.BASE_URL || 'http://localhost:5173',
-    trace: 'on-first-retry',
-    screenshot: 'only-on-failure',
+    baseURL: 'http://localhost:5173',
+    headless: true,
+    viewport: { width: 1920, height: 1080 },
+    actionTimeout: 15000,
+    ignoreHTTPSErrors: true,
     video: 'retain-on-failure',
+    screenshot: 'only-on-failure',
+    trace: 'retain-on-failure',
   },
   projects: [
     {
