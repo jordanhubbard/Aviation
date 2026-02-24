@@ -1,34 +1,30 @@
-"""Sensor simulation modules for flight dynamics.
-
-This package provides simulated sensor outputs including:
-- AHRS (Attitude and Heading Reference System)
-- ADC (Air Data Computer)
-"""
+"""Sensor simulation modules for AHRS and ADC."""
 
 from .ahrs import (
     AHRSConfig,
     AHRSOutput,
     AHRSSimulator,
+    AttitudeAngles,
     CoordinateFrame,
-    EulerAngles,
-    MagneticModel,
-    SlipSkidIndicator,
+    MagneticConfig,
     body_to_ned,
     ecef_to_ned,
     ned_to_body,
     ned_to_ecef,
+    quaternion_to_euler,
+    euler_to_quaternion,
 )
 from .adc import (
     ADCConfig,
     ADCOutput,
     ADCSimulator,
-    AirspeedType,
-    AltitudeType,
-    cas_to_tas,
-    ias_to_cas,
-    ias_to_tas,
-    pressure_to_altitude,
-    altitude_to_pressure,
+    AirspeedComponents,
+    AltitudeComponents,
+    compute_cas_from_ias,
+    compute_tas_from_cas,
+    compute_mach_number,
+    compute_density_altitude,
+    compute_pressure_altitude,
 )
 
 __all__ = [
@@ -36,23 +32,24 @@ __all__ = [
     "AHRSConfig",
     "AHRSOutput",
     "AHRSSimulator",
+    "AttitudeAngles",
     "CoordinateFrame",
-    "EulerAngles",
-    "MagneticModel",
-    "SlipSkidIndicator",
+    "MagneticConfig",
     "body_to_ned",
     "ecef_to_ned",
     "ned_to_body",
     "ned_to_ecef",
+    "quaternion_to_euler",
+    "euler_to_quaternion",
     # ADC
     "ADCConfig",
     "ADCOutput",
     "ADCSimulator",
-    "AirspeedType",
-    "AltitudeType",
-    "cas_to_tas",
-    "ias_to_cas",
-    "ias_to_tas",
-    "pressure_to_altitude",
-    "altitude_to_pressure",
+    "AirspeedComponents",
+    "AltitudeComponents",
+    "compute_cas_from_ias",
+    "compute_tas_from_cas",
+    "compute_mach_number",
+    "compute_density_altitude",
+    "compute_pressure_altitude",
 ]
