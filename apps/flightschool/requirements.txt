@@ -17,7 +17,7 @@ SQLAlchemy>=2.0.16
 WTForms==3.2.1
 
 # Google Calendar Integration
-google-auth==2.47.0
+google-auth==2.48.0
 google-auth-oauthlib==1.2.4
 google-auth-httplib2==0.3.0
 google-api-python-client==2.188.0
