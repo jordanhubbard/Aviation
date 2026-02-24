@@ -19,6 +19,8 @@ export interface Alert {
   message: string;
   timestamp: Date;
   acknowledged: boolean;
+  /** Timestamp when the alert was acknowledged */
+  acknowledgedAt?: Date;
   /** Optional source system that generated the alert */
   source?: string;
   /** Optional additional details */
@@ -36,27 +38,68 @@ export interface CreateAlertOptions {
 }
 
 /**
+ * Event types emitted by the alert manager
+ */
+export type AlertEventType =
+  | 'alert_added'
+  | 'alert_acknowledged'
+  | 'alert_cleared'
+  | 'all_alerts_cleared'
+  | 'all_acknowledged';
+
+/**
+ * Event payload for alert events
+ */
+export interface AlertEvent {
+  type: AlertEventType;
+  timestamp: Date;
+  /** The alert involved (not present for clearAll events) */
+  alert?: Alert;
+  /** All current alerts after the event */
+  alerts: Alert[];
+}
+
+/**
+ * Callback type for alert event subscriptions
+ */
+export type AlertEventSubscriber = (event: AlertEvent) => void;
+
+/**
  * Alert manager interface for managing the alert stack
  */
 export interface IAlertManager {
   /** Add a new alert to the stack */
   addAlert(options: CreateAlertOptions): Alert;
   /** Acknowledge an alert by ID */
-  acknowledgeAlert(id: string): void;
+  acknowledgeAlert(id: string): boolean;
+  /** Acknowledge all unacknowledged alerts */
+  acknowledgeAllAlerts(): number;
   /** Clear (remove) an alert by ID */
-  clearAlert(id: string): void;
+  clearAlert(id: string): boolean;
   /** Clear all alerts */
-  clearAllAlerts(): void;
+  clearAllAlerts(): number;
+  /** Clear all acknowledged alerts */
+  clearAcknowledgedAlerts(): number;
   /** Get all alerts sorted by priority (highest first) */
   getAlerts(): Alert[];
+  /** Get only unacknowledged alerts */
+  getUnacknowledgedAlerts(): Alert[];
+  /** Get only acknowledged alerts */
+  getAcknowledgedAlerts(): Alert[];
   /** Get visible alerts (up to maxVisible, highest priority first) */
   getVisibleAlerts(maxVisible?: number): Alert[];
-  /** Subscribe to alert changes */
+  /** Get the count of unacknowledged alerts */
+  getUnacknowledgedCount(): number;
+  /** Check if there are any unacknowledged alerts */
+  hasUnacknowledgedAlerts(): boolean;
+  /** Subscribe to alert changes (legacy) */
   subscribe(callback: AlertSubscriber): () => void;
+  /** Subscribe to alert events with detailed event info */
+  subscribeToEvents(callback: AlertEventSubscriber): () => void;
 }
 
 /**
- * Callback type for alert subscriptions
+ * Callback type for alert subscriptions (legacy)
  */
 export type AlertSubscriber = (alerts: Alert[]) => void;
 
