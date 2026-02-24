@@ -1,0 +1,18 @@
+# Trivy Ignore File
+# https://aquasecurity.github.io/trivy/latest/docs/configuration/filtering/#by-trivyignore
+
+# Development-only vulnerabilities in build tools
+# These packages are only used during development/build and are not included in production bundles
+
+# esbuild vulnerability (GHSA-67mh-4wv8-2f99) - Development build tool only
+# This vulnerability affects the esbuild development server which is not used in production
+# The built artifacts do not include esbuild
+CVE-2024-29415
+GHSA-67mh-4wv8-2f99
+
+# Vite development server vulnerabilities - not present in production builds
+# Vite is a build tool; production deployments use pre-built static assets
+GHSA-vg6x-rcgg-rjx6
+
+# Vitest is a test framework - never deployed to production
+# Any vulnerabilities in test frameworks don't affect production security
