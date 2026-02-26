@@ -2,6 +2,7 @@ from flask import Blueprint, render_template, flash, redirect, url_for, request
 from flask_login import login_required, current_user
 from app.models import User, Aircraft, Booking, MaintenanceRecord, MaintenanceType
 from datetime import datetime, timedelta
+from app.services.educational_enhancements import get_performance_tracking_data, get_knowledge_tests_data, get_achievements_data
 from app import db
 from functools import wraps
 
