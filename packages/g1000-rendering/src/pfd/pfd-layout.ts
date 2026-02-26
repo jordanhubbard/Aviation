@@ -1,152 +1,183 @@
 /**
- * PFD Layout module
- * Implements the Primary Flight Display layout and instrument arrangement
+ * PFD Layout Engine
+ * 
+ * Manages dynamic positioning and layout of PFD elements including:
+ * - Attitude indicator
+ * - Airspeed tape
+ * - Altimeter tape
+ * - HSI (Horizontal Situation Indicator)
+ * - Alert overlays
  */
 
-import { TapeRenderer, TapeConfig } from '../primitives/tape';
-import { AttitudeSphereRenderer, AttitudeSphereConfig } from '../primitives/attitude-sphere';
-import { CompassRoseRenderer, CompassRoseConfig } from '../primitives/compass-rose';
-
-export interface PFDLayoutConfig {
-  canvas: HTMLCanvasElement;
+export interface LayoutConfig {
   width: number;
   height: number;
-  theme: string;
+  theme: 'day' | 'night' | 'high-contrast';
+  scale: number;
 }
 
-export interface FlightData {
-  altitude: number;
-  airspeed: number;
-  verticalSpeed: number;
-  heading: number;
-  pitch: number;
-  roll: number;
+export interface ElementPosition {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
 }
 
-export class PFDLayout {
-  private canvas: HTMLCanvasElement;
-  private ctx: CanvasRenderingContext2D;
-  private config: PFDLayoutConfig;
-  private flightData: FlightData;
+export interface PFDLayout {
+  canvas: ElementPosition;
+  attitudeIndicator: ElementPosition;
+  airspeedTape: ElementPosition;
+  altimeterTape: ElementPosition;
+  hsi: ElementPosition;
+  alertOverlay: ElementPosition;
+  verticalSpeedIndicator: ElementPosition;
+}
 
-  constructor(config: PFDLayoutConfig) {
-    this.canvas = config.canvas;
-    this.ctx = this.canvas.getContext('2d')!;
+/**
+ * PFDLayoutEngine
+ * Calculates optimal positioning for all PFD elements based on canvas size
+ */
+export class PFDLayoutEngine {
+  private config: LayoutConfig;
+  private layout: PFDLayout;
+
+  constructor(config: LayoutConfig) {
     this.config = config;
-    this.flightData = {
-      altitude: 5000,
-      airspeed: 120,
-      verticalSpeed: 0,
-      heading: 0,
-      pitch: 0,
-      roll: 0,
+    this.layout = this.calculateLayout();
+  }
+
+  /**
+   * Calculate layout positions for all PFD elements
+   * Standard G1000 PFD layout:
+   * - Center: Attitude indicator (primary)
+   * - Left: Airspeed tape
+   * - Right: Altimeter and VSI
+   * - Bottom: HSI (Horizontal Situation Indicator)
+   * - Top: Alerts and annunciations
+   */
+  private calculateLayout(): PFDLayout {
+    const { width, height, scale } = this.config;
+    const centerX = width / 2;
+    const centerY = height / 2;
+
+    // Attitude indicator - center of display, largest element
+    const attitudeSize = Math.min(width, height) * 0.6 * scale;
+    const attitudeX = centerX - attitudeSize / 2;
+    const attitudeY = centerY - attitudeSize / 2;
+
+    // Airspeed tape - left side
+    const tapeWidth = width * 0.12 * scale;
+    const tapeHeight = attitudeSize;
+    const airspeedX = attitudeX - tapeWidth - width * 0.02;
+    const airspeedY = attitudeY;
+
+    // Altimeter tape - right side
+    const altimeterX = attitudeX + attitudeSize + width * 0.02;
+    const altimeterY = attitudeY;
+
+    // VSI (Vertical Speed Indicator) - right side, below altimeter
+    const vsiWidth = tapeWidth;
+    const vsiHeight = height * 0.15 * scale;
+    const vsiX = altimeterX;
+    const vsiY = altimeterY + tapeHeight + height * 0.02;
+
+    // HSI - bottom center
+    const hsiSize = Math.min(width * 0.35, height * 0.25) * scale;
+    const hsiX = centerX - hsiSize / 2;
+    const hsiY = height - hsiSize - height * 0.05;
+
+    // Alert overlay - top of display
+    const alertHeight = height * 0.1 * scale;
+    const alertX = 0;
+    const alertY = 0;
+
+    return {
+      canvas: { x: 0, y: 0, width, height },
+      attitudeIndicator: {
+        x: attitudeX,
+        y: attitudeY,
+        width: attitudeSize,
+        height: attitudeSize,
+      },
+      airspeedTape: {
+        x: airspeedX,
+        y: airspeedY,
+        width: tapeWidth,
+        height: tapeHeight,
+      },
+      altimeterTape: {
+        x: altimeterX,
+        y: altimeterY,
+        width: tapeWidth,
+        height: tapeHeight,
+      },
+      verticalSpeedIndicator: {
+        x: vsiX,
+        y: vsiY,
+        width: vsiWidth,
+        height: vsiHeight,
+      },
+      hsi: {
+        x: hsiX,
+        y: hsiY,
+        width: hsiSize,
+        height: hsiSize,
+      },
+      alertOverlay: {
+        x: alertX,
+        y: alertY,
+        width: width,
+        height: alertHeight,
+      },
     };
   }
 
-  setFlightData(data: Partial<FlightData>): void {
-    this.flightData = { ...this.flightData, ...data };
+  /**
+   * Get the calculated layout
+   */
+  getLayout(): PFDLayout {
+    return this.layout;
   }
 
-  render(): void {
-    // Clear canvas
-    this.ctx.fillStyle = '#000000';
-    this.ctx.fillRect(0, 0, this.config.width, this.config.height);
-
-    // Render attitude sphere (center)
-    const attitudeConfig: AttitudeSphereConfig = {
-      x: this.config.width / 2,
-      y: this.config.height / 2,
-      radius: 150,
-      pitch: this.flightData.pitch,
-      roll: this.flightData.roll,
-    };
-    const attitudeRenderer = new AttitudeSphereRenderer(this.ctx, attitudeConfig);
-    attitudeRenderer.render();
-
-    // Render altitude tape (right side)
-    const altitudeConfig: TapeConfig = {
-      x: this.config.width - 80,
-      y: this.config.height / 2 - 150,
-      width: 60,
-      height: 300,
-      min: 0,
-      max: 10000,
-      current: this.flightData.altitude,
-      unit: 'ft',
-      majorTickInterval: 1000,
-      minorTickInterval: 100,
-    };
-    const altitudeRenderer = new TapeRenderer(this.ctx, altitudeConfig);
-    altitudeRenderer.render();
-
-    // Render airspeed tape (left side)
-    const airspeedConfig: TapeConfig = {
-      x: 20,
-      y: this.config.height / 2 - 150,
-      width: 60,
-      height: 300,
-      min: 0,
-      max: 250,
-      current: this.flightData.airspeed,
-      unit: 'kt',
-      majorTickInterval: 20,
-      minorTickInterval: 5,
-    };
-    const airspeedRenderer = new TapeRenderer(this.ctx, airspeedConfig);
-    airspeedRenderer.render();
-
-    // Render compass rose (bottom)
-    const compassConfig: CompassRoseConfig = {
-      x: this.config.width / 2,
-      y: this.config.height - 100,
-      radius: 80,
-      heading: this.flightData.heading,
-    };
-    const compassRenderer = new CompassRoseRenderer(this.ctx, compassConfig);
-    compassRenderer.render();
-
-    // Render vertical speed indicator (bottom right)
-    this.renderVerticalSpeedIndicator();
+  /**
+   * Get position for a specific element
+   */
+  getElementPosition(element: keyof Omit<PFDLayout, 'canvas'>): ElementPosition {
+    return this.layout[element];
   }
 
-  private renderVerticalSpeedIndicator(): void {
-    const x = this.config.width - 80;
-    const y = this.config.height - 100;
-    const size = 60;
-
-    // Draw background
-    this.ctx.fillStyle = '#000000';
-    this.ctx.fillRect(x - size / 2, y - size / 2, size, size);
-    this.ctx.strokeStyle = '#FFFFFF';
-    this.ctx.lineWidth = 2;
-    this.ctx.strokeRect(x - size / 2, y - size / 2, size, size);
-
-    // Draw scale
-    this.ctx.strokeStyle = '#FFFFFF';
-    this.ctx.lineWidth = 1;
-    for (let i = -5; i <= 5; i++) {
-      const angle = (i / 5) * Math.PI - Math.PI / 2;
-      const x1 = x + Math.cos(angle) * (size / 2 - 5);
-      const y1 = y + Math.sin(angle) * (size / 2 - 5);
-      const x2 = x + Math.cos(angle) * (size / 2 - 10);
-      const y2 = y + Math.sin(angle) * (size / 2 - 10);
-
-      this.ctx.beginPath();
-      this.ctx.moveTo(x1, y1);
-      this.ctx.lineTo(x2, y2);
-      this.ctx.stroke();
-    }
-
-    // Draw needle
-    const needleAngle = (this.flightData.verticalSpeed / 5000) * Math.PI - Math.PI / 2;
-    const needleX = x + Math.cos(needleAngle) * (size / 2 - 15);
-    const needleY = y + Math.sin(needleAngle) * (size / 2 - 15);
-
-    this.ctx.strokeStyle = '#00FF00';
-    this.ctx.lineWidth = 2;
-    this.ctx.beginPath();
-    this.ctx.moveTo(x, y);
-    this.ctx.lineTo(needleX, needleY);
-    this.ctx.stroke();
+  /**
+   * Update layout when canvas is resized
+   */
+  updateCanvasSize(width: number, height: number): void {
+    this.config.width = width;
+    this.config.height = height;
+    this.layout = this.calculateLayout();
   }
+
+  /**
+   * Update theme and recalculate if needed
+   */
+  setTheme(theme: 'day' | 'night' | 'high-contrast'): void {
+    this.config.theme = theme;
+  }
+
+  /**
+   * Get current configuration
+   */
+  getConfig(): LayoutConfig {
+    return { ...this.config };
+  }
+}
+
+/**
+ * Helper function to create a layout engine with default configuration
+ */
+export function createPFDLayout(
+  width: number,
+  height: number,
+  theme: 'day' | 'night' | 'high-contrast' = 'day',
+  scale: number = 1
+): PFDLayoutEngine {
+  return new PFDLayoutEngine({ width, height, theme, scale });
 }
