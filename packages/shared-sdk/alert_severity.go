@@ -23,6 +23,9 @@ const (
     // InformationalUpdate represents an informational update alert.
     InformationalUpdate
     // EngineAlert represents an engine-related alert.
+    FuelAlert
+    OilAlert
+    ElectricalAlert
     EngineAlert
     // FuelAlert represents a fuel-related alert.
     FuelAlert
@@ -36,6 +39,15 @@ const (
 func GetSeverity(alertType AlertType) AlertSeverity {
     switch alertType {
     case SystemFailure:
+    return Warning
+case EngineAlert:
+    return Caution
+case FuelAlert:
+    return Caution
+case OilAlert:
+    return Caution
+case ElectricalAlert:
+    return Caution
         return Warning
     case PerformanceDegradation:
         return Caution
