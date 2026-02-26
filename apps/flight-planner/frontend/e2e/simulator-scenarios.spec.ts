@@ -2,6 +2,8 @@ import { expect, test } from '@playwright/test';
 import { flightPlans, navData, demoScenarios, mockApis } from './fixtures';
 
 // E2E test for simulator startup flow
+// Define expected UI states for startup, flight plan, and approach flows
+// Cover PFD/MFD interactions
 // This test will cover the startup sequence of the simulator
 
 test('simulator startup flow', async ({ page }) => {
