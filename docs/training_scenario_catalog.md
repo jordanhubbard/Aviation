@@ -20,5 +20,15 @@ This document outlines the catalog of pre-recorded training scenarios for the av
 - **Starting Conditions**: Overcast weather, nighttime, IFR-equipped aircraft.
 - **Expected Outputs**: Successful completion of a flight plan using IFR.
 
+### Scenario 4: Night Flying
+- **Objective**: Train pilots on night flying techniques.
+- **Starting Conditions**: Nighttime, clear weather, standard aircraft configuration.
+- **Expected Outputs**: Safe and efficient navigation during night flights.
+
+### Scenario 5: Cross-Country Navigation
+- **Objective**: Train pilots on cross-country navigation.
+- **Starting Conditions**: VFR conditions, daytime, standard aircraft configuration.
+- **Expected Outputs**: Accurate and safe navigation between distant waypoints.
+
 ## Conclusion
 This catalog serves as a foundational guide for training pilots in various scenarios. Each scenario is crafted to enhance specific skills and ensure readiness for real-world situations.

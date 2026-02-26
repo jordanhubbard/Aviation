@@ -10,7 +10,7 @@ class Alert:
         self.timestamp = timestamp or datetime.now()
 
     def get_priority(self) -> int:
-        priority_map = {'Master Warning': 3, 'Master Caution': 2, 'Advisory': 1}
+        priority_map = {'high': 3, 'medium': 2, 'low': 1}
         return priority_map.get(self.severity, 0)
 
 class AlertManager:
