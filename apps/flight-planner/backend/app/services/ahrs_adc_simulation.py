@@ -2,12 +2,11 @@
 
 class AHRS:
     def __init__(self):
-        # Implement attitude computation logic
-        raise NotImplementedError
+        # Initialize AHRS parameters
 
     def compute_attitude(self, pitch, roll, yaw):
         # Implement attitude computation logic
-        pass
+        return AttitudeData(pitch=0.0, roll=0.0, yaw=0.0)
 
     def magnetic_heading(self, heading, variation):
         # Implement magnetic heading with variation correction

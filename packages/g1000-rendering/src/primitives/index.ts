@@ -1,21 +1,22 @@
-// Primitives module for G1000 Rendering SDK
+// Primitives module
+// This module will contain implementations for tapes, attitude sphere, compass rose, arcs, and text rendering.
 
-export const drawTape = () => {
-  console.log('Drawing tape');
-};
+export function renderTape() {
+  // Implementation for rendering a tape
+}
 
-export const drawAttitudeSphere = () => {
-  console.log('Drawing attitude sphere');
-};
+export function renderAttitudeSphere() {
+  // Implementation for rendering an attitude sphere
+}
 
-export const drawCompassRose = () => {
-  console.log('Drawing compass rose');
-};
+export function renderCompassRose() {
+  // Implementation for rendering a compass rose
+}
 
-export const drawArc = () => {
-  console.log('Drawing arc');
-};
+export function renderArc() {
+  // Implementation for rendering an arc
+}
 
-export const renderText = () => {
-  console.log('Rendering text');
-};
+export function renderText() {
+  // Implementation for rendering text
+}

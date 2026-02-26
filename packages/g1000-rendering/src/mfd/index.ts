@@ -1,17 +1,18 @@
-// MFD module for G1000 Rendering SDK
+// MFD module
+// This module will contain implementations for map, terrain, weather overlays, and engine gauges.
 
-export const renderMFDLayout = () => {
-  console.log('Rendering MFD layout');
-};
+export function renderMap() {
+  // Implementation for rendering a map
+}
 
-export const updateMap = () => {
-  console.log('Updating MFD map');
-};
+export function renderTerrain() {
+  // Implementation for rendering terrain
+}
 
-export const overlayWeather = () => {
-  console.log('Overlaying weather on MFD');
-};
+export function renderWeatherOverlay() {
+  // Implementation for rendering weather overlays
+}
 
-export const displayEngineGauges = () => {
-  console.log('Displaying engine gauges on MFD');
-};
+export function renderEngineGauge() {
+  // Implementation for rendering engine gauges
+}

@@ -437,9 +437,12 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## ⚖️ Legal Considerations
 
+**IMPORTANT:** This software is provided for **educational purposes only** and is **NOT approved for flight training credit**.
+
 - **Educational Use Only**: This software is intended for educational purposes and is not approved for flight training credit.
-- **Data Attribution**: This project uses open data sources such as OurAirports and OpenAIP. Proper attribution is provided where applicable.
+- **Data Attribution**: This project uses open data sources such as OurAirports, OpenAIP, and OpenStreetMap. Proper attribution is provided where applicable.
 - **Disclaimer**: The information provided by this software is not intended for use in real-world flight operations.
+- **Full Legal Details**: See LEGAL.md for comprehensive legal information, disclaimers, and data attribution.
 
 ## 🔗 Links
 

@@ -5,58 +5,82 @@ This document outlines the training scenarios and exercises designed to enhance 
 
 ## Scenarios
 
-### Scenario 1: Basic Takeoff and Landing
+### Scenario 1: Pattern Work
 
 #### Objectives:
-- Understand pre-flight checks.
-- Perform a safe takeoff procedure.
-- Execute a stable landing.
+- Practice takeoff and climb to pattern altitude (1000 AGL).
+- Execute standard traffic patterns (left/right).
+- Perform approach, landing, and go-around options.
 
 #### Steps:
-1. Conduct pre-flight checks.
-2. Start the engine and taxi to the runway.
-3. Perform a takeoff procedure.
-4. Navigate to the practice area.
-5. Execute a stable landing.
+1. Takeoff and climb to 1000 AGL.
+2. Enter and fly a standard traffic pattern.
+3. Execute approach and landing.
+4. Optionally perform a go-around.
 
 #### Expected Outcomes:
-- Learners will be able to perform a safe takeoff and landing in the simulator.
-- Learners will demonstrate understanding of pre-flight procedures.
+- Learners will be able to perform standard traffic patterns.
+- Learners will demonstrate proficiency in approach and landing.
 
 #### Demo Scenario Data:
 - [Link to Demo Scenario Data](#)
 
-### Scenario 2: Navigation and Waypoint Planning
+### Scenario 2: GPS Approach
 
 #### Objectives:
-- Learn how to use navigation tools.
-- Plan and follow waypoints.
+- Establish on final course.
+- Descend on glidepath.
+- Perform decision altitude (DA) callout.
+- Execute land or missed approach.
 
 #### Steps:
-1. Familiarize yourself with the navigation interface.
-2. Plan a route using waypoints.
-3. Follow the planned route in the simulator.
+1. Establish on final course.
+2. Descend on glidepath.
+3. Perform DA callout.
+4. Land or execute missed approach.
 
 #### Expected Outcomes:
-- Learners will be proficient in using navigation tools.
-- Learners will be able to plan and follow waypoints accurately.
+- Learners will be proficient in GPS approach procedures.
+- Learners will demonstrate decision-making at DA.
 
 #### Demo Scenario Data:
 - [Link to Demo Scenario Data](#)
 
-### Scenario 3: Emergency Procedures
+### Scenario 3: Cross-Country
 
 #### Objectives:
-- Understand emergency procedures.
-- Practice responding to emergency situations.
+- Depart origin and navigate en-route.
+- Handle weather deviations.
+- Arrive at destination.
 
 #### Steps:
-1. Identify potential emergency scenarios.
-2. Practice responding to each scenario in the simulator.
+1. Depart from origin.
+2. Navigate through multiple waypoints.
+3. Handle any weather deviations.
+4. Arrive at destination.
 
 #### Expected Outcomes:
-- Learners will be prepared to handle emergency situations.
-- Learners will demonstrate quick and effective responses.
+- Learners will be able to plan and execute cross-country flights.
+- Learners will demonstrate adaptability to weather changes.
+
+#### Demo Scenario Data:
+- [Link to Demo Scenario Data](#)
+
+### Scenario 4: Emergency
+
+#### Objectives:
+- Respond to engine and electrical failures.
+- Execute lost procedures and diversions.
+
+#### Steps:
+1. Simulate engine failure and respond.
+2. Simulate electrical failure and respond.
+3. Execute lost procedures.
+4. Perform a diversion to an alternate airport.
+
+#### Expected Outcomes:
+- Learners will be prepared for emergency situations.
+- Learners will demonstrate effective emergency responses.
 
 #### Demo Scenario Data:
 - [Link to Demo Scenario Data](#)

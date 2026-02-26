@@ -91,3 +91,19 @@ This document outlines the dependencies across the SDK, UI, and services within 
 - **Version Control:** Use semantic versioning for shared packages to manage dependencies effectively.
 - **Communication:** Maintain regular communication channels between teams to address integration issues promptly.
 - **Testing:** Implement comprehensive testing strategies to ensure the stability of integrated systems.
+
+## New Dependencies
+- **G1000 Backend**
+  - **Dependencies:** `@aviation/shared-sdk`
+  - **Critical Integration Points:** Background services, AI
+
+- **G1000 Simulator**
+  - **Dependencies:** `@aviation/shared-sdk`, `@aviation/ui-framework`
+  - **Critical Integration Points:** Background services, AI, UI components
+
+- **Meta App**
+  - **Dependencies:** `@aviation/shared-sdk`, `@aviation/ui-framework`
+  - **Critical Integration Points:** Background services, AI, UI components
+
+## Conclusion
+This document serves as a comprehensive guide to understanding the dependencies across teams and applications within the Aviation monorepo. It is crucial to keep this document updated as new dependencies arise or existing ones change.

@@ -63,6 +63,40 @@ The Multi-Function Display (MFD) offers additional flight information and contro
 - **Communication Page**: Facilitates radio communications with air traffic control and other aircraft.
 - **Weather Page**: Displays real-time weather data and forecasts.
 
+## Flight Planning
+
+### Creating a Flight Plan
+
+1. **Open Flight Planning**: Access the flight planning tool from the main menu.
+2. **Set Departure**: Select your departure airport.
+3. **Set Destination**: Select your destination airport.
+4. **Add Waypoints**: Click to add waypoints along your route.
+5. **Review Route**: Check the planned route on the map.
+6. **Save Plan**: Save your flight plan for later use.
+
+### Flight Plan Details
+
+- **Distance**: Total distance of the flight plan.
+- **Estimated Time**: Calculated based on aircraft speed.
+- **Altitude**: Planned cruising altitude.
+- **Fuel Requirements**: Estimated fuel needed for the flight.
+
+## Autopilot Usage
+
+### Engaging Autopilot
+
+1. **Reach Cruising Altitude**: Climb to desired altitude.
+2. **Engage Autopilot**: Press the autopilot button or use keyboard shortcut.
+3. **Set Mode**: Select autopilot mode (altitude hold, heading hold, navigation).
+4. **Monitor**: Watch for any deviations and be ready to take manual control.
+
+### Autopilot Modes
+
+- **Altitude Hold**: Maintains current altitude automatically.
+- **Heading Hold**: Maintains current heading automatically.
+- **Navigation**: Follows programmed flight plan automatically.
+- **Approach**: Assists with instrument approaches.
+
 ## Training Scenarios
 
 Refer to the [Training Scenarios](TRAINING_SCENARIOS.md) document for detailed scenarios and exercises to enhance your skills in using the aviation applications.

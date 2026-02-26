@@ -18,7 +18,7 @@ class PIDController:
 
 class PitchController(PIDController):
     def __init__(self):
-        super().__init__(kp=1.0, ki=0.1, kd=0.05)
+        super().__init__(kp=1.2, ki=0.15, kd=0.07)
 
 class RollController(PIDController):
     def __init__(self):

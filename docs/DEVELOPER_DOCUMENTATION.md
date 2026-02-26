@@ -46,3 +46,17 @@ Developers can create custom displays using the UI framework and SDK components.
 
 ### Extending Functionality
 Plugins can extend existing functionalities by integrating with backend services and utilizing shared SDKs.
+
+## 5. Additional Resources
+
+### Testing Strategy
+Refer to the `TESTING_STRATEGY.md` for comprehensive testing guidelines and best practices.
+
+### Security and Compliance
+See `SECURITY.md` and `SECURITY_COMPLIANCE.md` for security protocols and compliance requirements.
+
+### Contribution Guidelines
+Check `CONTRIBUTING.md` for instructions on how to contribute to the project.
+
+### Getting Started
+New developers should start with `GETTING_STARTED.md` to set up their development environment and understand the project basics.

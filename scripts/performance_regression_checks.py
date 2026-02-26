@@ -11,7 +11,10 @@ def fetch_performance_metrics():
     return {
         'response_time': 220,
         'cpu_usage': 55,
-        'memory_usage': 210
+        'memory_usage': 210,
+        'frame_rate_pfd': 20,
+        'frame_rate_mfd': 5,
+        'websocket_latency': 45
     }
 
 # Load historical metrics

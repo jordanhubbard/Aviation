@@ -100,6 +100,16 @@ function App() {
             secondary: '#ff0000',
           },
         }),
+        ...(themeMode === 'day' && {
+          background: {
+            default: '#ffffff',
+            paper: '#f8fafc',
+          },
+          text: {
+            primary: '#1e293b',
+            secondary: '#475569',
+          },
+        }),
       },
     }),
   [themeMode]);

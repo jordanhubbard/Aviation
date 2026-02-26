@@ -1,9 +1,10 @@
-// PFD module for G1000 Rendering SDK
+// PFD module
+// This module will contain implementations for PFD layout and instruments.
 
-export const renderPFDLayout = () => {
-  console.log('Rendering PFD layout');
-};
+export function renderPFDLayout() {
+  // Implementation for rendering the PFD layout
+}
 
-export const updateInstruments = () => {
-  console.log('Updating PFD instruments');
-};
+export function renderInstrument() {
+  // Implementation for rendering an instrument
+}

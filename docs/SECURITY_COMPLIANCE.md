@@ -75,6 +75,10 @@ Before submitting code:
 - [ ] Dependencies are up to date
 - [ ] Security tests included
 - [ ] Documentation updated
+- [ ] Rate limiting implemented
+- [ ] API key management verified
+- [ ] HTTPS enforced in production
+- [ ] Regular security audits scheduled
 
 ## Contact
 

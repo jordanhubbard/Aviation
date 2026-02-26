@@ -1,0 +1,51 @@
+openapi: 3.0.0
+info:
+  title: G1000 Simulator API
+  version: 1.0.0
+paths:
+  /flightplans:
+    get:
+      summary: Retrieve all flight plans
+      responses:
+        '200':
+          description: A list of flight plans
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/FlightPlan'
+  /telemetry:
+    post:
+      summary: Submit telemetry data
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TelemetryData'
+      responses:
+        '204':
+          description: Telemetry data accepted
+components:
+  schemas:
+    FlightPlan:
+      type: object
+      properties:
+        id:
+          type: string
+        departure:
+          type: string
+        destination:
+          type: string
+        aircraft:
+          type: string
+    TelemetryData:
+      type: object
+      properties:
+        altitude:
+          type: number
+        speed:
+          type: number
+        heading:
+          type: number

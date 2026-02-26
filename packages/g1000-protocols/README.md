@@ -1,6 +1,6 @@
 # G1000 Protocols SDK
 
-This package defines communication protocols and data formats for simulator services.
+This package defines the communication protocols and data formats for simulator services.
 
 ## Modules
 
@@ -10,29 +10,14 @@ This package defines communication protocols and data formats for simulator serv
 
 ## Getting Started
 
-To set up the G1000 Protocols SDK, follow these steps:
+This package is intended to be used as part of the G1000 simulator suite. It provides the necessary protocols and data formats to ensure seamless communication between different components of the simulator.
 
-1. Clone the repository:
-   ```bash
-git clone https://github.com/your-repo/aviation.git
-   ```
+## Directory Structure
 
-2. Navigate to the `g1000-protocols` package:
-   ```bash
-cd aviation/packages/g1000-protocols
-   ```
+- `websocket/`: Contains definitions for WebSocket message types, serialization logic, and client implementations.
+- `api/`: Defines REST API types and includes the OpenAPI schema for the simulator's API.
+- `formats/`: Handles various data formats including flight plan import/export, telemetry data, and configuration formats.
 
-3. Install dependencies (if any):
-   ```bash
-npm install
-   ```
+## Usage
 
-4. Explore the modules and start using the SDK.
-
-## Contributing
-
-Please refer to the [CONTRIBUTING.md](../../CONTRIBUTING.md) for details on how to contribute to this project.
-
-## License
-
-This project is licensed under the MIT License - see the [LICENSE](../../LICENSE) file for details.
+To use this package, import the necessary modules into your simulator application and follow the provided documentation for each module to integrate the protocols and data formats into your system.

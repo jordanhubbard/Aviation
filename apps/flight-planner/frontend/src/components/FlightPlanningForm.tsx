@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react'
+import React, { useMemo, useState } from 'react'; import ImportExportUI from './ImportExportUI';
 import {
   Autocomplete,
   Checkbox,
@@ -137,7 +137,8 @@ const FlightPlanningForm: React.FC<Props> = ({ isLoading, onSubmit }) => {
   }
 
   return (
-    <Button variant="outlined" onClick={handleOpen} disabled={isLoading}>Load Flight Plan</Button>
+    <ImportExportUI />
+<Button variant="outlined" onClick={handleOpen} disabled={isLoading}>Load Flight Plan</Button>
 
       <Dialog open={open} onClose={handleClose}>
         <DialogTitle>Load Flight Plan</DialogTitle>

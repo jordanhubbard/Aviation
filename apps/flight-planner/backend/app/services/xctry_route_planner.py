@@ -160,8 +160,11 @@ def plan_direct_route(
 
 
 def skip_waypoint(route: List[Tuple[float, float]], waypoint: str) -> List[Tuple[float, float]]:
-    # Logic to skip a waypoint
-    pass
+    try:
+        index = route.index(waypoint)
+        return route[:index] + route[index+1:]
+    except ValueError:
+        return route
 
 def insert_waypoint(route: List[Tuple[float, float]], waypoint: str, position: str) -> List[Tuple[float, float]]:
     # Logic to insert a waypoint
