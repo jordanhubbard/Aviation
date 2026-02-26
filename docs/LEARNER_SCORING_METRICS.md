@@ -1,70 +1,42 @@
-# Learner Scoring Metrics
+# Learner Scoring Metrics Design
 
 ## Overview
-This document outlines the scoring metrics designed to evaluate learner performance in aviation training scenarios. The metrics focus on accuracy, timing, and safety, and are mapped to specific scenario events.
+This document outlines the design of scoring metrics for evaluating learner performance in aviation training scenarios.
 
-## Scoring Metrics
+## Metrics
 
-### 1. Accuracy
-- **Definition**: Measures the precision of actions taken by the learner.
-- **Examples**: Correct altitude maintenance, precise navigation, accurate landing.
-- **Scoring**: 
-  - 5 points: Perfect accuracy
-  - 4 points: Minor deviations
-  - 3 points: Moderate deviations
-  - 2 points: Significant deviations
-  - 1 point: Major errors
+### Accuracy
+- **Definition**: Measures how closely the learner's actions match the expected outcomes.
+- **Scenarios**: Applied to tasks like maintaining altitude, heading, and speed.
+- **Scoring Rubric**: 
+  - 90-100%: Excellent
+  - 75-89%: Good
+  - 50-74%: Needs Improvement
+  - Below 50%: Poor
 
-### 2. Timing
-- **Definition**: Evaluates the timeliness of actions and decision-making.
-- **Examples**: Timely execution of approach procedures, prompt response to ATC instructions.
-- **Scoring**:
-  - 5 points: Perfect timing
-  - 4 points: Slight delays
-  - 3 points: Moderate delays
-  - 2 points: Significant delays
-  - 1 point: Major delays
+### Timing
+- **Definition**: Evaluates the timeliness of the learner's actions.
+- **Scenarios**: Critical for tasks like decision-making at DA (Decision Altitude) or executing go-arounds.
+- **Scoring Rubric**:
+  - On Time: Excellent
+  - Slight Delay: Good
+  - Noticeable Delay: Needs Improvement
+  - Significant Delay: Poor
 
-### 3. Safety
-- **Definition**: Assesses adherence to safety protocols and risk management.
-- **Examples**: Proper checklist usage, safe handling of emergencies.
-- **Scoring**:
-  - 5 points: Exemplary safety
-  - 4 points: Minor safety lapses
-  - 3 points: Moderate safety lapses
-  - 2 points: Significant safety lapses
-  - 1 point: Major safety violations
+### Safety
+- **Definition**: Assesses the safety of the learner's actions and decisions.
+- **Scenarios**: Includes emergency procedures and adherence to safety protocols.
+- **Scoring Rubric**:
+  - Safe: Excellent
+  - Minor Safety Concerns: Good
+  - Moderate Safety Concerns: Needs Improvement
+  - Major Safety Concerns: Poor
 
 ## Mapping Metrics to Scenario Events
-
-### Scenario 1: Pattern Work
-- **Accuracy**: Maintaining pattern altitude and heading.
-- **Timing**: Timely execution of pattern turns and landings.
-- **Safety**: Adherence to traffic pattern rules.
-
-### Scenario 2: GPS Approach
-- **Accuracy**: Correct course and glidepath adherence.
-- **Timing**: Timely DA callouts and decisions.
-- **Safety**: Safe execution of land or missed approach.
-
-### Scenario 3: Cross-Country
-- **Accuracy**: Precise waypoint navigation.
-- **Timing**: Timely handling of weather deviations.
-- **Safety**: Safe arrival at destination.
-
-### Scenario 4: Emergency
-- **Accuracy**: Correct emergency procedure execution.
-- **Timing**: Prompt response to failures.
-- **Safety**: Effective emergency management.
-
-## Scoring Rubric
-- **Total Score**: Sum of all metric scores for each scenario.
-- **Performance Levels**:
-  - 90-100: Excellent
-  - 75-89: Good
-  - 60-74: Satisfactory
-  - 45-59: Needs Improvement
-  - Below 45: Unsatisfactory
+- **Pattern Work**: Accuracy in maintaining pattern altitude, timing in executing go-arounds, safety in approach and landing.
+- **GPS Approach**: Accuracy in following glidepath, timing in DA callout, safety in landing or missed approach.
+- **Cross-Country**: Accuracy in navigation, timing in handling weather deviations, safety in arrival procedures.
+- **Emergency**: Accuracy in responding to failures, timing in executing lost procedures, safety in diversions.
 
 ## Conclusion
-The learner scoring metrics provide a comprehensive framework for evaluating performance across various aviation training scenarios, ensuring a focus on accuracy, timing, and safety.
+These metrics provide a comprehensive framework for evaluating learner performance, ensuring a focus on accuracy, timing, and safety across various training scenarios.
