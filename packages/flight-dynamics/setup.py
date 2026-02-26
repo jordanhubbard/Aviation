@@ -1,11 +1,19 @@
-from setuptools import find_packages, setup
+from setuptools import setup, find_packages
 
 setup(
-    name="aviation-flight-dynamics",
-    version="0.1.0",
-    description="Physics-based flight simulation library for aviation applications",
+    name='aviation-flight-dynamics',
+    version='0.1.0',
+    description='Flight physics simulation engine for aviation applications',
+    author='Aviation Team',
     packages=find_packages(),
-    package_data={"aviation_flight_dynamics": ["aircraft/models/*.yaml"]},
-    include_package_data=True,
-    python_requires=">=3.11",
+    python_requires='>=3.11',
+    install_requires=[
+        'numpy>=1.24.0',
+    ],
+    extras_require={
+        'dev': [
+            'pytest>=7.0',
+            'pytest-cov>=4.0',
+        ],
+    },
 )

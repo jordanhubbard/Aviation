@@ -1,1 +1,1 @@
-# Initial setup for g1000-simulator backend
+# G1000 Simulator App
