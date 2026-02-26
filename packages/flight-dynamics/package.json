@@ -1,0 +1,18 @@
+{
+  "name": "@aviation/flight-dynamics",
+  "version": "1.0.0",
+  "description": "Flight dynamics API layer for aviation applications",
+  "main": "api.py",
+  "scripts": {
+    "start": "uvicorn api:app --reload",
+    "test": "pytest"
+  },
+  "dependencies": {
+    "fastapi": "^0.104.0",
+    "uvicorn": "^0.24.0",
+    "pydantic": "^2.0.0"
+  },
+  "devDependencies": {
+    "pytest": "^7.4.0"
+  }
+}
