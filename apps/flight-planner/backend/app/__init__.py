@@ -10,6 +10,7 @@ from .services.ahrs_adc_simulation import AHRS, ADC
 from .services.gps_simulation import GPSSimulationService, GPSState
 from .services.telemetry_recording import TelemetryRecordingService, TelemetrySnapshot
 from .services.approaches import ApproachProcedure, ApproachType, ApproachCategory, Waypoint, MissedApproachAction
+from .routes.alerts import router as alerts_router
 from fastapi import WebSocket, WebSocketDisconnect
 
 
@@ -73,6 +74,7 @@ def create_app(settings):
 
     app.include_router(flight_plan_router, prefix="/flight-plans", tags=["flight-plans"])
     app.include_router(flight_recording_router, prefix="/flight-recordings", tags=["flight-recordings"])
+    app.include_router(alerts_router)
 
     # Initialize AlertManager
     app.alert_manager = AlertManager()

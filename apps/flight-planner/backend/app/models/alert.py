@@ -24,6 +24,8 @@ class Alert(BaseModel):
     source: str = Field(..., description="Source of the alert (e.g., 'flight_plan_service')")
     cleared: bool = Field(default=False, description="Whether alert has been cleared")
     cleared_at: Optional[datetime] = Field(default=None, description="When alert was cleared")
+    acknowledged: bool = Field(default=False, description="Whether alert has been acknowledged")
+    acknowledged_at: Optional[datetime] = Field(default=None, description="When alert was acknowledged")
     metadata: dict = Field(default_factory=dict, description="Additional alert metadata")
     
     class Config:
@@ -38,6 +40,8 @@ class Alert(BaseModel):
                 "source": "flight_plan_service",
                 "cleared": False,
                 "cleared_at": None,
+                "acknowledged": False,
+                "acknowledged_at": None,
                 "metadata": {"flight_id": "fp_123"}
             }
         }
@@ -46,3 +50,8 @@ class Alert(BaseModel):
         """Mark alert as cleared."""
         self.cleared = True
         self.cleared_at = datetime.utcnow()
+    
+    def acknowledge(self) -> None:
+        """Mark alert as acknowledged."""
+        self.acknowledged = True
+        self.acknowledged_at = datetime.utcnow()

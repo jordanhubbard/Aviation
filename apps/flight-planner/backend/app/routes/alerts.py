@@ -34,6 +34,12 @@ def get_active_alerts(severity: Optional[AlertSeverity] = Query(None)):
     return alert_manager.get_active_alerts(severity_filter=severity)
 
 
+@router.get("/unacknowledged", response_model=List[Alert])
+def get_unacknowledged_alerts(severity: Optional[AlertSeverity] = Query(None)):
+    """Get unacknowledged active alerts, optionally filtered by severity."""
+    return alert_manager.get_unacknowledged_alerts(severity_filter=severity)
+
+
 @router.get("/cleared", response_model=List[Alert])
 def get_cleared_alerts(limit: Optional[int] = Query(None)):
     """Get cleared alerts."""
@@ -47,6 +53,22 @@ def get_alert(alert_id: str):
     if not alert:
         raise HTTPException(status_code=404, detail="Alert not found")
     return alert
+
+
+@router.post("/{alert_id}/acknowledge", response_model=Alert)
+def acknowledge_alert(alert_id: str):
+    """Acknowledge an active alert."""
+    alert = alert_manager.acknowledge_alert(alert_id)
+    if not alert:
+        raise HTTPException(status_code=404, detail="Alert not found")
+    return alert
+
+
+@router.post("/acknowledge-all")
+def acknowledge_all_alerts():
+    """Acknowledge all active alerts."""
+    count = alert_manager.acknowledge_all_alerts()
+    return {"acknowledged_count": count}
 
 
 @router.post("/{alert_id}/clear", response_model=Alert)
@@ -69,4 +91,11 @@ def clear_all_alerts():
 def get_alert_count(severity: Optional[AlertSeverity] = Query(None)):
     """Get count of active alerts."""
     count = alert_manager.get_alert_count(severity_filter=severity)
+    return {"count": count}
+
+
+@router.get("/count/unacknowledged")
+def get_unacknowledged_count(severity: Optional[AlertSeverity] = Query(None)):
+    """Get count of unacknowledged active alerts."""
+    count = alert_manager.get_unacknowledged_count(severity_filter=severity)
     return {"count": count}

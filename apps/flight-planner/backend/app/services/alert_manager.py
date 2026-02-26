@@ -55,6 +55,37 @@ class AlertManager:
         self._persist()
         return alert
     
+    def acknowledge_alert(self, alert_id: str) -> Optional[Alert]:
+        """Acknowledge an active alert.
+        
+        Args:
+            alert_id: ID of alert to acknowledge
+            
+        Returns:
+            The acknowledged Alert object, or None if not found
+        """
+        if alert_id not in self.active_alerts:
+            return None
+        
+        alert = self.active_alerts[alert_id]
+        alert.acknowledge()
+        self._persist()
+        return alert
+    
+    def acknowledge_all_alerts(self) -> int:
+        """Acknowledge all active alerts.
+        
+        Returns:
+            Number of alerts acknowledged
+        """
+        count = 0
+        for alert in self.active_alerts.values():
+            if not alert.acknowledged:
+                alert.acknowledge()
+                count += 1
+        self._persist()
+        return count
+    
     def clear_alert(self, alert_id: str) -> Optional[Alert]:
         """Clear an active alert.
         
@@ -83,6 +114,33 @@ class AlertManager:
             List of active alerts sorted by severity (critical first) then by timestamp
         """
         alerts = list(self.active_alerts.values())
+        
+        if severity_filter:
+            alerts = [a for a in alerts if a.severity == severity_filter]
+        
+        # Sort by severity (critical > warning > info > debug) then by timestamp (newest first)
+        severity_order = {
+            AlertSeverity.CRITICAL: 0,
+            AlertSeverity.WARNING: 1,
+            AlertSeverity.INFO: 2,
+            AlertSeverity.DEBUG: 3
+        }
+        
+        alerts.sort(
+            key=lambda a: (severity_order[a.severity], -a.timestamp.timestamp())
+        )
+        return alerts
+    
+    def get_unacknowledged_alerts(self, severity_filter: Optional[AlertSeverity] = None) -> List[Alert]:
+        """Get unacknowledged active alerts, optionally filtered by severity.
+        
+        Args:
+            severity_filter: Optional severity level to filter by
+            
+        Returns:
+            List of unacknowledged active alerts sorted by severity then timestamp
+        """
+        alerts = [a for a in self.active_alerts.values() if not a.acknowledged]
         
         if severity_filter:
             alerts = [a for a in alerts if a.severity == severity_filter]
@@ -148,6 +206,17 @@ class AlertManager:
             Count of active alerts
         """
         return len(self.get_active_alerts(severity_filter))
+    
+    def get_unacknowledged_count(self, severity_filter: Optional[AlertSeverity] = None) -> int:
+        """Get count of unacknowledged active alerts.
+        
+        Args:
+            severity_filter: Optional severity level to filter by
+            
+        Returns:
+            Count of unacknowledged active alerts
+        """
+        return len(self.get_unacknowledged_alerts(severity_filter))
     
     def _persist(self) -> None:
         """Persist alerts to disk if persistence path is configured."""
