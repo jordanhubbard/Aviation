@@ -112,7 +112,7 @@ const UploadPage: React.FC = () => {
           ForeFlight Logbook Dashboard
         </Typography>
         
-        <Typography variant="h6" color="text.secondary" sx={{ mb: 4 }}>
+        <Typography variant="h6" color="text.secondary" sx={{ mb: 4, color: 'text.primary' }}>
           Upload your ForeFlight logbook CSV to view your flight statistics and dashboard
         </Typography>
 

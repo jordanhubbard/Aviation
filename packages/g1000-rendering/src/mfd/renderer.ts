@@ -24,9 +24,9 @@ export class MFDRenderer {
   render(state: DisplayState, options?: RenderOptions): void {
     this.clearCanvas();
     this.drawBackground();
-    this.drawMapArea(state);
-    this.drawWeatherInfo(state);
+    this.drawMapView(state);
     this.drawSystemStatus(state);
+    this.drawWeatherInfo(state);
   }
 
   /**
@@ -38,7 +38,7 @@ export class MFDRenderer {
   }
 
   /**
-   * Draw the background
+   * Draw the background grid and borders
    */
   private drawBackground(): void {
     this.ctx.strokeStyle = this.theme.foreground;
@@ -47,13 +47,13 @@ export class MFDRenderer {
   }
 
   /**
-   * Draw the map area
+   * Draw the map view with aircraft position
    */
-  private drawMapArea(state: DisplayState): void {
-    const mapX = 20;
-    const mapY = 20;
-    const mapWidth = this.width - 220;
-    const mapHeight = this.height - 40;
+  private drawMapView(state: DisplayState): void {
+    const mapX = 30;
+    const mapY = 30;
+    const mapWidth = this.width - 60;
+    const mapHeight = this.height - 120;
 
     // Draw map border
     this.ctx.strokeStyle = this.theme.foreground;
@@ -63,14 +63,13 @@ export class MFDRenderer {
     // Draw grid
     this.ctx.strokeStyle = this.theme.foreground;
     this.ctx.globalAlpha = 0.3;
-    const gridSize = 50;
-    for (let x = mapX; x < mapX + mapWidth; x += gridSize) {
+    for (let i = 0; i <= 10; i++) {
+      const x = mapX + (mapWidth / 10) * i;
+      const y = mapY + (mapHeight / 10) * i;
       this.ctx.beginPath();
       this.ctx.moveTo(x, mapY);
       this.ctx.lineTo(x, mapY + mapHeight);
       this.ctx.stroke();
-    }
-    for (let y = mapY; y < mapY + mapHeight; y += gridSize) {
       this.ctx.beginPath();
       this.ctx.moveTo(mapX, y);
       this.ctx.lineTo(mapX + mapWidth, y);
@@ -78,38 +77,41 @@ export class MFDRenderer {
     }
     this.ctx.globalAlpha = 1.0;
 
-    // Draw aircraft symbol at center
-    const centerX = mapX + mapWidth / 2;
-    const centerY = mapY + mapHeight / 2;
-    this.drawAircraftSymbol(centerX, centerY, state.heading);
+    // Draw aircraft position
+    const aircraftX = mapX + mapWidth / 2;
+    const aircraftY = mapY + mapHeight / 2;
+    this.ctx.fillStyle = this.theme.accent;
+    this.ctx.beginPath();
+    this.ctx.arc(aircraftX, aircraftY, 5, 0, Math.PI * 2);
+    this.ctx.fill();
 
-    // Draw coordinates
-    this.ctx.fillStyle = this.theme.foreground;
-    this.ctx.font = '10px monospace';
-    this.ctx.fillText(`${state.latitude.toFixed(4)}°`, mapX + 10, mapY + 15);
-    this.ctx.fillText(`${state.longitude.toFixed(4)}°`, mapX + 10, mapY + 30);
+    // Draw heading indicator
+    this.ctx.strokeStyle = this.theme.accent;
+    this.ctx.lineWidth = 2;
+    const headingRad = (state.heading * Math.PI) / 180;
+    const lineLength = 20;
+    this.ctx.beginPath();
+    this.ctx.moveTo(aircraftX, aircraftY);
+    this.ctx.lineTo(
+      aircraftX + Math.sin(headingRad) * lineLength,
+      aircraftY - Math.cos(headingRad) * lineLength
+    );
+    this.ctx.stroke();
   }
 
   /**
-   * Draw aircraft symbol
+   * Draw system status information
    */
-  private drawAircraftSymbol(x: number, y: number, heading: number): void {
-    this.ctx.save();
-    this.ctx.translate(x, y);
-    this.ctx.rotate((heading * Math.PI) / 180);
+  private drawSystemStatus(state: DisplayState): void {
+    const x = 30;
+    const y = this.height - 80;
+    this.ctx.fillStyle = this.theme.foreground;
+    this.ctx.font = '11px monospace';
+    this.ctx.textAlign = 'left';
 
-    // Draw aircraft shape
-    this.ctx.strokeStyle = this.theme.accent;
-    this.ctx.lineWidth = 2;
-    this.ctx.beginPath();
-    this.ctx.moveTo(0, -15); // Nose
-    this.ctx.lineTo(-8, 10); // Left wing
-    this.ctx.lineTo(0, 5); // Center
-    this.ctx.lineTo(8, 10); // Right wing
-    this.ctx.closePath();
-    this.ctx.stroke();
-
-    this.ctx.restore();
+    this.ctx.fillText(`GPS: ${state.latitude.toFixed(4)}° ${state.longitude.toFixed(4)}°`, x, y);
+    this.ctx.fillText(`TIME: ${new Date(state.timestamp).toUTCString()}`, x, y + 15);
+    this.ctx.fillText(`STATUS: OK`, x, y + 30);
   }
 
   /**
@@ -117,34 +119,14 @@ export class MFDRenderer {
    */
   private drawWeatherInfo(state: DisplayState): void {
     const x = this.width - 200;
-    const y = 30;
-
+    const y = this.height - 80;
     this.ctx.fillStyle = this.theme.foreground;
-    this.ctx.font = 'bold 12px monospace';
-    this.ctx.fillText('WEATHER', x, y);
+    this.ctx.font = '11px monospace';
+    this.ctx.textAlign = 'left';
 
-    this.ctx.font = '10px monospace';
-    this.ctx.fillText('Wind: 180/15kt', x, y + 20);
-    this.ctx.fillText('Temp: 15°C', x, y + 35);
-    this.ctx.fillText('Altimeter: 29.92', x, y + 50);
-  }
-
-  /**
-   * Draw system status
-   */
-  private drawSystemStatus(state: DisplayState): void {
-    const x = this.width - 200;
-    const y = this.height - 100;
-
-    this.ctx.fillStyle = this.theme.foreground;
-    this.ctx.font = 'bold 12px monospace';
-    this.ctx.fillText('SYSTEM', x, y);
-
-    this.ctx.font = '10px monospace';
-    this.ctx.fillStyle = this.theme.safe;
-    this.ctx.fillText('✓ GPS', x, y + 20);
-    this.ctx.fillText('✓ AHRS', x, y + 35);
-    this.ctx.fillText('✓ Engine', x, y + 50);
+    this.ctx.fillText(`WEATHER: CLEAR`, x, y);
+    this.ctx.fillText(`WIND: 180° @ 5kt`, x, y + 15);
+    this.ctx.fillText(`TEMP: 15°C`, x, y + 30);
   }
 
   /**

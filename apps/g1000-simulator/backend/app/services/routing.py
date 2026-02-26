@@ -4,132 +4,134 @@ from typing import List, Dict, Any, Tuple
 import math
 
 
-class Waypoint:
-    """Represents a waypoint in a route."""
-    def __init__(self, identifier: str, latitude: float, longitude: float):
-        self.identifier = identifier
-        self.latitude = latitude
-        self.longitude = longitude
-
-    def to_dict(self) -> Dict[str, Any]:
-        return {
-            'identifier': self.identifier,
-            'latitude': self.latitude,
-            'longitude': self.longitude
-        }
-
-
 class Route:
-    """Represents a complete route with waypoints."""
-    def __init__(self, start: Waypoint, end: Waypoint, waypoints: List[Waypoint] = None):
-        self.start = start
-        self.end = end
+    """Represents a flight route."""
+    def __init__(self, origin: str, destination: str, waypoints: List[str] = None):
+        self.origin = origin
+        self.destination = destination
         self.waypoints = waypoints or []
-        self.total_distance = self._calculate_total_distance()
-
-    def _calculate_total_distance(self) -> float:
-        """Calculate total distance of the route."""
-        distance = 0.0
-        points = [self.start] + self.waypoints + [self.end]
-        
-        for i in range(len(points) - 1):
-            distance += self._great_circle_distance(
-                points[i].latitude, points[i].longitude,
-                points[i+1].latitude, points[i+1].longitude
-            )
-        
-        return distance
-
-    @staticmethod
-    def _great_circle_distance(lat1: float, lon1: float, 
-                               lat2: float, lon2: float) -> float:
-        """Calculate great circle distance between two points in nautical miles."""
-        R = 3440.065  # Earth radius in nautical miles
-        
-        lat1_rad = math.radians(lat1)
-        lat2_rad = math.radians(lat2)
-        delta_lat = math.radians(lat2 - lat1)
-        delta_lon = math.radians(lon2 - lon1)
-        
-        a = math.sin(delta_lat/2)**2 + math.cos(lat1_rad) * math.cos(lat2_rad) * math.sin(delta_lon/2)**2
-        c = 2 * math.asin(math.sqrt(a))
-        
-        return R * c
+        self.segments = []
+        self.total_distance = 0.0
+        self.total_time = 0.0
 
     def to_dict(self) -> Dict[str, Any]:
         return {
-            'start': self.start.to_dict(),
-            'end': self.end.to_dict(),
-            'waypoints': [wp.to_dict() for wp in self.waypoints],
-            'total_distance_nm': round(self.total_distance, 2)
+            'origin': self.origin,
+            'destination': self.destination,
+            'waypoints': self.waypoints,
+            'segments': self.segments,
+            'total_distance': self.total_distance,
+            'total_time': self.total_time
         }
 
 
 class RoutingService:
-    """Service for calculating and optimizing routes."""
+    """Service for calculating flight routes."""
     
     def __init__(self):
-        pass
+        # Sample airport coordinates (latitude, longitude)
+        self.airport_coords = {
+            'KJFK': (40.6413, -73.7781),
+            'KLAX': (33.9425, -118.4081),
+            'KORD': (41.9742, -87.9073),
+            'KDFW': (32.8975, -97.0382),
+            'KATL': (33.6407, -84.4277)
+        }
 
-    def calculate_route(self, start: Dict[str, Any], end: Dict[str, Any], 
-                       waypoints: List[Dict[str, Any]] = None) -> Dict[str, Any]:
+    def calculate_route(self, start: str, end: str, waypoints: List[str] = None) -> Dict[str, Any]:
         """Calculate a route from start to end with optional waypoints.
         
         Args:
-            start: Dictionary with 'identifier', 'latitude', 'longitude'
-            end: Dictionary with 'identifier', 'latitude', 'longitude'
-            waypoints: List of waypoint dictionaries
+            start: Origin airport code
+            end: Destination airport code
+            waypoints: List of intermediate waypoint airport codes
             
         Returns:
-            Dictionary representation of the calculated route
+            Dictionary with route information
         """
-        start_wp = Waypoint(
-            identifier=start.get('identifier', 'START'),
-            latitude=start.get('latitude'),
-            longitude=start.get('longitude')
-        )
+        waypoints = waypoints or []
         
-        end_wp = Waypoint(
-            identifier=end.get('identifier', 'END'),
-            latitude=end.get('latitude'),
-            longitude=end.get('longitude')
-        )
+        # Validate airports
+        if start not in self.airport_coords:
+            return {'error': f'Origin airport {start} not found'}
+        if end not in self.airport_coords:
+            return {'error': f'Destination airport {end} not found'}
         
-        waypoint_list = []
-        if waypoints:
-            for wp in waypoints:
-                waypoint_list.append(Waypoint(
-                    identifier=wp.get('identifier'),
-                    latitude=wp.get('latitude'),
-                    longitude=wp.get('longitude')
-                ))
+        route = Route(start, end, waypoints)
         
-        route = Route(start_wp, end_wp, waypoint_list)
+        # Build route segments
+        current = start
+        all_waypoints = waypoints + [end]
+        
+        for waypoint in all_waypoints:
+            if waypoint not in self.airport_coords:
+                return {'error': f'Waypoint {waypoint} not found'}
+            
+            distance = self._calculate_distance(
+                self.airport_coords[current],
+                self.airport_coords[waypoint]
+            )
+            
+            segment = {
+                'from': current,
+                'to': waypoint,
+                'distance_nm': round(distance, 2),
+                'heading': self._calculate_heading(
+                    self.airport_coords[current],
+                    self.airport_coords[waypoint]
+                )
+            }
+            
+            route.segments.append(segment)
+            route.total_distance += distance
+            current = waypoint
+        
+        # Estimate time at 450 knots
+        route.total_time = round(route.total_distance / 450, 2)
+        
         return route.to_dict()
 
-    def optimize_route(self, waypoints: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
-        """Optimize waypoint order using nearest neighbor algorithm.
+    def _calculate_distance(self, point1: Tuple[float, float], 
+                           point2: Tuple[float, float]) -> float:
+        """Calculate great circle distance between two points in nautical miles."""
+        lat1, lon1 = point1
+        lat2, lon2 = point2
         
-        Args:
-            waypoints: List of waypoint dictionaries
-            
-        Returns:
-            Optimized list of waypoint dictionaries
-        """
-        if not waypoints or len(waypoints) <= 2:
-            return waypoints
+        # Convert to radians
+        lat1_rad = math.radians(lat1)
+        lon1_rad = math.radians(lon1)
+        lat2_rad = math.radians(lat2)
+        lon2_rad = math.radians(lon2)
         
-        # Simple nearest neighbor optimization
-        unvisited = [Waypoint(**wp) for wp in waypoints]
-        optimized = [unvisited.pop(0)]
+        # Haversine formula
+        dlat = lat2_rad - lat1_rad
+        dlon = lon2_rad - lon1_rad
         
-        while unvisited:
-            current = optimized[-1]
-            nearest = min(unvisited, key=lambda wp: Route._great_circle_distance(
-                current.latitude, current.longitude,
-                wp.latitude, wp.longitude
-            ))
-            optimized.append(nearest)
-            unvisited.remove(nearest)
+        a = math.sin(dlat/2)**2 + math.cos(lat1_rad) * math.cos(lat2_rad) * math.sin(dlon/2)**2
+        c = 2 * math.asin(math.sqrt(a))
         
-        return [wp.to_dict() for wp in optimized]
+        # Earth radius in nautical miles
+        earth_radius_nm = 3440.065
+        
+        return earth_radius_nm * c
+
+    def _calculate_heading(self, point1: Tuple[float, float], 
+                          point2: Tuple[float, float]) -> float:
+        """Calculate magnetic heading from point1 to point2."""
+        lat1, lon1 = point1
+        lat2, lon2 = point2
+        
+        lat1_rad = math.radians(lat1)
+        lon1_rad = math.radians(lon1)
+        lat2_rad = math.radians(lat2)
+        lon2_rad = math.radians(lon2)
+        
+        dlon = lon2_rad - lon1_rad
+        
+        y = math.sin(dlon) * math.cos(lat2_rad)
+        x = math.cos(lat1_rad) * math.sin(lat2_rad) - math.sin(lat1_rad) * math.cos(lat2_rad) * math.cos(dlon)
+        
+        heading = math.degrees(math.atan2(y, x))
+        heading = (heading + 360) % 360
+        
+        return round(heading, 1)

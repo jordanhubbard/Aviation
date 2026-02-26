@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, UploadFile, File
 from .envelope_protection import EnvelopeProtection
 from .nav_database import NavDatabase
 from .routing import Routing
@@ -9,6 +9,12 @@ from pydantic import BaseModel, Field
 from typing import List, Optional, Dict, Any
 from dataclasses import dataclass, field
 from enum import Enum
+from datetime import datetime
+import json
+import os
+from pathlib import Path
+import xml.etree.ElementTree as ET
+from io import StringIO
 
 router = APIRouter()
 
@@ -54,16 +60,23 @@ class FlightPlan(BaseModel):
         else:
             raise ValueError(f"Waypoint {waypoint_name} not found in flight plan.")
 
-import json
-import os
-
 FLIGHT_PLANS_FILE = os.path.join(os.path.dirname(__file__), '..', '..', '..', 'data', 'flight_plans.json')
+RECENT_PLANS_FILE = os.path.join(os.path.dirname(__file__), '..', '..', '..', 'data', 'recent_flight_plans.json')
+
+# Ensure data directory exists
+os.makedirs(os.path.dirname(FLIGHT_PLANS_FILE), exist_ok=True)
 
 if os.path.exists(FLIGHT_PLANS_FILE):
     with open(FLIGHT_PLANS_FILE, 'r') as file:
         flight_plans = json.load(file)
 else:
     flight_plans = []
+
+if os.path.exists(RECENT_PLANS_FILE):
+    with open(RECENT_PLANS_FILE, 'r') as file:
+        recent_plans = json.load(file)
+else:
+    recent_plans = []
 
 # API Endpoints
 
@@ -82,7 +95,118 @@ def get_procedures(airport: str):
 # Save flight plans to file
 def save_flight_plans():
     with open(FLIGHT_PLANS_FILE, 'w') as file:
-        json.dump(flight_plans, file)
+        json.dump(flight_plans, file, indent=2)
+
+# Update recent plans list
+def update_recent_plans(flight_plan_id: int, name: str):
+    global recent_plans
+    # Remove if already exists
+    recent_plans = [p for p in recent_plans if p['id'] != flight_plan_id]
+    # Add to front
+    recent_plans.insert(0, {
+        'id': flight_plan_id,
+        'name': name,
+        'accessed_at': datetime.now().isoformat()
+    })
+    # Keep only last 10
+    recent_plans = recent_plans[:10]
+    with open(RECENT_PLANS_FILE, 'w') as file:
+        json.dump(recent_plans, file, indent=2)
+
+# Export flight plan to GPX format
+def export_to_gpx(flight_plan: Dict[str, Any]) -> str:
+    gpx = ET.Element('gpx', version='1.1', creator='flight-planner')
+    trk = ET.SubElement(gpx, 'trk')
+    name_elem = ET.SubElement(trk, 'name')
+    name_elem.text = flight_plan.get('name', 'Flight Plan')
+    trkseg = ET.SubElement(trk, 'trkseg')
+    
+    for wp in flight_plan.get('waypoints', []):
+        trkpt = ET.SubElement(trkseg, 'trkpt', lat=str(wp['latitude']), lon=str(wp['longitude']))
+        if wp.get('altitude'):
+            ele = ET.SubElement(trkpt, 'ele')
+            ele.text = str(wp['altitude'])
+        if wp.get('name'):
+            name = ET.SubElement(trkpt, 'name')
+            name.text = wp['name']
+    
+    return ET.tostring(gpx, encoding='unicode')
+
+# Export flight plan to FPL format (simple text format)
+def export_to_fpl(flight_plan: Dict[str, Any]) -> str:
+    lines = []
+    lines.append(f"(FPL-{flight_plan.get('name', 'PLAN')}-IS")
+    lines.append(f"-{flight_plan.get('aircraft_type', 'C172')}/L")
+    lines.append(f"-{flight_plan.get('origin', 'XXXX')}{flight_plan.get('destination', 'XXXX')}")
+    
+    waypoints_str = ' '.join([wp.get('name', f"WP{i}") for i, wp in enumerate(flight_plan.get('waypoints', []))])
+    lines.append(f"-{waypoints_str}")
+    lines.append(")")
+    
+    return '\n'.join(lines)
+
+# Import flight plan from GPX
+def import_from_gpx(gpx_content: str) -> Dict[str, Any]:
+    root = ET.fromstring(gpx_content)
+    waypoints = []
+    
+    for trkpt in root.findall('.//{http://www.topografix.com/GPX/1/1}trkpt'):
+        lat = float(trkpt.get('lat'))
+        lon = float(trkpt.get('lon'))
+        name_elem = trkpt.find('{http://www.topografix.com/GPX/1/1}name')
+        name = name_elem.text if name_elem is not None else None
+        ele_elem = trkpt.find('{http://www.topografix.com/GPX/1/1}ele')
+        altitude = float(ele_elem.text) if ele_elem is not None else None
+        
+        waypoints.append({
+            'latitude': lat,
+            'longitude': lon,
+            'name': name,
+            'altitude': altitude,
+            'status': 'pending',
+            'sequence_number': len(waypoints)
+        })
+    
+    # Try to get name from track
+    name = 'Imported Plan'
+    trk_name = root.find('.//{http://www.topografix.com/GPX/1/1}name')
+    if trk_name is not None:
+        name = trk_name.text
+    
+    return {
+        'name': name,
+        'waypoints': waypoints,
+        'active_waypoint_index': 0
+    }
+
+# Import flight plan from FPL
+def import_from_fpl(fpl_content: str) -> Dict[str, Any]:
+    lines = fpl_content.strip().split('\n')
+    waypoints = []
+    name = 'Imported FPL'
+    
+    for line in lines:
+        if line.startswith('(FPL'):
+            parts = line.split('-')
+            if len(parts) > 1:
+                name = parts[1]
+        elif not line.startswith('(') and not line.startswith(')'):
+            # Parse waypoint line
+            wp_names = line.split()
+            for i, wp_name in enumerate(wp_names):
+                waypoints.append({
+                    'name': wp_name,
+                    'latitude': 0.0,
+                    'longitude': 0.0,
+                    'status': 'pending',
+                    'sequence_number': i
+                })
+    
+    return {
+        'name': name,
+        'waypoints': waypoints,
+        'active_waypoint_index': 0
+    }
 
 
 envelope_protection = EnvelopeProtection()

@@ -8,16 +8,30 @@ import {
   AlertSubscriber,
   CreateAlertOptions,
   IAlertManager,
+  AlertEvent,
+  AlertEventCallback,
   ALERT_PRIORITY,
   DEFAULT_MAX_VISIBLE_ALERTS,
 } from './types';
+import { AlertEventEmitter } from './event-emitter';
+import { AlertPersistence } from './persistence';
 
-/**
- * Generate a unique ID for alerts
- */
-function generateAlertId(): string {
-  return `alert-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-}
+  /**
+   * Create a new AlertManager
+   * @param auralCallback Optional callback to play aural alerts when new alerts are added
+   * @param persistenceEnabled Whether to enable persistence of alerts to local storage
+   */
+  constructor(auralCallback?: (level: AlertLevel) => void, persistenceEnabled: boolean = false) {
+    this.auralCallback = auralCallback;
+    this.persistenceEnabled = persistenceEnabled;
+    // Load persisted alerts if persistence is enabled
+    if (this.persistenceEnabled) {
+      const persisted = AlertPersistence.loadAlerts();
+      persisted.forEach((alert) => {
+        this.alerts.set(alert.id, alert);
+      });
+    }
+  }
 
 /**
  * Sort alerts by priority (highest first), then by timestamp (newest first for same priority)
@@ -37,14 +51,26 @@ function sortAlerts(alerts: Alert[]): Alert[] {
 export class AlertManager implements IAlertManager {
   private alerts: Map<string, Alert> = new Map();
   private subscribers: Set<AlertSubscriber> = new Set();
+  private eventEmitter: AlertEventEmitter = new AlertEventEmitter();
   private auralCallback?: (level: AlertLevel) => void;
+  private persistenceEnabled: boolean = false;
 
   /**
    * Create a new AlertManager
    * @param auralCallback Optional callback to play aural alerts when new alerts are added
+   * @param enablePersistence Whether to persist alerts to local storage
    */
-  constructor(auralCallback?: (level: AlertLevel) => void) {
+  constructor(auralCallback?: (level: AlertLevel) => void, enablePersistence: boolean = false) {
     this.auralCallback = auralCallback;
+    this.persistenceEnabled = enablePersistence;
+    
+    // Load persisted alerts if persistence is enabled
+    if (this.persistenceEnabled) {
+      const persistedAlerts = AlertPersistence.loadAlerts();
+      persistedAlerts.forEach((alert) => {
+        this.alerts.set(alert.id, alert);
+      });
+    }
   }
 
   /**
@@ -75,29 +101,90 @@ export class AlertManager implements IAlertManager {
   /**
    * Acknowledge an alert by ID
    */
-  acknowledgeAlert(id: string): void {
+  acknowledgeAlert(id: string): boolean {
     const alert = this.alerts.get(id);
     if (alert) {
       alert.acknowledged = true;
+      alert.acknowledgedAt = new Date();
+      this.notifySubscribers();
+      return true;
+    }
+    return false;
+  }
+
+  /**
+   * Acknowledge all unacknowledged alerts
+   */
+  acknowledgeAllAlerts(): number {
+    let count = 0;
+    const now = new Date();
+    this.alerts.forEach((alert) => {
+      if (!alert.acknowledged) {
+        alert.acknowledged = true;
+        alert.acknowledgedAt = now;
+        count++;
+      }
+    });
+    if (count > 0) {
       this.notifySubscribers();
     }
+    return count;
   }
 
   /**
    * Clear (remove) an alert by ID
    */
-  clearAlert(id: string): void {
+  clearAlert(id: string): boolean {
     if (this.alerts.delete(id)) {
       this.notifySubscribers();
+      return true;
     }
+    return false;
   }
 
   /**
    * Clear all alerts
    */
-  clearAllAlerts(): void {
+  clearAllAlerts(): number {
+    const count = this.alerts.size;
     this.alerts.clear();
-    this.notifySubscribers();
+    if (count > 0) {
+      this.notifySubscribers();
+    }
+    return count;
+  }
+
+  /**
+   * Clear all acknowledged alerts only
+   */
+  clearAcknowledgedAlerts(): number {
+    let count = 0;
+    const idsToDelete: string[] = [];
+    this.alerts.forEach((alert, id) => {
+      if (alert.acknowledged) {
+        idsToDelete.push(id);
+        count++;
+      }
+    });
+    idsToDelete.forEach((id) => this.alerts.delete(id));
+    if (count > 0) {
+      this.notifySubscribers();
+    }
+    return count;
+  }
+
+  /**
+   * Get unacknowledged alerts only
+   */
+  getUnacknowledgedAlerts(): Alert[] {
+    return this.getAlerts().filter((alert) => !alert.acknowledged);
+  }
+
+  /**
+   * Get acknowledged alerts only
+   */
+  getAcknowledgedAlerts(): Alert[] {
+    return this.getAlerts().filter((alert) => alert.acknowledged);
   }
 
   /**
