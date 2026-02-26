@@ -8,6 +8,7 @@ from .services.hardware_integration import HardwareIntegrationService
 from .services.envelope_protection import EnvelopeProtection
 from .services.ahrs_adc_simulation import AHRS, ADC
 from .services.gps_simulation import GPSSimulationService, GPSState
+from .services.approaches import ApproachProcedure, ApproachType, ApproachCategory, Waypoint, MissedApproachAction
 
 app = FastAPI(docs_url=None, redoc_url=None, openapi_url=None, title='Flight Planner API', version='0.1.0')
 

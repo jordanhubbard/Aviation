@@ -11,6 +11,7 @@ if __name__ == '__main__':
     unittest.TextTestRunner(verbosity=2).run(unittest.defaultTestLoader.discover('apps/flight-planner/backend/tests'))
 
 from app.services.gps_simulation import GPSSimulationService, GPSState
+from app.services.approaches import ApproachProcedure, ApproachType, ApproachCategory, Waypoint, MissedApproachAction
 from app.services.telemetry_recording import TelemetryRecordingService
 
 initial_gps_state = GPSState(lat=37.7749, lon=-122.4194, alt=30.0, speed=100.0, track=90.0, raim=True, epe=5.0)
