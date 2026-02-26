@@ -62,7 +62,7 @@ def skip_waypoint_route(req: RouteRequest, waypoint: str) -> RouteResponse:
     return calculate_route_response(updated_points, req)
 
 @router.post("/route/insert_waypoint", response_model=RouteResponse)
-def insert_waypoint_route(req: RouteRequest, waypoint: str, position: str) -> RouteResponse:
+def insert_waypoint_route(req: RouteRequest, waypoint: Tuple[float, float], position: str) -> RouteResponse:
     updated_points = insert_waypoint(points, waypoint, position)
     return calculate_route_response(updated_points, req)
 

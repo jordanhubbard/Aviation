@@ -166,9 +166,11 @@ def skip_waypoint(route: List[Tuple[float, float]], waypoint: str) -> List[Tuple
     except ValueError:
         return route
 
-def insert_waypoint(route: List[Tuple[float, float]], waypoint: str, position: str) -> List[Tuple[float, float]]:
-    # Logic to insert a waypoint
-    pass
+def insert_waypoint(route: List[Tuple[float, float]], waypoint: Tuple[float, float], position: str) -> List[Tuple[float, float]]:
+    index = int(position)
+    if index < 0 or index > len(route):
+        raise ValueError("Position out of range")
+    return route[:index] + [waypoint] + route[index:]
 
 def parallel_offset(route: List[Tuple[float, float]], offset_distance: float) -> List[Tuple[float, float]]:
     # Logic for parallel offset
