@@ -45,7 +45,12 @@ def register():
     form = RegistrationForm()
     if form.validate_on_submit():
         try:
-            user = User(
+            birth_date = form.birth_date.data
+        age = (datetime.now().date() - birth_date).days // 365
+        if age < 13:
+            flash('You must be at least 13 years old to register.', 'danger')
+            return render_template('auth/register.html', form=form)
+        user = User(
                 email=form.email.data,
                 first_name=form.first_name.data,
                 last_name=form.last_name.data,

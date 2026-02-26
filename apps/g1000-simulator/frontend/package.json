@@ -7,31 +7,27 @@
     "dev": "vite",
     "build": "tsc && vite build",
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
+    "lint:fix": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0 --fix",
     "type-check": "tsc --noEmit",
     "test": "vitest run",
+    "format": "prettier --ignore-path ../.prettierignore --write .",
+    "format:check": "prettier --ignore-path ../.prettierignore --check .",
     "preview": "vite preview"
   },
   "dependencies": {
-    "@aviation/shared-sdk": "*",
-    "@aviation/ui-framework": "*",
     "react": "^18.2.0",
-    "react-dom": "^19.2.4",
-    "zustand": "^4.5.7"
+    "react-dom": "^18.2.0",
+    "zustand": "^4.4.7"
   },
   "devDependencies": {
-    "@testing-library/jest-dom": "^6.1.5",
-    "@testing-library/react": "^16.3.2",
     "@types/react": "^18.2.43",
-    "@types/react-dom": "^19.2.3",
-    "@typescript-eslint/eslint-plugin": "^8.56.1",
-    "@typescript-eslint/parser": "^8.56.1",
-    "@vitejs/plugin-react": "^5.1.4",
-    "eslint": "^10.0.2",
-    "eslint-plugin-react-hooks": "^7.0.1",
-    "eslint-plugin-react-refresh": "^0.5.2",
-    "jsdom": "^28.1.0",
+    "@types/react-dom": "^18.2.17",
+    "@typescript-eslint/eslint-plugin": "^6.14.0",
+    "@typescript-eslint/parser": "^6.14.0",
+    "eslint": "^8.55.0",
+    "prettier": "^3.4.2",
     "typescript": "^5.2.2",
     "vite": "^7.3.0",
-    "vitest": "^4.0.18"
+    "vitest": "^4.0.16"
   }
 }
