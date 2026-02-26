@@ -268,6 +268,12 @@ jobs:
           mkdir -p performance_metrics
           python scripts/store_historical_metrics.py
 
+      - name: Run G1000 Simulator Performance Tests
+        run: |
+          cd apps/g1000-simulator/backend
+          pip install -r requirements.txt
+          pytest tests/performance/ -v
+
     - name: Fail on performance regressions
       if: failure()
       run: |
