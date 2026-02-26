@@ -1,29 +1,60 @@
-# Navigation Service
+# Navigation Service for G1000 Simulator
 
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
+from pydantic import BaseModel
+from typing import List, Optional
 
 app = FastAPI()
 
-@app.post('/api/flight-plan')
-def create_flight_plan():
-    return {'message': 'Flight plan created'}
+# Define data models
+class Waypoint(BaseModel):
+    id: str
+    name: str
+    latitude: float
+    longitude: float
 
-@app.get('/api/flight-plan/{id}')
-def get_flight_plan(id: str):
-    return {'message': f'Flight plan {id} retrieved'}
+class FlightPlan(BaseModel):
+    id: str
+    waypoints: List[Waypoint]
+    active: bool = False
 
-@app.put('/api/flight-plan/{id}')
-def update_flight_plan(id: str):
-    return {'message': f'Flight plan {id} updated'}
+# In-memory database
+flight_plans = {}
 
-@app.delete('/api/flight-plan/{id}')
-def delete_flight_plan(id: str):
-    return {'message': f'Flight plan {id} deleted'}
+@app.post("/api/flight-plan", response_model=FlightPlan)
+def create_flight_plan(flight_plan: FlightPlan):
+    if flight_plan.id in flight_plans:
+        raise HTTPException(status_code=400, detail="Flight plan already exists")
+    flight_plans[flight_plan.id] = flight_plan
+    return flight_plan
 
-@app.get('/api/nav/search')
-def search_navigation_database():
-    return {'message': 'Navigation database search'}
+@app.get("/api/flight-plan/{flight_plan_id}", response_model=FlightPlan)
+def get_flight_plan(flight_plan_id: str):
+    flight_plan = flight_plans.get(flight_plan_id)
+    if not flight_plan:
+        raise HTTPException(status_code=404, detail="Flight plan not found")
+    return flight_plan
 
-@app.get('/api/procedures/{airport}')
-def get_procedures(airport: str):
-    return {'message': f'Procedures for {airport}'}
+@app.put("/api/flight-plan/{flight_plan_id}", response_model=FlightPlan)
+def update_flight_plan(flight_plan_id: str, flight_plan: FlightPlan):
+    if flight_plan_id not in flight_plans:
+        raise HTTPException(status_code=404, detail="Flight plan not found")
+    flight_plans[flight_plan_id] = flight_plan
+    return flight_plan
+
+@app.delete("/api/flight-plan/{flight_plan_id}")
+def delete_flight_plan(flight_plan_id: str):
+    if flight_plan_id not in flight_plans:
+        raise HTTPException(status_code=404, detail="Flight plan not found")
+    del flight_plans[flight_plan_id]
+    return {"detail": "Flight plan deleted"}
+
+@app.get("/api/nav/search")
+def search_navigation_database(query: str):
+    # Placeholder for navigation database search
+    return {"results": []}
+
+@app.get("/api/procedures/{airport}")
+def get_procedures_for_airport(airport: str):
+    # Placeholder for procedures retrieval
+    return {"procedures": []}
