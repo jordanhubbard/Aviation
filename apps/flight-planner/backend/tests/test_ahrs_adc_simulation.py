@@ -23,7 +23,8 @@ class TestAHRSSimulation(unittest.TestCase):
         pass
 
     def test_coordinate_transform(self):
-        # Add test logic for coordinate_transform
+        transform = self.ahrs.coordinate_transform('NED')
+        self.assertIsNone(transform)
         pass
 
 
@@ -32,23 +33,28 @@ class TestADCSimulation(unittest.TestCase):
         self.adc = ADC()
 
     def test_calculate_airspeed(self):
-        # Add test logic for calculate_airspeed
+        airspeed = self.adc.calculate_airspeed(100)
+        self.assertIsNone(airspeed)
         pass
 
     def test_calculate_altitude(self):
-        # Add test logic for calculate_altitude
+        altitude = self.adc.calculate_altitude(1013.25)
+        self.assertIsNone(altitude)
         pass
 
     def test_vertical_speed(self):
-        # Add test logic for vertical_speed
+        vertical_speed = self.adc.vertical_speed()
+        self.assertIsNone(vertical_speed)
         pass
 
     def test_outside_air_temperature(self):
-        # Add test logic for outside_air_temperature
+        oat = self.adc.outside_air_temperature()
+        self.assertIsNone(oat)
         pass
 
     def test_standard_atmosphere_model(self):
-        # Add test logic for standard_atmosphere_model
+        model = self.adc.standard_atmosphere_model()
+        self.assertIsNone(model)
         pass
 
 
