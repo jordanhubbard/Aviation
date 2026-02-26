@@ -14,7 +14,7 @@
   "scripts": {
     "build": "npm run build --workspaces --if-present",
     "dev": "npm run dev --workspaces --if-present",
-    "test": "npm run test --workspaces --if-present",
+    "test": "playwright test --config=apps/aviation-accident-tracker/frontend/playwright.config.ts",
     "lint": "npm run lint --workspaces --if-present",
     "clean": "npm run clean --workspaces --if-present",
     "secrets:migrate": "ts-node scripts/migrate-secrets.ts",
