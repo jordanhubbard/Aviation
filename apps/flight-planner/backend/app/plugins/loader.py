@@ -26,6 +26,12 @@ class PluginLoader:
             if key not in manifest:
                 raise PluginLoadError(f"Manifest missing required key: {key}")
 
+    def load_plugin_class(self, entry_point):
+        module_name, class_name = entry_point.rsplit('.', 1)
+        module = __import__(module_name, fromlist=[class_name])
+        return getattr(module, class_name)
+
     def create_plugin(self, manifest):
         # Placeholder for creating a plugin instance
-        return Plugin(manifest['id'], manifest['name'], manifest['version'])
+        plugin_class = self.load_plugin_class(manifest['entry_point'])
+        return plugin_class(PluginMetadata(manifest['id'], manifest['name'], manifest['version'], manifest.get('description', ''), manifest.get('author', ''), manifest['entry_point'], manifest.get('permissions', [])))
