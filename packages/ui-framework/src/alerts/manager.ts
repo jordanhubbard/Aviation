@@ -94,7 +94,15 @@ export class AlertManager implements IAlertManager {
       this.auralCallback(alert.level);
     }
 
+    // Emit event
+    this.eventEmitter.emit({
+      type: 'alert:added',
+      timestamp: new Date(),
+      alert,
+    });
+
     this.notifySubscribers();
+    this.persistIfEnabled();
     return alert;
   }
 
