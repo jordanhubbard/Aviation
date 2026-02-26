@@ -23,6 +23,10 @@ def admin_required(f):
 @login_required
 @admin_required
 def dashboard():
+    # Educational enhancements
+    performance_tracking = get_performance_tracking_data()
+    knowledge_tests = get_knowledge_tests_data()
+    achievements = get_achievements_data()
     """Display admin dashboard."""
     # Get statistics
     stats = {
@@ -39,7 +43,10 @@ def dashboard():
     students = User.query.filter_by(is_instructor=False, is_admin=False).all()
     aircraft_list = Aircraft.query.all()
     
-    return render_template('admin/dashboard.html', 
+    return render_template('admin/dashboard.html',
+                          performance_tracking=performance_tracking,
+                          knowledge_tests=knowledge_tests,
+                          achievements=achievements, 
                           stats=stats, 
                           instructors=instructors, 
                           students=students, 

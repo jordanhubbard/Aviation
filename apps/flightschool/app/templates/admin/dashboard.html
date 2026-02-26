@@ -177,6 +177,35 @@
             </div>
         </div>
 
+        <!-- Educational Enhancements Tab -->
+        <div class="tab-pane fade" id="educational" role="tabpanel">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Educational Enhancements</h5>
+                </div>
+                <div class="card-body">
+                    <h6>Performance Tracking</h6>
+                    <ul>
+                        {% for performance in performance_tracking %}
+                        <li>{{ performance }}</li>
+                        {% endfor %}
+                    </ul>
+                    <h6>Knowledge Tests</h6>
+                    <ul>
+                        {% for test in knowledge_tests %}
+                        <li>{{ test }}</li>
+                        {% endfor %}
+                    </ul>
+                    <h6>Achievements</h6>
+                    <ul>
+                        {% for achievement in achievements %}
+                        <li>{{ achievement }}</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+        </div>
+
         <!-- Bookings Tab -->
         <div class="tab-pane fade" id="bookings" role="tabpanel">
             <div class="card">
