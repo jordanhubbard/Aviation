@@ -1,16 +1,15 @@
-# @aviation/flight-dynamics
+# Flight Dynamics Package
 
-Flight physics simulation engine for aviation applications.
+A physics-based flight simulation library for aviation applications.
 
 ## Overview
 
-This package provides a physics-based flight simulation library with support for:
+The Flight Dynamics package provides a core flight physics engine that simulates aircraft behavior based on control inputs. It includes:
 
-- 6-DOF equations of motion
-- Aerodynamic force/moment calculations
-- Propulsion modeling
-- Atmospheric effects
-- Aircraft performance calculations
+- **6-DOF Equations of Motion**: Accurate aircraft dynamics simulation
+- **FastAPI Service**: RESTful API for flight state updates and queries
+- **State Serialization**: Efficient state representation for client applications
+- **Deterministic Updates**: Consistent physics calculations with fixed time steps
 
 ## Installation
 
@@ -20,79 +19,90 @@ pip install -e .
 
 ## Usage
 
+### As a Library
+
 ```python
 from aviation_flight_dynamics import FlightPhysics
 
-# Initialize physics engine
 physics = FlightPhysics()
-
-# Update with control inputs
-control_inputs = {
-    'throttle': 0.8,
-    'pitch': 0.1,
-    'roll': 0.0,
-    'yaw': 0.0
-}
-
-state = physics.run_update_loop(control_inputs)
+state = physics.run_update_loop({'throttle': 0.5})
 print(state)
+```
+
+### As a Service
+
+```bash
+uvicorn aviation_flight_dynamics.service:app --reload
+```
+
+Then make requests to:
+- `POST /api/flight/update` - Update flight state with control inputs
+- `GET /api/flight/state` - Get current flight state
+
+## API Endpoints
+
+### POST /api/flight/update
+
+Update the flight state with control inputs.
+
+**Request:**
+```json
+{
+  "throttle": 0.5
+}
+```
+
+**Response:**
+```json
+{
+  "position": 0.5
+}
+```
+
+### GET /api/flight/state
+
+Retrieve the current flight state.
+
+**Response:**
+```json
+{
+  "position": 0.5
+}
 ```
 
 ## Architecture
 
-### Core Modules
+### FlightPhysics Class
 
-- `flight_physics.py` - Main physics engine with 6-DOF equations of motion
-- `aircraft_model.py` - Aircraft configuration and characteristics
-- `aerodynamics.py` - Aerodynamic force/moment calculations
-- `propulsion.py` - Engine simulation
-- `atmosphere.py` - Atmospheric modeling
+The core physics engine that manages aircraft state and updates.
+
+**Methods:**
+- `update(control_inputs)` - Update state based on control inputs
+- `serialize_state()` - Get current state as dictionary
+- `run_update_loop(control_inputs)` - Single update cycle
+
+## Testing
+
+```bash
+pytest
+```
 
 ## Development
 
+Install development dependencies:
+
 ```bash
-# Install with dev dependencies
 pip install -e ".[dev]"
-
-# Run tests
-pytest
-
-# Run with coverage
-pytest --cov=aviation_flight_dynamics
 ```
 
-## API Reference
+## Future Enhancements
 
-### FlightPhysics
-
-#### Methods
-
-- `update(control_inputs)` - Update flight state based on control inputs
-- `serialize_state()` - Get current flight state as dictionary
-- `run_update_loop(control_inputs)` - Run one physics update cycle
-
-#### Control Inputs
-
-```python
-{
-    'throttle': float,      # 0.0 to 1.0
-    'pitch': float,         # -1.0 to 1.0 (radians)
-    'roll': float,          # -1.0 to 1.0 (radians)
-    'yaw': float            # -1.0 to 1.0 (radians)
-}
-```
-
-#### Flight State
-
-```python
-{
-    'position': float,      # Current position
-    'velocity': float,      # Current velocity
-    'attitude': dict,       # Pitch, roll, yaw
-    'altitude': float,      # Current altitude
-    'airspeed': float       # Current airspeed
-}
-```
+- [ ] Aerodynamic modeling (lift, drag, thrust)
+- [ ] Engine performance simulation
+- [ ] Fuel consumption calculations
+- [ ] Environmental effects (wind, turbulence)
+- [ ] Landing gear dynamics
+- [ ] Autopilot integration
 
 ## License
 

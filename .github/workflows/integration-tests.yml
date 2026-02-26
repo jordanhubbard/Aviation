@@ -43,7 +43,7 @@ jobs:
 
     - name: Run integration tests
       run: |
-        pytest tests/integration
+        pytest tests/integration --junitxml=tests/integration/results/results.xml
 
     - name: Archive test results
       if: failure()
@@ -51,3 +51,14 @@ jobs:
       with:
         name: test-results
         path: tests/integration/results
+
+    - name: Start Docker Compose
+      run: |
+        docker-compose -f docker-compose.cache.yml up -d
+        docker-compose -f docker-compose.monitoring.yml up -d
+
+    - name: Stop Docker Compose
+      if: always()
+      run: |
+        docker-compose -f docker-compose.cache.yml down
+        docker-compose -f docker-compose.monitoring.yml down
