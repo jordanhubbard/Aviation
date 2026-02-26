@@ -1,52 +1,48 @@
 // alertStore.ts
-// Alert state management using Zustand
-
 import { create } from 'zustand';
-
-export enum AlertLevel {
-  MASTER_WARNING = 'MASTER_WARNING',
-  MASTER_CAUTION = 'MASTER_CAUTION',
-  ADVISORY = 'ADVISORY',
-}
 
 export interface Alert {
   id: string;
-  level: AlertLevel;
+  level: 'warning' | 'caution' | 'advisory';
   message: string;
-  timestamp: number;
+  timestamp: Date;
   acknowledged: boolean;
 }
 
 interface AlertStore {
   alerts: Alert[];
   addAlert: (alert: Omit<Alert, 'id' | 'timestamp' | 'acknowledged'>) => void;
-  removeAlert: (id: string) => void;
   acknowledgeAlert: (id: string) => void;
+  clearAlert: (id: string) => void;
   clearAllAlerts: () => void;
-  getActiveAlerts: () => Alert[];
-  getAlertsByLevel: (level: AlertLevel) => Alert[];
 }
 
-export const useAlertStore = create<AlertStore>((set, get) => ({
+const PRIORITY_ORDER = {
+  warning: 0,
+  caution: 1,
+  advisory: 2,
+};
+
+export const useAlertStore = create<AlertStore>((set) => ({
   alerts: [],
 
   addAlert: (alert) =>
-    set((state) => ({
-      alerts: [
-        ...state.alerts,
-        {
-          ...alert,
-          id: `alert-${Date.now()}-${Math.random()}`,
-          timestamp: Date.now(),
-          acknowledged: false,
-        },
-      ],
-    })),
+    set((state) => {
+      const newAlert: Alert = {
+        ...alert,
+        id: `alert-${Date.now()}-${Math.random()}`,
+        timestamp: new Date(),
+        acknowledged: false,
+      };
 
-  removeAlert: (id) =>
-    set((state) => ({
-      alerts: state.alerts.filter((alert) => alert.id !== id),
-    })),
+      // Add alert and sort by priority (warning > caution > advisory)
+      const updatedAlerts = [...state.alerts, newAlert].sort(
+        (a, b) => PRIORITY_ORDER[a.level] - PRIORITY_ORDER[b.level]
+      );
+
+      // Keep only top 3 alerts
+      return { alerts: updatedAlerts.slice(0, 3) };
+    }),
 
   acknowledgeAlert: (id) =>
     set((state) => ({
@@ -55,15 +51,10 @@ export const useAlertStore = create<AlertStore>((set, get) => ({
       ),
     })),
 
+  clearAlert: (id) =>
+    set((state) => ({
+      alerts: state.alerts.filter((alert) => alert.id !== id),
+    })),
+
   clearAllAlerts: () => set({ alerts: [] }),
-
-  getActiveAlerts: () => {
-    const state = get();
-    return state.alerts.filter((alert) => !alert.acknowledged);
-  },
-
-  getAlertsByLevel: (level) => {
-    const state = get();
-    return state.alerts.filter((alert) => alert.level === level);
-  },
 }));

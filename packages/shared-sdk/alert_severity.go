@@ -22,6 +22,14 @@ const (
     PerformanceDegradation
     // InformationalUpdate represents an informational update alert.
     InformationalUpdate
+    // EngineAlert represents an engine-related alert.
+    EngineAlert
+    // FuelAlert represents a fuel-related alert.
+    FuelAlert
+    // OilAlert represents an oil-related alert.
+    OilAlert
+    // ElectricalAlert represents an electrical system alert.
+    ElectricalAlert
 )
 
 // GetSeverity returns the severity level for a given alert type.
@@ -33,6 +41,14 @@ func GetSeverity(alertType AlertType) AlertSeverity {
         return Caution
     case InformationalUpdate:
         return Advisory
+    case EngineAlert:
+        return Warning
+    case FuelAlert:
+        return Caution
+    case OilAlert:
+        return Warning
+    case ElectricalAlert:
+        return Caution
     default:
         return Advisory
     }
