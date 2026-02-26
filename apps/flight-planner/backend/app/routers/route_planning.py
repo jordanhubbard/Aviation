@@ -68,13 +68,53 @@ def insert_waypoint_route(req: RouteRequest, waypoint: Tuple[float, float], posi
 
 @router.post("/route/parallel_offset", response_model=RouteResponse)
 def parallel_offset_route(req: RouteRequest, offset_distance: float) -> RouteResponse:
+    origin = get_airport_coordinates(req.origin)
+    dest = get_airport_coordinates(req.destination)
+    if not origin or not dest:
+        raise HTTPException(status_code=400, detail="Invalid origin or destination code")
+    
+    o_lat = origin["latitude"]
+    o_lon = origin["longitude"]
+    d_lat = dest["latitude"]
+    d_lon = dest["longitude"]
+    
+    points, planned_segments = plan_route(
+        origin=(o_lat, o_lon),
+        destination=(d_lat, d_lon),
+        cruising_altitude_ft=req.altitude,
+        avoid_airspaces_enabled=req.avoid_airspaces,
+    )
+    
     updated_points = parallel_offset(points, offset_distance)
-    return calculate_route_response(updated_points, req)
+    response = calculate_route_response(updated_points, req)
+    response.parallel_offset_active = True
+    response.parallel_offset_distance_nm = offset_distance
+    return response
 
 @router.post("/route/hold_pattern", response_model=RouteResponse)
 def hold_pattern_route(req: RouteRequest, waypoint: str) -> RouteResponse:
+    origin = get_airport_coordinates(req.origin)
+    dest = get_airport_coordinates(req.destination)
+    if not origin or not dest:
+        raise HTTPException(status_code=400, detail="Invalid origin or destination code")
+    
+    o_lat = origin["latitude"]
+    o_lon = origin["longitude"]
+    d_lat = dest["latitude"]
+    d_lon = dest["longitude"]
+    
+    points, planned_segments = plan_route(
+        origin=(o_lat, o_lon),
+        destination=(d_lat, d_lon),
+        cruising_altitude_ft=req.altitude,
+        avoid_airspaces_enabled=req.avoid_airspaces,
+    )
+    
     updated_points = hold_pattern(points, waypoint)
-    return calculate_route_response(updated_points, req)
+    response = calculate_route_response(updated_points, req)
+    response.hold_pattern_active = True
+    response.hold_waypoint = waypoint
+    return response
 def calculate_route(req: RouteRequest) -> RouteResponse:
     return calculate_route_response(points, req)
 

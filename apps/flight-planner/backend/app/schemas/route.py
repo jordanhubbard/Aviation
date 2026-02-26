@@ -86,3 +86,7 @@ class RouteResponse(BaseModel):
     headwind_kt: Optional[float] = None
     crosswind_kt: Optional[float] = None
     groundspeed_kt: Optional[float] = None
+    hold_pattern_active: bool = False
+    hold_waypoint: Optional[str] = None
+    parallel_offset_active: bool = False
+    parallel_offset_distance_nm: Optional[float] = None

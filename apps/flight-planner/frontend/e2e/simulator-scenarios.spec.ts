@@ -74,3 +74,9 @@ test('PFD/MFD interactions', async ({ page }) => {
   await page.getByRole('button', { name: 'Toggle MFD' }).click();
   await expect(page.getByText('MFD Active')).toBeVisible();
 });
+
+// Define expected UI states for each flow
+// Startup: Simulator Startup heading visible, Simulator Running text visible
+// Flight Plan: Flight Plan Details heading visible, Route: KSFO to KLAX text visible
+// Approach: Approach in Progress text visible, Approach Completed text visible
+// PFD/MFD: PFD Active text visible, MFD Active text visible
