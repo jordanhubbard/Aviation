@@ -8,6 +8,9 @@ setup(
     packages=find_packages(),
     python_requires='>=3.11',
     install_requires=[
+        'fastapi>=0.70.0',
+        'uvicorn>=0.15.0',
+        'pydantic>=1.8.2',
         'numpy>=1.24.0',
     ],
     extras_require={
