@@ -33,6 +33,13 @@ export const TabNavigation: React.FC<TabNavigationProps> = ({
   }, [useDefaultStyles]);
 
   const handleKeyDown = (event: React.KeyboardEvent<HTMLButtonElement>) => {
+    if (event.altKey && event.key === '1') {
+      event.preventDefault();
+      onTabSelect?.(panes[0].id);
+    } else if (event.altKey && event.key === '2') {
+      event.preventDefault();
+      onTabSelect?.(panes[1].id);
+    }
     if (!onTabSelect) {
       return;
     }

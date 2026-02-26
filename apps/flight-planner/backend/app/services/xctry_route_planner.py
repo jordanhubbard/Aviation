@@ -173,12 +173,28 @@ def insert_waypoint(route: List[Tuple[float, float]], waypoint: Tuple[float, flo
     return route[:index] + [waypoint] + route[index:]
 
 def parallel_offset(route: List[Tuple[float, float]], offset_distance: float) -> List[Tuple[float, float]]:
-    # Logic for parallel offset
-    pass
+    offset_route = []
+    for i in range(len(route) - 1):
+        start = route[i]
+        end = route[i + 1]
+        dx = end[0] - start[0]
+        dy = end[1] - start[1]
+        length = math.sqrt(dx**2 + dy**2)
+        offset_dx = -dy / length * offset_distance
+        offset_dy = dx / length * offset_distance
+        offset_route.append((start[0] + offset_dx, start[1] + offset_dy))
+    offset_route.append((route[-1][0] + offset_dx, route[-1][1] + offset_dy))
+    return offset_route
 
 def hold_pattern(route: List[Tuple[float, float]], waypoint: str) -> List[Tuple[float, float]]:
-    # Logic for hold pattern
-    pass
+    try:
+        index = route.index(waypoint)
+        hold_route = route[:index + 1]
+        hold_route.extend([waypoint] * 4)  # Simulate a simple hold pattern
+        hold_route.extend(route[index + 1:])
+        return hold_route
+    except ValueError:
+        return route
 
 def plan_route(
     origin: Tuple[float, float],
