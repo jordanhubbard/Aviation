@@ -3,6 +3,13 @@ import { test, expect } from '@playwright/test';
 // Setup and teardown for simulator
 const SIMULATOR_URL = 'http://localhost:3000';
 
+// Capture screenshots on failure
+test.afterEach(async ({ page }, testInfo) => {
+  if (testInfo.status !== testInfo.expectedStatus) {
+    await page.screenshot({ path: `screenshots/${testInfo.title}.png`, fullPage: true });
+  }
+});
+
 test.beforeAll(async () => {
   // Start the simulator if needed
 });

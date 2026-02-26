@@ -18,5 +18,9 @@ This document outlines the persistence requirements for flight plans, settings, 
 - **Settings**: Sync changes immediately when online. Offline changes should queue for sync.
 - **Recordings**: Upload to cloud storage when online. Offline storage should be temporary and limited to 500MB.
 
+## Database Options
+- **SQLite**: Use for local persistence to ensure offline access and quick setup.
+- **PostgreSQL**: Optional for multi-user deployments to handle larger data volumes and concurrent access.
+
 ## Conclusion
 These requirements ensure data integrity, user accessibility, and efficient storage management across aviation applications.

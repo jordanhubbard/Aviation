@@ -1,38 +1,10 @@
 {
-  "name": "aviation-monorepo",
-  "version": "0.1.0",
-  "private": true,
-  "description": "Monorepo for aviation-related applications and SDKs",
-  "workspaces": [
-    "packages/*",
-    "apps/*",
-    "apps/aviation-accident-tracker/backend",
-    "apps/aviation-accident-tracker/frontend",
-    "apps/g1000-simulator/backend",
-    "apps/g1000-simulator/frontend"
-  ],
+  "name": "aviation-e2e-tests",
+  "version": "1.0.0",
   "scripts": {
-    "build": "npm run build --workspaces --if-present",
-    "dev": "npm run dev --workspaces --if-present",
-    "test": "playwright test --config=apps/aviation-accident-tracker/frontend/playwright.config.ts",
-    "lint": "npm run lint --workspaces --if-present",
-    "clean": "npm run clean --workspaces --if-present",
-    "secrets:migrate": "ts-node scripts/migrate-secrets.ts",
-    "keystore": "ts-node scripts/keystore-cli.ts",
-    "keystore:list": "ts-node scripts/keystore-cli.ts services"
+    "test:e2e": "playwright test"
   },
-  "keywords": [
-    "aviation",
-    "monorepo"
-  ],
-  "author": "Jordan Hubbard",
-  "license": "MIT",
   "devDependencies": {
-    "@types/node": "^25.3.0",
-    "ts-node": "^10.9.2",
-    "typescript": "^5.0.0"
-  },
-  "overrides": {
-    "diff": "^8.0.3"
+    "@playwright/test": "^1.0.0"
   }
 }
