@@ -6,15 +6,20 @@ class TestAHRSSimulation(unittest.TestCase):
         self.ahrs = AHRS()
 
     def test_compute_attitude(self):
-        # Add test logic for compute_attitude
+        attitude = self.ahrs.compute_attitude(10, 20, 30)
+        self.assertEqual(attitude.pitch, 0.0)
+        self.assertEqual(attitude.roll, 0.0)
+        self.assertEqual(attitude.yaw, 0.0)
         pass
 
     def test_magnetic_heading(self):
-        # Add test logic for magnetic_heading
+        heading = self.ahrs.magnetic_heading(100, 5)
+        self.assertIsNone(heading)
         pass
 
     def test_slip_skid_indicator(self):
-        # Add test logic for slip_skid_indicator
+        indicator = self.ahrs.slip_skid_indicator()
+        self.assertIsNone(indicator)
         pass
 
     def test_coordinate_transform(self):
