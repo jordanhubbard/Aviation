@@ -1,10 +1,8 @@
-/**
- * G1000 Rendering SDK
- * Canvas rendering library for G1000 PFD/MFD displays and visual themes
- */
+// G1000 Rendering Library - Main Entry Point
+// Canvas rendering library for G1000 PFD/MFD displays and visual themes
 
-export * from './primitives';
-export * from './pfd';
-export * from './mfd';
-export * from './themes';
-export * from './utils';
+export { PFDRenderer } from './pfd/renderer';
+export { MFDRenderer } from './mfd/renderer';
+export { CanvasTheme, ThemeManager } from './theme/theme';
+export { InputHandler } from './input/handler';
+export type { RenderContext, DisplayState } from './types';
