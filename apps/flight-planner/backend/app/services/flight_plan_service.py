@@ -122,8 +122,6 @@ def create_flight_plan(flight_plan: FlightPlan) -> FlightPlan:
 
     flight_plans.append(flight_plan.dict())
     save_flight_plans()
-    save_flight_plans()
-    save_flight_plans()
     return flight_plan
 
 @router.get("/{flight_plan_id}", response_model=FlightPlan)
