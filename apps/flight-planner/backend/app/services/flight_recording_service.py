@@ -7,14 +7,14 @@ import os
 router = APIRouter()
 
 class FlightRecording(BaseModel):
-    metadata: {
+    metadata: dict
         aircraft: str,
         startTime: str,
         duration: int,
         departure: str,
         destination: str
     }
-    telemetry: {
+    telemetry: dict
         timestamp: List[int],
         latitude: List[float],
         longitude: List[float],
@@ -24,7 +24,7 @@ class FlightRecording(BaseModel):
         roll: List[float],
         speed: List[float]
     }
-    events: List[{
+    events: List[dict]
         time: int,
         type: str,
         data: dict
