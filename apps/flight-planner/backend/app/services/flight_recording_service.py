@@ -8,27 +8,8 @@ router = APIRouter()
 
 class FlightRecording(BaseModel):
     metadata: dict
-        aircraft: str,
-        startTime: str,
-        duration: int,
-        departure: str,
-        destination: str
-    }
     telemetry: dict
-        timestamp: List[int],
-        latitude: List[float],
-        longitude: List[float],
-        altitude: List[float],
-        heading: List[float],
-        pitch: List[float],
-        roll: List[float],
-        speed: List[float]
-    }
     events: List[dict]
-        time: int,
-        type: str,
-        data: dict
-    }]
 
 FLIGHT_RECORDINGS_FILE = 'flight_recordings.json'
 
@@ -44,7 +25,7 @@ else:
 # Save flight recordings to file
 def save_flight_recordings():
     with open(FLIGHT_RECORDINGS_FILE, 'w') as file:
-        json.dump([fr.dict() for fr in flight_recordings], file)
+        json.dump([fr if isinstance(fr, dict) else fr.dict() for fr in flight_recordings], file)
 
 
 @router.post("/", response_model=FlightRecording)
@@ -63,7 +44,7 @@ def read_flight_recording(flight_recording_id: int):
 @router.put("/{flight_recording_id}", response_model=FlightRecording)
 def update_flight_recording(flight_recording_id: int, flight_recording: FlightRecording):
     for idx, fr in enumerate(flight_recordings):
-        if fr['metadata']['id'] == flight_recording_id:
+        if fr['metadata'].get('id') == flight_recording_id:
             flight_recordings[idx] = flight_recording.dict()
             save_flight_recordings()
             return flight_recording
@@ -72,7 +53,7 @@ def update_flight_recording(flight_recording_id: int, flight_recording: FlightRe
 @router.delete("/{flight_recording_id}")
 def delete_flight_recording(flight_recording_id: int):
     for idx, fr in enumerate(flight_recordings):
-        if fr['metadata']['id'] == flight_recording_id:
+        if fr['metadata'].get('id') == flight_recording_id:
             del flight_recordings[idx]
             save_flight_recordings()
             return {"message": "Flight recording deleted"}
