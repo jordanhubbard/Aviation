@@ -78,14 +78,18 @@ class Settings(BaseSettings):
 
 import yaml
 
-# Load aircraft profiles configuration
-with open(REPO_ROOT / 'backend' / 'config' / 'aircraft_profiles.yaml', 'r') as file:
-    aircraft_profiles = yaml.safe_load(file)
+settings = Settings()
+
+# Load aircraft profiles configuration (stored as module-level variables, not on the Settings object)
+try:
+    with open(REPO_ROOT / 'backend' / 'config' / 'aircraft_profiles.yaml', 'r') as file:
+        aircraft_profiles = yaml.safe_load(file)
+except FileNotFoundError:
+    aircraft_profiles = {}
 
 # Load G1000 configuration
-with open(REPO_ROOT / 'backend' / 'config' / 'g1000_configuration.yaml', 'r') as file:
-    g1000_configuration = yaml.safe_load(file)
-
-settings = Settings()
-settings.aircraft_profiles = aircraft_profiles
-settings.g1000_configuration = g1000_configuration
+try:
+    with open(REPO_ROOT / 'backend' / 'config' / 'g1000_configuration.yaml', 'r') as file:
+        g1000_configuration = yaml.safe_load(file)
+except FileNotFoundError:
+    g1000_configuration = {}

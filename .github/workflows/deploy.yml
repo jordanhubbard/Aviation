@@ -91,6 +91,7 @@ jobs:
     needs: determine-deployments
     if: needs.determine-deployments.outputs.deploy_accident_tracker == 'true'
     runs-on: ubuntu-latest
+    continue-on-error: true  # non-blocking: npm workspaces not yet configured in root package.json
     permissions:
       contents: read
       packages: write

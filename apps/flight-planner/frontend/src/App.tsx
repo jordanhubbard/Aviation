@@ -110,7 +110,7 @@ function App() {
           },
         }),
       },
-    }),
+    })
   }, [themeMode]);
   const location = useLocation()
   // const theme = useTheme()
