@@ -11,7 +11,7 @@ import { useState } from 'react'
 import './styles/globals.css'
 
 // Create a Material-UI theme with aviation-inspired design
-const theme = (mode: string = 'light') => createTheme({
+const theme = (mode: 'light' | 'dark' = 'light') => createTheme({
   palette: {
     mode: mode,
     primary: {

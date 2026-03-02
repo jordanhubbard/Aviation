@@ -6,6 +6,7 @@ from .procedures import Procedures
 from .geo_calculations import GeoCalculations
 from .alert_manager import AlertManager
 from pydantic import BaseModel, Field
+from app.schemas.flight_plan import FlightPlanSummary
 from typing import List, Optional, Dict, Any
 from dataclasses import dataclass, field
 from enum import Enum

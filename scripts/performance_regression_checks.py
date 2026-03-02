@@ -27,9 +27,12 @@ if os.path.exists(historical_data_path):
 
 # Define performance metrics targets
 performance_targets = {
-    'response_time': 200,  # Target response time in milliseconds
+    'response_time': 200,    # Target response time in milliseconds
     'cpu_usage': 50,         # Target CPU usage percentage
-    'memory_usage': 200      # Target memory usage in MB
+    'memory_usage': 200,     # Target memory usage in MB
+    'frame_rate_pfd': 30,    # Target PFD frame rate (fps)
+    'frame_rate_mfd': 10,    # Target MFD frame rate (fps)
+    'websocket_latency': 50, # Target WebSocket latency (ms)
 }
 
 def compare_metrics(current_metrics, historical_metrics):

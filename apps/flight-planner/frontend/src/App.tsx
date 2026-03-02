@@ -3,7 +3,7 @@ import { Routes, Route, useLocation } from 'react-router-dom'
 import { Container, AppBar, Toolbar, Typography, Box, Button } from '@mui/material'
 import { BugReport } from '@mui/icons-material'
 import { motion, AnimatePresence } from 'framer-motion'
-import { useTheme } from '@mui/material/styles'
+import { ThemeProvider, createTheme, useTheme } from '@mui/material/styles'
 import useMediaQuery from '@mui/material/useMediaQuery'
 import Navigation from './components/Navigation'
 import G1000Controls from './components/G1000Controls'
@@ -33,7 +33,6 @@ function MissingRoute() {
   }, [location.pathname, location.search])
 
   return (
-    <ThemeProvider theme={theme}>
     <Box>
       <Typography variant="h5" sx={{ mb: 1 }}>
         Page not found
@@ -69,10 +68,8 @@ const pageVariants = {
   },
 }
 
-import { ThemeProvider, createTheme } from '@mui/material/styles';
-
 function App() {
-  const [themeMode, setThemeMode] = useState('light');
+  const [themeMode, setThemeMode] = useState<'light' | 'dark'>('light');
 
   const theme = useMemo(() =>
     createTheme({
