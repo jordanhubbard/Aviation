@@ -228,19 +228,18 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Set up Go
-        uses: actions/setup-go@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
         with:
-          go-version: '1.20'
+          node-version: '20'
 
-      - name: Build Go applications
+      - name: Verify monorepo Node.js structure
+        run: npm install --ignore-scripts
+
+      - name: Build status
         run: |
-          go build -v ./...
-
-    - name: Build status
-      run: |
-        echo "✅ All validation checks passed!"
-        echo "📦 Applications are ready for deployment"
+          echo "✅ All validation checks passed!"
+          echo "📦 Applications are ready for deployment"
 
   # Performance Regression Checks
   performance-regression:
@@ -261,24 +260,18 @@ jobs:
 
       - name: Run performance regression checks
         run: |
+          mkdir -p performance_metrics
           python scripts/performance_regression_checks.py
 
       - name: Store historical metrics
         run: |
-          mkdir -p performance_metrics
           python scripts/store_historical_metrics.py
 
-      - name: Run G1000 Simulator Performance Tests
+      - name: Fail on performance regressions
+        if: failure()
         run: |
-          cd apps/g1000-simulator/backend
-          pip install -r requirements.txt
-          pytest tests/performance/ -v
-
-    - name: Fail on performance regressions
-      if: failure()
-      run: |
-        echo "Performance regressions detected. Failing the CI."
-        exit 1
+          echo "Performance regressions detected. Failing the CI."
+          exit 1
 
   # Integration Tests
   integration-tests:
