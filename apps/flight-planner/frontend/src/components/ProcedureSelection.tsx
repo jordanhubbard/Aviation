@@ -76,7 +76,6 @@ const ProcedureSelection = ({ airportCode }) => {
         <Grid item xs={12}>
           <Typography variant="body1">Preview of procedure legs will be shown here.</Typography>
         </Grid>
-      )}
     </Grid>
   );
 };

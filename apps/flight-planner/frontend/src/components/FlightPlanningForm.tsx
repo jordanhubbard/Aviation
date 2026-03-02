@@ -1,9 +1,18 @@
-import React, { useMemo, useState } from 'react'; import ImportExportUI from './ImportExportUI';
+import React, { useMemo, useState, useEffect } from 'react'
+import ImportExportUI from './ImportExportUI'
 import {
   Autocomplete,
+  Button,
   Checkbox,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
   FormControlLabel,
   Grid,
+  List,
+  ListItem,
+  ListItemText,
   Slider,
   TextField,
   Typography,
@@ -12,7 +21,7 @@ import toast from 'react-hot-toast'
 
 import { useAirportSearch } from '../hooks/useAirports'
 import { validateAirportCode } from '../utils'
-import type { Airport, FlightPlanRequest, LocalPlanRequest, RoutePlanRequest } from '../types'
+import type { Airport, FlightPlan, FlightPlanRequest, LocalPlanRequest, RoutePlanRequest } from '../types'
 import { FormSection } from './shared'
 import ModeSelector, { type PlanMode } from './ModeSelector'
 
@@ -26,19 +35,15 @@ const optionLabel = (a: Airport) => {
   if (a.name) return `${code} — ${a.name}`
   return code
 }
-
-import { Button, Dialog, DialogActions, DialogContent, DialogTitle, List, ListItem, ListItemText } from '@mui/material';
-import { useEffect } from 'react';
-
 const FlightPlanningForm: React.FC<Props> = ({ isLoading, onSubmit }) => {
-  const [flightPlans, setFlightPlans] = useState<FlightPlan[]>([]);
-  const [open, setOpen] = useState(false);
+  const [flightPlans, setFlightPlans] = useState<FlightPlan[]>([])
+  const [open, setOpen] = useState(false)
 
   useEffect(() => {
     fetch('/api/flight-plans')
       .then(response => response.json())
-      .then(data => setFlightPlans(data));
-  }, []);
+      .then((data: FlightPlan[]) => setFlightPlans(data))
+  }, [])
 
   const handleLoad = (plan: FlightPlan) => {
     setOrigin(plan.origin);
@@ -137,8 +142,9 @@ const FlightPlanningForm: React.FC<Props> = ({ isLoading, onSubmit }) => {
   }
 
   return (
+    <>
     <ImportExportUI />
-<Button variant="outlined" onClick={handleOpen} disabled={isLoading}>Load Flight Plan</Button>
+    <Button variant="outlined" onClick={handleOpen} disabled={isLoading}>Load Flight Plan</Button>
 
       <Dialog open={open} onClose={handleClose}>
         <DialogTitle>Load Flight Plan</DialogTitle>
@@ -376,6 +382,7 @@ const FlightPlanningForm: React.FC<Props> = ({ isLoading, onSubmit }) => {
         />
       </Grid>
     </FormSection>
+    </>
   )
 }
 

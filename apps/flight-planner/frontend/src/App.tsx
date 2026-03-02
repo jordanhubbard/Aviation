@@ -69,12 +69,14 @@ const pageVariants = {
 }
 
 function App() {
-  const [themeMode, setThemeMode] = useState<'light' | 'dark'>('light');
+  const [themeMode, setThemeMode] = useState<'light' | 'dark' | 'night' | 'high-contrast'>('light');
 
-  const theme = useMemo(() =>
-    createTheme({
+  const theme = useMemo(() => {
+    const baseMode: 'light' | 'dark' =
+      themeMode === 'night' || themeMode === 'high-contrast' ? 'dark' : themeMode
+    return createTheme({
       palette: {
-        mode: themeMode,
+        mode: baseMode,
         ...(themeMode === 'night' && {
           background: {
             default: '#1e1e1e',
@@ -109,7 +111,7 @@ function App() {
         }),
       },
     }),
-  [themeMode]);
+  }, [themeMode]);
   const location = useLocation()
   // const theme = useTheme()
   const isSmall = useMediaQuery(theme.breakpoints.down('sm'))
@@ -162,6 +164,7 @@ function App() {
   }, [repoUrl, revision, runtimeSha])
 
   return (
+    <ThemeProvider theme={theme}>
     <ErrorBoundary>
       <Box sx={{ flexGrow: 1, minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
         <AppBar position="static" component="header" role="banner">

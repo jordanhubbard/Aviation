@@ -3,6 +3,7 @@
 class AHRS:
     def __init__(self):
         # Initialize AHRS parameters
+        pass
 
     def compute_attitude(self, pitch, roll, yaw):
         # Implement attitude computation logic

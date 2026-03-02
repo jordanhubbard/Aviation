@@ -38,7 +38,7 @@ const parseSseBlock = (block: string): { event?: string; data?: string } => {
 }
 
 export const flightPlannerService = {
-  listFlightPlans: async (): Promise<FlightPlanSummary[]> => {
+  listFlightPlans: async (): Promise<FlightPlan[]> => {
     const response = await fetch('/api/flight-plans/list');
     if (!response.ok) {
         throw new Error('Failed to list flight plans');
@@ -52,19 +52,17 @@ export const flightPlannerService = {
     }
     return response.json();
   },
+
+  createFlightPlan: async (data: FlightPlanRequest): Promise<FlightPlan> => {
     const response = await fetch('/api/flight-plans', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(data),
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
     });
     if (!response.ok) {
-        throw new Error('Failed to create flight plan');
+      throw new Error('Failed to create flight plan');
     }
     return response.json();
-    const response = await apiClient.post<TResponse>('/plan', data)
-    return response.data
   },
 
   planStream: async <TPlan>(
