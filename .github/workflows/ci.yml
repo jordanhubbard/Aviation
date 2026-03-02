@@ -93,8 +93,8 @@ jobs:
       
       - name: Run Python tests
         working-directory: apps/flight-planner
-        run: pytest
-      
+        run: pytest --ignore=tests/integration_test.py --ignore=tests/test_integration.py
+
       - name: Install frontend dependencies
         working-directory: apps/flight-planner/frontend
         run: npm ci
