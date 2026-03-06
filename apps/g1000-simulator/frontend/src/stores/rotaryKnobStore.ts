@@ -1,4 +1,4 @@
-import { create } from 'zustand'
+import create from 'zustand'
 
 import {
   ROTARY_KNOB_FOCUS_TIMEOUT_MS,

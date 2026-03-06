@@ -1,5 +1,5 @@
 // configStore.ts
-import { create } from 'zustand';
+import create from 'zustand';
 
 export interface SimulatorConfig {
   // Display settings
