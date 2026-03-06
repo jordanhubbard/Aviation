@@ -1,3 +1,4 @@
+import json
 import unittest
 from app.plugins.loader import PluginLoader
 from app.plugins.registry import PluginRegistry

@@ -12,7 +12,7 @@ def client():
         with app.app_context():
             db.create_all()
             # Create an instructor user for login
-            user = User(email='instructor@example.com', first_name='John', last_name='Doe', role='instructor', status='active')
+            user = User(email='instructor@example.com', first_name='John', last_name='Doe', role='instructor', status='active', is_instructor=True)
             user.set_password('instructor123')
             db.session.add(user)
             db.session.commit()
@@ -22,7 +22,7 @@ def client():
 
 
 def login(client, email, password):
-    return client.post('/login', data={
+    return client.post('/auth/login', data={
         'email': email,
         'password': password
     }, follow_redirects=True)

@@ -20,8 +20,14 @@ def test_ensure_aircraft_image_existing(tmp_path, monkeypatch):
         f.write(jpeg_header + b"x" * (2048 - len(jpeg_header)))
     orig_exists = os.path.exists
     orig_getsize = os.path.getsize
-    monkeypatch.setattr(os.path, "exists", lambda path: str(fpath) in path or orig_exists(path))
-    monkeypatch.setattr(os.path, "getsize", lambda path: 2048 if str(fpath) in path else orig_getsize(path))
+    def _exists(path):
+        path_str = str(path) if path is not None else ""
+        return str(fpath) in path_str or orig_exists(path)
+    def _getsize(path):
+        path_str = str(path) if path is not None else ""
+        return 2048 if str(fpath) in path_str else orig_getsize(path)
+    monkeypatch.setattr(os.path, "exists", _exists)
+    monkeypatch.setattr(os.path, "getsize", _getsize)
     monkeypatch.setattr(os.path, "dirname", lambda path: str(tmp_path))
     # Should return the correct path for an existing file
     result = ensure_aircraft_image(fname)
