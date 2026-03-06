@@ -12,6 +12,6 @@ Flask-Login==0.6.3
 Flask-Mail==0.10.0
 Flask-Migrate==4.0.7
 Flask-SQLAlchemy==3.1.1
-Flask-WTF==1.2.1
+Flask-WTF==1.2.2
 email-validator>=2.0.0
 Werkzeug>=2.3.0
