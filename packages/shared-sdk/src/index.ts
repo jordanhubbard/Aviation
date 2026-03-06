@@ -1,11 +1,8 @@
-export * from './ai';
-export * from './service';
+export * from './ai.js';
+export * from './service.js';
 
 // Caching
-export * from './cache';
-
-// Beads error/issue reporting
-export * from './beads';
+export * from './cache/index.js';
 
 // Aviation data services
 export {
@@ -14,53 +11,17 @@ export {
   searchAirports,
   getAirportByCode,
   findNearbyAirports,
-} from './aviation/airports';
-export type { Airport, AirportSearchOptions } from './aviation/airports';
+} from './aviation/airports/index.js';
+export type { Airport, AirportSearchOptions } from './aviation/airports/types.js';
 
 // Aviation navigation utilities
-export * from './aviation/navigation';
+export * from './aviation/navigation/index.js';
 
-// Aviation weather services - explicit exports with explicit path
-export {
-  // Cache
-  WeatherCache,
-  weatherCache,
-  // METAR
-  fetchMetarRaw,
-  fetchMetarRaws,
-  parseMetar,
-  type MetarData,
-  // OpenWeatherMap
-  getOpenWeatherMapCurrent,
-  toWeatherData,
-  OpenWeatherMapError,
-  type OpenWeatherMapResponse,
-  type WeatherData,
-  // Open-Meteo
-  getOpenMeteoCurrent,
-  getDailyForecast,
-  getHourlyForecast,
-  samplePointsAlongRoute,
-  OpenMeteoError,
-  type CurrentWeather,
-  type DailyForecast,
-  type HourlyForecast,
-  // Flight Category
-  flightCategory,
-  recommendationForCategory,
-  warningsForConditions,
-  colorForCategory,
-  metersToSM,
-  estimateCeilingFromCloudCover,
-  estimateCeilingFtFromCloudcover,
-  scoreHour,
-  bestDepartureWindows,
-  DEFAULT_THRESHOLDS,
-  type FlightCategory,
-  type FlightCategoryThresholds,
-  type DepartureWindow,
-  type HourlyData,
-} from './aviation/weather/index';
+// Aviation weather services
+export * from './aviation/weather/index.js';
+
+// Date/Time utilities
+export * from './datetime/index.js';
 
 // Integrations
-export * as GoogleCalendar from './integrations/google';
+export * as GoogleCalendar from './integrations/google/index.js';
