@@ -4,6 +4,7 @@ import {
   flightCategory,
   recommendationForCategory,
   warningsForConditions,
+  type FlightCategory,
 } from '@aviation/shared-sdk';
 
 interface AirportConditions {
@@ -15,8 +16,70 @@ interface AirportConditions {
   lastUpdated: Date;
 }
 
+export interface WeatherBriefingServiceConfig {
+  name?: string;
+  enabled?: boolean;
+  autoStart?: boolean;
+}
+
 export class WeatherBriefingService {
   private airportCache: Map<string, AirportConditions> = new Map();
+  private _config: WeatherBriefingServiceConfig;
+
+  constructor(config: WeatherBriefingServiceConfig = {}) {
+    this._config = config;
+  }
+
+  public async start(): Promise<void> {
+    // No-op for compatibility; service is ready when constructed
+  }
+
+  public async stop(): Promise<void> {
+    this.airportCache.clear();
+  }
+
+  public async generateBriefing(station: string, forecastDays: number = 0): Promise<string> {
+    await this.updateAirportWeather([station]);
+    const conditions = this.getAirportConditions(station);
+    if (!conditions) {
+      return `No weather data available for ${station}.`;
+    }
+    const lines = [
+      `WEATHER BRIEFING: ${station}`,
+      `Category: ${conditions.category}`,
+      conditions.metar ? `METAR: ${conditions.metar}` : 'No METAR',
+      `Recommendation: ${conditions.recommendation}`,
+      ...(conditions.warnings.length ? [`Warnings: ${conditions.warnings.join('; ')}`] : []),
+    ];
+    return lines.join('\n');
+  }
+
+  public async getStationSummaries(stationCodes: string[]): Promise<Array<{ code: string; category: string; metar: string | null }>> {
+    await this.updateAirportWeather(stationCodes);
+    return stationCodes.map((code) => {
+      const c = this.getAirportConditions(code);
+      return {
+        code,
+        category: c?.category ?? 'UNKNOWN',
+        metar: c?.metar ?? null,
+      };
+    });
+  }
+
+  public async getStationSnapshot(code: string): Promise<{ code: string; category: string; metar: string | null; recommendation: string; warnings: string[] }> {
+    await this.updateAirportWeather([code]);
+    const c = this.getAirportConditions(code);
+    if (!c) {
+      return { code, category: 'UNKNOWN', metar: null, recommendation: 'No data', warnings: [] };
+    }
+    return {
+      code: c.icao,
+      category: c.category,
+      metar: c.metar,
+      recommendation: c.recommendation,
+      warnings: c.warnings,
+    };
+  }
 
   public async updateAirportWeather(icaoCodes: string[]): Promise<void> {
     console.log(`🌤️  Fetching weather for ${icaoCodes.length} airports...`);

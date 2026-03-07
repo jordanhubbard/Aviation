@@ -1,3 +1,9 @@
+import type {
+  FlightPlanCreateRequest,
+  FlightPlanResponse,
+  FlightPlanUpdateRequest,
+} from "./schema";
+
 export { API_PROTOCOL_VERSION } from "./schema";
 
 // New API client implementation
@@ -6,19 +12,22 @@ export class ApiClient {
     // Initialize API client with base URL
   }
 
-  async getFlightPlan(id: string): Promise<FlightPlanResponse> {
-    // Fetch flight plan by ID
+  async getFlightPlan(_id: string): Promise<FlightPlanResponse> {
+    return { success: false, error: { code: "not_implemented", message: "getFlightPlan" } };
   }
 
-  async createFlightPlan(request: FlightPlanCreateRequest): Promise<FlightPlanResponse> {
-    // Create a new flight plan
+  async createFlightPlan(_request: FlightPlanCreateRequest): Promise<FlightPlanResponse> {
+    return { success: false, error: { code: "not_implemented", message: "createFlightPlan" } };
   }
 
-  async updateFlightPlan(id: string, request: FlightPlanUpdateRequest): Promise<FlightPlanResponse> {
-    // Update an existing flight plan
+  async updateFlightPlan(
+    _id: string,
+    _request: FlightPlanUpdateRequest
+  ): Promise<FlightPlanResponse> {
+    return { success: false, error: { code: "not_implemented", message: "updateFlightPlan" } };
   }
 
-  async deleteFlightPlan(id: string): Promise<void> {
+  async deleteFlightPlan(_id: string): Promise<void> {
     // Delete a flight plan by ID
   }
 }

@@ -134,3 +134,37 @@ export interface PluginEntry {
   registeredAt: number
   initializedAt?: number
 }
+
+/**
+ * Convert a telemetry snapshot (or similar object) to FlightState for plugins
+ */
+export function telemetryToFlightState(telemetry: unknown): FlightState {
+  const t = telemetry as Record<string, unknown> | null;
+  if (!t) {
+    return {
+      position: { latitude: 0, longitude: 0, altitude: 0 },
+      heading: 0,
+      speed: 0,
+      verticalSpeed: 0,
+      pitch: 0,
+      roll: 0,
+      timestamp: 0,
+    };
+  }
+  const pos = (t.position as Record<string, number>) ?? {};
+  const attitude = (t.attitude as Record<string, number>) ?? {};
+  const velocity = (t.velocity as Record<string, number>) ?? {};
+  return {
+    position: {
+      latitude: pos.latitude_deg ?? pos.latitude ?? 0,
+      longitude: pos.longitude_deg ?? pos.longitude ?? 0,
+      altitude: (pos.altitude_ft ?? pos.altitude ?? 0) as number,
+    },
+    heading: attitude.heading_deg ?? (t.heading_deg as number) ?? 0,
+    speed: velocity.ground_speed_kt ?? velocity.speed ?? 0,
+    verticalSpeed: (t.vertical_speed_fpm as number) ?? 0,
+    pitch: attitude.pitch_deg ?? 0,
+    roll: attitude.roll_deg ?? 0,
+    timestamp: (t.timestamp as number) ?? Date.now(),
+  };
+}

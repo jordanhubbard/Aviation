@@ -51,11 +51,11 @@ const resolveMapStyle = (style?: Partial<MfdMapStyle>, theme?: G1000Theme): MfdM
   const themeDefaults = theme
     ? {
         backgroundColor: theme.palette.background,
-        ringColor: theme.palette.mapRing,
-        ringLabelColor: theme.palette.mapLabel,
-        ringLabelFont: theme.typography.small,
-        aircraftColor: theme.palette.mapAircraft,
-        aircraftStrokeColor: theme.palette.mapAircraftStroke,
+        ringColor: theme.palette.mapRing ?? DEFAULT_MFD_MAP_STYLE.ringColor,
+        ringLabelColor: theme.palette.mapLabel ?? DEFAULT_MFD_MAP_STYLE.ringLabelColor,
+        ringLabelFont: theme.typography.small ?? DEFAULT_MFD_MAP_STYLE.ringLabelFont,
+        aircraftColor: theme.palette.mapAircraft ?? DEFAULT_MFD_MAP_STYLE.aircraftColor,
+        aircraftStrokeColor: theme.palette.mapAircraftStroke ?? DEFAULT_MFD_MAP_STYLE.aircraftStrokeColor,
       }
     : {};
 

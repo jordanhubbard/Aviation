@@ -2,6 +2,7 @@ import type {
   FlightPlan,
   FlightPlanLeg,
   FlightPlanSegment,
+  WaypointType,
 } from "../api/schema";
 import {
   DEFAULT_FLIGHT_PLAN_SEGMENT,
@@ -25,7 +26,7 @@ const buildLegs = (waypoints: FplWaypoint[]): FlightPlanLeg[] =>
     sequence: index + 1,
     waypoint: {
       id: waypoint.id,
-      type: waypoint.type ?? "user",
+      type: (waypoint.type ?? "user") as WaypointType,
       name: waypoint.name,
       latitude_deg: waypoint.latitude_deg,
       longitude_deg: waypoint.longitude_deg,

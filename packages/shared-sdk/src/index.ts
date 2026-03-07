@@ -1,18 +1,13 @@
 export * from './ai.js';
 export * from './service.js';
+export * from './beads/index.js';
 
 // Caching
 export * from './cache/index.js';
 
 // Aviation data services
-export {
-  AirportDatabase,
-  getAirportDatabase,
-  searchAirports,
-  getAirportByCode,
-  findNearbyAirports,
-} from './aviation/airports/index.js';
-export type { Airport, AirportSearchOptions } from './aviation/airports/types.js';
+export * from './aviation/airports/index.js';
+export type { Airport, AirportSearchResult } from './aviation/airports/types.js';
 
 // Aviation navigation utilities
 export * from './aviation/navigation/index.js';

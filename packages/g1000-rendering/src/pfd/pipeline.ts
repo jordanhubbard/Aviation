@@ -189,7 +189,7 @@ export const createPfdPipeline = (options: PfdPipelineOptions): PfdPipeline => {
   let viewport = options.viewport;
   let telemetry = options.telemetry;
   let sceneGraph = options.sceneGraph ?? createDefaultPfdSceneGraph();
-  let theme: G1000Theme = resolveG1000Theme(options.theme ?? options.themeManager?.getTheme());
+  let theme: G1000Theme = resolveG1000Theme(options.theme ?? options.themeManager?.getTheme() ?? 'day');
   const loopConfig = resolveLoopConfig(options.loop);
   const intervalMs = 1000 / loopConfig.targetHz;
   let lastFrameMs = 0;
@@ -201,7 +201,7 @@ export const createPfdPipeline = (options: PfdPipelineOptions): PfdPipeline => {
   const performanceHooks = options.performance;
   const logEveryNFrames = performanceHooks?.logEveryNFrames ?? 1;
   const themeManager = options.themeManager;
-  themeManager?.subscribe((nextTheme) => {
+  themeManager?.subscribe((nextTheme: import('../themes').G1000Theme) => {
     theme = nextTheme;
   });
   if (themeManager && options.theme) {

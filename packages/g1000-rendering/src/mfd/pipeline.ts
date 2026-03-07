@@ -207,7 +207,7 @@ export const createMfdPipeline = (options: MfdPipelineOptions): MfdPipeline => {
   let telemetry = options.telemetry;
   let pages = resolvePageRegistry(options.pages);
   let activePage = resolvePageId(options.initialPage, pages);
-  let theme: G1000Theme = resolveG1000Theme(options.theme ?? options.themeManager?.getTheme());
+  let theme: G1000Theme = resolveG1000Theme(options.theme ?? options.themeManager?.getTheme() ?? 'day');
   const loopConfig = resolveLoopConfig(options.loop);
   const intervalMs = 1000 / loopConfig.targetHz;
   let lastFrameMs = 0;
@@ -216,7 +216,7 @@ export const createMfdPipeline = (options: MfdPipelineOptions): MfdPipeline => {
   let timerId: ReturnType<typeof setTimeout> | null = null;
   const fallbackSceneGraph = createDefaultMfdSceneGraph();
   const themeManager = options.themeManager;
-  themeManager?.subscribe((nextTheme) => {
+  themeManager?.subscribe((nextTheme: import('../themes').G1000Theme) => {
     theme = nextTheme;
   });
   if (themeManager && options.theme) {

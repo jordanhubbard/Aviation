@@ -8,7 +8,6 @@ import {
   AlertSubscriber,
   CreateAlertOptions,
   IAlertManager,
-  AlertEvent,
   AlertEventCallback,
   ALERT_PRIORITY,
   DEFAULT_MAX_VISIBLE_ALERTS,
@@ -16,22 +15,9 @@ import {
 import { AlertEventEmitter } from './event-emitter';
 import { AlertPersistence } from './persistence';
 
-  /**
-   * Create a new AlertManager
-   * @param auralCallback Optional callback to play aural alerts when new alerts are added
-   * @param persistenceEnabled Whether to enable persistence of alerts to local storage
-   */
-  constructor(auralCallback?: (level: AlertLevel) => void, persistenceEnabled: boolean = false) {
-    this.auralCallback = auralCallback;
-    this.persistenceEnabled = persistenceEnabled;
-    // Load persisted alerts if persistence is enabled
-    if (this.persistenceEnabled) {
-      const persisted = AlertPersistence.loadAlerts();
-      persisted.forEach((alert) => {
-        this.alerts.set(alert.id, alert);
-      });
-    }
-  }
+function generateAlertId(): string {
+  return `alert-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
+}
 
 /**
  * Sort alerts by priority (highest first), then by timestamp (newest first for same priority)
@@ -229,11 +215,24 @@ export class AlertManager implements IAlertManager {
   }
 
   /**
+   * Subscribe to specific alert events
+   */
+  onEvent(callback: AlertEventCallback): () => void {
+    return this.eventEmitter.on(callback);
+  }
+
+  /**
    * Notify all subscribers of alert changes
    */
   private notifySubscribers(): void {
     const alerts = this.getAlerts();
     this.subscribers.forEach((callback) => callback(alerts));
+  }
+
+  private persistIfEnabled(): void {
+    if (this.persistenceEnabled) {
+      AlertPersistence.saveAlerts(this.getAlerts());
+    }
   }
 }
 

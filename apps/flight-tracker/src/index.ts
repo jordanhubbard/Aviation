@@ -1,6 +1,8 @@
 import http from 'http';
 import { BeadsIssueCreator, installNodeProcessErrorReporting } from '@aviation/shared-sdk';
 import { FlightTrackerService } from './service';
+import { FlightWebSocketServer } from './websocket-server';
+import { DataPublisher } from './data-publisher';
 
 const beadsIssueCreator = new BeadsIssueCreator({
   defaultParent: process.env.BEADS_AUTOREPORT_PARENT || 'Aviation-hd5',
@@ -16,61 +18,16 @@ async function main() {
 
   installNodeProcessErrorReporting({ service: 'flight-tracker', issueCreator: beadsIssueCreator });
 
-import { FlightWebSocketServer } from './websocket-server';
-import { DataPublisher } from './data-publisher';
-
-// Initialize WebSocket server
-const wsServer = new FlightWebSocketServer(8080);
-
-// Initialize Data Publisher
-const dataPublisher = new DataPublisher(wsServer);
-dataPublisher.startPublishing();
-
-// Initialize service
-
-  // Load and initialize plugins
-  const plugins: G1000Plugin[] = []; // This would be dynamically loaded
-  for (const plugin of plugins) {
-    await plugin.initialize({ service });
-  }
-
-  // Example plugin usage
-  const examplePlugin: G1000Plugin = {
-    id: 'example-plugin',
-    name: 'Example Plugin',
-    version: '1.0.0',
-    async initialize(context) {
-      console.log(`Initializing plugin: ${this.name}`);
-    },
-    async destroy() {
-      console.log(`Destroying plugin: ${this.name}`);
-    },
-  };
-
-  plugins.push(examplePlugin);
-
-
-  // Initialize plugins
-  const plugins: G1000Plugin[] = [];
-  for (const plugin of plugins) {
-    await plugin.initialize({ service });
-  }
-
-  // Handle plugin lifecycle
-  process.on('exit', async () => {
-    for (const plugin of plugins) {
-      await plugin.destroy();
-    }
+  const service = new FlightTrackerService({
+    name: 'flight-tracker',
+    enabled: true,
+    autoStart: true,
   });
-// Note: Service uses createSecretLoader internally for keystore access
-const service = new FlightTrackerService({
-  name: 'flight-tracker',
-  enabled: true,
-  autoStart: true,
-});
+  await service.start();
 
-// Start the service
-await service.start();
+  const wsServer = new FlightWebSocketServer(8080);
+  const dataPublisher = new DataPublisher(wsServer);
+  dataPublisher.startPublishing();
 
   const port = Number(process.env.PORT ?? '3001');
   const server = http.createServer(async (req, res) => {

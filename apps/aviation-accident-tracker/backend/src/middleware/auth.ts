@@ -62,8 +62,9 @@ export async function requireApiKey(req: Request, res: Response, next: NextFunct
  * Validate an API key (simplified version)
  */
 export async function validateApiKey(apiKey: string): Promise<boolean> {
-  import { getApiKeyFromDatabase } from '../services/apiKeyService';
-  return apiKey.startsWith('avt_');
+  if (!apiKey.startsWith('avt_')) return false;
+  const record = await getApiKeyFromDatabase(apiKey);
+  return !!(record?.is_active);
 }
 
 /**

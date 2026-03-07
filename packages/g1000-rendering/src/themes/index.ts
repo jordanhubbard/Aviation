@@ -13,6 +13,60 @@ export interface Theme {
   };
 }
 
+// G1000-specific theme shape used by PFD/MFD layout
+export interface G1000Theme {
+  palette: {
+    background: string;
+    border: string;
+    textPrimary: string;
+    textSecondary: string;
+    accent: string;
+    warning: string;
+    sky?: string;
+    ground?: string;
+    horizon?: string;
+    mapRing?: string;
+    mapLabel?: string;
+    mapAircraft?: string;
+    mapAircraftStroke?: string;
+  };
+  typography: {
+    medium: string;
+    large?: string;
+    small?: string;
+    title?: string;
+  };
+}
+
+export type G1000ThemeSource = string | G1000Theme;
+
+export interface G1000ThemeManager {
+  subscribe(callback: (theme: G1000Theme) => void): () => void;
+  setTheme(source: G1000ThemeSource): void;
+  getTheme(): G1000Theme;
+}
+
+export function resolveG1000Theme(source: G1000ThemeSource): G1000Theme {
+  if (typeof source === 'object') return source;
+  const t = getTheme(source);
+  return {
+    palette: {
+      background: t.colors.background,
+      border: t.colors.foreground,
+      textPrimary: t.colors.foreground,
+      textSecondary: t.colors.foreground,
+      accent: t.colors.accent,
+      warning: t.colors.warning,
+    },
+    typography: {
+      medium: '12px sans-serif',
+      large: '14px sans-serif',
+      small: '10px sans-serif',
+      title: '16px sans-serif',
+    },
+  };
+}
+
 export const dayTheme: Theme = {
   name: 'day',
   colors: {

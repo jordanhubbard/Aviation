@@ -24,7 +24,7 @@ export function ingestOurAirportsAirports(csv: string): NormalizedAirport[] {
         source: OUR_AIRPORTS_SOURCE,
       };
     })
-    .filter((airport): airport is NormalizedAirport => airport !== null);
+    .filter((a): a is NonNullable<typeof a> => a !== null) as NormalizedAirport[];
 }
 
 export function ingestOurAirportsNavaids(csv: string): NormalizedNavaid[] {
@@ -52,7 +52,7 @@ export function ingestOurAirportsNavaids(csv: string): NormalizedNavaid[] {
         source: OUR_AIRPORTS_SOURCE,
       };
     })
-    .filter((navaid): navaid is NormalizedNavaid => navaid !== null);
+    .filter((n): n is NonNullable<typeof n> => n !== null) as NormalizedNavaid[];
 }
 
 function toNumber(value: string | undefined): number | null {

@@ -188,7 +188,8 @@ export const isSystemsState = (value: unknown): value is SystemsState =>
 
 export const isControlState = (value: unknown): value is ControlState =>
   isSystemsState(value)
-  && (value.flight_plan === undefined || isFlightPlan(value.flight_plan));
+  && ((value as ControlState).flight_plan === undefined
+    || isFlightPlan((value as ControlState).flight_plan));
 
 export const isNavigationState = (value: unknown): value is NavigationState =>
   isRecord(value)
