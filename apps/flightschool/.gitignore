@@ -39,3 +39,6 @@ ENV/
 
 # Logs
 *.log instance/flightschool.db
+
+# Test coverage
+coverage.xml
