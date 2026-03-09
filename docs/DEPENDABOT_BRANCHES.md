@@ -77,3 +77,9 @@ git branch -r | grep dependabot | sed 's|origin/||' | xargs -I {} git push origi
 Or use GitHub UI: close each Dependabot PR, then delete the branch.
 
 **Note:** "remote ref does not exist" means the branch was already deleted on GitHub (e.g. PR merged/closed); safe to ignore.
+
+## Open security alerts (addressed or deferred)
+
+- **minimatch (high)** – Fixed in foreflight-dashboard and flight-planner frontends via `overrides` to `>=9.0.7`. Other frontends (g1000-simulator, aviation-accident-tracker) had 0 vulns in local `npm audit`; GitHub may still show alerts until lockfiles are refreshed.
+- **rollup (high)** – Transitive in frontends; address when upgrading build toolchain or via future Dependabot PRs.
+- **Flask (low), flightschool** – Alert #61: first patched version 3.1.3. Deferred until planned Flask 3.x upgrade (major change). See GitHub Security → Dependabot to dismiss or track.

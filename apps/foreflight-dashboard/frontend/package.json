@@ -53,5 +53,8 @@
     "typescript": "^5.2.2",
     "vite": "^7.3.0",
     "vitest": "^4.0.16"
+  },
+  "overrides": {
+    "minimatch": ">=9.0.7"
   }
 }
