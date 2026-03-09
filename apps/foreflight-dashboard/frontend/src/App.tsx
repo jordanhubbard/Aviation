@@ -7,7 +7,7 @@ function App() {
     <Box 
       sx={{ 
         minHeight: '100vh', 
-        background: 'linear-gradient(180deg, #f0f4f8 0%, #e3eef7 100%)',
+        background: 'linear-gradient(180deg, #f0f4f8 0%, #e3eef7 100%)', color: 'text.primary',
       }}
     >
       <Routes>

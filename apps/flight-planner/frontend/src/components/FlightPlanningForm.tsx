@@ -1,9 +1,18 @@
-import React, { useMemo, useState } from 'react'
+import React, { useMemo, useState, useEffect } from 'react'
+import ImportExportUI from './ImportExportUI'
 import {
   Autocomplete,
+  Button,
   Checkbox,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
   FormControlLabel,
   Grid,
+  List,
+  ListItem,
+  ListItemText,
   Slider,
   TextField,
   Typography,
@@ -12,7 +21,7 @@ import toast from 'react-hot-toast'
 
 import { useAirportSearch } from '../hooks/useAirports'
 import { validateAirportCode } from '../utils'
-import type { Airport, FlightPlanRequest, LocalPlanRequest, RoutePlanRequest } from '../types'
+import type { Airport, FlightPlan, FlightPlanRequest, LocalPlanRequest, RoutePlanRequest } from '../types'
 import { FormSection } from './shared'
 import ModeSelector, { type PlanMode } from './ModeSelector'
 
@@ -26,8 +35,26 @@ const optionLabel = (a: Airport) => {
   if (a.name) return `${code} — ${a.name}`
   return code
 }
-
 const FlightPlanningForm: React.FC<Props> = ({ isLoading, onSubmit }) => {
+  const [flightPlans, setFlightPlans] = useState<FlightPlan[]>([])
+  const [open, setOpen] = useState(false)
+
+  useEffect(() => {
+    fetch('/api/flight-plans')
+      .then(response => response.json())
+      .then((data: FlightPlan[]) => setFlightPlans(data))
+  }, [])
+
+  const handleLoad = (plan: FlightPlan) => {
+    setOrigin(plan.origin);
+    setDestination(plan.destination);
+    setSpeed(plan.speed);
+    setAltitude(plan.altitude);
+    setOpen(false);
+  };
+
+  const handleOpen = () => setOpen(true);
+  const handleClose = () => setOpen(false);
   const [mode, setMode] = useState<PlanMode>('route')
 
   const [origin, setOrigin] = useState('')
@@ -115,7 +142,27 @@ const FlightPlanningForm: React.FC<Props> = ({ isLoading, onSubmit }) => {
   }
 
   return (
-    <FormSection
+    <>
+    <ImportExportUI />
+    <Button variant="outlined" onClick={handleOpen} disabled={isLoading}>Load Flight Plan</Button>
+
+      <Dialog open={open} onClose={handleClose}>
+        <DialogTitle>Load Flight Plan</DialogTitle>
+        <DialogContent>
+          <List>
+            {flightPlans.map((plan) => (
+              <ListItem button onClick={() => handleLoad(plan)} key={plan.id}>
+                <ListItemText primary={plan.name} />
+              </ListItem>
+            ))}
+          </List>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleClose}>Cancel</Button>
+        </DialogActions>
+      </Dialog>
+
+      <FormSection
       title="Planning"
       onSubmit={submit}
       buttonText={mode === 'route' ? 'Plan Route' : 'Plan Local Flight'}
@@ -127,7 +174,7 @@ const FlightPlanningForm: React.FC<Props> = ({ isLoading, onSubmit }) => {
 
       {mode === 'route' ? (
         <>
-          <Grid item xs={12} sm={6}>
+          <Grid item xs={12} sm={6}><ProcedureSelection airportCode={origin} /></Grid><Grid item xs={12} sm={6}>
             <Autocomplete
               freeSolo
               options={originOptions}
@@ -335,6 +382,7 @@ const FlightPlanningForm: React.FC<Props> = ({ isLoading, onSubmit }) => {
         />
       </Grid>
     </FormSection>
+    </>
   )
 }
 

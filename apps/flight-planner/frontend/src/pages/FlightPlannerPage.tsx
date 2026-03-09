@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'; import ImportExportUI from '../components/ImportExportUI';
 import {
   Grid,
   Card,
@@ -27,6 +27,7 @@ import WeatherOverlayControls, { type WeatherOverlays } from '../components/Weat
 import { useApiMutation } from '../hooks'
 import { flightPlannerService } from '../services'
 import { formatUtcMinute } from '../utils'
+import { startPerformanceProfiling } from '../utils/performanceProfiler'
 import type {
   FlightPlan,
   FlightPlanRequest,
@@ -36,6 +37,10 @@ import type {
 } from '../types'
 
 const FlightPlannerPage: React.FC = () => {
+  useEffect(() => {
+    const performanceData = startPerformanceProfiling();
+    console.log('Performance Data:', performanceData);
+  }, []);
   const [lastMode, setLastMode] = useState<'local' | 'route'>('route')
   const [lastRequest, setLastRequest] = useState<FlightPlanRequest | null>(null)
   const [overlays, setOverlays] = useState<WeatherOverlays>({

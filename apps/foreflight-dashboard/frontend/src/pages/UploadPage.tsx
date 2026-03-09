@@ -108,11 +108,11 @@ const UploadPage: React.FC = () => {
       <Paper elevation={3} sx={{ p: 6, textAlign: 'center' }}>
         <CloudUpload sx={{ fontSize: 64, color: 'primary.main', mb: 2 }} />
         
-        <Typography variant="h3" component="h1" gutterBottom>
+        <Typography variant="h3" component="h1" gutterBottom sx={{ color: 'text.primary' }}>
           ForeFlight Logbook Dashboard
         </Typography>
         
-        <Typography variant="h6" color="text.secondary" sx={{ mb: 4 }}>
+        <Typography variant="h6" color="text.secondary" sx={{ mb: 4, color: 'text.primary' }}>
           Upload your ForeFlight logbook CSV to view your flight statistics and dashboard
         </Typography>
 

@@ -319,6 +319,28 @@ See individual application README files for deployment instructions. Common plat
 - **Want to contribute?** Open an issue to discuss before starting large changes
 - **Need help?** Reach out in the issue comments
 
+## Legal Considerations
+
+### Attribution and Data Sources
+
+When contributing code that uses external data sources, ensure proper attribution:
+
+- **OurAirports** - Provide attribution in code comments and documentation
+- **OpenAIP** - Include attribution notices in relevant modules
+- **OpenStreetMap** - Follow ODbL attribution requirements
+- **Other sources** - Always document data sources and their licenses
+
+See [LEGAL.md](LEGAL.md) for complete attribution requirements and legal guidelines.
+
+### Educational Use Disclaimer
+
+This project is for educational purposes only. When contributing:
+
+- Do not add features that suggest real-world flight operation use
+- Include disclaimers in documentation for aviation-related features
+- Ensure all flight planning/weather features include appropriate warnings
+- Reference the educational-only nature in relevant docstrings
+
 ## License
 
-By contributing, you agree that your contributions will be licensed under the MIT License.
+By contributing, you agree that your contributions will be licensed under the MIT License. See [LICENSE](LICENSE) and [LEGAL.md](LEGAL.md) for details.

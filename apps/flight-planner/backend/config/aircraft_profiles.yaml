@@ -1,0 +1,25 @@
+# Aircraft Profiles Configuration
+# Defines aircraft specifications for flight planning
+
+aircraft:
+  - id: "c172"
+    name: "Cessna 172 Skyhawk"
+    performance:
+      cruise_speed_kts: 122
+      stall_speed_clean_kts: 47
+      stall_speed_landing_kts: 41
+      max_speed_kts: 163
+      climb_rate_fpm: 730
+      service_ceiling_ft: 14000
+    fuel:
+      capacity_gal: 56
+      unusable_gal: 3
+      burn_rate_gph: 8.5
+    weights:
+      empty_weight_lbs: 1663
+      max_gross_weight_lbs: 2550
+      useful_load_lbs: 887
+    dimensions:
+      wingspan_ft: 36
+      length_ft: 27.2
+      height_ft: 8.9

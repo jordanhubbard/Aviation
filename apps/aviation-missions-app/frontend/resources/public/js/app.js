@@ -125,10 +125,10 @@ class AviationMissionApp {
     bindEventListeners() {
         // Search input
         const searchInput = document.getElementById('searchInput');
-        searchInput.addEventListener('input', (e) => {
+        searchInput.addEventListener('input', this.debounce((e) => {
             this.filters.search = e.target.value;
             this.filterMissions();
-        });
+        }, 300));
 
         // Filter dropdowns
         const categoryFilter = document.getElementById('categoryFilter');
@@ -893,6 +893,21 @@ class AviationMissionApp {
         const div = document.createElement('div');
         div.textContent = text;
         return div.innerHTML;
+    }
+
+    /**
+     * Debounce utility - delays function execution until after wait milliseconds
+     * have elapsed since the last time it was invoked.
+     * @param {Function} func - The function to debounce
+     * @param {number} wait - The number of milliseconds to delay
+     * @returns {Function} - The debounced function
+     */
+    debounce(func, wait) {
+        let timeout;
+        return (...args) => {
+            clearTimeout(timeout);
+            timeout = setTimeout(() => func.apply(this, args), wait);
+        };
     }
 
     getAdminToken() {

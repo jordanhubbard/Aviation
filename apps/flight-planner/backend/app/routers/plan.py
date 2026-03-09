@@ -39,9 +39,9 @@ PlanRequest = Annotated[Union[PlanRouteRequest, PlanLocalRequest], Field(discrim
 
 
 @router.post(
-    "/plan",
-    summary="Plan a flight (route or local)",
-    description="Uses a discriminated union request body with `mode` set to `route` or `local`.",
+    "/initialize",
+    summary="Initialize a flight (route or local)",
+    description="Initializes a flight using a discriminated union request body with `mode` set to `route` or `local`.",
     openapi_extra={
         "requestBody": {
             "content": {
@@ -75,7 +75,7 @@ PlanRequest = Annotated[Union[PlanRouteRequest, PlanLocalRequest], Field(discrim
         }
     },
 )
-def plan(req: PlanRequest) -> Any:
+def initialize_flight(req: PlanRequest) -> Any:
     if req.mode == "route":
         ctx = PlanningContext(deadline_s=time.perf_counter() + planning_total_timeout_s())
         try:

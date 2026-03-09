@@ -1,0 +1,22 @@
+initial_conditions:
+  altitude: 3000
+  speed: 100
+  heading: 270
+waypoints:
+  - name: Current Position
+    latitude: 37.7749
+    longitude: -122.4194
+  - name: Emergency Landing Site
+    latitude: 37.8000
+    longitude: -122.3000
+events:
+  - time: 0
+    action: "Engine failure"
+  - time: 60
+    action: "Establish best glide speed"
+  - time: 120
+    action: "Identify landing site"
+  - time: 180
+    action: "Execute emergency landing checklist"
+  - time: 240
+    action: "Land at emergency site"

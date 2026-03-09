@@ -167,9 +167,9 @@ const resolveEngineConfig = (
         labelColor: theme.palette.textSecondary,
         valueColor: theme.palette.textPrimary,
         headerColor: theme.palette.textPrimary,
-        headerFont: theme.typography.large,
-        labelFont: theme.typography.small,
-        valueFont: theme.typography.title,
+        headerFont: theme.typography.large ?? DEFAULT_MFD_ENGINE_LAYOUT_CONFIG.headerFont,
+        labelFont: theme.typography.small ?? DEFAULT_MFD_ENGINE_LAYOUT_CONFIG.labelFont,
+        valueFont: theme.typography.title ?? DEFAULT_MFD_ENGINE_LAYOUT_CONFIG.valueFont,
       }
     : {};
 
@@ -191,9 +191,9 @@ const resolveUtilitiesConfig = (
         borderColor: theme.palette.border,
         labelColor: theme.palette.textSecondary,
         headerColor: theme.palette.textPrimary,
-        headerFont: theme.typography.large,
+        headerFont: theme.typography.large ?? DEFAULT_MFD_UTILITIES_LAYOUT_CONFIG.headerFont,
         sectionFont: theme.typography.medium,
-        footerFont: theme.typography.small,
+        footerFont: theme.typography.small ?? DEFAULT_MFD_UTILITIES_LAYOUT_CONFIG.footerFont,
       }
     : {};
 

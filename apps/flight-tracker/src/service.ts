@@ -88,7 +88,27 @@ interface AirportConditions {
  * - Weather recommendations
  * - Background service patterns
  */
+import { G1000Plugin } from './plugin-interface';
+
 export class FlightTrackerService extends BackgroundService {
+  private plugins: G1000Plugin[] = [];
+
+  public registerPlugin(plugin: G1000Plugin): void {
+    this.plugins.push(plugin);
+    plugin.initialize({ service: this });
+  }
+
+  private async initializePlugins(): Promise<void> {
+    for (const plugin of this.plugins) {
+      await plugin.initialize({ service: this });
+    }
+  }
+
+  private async destroyPlugins(): Promise<void> {
+    for (const plugin of this.plugins) {
+      await plugin.destroy();
+    }
+  }
   private secrets = createSecretLoader('flight-tracker');
   private intervalId?: NodeJS.Timeout;
   private liveIntervalId?: NodeJS.Timeout;
@@ -177,32 +197,6 @@ export class FlightTrackerService extends BackgroundService {
     });
 
     console.log(`📊 Tracking ${this.trackedFlights.size} flights`);
-
-// Initialize WebSocket server
-import { WebSocketServer } from 'ws';
-const wss = new WebSocketServer({ port: 8080 });
-
-wss.on('connection', (ws) => {
-  console.log('Client connected');
-
-  ws.on('message', (message) => {
-    console.log(`Received message => ${message}`);
-  });
-
-  ws.send(JSON.stringify({ type: 'system_status', message: 'Connected to Flight Tracker' }));
-});
-
-// Send flight data updates to connected clients
-this.wss = wss;
-
-// Function to send updates to connected clients
-this.sendUpdatesToClients = (data) => {
-  this.wss.clients.forEach((client) => {
-    if (client.readyState === client.OPEN) {
-      client.send(JSON.stringify(data));
-    }
-  });
-};
   }
 
   /**

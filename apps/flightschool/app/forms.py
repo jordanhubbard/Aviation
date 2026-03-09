@@ -36,6 +36,13 @@ class LoginForm(FlaskForm):
 
 
 class RegistrationForm(FlaskForm):
+    birth_date = DateTimeField(
+        'Birth Date',
+        format='%Y-%m-%d',
+        validators=[
+            DataRequired()
+        ]
+    )
     email = StringField(
         'Email',
         validators=[

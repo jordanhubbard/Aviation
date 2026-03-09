@@ -1,4 +1,4 @@
-# User Manual
+# User Manual Outline
 
 ## Introduction
 This user manual provides detailed instructions on using the Primary Flight Display (PFD) and Multi-Function Display (MFD) systems, as well as setup and configuration guidance.

@@ -1,0 +1,13 @@
+{
+  "name": "@aviation/flight-dynamics",
+  "version": "1.0.0",
+  "description": "Flight dynamics API layer for aviation applications",
+  "main": "api.py",
+  "scripts": {
+    "start": "uvicorn api:app --reload",
+    "test": "pytest"
+  },
+  "dependencies": {},
+  "devDependencies": {},
+  "comment": "Python runtime; install with pip install -r requirements.txt"
+}

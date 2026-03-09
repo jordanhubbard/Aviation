@@ -47,7 +47,7 @@ export interface DisplayUpdateMessage extends BaseMessage {
 export interface NavigationUpdateMessage extends BaseMessage {
   type: MessageType.NAVIGATION_UPDATE;
   payload: {
-    waypoints: Array<{ lat: number; lon: number; name: string };
+    waypoints: Array<{ lat: number; lon: number; name: string }>;
     active_waypoint: number;
   };
 }

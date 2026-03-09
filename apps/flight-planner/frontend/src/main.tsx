@@ -33,6 +33,16 @@ const theme = createTheme({
       main: '#dc004e',
     },
   },
+  components: {
+    MuiCssBaseline: {
+      styleOverrides: {
+        body: {
+          backgroundColor: themeMode === 'night' ? '#1e1e1e' : themeMode === 'high-contrast' ? '#000000' : '#ffffff',
+          color: themeMode === 'night' ? '#e0e0e0' : themeMode === 'high-contrast' ? '#000000' : '#1e293b',
+        },
+      },
+    },
+  },
 })
 
 // Create a client for React Query

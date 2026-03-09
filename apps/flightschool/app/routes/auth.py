@@ -1,10 +1,10 @@
-from flask import Blueprint, render_template, flash, redirect, url_for, request
+from datetime import datetime
+from flask import Blueprint, current_app, render_template, flash, redirect, url_for, request, session
 from flask_login import login_required, login_user, logout_user, current_user
 from app.models import User
 from app.forms import LoginForm, RegistrationForm, AccountSettingsForm
 from app import db
 import google_auth_oauthlib
-from flask import session
 
 auth_bp = Blueprint('auth', __name__)
 
@@ -45,6 +45,11 @@ def register():
     form = RegistrationForm()
     if form.validate_on_submit():
         try:
+            birth_date = form.birth_date.data
+            age = (datetime.now().date() - birth_date).days // 365
+            if age < 13:
+                flash('You must be at least 13 years old to register.', 'danger')
+                return render_template('auth/register.html', form=form)
             user = User(
                 email=form.email.data,
                 first_name=form.first_name.data,

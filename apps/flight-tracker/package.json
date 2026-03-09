@@ -20,10 +20,11 @@
   "dependencies": {
     "@aviation/shared-sdk": "*",
     "@aviation/keystore": "*",
-    "@aviation/ui-framework": "*"
+    "@aviation/ui-framework": "*",
+    "ws": "^8.18.0"
   },
   "devDependencies": {
-    "@types/node": "^25.0.3",
+    "@types/node": "^25.3.0",
     "typescript": "^5.0.0"
   }
 }

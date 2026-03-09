@@ -248,6 +248,7 @@ export const FlightPlanDisplay = ({ telemetry }: FlightPlanDisplayProps) => {
 
   return (
     <div className="mfd__panel mfd__fpl">
+      <RecentFlightPlans />
       <div className="mfd__fpl-header">
         <h4 className="mfd__panel-title">Flight Plan</h4>
         <div className="mfd__fpl-actions">

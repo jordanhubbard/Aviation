@@ -1,0 +1,51 @@
+// G1000Controls.tsx
+// Component to simulate G1000 controls with mouse, keyboard, and touch interactions
+
+import React, { useState, useEffect } from 'react';
+
+const G1000Controls = () => {
+  const [joystickPosition, setJoystickPosition] = useState({ x: 0, y: 0 });
+  const [knobValue, setKnobValue] = useState(0);
+  const [buttonPressed, setButtonPressed] = useState(false);
+
+  const handleKnobTurn = (direction: 'left' | 'right') => {
+    setKnobValue(prev => direction === 'left' ? prev - 1 : prev + 1);
+  };
+
+  const handleButtonPress = () => {
+    setButtonPressed(true);
+    setTimeout(() => setButtonPressed(false), 200); // Debounce
+  };
+
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'ArrowLeft') handleKnobTurn('left');
+      if (event.key === 'ArrowRight') handleKnobTurn('right');
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
+  return (
+    <div className="g1000-controls">
+      <div className="knob" onClick={() => handleKnobTurn('right')} onContextMenu={(e) => { e.preventDefault(); handleKnobTurn('left'); }}>
+        Knob: {knobValue}
+      </div>
+      <div className="joystick" onMouseMove={(e) => setJoystickPosition({ x: e.clientX, y: e.clientY })}>
+        Joystick: {`(${joystickPosition.x}, ${joystickPosition.y})`}
+      </div>
+      <div className="softkeys">
+        {['SK1', 'SK2', 'SK3', 'SK4', 'SK5'].map((key) => (
+          <button key={key} onClick={() => console.log(`${key} pressed`)}>
+            {key}
+          </button>
+        ))}
+      </div>
+      <button onMouseDown={handleButtonPress} className={buttonPressed ? 'pressed' : ''}>
+        Button
+      </button>
+    </div>
+  );
+};
+
+export default G1000Controls;

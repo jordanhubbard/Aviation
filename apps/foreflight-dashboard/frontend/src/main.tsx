@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useState } from 'react'
 import ReactDOM from 'react-dom/client'
 import { BrowserRouter } from 'react-router-dom'
 import { QueryClient, QueryClientProvider } from 'react-query'
@@ -6,11 +6,10 @@ import { ThemeProvider, createTheme } from '@mui/material/styles'
 import CssBaseline from '@mui/material/CssBaseline'
 import { Toaster } from 'react-hot-toast'
 import App from './App'
-import { useState } from 'react'
 import './styles/globals.css'
 
 // Create a Material-UI theme with aviation-inspired design
-const theme = (mode: string = 'light') => createTheme({
+const theme = (mode: 'light' | 'dark' = 'light') => createTheme({
   palette: {
     mode: mode,
     primary: {
@@ -57,62 +56,23 @@ const theme = (mode: string = 'light') => createTheme({
       'Arial',
       'sans-serif',
     ].join(','),
-    h1: {
-      fontSize: '2.5rem',
-      fontWeight: 600,
-      lineHeight: 1.2,
-    },
-    h2: {
-      fontSize: '2rem',
-      fontWeight: 600,
-      lineHeight: 1.3,
-    },
-    h3: {
-      fontSize: '1.75rem',
-      fontWeight: 600,
-      lineHeight: 1.3,
-    },
-    h4: {
-      fontSize: '1.5rem',
-      fontWeight: 600,
-      lineHeight: 1.4,
-    },
-    h5: {
-      fontSize: '1.25rem',
-      fontWeight: 600,
-      lineHeight: 1.4,
-    },
-    h6: {
-      fontSize: '1rem',
-      fontWeight: 600,
-      lineHeight: 1.4,
-    },
-    body1: {
-      fontSize: '1rem',
-      lineHeight: 1.5,
-    },
-    body2: {
-      fontSize: '0.875rem',
-      lineHeight: 1.43,
-    },
+    h1: { fontSize: '2.5rem', fontWeight: 600, lineHeight: 1.2 },
+    h2: { fontSize: '2rem', fontWeight: 600, lineHeight: 1.3 },
+    h3: { fontSize: '1.75rem', fontWeight: 600, lineHeight: 1.3 },
+    h4: { fontSize: '1.5rem', fontWeight: 600, lineHeight: 1.4 },
+    h5: { fontSize: '1.25rem', fontWeight: 600, lineHeight: 1.4 },
+    h6: { fontSize: '1rem', fontWeight: 600, lineHeight: 1.4 },
+    body1: { fontSize: '1rem', lineHeight: 1.5 },
+    body2: { fontSize: '0.875rem', lineHeight: 1.43 },
   },
-  shape: {
-    borderRadius: 8,
-  },
+  shape: { borderRadius: 8 },
   components: {
     MuiButton: {
       styleOverrides: {
-        root: {
-          textTransform: 'none',
-          fontWeight: 500,
-          borderRadius: 8,
-          padding: '8px 16px',
-        },
+        root: { textTransform: 'none', fontWeight: 500, borderRadius: 8, padding: '8px 16px' },
         contained: {
           boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-          '&:hover': {
-            boxShadow: '0 4px 8px rgba(0,0,0,0.15)',
-          },
+          '&:hover': { boxShadow: '0 4px 8px rgba(0,0,0,0.15)' },
         },
       },
     },
@@ -128,18 +88,10 @@ const theme = (mode: string = 'light') => createTheme({
     },
     MuiPaper: {
       styleOverrides: {
-        root: {
-          backgroundImage: 'none',
-        },
-        elevation1: {
-          boxShadow: '0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24)',
-        },
-        elevation2: {
-          boxShadow: '0 3px 6px rgba(0,0,0,0.16), 0 3px 6px rgba(0,0,0,0.23)',
-        },
-        elevation3: {
-          boxShadow: '0 10px 20px rgba(0,0,0,0.19), 0 6px 6px rgba(0,0,0,0.23)',
-        },
+        root: { backgroundImage: 'none' },
+        elevation1: { boxShadow: '0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24)' },
+        elevation2: { boxShadow: '0 3px 6px rgba(0,0,0,0.16), 0 3px 6px rgba(0,0,0,0.23)' },
+        elevation3: { boxShadow: '0 10px 20px rgba(0,0,0,0.19), 0 6px 6px rgba(0,0,0,0.23)' },
       },
     },
     MuiAppBar: {
@@ -152,11 +104,7 @@ const theme = (mode: string = 'light') => createTheme({
     },
     MuiTextField: {
       styleOverrides: {
-        root: {
-          '& .MuiOutlinedInput-root': {
-            borderRadius: 8,
-          },
-        },
+        root: { '& .MuiOutlinedInput-root': { borderRadius: 8 } },
       },
     },
   },
@@ -173,44 +121,42 @@ const queryClient = new QueryClient({
   },
 })
 
-const [selectedTheme, setSelectedTheme] = useState('light');
+function Root() {
+  const [selectedTheme, setSelectedTheme] = useState<'light' | 'dark'>('light')
 
-ReactDOM.createRoot(document.getElementById('root')!).render(
-  <React.StrictMode>
+  return (
     <QueryClientProvider client={queryClient}>
-      <ThemeProvider theme={theme(selectedTheme)}> 
+      <ThemeProvider theme={theme(selectedTheme)}>
         <CssBaseline />
         <BrowserRouter>
           <App />
+          <div>
+            <button onClick={() => setSelectedTheme('light')}>Light Mode</button>
+            <button onClick={() => setSelectedTheme('dark')}>Dark Mode</button>
+          </div>
           <Toaster
             position="top-right"
             toastOptions={{
               duration: 4000,
-              style: {
-                background: '#363636',
-                color: '#fff',
-              },
+              style: { background: '#363636', color: '#fff' },
               success: {
                 duration: 3000,
-                iconTheme: {
-                  primary: '#4caf50',
-                  secondary: '#fff',
-                },
+                iconTheme: { primary: '#4caf50', secondary: '#fff' },
               },
               error: {
                 duration: 5000,
-                iconTheme: {
-                  primary: '#f44336',
-                  secondary: '#fff',
-                },
+                iconTheme: { primary: '#f44336', secondary: '#fff' },
               },
             }}
           />
         </BrowserRouter>
       </ThemeProvider>
     </QueryClientProvider>
-        <button onClick={() => setSelectedTheme('light')}>Light Mode</button>
-      <button onClick={() => setSelectedTheme('dark')}>Dark Mode</button>
-      <button onClick={() => setSelectedTheme('high-contrast')}>High Contrast Mode</button>
-    </React.StrictMode>,
+  )
+}
+
+ReactDOM.createRoot(document.getElementById('root')!).render(
+  <React.StrictMode>
+    <Root />
+  </React.StrictMode>,
 )

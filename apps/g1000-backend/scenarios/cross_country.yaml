@@ -1,0 +1,28 @@
+initial_conditions:
+  altitude: 5000
+  speed: 110
+  heading: 090
+waypoints:
+  - name: Origin Airport
+    latitude: 37.7749
+    longitude: -122.4194
+  - name: Waypoint 1
+    latitude: 37.8000
+    longitude: -122.2000
+  - name: Waypoint 2
+    latitude: 37.9000
+    longitude: -121.9000
+  - name: Destination Airport
+    latitude: 38.0000
+    longitude: -121.5000
+events:
+  - time: 0
+    action: "Depart origin"
+  - time: 300
+    action: "En-route navigation to waypoint 1"
+  - time: 600
+    action: "En-route navigation to waypoint 2"
+  - time: 900
+    action: "Weather deviation"
+  - time: 1200
+    action: "Arrive destination"

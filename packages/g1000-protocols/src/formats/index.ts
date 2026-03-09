@@ -1,8 +1,20 @@
+import type { FlightPlanModel } from "./flight-plan";
+
 export {
   DEFAULT_FLIGHT_PLAN_SEGMENT,
   FLIGHT_PLAN_FORMATS,
   FLIGHT_PLAN_SPECS,
 } from "./flight-plan";
+
+// New format conversion utilities
+export function convertFlightPlanToJson(flightPlan: FlightPlanModel): string {
+  return JSON.stringify(flightPlan);
+}
+
+export function parseJsonToFlightPlan(json: string): FlightPlanModel {
+  return JSON.parse(json) as FlightPlanModel;
+}
+
 export type {
   FlightPlanFormat,
   FlightPlanFormatSpec,

@@ -1,0 +1,70 @@
+# Beads Configuration for G1000 Backend
+#
+# This file defines the independent work units (beads) that compose the
+# G1000 backend simulator. Beads enable parallel development, testing, and
+# execution of different application components.
+
+version: "1.0"
+
+beads:
+  # Flight Dynamics
+  - name: flight-dynamics
+    description: Core flight physics and dynamics simulation
+    path: flight_dynamics_service.py
+    dependencies: []
+    parallel: true
+
+  # Navigation Service
+  - name: navigation
+    description: GPS navigation, waypoints, and route tracking
+    path: navigation_service.py
+    dependencies: []
+    parallel: true
+
+  # Weather Integration
+  - name: weather
+    description: Weather data integration for G1000 display
+    path: weather_service.ts
+    dependencies: []
+    parallel: true
+
+  # Persistence Layer
+  - name: persistence
+    description: Database models and migration support
+    path: persistence.py
+    dependencies: []
+    parallel: true
+
+  # Realtime Streaming
+  - name: realtime-streaming
+    description: WebSocket streaming of flight telemetry data
+    path: realtime_streaming_service.ts
+    dependencies: [flight-dynamics, navigation, weather]
+    parallel: false
+
+  # Demo Flight Service
+  - name: demo-flight
+    description: Prerecorded demo flight scenarios for testing
+    path: demo_flight_service.py
+    dependencies: [flight-dynamics, navigation]
+    parallel: false
+
+# Bead execution groups
+execution_groups:
+  - name: foundation
+    beads: [flight-dynamics, navigation, weather, persistence]
+
+  - name: services
+    beads: [realtime-streaming, demo-flight]
+    depends_on: [foundation]
+
+# CI/CD integration
+ci:
+  test_strategy: parallel
+  max_parallel: 4
+  test_groups:
+    - name: unit-tests
+      beads: [flight-dynamics, navigation, weather, persistence]
+    - name: integration-tests
+      beads: [realtime-streaming, demo-flight]
+      depends_on: [unit-tests]

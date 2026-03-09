@@ -1,0 +1,66 @@
+# G1000 Configuration
+# Defines G1000 avionics system settings and capabilities
+
+g1000:
+  version: "NXi"
+  display_configuration:
+    pfd:
+      width_px: 1024
+      height_px: 768
+      resolution_dpi: 96
+      brightness_levels: 16
+    mfd:
+      width_px: 1024
+      height_px: 768
+      resolution_dpi: 96
+      brightness_levels: 16
+  
+  features:
+    synthetic_vision_technology: true
+    terrain_awareness_warning_system: true
+    traffic_information_service: true
+    weather_radar: true
+    charts_integration: true
+    autopilot: true
+    flight_plan_management: true
+    engine_monitoring: true
+  
+  radios:
+    com:
+      - id: "COM1"
+        frequency_min_mhz: 118.0
+        frequency_max_mhz: 136.975
+        frequency_step_khz: 25
+      - id: "COM2"
+        frequency_min_mhz: 118.0
+        frequency_max_mhz: 136.975
+        frequency_step_khz: 25
+    nav:
+      - id: "NAV1"
+        frequency_min_mhz: 108.0
+        frequency_max_mhz: 117.95
+        frequency_step_khz: 50
+      - id: "NAV2"
+        frequency_min_mhz: 108.0
+        frequency_max_mhz: 117.95
+        frequency_step_khz: 50
+    adf:
+      - id: "ADF"
+        frequency_min_khz: 190
+        frequency_max_khz: 1750
+        frequency_step_khz: 1
+  
+  transponder:
+    modes:
+      - "A"
+      - "C"
+      - "S"
+    altitude_reporting: true
+    identity_feature: true
+  
+  audio_panel:
+    com_channels: 2
+    nav_channels: 2
+    adf_channel: 1
+    marker_beacon: true
+    intercom: true

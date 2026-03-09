@@ -10,4 +10,6 @@ __all__ = [
     "route",
     "terrain",
     "weather",
+    "demo",
+    "autopilot",
 ]

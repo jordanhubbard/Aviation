@@ -1,6 +1,8 @@
 import http from 'http';
 import { BeadsIssueCreator, installNodeProcessErrorReporting } from '@aviation/shared-sdk';
 import { FlightTrackerService } from './service';
+import { FlightWebSocketServer } from './websocket-server';
+import { DataPublisher } from './data-publisher';
 
 const beadsIssueCreator = new BeadsIssueCreator({
   defaultParent: process.env.BEADS_AUTOREPORT_PARENT || 'Aviation-hd5',
@@ -16,16 +18,16 @@ async function main() {
 
   installNodeProcessErrorReporting({ service: 'flight-tracker', issueCreator: beadsIssueCreator });
 
-  // Initialize service
-  // Note: Service uses createSecretLoader internally for keystore access
   const service = new FlightTrackerService({
     name: 'flight-tracker',
     enabled: true,
     autoStart: true,
   });
-
-  // Start the service
   await service.start();
+
+  const wsServer = new FlightWebSocketServer(8080);
+  const dataPublisher = new DataPublisher(wsServer);
+  dataPublisher.startPublishing();
 
   const port = Number(process.env.PORT ?? '3001');
   const server = http.createServer(async (req, res) => {

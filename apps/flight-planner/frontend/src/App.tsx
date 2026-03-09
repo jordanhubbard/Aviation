@@ -3,9 +3,12 @@ import { Routes, Route, useLocation } from 'react-router-dom'
 import { Container, AppBar, Toolbar, Typography, Box, Button } from '@mui/material'
 import { BugReport } from '@mui/icons-material'
 import { motion, AnimatePresence } from 'framer-motion'
-import { useTheme } from '@mui/material/styles'
+import { ThemeProvider, createTheme, useTheme } from '@mui/material/styles'
 import useMediaQuery from '@mui/material/useMediaQuery'
 import Navigation from './components/Navigation'
+import G1000Controls from './components/G1000Controls'
+import CanvasRenderer from './components/CanvasRenderer'
+import KeyboardShortcuts from './components/KeyboardShortcuts'
 import { ErrorBoundary } from './components/ErrorBoundary'
 import { LoadingState } from './components/shared'
 import { getRuntimeEnv, githubNewIssueUrl } from './utils'
@@ -66,8 +69,51 @@ const pageVariants = {
 }
 
 function App() {
+  const [themeMode, setThemeMode] = useState<'light' | 'dark' | 'night' | 'high-contrast'>('light');
+
+  const theme = useMemo(() => {
+    const baseMode: 'light' | 'dark' =
+      themeMode === 'night' || themeMode === 'high-contrast' ? 'dark' : themeMode
+    return createTheme({
+      palette: {
+        mode: baseMode,
+        ...(themeMode === 'night' && {
+          background: {
+            default: '#1e1e1e',
+            paper: '#333333',
+          },
+          text: {
+            primary: '#e0e0e0',
+            secondary: '#ffcccb',
+          },
+        }),
+        ...(themeMode === 'high-contrast' && {
+          contrastThreshold: 3,
+          tonalOffset: 0.2,
+          background: {
+            default: '#000000',
+            paper: '#ffffff',
+          },
+          text: {
+            primary: '#000000',
+            secondary: '#ff0000',
+          },
+        }),
+        ...(themeMode === 'day' && {
+          background: {
+            default: '#ffffff',
+            paper: '#f8fafc',
+          },
+          text: {
+            primary: '#1e293b',
+            secondary: '#475569',
+          },
+        }),
+      },
+    })
+  }, [themeMode]);
   const location = useLocation()
-  const theme = useTheme()
+  // const theme = useTheme()
   const isSmall = useMediaQuery(theme.breakpoints.down('sm'))
 
   const [repoUrl, setRepoUrl] = useState<string | null>(null)
@@ -118,6 +164,7 @@ function App() {
   }, [repoUrl, revision, runtimeSha])
 
   return (
+    <ThemeProvider theme={theme}>
     <ErrorBoundary>
       <Box sx={{ flexGrow: 1, minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
         <AppBar position="static" component="header" role="banner">
@@ -143,6 +190,13 @@ function App() {
         </AppBar>
 
         <Navigation />
+        <Box sx={{ display: 'flex', justifyContent: 'center', mb: 2 }}>
+          <Button variant="contained" onClick={() => setThemeMode('light')}>Day Mode</Button>
+          <Button variant="contained" onClick={() => setThemeMode('night')} sx={{ mx: 1 }}>Night Mode</Button>
+          <Button variant="contained" onClick={() => setThemeMode('high-contrast')}>High Contrast Mode</Button>
+        </Box>
+        <KeyboardShortcuts />
+<G1000Controls />
 
         <Container
           maxWidth="xl"
@@ -150,6 +204,7 @@ function App() {
           component="main"
           role="main"
         >
+          <CanvasRenderer />
           <Suspense fallback={<LoadingState message="Loading page..." />}>
             <AnimatePresence mode="wait">
               <motion.div
@@ -171,6 +226,7 @@ function App() {
         </Container>
       </Box>
     </ErrorBoundary>
+    </ThemeProvider>
   )
 }
 

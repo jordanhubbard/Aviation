@@ -1,27 +1,37 @@
-import { defineConfig } from '@playwright/test'
+import { defineConfig } from '@playwright/test';
+
+import setup from './e2e/setup';
+import teardown from './e2e/teardown';
 
 export default defineConfig({
+  globalSetup: setup,
+  globalTeardown: teardown,
   testDir: './e2e',
-  timeout: 60_000,
-  use: {
-    baseURL: 'http://127.0.0.1:3004',
-    trace: 'on-first-retry',
+  timeout: 30000,
+  expect: {
+    timeout: 5000
   },
-  webServer: [
+  reporter: 'html',
+  use: {
+    headless: true,
+    viewport: { width: 1280, height: 720 },
+    actionTimeout: 0,
+    ignoreHTTPSErrors: true,
+    video: 'retain-on-failure',
+    screenshot: 'only-on-failure',
+  },
+  projects: [
     {
-      command: '../.venv/bin/python -m uvicorn main:app --host 127.0.0.1 --port 8000',
-      url: 'http://127.0.0.1:8000/api/health',
-      cwd: '../backend',
-      reuseExistingServer: !process.env.CI,
-      env: {
-        DISABLE_METAR_FETCH: '1',
-      },
+      name: 'chromium',
+      use: { ...devices['Desktop Chrome'] },
     },
     {
-      command: 'npm run dev -- --host 127.0.0.1 --port 3004',
-      url: 'http://127.0.0.1:3004',
-      cwd: '.',
-      reuseExistingServer: !process.env.CI,
+      name: 'firefox',
+      use: { ...devices['Desktop Firefox'] },
+    },
+    {
+      name: 'webkit',
+      use: { ...devices['Desktop Safari'] },
     },
   ],
-})
+});

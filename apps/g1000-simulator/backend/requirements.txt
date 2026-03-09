@@ -1,12 +1,2 @@
 fastapi
-uvicorn[standard]
-pydantic
-pydantic-settings
-python-dotenv
-httpx
-requests
-
--e ../../packages/shared-sdk/python
-
-pytest
-pytest-asyncio
+uvicorn

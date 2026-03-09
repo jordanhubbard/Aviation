@@ -1,157 +1,117 @@
-export type G1000ThemeId = 'day' | 'night' | 'high-contrast';
+// Themes module
+// This module will contain implementations for day/night/high-contrast visual themes.
 
-export type G1000Palette = {
-  background: string;
-  panel: string;
-  border: string;
-  textPrimary: string;
-  textSecondary: string;
-  accent: string;
-  warning: string;
-  caution: string;
-  sky: string;
-  ground: string;
-  horizon: string;
-  mapRing: string;
-  mapLabel: string;
-  mapAircraft: string;
-  mapAircraftStroke: string;
-};
+export interface Theme {
+  name: string;
+  colors: {
+    background: string;
+    foreground: string;
+    accent: string;
+    warning: string;
+    caution: string;
+    safe: string;
+  };
+}
 
-export type G1000Typography = {
-  small: string;
-  medium: string;
-  large: string;
-  title: string;
-  data: string;
-};
+// G1000-specific theme shape used by PFD/MFD layout
+export interface G1000Theme {
+  palette: {
+    background: string;
+    border: string;
+    textPrimary: string;
+    textSecondary: string;
+    accent: string;
+    warning: string;
+    sky?: string;
+    ground?: string;
+    horizon?: string;
+    mapRing?: string;
+    mapLabel?: string;
+    mapAircraft?: string;
+    mapAircraftStroke?: string;
+  };
+  typography: {
+    medium: string;
+    large?: string;
+    small?: string;
+    title?: string;
+  };
+}
 
-export type G1000Theme = {
-  id: G1000ThemeId;
-  label: string;
-  palette: G1000Palette;
-  typography: G1000Typography;
-};
+export type G1000ThemeSource = string | G1000Theme;
 
-export type G1000ThemeSource = G1000ThemeId | G1000Theme;
+export interface G1000ThemeManager {
+  subscribe(callback: (theme: G1000Theme) => void): () => void;
+  setTheme(source: G1000ThemeSource): void;
+  getTheme(): G1000Theme;
+}
 
-export const DEFAULT_G1000_TYPOGRAPHY: G1000Typography = {
-  small: '11px "Fira Sans", sans-serif',
-  medium: '12px "Fira Sans", sans-serif',
-  large: '16px "Fira Sans", sans-serif',
-  title: '18px "Fira Sans", sans-serif',
-  data: '20px "Fira Sans", sans-serif',
-};
-
-export const G1000_THEMES: Record<G1000ThemeId, G1000Theme> = {
-  day: {
-    id: 'day',
-    label: 'Day',
-    palette: {
-      background: '#0b1218',
-      panel: '#111a21',
-      border: '#1f2b36',
-      textPrimary: '#e6edf3',
-      textSecondary: '#9fb3c8',
-      accent: '#4bb2e5',
-      warning: '#f5d142',
-      caution: '#f59f0b',
-      sky: '#2f8ad8',
-      ground: '#8b4c1f',
-      horizon: '#f5f5f5',
-      mapRing: '#355169',
-      mapLabel: '#9fb3c8',
-      mapAircraft: '#e6edf3',
-      mapAircraftStroke: '#1f2933',
-    },
-    typography: DEFAULT_G1000_TYPOGRAPHY,
-  },
-  night: {
-    id: 'night',
-    label: 'Night',
-    palette: {
-      background: '#0a0606',
-      panel: '#140808',
-      border: '#331111',
-      textPrimary: '#f5c2c2',
-      textSecondary: '#b57171',
-      accent: '#e05757',
-      warning: '#ff8f4d',
-      caution: '#ff4d4d',
-      sky: '#3b1a1a',
-      ground: '#1b0f0f',
-      horizon: '#d49a9a',
-      mapRing: '#4a2a2a',
-      mapLabel: '#c48f8f',
-      mapAircraft: '#f5c2c2',
-      mapAircraftStroke: '#2b0f0f',
-    },
-    typography: DEFAULT_G1000_TYPOGRAPHY,
-  },
-  'high-contrast': {
-    id: 'high-contrast',
-    label: 'High Contrast',
-    palette: {
-      background: '#000000',
-      panel: '#0b0b0b',
-      border: '#ffffff',
-      textPrimary: '#ffffff',
-      textSecondary: '#e6e6e6',
-      accent: '#00ffff',
-      warning: '#ffff00',
-      caution: '#ff00ff',
-      sky: '#1e90ff',
-      ground: '#8b4513',
-      horizon: '#ffffff',
-      mapRing: '#ffffff',
-      mapLabel: '#ffffff',
-      mapAircraft: '#00ffff',
-      mapAircraftStroke: '#000000',
-    },
-    typography: DEFAULT_G1000_TYPOGRAPHY,
-  },
-};
-
-export const DEFAULT_G1000_THEME = G1000_THEMES.day;
-
-export const resolveG1000Theme = (theme?: G1000ThemeSource): G1000Theme => {
-  if (!theme) return DEFAULT_G1000_THEME;
-  if (typeof theme === 'string') {
-    return G1000_THEMES[theme] ?? DEFAULT_G1000_THEME;
-  }
-  return theme;
-};
-
-export type G1000ThemeListener = (theme: G1000Theme) => void;
-
-export type G1000ThemeManager = {
-  getTheme: () => G1000Theme;
-  setTheme: (theme: G1000ThemeSource) => void;
-  subscribe: (listener: G1000ThemeListener) => () => void;
-};
-
-export const createG1000ThemeManager = (
-  initialTheme?: G1000ThemeSource
-): G1000ThemeManager => {
-  let activeTheme = resolveG1000Theme(initialTheme);
-  const listeners = new Set<G1000ThemeListener>();
-
+export function resolveG1000Theme(source: G1000ThemeSource): G1000Theme {
+  if (typeof source === 'object') return source;
+  const t = getTheme(source);
   return {
-    getTheme: () => activeTheme,
-    setTheme: (theme: G1000ThemeSource) => {
-      activeTheme = resolveG1000Theme(theme);
-      listeners.forEach((listener) => listener(activeTheme));
+    palette: {
+      background: t.colors.background,
+      border: t.colors.foreground,
+      textPrimary: t.colors.foreground,
+      textSecondary: t.colors.foreground,
+      accent: t.colors.accent,
+      warning: t.colors.warning,
     },
-    subscribe: (listener: G1000ThemeListener) => {
-      listeners.add(listener);
-      listener(activeTheme);
-      return () => {
-        listeners.delete(listener);
-      };
+    typography: {
+      medium: '12px sans-serif',
+      large: '14px sans-serif',
+      small: '10px sans-serif',
+      title: '16px sans-serif',
     },
   };
+}
+
+export const dayTheme: Theme = {
+  name: 'day',
+  colors: {
+    background: '#FFFFFF',
+    foreground: '#000000',
+    accent: '#0066CC',
+    warning: '#FF6600',
+    caution: '#FFCC00',
+    safe: '#00CC00',
+  },
 };
 
-export const getG1000Theme = (theme?: G1000ThemeSource): G1000Theme => {
-  return resolveG1000Theme(theme);
+export const nightTheme: Theme = {
+  name: 'night',
+  colors: {
+    background: '#000000',
+    foreground: '#00FF00',
+    accent: '#0099FF',
+    warning: '#FF3300',
+    caution: '#FFFF00',
+    safe: '#00FF00',
+  },
 };
+
+export const highContrastTheme: Theme = {
+  name: 'high-contrast',
+  colors: {
+    background: '#000000',
+    foreground: '#FFFFFF',
+    accent: '#FFFF00',
+    warning: '#FF0000',
+    caution: '#FFFF00',
+    safe: '#00FF00',
+  },
+};
+
+export function getTheme(themeName: string): Theme {
+  switch (themeName) {
+    case 'day':
+      return dayTheme;
+    case 'night':
+      return nightTheme;
+    case 'high-contrast':
+      return highContrastTheme;
+    default:
+      return dayTheme;
+  }
+}

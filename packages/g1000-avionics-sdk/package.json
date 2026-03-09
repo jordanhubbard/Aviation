@@ -1,0 +1,18 @@
+{
+  "name": "@aviation/g1000-avionics-sdk",
+  "version": "1.0.0",
+  "description": "G1000 Avionics SDK with GPS, WAAS, RAIM, and other avionics systems simulation",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "test": "jest",
+    "dev": "tsc --watch"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "typescript": "^5.0.0",
+    "jest": "^29.0.0",
+    "@types/jest": "^29.0.0"
+  }
+}

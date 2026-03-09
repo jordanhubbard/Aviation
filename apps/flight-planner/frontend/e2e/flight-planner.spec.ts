@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test'
+import { expect, test } from '@playwright/test'; import { flightPlans, navData, demoScenarios, mockApis } from './fixtures';
 
 test('plan a route and a local flight', async ({ page }) => {
   test.setTimeout(120_000)

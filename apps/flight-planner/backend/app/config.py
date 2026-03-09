@@ -19,7 +19,7 @@ class Settings(BaseSettings):
 
     app_name: str = Field("flight-planner", description="Application name")
     app_version: str = Field("0.1.0", description="Application version")
-    debug: bool = Field(True, description="Debug mode")
+    debug: bool = Field(False, description="Debug mode")
 
     api_prefix: str = Field("/api", description="API prefix")
 
@@ -75,4 +75,21 @@ class Settings(BaseSettings):
         return v
 
 
+
+import yaml
+
 settings = Settings()
+
+# Load aircraft profiles configuration (stored as module-level variables, not on the Settings object)
+try:
+    with open(REPO_ROOT / 'backend' / 'config' / 'aircraft_profiles.yaml', 'r') as file:
+        aircraft_profiles = yaml.safe_load(file)
+except FileNotFoundError:
+    aircraft_profiles = {}
+
+# Load G1000 configuration
+try:
+    with open(REPO_ROOT / 'backend' / 'config' / 'g1000_configuration.yaml', 'r') as file:
+        g1000_configuration = yaml.safe_load(file)
+except FileNotFoundError:
+    g1000_configuration = {}

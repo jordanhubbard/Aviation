@@ -66,5 +66,10 @@ export type {
   NormalizedAirport,
   NormalizedNavaid,
   NormalizedProcedure,
+  ProcedureAltitudeConstraint,
+  ProcedureAltitudeConstraintType,
+  ProcedureLeg,
+  ProcedureSpeedConstraint,
+  ProcedureSpeedConstraintType,
   ProcedureType,
 } from "./types";

@@ -115,4 +115,3 @@ This hardware integration plan outlines the necessary components, tooling, drive
 - **Protocols**: Determine suitable communication protocols for button panel integration.
 - **Libraries**: Research and evaluate existing libraries for handling button events.
 - **Compatibility**: Ensure compatibility with existing applications and hardware.
-

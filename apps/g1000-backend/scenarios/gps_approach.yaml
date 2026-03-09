@@ -1,0 +1,23 @@
+initial_conditions:
+  altitude: 2500
+  speed: 120
+  heading: 180
+waypoints:
+  - name: Initial Approach Fix
+    latitude: 37.6213
+    longitude: -122.3790
+  - name: Final Approach Fix
+    latitude: 37.6150
+    longitude: -122.3750
+  - name: Runway Threshold
+    latitude: 37.6100
+    longitude: -122.3700
+events:
+  - time: 0
+    action: "Establish on final course"
+  - time: 60
+    action: "Descend on glidepath"
+  - time: 120
+    action: "Decision altitude callout"
+  - time: 180
+    action: "Land or missed approach"

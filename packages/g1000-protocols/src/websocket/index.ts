@@ -41,6 +41,8 @@ export type {
   TransponderMode,
 } from "./telemetry";
 export { isCommandPayload } from "./commands";
+export { WebSocketClient } from "./client";
+export type { WebSocketClientOptions, WebSocketClientState } from "./client";
 export type {
   CommandMessage,
   CommandName,

@@ -4,6 +4,7 @@
 
 import { Request, Response, NextFunction } from 'express';
 import crypto from 'crypto';
+import { getApiKeyFromDatabase } from '../services/apiKeyService';
 
 export interface ApiKey {
   id: number;
@@ -25,7 +26,7 @@ export function generateApiKey(): string {
 
 /**
  * Middleware to require API key authentication
- * NOTE: Currently simplified - API key validation not fully implemented
+ * Implement proper API key validation with database lookup
  */
 export async function requireApiKey(req: Request, res: Response, next: NextFunction) {
   const apiKey = req.headers['x-api-key'] as string;
@@ -44,7 +45,14 @@ export async function requireApiKey(req: Request, res: Response, next: NextFunct
     });
   }
 
-  // TODO: Implement proper API key validation with database
+  const apiKeyRecord = await getApiKeyFromDatabase(apiKey);
+  if (!apiKeyRecord || !apiKeyRecord.is_active) {
+    return res.status(401).json({
+      error: 'Unauthorized',
+      message: 'Invalid or inactive API key.',
+    });
+  }
+  (req as any).apiKey = apiKeyRecord.key;
   // For now, accept any properly formatted key
   (req as any).apiKey = apiKey;
   next();
@@ -54,8 +62,9 @@ export async function requireApiKey(req: Request, res: Response, next: NextFunct
  * Validate an API key (simplified version)
  */
 export async function validateApiKey(apiKey: string): Promise<boolean> {
-  // TODO: Implement proper database-backed validation
-  return apiKey.startsWith('avt_');
+  if (!apiKey.startsWith('avt_')) return false;
+  const record = await getApiKeyFromDatabase(apiKey);
+  return !!(record?.is_active);
 }
 
 /**

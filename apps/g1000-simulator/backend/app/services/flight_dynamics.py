@@ -418,7 +418,7 @@ class FlightDynamicsSimulator:
             self.state.heading_deg + desired_turn_rate * delta
         )
         self.state.roll_deg = roll_command
-        self.autopilot.bank_limit_active = abs(roll_command) >= max_roll * 0.99
+        self.autopilot.bank_limit_active = abs(roll_command) >= max_roll * 0.95
 
     def _update_altitude(self, delta: float) -> None:
         altitude_error = self.targets.altitude_ft - self.state.altitude_ft
@@ -452,7 +452,7 @@ class FlightDynamicsSimulator:
         self.state.vertical_speed_fpm = desired_vs
         self.state.altitude_ft += desired_vs * delta / 60.0
         self.state.pitch_deg = pitch_command
-        self.autopilot.pitch_limit_active = abs(pitch_command) >= max_pitch * 0.99
+        self.autopilot.pitch_limit_active = abs(pitch_command) >= max_pitch * 0.95
         self._update_vertical_capture(altitude_error)
         self._update_autopilot_limits(delta)
 
