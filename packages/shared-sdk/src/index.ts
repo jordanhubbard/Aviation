@@ -64,3 +64,11 @@ export {
 
 // Integrations
 export * as GoogleCalendar from './integrations/google';
+
+// OpenClaw in-app chat (server-side only; use from aviation-chat proxy or app backends)
+export {
+  createOpenClawClient,
+  type OpenClawClientConfig,
+  type SendMessageParams,
+  type SendMessageResult,
+} from './openclaw';

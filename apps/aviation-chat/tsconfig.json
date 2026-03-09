@@ -4,18 +4,14 @@
     "module": "commonjs",
     "lib": ["ES2020"],
     "moduleResolution": "node",
-    "declaration": true,
-    "declarationMap": true,
-    "sourceMap": true,
     "outDir": "./dist",
     "rootDir": "./src",
-    "removeComments": true,
-    "esModuleInterop": true,
-    "forceConsistentCasingInFileNames": true,
     "strict": true,
+    "esModuleInterop": true,
     "skipLibCheck": true,
+    "declaration": true,
     "resolveJsonModule": true
   },
   "include": ["src/**/*"],
-  "exclude": ["node_modules", "dist", "**/__tests__/**", "**/*.test.ts", "src/config.ts"]
+  "exclude": ["node_modules", "dist"]
 }

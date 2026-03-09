@@ -1,0 +1,12 @@
+version: "1.0"
+
+beads:
+  - name: proxy
+    description: OpenClaw chat proxy server
+    path: src/
+    dependencies: []
+    parallel: true
+
+execution_groups:
+  - name: default
+    beads: [proxy]

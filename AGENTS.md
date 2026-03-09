@@ -278,6 +278,14 @@ Instructions for local development.
 How to run tests.
 ```
 
+#### 7b. Create CLAUDE.md (for in-app chat)
+
+If the app will offer an OpenClaw in-app chat, add a **CLAUDE.md** (or **AI_CONTEXT.md**) at the app root so the chat can give app-specific advice without reading the repo.
+
+- **Location:** `apps/my-aviation-app/CLAUDE.md`
+- **Content:** What the app does, main features, key concepts/terms, and brief data shapes (1–2 screens). See `apps/flight-planner/CLAUDE.md` for an example.
+- The aviation-chat proxy loads this file by `appId` and sends it as context to OpenClaw.
+
 #### 8. Add Secrets Configuration
 
 ```bash
@@ -513,9 +521,17 @@ my-aviation-app/
 }
 ```
 
-#### 3. Independent Deployment
+#### 3. Chat with OpenClaw
 
-Each app can be deployed standalone with Docker:
+Apps can offer an in-app chat so users can ask OpenClaw for advice in context. Embed the shared `ChatPanel` from `@aviation/ui-framework` and point it at the aviation-chat proxy.
+
+- **Component:** `ChatPanel` with props `appId`, `userId`, `apiBaseUrl` (proxy URL), and optional `conversationId`.
+- **App context:** Add a **CLAUDE.md** (or **AI_CONTEXT.md**) at the app root; the proxy loads it by `appId` and sends it to OpenClaw so answers are app-aware.
+- **Proxy:** The `apps/aviation-chat` service exposes `POST /chat` with body `{ userId, appId, message, conversationId? }`. It reads Gateway URL and API key from **environment variables first** (for Railway/deploy), then keystore: set `OPENCLAW_GATEWAY_HOST` (or `OPENCLAW_BASE_URL`) and `OPENCLAW_API_KEY` (or `OPENCLAW_GATEWAY_TOKEN` / `OPENCLAW_GATEWAY_PASSWORD`) in env or in keystore for service `aviation-chat`.
+
+#### 4. Independent Deployment
+
+Each app can be deployed standalone with Docker.
 
 ```dockerfile
 # Dockerfile
@@ -532,7 +548,7 @@ EXPOSE 3003
 CMD ["node", "dist/index.js"]
 ```
 
-#### 4. Meta App as Optional Consumer
+#### 5. Meta App as Optional Consumer
 
 The meta app is just another consumer of your application:
 

@@ -102,6 +102,10 @@ Each application has a placeholder pane component that:
 - Provides a link to the standalone application
 - Can be replaced with an embedded component in the future
 
+### Chat with OpenClaw
+
+Apps can embed the shared **ChatPanel** from `@aviation/ui-framework` (or `@aviation/ui-framework/chat`) so users can ask OpenClaw for in-context advice. Pass `appId`, `userId`, and `apiBaseUrl` (the aviation-chat proxy URL, e.g. `http://localhost:31416`). The proxy loads each app's **CLAUDE.md** and sends it to OpenClaw so answers are app-aware. See AGENTS.md "Chat with OpenClaw" for setup.
+
 ## Customization
 
 ### Adding a New Application

@@ -7,6 +7,8 @@
 export * from './map';
 // Multi-tab UI components
 export * from './multi-tab';
+// OpenClaw in-app chat
+export * from './chat';
 
 /**
  * UI Modality Types

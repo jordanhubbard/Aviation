@@ -13,6 +13,10 @@
     "./map": {
       "types": "./dist/map/index.d.ts",
       "default": "./dist/map/index.js"
+    },
+    "./chat": {
+      "types": "./dist/chat/index.d.ts",
+      "default": "./dist/chat/index.js"
     }
   },
   "scripts": {

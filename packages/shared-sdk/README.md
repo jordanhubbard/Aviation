@@ -110,6 +110,33 @@ gs = ground_speed(450, 90, 270, 25)
 - High precision (< 0.1% error for distances > 10 NM)
 - Validated against known aviation values
 
+### OpenClaw in-app chat (server-side)
+
+The SDK provides an OpenClaw client for the aviation-chat proxy or app backends. **Do not use from the browser** (API key must stay server-side).
+
+- The **aviation-chat proxy** reads Gateway URL and API key from **environment variables first** (for Railway and other deployments), then keystore. See `apps/aviation-chat/README.md` and `docs/OPENCLAW_CHAT.md`.
+- When calling the client yourself, pass `baseUrl` and `apiKey` (from env or keystore). Call `sendMessage({ message, userId, appId, appContextPrefix?, conversationId?, history? })`.
+- The proxy loads each app's `CLAUDE.md` (or `AI_CONTEXT.md`) and passes it as `appContextPrefix` so OpenClaw can give app-specific advice.
+
+```typescript
+import { createOpenClawClient } from '@aviation/shared-sdk';
+import { createSecretLoader } from '@aviation/keystore';
+
+// Prefer env (e.g. Railway), then keystore
+const secrets = createSecretLoader('aviation-chat');
+const baseUrl = process.env.OPENCLAW_BASE_URL ?? secrets.get('OPENCLAW_BASE_URL') ?? 'http://localhost:31415';
+const apiKey = process.env.OPENCLAW_API_KEY ?? process.env.OPENCLAW_GATEWAY_TOKEN ?? secrets.get('OPENCLAW_API_KEY') ?? secrets.get('OPENCLAW_GATEWAY_TOKEN');
+
+const client = createOpenClawClient({ baseUrl, apiKey });
+const result = await client.sendMessage({
+  message: 'How do I add a fuel stop?',
+  userId: 'user-123',
+  appId: 'flight-planner',
+  appContextPrefix: claudeMdContent,
+});
+console.log(result.content);
+```
+
 ## Installation
 
 ```bash
