@@ -3,42 +3,116 @@
 ## Pilot Hardware Adapter
 
 ### Overview
-The pilot hardware adapter will facilitate communication between external hardware devices and our aviation applications. The adapter will be designed to support multiple hardware interfaces, ensuring flexibility and scalability.
+The pilot hardware adapter will serve as the interface between external hardware devices and our aviation applications. It will ensure seamless communication and data exchange.
 
 ### Components
-- **Interface Module**: Handles communication protocols (e.g., USB, Bluetooth, Serial).
-- **Data Conversion Layer**: Translates hardware-specific data formats into a standardized format used by our applications.
-- **Control Logic**: Manages device initialization, configuration, and error handling.
-
-### Implementation Details
-- **Programming Language**: C++ for performance-critical components.
-- **Libraries**: Use existing libraries for protocol handling (e.g., libusb for USB).
+- **Component 1: USB Interface Module**
+  - Provides a standard USB connection for hardware devices.
+- **Component 2: Serial Communication Module**
+  - Facilitates serial communication protocols (RS-232, RS-485) for legacy hardware.
+- **Component 3: Bluetooth/Wi-Fi Module**
+  - Enables wireless communication for modern hardware devices.
 
 ## Required Tooling and Drivers
 
 ### Tooling
-- **Integrated Development Environment (IDE)**: Visual Studio Code or CLion for C++ development.
-- **Build System**: CMake for cross-platform builds.
-- **Version Control**: Git for source code management.
+- **Tool 1: Hardware Debugger**
+  - Used for debugging and testing hardware connections.
+- **Tool 2: Protocol Analyzer**
+  - Analyzes communication protocols to ensure data integrity.
+- **Tool 3: Signal Generator**
+  - Generates test signals to simulate hardware inputs.
 
 ### Drivers
-- **USB Drivers**: Install appropriate drivers for the target hardware.
-- **Bluetooth Drivers**: Use platform-specific Bluetooth stack APIs.
-- **Serial Port Drivers**: Configure serial port settings using platform tools.
+- **Driver 1: USB Driver**
+  - Manages USB communication between the hardware and the system.
+- **Driver 2: Serial Port Driver**
+  - Manages serial communication between the hardware and the system.
+- **Driver 3: Bluetooth/Wi-Fi Driver**
+  - Manages wireless communication between the hardware and the system.
 
 ## Validation Steps
 
-### Unit Testing
-- Write unit tests for individual components (interface module, data conversion layer, control logic).
-- Use Google Test for C++ unit testing.
+### Step 1: Connection Test
+- Verify that the hardware device can establish a connection using the appropriate interface module.
 
-### Integration Testing
-- Test the entire adapter with mock hardware devices.
-- Verify data integrity and performance under various conditions.
+### Step 2: Data Flow Verification
+- Ensure that data flows correctly between the hardware device and the system.
 
-### System Testing
-- Integrate the adapter with actual aviation applications.
-- Conduct end-to-end testing to ensure seamless hardware interaction.
+### Step 3: Performance Testing
+- Conduct performance tests to ensure the hardware meets required speed and reliability standards.
+
+### Step 4: Compatibility Check
+- Perform compatibility checks to ensure the hardware works with all relevant aviation applications.
+
+## Prototype Plan
+
+### Step 1: Design the Adapter
+- Create detailed designs for the USB, Serial, and Bluetooth/Wi-Fi modules.
+
+### Step 2: Develop Initial Code
+- Write initial code for the adapter to handle basic communication.
+
+### Step 3: Implement Tooling
+- Set up the hardware debugger, protocol analyzer, and signal generator for testing.
+
+### Step 4: Integrate Drivers
+- Integrate the necessary USB, serial port, and Bluetooth/Wi-Fi drivers into the system.
+
+### Step 5: Conduct Initial Tests
+- Perform connection, data flow, performance, and compatibility tests.
 
 ## Conclusion
-This hardware integration plan outlines the necessary steps to develop and validate a pilot hardware adapter. By following these guidelines, we can ensure reliable and efficient integration of external hardware devices into our aviation applications.
+This hardware integration plan outlines the necessary components, tooling, drivers, and validation steps to successfully integrate external hardware devices with our aviation applications. The prototype plan includes detailed steps for each component and tooling. Next steps include prototyping the adapter and conducting initial tests.
+
+## Hardware Integration Targets
+
+### Supported Device Types
+- **Yoke**: Supports control surfaces like rudder pedals and control columns.
+- **Throttle**: Manages throttle controls for engine power.
+- **Button Panels**: Includes various control buttons and switches.
+
+### Input Mappings
+- **Yoke**: Maps physical movements to corresponding control surface commands.
+- **Throttle**: Maps throttle lever positions to engine power commands.
+- **Button Panels**: Maps button presses to specific control actions.
+
+### Driver/Library Requirements
+- **Yoke Driver**: Requires a driver to interpret yoke movements.
+- **Throttle Driver**: Requires a driver to interpret throttle positions.
+- **Button Panel Library**: Requires a library to handle button press events.
+
+## Hardware Integration Plan Details
+
+### Yoke
+- **Protocols**: Determine suitable communication protocols for yoke integration.
+- **Drivers**: Research and evaluate existing yoke drivers.
+- **Compatibility**: Ensure compatibility with existing applications and hardware.
+
+### Throttle
+- **Protocols**: Determine suitable communication protocols for throttle integration.
+- **Drivers**: Research and evaluate existing throttle drivers.
+- **Compatibility**: Ensure compatibility with existing applications and hardware.
+
+### Button Panels
+- **Protocols**: Determine suitable communication protocols for button panel integration.
+- **Libraries**: Research and evaluate existing libraries for handling button events.
+- **Compatibility**: Ensure compatibility with existing applications and hardware.
+
+## Research Summary
+
+### Yoke
+- **Protocols**: Determine suitable communication protocols for yoke integration.
+- **Drivers**: Research and evaluate existing yoke drivers.
+- **Compatibility**: Ensure compatibility with existing applications and hardware.
+
+### Throttle
+- **Protocols**: Determine suitable communication protocols for throttle integration.
+- **Drivers**: Research and evaluate existing throttle drivers.
+- **Compatibility**: Ensure compatibility with existing applications and hardware.
+
+### Button Panels
+- **Protocols**: Determine suitable communication protocols for button panel integration.
+- **Libraries**: Research and evaluate existing libraries for handling button events.
+- **Compatibility**: Ensure compatibility with existing applications and hardware.
+
