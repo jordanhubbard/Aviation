@@ -16,7 +16,7 @@ jobs:
     runs-on: ubuntu-latest
     if: github.event_name == 'pull_request' && github.actor == 'dependabot[bot]'
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - name: Dependabot Security Update
         uses: dependabot/fetch-metadata@v1.1.1
         with:
@@ -27,7 +27,7 @@ jobs:
     runs-on: ubuntu-latest
     continue-on-error: true  # non-blocking: finding real CVEs in dependencies we can't patch immediately
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - name: Run Trivy Vulnerability Scanner (filesystem)
         uses: aquasecurity/trivy-action@master
         with:
@@ -44,7 +44,7 @@ jobs:
   snyk:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - name: Run Snyk to check for vulnerabilities
         uses: snyk/actions/node@master
         continue-on-error: true   # non-blocking until SNYK_TOKEN is configured
@@ -56,9 +56,9 @@ jobs:
     runs-on: ubuntu-latest
     continue-on-error: true  # non-blocking: local editable package refs can't install in CI
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: '3.11'
       - name: Install dependencies

@@ -17,7 +17,7 @@
     "@aviation/keystore": "*",
     "@aviation/shared-sdk": "*",
     "express": "^4.21.0",
-    "cors": "^2.8.5"
+    "cors": "^2.8.6"
   },
   "devDependencies": {
     "@types/cors": "^2.8.17",
