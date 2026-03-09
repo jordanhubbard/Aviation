@@ -40,5 +40,9 @@
     "eslint": "^10.0.2",
     "@typescript-eslint/eslint-plugin": "^8.56.1",
     "@typescript-eslint/parser": "^8.56.1"
+  },
+  "overrides": {
+    "minimatch": ">=9.0.7",
+    "rollup": ">=4.59.0"
   }
 }
