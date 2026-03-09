@@ -82,4 +82,4 @@ Or use GitHub UI: close each Dependabot PR, then delete the branch.
 
 - **minimatch (high)** – Fixed in foreflight-dashboard and flight-planner frontends via `overrides` to `>=9.0.7`. Other frontends (g1000-simulator, aviation-accident-tracker) had 0 vulns in local `npm audit`; GitHub may still show alerts until lockfiles are refreshed.
 - **rollup (high)** – Transitive in frontends; address when upgrading build toolchain or via future Dependabot PRs.
-- **Flask (low), flightschool** – Alert #61: first patched version 3.1.3. Deferred until planned Flask 3.x upgrade (major change). See GitHub Security → Dependabot to dismiss or track.
+- **Flask (low), flightschool** – Resolved: upgraded to Flask 3.1.3 (and Werkzeug >= 3.1). FLASK_ENV replaced with FLASK_DEBUG in Makefile, docker-compose, and README.

@@ -24,7 +24,7 @@ services:
     restart: unless-stopped
     environment:
       - FLASK_APP=app
-      - FLASK_ENV=development
+      - FLASK_DEBUG=1
       - FLASK_DEBUG=1
       - PYTHONPATH=/app
       - BUILDKIT_PROGRESS=plain

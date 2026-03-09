@@ -104,7 +104,7 @@ flightschool/
 3. Create a `.env` file with the following variables:
    ```
    FLASK_APP=run.py
-   FLASK_ENV=development
+   FLASK_DEBUG=1
    SECRET_KEY=your-secret-key
    DATABASE_URL=sqlite:///flightschool.db
    ```

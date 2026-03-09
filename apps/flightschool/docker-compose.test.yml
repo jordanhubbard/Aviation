@@ -10,7 +10,7 @@ services:
       args:
         PYTHON_VERSION: ${PYTHON_VERSION:-3.11}
     environment:
-      FLASK_ENV: testing
+      FLASK_DEBUG: "0"
       FLASK_DEBUG: 0
       PYTHONPATH: /app
       DATABASE_URL: "sqlite:///:memory:"

@@ -11,9 +11,9 @@ FLASK = $(VENV)/bin/flask
 PYTEST = $(VENV)/bin/pytest
 COVERAGE = $(VENV)/bin/coverage
 
-# Environment variables for Flask
+# Environment variables for Flask (Flask 3.x: use FLASK_DEBUG, FLASK_ENV was removed)
 export FLASK_APP = app
-export FLASK_ENV = development
+export FLASK_DEBUG = 1
 export PYTHONPATH = $(shell pwd)
 PORT ?= 5000  # Default port, can be overridden with make run PORT=xxxx
 TYPE ?= "Aircraft"
