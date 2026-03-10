@@ -28,7 +28,7 @@
     "@playwright/test": "^1.0.0",
     "@types/node": "^25.3.0",
     "ts-node": "^10.9.2",
-    "typescript": "^5.0.0"
+    "typescript": "^5.9.3"
   },
   "overrides": {
     "@tootallnate/once": ">=3.0.1",
