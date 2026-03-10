@@ -1,4 +1,4 @@
-from . import airspace, airports, beads, health, local, plan, route, terrain, weather
+from . import airspace, airports, beads, health, local, plan, route, settings, terrain, weather
 
 __all__ = [
     "airspace",
@@ -8,6 +8,7 @@ __all__ = [
     "local",
     "plan",
     "route",
+    "settings",
     "terrain",
     "weather",
     "demo",

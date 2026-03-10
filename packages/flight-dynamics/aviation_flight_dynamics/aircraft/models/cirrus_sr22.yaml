@@ -1,0 +1,67 @@
+{
+  "aircraft_id": "cirrus-sr22",
+  "name": "Cirrus SR22",
+  "manufacturer": "Cirrus Aircraft",
+  "mass_properties": {
+    "empty_weight_lbs": 2242.0,
+    "max_gross_weight_lbs": 3600.0,
+    "reference_cg_in": 45.2,
+    "max_payload_lbs": 1358.0,
+    "cg_limits_in": {"forward_in": 39.0, "aft_in": 52.0},
+    "inertia": {"ix_slug_ft2": 1467.0, "iy_slug_ft2": 2077.0, "iz_slug_ft2": 3065.0, "ixz_slug_ft2": 0.0}
+  },
+  "aerodynamics": {
+    "geometry": {"wing_area_sqft": 144.9, "wing_span_ft": 38.4, "mean_aerodynamic_chord_ft": 3.9},
+    "coefficients": {
+      "lift_coefficient_zero": 0.21,
+      "lift_curve_slope_per_rad": 5.5,
+      "lift_coefficient_max": 1.6,
+      "drag_coefficient_zero": 0.025,
+      "induced_drag_factor": 0.040,
+      "moment_coefficient_zero": 0.02,
+      "moment_coefficient_alpha_per_rad": -1.0,
+      "side_force_beta": 0.0,
+      "roll_moment_beta": 0.0,
+      "yaw_moment_beta": 0.0
+    },
+    "control_surface_effects": {
+      "aileron_effectiveness": 0.09,
+      "elevator_effectiveness": 0.95,
+      "rudder_effectiveness": 0.11,
+      "flap_lift_increment": 0.55,
+      "flap_drag_increment": 0.10
+    }
+  },
+  "engine": {
+    "engine_type": "piston",
+    "max_power_hp": 310.0,
+    "max_rpm": 2700.0,
+    "idle_rpm": 700.0,
+    "redline_rpm": 2700.0,
+    "propeller_diameter_ft": 6.17,
+    "fuel_flow_gph_at_max_power": 17.0,
+    "specific_fuel_consumption_lb_hp_hr": 0.40
+  },
+  "fuel": {
+    "capacity_gal": 92.0,
+    "unusable_gal": 5.0,
+    "fuel_density_lbs_per_gal": 6.0
+  },
+  "limits": {
+    "never_exceed_speed_kt": 201.0,
+    "max_operating_speed_kt": 178.0,
+    "maneuvering_speed_kt": 133.0,
+    "stall_speed_clean_kt": 59.0,
+    "stall_speed_landing_kt": 52.0,
+    "max_bank_angle_deg": 60.0,
+    "max_pitch_angle_deg": 30.0
+  },
+  "performance": {
+    "cruise_speed_kt": 183.0,
+    "climb_rate_fpm": 1270.0,
+    "service_ceiling_ft": 17500.0,
+    "takeoff_distance_ft": 1036.0,
+    "landing_distance_ft": 1012.0
+  },
+  "variants": {}
+}

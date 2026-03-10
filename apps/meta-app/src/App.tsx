@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { TabNavigation, PaneContainer } from '@aviation/ui-framework';
 import type { PaneConfig } from '@aviation/ui-framework';
+import { ConfigPanel, SERVICE_REGISTRY } from '@aviation/aviation-config';
 import './App.css';
 
 type AppLink = {
@@ -117,14 +118,24 @@ const resolvedApps: ResolvedAppLink[] = appLinks.map((app) => ({
   url: app.envUrl || app.productionUrl,
 }));
 
-const aviationPanes: PaneConfig[] = resolvedApps.map((app, index) => ({
-  id: app.id,
-  title: app.tabTitle,
-  icon: app.icon,
-  component: () => <AppPane app={app} />,
-  order: index + 1,
-  defaultOpen: index === 0,
-}));
+const aviationPanes: PaneConfig[] = [
+  ...resolvedApps.map((app, index) => ({
+    id: app.id,
+    title: app.tabTitle,
+    icon: app.icon,
+    component: () => <AppPane app={app} />,
+    order: index + 1,
+    defaultOpen: index === 0,
+  })),
+  {
+    id: 'settings',
+    title: 'Settings',
+    icon: '⚙️',
+    component: () => <SettingsPane />,
+    order: 99,
+    defaultOpen: false,
+  },
+];
 
 function AppPane({ app }: { app: ResolvedAppLink }) {
   return (
@@ -139,6 +150,56 @@ function AppPane({ app }: { app: ResolvedAppLink }) {
           View source
         </a>
       </div>
+    </div>
+  );
+}
+
+function SettingsPane() {
+  return (
+    <div className="pane-content settings-pane">
+      <h1>Aviation Suite Settings</h1>
+      <p className="settings-note">
+        The meta-app has no backend. Configure each service from within the individual app, or use
+        the CLI:{' '}
+        <code>npm run keystore set &lt;service&gt; &lt;key&gt; &lt;value&gt;</code>
+      </p>
+
+      <section className="settings-section">
+        <h2>Per-App Settings</h2>
+        <ul className="settings-app-links">
+          {resolvedApps.map((app) => (
+            <li key={app.id}>
+              <span className="settings-app-icon">{app.icon}</span>{' '}
+              <a href={`${app.url}/settings`} target="_blank" rel="noopener noreferrer">
+                {app.title} Settings →
+              </a>
+            </li>
+          ))}
+        </ul>
+      </section>
+
+      <section className="settings-section">
+        <h2>Service Registry</h2>
+        <ConfigPanel title="Aviation Suite Settings" />
+        <table className="settings-registry-table">
+          <thead>
+            <tr>
+              <th>Service</th>
+              <th>Category</th>
+              <th>Apps</th>
+            </tr>
+          </thead>
+          <tbody>
+            {SERVICE_REGISTRY.map((svc) => (
+              <tr key={svc.id}>
+                <td>{svc.name}</td>
+                <td>{svc.category}</td>
+                <td>{svc.appScope?.join(', ') ?? '—'}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </section>
     </div>
   );
 }
@@ -160,38 +221,64 @@ function App() {
 
       {isLauncher ? (
         <main className="meta-app-main">
-          <div className="launcher-grid">
-            {resolvedApps.map((app) => (
+          {activeId === 'settings' ? (
+            <div>
+              <button
+                className="launcher-back-btn"
+                onClick={() => setActiveId(resolvedApps[0]?.id ?? '')}
+              >
+                ← Back to Launcher
+              </button>
+              <SettingsPane />
+            </div>
+          ) : (
+            <div className="launcher-grid">
+              {resolvedApps.map((app) => (
+                <div
+                  key={app.id}
+                  className="launcher-card"
+                >
+                  <div className="launcher-card-header">
+                    <span className="launcher-card-icon">{app.icon}</span>
+                    <h2 className="launcher-card-title">{app.title}</h2>
+                  </div>
+                  <p className="launcher-card-description">{app.description}</p>
+                  <div className="launcher-card-actions">
+                    <a
+                      className="launcher-card-cta"
+                      href={app.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      Open {app.tabTitle} →
+                    </a>
+                    <a
+                      className="launcher-card-source"
+                      href={app.sourceUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      Source
+                    </a>
+                  </div>
+                </div>
+              ))}
               <div
-                key={app.id}
                 className="launcher-card"
+                onClick={() => setActiveId('settings')}
+                style={{ cursor: 'pointer' }}
               >
                 <div className="launcher-card-header">
-                  <span className="launcher-card-icon">{app.icon}</span>
-                  <h2 className="launcher-card-title">{app.title}</h2>
+                  <span className="launcher-card-icon">⚙️</span>
+                  <h2 className="launcher-card-title">Settings</h2>
                 </div>
-                <p className="launcher-card-description">{app.description}</p>
+                <p className="launcher-card-description">Configure API keys and service settings for all aviation apps.</p>
                 <div className="launcher-card-actions">
-                  <a
-                    className="launcher-card-cta"
-                    href={app.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    Open {app.tabTitle} →
-                  </a>
-                  <a
-                    className="launcher-card-source"
-                    href={app.sourceUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    Source
-                  </a>
+                  <span className="launcher-card-cta">Open Settings →</span>
                 </div>
               </div>
-            ))}
-          </div>
+            </div>
+          )}
         </main>
       ) : (
         <>
@@ -219,7 +306,7 @@ function App() {
       )}
 
       <footer className="meta-app-footer">
-        <p>Aviation Monorepo Meta App • {resolvedApps.length} Applications</p>
+        <p>Aviation Monorepo Meta App • {resolvedApps.length} Applications + Settings</p>
       </footer>
     </div>
   );

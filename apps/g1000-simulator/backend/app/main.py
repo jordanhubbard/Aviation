@@ -12,6 +12,7 @@ from services.procedures import ProceduresService
 from services.geo_calculations import GeoCalculationsService
 from services.flight_dynamics import FlightDynamicsService
 from services.streaming import StreamingService
+from app.routers import settings as settings_router
 
 app = FastAPI()
 
@@ -130,3 +131,7 @@ async def websocket_flight_data(websocket: WebSocket):
 async def health_check():
     """Health check endpoint"""
     return {"status": "healthy"}
+
+
+# Settings router (ConfigPanel support)
+app.include_router(settings_router.router)

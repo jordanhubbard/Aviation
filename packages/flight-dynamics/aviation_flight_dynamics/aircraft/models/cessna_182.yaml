@@ -1,0 +1,67 @@
+{
+  "aircraft_id": "cessna-182",
+  "name": "Cessna 182 Skylane",
+  "manufacturer": "Cessna",
+  "mass_properties": {
+    "empty_weight_lbs": 1970.0,
+    "max_gross_weight_lbs": 3100.0,
+    "reference_cg_in": 43.5,
+    "max_payload_lbs": 1130.0,
+    "cg_limits_in": {"forward_in": 36.5, "aft_in": 50.4},
+    "inertia": {"ix_slug_ft2": 1285.0, "iy_slug_ft2": 1825.0, "iz_slug_ft2": 2667.0, "ixz_slug_ft2": 0.0}
+  },
+  "aerodynamics": {
+    "geometry": {"wing_area_sqft": 174.0, "wing_span_ft": 36.0, "mean_aerodynamic_chord_ft": 4.9},
+    "coefficients": {
+      "lift_coefficient_zero": 0.22,
+      "lift_curve_slope_per_rad": 5.2,
+      "lift_coefficient_max": 1.55,
+      "drag_coefficient_zero": 0.031,
+      "induced_drag_factor": 0.044,
+      "moment_coefficient_zero": 0.02,
+      "moment_coefficient_alpha_per_rad": -1.0,
+      "side_force_beta": 0.0,
+      "roll_moment_beta": 0.0,
+      "yaw_moment_beta": 0.0
+    },
+    "control_surface_effects": {
+      "aileron_effectiveness": 0.08,
+      "elevator_effectiveness": 0.9,
+      "rudder_effectiveness": 0.1,
+      "flap_lift_increment": 0.52,
+      "flap_drag_increment": 0.09
+    }
+  },
+  "engine": {
+    "engine_type": "piston",
+    "max_power_hp": 230.0,
+    "max_rpm": 2400.0,
+    "idle_rpm": 700.0,
+    "redline_rpm": 2400.0,
+    "propeller_diameter_ft": 6.67,
+    "fuel_flow_gph_at_max_power": 14.0,
+    "specific_fuel_consumption_lb_hp_hr": 0.43
+  },
+  "fuel": {
+    "capacity_gal": 92.0,
+    "unusable_gal": 2.0,
+    "fuel_density_lbs_per_gal": 6.0
+  },
+  "limits": {
+    "never_exceed_speed_kt": 175.0,
+    "max_operating_speed_kt": 145.0,
+    "maneuvering_speed_kt": 111.0,
+    "stall_speed_clean_kt": 54.0,
+    "stall_speed_landing_kt": 47.0,
+    "max_bank_angle_deg": 60.0,
+    "max_pitch_angle_deg": 30.0
+  },
+  "performance": {
+    "cruise_speed_kt": 145.0,
+    "climb_rate_fpm": 924.0,
+    "service_ceiling_ft": 18100.0,
+    "takeoff_distance_ft": 1350.0,
+    "landing_distance_ft": 1350.0
+  },
+  "variants": {}
+}

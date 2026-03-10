@@ -10,6 +10,7 @@
     "clean": "rm -rf dist"
   },
   "dependencies": {
+    "@aviation/aviation-config": "*",
     "@aviation/ui-framework": "*",
     "@aviation/shared-sdk": "*",
     "react": "^19.2.3",

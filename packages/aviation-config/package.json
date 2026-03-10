@@ -1,0 +1,32 @@
+{
+  "name": "@aviation/aviation-config",
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Shared configuration registry and UI for the Aviation suite",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "clean": "rm -rf dist"
+  },
+  "dependencies": {
+    "@aviation/keystore": "*"
+  },
+  "peerDependencies": {
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0"
+  },
+  "devDependencies": {
+    "@types/react": "^19.2.9",
+    "@types/react-dom": "^19.2.3",
+    "@types/node": "^25.3.0",
+    "typescript": "^5.0.0"
+  }
+}

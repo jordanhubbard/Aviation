@@ -40,6 +40,7 @@ from src.core.models import LogbookEntry, Aircraft, Airport, FlightConditions, R
 from src.services.foreflight_client import ForeFlightClient
 from src.services.importer import ForeFlightImporter
 from src.core.validation import validate_csv
+from src.api.settings import router as settings_router
 
 # Configure logging
 os.makedirs('logs', exist_ok=True)
@@ -147,6 +148,9 @@ async def add_security_headers(request: Request, call_next):
 limiter = Limiter(key_func=get_remote_address)
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+
+# Settings router (ConfigPanel support)
+app.include_router(settings_router, tags=["settings"])
 
 # Database is now configured in src.core.database
 
