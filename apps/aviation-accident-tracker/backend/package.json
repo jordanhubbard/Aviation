@@ -19,6 +19,7 @@
   "dependencies": {
     "@apollo/server": "^5.4.0",
     "@as-integrations/express5": "^1.0.0",
+    "@aviation/ai-explainer": "*",
     "@aviation/keystore": "*",
     "@aviation/shared-sdk": "*",
     "@graphql-tools/schema": "^10.0.2",

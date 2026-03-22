@@ -92,6 +92,47 @@ export function App() {
   const [selected, setSelected] = useState<EventRecord | null>(null);
   const [selectedLoading, setSelectedLoading] = useState(false);
   const [selectedError, setSelectedError] = useState<string | null>(null);
+
+  // AI Explainer
+  const [explainLoading, setExplainLoading] = useState(false);
+  const [explainText, setExplainText] = useState<string | null>(null);
+  const [explainError, setExplainError] = useState<string | null>(null);
+
+  const handleExplain = async (event: EventRecord) => {
+    setExplainLoading(true);
+    setExplainText(null);
+    setExplainError(null);
+    try {
+      const context = [
+        `Aircraft: ${event.aircraftType || 'unknown'}`,
+        `Registration: ${event.registration}`,
+        `Operator: ${event.operator || 'unknown'}`,
+        `Date: ${event.dateZ}`,
+        `Category: ${event.category}`,
+        `Country: ${event.country || 'unknown'}`,
+        `Fatalities: ${event.fatalities ?? 'unknown'}`,
+        `Injuries: ${event.injuries ?? 'unknown'}`,
+        `Summary: ${event.summary || 'n/a'}`,
+        `Narrative: ${event.narrative || 'n/a'}`,
+      ].join('\n');
+      const question = 'Why did this aviation accident occur and what factors contributed to it?';
+      const res = await fetch('/api/explain', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ context, question }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setExplainError(data.error || `Error ${res.status}`);
+      } else {
+        setExplainText(data.explanation);
+      }
+    } catch (err) {
+      setExplainError(err instanceof Error ? err.message : 'Failed to get explanation');
+    } finally {
+      setExplainLoading(false);
+    }
+  };
   const [airportQuery, setAirportQuery] = useState('');
   const [airportOptions, setAirportOptions] = useState<{ label: string; code: string }[]>([]);
   const [country, setCountry] = useState('');
@@ -590,7 +631,27 @@ export function App() {
                   : '—'}
             </p>
             {selectedError && <p style={{ color: 'red' }}>Failed to load event detail: {selectedError}</p>}
-            <button onClick={() => setSelected(null)}>Close</button>
+
+            {/* AI Explainer */}
+            <div style={{ marginTop: 16, borderTop: '1px solid #eee', paddingTop: 12 }}>
+              <button
+                onClick={() => handleExplain(selected)}
+                disabled={explainLoading}
+                title="Ask AI to explain this accident"
+                style={{ background: '#1a73e8', color: 'white', border: 'none', borderRadius: 4, padding: '6px 14px', cursor: explainLoading ? 'wait' : 'pointer' }}
+              >
+                {explainLoading ? '⏳ Thinking…' : '? Explain with AI'}
+              </button>
+              {explainError && <p style={{ color: 'red', marginTop: 8 }}>{explainError}</p>}
+              {explainText && (
+                <div style={{ marginTop: 10, background: '#f0f4ff', borderRadius: 6, padding: 12, fontSize: 14 }}>
+                  <strong>AI Explanation:</strong>
+                  <p style={{ marginTop: 6, whiteSpace: 'pre-wrap' }}>{explainText}</p>
+                </div>
+              )}
+            </div>
+
+            <button style={{ marginTop: 12 }} onClick={() => { setSelected(null); setExplainText(null); setExplainError(null); }}>Close</button>
           </div>
         </div>
       )}

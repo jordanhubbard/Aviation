@@ -1,0 +1,21 @@
+{
+  "name": "@aviation/ai-explainer",
+  "version": "0.1.0",
+  "description": "Shared AI decision explanation client for Aviation apps",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "type": "module",
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "clean": "rm -rf dist",
+    "test": "echo \"(placeholder)\""
+  },
+  "keywords": ["aviation", "ai", "explainer"],
+  "author": "Jordan Hubbard",
+  "license": "MIT",
+  "devDependencies": {
+    "@types/node": "^25.3.0",
+    "typescript": "^5.9.3"
+  }
+}

@@ -6,6 +6,7 @@ import { searchAirports } from '../geo/airportLookup.js';
 import { EventRepository } from '../db/repository.js';
 import { config } from '../config.js';
 import { beadsIssueCreator } from '../beads.js';
+import { ExplainerClient, isExplainError } from '@aviation/ai-explainer';
 
 type BeadsErrorReport = {
   source: 'frontend' | 'backend' | 'log' | string;
@@ -15,6 +16,8 @@ type BeadsErrorReport = {
   user_agent?: string | null;
   context?: Record<string, unknown>;
 };
+
+const explainerClient = new ExplainerClient();
 
 export function createRouter(repository: EventRepository) {
   const router = express.Router();
@@ -339,6 +342,49 @@ export function createRouter(repository: EventRepository) {
     const regions: string[] = []; // Regions not currently supported
 
     return res.json({ countries, regions });
+  });
+
+  /**
+   * @openapi
+   * /api/explain:
+   *   post:
+   *     summary: Explain an AI decision via the RCC brain API
+   *     tags: [AI]
+   *     requestBody:
+   *       required: true
+   *       content:
+   *         application/json:
+   *           schema:
+   *             type: object
+   *             required: [context, question]
+   *             properties:
+   *               context:
+   *                 type: string
+   *               question:
+   *                 type: string
+   *     responses:
+   *       200:
+   *         description: AI explanation
+   *         content:
+   *           application/json:
+   *             schema:
+   *               type: object
+   *               properties:
+   *                 explanation:
+   *                   type: string
+   *       503:
+   *         description: AI explanation service unavailable
+   */
+  router.post('/explain', async (req, res) => {
+    const { context, question } = req.body as { context?: string; question?: string };
+    if (!context || !question) {
+      return res.status(400).json({ error: 'context and question are required' });
+    }
+    const result = await explainerClient.explain({ context, question });
+    if (isExplainError(result)) {
+      return res.status(result.status).json({ error: result.error });
+    }
+    return res.json({ explanation: result.explanation });
   });
 
   return router;
