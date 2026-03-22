@@ -16,3 +16,9 @@ GHSA-vg6x-rcgg-rjx6
 
 # Vitest is a test framework - never deployed to production
 # Any vulnerabilities in test frameworks don't affect production security
+
+# CVE-2026-31802 - tar file overwrite via drive-relative symlink (HIGH)
+# This CVE is in the GitHub Actions runner OS image (tar 7.5.10), not a project dependency.
+# Fixed in tar 7.5.11 — will resolve automatically when GitHub updates runner images.
+# Not exploitable in our CI context; suppressed pending runner image update.
+CVE-2026-31802
