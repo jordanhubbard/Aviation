@@ -12,6 +12,7 @@ from .services.telemetry_recording import TelemetryRecordingService, TelemetrySn
 from .services.approaches import ApproachProcedure, ApproachType, ApproachCategory, Waypoint, MissedApproachAction
 from .routes.alerts import router as alerts_router
 from .routers.settings import router as settings_router
+from .routers.explain import router as explain_router
 from fastapi import WebSocket, WebSocketDisconnect
 
 
@@ -77,6 +78,7 @@ def create_app(settings):
     app.include_router(flight_recording_router, prefix="/flight-recordings", tags=["flight-recordings"])
     app.include_router(alerts_router)
     app.include_router(settings_router, tags=["settings"])
+    app.include_router(explain_router)
 
     # Initialize AlertManager
     app.alert_manager = AlertManager()

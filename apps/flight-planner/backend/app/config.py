@@ -39,6 +39,12 @@ class Settings(BaseSettings):
     )
     openaip_api_key: Optional[str] = Field(None, description="OpenAIP API key")
 
+    rcc_brain_url: str = Field(
+        "http://localhost:8765/api/brain/request",
+        description="RCC brain API endpoint for AI decision explanations",
+        validation_alias=AliasChoices("RCC_BRAIN_URL"),
+    )
+
     data_dir: str = Field(str(REPO_ROOT / "backend" / "data"), description="Data directory")
     airport_cache_file: str = Field(
         str(REPO_ROOT / "backend" / "data" / "airports_cache.json"),
