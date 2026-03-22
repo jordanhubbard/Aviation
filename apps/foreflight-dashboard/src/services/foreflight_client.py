@@ -1,11 +1,14 @@
 """ForeFlight API client for accessing logbook data."""
 
+import logging
 import requests
 from typing import Dict, List, Optional
 from datetime import datetime, timedelta
 
 from src.core.config import FOREFLIGHT_API_KEY, FOREFLIGHT_API_SECRET, FOREFLIGHT_API_BASE_URL
 from src.core.models import LogbookEntry, Aircraft
+
+logger = logging.getLogger(__name__)
 
 class ForeFlightClient:
     """Client for interacting with the ForeFlight API."""
@@ -96,8 +99,12 @@ class ForeFlightClient:
         if end_date:
             params['end_date'] = end_date.isoformat()
             
-        response = self._make_request('GET', '/logbook/entries', params=params)
-        return [LogbookEntry(**entry) for entry in response.get('entries', [])]
+        try:
+            response = self._make_request('GET', '/logbook/entries', params=params)
+            return [LogbookEntry(**entry) for entry in response.get('entries', [])]
+        except requests.exceptions.RequestException as e:
+            logger.warning(f"ForeFlight API request failed for logbook entries: {e}")
+            return []
         
     def add_logbook_entry(self, entry: LogbookEntry) -> LogbookEntry:
         """Add a new logbook entry to ForeFlight or local data.
@@ -186,15 +193,32 @@ class ForeFlightClient:
             return self.aircraft_list
         
         # API mode
-        response = self._make_request('GET', '/aircraft')
-        return [Aircraft(**aircraft) for aircraft in response.get('aircraft', [])]
+        try:
+            response = self._make_request('GET', '/aircraft')
+            return [Aircraft(**aircraft) for aircraft in response.get('aircraft', [])]
+        except requests.exceptions.RequestException as e:
+            logger.warning(f"ForeFlight API request failed for aircraft list: {e}")
+            return []
         
     def get_statistics(self) -> Dict:
         """Get flight statistics from local data or API.
-        
+
         Returns:
-            Dictionary containing flight statistics
+            Dictionary containing flight statistics including aircraft classification totals.
         """
+        empty_stats: Dict = {
+            'total_flights': 0,
+            'total_time': 0.0,
+            'pic_time': 0.0,
+            'cross_country_time': 0.0,
+            'instrument_time': 0.0,
+            'night_time': 0.0,
+            'total_landings': 0,
+            'tailwheel_time': 0.0,
+            'complex_time': 0.0,
+            'high_performance_time': 0.0,
+        }
+
         # If using local data or have logbook entries
         if hasattr(self, 'logbook_entries') and self.logbook_entries:
             entries = self.logbook_entries
@@ -203,30 +227,37 @@ class ForeFlightClient:
                 'total_time': sum(entry.total_time for entry in entries),
                 'pic_time': sum(entry.pic_time for entry in entries),
                 'cross_country_time': sum(entry.conditions.cross_country for entry in entries),
-                'instrument_time': sum(entry.conditions.actual_instrument + entry.conditions.simulated_instrument for entry in entries),
-                'night_time': sum(entry.conditions.night for entry in entries)
+                'instrument_time': sum(
+                    entry.conditions.actual_instrument + entry.conditions.simulated_instrument
+                    for entry in entries
+                ),
+                'night_time': sum(entry.conditions.night for entry in entries),
+                'total_landings': sum(entry.landings_day + entry.landings_night for entry in entries),
+                'tailwheel_time': sum(
+                    entry.total_time for entry in entries
+                    if entry.aircraft.gear_type and 'tailwheel' in entry.aircraft.gear_type.lower()
+                ),
+                'complex_time': sum(
+                    entry.total_time for entry in entries if entry.aircraft.complex_aircraft
+                ),
+                'high_performance_time': sum(
+                    entry.total_time for entry in entries if entry.aircraft.high_performance
+                ),
             }
-        
-        # API mode or empty stats
-        return {
-            'total_flights': 0,
-            'total_time': 0.0,
-            'pic_time': 0.0,
-            'cross_country_time': 0.0,
-            'instrument_time': 0.0,
-            'night_time': 0.0
-        }
+
+        return empty_stats
         
     def get_recent_flights(self, days: int = 30) -> List[LogbookEntry]:
         """Get recent flights within specified days.
-        
+
         Args:
-            days: Number of days to look back
-            
+            days: Number of days to look back (must be positive)
+
         Returns:
             List of recent LogbookEntry objects
         """
-        from datetime import datetime, timedelta
+        if days <= 0:
+            raise ValueError("days must be a positive integer")
         end_date = datetime.now()
         start_date = end_date - timedelta(days=days)
-        return self.get_logbook_entries(start_date, end_date) 
+        return self.get_logbook_entries(start_date, end_date)

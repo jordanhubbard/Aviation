@@ -182,12 +182,16 @@ class TestForeFlightClient:
     def test_get_statistics_empty(self, mock_client):
         """Test getting statistics with empty logbook."""
         mock_client.logbook_entries = []
-        
+
         stats = mock_client.get_statistics()
-        
+
         assert stats['total_time'] == 0.0
         assert stats['total_flights'] == 0
         assert stats['pic_time'] == 0.0
+        assert stats['total_landings'] == 0
+        assert stats['tailwheel_time'] == 0.0
+        assert stats['complex_time'] == 0.0
+        assert stats['high_performance_time'] == 0.0
 
     def test_get_statistics_with_entries(self, mock_client, sample_entry):
         """Test getting statistics with logbook entries."""
@@ -222,14 +226,77 @@ class TestForeFlightClient:
         assert stats['total_flights'] == 2
         assert stats['pic_time'] == 3.5
 
+    def test_get_statistics_aircraft_classification(self, mock_client):
+        """Test that get_statistics includes tailwheel, complex, and high-performance totals."""
+        tailwheel_entry = LogbookEntry(
+            date=datetime(2023, 1, 1),
+            total_time=2.0,
+            aircraft=Aircraft(
+                registration="N11TW",
+                type="Citabria",
+                category_class="ASEL",
+                gear_type="tailwheel",
+                complex_aircraft=False,
+                high_performance=False,
+            ),
+            departure=Airport(identifier="KPAO"),
+            destination=Airport(identifier="KPAO"),
+            conditions=FlightConditions(day=2.0),
+            pilot_role="PIC",
+            dual_received=0.0,
+            pic_time=2.0,
+            solo_time=0.0,
+            landings_day=4,
+            landings_night=0,
+        )
+        hp_complex_entry = LogbookEntry(
+            date=datetime(2023, 1, 2),
+            total_time=3.0,
+            aircraft=Aircraft(
+                registration="N300HP",
+                type="Bonanza",
+                category_class="ASEL",
+                gear_type="retractable",
+                complex_aircraft=True,
+                high_performance=True,
+            ),
+            departure=Airport(identifier="KBFI"),
+            destination=Airport(identifier="KSEA"),
+            conditions=FlightConditions(day=3.0, cross_country=3.0),
+            pilot_role="PIC",
+            dual_received=0.0,
+            pic_time=3.0,
+            solo_time=0.0,
+            landings_day=1,
+            landings_night=0,
+        )
+        mock_client.logbook_entries = [tailwheel_entry, hp_complex_entry]
+
+        stats = mock_client.get_statistics()
+
+        assert stats['total_flights'] == 2
+        assert stats['total_time'] == 5.0
+        assert stats['total_landings'] == 5
+        assert stats['tailwheel_time'] == 2.0
+        assert stats['complex_time'] == 3.0
+        assert stats['high_performance_time'] == 3.0
+
     def test_get_recent_flights(self, mock_client, sample_entry):
         """Test getting recent flights."""
         mock_client.logbook_entries = [sample_entry]
-        
+
         recent = mock_client.get_recent_flights(days=30)
-        
+
         # Depending on implementation, this might be empty if entry is too old
         assert isinstance(recent, list)
+
+    def test_get_recent_flights_invalid_days(self, mock_client):
+        """Test that get_recent_flights raises ValueError for non-positive days."""
+        with pytest.raises(ValueError, match="days must be a positive integer"):
+            mock_client.get_recent_flights(days=0)
+
+        with pytest.raises(ValueError, match="days must be a positive integer"):
+            mock_client.get_recent_flights(days=-5)
 
     def test_validate_entry_before_add(self, mock_client):
         """Test that entries are validated before adding."""

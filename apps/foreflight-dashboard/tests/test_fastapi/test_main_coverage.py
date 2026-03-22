@@ -67,7 +67,7 @@ class TestMainCoverage:
             landings_day=2,
             landings_night=1
         )
-        
+
         entry2 = LogbookEntry(
             date=datetime(2023, 1, 2),
             total_time=1.5,
@@ -92,9 +92,9 @@ class TestMainCoverage:
             landings_day=3,
             landings_night=0
         )
-        
+
         stats = calculate_stats_for_entries([entry1, entry2])
-        
+
         assert stats['total_time'] == 3.5
         assert stats['total_hours'] == 3.5  # Alias
         assert stats['total_pic'] == 2.0
@@ -104,6 +104,103 @@ class TestMainCoverage:
         assert stats['total_sim_instrument'] == 0.5  # 0.3 + 0.2 + 0.0 + 0.0
         assert stats['total_landings'] == 6  # 2 + 1 + 3 + 0
         assert stats['total_time_asel'] == 3.5  # Both aircraft are ASEL
+
+    def test_calculate_stats_tailwheel_detection(self):
+        """Test that tailwheel time is correctly summed from gear_type field."""
+        tailwheel_entry = LogbookEntry(
+            date=datetime(2023, 1, 1),
+            total_time=1.5,
+            aircraft=Aircraft(
+                registration="N11TW",
+                type="Citabria",
+                category_class="ASEL",
+                gear_type="tailwheel",
+            ),
+            departure=Airport(identifier="KPAO"),
+            destination=Airport(identifier="KPAO"),
+            conditions=FlightConditions(day=1.5),
+            pilot_role="PIC",
+            dual_received=0.0,
+            pic_time=1.5,
+            solo_time=0.0,
+            landings_day=3,
+            landings_night=0,
+        )
+        tricycle_entry = LogbookEntry(
+            date=datetime(2023, 1, 2),
+            total_time=2.0,
+            aircraft=Aircraft(
+                registration="N12345",
+                type="C172",
+                category_class="ASEL",
+                gear_type="tricycle",
+            ),
+            departure=Airport(identifier="KOAK"),
+            destination=Airport(identifier="KSFO"),
+            conditions=FlightConditions(day=2.0, cross_country=2.0),
+            pilot_role="PIC",
+            dual_received=0.0,
+            pic_time=2.0,
+            solo_time=0.0,
+            landings_day=1,
+            landings_night=0,
+        )
+
+        stats = calculate_stats_for_entries([tailwheel_entry, tricycle_entry])
+
+        assert stats['total_time_tailwheel'] == 1.5
+        assert stats['total_time_complex'] == 0.0
+        assert stats['total_time_high_performance'] == 0.0
+
+    def test_calculate_stats_complex_and_high_performance(self):
+        """Test that complex and high-performance time use Aircraft model flags."""
+        complex_hp_entry = LogbookEntry(
+            date=datetime(2023, 1, 1),
+            total_time=3.0,
+            aircraft=Aircraft(
+                registration="N300HP",
+                type="Bonanza",
+                category_class="ASEL",
+                gear_type="retractable",
+                complex_aircraft=True,
+                high_performance=True,
+            ),
+            departure=Airport(identifier="KBFI"),
+            destination=Airport(identifier="KSEA"),
+            conditions=FlightConditions(day=3.0, cross_country=3.0),
+            pilot_role="PIC",
+            dual_received=0.0,
+            pic_time=3.0,
+            solo_time=0.0,
+            landings_day=1,
+            landings_night=0,
+        )
+        simple_entry = LogbookEntry(
+            date=datetime(2023, 1, 2),
+            total_time=1.0,
+            aircraft=Aircraft(
+                registration="N12345",
+                type="C172",
+                category_class="ASEL",
+                complex_aircraft=False,
+                high_performance=False,
+            ),
+            departure=Airport(identifier="KOAK"),
+            destination=Airport(identifier="KPAO"),
+            conditions=FlightConditions(day=1.0),
+            pilot_role="PIC",
+            dual_received=0.0,
+            pic_time=1.0,
+            solo_time=0.0,
+            landings_day=1,
+            landings_night=0,
+        )
+
+        stats = calculate_stats_for_entries([complex_hp_entry, simple_entry])
+
+        assert stats['total_time_complex'] == 3.0
+        assert stats['total_time_high_performance'] == 3.0
+        assert stats['total_time'] == 4.0
 
     def test_calculate_running_totals(self):
         """Test calculate_running_totals function."""

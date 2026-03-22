@@ -313,9 +313,9 @@ def calculate_stats_for_entries(entries: List[LogbookEntry]) -> Dict:
         'total_sim_instrument': sum(float(e.conditions.simulated_instrument + e.conditions.actual_instrument) for e in entries),
         'total_landings': sum(e.landings_day + e.landings_night for e in entries),
         'total_time_asel': sum(float(e.total_time) for e in entries if 'ASEL' in e.aircraft.category_class),
-        'total_time_tailwheel': 0.0,  # TODO: Implement tailwheel detection
-        'total_time_complex': 0.0,    # TODO: Implement complex aircraft detection
-        'total_time_high_performance': 0.0  # TODO: Implement high performance detection
+        'total_time_tailwheel': sum(float(e.total_time) for e in entries if e.aircraft.gear_type and 'tailwheel' in e.aircraft.gear_type.lower()),
+        'total_time_complex': sum(float(e.total_time) for e in entries if e.aircraft.complex_aircraft),
+        'total_time_high_performance': sum(float(e.total_time) for e in entries if e.aircraft.high_performance),
     }
 
 # Authentication Routes
@@ -455,13 +455,35 @@ async def process_logbook(
             
             # Convert to template data
             entries = convert_entries_to_template_data(entries_objects)
-            
+
+            # Build per-aircraft statistics from all entries
+            aircraft_stats_map: Dict[str, Dict] = {}
+            for e in entries_objects:
+                reg = e.aircraft.registration
+                if reg not in aircraft_stats_map:
+                    aircraft_stats_map[reg] = {
+                        'registration': reg,
+                        'type': e.aircraft.type,
+                        'category_class': e.aircraft.category_class,
+                        'total_time': 0.0,
+                        'pic_time': 0.0,
+                        'landings': 0,
+                    }
+                aircraft_stats_map[reg]['total_time'] += float(e.total_time)
+                aircraft_stats_map[reg]['pic_time'] += float(e.pic_time)
+                aircraft_stats_map[reg]['landings'] += e.landings_day + e.landings_night
+            aircraft_stats = sorted(
+                aircraft_stats_map.values(),
+                key=lambda x: x['total_time'],
+                reverse=True,
+            )
+
             return {
                 "entries": entries,
                 "stats": stats,
                 "all_time": all_time,
                 "recent_experience": recent_experience,
-                "aircraft_stats": [],  # TODO: Implement aircraft stats
+                "aircraft_stats": aircraft_stats,
                 "logbook_filename": file.filename,
                 "error_count": 0,
                 "student_pilot": student_pilot
