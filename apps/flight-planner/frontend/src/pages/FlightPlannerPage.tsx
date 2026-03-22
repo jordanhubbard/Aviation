@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'; import ImportExportUI from '../components/ImportExportUI';
+import React, { useState, useEffect } from 'react';
 import {
   Grid,
   Card,

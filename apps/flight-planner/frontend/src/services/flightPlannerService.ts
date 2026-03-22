@@ -1,5 +1,4 @@
-import { apiClient } from './apiClient'
-import type { FlightPlanRequest } from '../types'
+import type { FlightPlan, FlightPlanRequest } from '../types'
 
 type StreamProgressEvent = {
   phase?: string | null
@@ -38,6 +37,18 @@ const parseSseBlock = (block: string): { event?: string; data?: string } => {
 }
 
 export const flightPlannerService = {
+  plan: async <T>(data: FlightPlanRequest): Promise<T> => {
+    const response = await fetch('/api/plan', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    })
+    if (!response.ok) {
+      throw new Error(`Request failed (${response.status})`)
+    }
+    return response.json() as Promise<T>
+  },
+
   listFlightPlans: async (): Promise<FlightPlan[]> => {
     const response = await fetch('/api/flight-plans/list');
     if (!response.ok) {

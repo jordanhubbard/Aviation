@@ -1,7 +1,7 @@
 // G1000Controls.tsx
 // Component to simulate G1000 controls with mouse, keyboard, and touch interactions
 
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 
 const G1000Controls = () => {
   const [joystickPosition, setJoystickPosition] = useState({ x: 0, y: 0 });

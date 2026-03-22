@@ -3,7 +3,7 @@ import { Routes, Route, useLocation } from 'react-router-dom'
 import { Container, AppBar, Toolbar, Typography, Box, Button } from '@mui/material'
 import { BugReport } from '@mui/icons-material'
 import { motion, AnimatePresence } from 'framer-motion'
-import { ThemeProvider, createTheme, useTheme } from '@mui/material/styles'
+import { ThemeProvider, createTheme } from '@mui/material/styles'
 import useMediaQuery from '@mui/material/useMediaQuery'
 import Navigation from './components/Navigation'
 import G1000Controls from './components/G1000Controls'
@@ -97,16 +97,6 @@ function App() {
           text: {
             primary: '#000000',
             secondary: '#ff0000',
-          },
-        }),
-        ...(themeMode === 'day' && {
-          background: {
-            default: '#ffffff',
-            paper: '#f8fafc',
-          },
-          text: {
-            primary: '#1e293b',
-            secondary: '#475569',
           },
         }),
       },

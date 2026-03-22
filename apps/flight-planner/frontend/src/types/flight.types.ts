@@ -42,6 +42,12 @@ export interface AlternateAirport {
 }
 
 export interface FlightPlan {
+  id?: string | null
+  name?: string | null
+  origin?: string | null
+  destination?: string | null
+  speed?: number | null
+  altitude?: number | null
   planned_at_utc?: string | null
   departure_time_utc?: string | null
   arrival_time_utc?: string | null

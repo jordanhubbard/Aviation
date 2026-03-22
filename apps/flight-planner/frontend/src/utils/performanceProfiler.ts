@@ -1,8 +1,8 @@
 // Utility to capture FPS and frame-time traces
 export function startPerformanceProfiling() {
-  const performanceData = {
+  const performanceData: { fps: number[]; frameTimes: number[] } = {
     fps: [],
-    frameTimes: []
+    frameTimes: [],
   };
 
   let lastFrameTime = performance.now();

@@ -24,6 +24,7 @@ import { validateAirportCode } from '../utils'
 import type { Airport, FlightPlan, FlightPlanRequest, LocalPlanRequest, RoutePlanRequest } from '../types'
 import { FormSection } from './shared'
 import ModeSelector, { type PlanMode } from './ModeSelector'
+import ProcedureSelection from './ProcedureSelection'
 
 type Props = {
   isLoading: boolean
@@ -46,10 +47,10 @@ const FlightPlanningForm: React.FC<Props> = ({ isLoading, onSubmit }) => {
   }, [])
 
   const handleLoad = (plan: FlightPlan) => {
-    setOrigin(plan.origin);
-    setDestination(plan.destination);
-    setSpeed(plan.speed);
-    setAltitude(plan.altitude);
+    setOrigin(plan.origin ?? '');
+    setDestination(plan.destination ?? '');
+    setSpeed(plan.speed ?? 110);
+    setAltitude(plan.altitude ?? 5500);
     setOpen(false);
   };
 

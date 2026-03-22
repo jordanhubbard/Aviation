@@ -1,30 +1,38 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Autocomplete, TextField, Typography, Grid, ToggleButton, ToggleButtonGroup, Card, CardContent, List, ListItem, ListItemText } from '@mui/material';
 
-const ProcedureSelection = ({ airportCode }) => {
+type Procedure = {
+  name: string
+  legs: Array<{ fix: string; altitude: number; course: number }>
+}
+
+type Props = {
+  airportCode: string
+}
+
+const ProcedureSelection = ({ airportCode }: Props) => {
   const [procedureType, setProcedureType] = useState('SID');
-  const [procedures, setProcedures] = useState([]);
-  const [selectedProcedure, setSelectedProcedure] = useState(null);
+  const [procedures, setProcedures] = useState<Procedure[]>([]);
+  const [selectedProcedure, setSelectedProcedure] = useState<Procedure | null>(null);
 
   useEffect(() => {
     if (airportCode) {
       fetch(`/api/procedures?airport=${airportCode}`)
         .then(response => response.json())
-        .then(data => setProcedures(data));
+        .then((data: Procedure[]) => setProcedures(data));
     }
   }, [airportCode]);
 
-  const handleProcedureChange = (event, value) => {
+  const handleProcedureChange = (_event: React.SyntheticEvent, value: Procedure | null) => {
     setSelectedProcedure(value);
   };
 
-  const handleProcedureTypeChange = (event, newType) => {
+  const handleProcedureTypeChange = (_event: React.MouseEvent, newType: string) => {
     setProcedureType(newType);
-    // Fetch procedures based on the selected type
     if (airportCode) {
       fetch(`/api/procedures?airport=${airportCode}&type=${newType}`)
         .then(response => response.json())
-        .then(data => setProcedures(data));
+        .then((data: Procedure[]) => setProcedures(data));
     }
   };
 
