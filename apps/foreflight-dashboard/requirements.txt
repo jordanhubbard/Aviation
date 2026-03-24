@@ -1,5 +1,5 @@
 # Core FastAPI dependencies
-fastapi==0.135.1
+fastapi==0.135.2
 uvicorn==0.42.0
 starlette==0.52.1
 python-multipart==0.0.22
