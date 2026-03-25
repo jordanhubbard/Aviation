@@ -53,7 +53,7 @@ updates:
 
   # Flight Planner Frontend
   - package-ecosystem: "npm"
-    directory: "/apps/flightplanner/frontend"
+    directory: "/apps/flight-planner/frontend"
     schedule:
       interval: "weekly"
     open-pull-requests-limit: 3
@@ -63,7 +63,7 @@ updates:
 
   # Flight Planner Backend (Python)
   - package-ecosystem: "pip"
-    directory: "/apps/flightplanner"
+    directory: "/apps/flight-planner"
     schedule:
       interval: "weekly"
     open-pull-requests-limit: 5
