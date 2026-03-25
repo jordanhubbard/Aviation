@@ -119,7 +119,7 @@ jobs:
             type=sha,prefix={{branch}}-
       
       - name: Build and push backend
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         with:
           context: .
           file: ./apps/aviation-accident-tracker/Dockerfile
@@ -161,7 +161,7 @@ jobs:
             type=sha,prefix={{branch}}-
       
       - name: Build and push
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         with:
           context: .
           file: ./apps/flight-planner/Dockerfile
@@ -203,7 +203,7 @@ jobs:
             type=sha,prefix={{branch}}-
       
       - name: Build and push
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         with:
           context: .
           file: ./apps/flightschool/Dockerfile
@@ -245,7 +245,7 @@ jobs:
             type=sha,prefix={{branch}}-
       
       - name: Build and push
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         with:
           context: .
           file: ./apps/foreflight-dashboard/Dockerfile
