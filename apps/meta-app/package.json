@@ -11,8 +11,8 @@
   },
   "dependencies": {
     "@aviation/aviation-config": "*",
-    "@aviation/ui-framework": "*",
     "@aviation/shared-sdk": "*",
+    "@aviation/ui-framework": "*",
     "react": "^19.2.3",
     "react-dom": "^19.2.4",
     "react-router-dom": "^7.11.0"
