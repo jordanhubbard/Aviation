@@ -1,6 +1,9 @@
 /**
  * ASN (Aviation Safety Network) adapter
- * Fetches recent accident occurrences
+ * Fetches recent accident occurrences with graceful degradation.
+ * ASN does not expose a public authenticated API; this adapter attempts
+ * to scrape the public database page. On any failure (403, 429, parse
+ * errors, network timeouts) it logs a warning and returns [].
  */
 
 import type { EventRecord, SourceAttribution } from '../types.js';
@@ -12,72 +15,129 @@ import { logger } from '../logger.js';
 export class ASNAdapter implements SourceAdapter {
   readonly sourceName = 'asn';
   private baseUrl = 'https://aviation-safety.net';
-  
+
   async fetchRecent(windowDays: number): Promise<EventRecord[]> {
     logger.info('Fetching ASN recent occurrences', { windowDays });
-    
+
     try {
-      // TODO: Implement actual ASN scraping/API
-      // For now, return stub data
-      logger.warn('ASN adapter not yet implemented - returning empty set');
-      return [];
-      
-      // Future implementation:
-      // 1. Fetch recent occurrences page
-      // 2. Parse HTML or JSON (if available)
-      // 3. Extract: date, registration, aircraft type, operator, location, summary, narrative
-      // 4. Normalize dates to UTC
-      // 5. Classify GA vs Commercial
-      // 6. Filter >= 2000
-      // 7. Return EventRecord array with sources
+      const response = await fetch(`${this.baseUrl}/database/`, {
+        headers: { 'User-Agent': 'AviationTracker/1.0 (safety research)' },
+        signal: AbortSignal.timeout(10_000),
+      });
+
+      if (!response.ok) {
+        logger.warn('ASN returned non-OK status, returning empty set', {
+          status: response.status,
+          windowDays,
+        });
+        return [];
+      }
+
+      const html = await response.text();
+      const rawEvents = this.extractEventsFromHtml(html);
+
+      if (rawEvents.length === 0) {
+        logger.warn('ASN: no parseable events found in response, returning empty set');
+        return [];
+      }
+
+      const cutoff = new Date();
+      cutoff.setDate(cutoff.getDate() - windowDays);
+      const cutoffStr = cutoff.toISOString().split('T')[0];
+
+      return rawEvents
+        .map(raw => this.parseEvent(raw))
+        .filter((e): e is EventRecord => e !== null && e.dateZ >= cutoffStr);
     } catch (error) {
-      logger.error('ASN fetch failed', error as Error, { windowDays });
-      throw error;
+      logger.warn('ASN fetch failed, returning empty set', {
+        windowDays,
+        message: (error as Error).message,
+      });
+      return [];
     }
   }
-  
+
   /**
-   * Parse ASN HTML/JSON to EventRecord
-   * (Stub for future implementation)
+   * Extract rows from ASN database HTML page.
+   * The page contains a datatable with columns: date, type, registration,
+   * operator, fatalities, location.
+   */
+  private extractEventsFromHtml(html: string): any[] {
+    const rows: any[] = [];
+
+    // ASN database page wraps accident rows in a table with class "datatable"
+    const tableMatch = html.match(
+      /<table[^>]*class="[^"]*datatable[^"]*"[^>]*>([\s\S]*?)<\/table>/i
+    );
+    if (!tableMatch) return [];
+
+    const getText = (cell: string) => cell.replace(/<[^>]+>/g, '').trim();
+    const getHref = (cell: string): string | undefined => {
+      const m = cell.match(/href="([^"]+)"/);
+      if (!m) return undefined;
+      return m[1].startsWith('http') ? m[1] : `${this.baseUrl}${m[1]}`;
+    };
+
+    const rowRegex = /<tr[^>]*>([\s\S]*?)<\/tr>/gi;
+    let rowMatch;
+    while ((rowMatch = rowRegex.exec(tableMatch[1])) !== null) {
+      const cells = rowMatch[1].match(/<td[^>]*>[\s\S]*?<\/td>/gi) ?? [];
+      if (cells.length < 4) continue;
+
+      rows.push({
+        date: getText(cells[0]),
+        aircraftType: getText(cells[1]),
+        registration: getText(cells[2]),
+        operator: getText(cells[3]),
+        fatalities: cells[4] ? parseInt(getText(cells[4]), 10) || 0 : 0,
+        location: cells[5] ? getText(cells[5]) : undefined,
+        summary: `${getText(cells[1])} - ${getText(cells[3])}`,
+        url: getHref(cells[0]),
+      });
+    }
+
+    return rows;
+  }
+
+  /**
+   * Map a raw scraped row to EventRecord.
    */
   private parseEvent(raw: any): EventRecord | null {
     try {
-      // TODO: Implement parsing logic
-      
       const dateZ = normalizeToUTC(raw.date);
       if (!isWithinRetentionWindow(dateZ)) {
-        return null; // Skip pre-2000 events
+        return null;
       }
-      
+
       const category = classifier.classify(raw.operator, raw.aircraftType);
-      
+
       const source: SourceAttribution = {
         sourceName: this.sourceName,
-        url: raw.url || `${this.baseUrl}/...`,
-        fetchedAt: new Date().toISOString()
+        url: raw.url ?? `${this.baseUrl}/database/`,
+        fetchedAt: new Date().toISOString(),
       };
-      
+
       return {
-        id: '', // Will be assigned by repository
+        id: '',
         dateZ,
         registration: raw.registration,
         aircraftType: raw.aircraftType,
         operator: raw.operator,
         category,
-        airportIcao: raw.airportIcao,
-        airportIata: raw.airportIata,
-        country: raw.country,
-        region: raw.region,
-        lat: raw.latitude,
-        lon: raw.longitude,
-        fatalities: raw.fatalities || 0,
-        injuries: raw.injuries || 0,
+        airportIcao: undefined,
+        airportIata: undefined,
+        country: raw.location,
+        region: undefined,
+        lat: undefined,
+        lon: undefined,
+        fatalities: raw.fatalities ?? 0,
+        injuries: 0,
         summary: raw.summary,
-        narrative: raw.narrative,
-        status: raw.status || 'preliminary',
+        narrative: undefined,
+        status: 'preliminary',
         sources: [source],
         createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
+        updatedAt: new Date().toISOString(),
       };
     } catch (error) {
       logger.error('Failed to parse ASN event', error as Error, { raw });
