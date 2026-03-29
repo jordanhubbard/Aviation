@@ -313,10 +313,28 @@ def calculate_stats_for_entries(entries: List[LogbookEntry]) -> Dict:
         'total_sim_instrument': sum(float(e.conditions.simulated_instrument + e.conditions.actual_instrument) for e in entries),
         'total_landings': sum(e.landings_day + e.landings_night for e in entries),
         'total_time_asel': sum(float(e.total_time) for e in entries if 'ASEL' in e.aircraft.category_class),
-        'total_time_tailwheel': 0.0,  # TODO: Implement tailwheel detection
-        'total_time_complex': 0.0,    # TODO: Implement complex aircraft detection
-        'total_time_high_performance': 0.0  # TODO: Implement high performance detection
+        'total_time_tailwheel': sum(float(e.total_time) for e in entries if e.aircraft.gear_type == "tailwheel"),
+        'total_time_complex': sum(float(e.total_time) for e in entries if e.aircraft.complex_aircraft),
+        'total_time_high_performance': sum(float(e.total_time) for e in entries if e.aircraft.high_performance)
     }
+
+def calculate_aircraft_stats(entries: List[LogbookEntry]) -> List[Dict]:
+    """Build per-aircraft summary sorted by total_time descending."""
+    stats: Dict[str, Dict] = {}
+    for e in entries:
+        reg = e.aircraft.registration
+        if reg not in stats:
+            stats[reg] = {
+                'registration': reg,
+                'type': e.aircraft.type,
+                'category_class': e.aircraft.category_class,
+                'total_time': 0.0,
+                'num_flights': 0,
+            }
+        stats[reg]['total_time'] += float(e.total_time)
+        stats[reg]['num_flights'] += 1
+    return sorted(stats.values(), key=lambda x: x['total_time'], reverse=True)
+
 
 # Authentication Routes
 
@@ -461,7 +479,7 @@ async def process_logbook(
                 "stats": stats,
                 "all_time": all_time,
                 "recent_experience": recent_experience,
-                "aircraft_stats": [],  # TODO: Implement aircraft stats
+                "aircraft_stats": calculate_aircraft_stats(entries_objects),
                 "logbook_filename": file.filename,
                 "error_count": 0,
                 "student_pilot": student_pilot
