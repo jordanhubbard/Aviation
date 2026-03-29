@@ -217,6 +217,74 @@ export class EventRepository {
   }
 
   /**
+   * Fuzzy-match an event by date window (±1 day), country, and aircraft_type.
+   * Used as a fallback when exact (date_z, registration) matching misses because
+   * different sources report slightly different dates or omit the registration.
+   *
+   * Matching rules (all conditions ANDed):
+   *   - date_z within ±1 calendar day of the candidate
+   *   - country matches exactly (case-insensitive) when both are present
+   *   - aircraft_type prefix matches (first token of type string, e.g. "Boeing 737")
+   *     when both are present
+   *
+   * Returns the id of the best match, or null if none found.
+   */
+  async findFuzzyEvent(
+    dateZ: string,
+    country?: string,
+    aircraftType?: string,
+  ): Promise<string | null> {
+    // Build ±1 day date window
+    const base = new Date(dateZ);
+    const minus1 = new Date(base);
+    minus1.setDate(minus1.getDate() - 1);
+    const plus1 = new Date(base);
+    plus1.setDate(plus1.getDate() + 1);
+    const dateLow = minus1.toISOString().split('T')[0];
+    const dateHigh = plus1.toISOString().split('T')[0];
+
+    // Base query: date window
+    const rows = await this.dbAll(
+      'SELECT id, country, aircraft_type FROM events WHERE date_z >= ? AND date_z <= ?',
+      [dateLow, dateHigh],
+    ) as Array<{ id: unknown; country: unknown; aircraft_type: unknown }>;
+
+    if (rows.length === 0) return null;
+
+    // Score each candidate: +1 for country match, +1 for aircraft_type prefix match
+    const normalize = (s: string | undefined | null) =>
+      (s ?? '').toLowerCase().trim();
+
+    const candidateCountry = normalize(country);
+    const candidateTypePrefix = normalize(aircraftType).split(/\s+/).slice(0, 2).join(' ');
+
+    let bestId: string | null = null;
+    let bestScore = -1;
+
+    for (const row of rows) {
+      let score = 0;
+
+      if (candidateCountry && normalize(String(row.country ?? '')) === candidateCountry) {
+        score += 1;
+      }
+      if (candidateTypePrefix) {
+        const rowTypePrefix = normalize(String(row.aircraft_type ?? '')).split(/\s+/).slice(0, 2).join(' ');
+        if (rowTypePrefix && rowTypePrefix === candidateTypePrefix) {
+          score += 1;
+        }
+      }
+
+      // Require at least one dimension to match (avoid false positives on date alone)
+      if (score > bestScore && score >= 1) {
+        bestScore = score;
+        bestId = String(row.id);
+      }
+    }
+
+    return bestId;
+  }
+
+  /**
    * Add a source entry for an event
    */
   async addSource(eventId: string, source: SourceAttribution): Promise<string> {
