@@ -20,9 +20,10 @@
   "author": "Jordan Hubbard",
   "license": "MIT",
   "dependencies": {
-    "@aviation/shared-sdk": "*",
     "@aviation/keystore": "*",
+    "@aviation/shared-sdk": "*",
     "@aviation/ui-framework": "*",
+    "@typescript-eslint/eslint-plugin": "^8.58.0",
     "ws": "^8.16.0"
   },
   "devDependencies": {
