@@ -234,8 +234,13 @@ jobs:
         with:
           node-version: '20'
 
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
       - name: Verify monorepo Node.js structure
-        run: npm install --ignore-scripts
+        run: pnpm install --ignore-scripts
 
       - name: Build status
         run: |

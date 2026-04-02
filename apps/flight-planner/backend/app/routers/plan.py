@@ -99,6 +99,17 @@ def initialize_flight(req: PlanRequest) -> Any:
     return local.local_plan(req)
 
 
+# /plan is the canonical, client-facing alias for /initialize.
+# Tests and the frontend use POST /api/plan with mode=route|local.
+@router.post(
+    "/plan",
+    summary="Plan a flight (route or local)",
+    description="Plans a flight using a discriminated union request body with `mode` set to `route` or `local`. Alias for /initialize.",
+)
+def plan_flight(req: PlanRequest) -> Any:
+    return initialize_flight(req)
+
+
 def _sse(event: str, data: Any) -> bytes:
     payload = json.dumps(data, separators=(",", ":"), ensure_ascii=False)
     return f"event: {event}\ndata: {payload}\n\n".encode("utf-8")

@@ -1,42 +1,42 @@
 import json
+import sys
 import unittest
 from app.plugins.loader import PluginLoader
 from app.plugins.registry import PluginRegistry
-from app.plugins.base import PluginMetadata
+from app.plugins.base import Plugin, PluginContext, PluginMetadata
 import os
+
 
 class TestPluginSystem(unittest.TestCase):
 
     def setUp(self):
         self.plugin_directory = 'test_plugins'
         os.makedirs(self.plugin_directory, exist_ok=True)
-        # Create a minimal plugin module so the entry_point can be imported
+        # Create __init__.py so the directory is a package
         init_path = os.path.join(self.plugin_directory, '__init__.py')
-        plugin_path = os.path.join(self.plugin_directory, 'test_plugin.py')
-        open(init_path, 'w').close()
-        with open(plugin_path, 'w') as f:
+        with open(init_path, 'w') as f:
+            f.write('')
+        # Create a minimal concrete Plugin class for the loader to instantiate
+        plugin_py = os.path.join(self.plugin_directory, 'test_plugin.py')
+        with open(plugin_py, 'w') as f:
             f.write(
-                "from app.plugins.base import Plugin, PluginMetadata\n"
+                "from app.plugins.base import Plugin, PluginContext, PluginMetadata\n\n"
                 "class TestPlugin(Plugin):\n"
-                "    def __init__(self, metadata):\n"
-                "        super().__init__(metadata)\n"
-                "    def initialize(self, context): pass\n"
-                "    def start(self): pass\n"
-                "    def stop(self): pass\n"
-                "    def destroy(self): pass\n"
+                "    async def initialize(self, context: PluginContext) -> None:\n"
+                "        pass\n"
+                "    async def destroy(self) -> None:\n"
+                "        pass\n"
             )
-        # Ensure test_plugins is importable from the current working directory
-        import sys
-        if os.getcwd() not in sys.path:
-            sys.path.insert(0, os.getcwd())
         self.loader = PluginLoader(self.plugin_directory)
         self.registry = PluginRegistry()
 
     def tearDown(self):
-        import shutil
-        import sys
-        shutil.rmtree(self.plugin_directory, ignore_errors=True)
-        # Clean up cached module so other tests start fresh
+        for filename in os.listdir(self.plugin_directory):
+            file_path = os.path.join(self.plugin_directory, filename)
+            if os.path.isfile(file_path):
+                os.unlink(file_path)
+        os.rmdir(self.plugin_directory)
+        # Remove the package from sys.modules so teardown is clean
         for key in list(sys.modules.keys()):
             if key.startswith('test_plugins'):
                 del sys.modules[key]
@@ -58,6 +58,7 @@ class TestPluginSystem(unittest.TestCase):
         plugin_metadata = plugins[0].metadata
         self.registry.register(plugin_metadata)
         self.assertIn(plugin_metadata.id, self.registry.plugins)
+
 
 if __name__ == '__main__':
     unittest.main()
