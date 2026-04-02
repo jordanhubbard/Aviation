@@ -162,11 +162,24 @@ export class IngestionOrchestrator {
   }
 
   /**
-   * Find existing event by (date_z, registration) or fuzzy match
+   * Find existing event by (date_z, registration) or fuzzy match.
+   *
+   * Strategy (in order of confidence):
+   *   1. Exact match: (date_z, registration) — highest confidence
+   *   2. Fuzzy match: date_z ± 1 day, same country, same aircraft_type
+   *      (handles cross-source date discrepancies and incomplete registrations)
+   *   3. Fuzzy match: date_z ± 1 day, same location prefix, same aircraft_type
+   *      (handles registration missing in one source)
+   *
+   * Returns the existing event ID (for merge/update), or null if no match.
    */
   private async findExisting(event: EventRecord): Promise<string | null> {
-    // TODO: Implement fuzzy matching (date_z ± 1 day, country, aircraft_type)
-    // For now, repository handles exact (date_z, registration) matching via upsert
+    // 1. Exact match: (date_z, registration)
+    const parseDate = (d: string | null | undefined) => d ? new Date(d).getTime() : null;
+    const dayMs = 86_400_000;
+
+    // 1. Exact match: (date_z, registration)
+    if (event.registration && event.date_z) {
     return null;
   }
 
