@@ -293,3 +293,122 @@ class TestForeFlightClient:
         
         assert entries1 == entries2
         assert len(entries1) == 1
+
+
+class TestForeFlightClientIngestAdapters:
+    """Tests for ingest adapter error handling and validation (issue #178)."""
+
+    @pytest.fixture
+    def api_client(self):
+        """Create a client in API mode with no CSV file."""
+        with patch('src.services.foreflight_client.ForeFlightClient.__init__', return_value=None):
+            client = ForeFlightClient()
+            client.csv_file_path = None
+            client.base_url = "https://api.foreflight.com"
+            client.logbook_entries = []
+            client.aircraft_list = []
+            client.session = Mock()
+            return client
+
+    @pytest.fixture
+    def sample_entry(self):
+        return LogbookEntry(
+            date=datetime(2024, 1, 15),
+            total_time=2.0,
+            aircraft=Aircraft(
+                registration="N99TW",
+                type="Piper PA-18",
+                category_class="ASEL",
+                gear_type="tailwheel",
+                complex_aircraft=False,
+                high_performance=False,
+            ),
+            departure=Airport(identifier="KPAO"),
+            destination=Airport(identifier="KSQL"),
+            conditions=FlightConditions(
+                day=2.0,
+                night=0.0,
+                actual_instrument=0.0,
+                simulated_instrument=0.0,
+                cross_country=1.5,
+            ),
+            pilot_role="PIC",
+            dual_received=0.0,
+            pic_time=2.0,
+            solo_time=0.0,
+            landings_day=1,
+            landings_night=0,
+        )
+
+    def test_get_logbook_entries_api_network_error_returns_empty(self, api_client):
+        """get_logbook_entries in API mode should return [] on network error."""
+        import requests
+        with patch.object(api_client, '_make_request',
+                          side_effect=requests.exceptions.ConnectionError("timeout")):
+            result = api_client.get_logbook_entries()
+        assert result == []
+
+    def test_get_aircraft_list_api_network_error_returns_empty(self, api_client):
+        """get_aircraft_list in API mode should return [] on network error."""
+        import requests
+        # Force API mode: no csv_file_path and empty aircraft_list
+        api_client.aircraft_list = []
+        with patch.object(api_client, '_make_request',
+                          side_effect=requests.exceptions.ConnectionError("timeout")):
+            result = api_client.get_aircraft_list()
+        assert result == []
+
+    def test_get_recent_flights_invalid_days_raises(self, api_client):
+        """get_recent_flights should raise ValueError for days <= 0."""
+        with pytest.raises(ValueError, match="days must be a positive integer"):
+            api_client.get_recent_flights(days=0)
+        with pytest.raises(ValueError, match="days must be a positive integer"):
+            api_client.get_recent_flights(days=-5)
+
+    def test_get_statistics_includes_classification_totals(self, api_client, sample_entry):
+        """get_statistics should return tailwheel/complex/high_performance totals."""
+        complex_aircraft = Aircraft(
+            registration="N33CP",
+            type="Cessna 182RG",
+            category_class="ASEL",
+            gear_type="tricycle",
+            complex_aircraft=True,
+            high_performance=True,
+        )
+        complex_entry = LogbookEntry(
+            date=datetime(2024, 2, 1),
+            total_time=1.5,
+            aircraft=complex_aircraft,
+            departure=Airport(identifier="KSJC"),
+            destination=Airport(identifier="KNUQ"),
+            conditions=FlightConditions(
+                day=1.5,
+                night=0.0,
+                actual_instrument=0.0,
+                simulated_instrument=0.0,
+                cross_country=0.0,
+            ),
+            pilot_role="PIC",
+            dual_received=0.0,
+            pic_time=1.5,
+            solo_time=0.0,
+            landings_day=1,
+            landings_night=0,
+        )
+        api_client.logbook_entries = [sample_entry, complex_entry]
+
+        stats = api_client.get_statistics()
+
+        assert stats['tailwheel_time'] == pytest.approx(2.0)
+        assert stats['complex_time'] == pytest.approx(1.5)
+        assert stats['high_performance_time'] == pytest.approx(1.5)
+        assert stats['total_landings'] == 2
+
+    def test_get_statistics_empty_returns_zero_classification_fields(self, api_client):
+        """Empty stats dict must include classification keys."""
+        api_client.logbook_entries = []
+        stats = api_client.get_statistics()
+        assert 'tailwheel_time' in stats
+        assert 'complex_time' in stats
+        assert 'high_performance_time' in stats
+        assert stats['tailwheel_time'] == 0.0
