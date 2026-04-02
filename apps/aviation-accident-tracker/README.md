@@ -56,7 +56,7 @@ apps/aviation-accident-tracker/
 ### Prerequisites
 
 - Node.js 20+
-- npm 9+
+- pnpm 9+ (the monorepo uses pnpm workspaces)
 - SQLite 3
 
 ### Setup & Build
@@ -93,12 +93,14 @@ Visit `http://localhost:5173` to access the UI.
 # Run all tests (backend + frontend)
 make test
 
-# Run backend tests only
+# Run backend tests only (34 tests)
 cd backend && npm test
 
-# Run frontend tests only
+# Run frontend tests only (62 tests across 10 test files)
 cd frontend && npm test
 ```
+
+The frontend test suite uses **Vitest** with `@testing-library/react`. The setup file is `src/test/setup.tsx` (note `.tsx` extension — required so JSX works in Vitest mock factories). Integration tests verify actual App functionality rather than mocked DOM structure.
 
 ## Data Model
 
@@ -439,8 +441,8 @@ json
 ```bash
 cd backend
 
-# Install dependencies
-npm install
+# Install dependencies (or run pnpm install from monorepo root)
+pnpm install
 
 # Run in watch mode
 npm run dev
@@ -458,8 +460,8 @@ npm run format
 ```bash
 cd frontend
 
-# Install dependencies
-npm install
+# Install dependencies (or run pnpm install from monorepo root)
+pnpm install
 
 # Start dev server with HMR
 npm run dev

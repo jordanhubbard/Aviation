@@ -5,11 +5,11 @@
 
 A monorepo of aviation-related applications with shared CI/CD, keystore-based secrets, and common packages. See [docs/](docs/) for setup and architecture.
 
-**Prerequisites:** Node.js 20+, npm 9+, Python 3.11+ (for Python apps), Java 11+ (for Clojure).
+**Prerequisites:** Node.js 20+, pnpm 9+, Python 3.11+ (for Python apps), Java 11+ (for Clojure).
 
 ```bash
 git clone https://github.com/jordanhubbard/Aviation.git && cd Aviation
-npm install
+pnpm install
 npm run keystore:init   # one-time
 ```
 

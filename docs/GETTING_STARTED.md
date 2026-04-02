@@ -7,7 +7,7 @@ Welcome to the Aviation monorepo! This guide will help you get up and running qu
 ### Prerequisites
 
 - Node.js 20 or higher
-- npm 9 or higher
+- pnpm 9 or higher (`npm install -g pnpm` if not already installed)
 
 ### Installation
 
@@ -16,11 +16,11 @@ Welcome to the Aviation monorepo! This guide will help you get up and running qu
 git clone https://github.com/jordanhubbard/Aviation.git
 cd Aviation
 
-# Install dependencies
-npm install
+# Install dependencies (pnpm workspaces)
+pnpm install
 
 # Build all packages
-npm run build
+pnpm run build
 ```
 
 ### Running Your First Application
@@ -50,9 +50,9 @@ Press `Ctrl+C` to stop the application.
 
 ### Control Basics
 
-- **Start Application**: Use `npm start` to begin running the application.
+- **Start Application**: Use `npm start` (or `pnpm start`) to begin running the application.
 - **Stop Application**: Press `Ctrl+C` to terminate the application.
-- **Rebuild Application**: Use `npm run build` to rebuild the application after making changes.
+- **Rebuild Application**: Use `pnpm run build` to rebuild the application after making changes.
 - **Watch Mode**: Use `npm run dev` to watch for changes and rebuild automatically during development.
 
 ### Troubleshooting Tips
@@ -60,7 +60,7 @@ Press `Ctrl+C` to stop the application.
 - **No API Key**: If you encounter a message indicating that no API key is found, ensure you have set the necessary environment variables as described in the [Setting Up API Keys](#setting-up-api-keys) section.
 - **Build Failures**: If the build process fails, check for any error messages and ensure all dependencies are correctly installed.
 - **Application Crashes**: If the application crashes, review the console output for error messages and logs for additional information.
-- **Environment Issues**: Ensure that your Node.js and npm versions meet the prerequisites specified above.
+- **Environment Issues**: Ensure that your Node.js and pnpm versions meet the prerequisites specified above.
 
 For more detailed information, refer to the [Architecture Guide](docs/ARCHITECTURE.md), [Security Best Practices](docs/SECURITY.md), and [UI Modalities](docs/UI_MODALITIES.md).
 
@@ -101,14 +101,14 @@ console.log('API keys configured successfully!');
 ### Build Everything
 
 ```bash
-npm run build
+pnpm run build
 ```
 
 ### Watch Mode (for development)
 
 ```bash
 # In the root directory
-npm run dev
+pnpm run dev
 ```
 
 This will watch all packages for changes and rebuild automatically.
@@ -116,13 +116,15 @@ This will watch all packages for changes and rebuild automatically.
 ### Clean Build Artifacts
 
 ```bash
-npm run clean
+pnpm run clean
 ```
 
 ### Running Tests
 
 ```bash
-npm test
+make test
+# or directly:
+pnpm --recursive --if-present run test
 ```
 
 ## Project Structure
@@ -166,8 +168,8 @@ cd apps/my-app
     "clean": "rm -rf dist"
   },
   "dependencies": {
-    "@aviation/shared-sdk": "*",
-    "@aviation/keystore": "*"
+    "@aviation/shared-sdk": "workspace:*",
+    "@aviation/keystore": "workspace:*"
   },
   "devDependencies": {
     "@types/node": "^20.0.0",
@@ -248,8 +250,8 @@ main().catch(console.error);
 
 ```bash
 cd ../..  # Back to root
-npm install
-npm run build
+pnpm install
+pnpm run build
 cd apps/my-app
 npm start
 ```
@@ -260,10 +262,10 @@ npm start
 
 ```bash
 # In the specific package/app directory
-npm install <package-name>
+pnpm add <package-name>
 
-# Or from root for all workspaces
-npm install <package-name> --workspace=@aviation/my-app
+# Or from root targeting a specific workspace
+pnpm add <package-name> --filter @aviation/my-app
 ```
 
 ### Viewing Logs
@@ -316,7 +318,7 @@ Welcome to the Aviation monorepo! This guide will help you get up and running qu
 ### Prerequisites
 
 - Node.js 20 or higher
-- npm 9 or higher
+- pnpm 9 or higher (`npm install -g pnpm` if not already installed)
 
 ### Setup Steps and First Flight
 
@@ -328,12 +330,12 @@ Welcome to the Aviation monorepo! This guide will help you get up and running qu
 
 2. **Install Dependencies**
    ```bash
-   npm install
+   pnpm install
    ```
 
 3. **Build All Packages**
    ```bash
-   npm run build
+   pnpm run build
    ```
 
 4. **Run Your First Application**
@@ -354,9 +356,9 @@ Welcome to the Aviation monorepo! This guide will help you get up and running qu
 
 ### Control Basics
 
-- **Start Application**: Use `npm start` to begin running the application.
+- **Start Application**: Use `npm start` (or `pnpm start`) to begin running the application.
 - **Stop Application**: Press `Ctrl+C` to terminate the application.
-- **Rebuild Application**: Use `npm run build` to rebuild the application after making changes.
+- **Rebuild Application**: Use `pnpm run build` to rebuild the application after making changes.
 - **Watch Mode**: Use `npm run dev` to watch for changes and rebuild automatically during development.
 
 ### Troubleshooting Tips
@@ -364,25 +366,6 @@ Welcome to the Aviation monorepo! This guide will help you get up and running qu
 - **No API Key**: If you encounter a message indicating that no API key is found, ensure you have set the necessary environment variables as described in the [Setting Up API Keys](#setting-up-api-keys) section.
 - **Build Failures**: If the build process fails, check for any error messages and ensure all dependencies are correctly installed.
 - **Application Crashes**: If the application crashes, review the console output for error messages and logs for additional information.
-- **Environment Issues**: Ensure that your Node.js and npm versions meet the prerequisites specified above.o API key found for flight-tracker. Some features may be limited.
-   Flight Tracker Service is now monitoring flights...
-   Service flight-tracker started successfully
-   Flight Tracker is running. Press Ctrl+C to stop.
-   ```
-   Press `Ctrl+C` to stop the application.
-
-### Control Basics
-
-- **Start Application**: Use `npm start` to begin running the application.
-- **Stop Application**: Press `Ctrl+C` to terminate the application.
-- **Rebuild Application**: Use `npm run build` to rebuild the application after making changes.
-- **Watch Mode**: Use `npm run dev` to watch for changes and rebuild automatically during development.
-
-### Troubleshooting Tips
-
-- **No API Key**: If you encounter a message indicating that no API key is found, ensure you have set the necessary environment variables as described in the [Setting Up API Keys](#setting-up-api-keys) section.
-- **Build Failures**: If the build process fails, check for any error messages and ensure all dependencies are correctly installed.
-- **Application Crashes**: If the application crashes, review the console output for error messages and logs for additional information.
-- **Environment Issues**: Ensure that your Node.js and npm versions meet the prerequisites specified above.
+- **Environment Issues**: Ensure that your Node.js and pnpm versions meet the prerequisites specified above.
 
 For more detailed information, refer to the [Architecture Guide](docs/ARCHITECTURE.md), [Security Best Practices](docs/SECURITY.md), and [UI Modalities](docs/UI_MODALITIES.md).
