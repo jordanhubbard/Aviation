@@ -54,8 +54,8 @@ export class EventRepository {
   private dbAll: (sql: string, params?: any[]) => Promise<any[]>;
   private dbExec: (sql: string) => Promise<void>;
 
-  constructor(dbPath: string) {
-    this.db = new Database(dbPath);
+  constructor(dbPath?: string) {
+    this.db = new Database(dbPath || ':memory:');
     this.dbRun = (sql, params = []) =>
       new Promise((resolve, reject) => {
         this.db.run(sql, params, function (err) {
