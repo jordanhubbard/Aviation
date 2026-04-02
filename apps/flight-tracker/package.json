@@ -18,13 +18,14 @@
   "author": "Jordan Hubbard",
   "license": "MIT",
   "dependencies": {
-    "@aviation/shared-sdk": "*",
-    "@aviation/keystore": "*",
-    "@aviation/ui-framework": "*",
+    "@aviation/shared-sdk": "workspace:*",
+    "@aviation/keystore": "workspace:*",
+    "@aviation/ui-framework": "workspace:*",
     "ws": "^8.18.0"
   },
   "devDependencies": {
     "@types/node": "^25.5.0",
-    "typescript": "^6.0.2"
+    "typescript": "^6.0.2",
+    "@types/ws": "^8.5.8"
   }
 }

@@ -1,4 +1,4 @@
-import create from 'zustand'
+import { create } from 'zustand'
 
 export type DisplayTheme = 'day' | 'night' | 'high-contrast'
 

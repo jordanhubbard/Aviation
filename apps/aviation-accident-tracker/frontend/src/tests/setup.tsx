@@ -26,28 +26,40 @@ vi.mock('leaflet', () => ({
   })),
 }));
 
-// Mock react-leaflet components (use factory returning functions, not require())
+// Mock react-leaflet — MapContainer gets data-testid="map-container",
+// Marker gets data-testid="marker" but does NOT render children so Popup
+// content stays out of the DOM (prevents duplicate text matches in tests).
 vi.mock('react-leaflet', () => ({
-  MapContainer: ({ children }: any) => children,
+  MapContainer: ({ children }: { children?: React.ReactNode }) => (
+    <div data-testid="map-container">{children}</div>
+  ),
   TileLayer: () => null,
-  Marker: ({ children }: any) => children,
-  Popup: ({ children }: any) => children,
+  Marker: (_props: unknown) => <div data-testid="marker" />,
+  Popup: ({ children }: { children?: React.ReactNode }) => <>{children}</>,
   useMapEvents: vi.fn(() => null),
 }));
 
 // Mock react-leaflet-cluster
 vi.mock('react-leaflet-cluster', () => ({
-  default: ({ children }: any) => children,
+  default: ({ children }: { children?: React.ReactNode }) => <>{children}</>,
 }));
 
-// Mock fetch globally — default to empty successful responses so App renders without crashing
-global.fetch = vi.fn(() =>
-  Promise.resolve({
+// Mock fetch globally — return correct shapes per endpoint so App renders without crashing
+global.fetch = vi.fn((url: RequestInfo | URL) => {
+  const s = url.toString();
+  if (s.includes('/api/filters/options')) {
+    return Promise.resolve({
+      ok: true,
+      json: () => Promise.resolve({ countries: [], regions: [] }),
+      text: () => Promise.resolve(''),
+    } as unknown as Response);
+  }
+  return Promise.resolve({
     ok: true,
-    json: () => Promise.resolve({ events: [], total: 0 }),
+    json: () => Promise.resolve({ data: [], events: [], total: 0 }),
     text: () => Promise.resolve(''),
-  } as unknown as Response)
-);
+  } as unknown as Response);
+});
 
 // Setup window.matchMedia (for responsive components)
 Object.defineProperty(window, 'matchMedia', {

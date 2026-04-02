@@ -18,8 +18,8 @@
   "author": "Jordan Hubbard",
   "license": "MIT",
   "dependencies": {
-    "@aviation/keystore": "*",
-    "@aviation/shared-sdk": "*",
+    "@aviation/keystore": "workspace:*",
+    "@aviation/shared-sdk": "workspace:*",
     "express": "^5.2.1",
     "cors": "^2.8.6",
     "@aviation/ai-explainer": "workspace:*"

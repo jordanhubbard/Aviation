@@ -1,0 +1,8 @@
+packages:
+  - "packages/*"
+  - "apps/*"
+  - "apps/aviation-accident-tracker/backend"
+  - "apps/aviation-accident-tracker/frontend"
+  - "apps/g1000-simulator/backend"
+  - "apps/g1000-simulator/frontend"
+  - "apps/aviation-chat"

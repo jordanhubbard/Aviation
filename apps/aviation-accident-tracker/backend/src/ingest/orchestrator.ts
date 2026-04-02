@@ -174,12 +174,32 @@ export class IngestionOrchestrator {
    * Returns the existing event ID (for merge/update), or null if no match.
    */
   private async findExisting(event: EventRecord): Promise<string | null> {
-    // 1. Exact match: (date_z, registration)
     const parseDate = (d: string | null | undefined) => d ? new Date(d).getTime() : null;
     const dayMs = 86_400_000;
 
-    // 1. Exact match: (date_z, registration)
-    if (event.registration && event.date_z) {
+    // 1. Exact match: (dateZ, registration)
+    if (event.registration && event.dateZ) {
+      const exactId = await this.repository.findEventId(event.dateZ, event.registration);
+      if (exactId) return exactId;
+    }
+
+    // 2. Fuzzy match: dateZ ± 1 day, same country/region, same aircraftType
+    if (event.dateZ && event.aircraftType) {
+      const ts = parseDate(event.dateZ);
+      if (ts !== null) {
+        const from = new Date(ts - dayMs).toISOString().slice(0, 10);
+        const to = new Date(ts + dayMs).toISOString().slice(0, 10);
+        const candidates = await this.repository.listEvents({ from, to, limit: 50, offset: 0 });
+        const match = candidates.events.find(
+          (e) =>
+            e.aircraftType === event.aircraftType &&
+            e.country === event.country &&
+            e.region === event.region
+        );
+        if (match) return String(match.id);
+      }
+    }
+
     return null;
   }
 

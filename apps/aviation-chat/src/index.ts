@@ -95,7 +95,7 @@ app.post('/chat', async (req, res) => {
 const explainer = new ExplainerClient({
   brainUrl: process.env['RCC_BRAIN_URL'] ?? 'http://146.190.134.110:8789/api/brain/request',
 });
-app.use(explainerRoute(explainer));
+app.use(/* @ts-ignore Express 5 Router type issue */ explainerRoute(explainer) as any);
 
 app.get('/health', (_req, res) => {
   res.json({ status: 'ok', service: 'aviation-chat' });

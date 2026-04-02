@@ -30,6 +30,9 @@
     "ts-node": "^10.9.2",
     "typescript": "^5.9.3"
   },
+  "pnpm": {
+    "onlyBuiltDependencies": ["@apollo/protobufjs", "@scarf/scarf", "@vscode/sqlite3", "esbuild", "unrs-resolver"]
+  },
   "overrides": {
     "@tootallnate/once": ">=3.0.1",
     "express-rate-limit": ">=8.2.2",

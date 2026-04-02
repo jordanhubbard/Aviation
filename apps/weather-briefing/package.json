@@ -19,9 +19,9 @@
   "author": "Jordan Hubbard",
   "license": "MIT",
   "dependencies": {
-    "@aviation/shared-sdk": "*",
-    "@aviation/keystore": "*",
-    "@aviation/ui-framework": "*"
+    "@aviation/shared-sdk": "workspace:*",
+    "@aviation/keystore": "workspace:*",
+    "@aviation/ui-framework": "workspace:*"
   },
   "devDependencies": {
     "@types/node": "^25.5.0",

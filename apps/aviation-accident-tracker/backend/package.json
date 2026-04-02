@@ -20,8 +20,8 @@
   "dependencies": {
     "@apollo/server": "^5.5.0",
     "@as-integrations/express5": "^1.0.0",
-    "@aviation/keystore": "*",
-    "@aviation/shared-sdk": "*",
+    "@aviation/keystore": "workspace:*",
+    "@aviation/shared-sdk": "workspace:*",
     "@graphql-tools/schema": "^10.0.2",
     "cors": "^2.8.6",
     "dataloader": "^2.2.2",
@@ -53,6 +53,7 @@
     "supertest": "^7.2.2",
     "swagger-jsdoc": "^6.2.8",
     "tsx": "^4.7.0",
-    "typescript": "^5.9.3"
+    "typescript": "^5.9.3",
+    "vitest": "^4.1.1"
   }
 }

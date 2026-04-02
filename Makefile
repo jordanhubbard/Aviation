@@ -141,7 +141,7 @@ test: test-node test-python test-clojure
 
 test-node:
 	@echo "🧪 Running Node.js/TypeScript tests..."
-	npm test --workspaces --if-present
+	pnpm --recursive --if-present run test
 	@echo "✅ Node.js/TypeScript tests passed"
 
 test-python:
@@ -171,9 +171,13 @@ test-python:
 test-clojure:
 	@echo "🧪 Running Clojure tests..."
 	@if [ -f apps/aviation-missions-app/Makefile ]; then \
-		cd apps/aviation-missions-app && $(MAKE) test; \
+		if docker info >/dev/null 2>&1; then \
+			cd apps/aviation-missions-app && $(MAKE) test; \
+		else \
+			echo "   ⚠️  Docker not running — skipping Clojure container tests (CI uses lein directly)"; \
+		fi \
 	fi
-	@echo "✅ Clojure tests passed"
+	@echo "✅ Clojure tests complete"
 
 #
 # DOCKER TEST TARGETS (Containerized Testing)

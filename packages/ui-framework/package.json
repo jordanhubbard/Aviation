@@ -37,7 +37,7 @@
   "author": "Jordan Hubbard",
   "license": "MIT",
   "dependencies": {
-    "@aviation/shared-sdk": "*",
+    "@aviation/shared-sdk": "workspace:*",
     "leaflet": "^1.9.4",
     "react-leaflet": "^5.0.0"
   },

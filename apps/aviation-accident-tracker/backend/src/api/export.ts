@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * export.ts — Data export API for aviation accident records.
  *

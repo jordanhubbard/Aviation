@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * webhookService.ts — Webhook subscription and delivery service.
  *

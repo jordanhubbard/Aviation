@@ -49,7 +49,7 @@ export function createApp(repository: EventRepository) {
   const explainer = new ExplainerClient({
     brainUrl: process.env['RCC_BRAIN_URL'] ?? 'http://146.190.134.110:8789/api/brain/request',
   });
-  app.use(explainerRoute(explainer));
+  app.use(/* @ts-ignore Express 5 Router type issue */ explainerRoute(explainer) as any);
 
   // API routes
   app.use('/api', createRouter(repository));

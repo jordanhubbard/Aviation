@@ -27,7 +27,7 @@ describe('Badge Component', () => {
   it('applies custom border', () => {
     render(<Badge border="#0000ff">Blue Border</Badge>);
     const badge = screen.getByText('Blue Border');
-    expect(badge).toHaveStyle({ border: '1px solid #0000ff' });
+    expect(badge).toHaveStyle({ borderColor: '#0000ff', borderStyle: 'solid', borderWidth: '1px' });
   });
 
   it('applies both custom color and border', () => {
@@ -39,7 +39,9 @@ describe('Badge Component', () => {
     const badge = screen.getByText('Custom Badge');
     expect(badge).toHaveStyle({
       background: '#00ff00',
-      border: '1px solid #ff00ff',
+      borderColor: '#ff00ff',
+      borderStyle: 'solid',
+      borderWidth: '1px',
     });
   });
 

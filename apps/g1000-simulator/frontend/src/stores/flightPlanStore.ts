@@ -1,4 +1,4 @@
-import create from 'zustand'
+import { create } from 'zustand'
 
 export type FlightPlanWaypointType =
   | 'airport'
@@ -155,7 +155,7 @@ export const useFlightPlanStore = create<FlightPlanState & FlightPlanActions>((s
               ...state.navigation,
               directToTargetId: null,
               directToResumeLegIndex: null,
-              cdiSource: 'FPL',
+              cdiSource: 'FPL' as const,
               directToPanelOpen: false,
             }
           : state.navigation

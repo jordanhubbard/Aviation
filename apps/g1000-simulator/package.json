@@ -14,7 +14,7 @@
     "type-check": "tsc --noEmit"
   },
   "dependencies": {
-    "@aviation/shared-sdk": "*",
+    "@aviation/shared-sdk": "workspace:*",
     "ws": "^8.14.2",
     "uuid": "^9.0.1"
   },

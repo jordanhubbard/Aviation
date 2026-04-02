@@ -1,4 +1,4 @@
-import create from 'zustand'
+import { create } from 'zustand'
 
 import type { SocketStatus } from '../hooks/useWebSocketClient'
 import type { TelemetrySnapshot, TelemetryUpdate } from '../types/telemetry'

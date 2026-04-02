@@ -10,7 +10,7 @@
     "skipLibCheck": true
   },
   "include": [
-    "src*"
+    "src/**/*"
   ],
   "exclude": [
     "src*.test.tsx",

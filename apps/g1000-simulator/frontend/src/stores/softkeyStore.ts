@@ -1,5 +1,5 @@
 import { useMemo } from 'react'
-import create from 'zustand'
+import { create } from 'zustand'
 
 import { SOFTKEY_MENUS, SoftkeyContext, SoftkeyMenu } from '../services/softkeyMenus'
 import type { SoftkeyItem } from '../displays/Shared/SoftkeyBar'
