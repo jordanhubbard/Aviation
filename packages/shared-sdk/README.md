@@ -139,9 +139,7 @@ console.log(result.content);
 
 ## Installation
 
-```bash
-npm install @aviation/shared-sdk
-```
+Within the monorepo, this package is referenced via `workspace:*` in dependent `package.json` files and installed automatically by `pnpm install` at the repo root.
 
 ## Usage
 
@@ -229,13 +227,16 @@ interface Airport {
 
 ```bash
 # Build
-npm run build
+pnpm run build
 
 # Watch mode
-npm run dev
+pnpm run dev
+
+# Run tests (162 tests via Vitest)
+pnpm test
 
 # Clean
-npm run clean
+pnpm run clean
 ```
 
 ## License

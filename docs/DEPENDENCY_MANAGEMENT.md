@@ -15,9 +15,8 @@ This document outlines the strategy for managing dependencies and performing reg
 - **Snyk**: Provides comprehensive dependency scanning for various programming languages.
 
 ### Dependency Managers
-- **npm/yarn**: For JavaScript/TypeScript dependencies.
-- **pip**: For Python dependencies.
-- **Maven/Gradle**: For Java dependencies.
+- **pnpm** (workspaces): For JavaScript/TypeScript dependencies. Internal package references use `workspace:*` protocol. `pnpm-workspace.yaml` defines the workspace packages.
+- **pip** (with virtualenv): For Python dependencies. Python packages create a `.venv` virtualenv for isolation.
 - **Leiningen**: For Clojure dependencies.
 
 ## Scanning Schedule

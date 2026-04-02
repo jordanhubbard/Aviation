@@ -233,18 +233,33 @@ class MyMobileUI extends MobileUI {
 
 ## Development Workflow
 
-1. **Development**: `npm run dev` (watches for changes)
-2. **Build**: `npm run build` (compiles TypeScript)
-3. **Test**: `npm test` (runs tests if available)
-4. **Clean**: `npm run clean` (removes build artifacts)
+The monorepo uses **pnpm workspaces**. Internal package references use the `workspace:*` protocol.
+
+1. **Development**: `pnpm run dev` (watches for changes)
+2. **Build**: `pnpm run build` (compiles TypeScript)
+3. **Test**: `make test` or `pnpm --recursive --if-present run test`
+4. **Clean**: `pnpm run clean` (removes build artifacts)
+
+### TypeScript Compatibility Notes
+
+- Packages using TS 6.x set `"ignoreDeprecations": "6.0"` in tsconfig to suppress the `moduleResolution: "node"` deprecation warning.
+- Packages using TS 5.x set `"ignoreDeprecations": "5.0"` for the same reason.
+- Packages requiring Node.js globals add `"types": ["node"]` to tsconfig compilerOptions.
+- The `ui-framework` package includes `src/css-modules.d.ts` to declare CSS module imports.
+
+### Breaking Dependency Notes
+
+- **Zustand v5**: All store files use the named import `import { create } from 'zustand'` (the default export was removed).
+- **React Router v7**: Routes use `<Routes><Route element={<Component />}>` syntax (`<Switch>` and `component` prop were removed).
+- **Express 5**: Some router assignments require `as any` casts due to type incompatibilities introduced in Express 5.
 
 ## Deployment
 
 Each application can be deployed independently:
 
-1. Build the application: `npm run build`
+1. Build the application: `pnpm run build`
 2. Set environment variables (especially `KEYSTORE_ENCRYPTION_KEY`)
-3. Run the service: `npm start`
+3. Run the service: `pnpm start`
 4. Configure process manager (PM2, systemd, etc.) for production
 
 ## Future Enhancements

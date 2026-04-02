@@ -30,14 +30,17 @@ Standard aviation color schemes for VFR/MVFR/IFR/LIFR conditions:
 
 ## Installation
 
+Within the monorepo, this package is referenced via `workspace:*` in dependent `package.json` files and installed automatically by `pnpm install` at the repo root.
+
 ```bash
-npm install @aviation/ui-framework
+# From monorepo root
+pnpm install
 ```
 
 ### Peer Dependencies
 
 ```bash
-npm install react react-dom leaflet react-leaflet
+pnpm add react react-dom leaflet react-leaflet
 ```
 
 ## Usage
@@ -314,7 +317,9 @@ OpenWeatherMap layer types.
 
 ## TypeScript Support
 
-Full TypeScript support with comprehensive type definitions.
+Full TypeScript support with comprehensive type definitions. The package includes `src/css-modules.d.ts` which declares the `*.css` module type so TypeScript does not error on CSS imports.
+
+The package tsconfig sets `"ignoreDeprecations": "5.0"` (or `"6.0"` depending on the installed TypeScript version) to suppress the `moduleResolution: "node"` deprecation warning.
 
 ```tsx
 import type { 

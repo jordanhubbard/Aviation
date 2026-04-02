@@ -2,6 +2,10 @@
 
 ## 1. Architecture Overview
 
+### Package Manager
+
+The monorepo uses **pnpm workspaces**. Internal package dependencies use the `workspace:*` protocol. Install all dependencies from the repo root with `pnpm install`. Run the full test suite with `make test` (which executes `pnpm --recursive --if-present run test` for Node packages).
+
 ### System Design
 The Aviation monorepo is designed with a modular architecture, where each application is self-contained and interacts with shared services and SDKs. The architecture supports scalability, maintainability, and ease of integration.
 

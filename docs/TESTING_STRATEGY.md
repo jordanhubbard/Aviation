@@ -35,7 +35,9 @@ Clojure tests require Docker to be running; the `test-clojure` target in the roo
 | `packages/ui-framework` | 36 |
 | `packages/ai-explainer` | 11 |
 | `packages/flight-dynamics` (Python) | 5 |
+| `packages/g1000-avionics-sdk`, `g1000-protocols`, `g1000-rendering` | pass with no tests (`--passWithNoTests`) |
 | Python apps total | 64 pass, 25 skipped |
+| Clojure (`aviation-missions-app`) | tested via `lein test` in CI |
 
 ## Unit Testing
 - **Objective**: Validate individual components and functions for correctness.
@@ -49,7 +51,7 @@ Clojure tests require Docker to be running; the `test-clojure` target in the roo
 
 ## Vitest Setup File
 
-Frontend packages that use React and JSX in test mocks must use a `.tsx` setup file (not `.ts`) so JSX compiles correctly in Vitest mock factories. The setup file is referenced in `vitest.config.ts` as `setupFiles: ['./src/test/setup.tsx']` (path may vary by package).
+Frontend packages that use React and JSX in test mocks must use a `.tsx` setup file (not `.ts`) so JSX compiles correctly in Vitest mock factories. The setup file is referenced in `vitest.config.ts` via the `setupFiles` option (path varies by package — e.g., `./src/tests/setup.tsx` for `aviation-accident-tracker/frontend`).
 
 The global fetch mock in `setup.tsx` returns correct shapes per endpoint:
 - `/api/filters/options` → `{ countries: [], regions: [] }`
@@ -59,6 +61,12 @@ The global fetch mock in `setup.tsx` returns correct shapes per endpoint:
 Map components are mocked to return simple `<div>` elements with `data-testid` attributes:
 - `MapContainer` → `<div data-testid="map-container">`
 - `Marker` → `<div data-testid="marker" />` (self-closing, no children — prevents Popup content appearing in the DOM inadvertently)
+
+## Per-Package Test Notes
+
+- **`apps/g1000-simulator`**: Uses **Jest** (ts-jest config) with a dedicated `jest.config.js` at the app root; e2e and performance tests are excluded from the default run.
+- **`packages/flight-dynamics`**: Python tests run inside a virtualenv created automatically: `python3 -m venv .venv && .venv/bin/pip install ...`.
+- **`packages/g1000-avionics-sdk`, `g1000-protocols`, `g1000-rendering`**: Jest configured with `--passWithNoTests` so CI does not fail when no test files exist yet.
 
 ## End-to-End Testing
 - **Objective**: Validate complete user workflows from start to finish.

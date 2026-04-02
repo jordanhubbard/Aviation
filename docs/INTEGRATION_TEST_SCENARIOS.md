@@ -1,33 +1,42 @@
 # Integration Test Scenarios
 
 ## Overview
-This document outlines the integration test scenarios for the Aviation project. These scenarios cover the interactions between backend services and the UI, focusing on WebSocket telemetry flows, flight plan CRUD operations, and navigation queries.
+This document outlines the integration test scenarios for the Aviation project. Integration tests verify actual application behavior — rendered UI output, real API response shapes, and component interaction — rather than mocked DOM structure.
 
-## Test Scenarios
+## Test Framework and Conventions
 
-### 1. WebSocket Telemetry Flows
-- **Scenario 1:** Verify real-time updates are received by the frontend when telemetry data changes in the backend.
-  - **Expected Outcome:** Frontend UI updates within 1 second of backend data change.
+- **Framework**: Vitest + `@testing-library/react` for frontend integration tests.
+- **No MSW**: Tests do not use Mock Service Worker. The global `fetch` is mocked in the setup file (`setup.tsx`) and returns correct response shapes per endpoint.
+- **Mock factories use JSX**: The setup file uses the `.tsx` extension so Vitest mock factories can return JSX elements (e.g., `vi.fn()` returning `<div data-testid="map-container">`).
+- **No `jest.fn()`**: All mocks use `vi.fn()` (Vitest API).
 
-- **Scenario 2:** Test WebSocket connection stability under high load.
-  - **Expected Outcome:** Connection remains stable with no data loss for up to 1000 concurrent users.
+## aviation-accident-tracker Frontend Integration Tests
 
-### 2. Flight Plan CRUD Operations
-- **Scenario 1:** Create a new flight plan and verify it appears in the list of available plans.
-  - **Expected Outcome:** New flight plan is listed with correct details.
+7 integration tests in `tests/integration/` cover:
 
-- **Scenario 2:** Update an existing flight plan and verify changes are reflected in the UI.
-  - **Expected Outcome:** UI displays updated flight plan details immediately.
+1. **Error state rendering** — App renders an error message when the API returns a non-OK response.
+2. **Loading state rendering** — App renders a loading indicator while the API call is in flight.
+3. **Event data display** — App renders accident event data (date, registration, aircraft type) fetched from the API.
+4. **Rendering structure** — App renders the expected top-level structure (header, main content area, footer).
+5. **Map markers** — Map renders a marker for each event returned from the API.
+6. **Filter API params** — Applying a filter causes the events API to be called with the correct query parameters.
+7. **Modal open/close** — Clicking an event row opens the detail modal; closing it hides the modal.
 
-- **Scenario 3:** Delete a flight plan and ensure it is removed from the list.
-  - **Expected Outcome:** Flight plan is no longer visible in the UI.
+## aviation-accident-tracker Backend Integration Tests
 
-### 3. Navigation Queries
-- **Scenario 1:** Perform a navigation query and verify the results are accurate and displayed correctly.
-  - **Expected Outcome:** Query results match expected data and are displayed in the correct format.
+Vitest-based tests cover the REST API layer using `supertest`:
+- Events list with filter parameters
+- Event detail retrieval
+- Filter options endpoint (`/api/filters/options` returns `{ countries: [], regions: [] }`)
+- Ingestion trigger endpoint
 
-- **Scenario 2:** Test the performance of navigation queries under various conditions.
-  - **Expected Outcome:** Queries complete within 2 seconds under normal conditions.
+## Planned Scenarios (Not Yet Implemented)
+
+### WebSocket Telemetry Flows
+Real-time update tests for the G1000 simulator are planned but not yet wired into CI.
+
+### Flight Plan CRUD Operations
+Full CRUD integration tests for the flight-planner app are planned for a future sprint.
 
 ## Conclusion
-These scenarios ensure that the integration between backend services and the UI is functioning correctly and efficiently. They cover critical functionalities that are essential for the smooth operation of the Aviation applications.
+Integration tests target actual application behavior. Tests that only validate phantom/mocked DOM structure (e.g., checking for menu buttons or alert dialogs that don't exist in the app) should be removed and replaced with tests that verify real rendered output.

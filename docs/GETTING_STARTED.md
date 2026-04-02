@@ -32,7 +32,7 @@ Let's start the Flight Tracker application:
 cd apps/flight-tracker
 
 # Run the application
-npm start
+pnpm start
 ```
 
 You should see output like:
@@ -50,10 +50,10 @@ Press `Ctrl+C` to stop the application.
 
 ### Control Basics
 
-- **Start Application**: Use `npm start` (or `pnpm start`) to begin running the application.
+- **Start Application**: Use `pnpm start` to begin running the application.
 - **Stop Application**: Press `Ctrl+C` to terminate the application.
 - **Rebuild Application**: Use `pnpm run build` to rebuild the application after making changes.
-- **Watch Mode**: Use `npm run dev` to watch for changes and rebuild automatically during development.
+- **Watch Mode**: Use `pnpm run dev` to watch for changes and rebuild automatically during development.
 
 ### Troubleshooting Tips
 
@@ -253,7 +253,7 @@ cd ../..  # Back to root
 pnpm install
 pnpm run build
 cd apps/my-app
-npm start
+pnpm start
 ```
 
 ## Common Tasks
@@ -342,7 +342,7 @@ Welcome to the Aviation monorepo! This guide will help you get up and running qu
    Let's start the Flight Tracker application:
    ```bash
    cd apps/flight-tracker
-   npm start
+   pnpm start
    ```
    You should see output like:
    ```
@@ -356,10 +356,10 @@ Welcome to the Aviation monorepo! This guide will help you get up and running qu
 
 ### Control Basics
 
-- **Start Application**: Use `npm start` (or `pnpm start`) to begin running the application.
+- **Start Application**: Use `pnpm start` to begin running the application.
 - **Stop Application**: Press `Ctrl+C` to terminate the application.
 - **Rebuild Application**: Use `pnpm run build` to rebuild the application after making changes.
-- **Watch Mode**: Use `npm run dev` to watch for changes and rebuild automatically during development.
+- **Watch Mode**: Use `pnpm run dev` to watch for changes and rebuild automatically during development.
 
 ### Troubleshooting Tips
 

@@ -94,10 +94,10 @@ Visit `http://localhost:5173` to access the UI.
 make test
 
 # Run backend tests only (34 tests)
-cd backend && npm test
+cd backend && pnpm test
 
 # Run frontend tests only (62 tests across 10 test files)
-cd frontend && npm test
+cd frontend && pnpm test
 ```
 
 The frontend test suite uses **Vitest** with `@testing-library/react`. The setup file is `src/test/setup.tsx` (note `.tsx` extension — required so JSX works in Vitest mock factories). Integration tests verify actual App functionality rather than mocked DOM structure.
@@ -445,14 +445,14 @@ cd backend
 pnpm install
 
 # Run in watch mode
-npm run dev
+pnpm run dev
 
 # Run tests
-npm test
+pnpm test
 
 # Lint & format
-npm run lint
-npm run format
+pnpm run lint
+pnpm run format
 ```
 
 ### Frontend Development
@@ -464,13 +464,13 @@ cd frontend
 pnpm install
 
 # Start dev server with HMR
-npm run dev
+pnpm run dev
 
 # Run tests
-npm test
+pnpm test
 
 # Build for production
-npm run build
+pnpm run build
 ```
 
 ## Scheduler / ingestion

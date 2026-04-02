@@ -42,4 +42,26 @@ The G1000 Simulator is a comprehensive flight simulation application designed to
 - **Developer API docs**: To be implemented.
 
 ## Getting Started
-Instructions on how to set up and run the simulator will be provided in future updates.
+
+Install dependencies from the monorepo root:
+
+```bash
+pnpm install
+```
+
+### Running Tests
+
+The simulator uses **Jest** (ts-jest) for unit tests. A `jest.config.js` at the app root configures ts-jest and excludes e2e and performance test directories.
+
+```bash
+cd apps/g1000-simulator
+pnpm test
+# or from monorepo root:
+pnpm --filter @aviation/g1000-simulator run test
+```
+
+Current passing test count: **68 tests**.
+
+### Package Manager
+
+This app is part of the pnpm workspace monorepo. Internal package references use `workspace:*` protocol. Backend requires `@types/express` and `@types/cors`. Frontend store files use Zustand v5 named import (`import { create } from 'zustand'`) and React Router v7 `<Routes>`/`<Route element={<X />}>` syntax.
