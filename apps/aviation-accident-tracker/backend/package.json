@@ -39,7 +39,8 @@
     "swagger-ui-express": "^5.0.1",
     "uuid": "^13.0.0",
     "ws": "^8.16.0",
-    "yaml": "^2.8.3"
+    "yaml": "^2.8.3",
+    "@aviation/ai-explainer": "workspace:*"
   },
   "devDependencies": {
     "@types/cors": "^2.8.17",

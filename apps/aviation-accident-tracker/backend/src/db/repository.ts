@@ -507,6 +507,20 @@ export class EventRepository {
   }
 
   /**
+   * Get distinct non-null values for a given column (used for filter option lists).
+   * Only allows known safe column names to prevent SQL injection.
+   */
+  async getDistinctValues(column: string): Promise<string[]> {
+    const allowed = new Set(['country', 'region', 'category', 'aircraft_type', 'phase_of_flight', 'operator']);
+    if (!allowed.has(column)) return [];
+    const rows: Array<{ val: string }> = await this.dbAll(
+      `SELECT DISTINCT ${column} AS val FROM events WHERE ${column} IS NOT NULL AND ${column} != '' ORDER BY ${column} ASC`,
+      []
+    );
+    return rows.map(r => r.val);
+  }
+
+  /**
    * Close database connection
    */
   async close(): Promise<void> {

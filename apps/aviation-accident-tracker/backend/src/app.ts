@@ -8,6 +8,7 @@ import { getLastRun } from './scheduler.js';
 import { logger } from './logger.js';
 import { config } from './config.js';
 import { EventRepository } from './db/repository.js';
+import { ExplainerClient, explainerRoute } from '@aviation/ai-explainer';
 
 const SERVICE_VERSION = '0.1.0';
 
@@ -43,6 +44,12 @@ export function createApp(repository: EventRepository) {
       service: 'accident-tracker',
     });
   });
+
+  // AI decision explanation endpoint
+  const explainer = new ExplainerClient({
+    brainUrl: process.env['RCC_BRAIN_URL'] ?? 'http://146.190.134.110:8789/api/brain/request',
+  });
+  app.use(explainerRoute(explainer));
 
   // API routes
   app.use('/api', createRouter(repository));

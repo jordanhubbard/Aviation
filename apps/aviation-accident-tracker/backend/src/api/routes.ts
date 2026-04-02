@@ -327,18 +327,24 @@ export function createRouter(repository: EventRepository) {
    *             schema:
    *               $ref: '#/components/schemas/FiltersOptions'
    */
-  router.get('/filters/options', (_req, res) => {
-    // Return common aviation countries
-    // TODO: Could be generated dynamically from events table or full airport database
-    const countries = [
-      'Australia', 'Brazil', 'Canada', 'China', 'France', 'Germany', 'India',
-      'Indonesia', 'Italy', 'Japan', 'Mexico', 'Netherlands', 'Russia',
-      'Spain', 'Sweden', 'Switzerland', 'Turkey', 'United Kingdom', 'United States'
-    ].sort();
+  router.get('/filters/options', async (_req, res, next) => {
+    try {
+      // Dynamic country/region lists derived from events in DB
+      const [countryRows, regionRows] = await Promise.all([
+        useMemoryRepo
+          ? Promise.resolve(
+              [...new Set(memoryRepo.list({}).data.map((e: any) => e.country).filter(Boolean))].sort()
+            )
+          : repository.getDistinctValues('country'),
+        useMemoryRepo
+          ? Promise.resolve([])
+          : repository.getDistinctValues('region'),
+      ]);
 
-    const regions: string[] = []; // Regions not currently supported
-
-    return res.json({ countries, regions });
+      return res.json({ countries: countryRows, regions: regionRows });
+    } catch (err) {
+      return next(err);
+    }
   });
 
   return router;

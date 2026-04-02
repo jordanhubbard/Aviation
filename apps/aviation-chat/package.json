@@ -10,14 +10,19 @@
     "dev": "tsc --watch",
     "clean": "rm -rf dist"
   },
-  "keywords": ["aviation", "openclaw", "chat"],
+  "keywords": [
+    "aviation",
+    "openclaw",
+    "chat"
+  ],
   "author": "Jordan Hubbard",
   "license": "MIT",
   "dependencies": {
     "@aviation/keystore": "*",
     "@aviation/shared-sdk": "*",
     "express": "^5.2.1",
-    "cors": "^2.8.6"
+    "cors": "^2.8.6",
+    "@aviation/ai-explainer": "workspace:*"
   },
   "devDependencies": {
     "@types/cors": "^2.8.17",

@@ -4,6 +4,7 @@ import { createSecretLoader } from '@aviation/keystore';
 import { createOpenClawClient } from '@aviation/shared-sdk';
 import { loadAppContext } from './context';
 import { getHistory, appendTurn } from './memory';
+import { ExplainerClient, explainerRoute } from '@aviation/ai-explainer';
 
 const app = express();
 app.use(cors({ origin: true }));
@@ -89,6 +90,12 @@ app.post('/chat', async (req, res) => {
     res.status(500).json({ error: message });
   }
 });
+
+// AI decision explanation endpoint
+const explainer = new ExplainerClient({
+  brainUrl: process.env['RCC_BRAIN_URL'] ?? 'http://146.190.134.110:8789/api/brain/request',
+});
+app.use(explainerRoute(explainer));
 
 app.get('/health', (_req, res) => {
   res.json({ status: 'ok', service: 'aviation-chat' });

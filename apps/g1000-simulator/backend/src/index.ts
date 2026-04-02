@@ -1,4 +1,5 @@
 import { G1000StreamingService } from './service';
+import { startExplainServer } from './explainServer';
 
 const port = Number(process.env.G1000_STREAM_PORT ?? process.env.PORT ?? 9010);
 
@@ -28,3 +29,6 @@ service.start().catch((error) => {
   console.error('Failed to start G1000 streaming service:', error);
   process.exit(1);
 });
+
+// Start HTTP explainer companion (port 9011 by default)
+startExplainServer(Number(process.env['G1000_EXPLAIN_PORT'] ?? 9011));
