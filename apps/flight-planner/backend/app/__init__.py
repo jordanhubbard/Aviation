@@ -13,6 +13,15 @@ from .services.approaches import ApproachProcedure, ApproachType, ApproachCatego
 from .routes.alerts import router as alerts_router
 from .routers.settings import router as settings_router
 from .routers.explain import router as explain_router
+from .routers import plan as plan_router_mod
+from .routers import route as route_router_mod
+from .routers import weather as weather_router_mod
+from .routers import terrain as terrain_router_mod
+from .routers import local as local_router_mod
+from .routers import airports as airports_router_mod
+from .routers import airspace as airspace_router_mod
+from .routers import health as health_router_mod
+from .routers import beads as beads_router_mod
 from fastapi import WebSocket, WebSocketDisconnect
 
 
@@ -79,6 +88,16 @@ def create_app(settings):
     app.include_router(alerts_router)
     app.include_router(settings_router, tags=["settings"])
     app.include_router(explain_router)
+    # Core routing / planning routers (were imported in routers/__init__ but never mounted)
+    app.include_router(plan_router_mod.router, prefix="/api", tags=["plan"])
+    app.include_router(route_router_mod.router, prefix="/api", tags=["route"])
+    app.include_router(weather_router_mod.router, prefix="/api", tags=["weather"])
+    app.include_router(terrain_router_mod.router, prefix="/api", tags=["terrain"])
+    app.include_router(local_router_mod.router, prefix="/api", tags=["local"])
+    app.include_router(airports_router_mod.router, prefix="/api", tags=["airports"])
+    app.include_router(airspace_router_mod.router, prefix="/api", tags=["airspace"])
+    app.include_router(health_router_mod.router, prefix="/api", tags=["health"])
+    app.include_router(beads_router_mod.router, prefix="/api", tags=["beads"])
 
     # Initialize AlertManager
     app.alert_manager = AlertManager()

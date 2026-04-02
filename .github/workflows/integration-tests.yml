@@ -44,7 +44,8 @@ jobs:
 
     - name: Run integration tests
       run: |
-        pytest tests/integration --junitxml=tests/integration/results/results.xml
+        # RUN_LIVE_TESTS is intentionally unset; live-server tests are skipped.
+        pytest tests/integration --junitxml=tests/integration/results/results.xml -v
 
     - name: Archive test results
       if: failure()

@@ -39,6 +39,16 @@ PlanRequest = Annotated[Union[PlanRouteRequest, PlanLocalRequest], Field(discrim
 
 
 @router.post(
+    "/plan",
+    summary="Plan a flight (route or local) — primary entrypoint",
+    description="Unified planning entrypoint. Discriminated by `mode` field: `route` or `local`.",
+    include_in_schema=True,
+)
+def plan_flight(req: PlanRequest) -> Any:
+    return initialize_flight(req)
+
+
+@router.post(
     "/initialize",
     summary="Initialize a flight (route or local)",
     description="Initializes a flight using a discriminated union request body with `mode` set to `route` or `local`.",

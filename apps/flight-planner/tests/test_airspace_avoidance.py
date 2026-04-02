@@ -1,7 +1,13 @@
 from __future__ import annotations
 
+import importlib.util
 from dataclasses import dataclass
 from typing import Iterable, List
+
+import pytest
+
+if importlib.util.find_spec("shapely") is None:
+    pytest.skip("shapely not installed", allow_module_level=True)
 
 from shapely.geometry import Polygon
 

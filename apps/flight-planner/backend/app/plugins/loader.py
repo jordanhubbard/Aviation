@@ -32,6 +32,14 @@ class PluginLoader:
         return getattr(module, class_name)
 
     def create_plugin(self, manifest):
-        # Placeholder for creating a plugin instance
         plugin_class = self.load_plugin_class(manifest['entry_point'])
-        return plugin_class(PluginMetadata(manifest['id'], manifest['name'], manifest['version'], manifest.get('description', ''), manifest.get('author', ''), manifest['entry_point'], manifest.get('permissions', [])))
+        metadata = PluginMetadata(
+            plugin_id=manifest['id'],
+            name=manifest['name'],
+            version=manifest['version'],
+            description=manifest.get('description', ''),
+            author=manifest.get('author', ''),
+            entry_point=manifest['entry_point'],
+            permissions=manifest.get('permissions', []),
+        )
+        return plugin_class(metadata)
