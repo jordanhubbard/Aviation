@@ -311,3 +311,4 @@ export function App() {
                                         ? selected.sources.map((s) => (_jsx("span", { style: { marginRight: 8 }, children: _jsx("a", { href: s.url, target: "_blank", rel: "noreferrer", children: s.sourceName || 'source' }) }, s.url)))
                                         : '—'] }), selectedError && _jsxs("p", { style: { color: 'red' }, children: ["Failed to load event detail: ", selectedError] }), _jsx("button", { onClick: () => setSelected(null), children: "Close" })] }) }))] }));
 }
+export default App;
