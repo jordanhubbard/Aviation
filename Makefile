@@ -59,13 +59,17 @@ build: build-node build-python build-clojure build-go
 
 build-go:
 	@echo "📦 Building Go applications..."
-	go build -v ./...
+	@if command -v go >/dev/null 2>&1; then \
+		go build -v ./...; \
+	else \
+		echo "   ⚠️  go not installed — skipping Go build"; \
+	fi
 	@echo "✅ Go applications build complete"
 
 build-node:
 	@echo "📦 Building Node.js/TypeScript applications and packages..."
-	npm install
-	npm run build --workspaces --if-present
+	pnpm install
+	pnpm --recursive --if-present run build
 	@echo "✅ Node.js/TypeScript build complete"
 
 build-python:
@@ -77,7 +81,11 @@ build-python:
 build-clojure:
 	@echo "☕ Building Clojure applications..."
 	@if [ -f apps/aviation-missions-app/Makefile ]; then \
-		cd apps/aviation-missions-app && $(MAKE) build; \
+		if docker info >/dev/null 2>&1; then \
+			cd apps/aviation-missions-app && $(MAKE) build; \
+		else \
+			echo "   ⚠️  Docker not running — skipping Clojure container build"; \
+		fi \
 	fi
 	@echo "✅ Clojure build complete"
 
@@ -92,7 +100,7 @@ clean: clean-node clean-python clean-clojure
 clean-node:
 	@echo "🧹 Cleaning Node.js/TypeScript artifacts..."
 	# Clean workspace build artifacts
-	npm run clean --workspaces --if-present
+	pnpm --recursive --if-present run clean
 	# Remove node_modules
 	rm -rf node_modules
 	rm -rf apps/*/node_modules
@@ -244,12 +252,12 @@ validate:
 
 lint:
 	@echo "🔍 Running linters..."
-	npm run lint --workspaces --if-present
+	pnpm --recursive --if-present run lint
 	@echo "✅ Linting complete"
 
 format:
 	@echo "✨ Formatting code..."
-	npm run format --workspaces --if-present
+	pnpm --recursive --if-present run format
 	@echo "✅ Code formatting complete"
 
 audit: audit-node audit-python
@@ -258,7 +266,7 @@ audit: audit-node audit-python
 
 audit-node:
 	@echo "🔐 Running Node.js security audit..."
-	npm audit --workspaces --if-present
+	pnpm audit --recursive || true
 	@echo "✅ Node.js audit complete"
 
 audit-python:

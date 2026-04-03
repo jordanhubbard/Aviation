@@ -4,7 +4,6 @@ package websocket
 
 import (
 	"github.com/gorilla/websocket"
-	"log"
 )
 
 // Client represents a WebSocket client.
