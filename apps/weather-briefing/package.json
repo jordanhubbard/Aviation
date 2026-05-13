@@ -24,7 +24,7 @@
     "@aviation/ui-framework": "workspace:*"
   },
   "devDependencies": {
-    "@types/node": "^25.5.0",
+    "@types/node": "^25.7.0",
     "typescript": "^6.0.2"
   }
 }
