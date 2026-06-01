@@ -21,7 +21,7 @@
     "@mui/x-charts": "^6.18.2",
     "@mui/x-data-grid": "^6.18.2",
     "@mui/x-date-pickers": "^6.18.2",
-    "axios": "^1.13.5",
+    "axios": "^1.16.0",
     "date-fns": "^2.30.0",
     "framer-motion": "^10.16.16",
     "react": "^18.2.0",
@@ -44,15 +44,15 @@
     "@typescript-eslint/eslint-plugin": "^6.14.0",
     "@typescript-eslint/parser": "^6.14.0",
     "@vitejs/plugin-react": "^4.2.1",
-    "@vitest/coverage-v8": "^4.0.16",
-    "@vitest/ui": "^4.0.16",
+    "@vitest/coverage-v8": "^4.1.8",
+    "@vitest/ui": "^4.1.8",
     "eslint": "^8.57.1",
     "eslint-plugin-react-hooks": "^4.6.0",
     "eslint-plugin-react-refresh": "^0.4.5",
     "jsdom": "^23.0.1",
     "typescript": "^5.2.2",
-    "vite": "^7.3.0",
-    "vitest": "^4.0.16"
+    "vite": "^7.3.5",
+    "vitest": "^4.1.8"
   },
   "overrides": {
     "minimatch": ">=9.0.7"
