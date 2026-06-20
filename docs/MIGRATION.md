@@ -1,7 +1,9 @@
 # Migration Summary: Aviation Monorepo Integration
 
+> **Note (current status):** This document is a historical record of the original monorepo integration, which used the **beads** pattern for work organization. The project has since **migrated off beads to `mac`** (the Multi-agent coordinator control plane). All beads data and tooling have been removed and the work now lives as tasks under project "Aviation" in mac, mirrored to git-tracked `.tickets/<id>.md` files. See [Migration to mac (beads → mac)](#migration-to-mac-beads--mac) below for details. The beads sections that follow are preserved for historical accuracy and describe how the repository was organized at the time of the original integration.
+
 ## Overview
-Successfully migrated multiple aviation applications into a unified monorepo structure, implementing the beads pattern for work organization, standardized accessibility compliance, and unified CI/CD pipelines.
+Successfully migrated multiple aviation applications into a unified monorepo structure, originally implementing the beads pattern for work organization, standardized accessibility compliance, and unified CI/CD pipelines. (Work organization has since moved from beads to `mac` — see the [migration note](#migration-to-mac-beads--mac).)
 
 ## Applications Integrated
 
@@ -64,7 +66,7 @@ Aviation/
 ├── CONTRIBUTING.md                 # Development guidelines
 ├── MIGRATION.md                    # This file
 ├── .gitignore                      # Monorepo gitignore
-├── validate_beads.py               # Beads validation tool
+├── validate_beads.py               # Beads validation tool (removed after migration to mac)
 └── README.md                       # Monorepo overview
 ```
 
@@ -256,7 +258,7 @@ make start
 
 ### For Adding New Applications
 1. Clone or create directory in `apps/`
-2. Add `beads.yaml` configuration following existing patterns
+2. Create mac tasks for the app's work under project "Aviation" (each gets a git-tracked `.tickets/<id>.md` mirror) — see AGENTS.md, "Task Tracking with mac". Do **not** add a `beads.yaml`; that pattern has been retired.
 3. Update application README with monorepo context
 4. Follow style guidelines in AGENTS.md and CONTRIBUTING.md
 5. Update root README.md with application description
@@ -271,8 +273,9 @@ make start
 ## Validation Commands
 
 ```bash
-# Validate all beads configurations
-python3 validate_beads.py
+# Inspect tracked work (now in mac, project "Aviation")
+mac task list --project Aviation
+mac task stats --project Aviation
 
 # Check color contrast compliance
 ./scripts/check-all-contrast.sh
@@ -358,6 +361,23 @@ beads:
 - Full suite runs through execution groups
 - Parallel test execution in CI/CD
 - Coverage reporting for Python applications
+
+## Migration to mac (beads → mac)
+
+The beads pattern described above was the original work-organization scheme for the monorepo. The project has since migrated all task tracking to **`mac`** (the Multi-agent coordinator control plane). Beads is no longer used.
+
+### What changed
+
+- **Tasks moved into mac.** All beads issues were imported into the mac control-plane DB (`~/.mac/mac.db`) under project **"Aviation"** — 581 tasks total (459 from the repo-root beads instance plus 122 from `apps/flight-planner`), of which 414 are completed and 167 open.
+- **Git-tracked ticket mirror.** A version-controlled, human-readable copy of every task was written to `.tickets/<id>.md` at the repo root (459 files) and `apps/flight-planner/.tickets/<id>.md` (122 files). Each ticket's frontmatter carries a `mac-task-id` cross-reference to the live task.
+- **Beads tooling removed.** The `.beads/` directories, the `beads-sync` git branch/worktree and its git hooks, `validate_beads.py`, every per-app `beads.yaml`, the CI `validate-beads` job, the Makefile `validate` target, and the runtime beads error-reporting integration were all deleted.
+
+### How work is tracked now
+
+- The **`mac` CLI** (`~/.local/bin/mac`) is used to query, claim, close, and dispatch work, e.g. `mac task list --project Aviation`, `mac task ready --project Aviation`, and `mac task stats --project Aviation`. Commands target the configured hub or a local DB via `--db ~/.mac/mac.db`.
+- The **`.tickets/` files** are the git-tracked, human-readable mirror of those tasks and are what shows up in diffs and PRs.
+
+See AGENTS.md, section "Task Tracking with mac", for day-to-day usage.
 
 ## Conclusion
 

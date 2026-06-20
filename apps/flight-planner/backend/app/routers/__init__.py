@@ -1,9 +1,8 @@
-from . import airspace, airports, beads, health, local, plan, route, settings, terrain, weather
+from . import airspace, airports, health, local, plan, route, settings, terrain, weather
 
 __all__ = [
     "airspace",
     "airports",
-    "beads",
     "health",
     "local",
     "plan",

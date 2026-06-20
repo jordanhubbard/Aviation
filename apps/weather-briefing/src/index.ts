@@ -1,13 +1,6 @@
 import http from 'http';
-import { BeadsIssueCreator, installNodeProcessErrorReporting } from '@aviation/shared-sdk';
 import { WeatherBriefingService } from './service';
 import { defaultRegionId, getRegion, regions } from './regions';
-
-const beadsIssueCreator = new BeadsIssueCreator({
-  defaultParent: process.env.BEADS_AUTOREPORT_PARENT || 'Aviation-hd5',
-  requireDebug: true,
-  debug: process.env.NODE_ENV !== 'production',
-});
 
 /**
  * Weather Briefing Application Entry Point
@@ -17,8 +10,6 @@ const beadsIssueCreator = new BeadsIssueCreator({
 async function main() {
   console.log('Starting Aviation Weather Briefing Service...');
   console.log('Using @aviation/shared-sdk for weather data\n');
-
-  installNodeProcessErrorReporting({ service: 'weather-briefing', issueCreator: beadsIssueCreator });
 
   // Initialize service with shared SDK
   const service = new WeatherBriefingService({

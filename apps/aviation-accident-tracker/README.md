@@ -27,7 +27,6 @@ The Aviation Accident Tracker ingests, deduplicates, and serves aviation acciden
 apps/aviation-accident-tracker/
 ├── PLAN.md                     # Epic/work breakdown
 ├── README.md                   # This file
-├── beads.yaml                  # Work organization
 ├── backend/                    # Node/TypeScript service
 │   ├── src/
 │   │   ├── api/                # REST API routes

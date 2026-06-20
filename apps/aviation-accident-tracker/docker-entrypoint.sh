@@ -21,33 +21,9 @@ else
             return
         fi
 
-        if command -v node >/dev/null 2>&1; then
-            node - <<'NODE'
-const procName = process.env.AVIATION_CHILD_NAME || 'child';
-const exitCode = process.env.AVIATION_CHILD_EXIT_CODE || 'unknown';
-
-try {
-  // shared-sdk is part of the monorepo workspace build.
-  const { BeadsIssueCreator } = require('@aviation/shared-sdk');
-  const creator = new BeadsIssueCreator({
-    defaultParent: process.env.BEADS_AUTOREPORT_PARENT || 'Aviation-hd5',
-    requireDebug: true,
-    debug: String(process.env.NODE_ENV || '').toLowerCase() !== 'production',
-  });
-
-  creator.createAutoFiledIssue({
-    title: `[supervisor] accident-tracker ${procName} exited ${exitCode}`.slice(0, 180),
-    description: `Supervisor detected a non-zero child exit.\n\nProcess: ${procName}\nExit code: ${exitCode}\n`,
-    priority: 1,
-    autoFiledComment: `non-zero child exit (${procName}=${exitCode})`,
-  });
-} catch {
-  // ignore
-}
-NODE
-        fi
+        echo "⚠️  ${PROC_NAME} exited with code ${EXIT_CODE}" >&2
     }
-    
+
     # Start backend API (Express)
     BACKEND_PORT=${PORT:-${BACKEND_PORT:-3002}}
     echo "Starting Express API on port ${BACKEND_PORT}..."

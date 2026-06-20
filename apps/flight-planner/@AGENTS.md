@@ -1,15 +1,16 @@
 # Agent Instructions
 
-This project uses **bd** (beads) for issue tracking. Run `bd onboard` to get started.
+This project tracks issues in **mac** under the project **Aviation**. Tasks are
+mirrored to git-tracked files in the repo's `.tickets/` directory.
 
 ## Quick Reference
 
 ```bash
-bd ready              # Find available work
-bd show <id>          # View issue details
-bd update <id> --status in_progress  # Claim work
-bd close <id>         # Complete work
-bd sync               # Sync with git
+mac task ready --project Aviation   # Find available work
+mac task list --project Aviation    # List all tasks
+mac task claim <id> --project Aviation   # Claim work
+mac task close <id> --project Aviation   # Complete work
+mac task stats --project Aviation   # Show task statistics
 ```
 
 ## Landing the Plane (Session Completion)
@@ -24,7 +25,6 @@ bd sync               # Sync with git
 4. **PUSH TO REMOTE** - This is MANDATORY:
    ```bash
    git pull --rebase
-   bd sync
    git push
    git status  # MUST show "up to date with origin"
    ```

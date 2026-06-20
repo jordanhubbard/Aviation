@@ -1,22 +1,13 @@
 import http from 'http';
-import { BeadsIssueCreator, installNodeProcessErrorReporting } from '@aviation/shared-sdk';
 import { FlightTrackerService } from './service';
 import { FlightWebSocketServer } from './websocket-server';
 import { DataPublisher } from './data-publisher';
-
-const beadsIssueCreator = new BeadsIssueCreator({
-  defaultParent: process.env.BEADS_AUTOREPORT_PARENT || 'Aviation-hd5',
-  requireDebug: true,
-  debug: process.env.NODE_ENV !== 'production',
-});
 
 /**
  * Flight Tracker Application Entry Point
  */
 async function main() {
   console.log('Starting Flight Tracker Application...');
-
-  installNodeProcessErrorReporting({ service: 'flight-tracker', issueCreator: beadsIssueCreator });
 
   const service = new FlightTrackerService({
     name: 'flight-tracker',

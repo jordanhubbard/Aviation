@@ -379,8 +379,8 @@ const apiKey = secrets.getRequired('OPENWEATHERMAP_API_KEY');
 # 1. Read the spec
 cat specs/AIRPORTS_EXTRACTION_SPEC.md
 
-# 2. Start the bead
-bd start Aviation-o2d
+# 2. Claim the task
+mac task claim Aviation-o2d --project Aviation
 
 # 3. Create package structure
 cd packages/shared-sdk
@@ -392,8 +392,8 @@ mkdir -p src/aviation/airports
 # 5. Run tests
 npm test
 
-# 6. Update bead
-bd done Aviation-o2d
+# 6. Close the task
+mac task close Aviation-o2d --project Aviation
 ```
 
 ### Using in Accident-Tracker
@@ -412,7 +412,7 @@ const nearby = await searchAirports('San Francisco', 10);
 
 ## Timeline Summary
 
-| Week | Phase | Beads | Deliverables |
+| Week | Phase | Tasks | Deliverables |
 |------|-------|-------|--------------|
 | 1 | Airports + Weather | o2d, dx3, a5f | Shared SDK with airports & weather |
 | 2 | Navigation + Map | ywm, r2l | Complete shared SDK + UI framework |

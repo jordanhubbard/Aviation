@@ -231,12 +231,7 @@ test-docker-clojure:
 # UTILITY TARGETS
 #
 
-.PHONY: validate lint format audit audit-node audit-python
-
-validate:
-	@echo "🔍 Validating beads configuration..."
-	python3 validate_beads.py
-	@echo "✅ Beads configuration valid"
+.PHONY: lint format audit audit-node audit-python
 
 lint:
 	@echo "🔍 Running linters..."

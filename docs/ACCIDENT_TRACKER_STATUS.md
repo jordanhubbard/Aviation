@@ -11,7 +11,7 @@
 - ✅ Directory exists: `apps/aviation-accident-tracker/`
 - ✅ Backend structure complete (src/, GraphQL, API, database, ingest)
 - ✅ Frontend structure complete (React + TypeScript + Vite)
-- ✅ All beads closed (10 accident-tracker related beads)
+- ✅ All 10 accident-tracker tasks completed (now tracked in mac; see table below)
 
 ### 2. Documentation
 - ✅ README.md (comprehensive)
@@ -130,9 +130,11 @@ async listEvents(params: ListEventsParams): Promise<{ events: EventRecord[], tot
 
 ---
 
-## 📋 Closed Beads (Work Completed)
+## 📋 Completed Tasks (Work Completed)
 
-| Bead ID | Title | Status |
+These items, originally tracked as beads, were migrated to mac (project "Aviation"); IDs are preserved.
+
+| Task ID | Title | Status |
 |---------|-------|--------|
 | Aviation-a5f | Migrate accident-tracker to use shared aviation SDK | ✅ Closed |
 | Aviation-0bk | Aviation Accident Tracker: Frontend | ✅ Closed |
@@ -149,7 +151,7 @@ async listEvents(params: ListEventsParams): Promise<{ events: EventRecord[], tot
 
 ## 🎯 Recommended Next Steps
 
-1. **Create new bead:** "Fix accident-tracker build errors" (P1)
+1. **Create new mac task:** "Fix accident-tracker build errors" (P1)
 2. **Update EventRepository** to match GraphQL resolver expectations
 3. **Fix all TypeScript compilation errors**
 4. **Add accident-tracker to root README**
@@ -195,4 +197,4 @@ These session summary files can be safely deleted:
 
 ---
 
-**Summary:** The accident-tracker has extensive work completed but needs build error fixes before it can be considered fully integrated. All planning work has been converted to beads and the temporary session files can be removed.
+**Summary:** The accident-tracker has extensive work completed but needs build error fixes before it can be considered fully integrated. All planning work has been captured as tracked tasks (originally beads, since migrated to mac) and the temporary session files can be removed.

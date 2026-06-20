@@ -66,17 +66,6 @@ COPY packages/shared-sdk/python /packages/shared-sdk/python
 COPY packages/shared-sdk/data /packages/shared-sdk/data
 COPY packages/keystore/python /packages/keystore/python
 
-# Optional: include Beads issue tracker and CLI for local error auto-reporting.
-ARG INSTALL_BD=false
-RUN if [ "$INSTALL_BD" = "true" ]; then \
-      apt-get update && apt-get install -y --no-install-recommends curl bash ca-certificates && \
-      rm -rf /var/lib/apt/lists/* && \
-      curl -sSL https://raw.githubusercontent.com/steveyegge/beads/main/scripts/install.sh | bash ; \
-    fi
-
-WORKDIR /app
-COPY apps/flight-planner/.beads/ ./.beads/
-
 WORKDIR /app/backend
 COPY apps/flight-planner/backend/ ./
 COPY --from=frontend-build /app/frontend/dist/ /app/backend/static/

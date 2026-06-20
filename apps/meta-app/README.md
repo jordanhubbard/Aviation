@@ -68,7 +68,6 @@ apps/meta-app/
 ├── package.json          # Dependencies
 ├── vite.config.ts        # Vite configuration
 ├── tsconfig.json         # TypeScript config
-├── beads.yaml            # Work organization
 ├── Makefile              # Build commands
 └── README.md             # This file
 ```

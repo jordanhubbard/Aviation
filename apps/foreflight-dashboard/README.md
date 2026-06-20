@@ -14,7 +14,7 @@ A modern, stateless web application for analyzing ForeFlight logbook data. This 
 
 🐳 **Container-First Architecture**: This application is designed exclusively for containerized deployment. All operations run inside Docker containers for consistency, security, and easy deployment to any container platform.
 
-🔷 **Beads Organization**: This application uses the beads pattern for work organization, enabling parallel development and testing. See [beads.yaml](beads.yaml) for the complete bead structure.
+🔷 **Work Tracking**: Work for this application is tracked in **mac** under the project **Aviation**, with a git-tracked mirror in the repo's `.tickets/` directory. Use `mac task ready --project Aviation` to find available work.
 
 ## Features
 

@@ -1,15 +1,16 @@
 # Agent Instructions
 
-This project uses **bd** (beads) for issue tracking. Run `bd onboard` to get started.
+This project tracks issues in **mac** under the project **Aviation**. Tasks are
+mirrored to git-tracked files in the repo's `.tickets/` directory.
 
 ## Quick Reference
 
 ```bash
-bd ready              # Find available work
-bd show <id>          # View issue details
-bd update <id> --status in_progress  # Claim work
-bd close <id>         # Complete work
-bd sync               # Sync with git
+mac task ready --project Aviation   # Find available work
+mac task list --project Aviation    # List all tasks
+mac task claim <id> --project Aviation   # Claim work
+mac task close <id> --project Aviation   # Complete work
+mac task stats --project Aviation   # Show task statistics
 ```
 
 ## Landing the Plane (Session Completion)
@@ -24,7 +25,6 @@ bd sync               # Sync with git
 4. **PUSH TO REMOTE** - This is MANDATORY:
    ```bash
    git pull --rebase
-   bd sync
    git push
    git status  # MUST show "up to date with origin"
    ```
@@ -40,89 +40,64 @@ bd sync               # Sync with git
 
 
 
-<!-- BEGIN BEADS INTEGRATION -->
-## Issue Tracking with bd (beads)
+<!-- BEGIN MAC INTEGRATION -->
+## Issue Tracking with mac
 
-**IMPORTANT**: This project uses **bd (beads)** for ALL issue tracking. Do NOT use markdown TODOs, task lists, or other tracking methods.
+**IMPORTANT**: This project tracks ALL work in **mac** under the project
+**Aviation**. Do NOT use markdown TODOs, task lists, or other tracking methods.
+Tasks are mirrored to git-tracked files in the repo's `.tickets/` directory
+(each ticket's frontmatter carries its `mac-task-id`).
 
-### Why bd?
+### Why mac?
 
-- Dependency-aware: Track blockers and relationships between issues
-- Git-friendly: Auto-syncs to JSONL for version control
-- Agent-optimized: JSON output, ready work detection, discovered-from links
-- Prevents duplicate tracking systems and confusion
+- Dependency-aware: tasks become "ready" once their blockers are complete
+- Git-friendly: a `.tickets/<id>.md` mirror is version-controlled with the code
+- Single source of truth: prevents duplicate tracking systems and confusion
 
 ### Quick Start
 
 **Check for ready work:**
 
 ```bash
-bd ready --json
+mac task ready --project Aviation
 ```
 
-**Create new issues:**
+**Create new tasks:**
 
 ```bash
-bd create "Issue title" --description="Detailed context" -t bug|feature|task -p 0-4 --json
-bd create "Issue title" --description="What this issue is about" -p 1 --deps discovered-from:bd-123 --json
+mac task create "Task title" --project Aviation
 ```
 
-**Claim and update:**
+**Claim and complete:**
 
 ```bash
-bd update bd-42 --status in_progress --json
-bd update bd-42 --priority 1 --json
+mac task claim <id> --project Aviation
+mac task close <id> --project Aviation
 ```
 
-**Complete work:**
+**See task statistics:**
 
 ```bash
-bd close bd-42 --reason "Completed" --json
+mac task stats --project Aviation
 ```
-
-### Issue Types
-
-- `bug` - Something broken
-- `feature` - New functionality
-- `task` - Work item (tests, docs, refactoring)
-- `epic` - Large feature with subtasks
-- `chore` - Maintenance (dependencies, tooling)
-
-### Priorities
-
-- `0` - Critical (security, data loss, broken builds)
-- `1` - High (major features, important bugs)
-- `2` - Medium (default, nice-to-have)
-- `3` - Low (polish, optimization)
-- `4` - Backlog (future ideas)
 
 ### Workflow for AI Agents
 
-1. **Check ready work**: `bd ready` shows unblocked issues
-2. **Claim your task**: `bd update <id> --status in_progress`
+1. **Check ready work**: `mac task ready --project Aviation` shows unblocked tasks
+2. **Claim your task**: `mac task claim <id> --project Aviation`
 3. **Work on it**: Implement, test, document
-4. **Discover new work?** Create linked issue:
-   - `bd create "Found bug" --description="Details about what was found" -p 1 --deps discovered-from:<parent-id>`
-5. **Complete**: `bd close <id> --reason "Done"`
-
-### Auto-Sync
-
-bd automatically syncs with git:
-
-- Exports to `.beads/issues.jsonl` after changes (5s debounce)
-- Imports from JSONL when newer (e.g., after `git pull`)
-- No manual export/import needed!
+4. **Discover new work?** Create a task: `mac task create "Found bug" --project Aviation`
+5. **Complete**: `mac task close <id> --project Aviation`
 
 ### Important Rules
 
-- ✅ Use bd for ALL task tracking
-- ✅ Always use `--json` flag for programmatic use
-- ✅ Link discovered work with `discovered-from` dependencies
-- ✅ Check `bd ready` before asking "what should I work on?"
+- ✅ Use mac for ALL task tracking
+- ✅ Commit the changed `.tickets/` files alongside your code
+- ✅ Check `mac task ready` before asking "what should I work on?"
 - ❌ Do NOT create markdown TODO lists
 - ❌ Do NOT use external issue trackers
 - ❌ Do NOT duplicate tracking systems
 
 For more details, see README.md and docs/QUICKSTART.md.
 
-<!-- END BEADS INTEGRATION -->
+<!-- END MAC INTEGRATION -->

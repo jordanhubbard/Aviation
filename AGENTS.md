@@ -14,7 +14,7 @@ This document provides comprehensive guidelines for LLM agents working with this
 6. [Monorepo Best Practices](#monorepo-best-practices)
 7. [Aviation SDK & Shared Tools](#aviation-sdk--shared-tools)
 8. [Application-Specific Best Practices](#application-specific-best-practices)
-9. [Work Organization with Beads](#work-organization-with-beads)
+9. [Task Tracking with mac](#task-tracking-with-mac)
 10. [Security & Secrets Management](#security--secrets-management)
 11. [Development Workflows](#development-workflows)
 12. [Testing Strategy](#testing-strategy)
@@ -57,7 +57,7 @@ Aviation/
 4. **Multi-Modal UI**: Support for web, mobile, and multi-tab interfaces
 5. **Polyglot**: Multiple languages optimized for each use case
 6. **Organized**: All user facing documentation must be in docs/
-7, **AI optimized**: All AI generated planning files must be in plans and all work items expressed as beads, not .md files.
+7, **AI optimized**: All AI generated planning files must be in plans and all work items tracked as mac tasks (project "Aviation"), not ad-hoc .md files. The git-tracked `.tickets/<id>.md` mirror is the human-readable view of those tasks.
 ---
 
 ## Adding New Aviation Applications
@@ -94,7 +94,6 @@ my-aviation-app/
 │   ├── package.json
 │   └── vite.config.ts
 ├── tests/
-├── beads.yaml                  # Work organization
 ├── Makefile                    # Build commands
 └── README.md
 ```
@@ -106,7 +105,6 @@ my-aviation-app/
 │   ├── index.ts               # Entry point
 │   ├── service.ts             # Background service
 │   └── api/                   # API routes
-├── beads.yaml
 ├── Makefile
 ├── package.json
 ├── tsconfig.json
@@ -124,7 +122,6 @@ my-aviation-app/
 ├── frontend/
 │   └── resources/
 │       └── public/
-├── beads.yaml
 ├── Makefile
 └── README.md
 ```
@@ -156,48 +153,21 @@ my-aviation-app/
 }
 ```
 
-#### 4. Create beads.yaml
+#### 4. Track the Work in mac
 
-Define the work organization (see [Work Organization with Beads](#work-organization-with-beads)):
+The monorepo tracks all work as tasks in the `mac` control plane under project **"Aviation"** (see [Task Tracking with mac](#task-tracking-with-mac)). You do not create a per-app config file; instead, create tasks for the new app's work and let the git-tracked `.tickets/<id>.md` mirror keep them visible in the repo.
 
-```yaml
-version: "1.0"
+```bash
+# Create a task for the new app's core work
+mac task create --project Aviation \
+  --title "my-aviation-app: core service" \
+  --description "Implement the main service logic and API layer"
 
-beads:
-  # Core service
-  - name: core-service
-    description: Main service logic
-    path: src/service.ts
-    dependencies: []
-    parallel: true
-    test_path: tests/service.test.ts
-    
-  # API layer
-  - name: api
-    description: REST API endpoints
-    path: src/api/
-    dependencies: [core-service]
-    parallel: false
-    test_path: tests/api.test.ts
-    
-  # Frontend (if applicable)
-  - name: frontend
-    description: User interface
-    path: frontend/src/
-    dependencies: []
-    parallel: true
-    
-execution_groups:
-  - name: initial
-    beads: [core-service, frontend]
-  - name: integration
-    beads: [api]
-    depends_on: [initial]
-
-ci:
-  test_strategy: parallel
-  max_parallel: 3
+# List what's already open for the project
+mac task list --project Aviation --state open
 ```
+
+Break the app down into small, focused tasks (core service, API, frontend, etc.) the same way you would any other unit of work. Each task gets a `.tickets/<id>.md` mirror with a `mac-task-id` cross-reference back to the live task.
 
 #### 5. Create Makefile
 
@@ -388,7 +358,6 @@ run-my-aviation-app:
 #### 12. Register with CI/CD
 
 The app will be automatically picked up by CI/CD if:
-- It has a `beads.yaml` file (validated by `python validate_beads.py`)
 - It has test scripts defined in `package.json` or `Makefile`
 - Tests are in standard locations (`tests/`, `test/`)
 
@@ -598,20 +567,7 @@ make ci-check
 
 Or manually run each step:
 
-#### 1. Validate Beads Configuration
-
-```bash
-python validate_beads.py
-```
-
-**Expected Output:**
-```
-✅ All applications have valid beads configuration!
-```
-
-**If it fails**: Fix your `beads.yaml` files to resolve validation errors.
-
-#### 2. Run All Tests
+#### 1. Run All Tests
 
 ```bash
 # Run all tests across all applications
@@ -627,7 +583,7 @@ make test-clojure    # Clojure tests
 
 **If tests fail**: Fix the failing tests before committing.
 
-#### 3. Run Linters and Formatters
+#### 2. Run Linters and Formatters
 
 ```bash
 # Check all code style
@@ -646,7 +602,7 @@ black apps/*/app apps/*/backend
 
 **Expected**: All linters pass with 0 errors, 0 warnings.
 
-#### 4. Check Color Contrast (Accessibility)
+#### 3. Check Color Contrast (Accessibility)
 
 ```bash
 ./scripts/check-all-contrast.sh
@@ -654,7 +610,7 @@ black apps/*/app apps/*/backend
 
 **Expected**: All color combinations meet WCAG AA standards.
 
-#### 5. Type Check (TypeScript apps)
+#### 4. Type Check (TypeScript apps)
 
 ```bash
 # Check TypeScript types
@@ -664,7 +620,7 @@ npm run type-check
 
 **Expected**: 0 type errors.
 
-#### 6. Build Verification
+#### 5. Build Verification
 
 ```bash
 # Verify all apps build successfully
@@ -681,16 +637,15 @@ The CI/CD pipeline (`.github/workflows/ci.yml`) runs automatically on:
 
 **Pipeline Stages:**
 
-1. **Validate Beads** - Validates all `beads.yaml` files
-2. **Accessibility** - Checks WCAG AA color contrast
-3. **Test Applications** - Runs tests for each app:
+1. **Accessibility** - Checks WCAG AA color contrast
+2. **Test Applications** - Runs tests for each app:
    - `test-missions-app` - Clojure backend tests
    - `test-flight-planner` - Python backend + TypeScript frontend
    - `test-flightschool` - Python Flask tests
    - `test-foreflight` - Python backend + React frontend
-4. **Lint & Format** - Code style checks (Black, Prettier, ESLint)
-5. **Security Scan** - Trivy vulnerability scanning
-6. **Build Check** - Verifies all apps can build
+3. **Lint & Format** - Code style checks (Black, Prettier, ESLint)
+4. **Security Scan** - Trivy vulnerability scanning
+5. **Build Check** - Verifies all apps can build
 
 ### "Always Green" Rules
 
@@ -702,7 +657,6 @@ The CI/CD pipeline (`.github/workflows/ci.yml`) runs automatically on:
 4. ✅ **Keep tests passing** - Don't commit code that breaks existing tests
 5. ✅ **Maintain 80%+ coverage** - Add tests for new code
 6. ✅ **No linter errors** - Clean code only
-7. ✅ **Validate beads** - All `beads.yaml` files must be valid
 
 ### Local CI/CD Simulation
 
@@ -715,21 +669,18 @@ set -e
 
 echo "🔍 Running CI/CD checks locally..."
 
-echo "1. Validating beads configuration..."
-python validate_beads.py
-
-echo "2. Checking color contrast..."
+echo "1. Checking color contrast..."
 ./scripts/check-all-contrast.sh
 
-echo "3. Running tests..."
+echo "2. Running tests..."
 make test-node
 make test-python
 make test-clojure
 
-echo "4. Linting..."
+echo "3. Linting..."
 npm run lint
 
-echo "5. Building..."
+echo "4. Building..."
 make build
 
 echo "✅ All CI/CD checks passed!"
@@ -746,10 +697,9 @@ chmod +x scripts/ci-check-local.sh
 
 New applications are **automatically** included in CI/CD if they follow the standard structure:
 
-1. **Have a `beads.yaml` file** - Will be validated automatically
-2. **Have test scripts** - `npm test` or `pytest` or `lein test`
-3. **Follow naming conventions** - Tests in `tests/` or `test/` directory
-4. **Have a Makefile** - With standard targets (`build`, `test`, `clean`)
+1. **Have test scripts** - `npm test` or `pytest` or `lein test`
+2. **Follow naming conventions** - Tests in `tests/` or `test/` directory
+3. **Have a Makefile** - With standard targets (`build`, `test`, `clean`)
 
 To add custom CI/CD steps, edit `.github/workflows/ci.yml`:
 
@@ -789,7 +739,6 @@ Common failures:
 
 | Error | Cause | Fix |
 |-------|-------|-----|
-| "beads.yaml not found" | Missing beads configuration | Add `beads.yaml` to your app |
 | "Test failed" | Failing unit/integration tests | Fix the failing tests |
 | "Lint errors" | Code style violations | Run `npm run format` or `black` |
 | "Type error" | TypeScript type issues | Fix type errors, run `npm run type-check` |
@@ -2090,66 +2039,47 @@ export class WeatherApiClient {
 
 ---
 
-## Work Organization with Beads
+## Task Tracking with mac
 
-### What are Beads?
+All work in this monorepo is tracked as tasks in **mac** (the Multi-agent coordinator control plane). The repository previously used the "beads" pattern (per-app `beads.yaml` files validated by `validate_beads.py`); that has been fully migrated into mac. See [docs/MIGRATION.md](docs/MIGRATION.md) for the migration record.
 
-Beads are independent, composable units of work that enable:
-1. **Parallel execution** - Multiple beads can run simultaneously
-2. **Independent testing** - Each bead has its own test suite
-3. **Team collaboration** - Different teams work on different beads
-4. **Clear dependencies** - Bead relationships are explicit
+### Where tasks live
 
-### Bead Structure
+- **Source of truth:** the mac control-plane DB, under project **"Aviation"**. Every unit of work — features, bugs, app integrations — is a mac task.
+- **Git-tracked mirror:** a human-readable copy of each task is written to `.tickets/<id>.md`. Tickets at the repo root mirror monorepo-wide work; `apps/flight-planner/.tickets/<id>.md` mirrors that app's tasks. Each ticket's frontmatter carries a `mac-task-id` cross-reference back to the live task.
 
-```yaml
-version: "1.0"
+The `.tickets/` files are what you read and diff in the repo; the `mac` CLI is how you query, claim, and close the live work.
 
-beads:
-  # Define each bead
-  - name: bead-name
-    description: What this bead does
-    path: src/path/to/code.ts
-    dependencies: [other-bead]  # Optional
-    parallel: true              # Can run in parallel?
-    test_path: tests/bead_test.ts
+### Using the mac CLI
 
-# Define execution groups
-execution_groups:
-  - name: group-name
-    beads: [bead1, bead2]
-    depends_on: [other-group]
-
-# CI/CD integration
-ci:
-  test_strategy: parallel
-  max_parallel: 4
-  test_groups:
-    - name: unit-tests
-      beads: [bead1, bead2]
-```
-
-### Best Practices for Beads
-
-1. **Keep beads small and focused** - Each bead should do one thing well
-2. **Minimize dependencies** - Fewer dependencies = more parallelism
-3. **Test each bead independently** - Don't rely on other beads in tests
-4. **Document dependencies** - Make relationships explicit
-5. **Use execution groups** - Organize related beads together
-
-### Validating Beads
+The `mac` CLI lives at `~/.local/bin/mac`. Commands talk to the configured hub, or you can point at the local DB with `--db ~/.mac/mac.db`.
 
 ```bash
-# Validate all beads.yaml files
-python validate_beads.py
+# List tasks for the project (filter by state as supported)
+mac task list --project Aviation
+mac task list --project Aviation --state open
 
-# Checks for:
-# - Valid YAML syntax
-# - Path existence
-# - Dependency validity
-# - Circular dependencies
-# - Execution group consistency
+# Show tasks that are ready to be worked (dependencies satisfied)
+mac task ready --project Aviation
+
+# Project-wide task statistics (counts by state, etc.)
+mac task stats --project Aviation
+
+# Create, claim, and close work
+mac task create --project Aviation --title "..." --description "..."
+mac task claim <id>
+mac task close <id>
 ```
+
+> Subcommand flags may evolve — run `mac task --help` (or `mac task <subcommand> --help`) to confirm available options.
+
+### Best Practices
+
+1. **Keep tasks small and focused** - Each task should describe one well-scoped unit of work.
+2. **Track everything in mac** - Don't capture work in ad-hoc `.md` files; create a mac task so it gets a `.tickets/` mirror.
+3. **Use the `.tickets/` mirror for review** - The git-tracked tickets keep work visible in PRs and history.
+4. **Check what's ready before starting** - Use `mac task ready` to find unblocked work, then `mac task claim` it.
+5. **Close tasks when done** - Keep the live state accurate so `mac task stats` reflects reality.
 
 ---
 
@@ -2242,7 +2172,6 @@ git checkout -b feature/my-feature
 # Edit code, add tests, update docs
 
 # 3. Run quality checks
-python validate_beads.py
 make test
 npm run lint
 
@@ -2707,16 +2636,13 @@ make stop-all
 ### CI/CD Checks
 
 ```bash
-# Validate beads configuration
-python validate_beads.py
-
 # Check color contrast
 ./scripts/check-all-contrast.sh
 
 # Run all CI checks locally
 make ci-check  # If available
 # OR manually:
-python validate_beads.py && ./scripts/check-all-contrast.sh && make test && npm run lint
+./scripts/check-all-contrast.sh && make test && npm run lint
 ```
 
 ### Dependency Management
@@ -2795,10 +2721,10 @@ docker-compose down -v --rmi all
 
 - [ ] Create app directory under `apps/`
 - [ ] Add `package.json` (if TypeScript) or `requirements.txt` (if Python)
-- [ ] Create `beads.yaml` for work organization
 - [ ] Add `Makefile` with standard targets
 - [ ] Create `README.md` with documentation
 - [ ] Implement the application code
+- [ ] Create mac tasks for the app's work (project "Aviation"); a `.tickets/<id>.md` mirror is generated for each
 - [ ] Add tests (aim for 80%+ coverage)
 - [ ] Add secrets to keystore
 - [ ] Add to root `package.json` workspaces
@@ -2833,7 +2759,6 @@ For questions about this monorepo structure or conventions, please:
 4. **PUSH TO REMOTE** - This is MANDATORY:
    ```bash
    git pull --rebase
-   bd sync
    git push
    git status  # MUST show "up to date with origin"
    ```

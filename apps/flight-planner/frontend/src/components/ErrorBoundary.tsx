@@ -2,8 +2,6 @@ import { Component, ErrorInfo, ReactNode } from 'react'
 import { Alert, AlertTitle, Button, Box, Typography, Paper } from '@mui/material'
 import { Error as ErrorIcon, Refresh } from '@mui/icons-material'
 
-import { reportFrontendErrorToBeads } from '../utils/beadsReporting'
-
 interface Props {
   children: ReactNode
   fallback?: ReactNode
@@ -37,11 +35,6 @@ export class ErrorBoundary extends Component<Props, State> {
 
   componentDidCatch(error: Error, errorInfo: ErrorInfo) {
     console.error('ErrorBoundary caught an error:', error, errorInfo)
-
-    void reportFrontendErrorToBeads(error, {
-      kind: 'react-error-boundary',
-      componentStack: errorInfo.componentStack || undefined,
-    })
 
     this.setState({ error, errorInfo })
   }

@@ -146,9 +146,11 @@ Railway should now successfully build all 3 TypeScript apps after detecting comm
 
 ---
 
-## 📝 Bead Tracking
+## 📝 Task Tracking
 
-**Current Beads:**
+Tracked in **mac** under the project **Aviation** (mirrored in `.tickets/`).
+
+**Current tasks:**
 - `Aviation-1qg.3` - Configure Railway for monorepo deployment (in_progress)
 - `Aviation-1qg.3.1` - aviation-missions-app: Missing missions (in_progress)
 
