@@ -1,0 +1,27 @@
+schema: mac.repository_contract.v1
+project: Aviation
+canonical_remote_url: git@github.com:jordanhubbard/Aviation.git
+platforms:
+  - darwin
+  - linux
+toolchain:
+  required_commands:
+    - git
+    - python3
+    - node
+    - pnpm
+    - java
+    - lein
+bootstrap:
+  command: pnpm install
+  creates:
+    - node_modules
+test:
+  command: make test
+evidence:
+  required:
+    - repo.head_sha
+    - repo.pushed
+    - repo.dirty
+    - repo.files_changed
+    - tests
