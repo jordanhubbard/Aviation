@@ -10,7 +10,10 @@ Run: python3 -m pytest backend/tests/test_navmath.py --noconftest -p no:cachepro
 """
 
 import importlib.util
+import math
 from pathlib import Path
+
+import pytest
 
 _MOD_PATH = Path(__file__).resolve().parents[1] / "app" / "navmath.py"
 _spec = importlib.util.spec_from_file_location("navmath", _MOD_PATH)
@@ -38,10 +41,6 @@ def test_heading_difference():
 
 
 def test_crosswind_component():
-    import math
-
-    import pytest
-
     # Direct 90-deg crosswind from the right: full wind speed, positive.
     assert navmath.crosswind_component(0, 90, 10) == pytest.approx(10.0, abs=1e-6)
     # Pure headwind: no crosswind.
@@ -52,3 +51,20 @@ def test_crosswind_component():
     )
     # Wind from the left (270) is negative.
     assert navmath.crosswind_component(0, 270, 10) == pytest.approx(-10.0, abs=1e-6)
+
+
+def test_haversine_nm():
+    # Identical points -> zero distance.
+    assert navmath.haversine_nm(0.0, 0.0, 0.0, 0.0) == pytest.approx(0.0)
+    assert navmath.haversine_nm(40.0, -75.0, 40.0, -75.0) == pytest.approx(0.0)
+
+    # One degree of latitude is ~60 NM (a nautical mile is ~1 arcminute).
+    assert navmath.haversine_nm(0.0, 0.0, 1.0, 0.0) == pytest.approx(60.0, abs=0.5)
+
+    # One degree of longitude at the equator is also ~60 NM.
+    assert navmath.haversine_nm(0.0, 0.0, 0.0, 1.0) == pytest.approx(60.0, abs=0.5)
+
+    # Distance is symmetric.
+    assert navmath.haversine_nm(0.0, 0.0, 0.0, 1.0) == pytest.approx(
+        navmath.haversine_nm(0.0, 1.0, 0.0, 0.0)
+    )
