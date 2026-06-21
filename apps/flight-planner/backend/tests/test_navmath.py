@@ -24,3 +24,14 @@ def test_normalize_heading():
     assert navmath.normalize_heading(370) == 10.0
     assert navmath.normalize_heading(-10) == 350.0
     assert navmath.normalize_heading(720.0) == 0.0
+
+
+def test_heading_difference():
+    assert navmath.heading_difference(10, 40) == 30
+    assert navmath.heading_difference(350, 10) == 20
+    assert navmath.heading_difference(10, 350) == -20
+    assert navmath.heading_difference(0, 180) == 180
+    # Opposite headings clamp to the inclusive upper bound (+180, never -180).
+    assert navmath.heading_difference(180, 0) == 180
+    # No-op turn.
+    assert navmath.heading_difference(90, 90) == 0
