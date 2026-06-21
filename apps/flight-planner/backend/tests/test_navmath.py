@@ -24,3 +24,20 @@ def test_normalize_heading():
     assert navmath.normalize_heading(370) == 10.0
     assert navmath.normalize_heading(-10) == 350.0
     assert navmath.normalize_heading(720.0) == 0.0
+
+
+def test_crosswind_component():
+    import math
+
+    import pytest
+
+    # Direct 90-deg crosswind from the right: full wind speed, positive.
+    assert navmath.crosswind_component(0, 90, 10) == pytest.approx(10.0, abs=1e-6)
+    # Pure headwind: no crosswind.
+    assert navmath.crosswind_component(0, 0, 10) == pytest.approx(0.0, abs=1e-6)
+    # 45-deg wind: wind_speed * sin(45 deg) ~= 7.071.
+    assert navmath.crosswind_component(0, 45, 10) == pytest.approx(
+        10 * math.sin(math.radians(45)), abs=1e-6
+    )
+    # Wind from the left (270) is negative.
+    assert navmath.crosswind_component(0, 270, 10) == pytest.approx(-10.0, abs=1e-6)
