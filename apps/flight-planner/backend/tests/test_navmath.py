@@ -53,6 +53,19 @@ def test_crosswind_component():
     assert navmath.crosswind_component(0, 270, 10) == pytest.approx(-10.0, abs=1e-6)
 
 
+def test_headwind_component():
+    # Wind straight down the runway (from 000): full headwind, positive.
+    assert navmath.headwind_component(0, 0, 10) == pytest.approx(10.0, abs=1e-6)
+    # Wind from directly behind (180): full tailwind, negative.
+    assert navmath.headwind_component(0, 180, 10) == pytest.approx(-10.0, abs=1e-6)
+    # Pure crosswind from the right (090): no headwind component.
+    assert navmath.headwind_component(0, 90, 10) == pytest.approx(0.0, abs=1e-6)
+    # 45-deg wind: wind_speed * cos(45 deg) ~= 7.071.
+    assert navmath.headwind_component(0, 45, 10) == pytest.approx(
+        10 * math.cos(math.radians(45)), abs=1e-6
+    )
+
+
 def test_haversine_nm():
     # Identical points -> zero distance.
     assert navmath.haversine_nm(0.0, 0.0, 0.0, 0.0) == pytest.approx(0.0)

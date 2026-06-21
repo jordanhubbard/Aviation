@@ -3,6 +3,10 @@
 Stdlib-only (no app dependencies), so each helper is unit-testable in isolation.
 New helpers register here; this module plus tests/test_navmath.py are the
 integration points that independently authored helpers converge on.
+
+This module is the canonical pure-math layer for wind components
+(crosswind/headwind): callers should use these helpers rather than re-deriving
+the trigonometry.
 """
 
 from __future__ import annotations
@@ -44,6 +48,22 @@ def crosswind_component(runway_heading: float, wind_dir: float, wind_speed: floa
     """
     angle = float(wind_dir) - float(runway_heading)
     return float(wind_speed) * math.sin(math.radians(angle))
+
+
+def headwind_component(runway_heading: float, wind_dir: float, wind_speed: float) -> float:
+    """Signed headwind component of the wind along a runway heading.
+
+    The headwind is the part of the wind blowing parallel to the runway,
+    computed as ``wind_speed * cos(wind_dir - runway_heading)`` (angles in
+    degrees, converted to radians for ``math.cos``), using the same angle
+    convention as :func:`crosswind_component`.
+
+    Sign convention: a positive return value means a headwind (wind from
+    ahead, opposing the takeoff direction); a negative value means a tailwind
+    (wind from behind). A pure crosswind yields 0.
+    """
+    angle = float(wind_dir) - float(runway_heading)
+    return float(wind_speed) * math.cos(math.radians(angle))
 
 
 def haversine_nm(lat1: float, lon1: float, lat2: float, lon2: float) -> float:
