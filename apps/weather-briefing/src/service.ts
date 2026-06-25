@@ -5,6 +5,11 @@ import {
   recommendationForCategory,
   warningsForConditions,
   type FlightCategory,
+  NotamClient,
+  sortNotamsBySeverity,
+  formatNotamText,
+  type NOTAM,
+  type NotamClientOptions,
 } from '@aviation/shared-sdk';
 
 interface AirportConditions {
@@ -20,14 +25,18 @@ export interface WeatherBriefingServiceConfig {
   name?: string;
   enabled?: boolean;
   autoStart?: boolean;
+  /** Optional override for the NOTAM client (useful in tests) */
+  notamClientOptions?: NotamClientOptions;
 }
 
 export class WeatherBriefingService {
   private airportCache: Map<string, AirportConditions> = new Map();
   private _config: WeatherBriefingServiceConfig;
+  private notamClient: NotamClient;
 
   constructor(config: WeatherBriefingServiceConfig = {}) {
     this._config = config;
+    this.notamClient = new NotamClient(config.notamClientOptions ?? {});
   }
 
   public async start(): Promise<void> {
@@ -44,14 +53,40 @@ export class WeatherBriefingService {
     if (!conditions) {
       return `No weather data available for ${station}.`;
     }
+
+    // Fetch NOTAMs — failures are non-fatal (network/key absent in dev)
+    let notamLines: string[] = [];
+    try {
+      const notams = await this.notamClient.fetchByIcao(station);
+      notamLines = this.formatNotamSection(notams);
+    } catch {
+      // NOTAM fetch failed; briefing still usable without NOTAMs
+      notamLines = ['NOTAMs: unavailable (check FAA_NOTAM_API_KEY configuration)'];
+    }
+
     const lines = [
       `WEATHER BRIEFING: ${station}`,
       `Category: ${conditions.category}`,
       conditions.metar ? `METAR: ${conditions.metar}` : 'No METAR',
       `Recommendation: ${conditions.recommendation}`,
       ...(conditions.warnings.length ? [`Warnings: ${conditions.warnings.join('; ')}`] : []),
+      '',
+      ...notamLines,
     ];
     return lines.join('\n');
+  }
+
+  /** Format an array of NOTAMs as human-readable briefing lines. */
+  private formatNotamSection(notams: NOTAM[]): string[] {
+    if (notams.length === 0) {
+      return ['NOTAMs: None active'];
+    }
+    const sorted = sortNotamsBySeverity(notams);
+    const header = `NOTAMs (${sorted.length} active):`;
+    const items = sorted.map(
+      (n) => `  [${n.severity.toUpperCase()}] ${formatNotamText(n.text)} (${n.category ?? 'General'})`
+    );
+    return [header, ...items];
   }
 
   public async getStationSummaries(stationCodes: string[]): Promise<Array<{ code: string; category: string; metar: string | null }>> {
@@ -145,6 +180,7 @@ export class WeatherBriefingService {
       case 'LIFR':
         return '🟣';
       case 'UNKNOWN':
+      default:
         return '⚪';
     }
   }
