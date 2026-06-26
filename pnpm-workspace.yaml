@@ -6,3 +6,10 @@ packages:
   - "apps/g1000-simulator/backend"
   - "apps/g1000-simulator/frontend"
   - "apps/aviation-chat"
+allowBuilds:
+  '@apollo/protobufjs': true
+  '@scarf/scarf': false
+  '@vscode/sqlite3': true
+  esbuild: true
+  msw: true
+  unrs-resolver: true

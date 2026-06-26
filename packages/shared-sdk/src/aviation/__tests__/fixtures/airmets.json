@@ -1,0 +1,80 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "airSigmetId": "AIRM01",
+        "seriesId": "SFO-1",
+        "hazard": "SIERRA",
+        "rawAirSigmet": "AIRMET SIERRA 1 FOR IFR AND MOUNTAIN OBSCURATION",
+        "validTimeFrom": "2099-01-26T04:00:00Z",
+        "validTimeTo": "2099-01-26T10:00:00Z",
+        "altitudeLow1": 0,
+        "altitudeHi1": 12000
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [-124.0, 38.0],
+            [-122.0, 38.0],
+            [-122.0, 40.0],
+            [-124.0, 40.0],
+            [-124.0, 38.0]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "airSigmetId": "AIRM02",
+        "seriesId": "DEN-1",
+        "hazard": "TANGO",
+        "rawAirSigmet": "AIRMET TANGO 2 FOR TURBULENCE OVER COLORADO ROCKIES",
+        "validTimeFrom": "2099-01-26T04:00:00Z",
+        "validTimeTo": "2099-01-26T10:00:00Z",
+        "altitudeLow1": 8000,
+        "altitudeHi1": 25000
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [-106.0, 38.0],
+            [-104.0, 38.0],
+            [-104.0, 40.0],
+            [-106.0, 40.0],
+            [-106.0, 38.0]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "airSigmetId": "AIRM03",
+        "seriesId": "MSP-1",
+        "hazard": "ZULU",
+        "rawAirSigmet": "AIRMET ZULU 3 FOR ICING OVER GREAT LAKES REGION",
+        "validTimeFrom": "2099-01-26T04:00:00Z",
+        "validTimeTo": "2099-01-26T10:00:00Z",
+        "altitudeLow1": 5000,
+        "altitudeHi1": 18000
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [-93.0, 44.0],
+            [-88.0, 44.0],
+            [-88.0, 47.0],
+            [-93.0, 47.0],
+            [-93.0, 44.0]
+          ]
+        ]
+      }
+    }
+  ]
+}

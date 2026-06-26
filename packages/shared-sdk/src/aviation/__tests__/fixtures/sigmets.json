@@ -1,0 +1,80 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "airSigmetId": "SIGI01",
+        "seriesId": "A",
+        "hazard": "CONVECTIVE",
+        "rawAirSigmet": "SIGMET ALFA 1 VALID 260300/260700Z KZOA - OAKLAND OCEANIC FIR CONVECTIVE SIGMET ACTIVE",
+        "validTimeFrom": "2099-01-26T03:00:00Z",
+        "validTimeTo": "2099-01-26T07:00:00Z",
+        "altitudeLow1": 10000,
+        "altitudeHi1": 45000
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [-122.5, 37.5],
+            [-121.5, 37.5],
+            [-121.5, 38.5],
+            [-122.5, 38.5],
+            [-122.5, 37.5]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "airSigmetId": "SIGI02",
+        "seriesId": "B",
+        "hazard": "NON-CONVECTIVE",
+        "rawAirSigmet": "SIGMET BRAVO 2 VALID 260300/260900Z TURBULENCE OVR SIERRA NEVADA",
+        "validTimeFrom": "2099-01-26T03:00:00Z",
+        "validTimeTo": "2099-01-26T09:00:00Z",
+        "altitudeLow1": 18000,
+        "altitudeHi1": 35000
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [-119.0, 36.5],
+            [-118.0, 36.5],
+            [-118.0, 38.0],
+            [-119.0, 38.0],
+            [-119.0, 36.5]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "airSigmetId": "SIGEXPIRED",
+        "seriesId": "C",
+        "hazard": "CONVECTIVE",
+        "rawAirSigmet": "SIGMET CHARLIE 3 EXPIRED",
+        "validTimeFrom": "2000-01-01T00:00:00Z",
+        "validTimeTo": "2000-01-01T06:00:00Z",
+        "altitudeLow1": 5000,
+        "altitudeHi1": 30000
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [-120.0, 35.0],
+            [-119.0, 35.0],
+            [-119.0, 36.0],
+            [-120.0, 36.0],
+            [-120.0, 35.0]
+          ]
+        ]
+      }
+    }
+  ]
+}
