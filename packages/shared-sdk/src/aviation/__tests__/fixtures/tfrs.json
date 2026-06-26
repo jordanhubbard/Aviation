@@ -1,0 +1,109 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "notamNumber": "0/7812",
+        "coreNOTAMNumber": "0/7812",
+        "subType": "VIP",
+        "facilityDesignation": "KSAN VIP MOVEMENT TFR",
+        "notamText": "!SAN 10/001 SAN AIRSPACE TFR VIP ...",
+        "startDate": "2099-01-26T14:00:00Z",
+        "endDate": "2099-01-26T18:00:00Z",
+        "minAlt": 0,
+        "maxAlt": 18000
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [-117.3, 32.6],
+            [-116.9, 32.6],
+            [-116.9, 33.0],
+            [-117.3, 33.0],
+            [-117.3, 32.6]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "notamNumber": "1/2345",
+        "coreNOTAMNumber": "1/2345",
+        "subType": "SECURITY",
+        "facilityDesignation": "DCA SFRA",
+        "notamText": "!FDC SECURITY AIRSPACE SFRA WASHINGTON DC AREA",
+        "startDate": "2099-01-01T00:00:00Z",
+        "endDate": "2099-12-31T23:59:00Z",
+        "minAlt": 0,
+        "maxAlt": 18000
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [-77.5, 38.5],
+            [-76.5, 38.5],
+            [-76.5, 39.5],
+            [-77.5, 39.5],
+            [-77.5, 38.5]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "notamNumber": "2/9999",
+        "coreNOTAMNumber": "2/9999",
+        "subType": "SPECIAL_EVENT",
+        "facilityDesignation": "FIRE TFR CALIFORNIA",
+        "notamText": "!ZLA TEMPORARY FLIGHT RESTRICTION WILDFIRE SUPPRESSION",
+        "startDate": "2099-01-26T06:00:00Z",
+        "endDate": "2099-01-26T20:00:00Z",
+        "minAlt": 0,
+        "maxAlt": 3000
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [-118.5, 34.0],
+            [-118.0, 34.0],
+            [-118.0, 34.5],
+            [-118.5, 34.5],
+            [-118.5, 34.0]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "notamNumber": "EXPIRED-001",
+        "coreNOTAMNumber": "EXPIRED-001",
+        "subType": "VIP",
+        "facilityDesignation": "EXPIRED TFR",
+        "notamText": "EXPIRED VIP TFR",
+        "startDate": "2000-01-01T00:00:00Z",
+        "endDate": "2000-01-01T06:00:00Z",
+        "minAlt": 0,
+        "maxAlt": 18000
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [-100.0, 40.0],
+            [-99.0, 40.0],
+            [-99.0, 41.0],
+            [-100.0, 41.0],
+            [-100.0, 40.0]
+          ]
+        ]
+      }
+    }
+  ]
+}
