@@ -1,7 +1,7 @@
 import fs from 'fs';
 import os from 'os';
 import path from 'path';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('child_process', () => ({
   spawnSync: vi.fn(),
@@ -15,12 +15,25 @@ const spawnMock = spawnSync as unknown as ReturnType<typeof vi.fn>;
 describe('BeadsIssueCreator', () => {
   let repoRoot: string;
 
+  let savedCI: string | undefined;
+
   beforeEach(() => {
     repoRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'beads-sdk-'));
     fs.mkdirSync(path.join(repoRoot, '.beads'));
     spawnMock.mockReset();
 
     process.env.NODE_ENV = 'development';
+    // Unset CI so enabled() does not short-circuit in CI environments.
+    savedCI = process.env.CI;
+    delete process.env.CI;
+  });
+
+  afterEach(() => {
+    if (savedCI !== undefined) {
+      process.env.CI = savedCI;
+    } else {
+      delete process.env.CI;
+    }
   });
 
   it('dedupes repeated createIssue calls', () => {
