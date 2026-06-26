@@ -15,6 +15,9 @@ export * from './aviation/navigation/index.js';
 // Aviation weather services
 export * from './aviation/weather/index.js';
 
+// Aviation NOTAM services (FAA NOTAM Search API client)
+export * from './aviation/notam.js';
+
 // Date/Time utilities
 export * from './datetime/index.js';
 

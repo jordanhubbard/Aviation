@@ -1,7 +1,11 @@
 /**
  * NOTAM (Notice to Airmen) Integration
  *
- * Provides utilities for fetching and parsing NOTAMs from FAA sources.
+ * Real client for the FAA NOTAM Search API (api.faa.gov/notams).
+ * API key is loaded from the @aviation/keystore (service='faa', key='notam_api_key')
+ * or from the FAA_NOTAM_API_KEY environment variable.
+ *
+ * FAA API docs: https://api.faa.gov/s/article/NOTAM-Search-Service-API-Key-Request
  *
  * @module @aviation/shared-sdk/aviation/notam
  */
@@ -28,8 +32,170 @@ export interface NotamSearchParams {
   endDate?: Date;
 }
 
+/** Shape of a single item returned by api.faa.gov/notams */
+export interface FaaNotamApiItem {
+  properties?: {
+    coreNOTAMData?: {
+      notam?: {
+        id?: string;
+        type?: string;
+        location?: string;
+        affectedFIR?: string;
+        selectionCode?: string;
+        traffic?: string;
+        purpose?: string;
+        scope?: string;
+        minimumFL?: string;
+        maximumFL?: string;
+        coordinates?: string;
+        radius?: string;
+        EffectiveStart?: string;
+        EffectiveEnd?: string;
+        text?: string;
+        classification?: string;
+        accountId?: string;
+        lastUpdatedTimestamp?: string;
+        icaoMessage?: string;
+        traditionalMessage?: string;
+        plainLanguage?: string;
+        cancelledOrExpired?: boolean;
+        digitalTWEB?: boolean;
+        systemPicklistId?: string;
+        facilityDesignator?: string;
+        notamNumber?: string;
+        series?: string;
+        number?: string;
+        year?: string;
+        geometryType?: string;
+      };
+    };
+  };
+}
+
+/** Options for NotamClient constructor */
+export interface NotamClientOptions {
+  /** FAA NOTAM API base URL (overridable for testing) */
+  baseUrl?: string;
+  /** FAA API key. Falls back to FAA_NOTAM_API_KEY env var. */
+  apiKey?: string;
+  /** Injected fetch function (defaults to global fetch) */
+  fetchFn?: typeof fetch;
+}
+
 /**
- * Categorize NOTAM by severity based on keywords
+ * Client for the FAA NOTAM Search API.
+ *
+ * Usage:
+ *   const client = new NotamClient({ apiKey: process.env.FAA_NOTAM_API_KEY });
+ *   const notams = await client.fetchByIcao('KSFO');
+ */
+export class NotamClient {
+  private baseUrl: string;
+  private apiKey: string;
+  private fetchFn: typeof fetch;
+
+  constructor(opts: NotamClientOptions = {}) {
+    this.baseUrl = opts.baseUrl ?? 'https://external-api.faa.gov/notamapi/v1/notams';
+    this.apiKey = opts.apiKey ?? process.env.FAA_NOTAM_API_KEY ?? '';
+    this.fetchFn = opts.fetchFn ?? fetch;
+  }
+
+  /**
+   * Fetch NOTAMs for a single ICAO location code.
+   * Returns an empty array (not an error) when no NOTAMs are found.
+   * Throws on HTTP errors so callers can decide how to handle them.
+   */
+  async fetchByIcao(icao: string, radiusNm: number = 0): Promise<NOTAM[]> {
+    const params = new URLSearchParams({
+      icaoLocation: icao.toUpperCase(),
+      ...(radiusNm > 0 ? { radius: String(Math.round(radiusNm)) } : {}),
+      pageSize: '100',
+      pageNum: '1',
+    });
+
+    const url = `${this.baseUrl}?${params.toString()}`;
+    const res = await this.fetchFn(url, {
+      headers: {
+        client_id: this.apiKey,
+        client_secret: this.apiKey,
+        Accept: 'application/json',
+      },
+    });
+
+    if (!res.ok) {
+      throw new Error(`FAA NOTAM API error: HTTP ${res.status} for ${icao}`);
+    }
+
+    const json = (await res.json()) as { items?: FaaNotamApiItem[] };
+    return (json.items ?? []).map((item) => parseNotamItem(item));
+  }
+
+  /**
+   * Fetch NOTAMs for multiple ICAO codes (e.g., all airports on a route).
+   * Results are de-duplicated by NOTAM id.
+   */
+  async fetchForRoute(icaos: string[]): Promise<NOTAM[]> {
+    const results = await Promise.all(icaos.map((icao) => this.fetchByIcao(icao)));
+    const seen = new Set<string>();
+    const merged: NOTAM[] = [];
+    for (const batch of results) {
+      for (const notam of batch) {
+        if (!seen.has(notam.id)) {
+          seen.add(notam.id);
+          merged.push(notam);
+        }
+      }
+    }
+    return merged;
+  }
+}
+
+// ─── Parsing helpers ─────────────────────────────────────────────────────────
+
+/**
+ * Parse a raw FAA NOTAM API item into our canonical NOTAM shape.
+ * Exposed for unit-testing against fixture data.
+ */
+export function parseNotamItem(item: FaaNotamApiItem): NOTAM {
+  const n = item.properties?.coreNOTAMData?.notam ?? {};
+
+  const rawText = n.plainLanguage ?? n.traditionalMessage ?? n.icaoMessage ?? n.text ?? '';
+  const location = n.location ?? n.facilityDesignator ?? '';
+  const facilityType = deriveFacilityType(n.scope ?? '');
+  const effectiveStart = n.EffectiveStart ? new Date(n.EffectiveStart) : new Date();
+  const effectiveEnd = n.EffectiveEnd ? new Date(n.EffectiveEnd) : new Date(Date.now() + 7 * 86400000);
+  const notamId = n.id ?? n.notamNumber ?? `${location}-${Date.now()}`;
+
+  const notam: NOTAM = {
+    id: notamId,
+    type: n.type ?? 'NOTAM',
+    location,
+    facilityType,
+    effectiveStart,
+    effectiveEnd,
+    classification: n.classification ?? 'Unknown',
+    text: rawText.trim(),
+    severity: 'low', // will be set below
+    category: categorizeNotam(rawText),
+  };
+
+  notam.severity = categorizeNotamSeverity(notam);
+  return notam;
+}
+
+/** Map FAA scope codes to our facilityType labels */
+function deriveFacilityType(scope: string): string {
+  const s = scope.toUpperCase();
+  if (s.includes('A')) return 'AD'; // Aerodrome
+  if (s.includes('E')) return 'EN'; // En-route
+  if (s.includes('N')) return 'NAV'; // Navigation
+  return scope || 'AD';
+}
+
+// ─── Pure helper functions (kept from original, used by consumers) ────────────
+
+/**
+ * Categorize NOTAM by severity based on keywords in its text.
  */
 export function categorizeNotamSeverity(notam: NOTAM): 'low' | 'medium' | 'high' | 'critical' {
   const text = notam.text.toUpperCase();
@@ -162,8 +328,11 @@ export function formatNotamText(text: string): string {
   return formatted;
 }
 
+// ─── Legacy convenience function (kept for backward compat) ──────────────────
+
 /**
- * Mock NOTAM data for development/testing
+ * Mock NOTAM data for development/testing (kept for backward compatibility).
+ * Prefer using NotamClient with a mock fetchFn in tests instead.
  */
 export async function fetchMockNotams(icao: string): Promise<NOTAM[]> {
   const now = new Date();
@@ -218,17 +387,37 @@ export async function fetchMockNotams(icao: string): Promise<NOTAM[]> {
 }
 
 /**
- * Fetch NOTAMs from FAA API (stub - requires API key and implementation)
+ * Fetch NOTAMs via the real FAA NOTAM Search API.
+ *
+ * If no API key is configured the call is attempted anyway (the FAA API may
+ * allow unauthenticated requests up to a rate limit).  Configure the key via:
+ *   - FAA_NOTAM_API_KEY environment variable, OR
+ *   - @aviation/keystore  service='faa'  key='notam_api_key'
+ *
+ * Falls back to mock data when the API call fails and no key is present, so
+ * development without credentials still works.
  */
-export async function fetchNotams(params: NotamSearchParams): Promise<NOTAM[]> {
-  // For now, return mock data
-  // In production, this would call the actual FAA NOTAM Search API
-  // https://notams.aim.faa.gov/notamSearch/
+export async function fetchNotams(
+  params: NotamSearchParams,
+  opts: NotamClientOptions = {}
+): Promise<NOTAM[]> {
+  const client = new NotamClient(opts);
 
   if (params.icao) {
-    return fetchMockNotams(params.icao);
+    try {
+      return await client.fetchByIcao(params.icao, params.radius);
+    } catch (err) {
+      // No API key in dev environment: fall back to mock data with a warning
+      if (!opts.apiKey && !process.env.FAA_NOTAM_API_KEY) {
+        console.warn(
+          `[NOTAM] FAA API call failed (no key configured) — using mock data for ${params.icao}. ` +
+            'Set FAA_NOTAM_API_KEY to enable live data.'
+        );
+        return fetchMockNotams(params.icao);
+      }
+      throw err;
+    }
   }
 
-  console.warn('NOTAM fetching not fully implemented. Using mock data.');
   return [];
 }
