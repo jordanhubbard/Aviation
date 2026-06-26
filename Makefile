@@ -149,6 +149,7 @@ test: test-node test-python test-clojure
 
 test-node:
 	@echo "🧪 Running Node.js/TypeScript tests..."
+	pnpm --recursive --if-present run build
 	pnpm --recursive --if-present run test
 	@echo "✅ Node.js/TypeScript tests passed"
 
