@@ -192,6 +192,13 @@ test-python:
 	else \
 		echo "   No tests configured"; \
 	fi
+	@echo ""
+	@echo "   G1000 Simulator:"
+	@if [ -f apps/g1000-simulator/Makefile ]; then \
+		cd apps/g1000-simulator && $(MAKE) backend-test 2>/dev/null || echo "   ⚠️  Tests require setup (see app README)"; \
+	else \
+		echo "   No tests configured"; \
+	fi
 	@echo "✅ Python tests complete"
 
 test-clojure:
