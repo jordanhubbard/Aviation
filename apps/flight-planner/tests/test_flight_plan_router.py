@@ -379,3 +379,33 @@ def test_import_gpx_roundtrip(client):
     assert export_resp.status_code == 200
     exported = export_resp.json()["content"]
     assert "KSFO" in exported
+
+
+def test_fpl_roundtrip(client):
+    """Import FPL then export it back and verify content is preserved."""
+    import_resp = client.post(
+        "/flight-plans/import",
+        json={"format": "fpl", "content": FPL_CONTENT, "name": "FPL Roundtrip"},
+    )
+    assert import_resp.status_code == 201
+    plan_id = import_resp.json()["metadata"]["id"]
+    export_resp = client.post(f"/flight-plans/{plan_id}/export?fmt=fpl")
+    assert export_resp.status_code == 200
+    assert "FPL" in export_resp.json()["content"]
+
+
+def test_storage_isolation(client):
+    """Each test should start with a clean store — previous tests must not bleed through."""
+    resp = client.get("/flight-plans/")
+    assert resp.status_code == 200
+    assert resp.json() == [], "Store was not empty at start of test — monkeypatch isolation broken"
+
+
+def test_delete_then_get_404(client):
+    """After deleting a plan, GET returns 404."""
+    created = _create_plan(client, name="Gone Plan")
+    plan_id = created["metadata"]["id"]
+    del_resp = client.delete(f"/flight-plans/{plan_id}")
+    assert del_resp.status_code == 204
+    get_resp = client.get(f"/flight-plans/{plan_id}")
+    assert get_resp.status_code == 404
