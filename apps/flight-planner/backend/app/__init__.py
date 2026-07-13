@@ -1,6 +1,6 @@
 # Initialize the backend application
 from fastapi import FastAPI
-from .services.flight_plan_service import router as flight_plan_router
+from .routers.flight_plan import router as flight_plan_router
 from .services.alert_manager import AlertManager
 from .services.websocket_protocol import WebSocketProtocol, MessageType
 from .services.flight_recording_service import router as flight_recording_router
