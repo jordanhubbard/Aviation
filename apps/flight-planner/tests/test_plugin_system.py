@@ -31,11 +31,8 @@ class TestPluginSystem(unittest.TestCase):
         self.registry = PluginRegistry()
 
     def tearDown(self):
-        for filename in os.listdir(self.plugin_directory):
-            file_path = os.path.join(self.plugin_directory, filename)
-            if os.path.isfile(file_path):
-                os.unlink(file_path)
-        os.rmdir(self.plugin_directory)
+        import shutil
+        shutil.rmtree(self.plugin_directory, ignore_errors=True)
         # Remove the package from sys.modules so teardown is clean
         for key in list(sys.modules.keys()):
             if key.startswith('test_plugins'):

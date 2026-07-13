@@ -22,11 +22,11 @@ dev-down:
 # test_integration.py requires a live server and is excluded here.
 backend-test:
 	@if [ -d ".venv" ]; then \
-		.venv/bin/pytest tests/ -ra --ignore=tests/test_integration.py; \
+		.venv/bin/pytest tests/ -ra --ignore=tests/test_integration.py --ignore=tests/integration_test.py; \
 	elif [ -d "venv" ]; then \
-		venv/bin/pytest tests/ -ra --ignore=tests/test_integration.py; \
+		venv/bin/pytest tests/ -ra --ignore=tests/test_integration.py --ignore=tests/integration_test.py; \
 	else \
-		python3 -m pytest tests/ -ra --ignore=tests/test_integration.py; \
+		python3 -m pytest tests/ -ra --ignore=tests/test_integration.py --ignore=tests/integration_test.py; \
 	fi
 
 # Remove build artifacts, caches, and byte-compiled files.
