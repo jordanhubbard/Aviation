@@ -38,3 +38,6 @@ black
 flake8
 mypy
 pre-commit
+
+# WebSocket client (required by integration_test.py)
+websocket-client

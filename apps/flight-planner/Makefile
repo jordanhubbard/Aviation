@@ -18,14 +18,15 @@ dev-down:
 	docker compose -f docker-compose.yml down -v
 
 # Run backend Python tests.
-# Searches for a local venv first; falls back to the system python3.
+# Uses the project .venv; falls back to system python3 when .venv is absent.
+# test_integration.py requires a live server and is excluded here.
 backend-test:
 	@if [ -d ".venv" ]; then \
-		.venv/bin/pytest tests/ -ra; \
+		.venv/bin/pytest tests/ -ra --ignore=tests/test_integration.py; \
 	elif [ -d "venv" ]; then \
-		venv/bin/pytest tests/ -ra; \
+		venv/bin/pytest tests/ -ra --ignore=tests/test_integration.py; \
 	else \
-		python3 -m pytest tests/ -ra; \
+		python3 -m pytest tests/ -ra --ignore=tests/test_integration.py; \
 	fi
 
 # Remove build artifacts, caches, and byte-compiled files.
