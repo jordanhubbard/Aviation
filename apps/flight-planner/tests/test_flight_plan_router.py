@@ -498,3 +498,12 @@ def test_create_with_notes(client):
     plan_id = created["metadata"]["id"]
     get_resp = client.get(f"/flight-plans/{plan_id}")
     assert get_resp.json()["notes"] == "VFR corridor"
+
+
+def test_import_malformed_gpx_returns_422(client):
+    """Importing syntactically invalid GPX XML content returns 422."""
+    resp = client.post(
+        "/flight-plans/import",
+        json={"format": "gpx", "content": "<gpx><unclosed"},
+    )
+    assert resp.status_code == 422
