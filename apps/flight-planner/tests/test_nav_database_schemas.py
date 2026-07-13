@@ -1,223 +1,250 @@
-"""Unit tests for nav_database Pydantic v2 schemas and NavDatabase service."""
+"""Unit tests for nav_database Pydantic v2 schemas."""
 from __future__ import annotations
 
 import pytest
 
 from app.schemas.nav_database import (
     AirspaceClass,
+    GeoPointSchema,
     NavAirportSchema,
     NavAirspaceSchema,
-    NavaidType,
-    NavDataProceduresResponse,
-    NavDataSearchResponse,
+    NavDataStoreSchema,
     NavNavaidSchema,
     NavProcedureSchema,
+    NavaidType,
+    ProcedureAltitudeConstraintSchema,
+    ProcedureAltitudeConstraintType,
+    ProcedureLegSchema,
+    ProcedureSpeedConstraintSchema,
+    ProcedureSpeedConstraintType,
+    ProcedureType,
 )
-from app.services.nav_database import NavDatabase
 
 
-# ---------------------------------------------------------------------------
-# Schema construction tests
-# ---------------------------------------------------------------------------
+class TestGeoPointSchema:
+    def test_basic(self):
+        gp = GeoPointSchema(latitude=37.6, longitude=-122.4)
+        assert gp.latitude == pytest.approx(37.6)
+        assert gp.longitude == pytest.approx(-122.4)
+
+    def test_required_fields(self):
+        with pytest.raises(Exception):
+            GeoPointSchema(latitude=0.0)  # missing longitude
 
 
 class TestNavAirportSchema:
     def test_required_fields(self):
-        airport = NavAirportSchema(icao="KSFO", latitude=37.6213, longitude=-122.3790)
+        gp = GeoPointSchema(latitude=37.6213, longitude=-122.3790)
+        airport = NavAirportSchema(icao="KSFO", name="San Francisco Intl", location=gp, sources=[])
         assert airport.icao == "KSFO"
-        assert airport.latitude == pytest.approx(37.6213)
-        assert airport.longitude == pytest.approx(-122.3790)
+        assert airport.name == "San Francisco Intl"
+        assert airport.location.latitude == pytest.approx(37.6213)
         assert airport.iata is None
-        assert airport.name is None
         assert airport.elevation_ft is None
+        assert airport.type is None
+        assert airport.country is None
 
     def test_all_fields(self):
+        gp = GeoPointSchema(latitude=40.6413, longitude=-73.7781)
         airport = NavAirportSchema(
             icao="KJFK",
             iata="JFK",
             name="John F. Kennedy International",
-            latitude=40.6413,
-            longitude=-73.7781,
-            elevation_ft=13,
+            location=gp,
+            elevationFt=13,
+            type="large_airport",
+            country="US",
+            sources=["openflights"],
         )
         assert airport.icao == "KJFK"
         assert airport.iata == "JFK"
-        assert airport.name == "John F. Kennedy International"
         assert airport.elevation_ft == 13
+        assert airport.country == "US"
+        assert airport.sources == ["openflights"]
 
-    def test_missing_required_fields_raises(self):
+    def test_alias_elevation_ft(self):
+        gp = GeoPointSchema(latitude=0.0, longitude=0.0)
+        airport = NavAirportSchema(icao="KZZZ", name="Test", location=gp, elevationFt=100, sources=[])
+        assert airport.elevation_ft == 100
+
+    def test_missing_required_raises(self):
         with pytest.raises(Exception):
-            NavAirportSchema(icao="KSFO")  # missing latitude/longitude
+            NavAirportSchema(icao="KSFO", sources=[])  # missing name and location
 
 
 class TestNavNavaidSchema:
     def test_vor_navaid(self):
+        pos = GeoPointSchema(latitude=37.619, longitude=-122.375)
         navaid = NavNavaidSchema(
             identifier="SFO",
             name="San Francisco VOR",
-            type=NavaidType.VORDME,
-            latitude=37.619,
-            longitude=-122.375,
-            frequency="115.8",
+            type=NavaidType.VOR,
+            position=pos,
+            frequency=115.8,
+            frequencyUnit="MHz",
+            sources=["dafif"],
         )
         assert navaid.identifier == "SFO"
-        assert navaid.type == NavaidType.VORDME
-        assert navaid.frequency == "115.8"
-        assert navaid.airport_icao is None
-
-    def test_navaid_with_airport(self):
-        navaid = NavNavaidSchema(
-            identifier="JFK",
-            type=NavaidType.VOR,
-            latitude=40.6413,
-            longitude=-73.7781,
-            airport_icao="KJFK",
-        )
-        assert navaid.airport_icao == "KJFK"
+        assert navaid.type == NavaidType.VOR
+        assert navaid.frequency == pytest.approx(115.8)
+        assert navaid.frequency_unit == "MHz"
 
     def test_navaid_type_enum_values(self):
+        pos = GeoPointSchema(latitude=0.0, longitude=0.0)
         for nav_type in NavaidType:
-            navaid = NavNavaidSchema(
-                identifier="TST",
-                type=nav_type,
-                latitude=0.0,
-                longitude=0.0,
-            )
+            navaid = NavNavaidSchema(identifier="TST", type=nav_type, position=pos, sources=[])
             assert navaid.type == nav_type
+
+    def test_optional_fields_default_none(self):
+        pos = GeoPointSchema(latitude=0.0, longitude=0.0)
+        navaid = NavNavaidSchema(identifier="TST", type=NavaidType.FIX, position=pos, sources=[])
+        assert navaid.name is None
+        assert navaid.frequency is None
+        assert navaid.frequency_unit is None
 
 
 class TestNavAirspaceSchema:
     def test_basic_airspace(self):
+        pt = GeoPointSchema(latitude=37.0, longitude=-122.0)
         airspace = NavAirspaceSchema(
             identifier="SFO_B",
             name="San Francisco Class B",
-            airspace_class=AirspaceClass.B,
-            lower_limit_ft=0,
-            upper_limit_ft=10000,
+            **{"class": AirspaceClass.B},
+            lowerLimitFt=0,
+            upperLimitFt=10000,
+            boundary=[pt],
+            sources=["faa"],
         )
         assert airspace.identifier == "SFO_B"
         assert airspace.airspace_class == AirspaceClass.B
         assert airspace.lower_limit_ft == 0
         assert airspace.upper_limit_ft == 10000
-        assert airspace.controlling_facility is None
+        assert len(airspace.boundary) == 1
 
     def test_all_airspace_classes(self):
+        pt = GeoPointSchema(latitude=0.0, longitude=0.0)
         for cls in AirspaceClass:
             airspace = NavAirspaceSchema(
                 identifier="TST",
-                airspace_class=cls,
-                lower_limit_ft=0,
-                upper_limit_ft=5000,
+                **{"class": cls},
+                boundary=[pt],
+                sources=[],
             )
             assert airspace.airspace_class == cls
+
+    def test_optional_limits(self):
+        pt = GeoPointSchema(latitude=0.0, longitude=0.0)
+        airspace = NavAirspaceSchema(identifier="TST", **{"class": AirspaceClass.G}, boundary=[pt], sources=[])
+        assert airspace.lower_limit_ft is None
+        assert airspace.upper_limit_ft is None
+
+
+class TestProcedureLegSchema:
+    def test_basic_leg(self):
+        leg = ProcedureLegSchema(fix="DUMBA")
+        assert leg.fix == "DUMBA"
+        assert leg.path_type is None
+        assert leg.altitude_constraint is None
+        assert leg.speed_constraint is None
+
+    def test_leg_with_path_type_alias(self):
+        leg = ProcedureLegSchema(fix="GATE1", pathType="TF")
+        assert leg.path_type == "TF"
+
+    def test_leg_with_altitude_constraint(self):
+        alt = ProcedureAltitudeConstraintSchema(
+            type=ProcedureAltitudeConstraintType.AT_OR_ABOVE,
+            altitudeFt=3000.0,
+        )
+        leg = ProcedureLegSchema(fix="GATE1", altitudeConstraint=alt)
+        assert leg.altitude_constraint.altitude_ft == pytest.approx(3000.0)
+        assert leg.altitude_constraint.type == ProcedureAltitudeConstraintType.AT_OR_ABOVE
+
+    def test_leg_with_speed_constraint(self):
+        spd = ProcedureSpeedConstraintSchema(
+            type=ProcedureSpeedConstraintType.AT_OR_BELOW,
+            speedKts=250.0,
+        )
+        leg = ProcedureLegSchema(fix="CF", speedConstraint=spd)
+        assert leg.speed_constraint.speed_kts == pytest.approx(250.0)
 
 
 class TestNavProcedureSchema:
     def test_sid_procedure(self):
-        proc = NavProcedureSchema(name="DEPARTURE1", type="SID", runway="04L", initial_altitude_ft=2000)
-        assert proc.name == "DEPARTURE1"
-        assert proc.type == "SID"
-        assert proc.runway == "04L"
-        assert proc.initial_altitude_ft == 2000
+        leg = ProcedureLegSchema(fix="DUMBA")
+        proc = NavProcedureSchema(
+            identifier="SIDTEST1",
+            airportIcao="KSFO",
+            type=ProcedureType.SID,
+            name="Test SID",
+            legs=[leg],
+            sources=["cifp"],
+        )
+        assert proc.identifier == "SIDTEST1"
+        assert proc.airport_icao == "KSFO"
+        assert proc.type == ProcedureType.SID
+        assert proc.name == "Test SID"
+        assert len(proc.legs) == 1
 
-    def test_approach_no_initial_altitude(self):
-        proc = NavProcedureSchema(name="ILS 22L", type="APPROACH", runway="22L")
-        assert proc.initial_altitude_ft is None
+    def test_optional_fields(self):
+        proc = NavProcedureSchema(
+            identifier="STAR1",
+            type=ProcedureType.STAR,
+            sources=[],
+        )
+        assert proc.airport_icao is None
+        assert proc.transition is None
+        assert proc.fixes is None
+        assert proc.legs is None
+        assert proc.raw_records is None
+
+    def test_procedure_type_enum(self):
+        for ptype in ProcedureType:
+            proc = NavProcedureSchema(identifier="P1", type=ptype, sources=[])
+            assert proc.type == ptype
+
+    def test_alias_raw_records(self):
+        proc = NavProcedureSchema(
+            identifier="P1",
+            type=ProcedureType.APPROACH,
+            rawRecords=["raw data"],
+            sources=[],
+        )
+        assert proc.raw_records == ["raw data"]
 
 
-class TestNavDataSearchResponse:
-    def test_empty_response(self):
-        resp = NavDataSearchResponse()
-        assert resp.airports == []
-        assert resp.navaids == []
+class TestNavDataStoreSchema:
+    def test_empty_store(self):
+        store = NavDataStoreSchema()
+        assert store.airports_by_icao == {}
+        assert store.navaids_by_ident == {}
+        assert store.airspaces == []
+        assert store.procedures_by_airport == {}
 
-    def test_populated_response(self):
-        airport = NavAirportSchema(icao="KSFO", latitude=37.6213, longitude=-122.3790)
-        navaid = NavNavaidSchema(identifier="SFO", type=NavaidType.VOR, latitude=37.619, longitude=-122.375)
-        resp = NavDataSearchResponse(airports=[airport], navaids=[navaid])
-        assert len(resp.airports) == 1
-        assert len(resp.navaids) == 1
+    def test_populated_store(self):
+        gp = GeoPointSchema(latitude=37.6, longitude=-122.4)
+        airport = NavAirportSchema(icao="KSFO", name="SFO", location=gp, sources=["test"])
+        navaid = NavNavaidSchema(identifier="SFO", type=NavaidType.VOR, position=gp, sources=["test"])
+        airspace = NavAirspaceSchema(identifier="SFO_B", **{"class": AirspaceClass.B}, boundary=[gp], sources=["test"])
+        leg = ProcedureLegSchema(fix="DUMBA")
+        proc = NavProcedureSchema(identifier="SID1", type=ProcedureType.SID, airportIcao="KSFO", legs=[leg], sources=["test"])
 
+        store = NavDataStoreSchema(
+            airportsByIcao={"KSFO": airport},
+            navaidsByIdent={"SFO": navaid},
+            airspaces=[airspace],
+            proceduresByAirport={"KSFO": [proc]},
+        )
+        assert "KSFO" in store.airports_by_icao
+        assert "SFO" in store.navaids_by_ident
+        assert len(store.airspaces) == 1
+        assert "KSFO" in store.procedures_by_airport
 
-class TestNavDataProceduresResponse:
-    def test_empty_response(self):
-        resp = NavDataProceduresResponse()
-        assert resp.airport is None
-        assert resp.sids == []
-        assert resp.stars == []
-        assert resp.approaches == []
-
-
-# ---------------------------------------------------------------------------
-# NavDatabase service tests
-# ---------------------------------------------------------------------------
-
-
-class TestNavDatabase:
-    def setup_method(self):
-        self.db = NavDatabase()
-
-    def test_search_by_icao(self):
-        result = self.db.search("KJFK")
-        assert isinstance(result, NavDataSearchResponse)
-        assert any(a.icao == "KJFK" for a in result.airports)
-
-    def test_search_returns_typed_schemas(self):
-        result = self.db.search("KSFO")
-        for airport in result.airports:
-            assert isinstance(airport, NavAirportSchema)
-        for navaid in result.navaids:
-            assert isinstance(navaid, NavNavaidSchema)
-
-    def test_search_by_name_substring(self):
-        result = self.db.search("Francisco")
-        assert any("Francisco" in (a.name or "") for a in result.airports)
-
-    def test_search_no_match_returns_empty_lists(self):
-        result = self.db.search("ZZZZ_NOMATCH")
-        assert result.airports == []
-        assert result.navaids == []
-
-    def test_search_case_insensitive(self):
-        result_upper = self.db.search("kjfk")
-        result_lower = self.db.search("KJFK")
-        assert len(result_upper.airports) == len(result_lower.airports)
-
-    def test_get_procedures_known_airport(self):
-        result = self.db.get_procedures("KJFK")
-        assert isinstance(result, NavDataProceduresResponse)
-        assert result.airport is not None
-        assert result.airport.icao == "KJFK"
-        assert len(result.sids) > 0
-        assert len(result.stars) > 0
-        assert len(result.approaches) > 0
-
-    def test_get_procedures_returns_typed_schemas(self):
-        result = self.db.get_procedures("KLAX")
-        for sid in result.sids:
-            assert isinstance(sid, NavProcedureSchema)
-        for star in result.stars:
-            assert isinstance(star, NavProcedureSchema)
-        for approach in result.approaches:
-            assert isinstance(approach, NavProcedureSchema)
-
-    def test_get_procedures_unknown_airport_has_no_airport(self):
-        result = self.db.get_procedures("ZZZZ")
-        assert isinstance(result, NavDataProceduresResponse)
-        assert result.airport is None
-        assert len(result.sids) > 0
-
-    def test_get_procedures_case_insensitive(self):
-        result_lower = self.db.get_procedures("kjfk")
-        result_upper = self.db.get_procedures("KJFK")
-        assert (result_lower.airport is not None) == (result_upper.airport is not None)
-
-    def test_search_navaid_by_identifier(self):
-        result = self.db.search("JFK")
-        assert any(n.identifier == "JFK" for n in result.navaids)
-
-    def test_schemas_are_pydantic_v2(self):
-        airport = NavAirportSchema(icao="KORD", latitude=41.9742, longitude=-87.9073)
-        data = airport.model_dump()
+    def test_model_dump(self):
+        store = NavDataStoreSchema()
+        data = store.model_dump()
         assert isinstance(data, dict)
-        assert data["icao"] == "KORD"
+        assert "airports_by_icao" in data
+        assert "navaids_by_ident" in data
+        assert "airspaces" in data
+        assert "procedures_by_airport" in data

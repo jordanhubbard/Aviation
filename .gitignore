@@ -79,3 +79,4 @@ htmlcov/
 tmp/
 temp/
 *.tmp
+.codegraph/
