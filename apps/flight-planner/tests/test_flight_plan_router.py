@@ -379,3 +379,122 @@ def test_import_gpx_roundtrip(client):
     assert export_resp.status_code == 200
     exported = export_resp.json()["content"]
     assert "KSFO" in exported
+
+
+# ---------------------------------------------------------------------------
+# Additional edge-case tests for improved coverage
+# ---------------------------------------------------------------------------
+
+
+def test_create_with_all_waypoint_fields(client):
+    """Verify waypoints with all optional fields are stored and returned correctly."""
+    waypoints = [
+        {
+            "name": "KSFO",
+            "latitude": 37.619,
+            "longitude": -122.375,
+            "altitude_ft": 12.0,
+            "sequence": 0,
+        },
+        {
+            "name": "KOAK",
+            "latitude": 37.721,
+            "longitude": -122.221,
+            "altitude_ft": 9.0,
+            "sequence": 1,
+        },
+    ]
+    created = _create_plan(client, name="Full WP Plan", waypoints=waypoints)
+    assert len(created["waypoints"]) == 2
+    assert created["waypoints"][0]["altitude_ft"] == 12.0
+    assert created["waypoints"][1]["name"] == "KOAK"
+
+
+def test_update_adds_waypoints(client):
+    """Updating a plan's waypoints replaces the existing waypoint list."""
+    created = _create_plan(client, name="No Waypoints")
+    plan_id = created["metadata"]["id"]
+    new_waypoints = [
+        {"name": "KLAX", "latitude": 33.943, "longitude": -118.408, "sequence": 0}
+    ]
+    resp = client.put(f"/flight-plans/{plan_id}", json={"waypoints": new_waypoints})
+    assert resp.status_code == 200
+    assert len(resp.json()["waypoints"]) == 1
+    assert resp.json()["waypoints"][0]["name"] == "KLAX"
+
+
+def test_update_distance_nm(client):
+    """Updating distance_nm is reflected in the response."""
+    created = _create_plan(client, name="Distance Plan", distance_nm=100.0)
+    plan_id = created["metadata"]["id"]
+    resp = client.put(f"/flight-plans/{plan_id}", json={"distance_nm": 250.5})
+    assert resp.status_code == 200
+    assert resp.json()["distance_nm"] == 250.5
+
+
+def test_create_multiple_and_list_count(client):
+    """Creating N plans results in exactly N items in the list."""
+    for i in range(5):
+        _create_plan(client, name=f"Plan {i}")
+    resp = client.get("/flight-plans/")
+    assert resp.status_code == 200
+    assert len(resp.json()) == 5
+
+
+def test_delete_then_get_returns_404(client):
+    """Deleting a plan and then GETting it by ID returns 404."""
+    created = _create_plan(client, name="Ephemeral Plan")
+    plan_id = created["metadata"]["id"]
+    del_resp = client.delete(f"/flight-plans/{plan_id}")
+    assert del_resp.status_code == 204
+    get_resp = client.get(f"/flight-plans/{plan_id}")
+    assert get_resp.status_code == 404
+
+
+def test_export_fpl_uses_aircraft_type(client):
+    """FPL export should include the aircraft type in its content."""
+    created = _create_plan(client, name="PA28 Plan", aircraft_type="PA28")
+    plan_id = created["metadata"]["id"]
+    resp = client.post(f"/flight-plans/{plan_id}/export?fmt=fpl")
+    assert resp.status_code == 200
+    assert "PA28" in resp.json()["content"]
+
+
+def test_export_fpl_filename_uses_plan_name(client):
+    """FPL export filename is derived from the plan name."""
+    created = _create_plan(client, name="My Route Plan")
+    plan_id = created["metadata"]["id"]
+    resp = client.post(f"/flight-plans/{plan_id}/export?fmt=fpl")
+    assert resp.status_code == 200
+    assert "My_Route_Plan" in resp.json()["filename"]
+
+
+def test_import_fpl_stored_and_retrievable(client):
+    """A plan imported from FPL can be retrieved by its new ID."""
+    resp = client.post(
+        "/flight-plans/import",
+        json={"format": "fpl", "content": FPL_CONTENT},
+    )
+    assert resp.status_code == 201
+    plan_id = resp.json()["metadata"]["id"]
+    get_resp = client.get(f"/flight-plans/{plan_id}")
+    assert get_resp.status_code == 200
+    assert get_resp.json()["metadata"]["id"] == plan_id
+
+
+def test_list_summary_distance_nm(client):
+    """List endpoint returns distance_nm in summary when set."""
+    _create_plan(client, name="Distance Check", distance_nm=123.4)
+    resp = client.get("/flight-plans/")
+    assert resp.status_code == 200
+    summary = resp.json()[0]
+    assert summary["distance_nm"] == 123.4
+
+
+def test_create_with_notes(client):
+    """Plan can be created with notes field and it is persisted."""
+    created = _create_plan(client, name="Noted Plan", notes="VFR corridor")
+    assert created["notes"] == "VFR corridor"
+    plan_id = created["metadata"]["id"]
+    get_resp = client.get(f"/flight-plans/{plan_id}")
+    assert get_resp.json()["notes"] == "VFR corridor"
