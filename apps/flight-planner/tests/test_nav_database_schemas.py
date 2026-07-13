@@ -36,6 +36,38 @@ class TestNavRunwaySchema:
         assert rwy.length_ft == pytest.approx(11870.0)
         assert rwy.surface == "ASPHALT"
 
+    def test_heading_boundary_valid(self):
+        rwy_zero = NavRunwaySchema(identifier="00", heading_deg=0.0)
+        assert rwy_zero.heading_deg == pytest.approx(0.0)
+        rwy_359 = NavRunwaySchema(identifier="36", heading_deg=359.9)
+        assert rwy_359.heading_deg == pytest.approx(359.9)
+
+    def test_heading_360_raises(self):
+        with pytest.raises(Exception):
+            NavRunwaySchema(identifier="36", heading_deg=360.0)
+
+    def test_heading_negative_raises(self):
+        with pytest.raises(Exception):
+            NavRunwaySchema(identifier="36", heading_deg=-1.0)
+
+    def test_length_non_negative_raises(self):
+        with pytest.raises(Exception):
+            NavRunwaySchema(identifier="18L", length_ft=-100.0)
+
+    def test_width_non_negative_raises(self):
+        with pytest.raises(Exception):
+            NavRunwaySchema(identifier="18L", width_ft=-50.0)
+
+    def test_str_strip_whitespace(self):
+        rwy = NavRunwaySchema(identifier="  18L  ")
+        assert rwy.identifier == "18L"
+
+    def test_model_dump(self):
+        rwy = NavRunwaySchema(identifier="18L", length_ft=10000.0)
+        data = rwy.model_dump()
+        assert data["identifier"] == "18L"
+        assert data["length_ft"] == pytest.approx(10000.0)
+
 
 class TestNavFrequencySchema:
     def test_basic(self):
@@ -47,6 +79,20 @@ class TestNavFrequencySchema:
     def test_with_description(self):
         freq = NavFrequencySchema(type="TOWER", description="SFO Tower", frequency_mhz=120.5)
         assert freq.description == "SFO Tower"
+
+    def test_zero_frequency_raises(self):
+        with pytest.raises(Exception):
+            NavFrequencySchema(type="ATIS", frequency_mhz=0)
+
+    def test_negative_frequency_raises(self):
+        with pytest.raises(Exception):
+            NavFrequencySchema(type="ATIS", frequency_mhz=-1.0)
+
+    def test_model_dump(self):
+        freq = NavFrequencySchema(type="GROUND", frequency_mhz=121.9)
+        data = freq.model_dump()
+        assert data["type"] == "GROUND"
+        assert data["frequency_mhz"] == pytest.approx(121.9)
 
 
 class TestNavAirportSchema:
@@ -95,6 +141,35 @@ class TestNavAirportSchema:
         with pytest.raises(Exception):
             NavAirportSchema(icao="KSFO")  # missing name, latitude, longitude
 
+    def test_latitude_out_of_range_raises(self):
+        with pytest.raises(Exception):
+            NavAirportSchema(icao="KSFO", name="Test", latitude=91.0, longitude=0.0)
+
+    def test_latitude_min_boundary(self):
+        airport = NavAirportSchema(icao="TEST", name="South Pole", latitude=-90.0, longitude=0.0)
+        assert airport.latitude == pytest.approx(-90.0)
+
+    def test_latitude_max_boundary(self):
+        airport = NavAirportSchema(icao="TEST", name="North Pole", latitude=90.0, longitude=0.0)
+        assert airport.latitude == pytest.approx(90.0)
+
+    def test_longitude_out_of_range_raises(self):
+        with pytest.raises(Exception):
+            NavAirportSchema(icao="KSFO", name="Test", latitude=0.0, longitude=181.0)
+
+    def test_longitude_boundaries(self):
+        airport_west = NavAirportSchema(icao="TEST", name="West", latitude=0.0, longitude=-180.0)
+        airport_east = NavAirportSchema(icao="TEST", name="East", latitude=0.0, longitude=180.0)
+        assert airport_west.longitude == pytest.approx(-180.0)
+        assert airport_east.longitude == pytest.approx(180.0)
+
+    def test_model_dump(self):
+        airport = NavAirportSchema(icao="KSFO", name="SFO", latitude=37.6, longitude=-122.4)
+        data = airport.model_dump()
+        assert data["icao"] == "KSFO"
+        assert isinstance(data["runways"], list)
+        assert isinstance(data["frequencies"], list)
+
 
 class TestNavNavaidSchema:
     def test_required_fields(self):
@@ -136,6 +211,24 @@ class TestNavNavaidSchema:
             )
             assert navaid.type == nav_type
 
+    def test_latitude_out_of_range_raises(self):
+        with pytest.raises(Exception):
+            NavNavaidSchema(identifier="TST", type="VOR", latitude=-91.0, longitude=0.0)
+
+    def test_longitude_out_of_range_raises(self):
+        with pytest.raises(Exception):
+            NavNavaidSchema(identifier="TST", type="VOR", latitude=0.0, longitude=200.0)
+
+    def test_zero_frequency_raises(self):
+        with pytest.raises(Exception):
+            NavNavaidSchema(identifier="TST", type="VOR", latitude=0.0, longitude=0.0, frequency=0.0)
+
+    def test_model_dump(self):
+        navaid = NavNavaidSchema(identifier="SFO", type="VOR", latitude=37.6, longitude=-122.4)
+        data = navaid.model_dump()
+        assert data["identifier"] == "SFO"
+        assert data["type"] == "VOR"
+
 
 class TestNavAirspaceSchema:
     def test_basic_airspace(self):
@@ -165,6 +258,30 @@ class TestNavAirspaceSchema:
             airspace = NavAirspaceSchema(identifier="TST", airspace_class=cls)
             assert airspace.airspace_class == cls
 
+    def test_inverted_altitude_limits_raises(self):
+        with pytest.raises(Exception):
+            NavAirspaceSchema(
+                identifier="BAD",
+                airspace_class="C",
+                lower_limit_ft=10000.0,
+                upper_limit_ft=5000.0,
+            )
+
+    def test_equal_altitude_limits_ok(self):
+        airspace = NavAirspaceSchema(
+            identifier="THIN",
+            airspace_class="E",
+            lower_limit_ft=5000.0,
+            upper_limit_ft=5000.0,
+        )
+        assert airspace.lower_limit_ft == pytest.approx(5000.0)
+
+    def test_model_dump(self):
+        airspace = NavAirspaceSchema(identifier="TST", airspace_class="B")
+        data = airspace.model_dump()
+        assert data["identifier"] == "TST"
+        assert data["airspace_class"] == "B"
+
 
 class TestProcedureLegSchema:
     def test_basic_leg(self):
@@ -184,6 +301,12 @@ class TestProcedureLegSchema:
         assert leg.path_type == "TF"
         assert leg.altitude_constraint == "AT_OR_ABOVE 3000"
         assert leg.speed_constraint == "AT_OR_BELOW 250"
+
+    def test_model_dump(self):
+        leg = ProcedureLegSchema(fix="MOLEN", path_type="IF")
+        data = leg.model_dump()
+        assert data["fix"] == "MOLEN"
+        assert data["path_type"] == "IF"
 
 
 class TestNavProcedureSchema:
@@ -224,6 +347,17 @@ class TestNavProcedureSchema:
             )
             assert proc.procedure_type == ptype
 
+    def test_model_dump(self):
+        proc = NavProcedureSchema(
+            identifier="TEST1",
+            airport_icao="KSFO",
+            procedure_type="SID",
+        )
+        data = proc.model_dump()
+        assert data["identifier"] == "TEST1"
+        assert isinstance(data["legs"], list)
+        assert isinstance(data["transitions"], list)
+
 
 class TestNavDataStatus:
     def test_required_fields(self):
@@ -255,6 +389,18 @@ class TestNavDataStatus:
         with pytest.raises(Exception):
             NavDataStatus(airport_count=1)  # missing navaid_count and airspace_count
 
+    def test_negative_counts_raise(self):
+        with pytest.raises(Exception):
+            NavDataStatus(airport_count=-1, navaid_count=0, airspace_count=0)
+        with pytest.raises(Exception):
+            NavDataStatus(airport_count=0, navaid_count=-1, airspace_count=0)
+        with pytest.raises(Exception):
+            NavDataStatus(airport_count=0, navaid_count=0, airspace_count=-1)
+
+    def test_zero_counts_ok(self):
+        status = NavDataStatus(airport_count=0, navaid_count=0, airspace_count=0)
+        assert status.airport_count == 0
+
     def test_model_dump(self):
         status = NavDataStatus(airport_count=1, navaid_count=2, airspace_count=3)
         data = status.model_dump()
@@ -264,3 +410,19 @@ class TestNavDataStatus:
         assert "airspace_count" in data
         assert "last_updated" in data
         assert "source" in data
+
+    def test_model_json_round_trip(self):
+        from datetime import datetime
+        ts = datetime(2026, 6, 1, 12, 0, 0)
+        status = NavDataStatus(
+            airport_count=42,
+            navaid_count=100,
+            airspace_count=15,
+            last_updated=ts,
+            source="test-source",
+        )
+        json_str = status.model_dump_json()
+        restored = NavDataStatus.model_validate_json(json_str)
+        assert restored.airport_count == 42
+        assert restored.navaid_count == 100
+        assert restored.source == "test-source"
