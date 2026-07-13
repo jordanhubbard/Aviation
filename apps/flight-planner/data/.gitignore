@@ -1,0 +1,4 @@
+# Ignore runtime-generated JSON files
+*.json
+# Keep the directory
+!.gitkeep
