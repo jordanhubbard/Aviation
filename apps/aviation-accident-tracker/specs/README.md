@@ -13,8 +13,8 @@ These specs support the **Incremental Execution Plan (Option B)**, which extract
 ## Specifications
 
 ### 1. [Airports Extraction](./AIRPORTS_EXTRACTION_SPEC.md)
-**Bead:** [Aviation-o2d] ⭐ P0 - MVP Blocker  
-**Effort:** 2-3 days  
+**MAC task:** [Aviation-o2d] ⭐ P0 - MVP Blocker
+**Effort:** 2-3 days
 **Dependencies:** None
 
 **What:**
@@ -40,8 +40,8 @@ These specs support the **Incremental Execution Plan (Option B)**, which extract
 ---
 
 ### 2. [Weather Services Extraction](./WEATHER_EXTRACTION_SPEC.md)
-**Bead:** [Aviation-dx3] ⭐ P0 - MVP Blocker  
-**Effort:** 3-4 days  
+**MAC task:** [Aviation-dx3] ⭐ P0 - MVP Blocker
+**Effort:** 3-4 days
 **Dependencies:** Aviation-o2d (for coordinate lookup)
 
 **What:**
@@ -73,8 +73,8 @@ These specs support the **Incremental Execution Plan (Option B)**, which extract
 ---
 
 ### 3. [Navigation Utilities Extraction](./NAVIGATION_EXTRACTION_SPEC.md)
-**Bead:** [Aviation-ywm] ⭐ P0 - MVP Blocker  
-**Effort:** 2 days  
+**MAC task:** [Aviation-ywm] ⭐ P0 - MVP Blocker
+**Effort:** 2 days
 **Dependencies:** None
 
 **What:**
@@ -100,8 +100,8 @@ These specs support the **Incremental Execution Plan (Option B)**, which extract
 ---
 
 ### 4. [Map Integration Extraction](./MAP_EXTRACTION_SPEC.md)
-**Bead:** [Aviation-r2l] ⭐ P0 - MVP Blocker  
-**Effort:** 3-4 days  
+**MAC task:** [Aviation-r2l] ⭐ P0 - MVP Blocker
+**Effort:** 3-4 days
 **Dependencies:** None (but benefits from airports and navigation)
 
 **What:**
@@ -379,8 +379,8 @@ const apiKey = secrets.getRequired('OPENWEATHERMAP_API_KEY');
 # 1. Read the spec
 cat specs/AIRPORTS_EXTRACTION_SPEC.md
 
-# 2. Start the bead
-bd start Aviation-o2d
+# 2. Inspect the MAC task
+/Users/jkh/Src/mac/.venv/bin/mac task show <task-id>
 
 # 3. Create package structure
 cd packages/shared-sdk
@@ -392,8 +392,8 @@ mkdir -p src/aviation/airports
 # 5. Run tests
 npm test
 
-# 6. Update bead
-bd done Aviation-o2d
+# 6. Submit evidence through the MAC task lifecycle
+/Users/jkh/Src/mac/.venv/bin/mac task show <task-id>
 ```
 
 ### Using in Accident-Tracker
@@ -412,7 +412,7 @@ const nearby = await searchAirports('San Francisco', 10);
 
 ## Timeline Summary
 
-| Week | Phase | Beads | Deliverables |
+| Week | Phase | Legacy task IDs | Deliverables |
 |------|-------|-------|--------------|
 | 1 | Airports + Weather | o2d, dx3, a5f | Shared SDK with airports & weather |
 | 2 | Navigation + Map | ywm, r2l | Complete shared SDK + UI framework |
@@ -440,6 +440,6 @@ For the extraction analysis, see:
 
 ---
 
-**Status:** Ready for implementation ✅  
-**Last Updated:** 2026-01-13  
+**Status:** Ready for implementation ✅
+**Last Updated:** 2026-01-13
 **Approach:** Option B - Incremental

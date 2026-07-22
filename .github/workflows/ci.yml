@@ -7,23 +7,23 @@ on:
     branches: [ main, develop ]
 
 jobs:
-  # Validate beads configuration
-  validate-beads:
-    name: Validate Beads Configuration
+  # Validate the sole task/execution contract.
+  validate-mac:
+    name: Validate MAC Repository Contract
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
-      
+
       - name: Set up Python
         uses: actions/setup-python@v6
         with:
           python-version: '3.11'
-      
-      - name: Install PyYAML
+
+      - name: Install contract parser
         run: pip install PyYAML
-      
-      - name: Validate beads.yaml files
-        run: python validate_beads.py
+
+      - name: Validate MAC contract
+        run: make validate
 
   # Check accessibility and color contrast
   accessibility:
@@ -31,12 +31,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
-      
+
       - name: Set up Node.js
         uses: actions/setup-node@v6
         with:
           node-version: '20'
-      
+
       - name: Check Color Contrast (WCAG AA)
         run: |
           chmod +x scripts/check-all-contrast.sh
@@ -48,20 +48,20 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
-      
+
       - name: Set up Java for Clojure
         uses: actions/setup-java@v5
         with:
           distribution: 'temurin'
           java-version: '17'
-      
+
       - name: Install Leiningen
         run: |
           wget https://raw.githubusercontent.com/technomancy/leiningen/stable/bin/lein
           chmod +x lein
           sudo mv lein /usr/local/bin/
           lein version
-      
+
       - name: Run backend tests
         working-directory: apps/aviation-missions-app/backend
         run: |
@@ -75,23 +75,23 @@ jobs:
     continue-on-error: true  # non-blocking: many test endpoints are stubs (return 404)
     steps:
       - uses: actions/checkout@v6
-      
+
       - name: Set up Python
         uses: actions/setup-python@v6
         with:
           python-version: '3.11'
-      
+
       - name: Set up Node.js
         uses: actions/setup-node@v6
         with:
           node-version: '20'
-      
+
       - name: Install Python dependencies
         working-directory: apps/flight-planner
         run: |
           pip install -r requirements.txt
           pip install pytest pytest-cov
-      
+
       - name: Run Python tests
         working-directory: apps/flight-planner
         run: pytest --ignore=tests/integration_test.py --ignore=tests/test_integration.py
@@ -99,11 +99,11 @@ jobs:
       - name: Install frontend dependencies
         working-directory: apps/flight-planner/frontend
         run: npm ci
-      
+
       - name: Type check frontend
         working-directory: apps/flight-planner/frontend
         run: npm run type-check
-      
+
       - name: Lint frontend
         working-directory: apps/flight-planner/frontend
         run: npm run lint
@@ -114,22 +114,22 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
-      
+
       - name: Set up Python
         uses: actions/setup-python@v6
         with:
           python-version: '3.11'
-      
+
       - name: Install dependencies
         working-directory: apps/flightschool
         run: |
           pip install -r requirements.txt
           pip install pytest pytest-cov
-      
+
       - name: Run tests
         working-directory: apps/flightschool
         run: pytest --cov=app --cov-report=xml
-      
+
       - name: Upload coverage
         uses: codecov/codecov-action@v6
         with:
@@ -142,31 +142,31 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
-      
+
       - name: Set up Python
         uses: actions/setup-python@v6
         with:
           python-version: '3.11'
-      
+
       - name: Set up Node.js
         uses: actions/setup-node@v6
         with:
           node-version: '20'
-      
+
       - name: Install Python dependencies
         working-directory: apps/foreflight-dashboard
         run: |
           pip install -r requirements.txt
           pip install pytest pytest-cov
-      
+
       - name: Run Python tests
         working-directory: apps/foreflight-dashboard
         run: pytest
-      
+
       - name: Install frontend dependencies
         working-directory: apps/foreflight-dashboard/frontend
         run: npm ci
-      
+
       - name: Build frontend
         working-directory: apps/foreflight-dashboard/frontend
         run: npm run build
@@ -177,26 +177,26 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
-      
+
       - name: Set up Python
         uses: actions/setup-python@v6
         with:
           python-version: '3.11'
-      
+
       - name: Install Python linting tools
         run: |
           pip install black flake8 isort
-      
+
       - name: Check Python formatting
         run: |
           black --check apps/*/src apps/*/app apps/*/backend 2>/dev/null || true
           flake8 apps/*/src apps/*/app apps/*/backend 2>/dev/null || true
-      
+
       - name: Set up Node.js
         uses: actions/setup-node@v6
         with:
           node-version: '20'
-      
+
       - name: Check JavaScript/TypeScript formatting
         run: |
           npx prettier --check "apps/**/frontend/**/*.{js,jsx,ts,tsx}" 2>/dev/null || true
@@ -207,7 +207,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
-      
+
       - name: Run Trivy vulnerability scanner
         uses: aquasecurity/trivy-action@master
         with:
@@ -215,7 +215,7 @@ jobs:
           scan-ref: '.'
           format: 'sarif'
           output: 'trivy-results.sarif'
-      
+
       - name: Upload Trivy results to GitHub Security
         uses: github/codeql-action/upload-sarif@v4
         with:
@@ -225,7 +225,7 @@ jobs:
   build-check:
     name: Build Check
     runs-on: ubuntu-latest
-    needs: [validate-beads, accessibility]
+    needs: [validate-mac, accessibility]
     steps:
       - uses: actions/checkout@v6
 
@@ -309,4 +309,3 @@ jobs:
           path: |
             apps/*/tests/
             apps/*/logs/
-

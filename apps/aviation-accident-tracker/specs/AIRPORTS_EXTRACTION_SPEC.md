@@ -1,6 +1,6 @@
 # Airport Extraction Implementation Spec
 
-**Bead:** [Aviation-o2d] Extract airport database and search to @aviation/shared-sdk
+**MAC task:** [Aviation-o2d] Extract airport database and search to @aviation/shared-sdk
 **Priority:** P0 - MVP Blocker
 **Effort:** 2-3 days
 **Dependencies:** None
@@ -278,7 +278,7 @@ private candidateCodes(code: string): string[] {
 
   // US airports: Try with/without K prefix
   // FAA codes like "7S5" are stored as "K7S5"
-  if (!code.startsWith('K') && 
+  if (!code.startsWith('K') &&
       (code.length === 3 || (code.length === 4 && /\d/.test(code)))) {
     codes.add(`K${code}`);
   }
@@ -333,14 +333,14 @@ private sequenceMatcher(a: string, b: string): number {
   // TODO: Implement proper algorithm or use library
   const maxLen = Math.max(a.length, b.length);
   if (maxLen === 0) return 1.0;
-  
+
   // Simplified: count matching characters
   let matches = 0;
   const minLen = Math.min(a.length, b.length);
   for (let i = 0; i < minLen; i++) {
     if (a[i] === b[i]) matches++;
   }
-  
+
   return matches / maxLen;
 }
 ```
@@ -355,9 +355,9 @@ static haversineDistance(
   lon2: number
 ): number {
   const R = 3440.065; // Earth radius in nautical miles
-  
+
   const toRad = (deg: number) => deg * (Math.PI / 180);
-  
+
   const φ1 = toRad(lat1);
   const φ2 = toRad(lat2);
   const Δφ = toRad(lat2 - lat1);
@@ -366,7 +366,7 @@ static haversineDistance(
   const a = Math.sin(Δφ / 2) * Math.sin(Δφ / 2) +
             Math.cos(φ1) * Math.cos(φ2) *
             Math.sin(Δλ / 2) * Math.sin(Δλ / 2);
-  
+
   const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 
   return R * c;
@@ -402,46 +402,46 @@ class Airport:
 
 class AirportDatabase:
     """Airport database with search capabilities"""
-    
+
     def __init__(self):
         self._cache: Optional[List[Dict[str, Any]]] = None
-    
+
     def load(self) -> None:
         """Load airport cache"""
         if self._cache is not None:
             return
-        
+
         # Load from data directory
         data_path = os.path.join(
             os.path.dirname(__file__),
             '../../data/airports_cache.json'
         )
-        
+
         with open(data_path, 'r') as f:
             self._cache = json.load(f)
-        
+
         print(f"Loaded {len(self._cache)} airports into cache")
-    
+
     def get_airport(self, code: str) -> Optional[Airport]:
         """Get airport by ICAO or IATA code"""
         self.load()
-        
+
         code_upper = self._normalize_code(code)
         candidates = self._candidate_codes(code_upper)
-        
+
         for airport in self._cache:
             icao = (airport.get('icao') or '').upper()
             iata = (airport.get('iata') or '').upper()
-            
+
             if icao in candidates or iata in candidates:
                 return self._to_airport(airport)
-        
+
         return None
-    
+
     def search(self, query: str, limit: int = 20) -> List[Airport]:
         """Search airports by query"""
         return self.search_advanced(query=query, limit=limit)
-    
+
     def search_advanced(
         self,
         query: Optional[str] = None,
@@ -452,58 +452,58 @@ class AirportDatabase:
     ) -> List[Airport]:
         """Advanced airport search with proximity"""
         self.load()
-        
+
         q = (query or '').strip().lower()
         has_geo = lat is not None and lon is not None
-        
+
         if not q and not has_geo:
             return []
-        
+
         candidates = []
         seen = set()
-        
+
         for airport in self._cache:
             coords = self._extract_coords(airport)
             if coords is None:
                 continue
-            
+
             lat_a, lon_a = coords
-            
+
             # Calculate distance if geo search
             dist_nm = None
             if has_geo:
                 dist_nm = self.haversine_distance(lat, lon, lat_a, lon_a)
                 if radius_nm is not None and dist_nm > radius_nm:
                     continue
-            
+
             # Score text match
             score = 0.0
             if q:
                 score = self._score_match(q, airport)
                 if score < 0.6:
                     continue
-            
+
             # Convert to Airport
             result = self._to_airport(airport)
             if dist_nm is not None:
                 result.distance_nm = round(dist_nm, 2)
-            
+
             # Deduplicate
             key = result.icao or result.iata or f"{result.latitude},{result.longitude}"
             if key in seen:
                 continue
             seen.add(key)
-            
+
             candidates.append((score, dist_nm or float('inf'), result))
-        
+
         # Sort by relevance or distance
         if has_geo and not q:
             candidates.sort(key=lambda x: x[1])
         else:
             candidates.sort(key=lambda x: (-x[0], x[1]))
-        
+
         return [x[2] for x in candidates[:limit]]
-    
+
     @staticmethod
     def haversine_distance(
         lat1: float,
@@ -513,19 +513,19 @@ class AirportDatabase:
     ) -> float:
         """Calculate distance in nautical miles"""
         R = 3440.065  # Earth radius in NM
-        
+
         φ1 = math.radians(lat1)
         φ2 = math.radians(lat2)
         Δφ = math.radians(lat2 - lat1)
         Δλ = math.radians(lon2 - lon1)
-        
+
         a = (math.sin(Δφ / 2) ** 2 +
              math.cos(φ1) * math.cos(φ2) * math.sin(Δλ / 2) ** 2)
-        
+
         c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
-        
+
         return R * c
-    
+
     # ... (similar private methods as TypeScript)
 
 # Singleton instance
@@ -626,7 +626,7 @@ describe('AirportDatabase', () => {
         radius_nm: 50,
         limit: 10
       });
-      
+
       expect(results.length).toBeGreaterThan(0);
       expect(results[0].distance_nm).toBeDefined();
       expect(results[0].distance_nm!).toBeLessThanOrEqual(50);
@@ -640,7 +640,7 @@ describe('AirportDatabase', () => {
         radius_nm: 100,
         limit: 5
       });
-      
+
       expect(results.length).toBeGreaterThan(0);
       expect(results.some(a => a.name.includes('San'))).toBe(true);
     });
@@ -651,7 +651,7 @@ describe('AirportDatabase', () => {
         lon: -122.38,
         radius_nm: 50
       });
-      
+
       // Results should be sorted by distance
       for (let i = 1; i < results.length; i++) {
         expect(results[i].distance_nm!).toBeGreaterThanOrEqual(

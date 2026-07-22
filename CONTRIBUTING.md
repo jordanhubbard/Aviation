@@ -44,11 +44,11 @@ from typing import List, Optional
 
 def process_flight_data(data: List[dict], validate: bool = True) -> Optional[dict]:
     """Process flight data from CSV import.
-    
+
     Args:
         data: List of flight records as dictionaries
         validate: Whether to validate the data
-        
+
     Returns:
         Processed flight data or None if validation fails
     """
@@ -86,65 +86,22 @@ export const processFlightData = (data: FlightData[]): number => {
 - Include code examples where helpful
 - Keep documentation up-to-date with code changes
 
-## Work Organization with Beads
+## Work Organization with MAC
 
-This monorepo uses the **beads pattern** for organizing work:
+MAC is the sole task ledger for this monorepo. Do not create repository-local
+ticket databases or Markdown task lists.
 
-### What are Beads?
+Use the current CLI from `/Users/jkh/Src/mac` when available:
 
-Beads are independent, composable units of work that enable:
-- **Parallel execution** - Multiple beads can run simultaneously
-- **Independent testing** - Each bead has its own test suite  
-- **Team collaboration** - Different teams can work on different beads
-- **Clear dependencies** - Bead relationships are explicit
+```bash
+/Users/jkh/Src/mac/.venv/bin/mac task ready --project Aviation
+/Users/jkh/Src/mac/.venv/bin/mac task create "Task title" \
+  --project Aviation --no-ticket --description "Detailed context"
+/Users/jkh/Src/mac/.venv/bin/mac task show <task-id>
+```
 
-### Creating a New Bead
-
-1. **Define the bead** in `beads.yaml`:
-   ```yaml
-   beads:
-     - name: my-new-bead
-       description: Brief description of what this bead does
-       dependencies: [other-bead-name]  # Optional
-       parallel: true  # Can run in parallel with other beads
-   ```
-
-2. **Create the bead directory**:
-   ```bash
-   mkdir -p beads/my-new-bead
-   cd beads/my-new-bead
-   ```
-
-3. **Implement the bead**:
-   ```python
-   # beads/my-new-bead/__init__.py
-   """My New Bead - Brief description."""
-   
-   from typing import Any
-   
-   def execute(input_data: Any) -> Any:
-       """Execute this bead's logic."""
-       # Implementation
-       pass
-   ```
-
-4. **Add tests**:
-   ```python
-   # beads/my-new-bead/tests/test_my_new_bead.py
-   import pytest
-   from beads.my_new_bead import execute
-   
-   def test_execute():
-       result = execute(test_input)
-       assert result == expected_output
-   ```
-
-### Bead Dependencies
-
-- Beads with no dependencies can run in parallel
-- Beads with dependencies run after their dependencies complete
-- Circular dependencies are not allowed
-- Keep dependencies minimal for maximum parallelism
+Declare dependencies with MAC task IDs. Keep implementation code and tests in
+their normal application/package directories; task topology belongs in MAC.
 
 ## Testing
 
@@ -152,7 +109,7 @@ Beads are independent, composable units of work that enable:
 
 - Aim for 80%+ code coverage
 - Write unit tests for individual functions
-- Write integration tests for multi-bead workflows
+- Write integration tests for multi-component workflows
 - Make tests fast and deterministic
 - Use descriptive test names
 

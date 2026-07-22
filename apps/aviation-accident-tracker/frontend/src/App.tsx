@@ -5,7 +5,7 @@ import L from 'leaflet';
 // import MarkerClusterGroup from 'react-leaflet-cluster'; // Package doesn't exist, clustering temporarily disabled
 import debounce from 'lodash.debounce';
 import { Badge } from './components/Badge';
-import { reportFrontendErrorToBeads } from './utils/beadsReporting';
+import { reportFrontendErrorToMac } from './utils/macReporting';
 // import { normalizeMarkers, defaultClusterOptions } from '@aviation/ui-framework';
 
 type EventRecord = {
@@ -117,7 +117,7 @@ export function App() {
             );
           })
           .catch((err) => {
-            void reportFrontendErrorToBeads(err, {
+            void reportFrontendErrorToMac(err, {
               kind: 'fetch',
               extra: { endpoint: '/api/airports', query: q },
             });
@@ -162,7 +162,7 @@ export function App() {
         setLoading(false);
       })
       .catch((err) => {
-        void reportFrontendErrorToBeads(err, {
+        void reportFrontendErrorToMac(err, {
           kind: 'fetch',
           extra: { endpoint: '/api/events', query: params.toString() },
         });
@@ -176,7 +176,7 @@ export function App() {
       .then((r) => r.json())
       .then((data) => setOptions(data))
       .catch((err) => {
-        void reportFrontendErrorToBeads(err, { kind: 'fetch', extra: { endpoint: '/api/filters/options' } });
+        void reportFrontendErrorToMac(err, { kind: 'fetch', extra: { endpoint: '/api/filters/options' } });
         setOptions({ countries: [], regions: [] });
       });
   }, []);
@@ -213,7 +213,7 @@ export function App() {
       .catch((err) => {
         if (controller.signal.aborted) return;
 
-        void reportFrontendErrorToBeads(err, {
+        void reportFrontendErrorToMac(err, {
           kind: 'fetch',
           extra: { endpoint: `/api/events/${selected.id}` },
         });

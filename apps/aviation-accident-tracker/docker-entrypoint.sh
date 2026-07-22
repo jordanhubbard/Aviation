@@ -28,31 +28,31 @@ const exitCode = process.env.AVIATION_CHILD_EXIT_CODE || 'unknown';
 
 try {
   // shared-sdk is part of the monorepo workspace build.
-  const { BeadsIssueCreator } = require('@aviation/shared-sdk');
-  const creator = new BeadsIssueCreator({
-    defaultParent: process.env.BEADS_AUTOREPORT_PARENT || 'Aviation-hd5',
+  const { MacTaskCreator } = require('@aviation/shared-sdk');
+  const creator = new MacTaskCreator({
+    project: 'Aviation',
     requireDebug: true,
     debug: String(process.env.NODE_ENV || '').toLowerCase() !== 'production',
   });
 
-  creator.createAutoFiledIssue({
+  creator.createAutoFiledTask({
     title: `[supervisor] accident-tracker ${procName} exited ${exitCode}`.slice(0, 180),
     description: `Supervisor detected a non-zero child exit.\n\nProcess: ${procName}\nExit code: ${exitCode}\n`,
     priority: 1,
-    autoFiledComment: `non-zero child exit (${procName}=${exitCode})`,
-  });
+    autoFiledContext: `non-zero child exit (${procName}=${exitCode})`,
+  }).catch(() => {});
 } catch {
   // ignore
 }
 NODE
         fi
     }
-    
+
     # Start backend API (Express)
     BACKEND_PORT=${PORT:-${BACKEND_PORT:-3002}}
     echo "Starting Express API on port ${BACKEND_PORT}..."
     cd /app/backend
-    
+
     if [ "${NODE_ENV}" = "development" ]; then
         # Development mode with auto-reload
         npm run dev &
@@ -60,10 +60,10 @@ NODE
         # Production mode
         npm start &
     fi
-    
+
     BACKEND_PID=$!
     cd /app
-    
+
     # In development, start frontend dev server
     if [ "${NODE_ENV}" = "development" ] && [ -d "/app/frontend" ]; then
         FRONTEND_PORT=${FRONTEND_PORT:-5173}
@@ -77,14 +77,14 @@ NODE
         echo "Production mode: Backend serves built frontend static files"
         FRONTEND_PID=""
     fi
-    
+
     # Handle shutdown signals
     if [ -n "$FRONTEND_PID" ]; then
         trap 'kill $BACKEND_PID $FRONTEND_PID; exit 0' TERM INT
     else
         trap 'kill $BACKEND_PID; exit 0' TERM INT
     fi
-    
+
     # Keep the script running
     echo "✅ Services started successfully!"
     if [ -n "$FRONTEND_PID" ]; then

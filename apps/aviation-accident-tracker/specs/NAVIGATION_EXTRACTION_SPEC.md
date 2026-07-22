@@ -1,6 +1,6 @@
 # Navigation Utilities Extraction Implementation Spec
 
-**Bead:** [Aviation-ywm] Extract navigation utilities to @aviation/shared-sdk
+**MAC task:** [Aviation-ywm] Extract navigation utilities to @aviation/shared-sdk
 **Priority:** P0 - MVP Blocker
 **Effort:** 2 days
 **Dependencies:** None
@@ -103,14 +103,14 @@ export const EARTH_RADIUS = {
 /**
  * Calculate great circle distance between two coordinates
  * Uses the Haversine formula for accuracy
- * 
+ *
  * @param lat1 - Starting latitude (decimal degrees)
  * @param lon1 - Starting longitude (decimal degrees)
  * @param lat2 - Ending latitude (decimal degrees)
  * @param lon2 - Ending longitude (decimal degrees)
  * @param unit - Distance unit (default: 'nm')
  * @returns Distance in specified unit
- * 
+ *
  * @example
  * // Distance from KSFO to KJFK
  * const dist = haversineDistance(37.62, -122.38, 40.64, -73.78);
@@ -124,7 +124,7 @@ export function haversineDistance(
   unit: DistanceUnit = 'nm'
 ): number {
   const R = EARTH_RADIUS[unit.toUpperCase() as keyof typeof EARTH_RADIUS];
-  
+
   const φ1 = toRadians(lat1);
   const φ2 = toRadians(lat2);
   const Δφ = toRadians(lat2 - lat1);
@@ -133,7 +133,7 @@ export function haversineDistance(
   const a = Math.sin(Δφ / 2) * Math.sin(Δφ / 2) +
             Math.cos(φ1) * Math.cos(φ2) *
             Math.sin(Δλ / 2) * Math.sin(Δλ / 2);
-  
+
   const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 
   return R * c;
@@ -435,7 +435,7 @@ export function formatLatitudeDMS(lat: number): string {
   const minutes = Math.floor((abs - degrees) * 60);
   const seconds = Math.round(((abs - degrees) * 60 - minutes) * 60);
   const direction = lat >= 0 ? 'N' : 'S';
-  
+
   return `${degrees}°${minutes}'${seconds}"${direction}`;
 }
 
@@ -445,7 +445,7 @@ export function formatLongitudeDMS(lon: number): string {
   const minutes = Math.floor((abs - degrees) * 60);
   const seconds = Math.round(((abs - degrees) * 60 - minutes) * 60);
   const direction = lon >= 0 ? 'E' : 'W';
-  
+
   return `${degrees}°${minutes}'${seconds}"${direction}`;
 }
 
@@ -466,19 +466,19 @@ export function parseDMS(dms: string): [number, number] | null {
   // Simple regex-based parser
   const pattern = /(\d+)°(\d+)'(\d+(?:\.\d+)?)[""]([NSEW])\s+(\d+)°(\d+)'(\d+(?:\.\d+)?)[""]([NSEW])/;
   const match = dms.match(pattern);
-  
+
   if (!match) return null;
-  
-  const lat = parseInt(match[1]) + 
-              parseInt(match[2]) / 60 + 
+
+  const lat = parseInt(match[1]) +
+              parseInt(match[2]) / 60 +
               parseFloat(match[3]) / 3600;
   const latSign = match[4] === 'N' ? 1 : -1;
-  
-  const lon = parseInt(match[5]) + 
-              parseInt(match[6]) / 60 + 
+
+  const lon = parseInt(match[5]) +
+              parseInt(match[6]) / 60 +
               parseFloat(match[7]) / 3600;
   const lonSign = match[8] === 'E' ? 1 : -1;
-  
+
   return [lat * latSign, lon * lonSign];
 }
 
@@ -748,7 +748,7 @@ describe('haversineDistance', () => {
     const nm = haversineDistance(37.62, -122.38, 40.64, -73.78, 'nm');
     const sm = haversineDistance(37.62, -122.38, 40.64, -73.78, 'sm');
     const km = haversineDistance(37.62, -122.38, 40.64, -73.78, 'km');
-    
+
     expect(sm / nm).toBeCloseTo(1.15078, 2);
     expect(km / nm).toBeCloseTo(1.852, 2);
   });

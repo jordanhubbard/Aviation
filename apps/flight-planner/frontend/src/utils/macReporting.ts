@@ -1,4 +1,4 @@
-type BeadsEnabledResponse = {
+type MacEnabledResponse = {
   enabled: boolean
 }
 
@@ -13,7 +13,7 @@ type FrontendErrorContext = {
   extra?: Record<string, unknown>
 }
 
-type BeadsErrorReport = {
+type MacErrorReport = {
   source: 'frontend'
   message: string
   stack?: string | null
@@ -25,19 +25,19 @@ type BeadsErrorReport = {
 let enabledPromise: Promise<boolean> | null = null
 const recent = new Map<string, number>()
 
-const hashString = (s: string) => {
-  let h = 0
-  for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) | 0
-  return String(h)
+const hashString = (value: string) => {
+  let hash = 0
+  for (let i = 0; i < value.length; i++) hash = (hash * 31 + value.charCodeAt(i)) | 0
+  return String(hash)
 }
 
-export const beadsReportingEnabled = async () => {
+export const macReportingEnabled = async () => {
   if (enabledPromise) return enabledPromise
 
-  enabledPromise = fetch('/api/beads/enabled', { method: 'GET' })
-    .then(async (r) => {
-      if (!r.ok) return false
-      const json = (await r.json()) as BeadsEnabledResponse
+  enabledPromise = fetch('/api/mac/enabled', { method: 'GET' })
+    .then(async (response) => {
+      if (!response.ok) return false
+      const json = (await response.json()) as MacEnabledResponse
       return Boolean(json.enabled)
     })
     .catch(() => false)
@@ -53,34 +53,34 @@ const shouldSend = (signature: string, ttlMs = 15 * 60 * 1000) => {
   return true
 }
 
-export const reportFrontendErrorToBeads = async (
+export const reportFrontendErrorToMac = async (
   error: unknown,
-  ctx: FrontendErrorContext,
+  context: FrontendErrorContext,
 ): Promise<void> => {
-  if (!(await beadsReportingEnabled())) return
+  if (!(await macReportingEnabled())) return
 
   const err = error instanceof Error ? error : new Error(String(error))
   const message = err.message || String(error)
   const stack = err.stack || null
 
-  const signature = hashString(`${ctx.kind}\n${message}\n${stack ?? ''}`)
+  const signature = hashString(`${context.kind}\n${message}\n${stack ?? ''}`)
   if (!shouldSend(signature)) return
 
-  const payload: BeadsErrorReport = {
+  const payload: MacErrorReport = {
     source: 'frontend',
     message,
     stack,
     url: window.location?.href ?? null,
     user_agent: navigator.userAgent,
     context: {
-      kind: ctx.kind,
-      componentStack: ctx.componentStack,
-      ...ctx.extra,
+      kind: context.kind,
+      componentStack: context.componentStack,
+      ...context.extra,
     },
   }
 
   try {
-    await fetch('/api/beads/report', {
+    await fetch('/api/mac/report', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload),
@@ -90,12 +90,12 @@ export const reportFrontendErrorToBeads = async (
   }
 }
 
-export const installFrontendBeadsErrorReporting = () => {
-  window.addEventListener('error', (ev) => {
-    void reportFrontendErrorToBeads(ev.error ?? ev.message, { kind: 'window.onerror' })
+export const installFrontendMacErrorReporting = () => {
+  window.addEventListener('error', (event) => {
+    void reportFrontendErrorToMac(event.error ?? event.message, { kind: 'window.onerror' })
   })
 
-  window.addEventListener('unhandledrejection', (ev) => {
-    void reportFrontendErrorToBeads(ev.reason, { kind: 'unhandledrejection' })
+  window.addEventListener('unhandledrejection', (event) => {
+    void reportFrontendErrorToMac(event.reason, { kind: 'unhandledrejection' })
   })
 }

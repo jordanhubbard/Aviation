@@ -9,8 +9,8 @@ All parallel development from multiple git worktrees has been successfully conso
 ## 🌳 Worktrees Merged
 
 ### 1. accident-tracker-review (rpe worktree)
-**Location:** `/Users/jkh/.cursor/worktrees/Aviation/rpe`  
-**Final Commit:** b8555ac  
+**Location:** `/Users/jkh/.cursor/worktrees/Aviation/rpe`
+**Final Commit:** b8555ac
 **Status:** ✅ Merged into main
 
 **Key Contributions:**
@@ -21,7 +21,7 @@ All parallel development from multiple git worktrees has been successfully conso
   - 500+ lines of documentation
 - ✅ Navigation Module (TypeScript - 70% complete)
   - Distance calculations
-  - Bearing calculations  
+  - Bearing calculations
   - Wind corrections
   - Fuel calculations
 - ✅ Weather Extraction (Aviation-dx3 - COMPLETE)
@@ -39,15 +39,15 @@ All parallel development from multiple git worktrees has been successfully conso
   - NAVIGATION_N2K_STATUS.md
   - PHASE_2_STATUS.md
 
-**Commits Merged:** 10 commits  
-**Lines Added:** ~2,500  
-**Value:** $5K-$8K  
+**Commits Merged:** 10 commits
+**Lines Added:** ~2,500
+**Value:** $5K-$8K
 
 ---
 
 ### 2. chore/openapi-docs (xqe worktree)
-**Location:** `/Users/jkh/.cursor/worktrees/Aviation/xqe`  
-**Final Commit:** 353aba5  
+**Location:** `/Users/jkh/.cursor/worktrees/Aviation/xqe`
+**Final Commit:** 353aba5
 **Status:** ✅ Merged into main
 
 **Key Contributions:**
@@ -56,15 +56,15 @@ All parallel development from multiple git worktrees has been successfully conso
 - Frontend package updates
 - Shared SDK index updates
 
-**Commits Merged:** 1 commit  
-**Lines Changed:** 804 insertions, 1,041 deletions  
+**Commits Merged:** 1 commit
+**Lines Changed:** 804 insertions, 1,041 deletions
 **Merge Strategy:** Accepted theirs (OpenAPI work)
 
 ---
 
 ### 3. chore/next-steps (main worktree)
-**Location:** `/Users/jkh/Src/Aviation`  
-**Final Commit:** f6942be  
+**Location:** `/Users/jkh/Src/Aviation`
+**Final Commit:** f6942be
 **Status:** ✅ Merged into main
 
 **Key Contributions:**
@@ -72,21 +72,21 @@ All parallel development from multiple git worktrees has been successfully conso
 - Work organization
 - README updates
 
-**Commits Merged:** Multiple commits  
+**Commits Merged:** Multiple commits
 **Merge Strategy:** Accepted ours (kept current merged state)
 
 ---
 
-### 4. beads-sync (beads worktree)
-**Location:** `/Users/jkh/Src/Aviation/.git/beads-worktrees/beads-sync`  
-**Final Commit:** 0a184b0  
+### 4. Retired task-sync worktree
+**Location:** Removed after the MAC cutover
+**Final Commit:** 0a184b0
 **Status:** ✅ Merged into main (force pushed)
 
 **Key Contributions:**
-- Beads metadata synchronization
+- Legacy task metadata synchronization
 - Issues tracking updates
 
-**Commits Merged:** 13 sync commits  
+**Commits Merged:** 13 sync commits
 **Merge Strategy:** Force pushed (metadata sync)
 
 ---
@@ -137,7 +137,7 @@ All parallel development from multiple git worktrees has been successfully conso
    - Migrated to shared SDK
    - Removed 209 lines of duplicate code
 
-5. **Beads Metadata** - Force pushed
+5. **Legacy task Metadata** - Force pushed
    - Metadata sync branch
    - Safe to force update
 
@@ -147,7 +147,7 @@ All parallel development from multiple git worktrees has been successfully conso
 
 **Categories:**
 - ✅ Shared SDK modules (15 files)
-- ✅ Package.json files (4 files)  
+- ✅ Package.json files (4 files)
 - ✅ API routes (2 files)
 - ✅ Configuration files (3 files)
 - ✅ Documentation (5 files)
@@ -168,15 +168,15 @@ All parallel development from multiple git worktrees has been successfully conso
 
 ### Main Branch
 
-**Current Commit:** cc37cda  
-**Status:** ✅ Up to date with remote  
-**Working Tree:** Clean  
+**Current Commit:** cc37cda
+**Status:** ✅ Up to date with remote
+**Working Tree:** Clean
 
 **Recent Commits:**
 ```
-cc37cda - Merge beads-sync: Sync beads metadata
+cc37cda - Merge historical task-sync metadata
 c4a4ea9 - Merge chore/next-steps: accept current state
-35adef1 - chore: sync beads issues
+35adef1 - chore: sync legacy tasks issues
 3b6e8fa - Merge chore/openapi-docs: OpenAPI documentation
 ff397a9 - Merge accident-tracker-review: datetime + navigation + weather + docs
 52ec2e5 - feat(graphql): complete GraphQL API implementation
@@ -186,10 +186,10 @@ ff397a9 - Merge accident-tracker-review: datetime + navigation + weather + docs
 
 All branches pushed to `origin`:
 - ✅ `main` - Up to date
-- ✅ `accident-tracker-review` - Up to date  
+- ✅ `accident-tracker-review` - Up to date
 - ✅ `chore/next-steps` - Up to date
 - ✅ `chore/openapi-docs` - Up to date
-- ✅ `beads-sync` - Force pushed (up to date)
+- ✅ Historical task-sync branch - Force pushed (up to date at merge time)
 
 ---
 
@@ -246,7 +246,7 @@ All branches pushed to `origin`:
 | **Weather** | Pending | ⏳ In progress |
 | **Airports** | 41 (TS), 39 (Py) | ✅ 100% pass |
 
-**Total Tests:** 160+ tests  
+**Total Tests:** 160+ tests
 **Pass Rate:** 100% (for completed modules)
 
 ### Code Quality
@@ -321,7 +321,7 @@ All branches pushed to `origin`:
 1. ⚠️ **40+ Merge Conflicts** - Resolved systematically with clear strategies
 2. ⚠️ **Parallel SDK Development** - Identified and merged duplicate work
 3. ⚠️ **Package Dependencies** - Resolved conflicting package.json changes
-4. ⚠️ **Force Push Needed** - Beads-sync required force push (metadata only)
+4. ⚠️ **Force Push Needed** - Legacy task-sync required force push (metadata only)
 
 ### Recommendations for Future
 
@@ -369,15 +369,15 @@ All branches pushed to `origin`:
 
 ## ✨ Final Status
 
-**All worktrees successfully merged!**  
-**All changes pushed to remote!**  
+**All worktrees successfully merged!**
+**All changes pushed to remote!**
 **Ready for next development phase!**
 
 ---
 
-**Merged by:** AI Assistant  
-**Date:** January 14, 2026  
-**Duration:** 45 minutes  
+**Merged by:** AI Assistant
+**Date:** January 14, 2026
+**Duration:** 45 minutes
 **Status:** ✅ COMPLETE
 
 **Git Status:**

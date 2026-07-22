@@ -14,7 +14,7 @@ This document provides comprehensive guidelines for LLM agents working with this
 6. [Monorepo Best Practices](#monorepo-best-practices)
 7. [Aviation SDK & Shared Tools](#aviation-sdk--shared-tools)
 8. [Application-Specific Best Practices](#application-specific-best-practices)
-9. [Work Organization with Beads](#work-organization-with-beads)
+9. [Work Organization with MAC](#work-organization-with-mac)
 10. [Security & Secrets Management](#security--secrets-management)
 11. [Development Workflows](#development-workflows)
 12. [Testing Strategy](#testing-strategy)
@@ -57,7 +57,7 @@ Aviation/
 4. **Multi-Modal UI**: Support for web, mobile, and multi-tab interfaces
 5. **Polyglot**: Multiple languages optimized for each use case
 6. **Organized**: All user facing documentation must be in docs/
-7, **AI optimized**: All AI generated planning files must be in plans and all work items expressed as beads, not .md files.
+7. **AI optimized**: All AI-generated planning files must be in `plans/`; all work items belong in the Aviation project in MAC, not Markdown task lists.
 ---
 
 ## Adding New Aviation Applications
@@ -94,7 +94,6 @@ my-aviation-app/
 │   ├── package.json
 │   └── vite.config.ts
 ├── tests/
-├── beads.yaml                  # Work organization
 ├── Makefile                    # Build commands
 └── README.md
 ```
@@ -106,7 +105,6 @@ my-aviation-app/
 │   ├── index.ts               # Entry point
 │   ├── service.ts             # Background service
 │   └── api/                   # API routes
-├── beads.yaml
 ├── Makefile
 ├── package.json
 ├── tsconfig.json
@@ -124,7 +122,6 @@ my-aviation-app/
 ├── frontend/
 │   └── resources/
 │       └── public/
-├── beads.yaml
 ├── Makefile
 └── README.md
 ```
@@ -156,47 +153,18 @@ my-aviation-app/
 }
 ```
 
-#### 4. Create beads.yaml
+#### 4. Create MAC tasks
 
-Define the work organization (see [Work Organization with Beads](#work-organization-with-beads)):
+Track implementation work in the `Aviation` MAC project. Keep task topology,
+dependencies, and evidence in MAC rather than adding a repository-local ledger.
 
-```yaml
-version: "1.0"
-
-beads:
-  # Core service
-  - name: core-service
-    description: Main service logic
-    path: src/service.ts
-    dependencies: []
-    parallel: true
-    test_path: tests/service.test.ts
-    
-  # API layer
-  - name: api
-    description: REST API endpoints
-    path: src/api/
-    dependencies: [core-service]
-    parallel: false
-    test_path: tests/api.test.ts
-    
-  # Frontend (if applicable)
-  - name: frontend
-    description: User interface
-    path: frontend/src/
-    dependencies: []
-    parallel: true
-    
-execution_groups:
-  - name: initial
-    beads: [core-service, frontend]
-  - name: integration
-    beads: [api]
-    depends_on: [initial]
-
-ci:
-  test_strategy: parallel
-  max_parallel: 3
+```bash
+/Users/jkh/Src/mac/.venv/bin/mac task create "Implement core service" \
+  --project Aviation --no-ticket \
+  --description "Scope, acceptance criteria, and test plan"
+/Users/jkh/Src/mac/.venv/bin/mac task create "Add API layer" \
+  --project Aviation --no-ticket --dependencies <core-task-id> \
+  --description "REST endpoints and integration tests"
 ```
 
 #### 5. Create Makefile
@@ -388,7 +356,6 @@ run-my-aviation-app:
 #### 12. Register with CI/CD
 
 The app will be automatically picked up by CI/CD if:
-- It has a `beads.yaml` file (validated by `python validate_beads.py`)
 - It has test scripts defined in `package.json` or `Makefile`
 - Tests are in standard locations (`tests/`, `test/`)
 
@@ -598,18 +565,18 @@ make ci-check
 
 Or manually run each step:
 
-#### 1. Validate Beads Configuration
+#### 1. Validate the MAC Repository Contract
 
 ```bash
-python validate_beads.py
+make validate
 ```
 
 **Expected Output:**
 ```
-✅ All applications have valid beads configuration!
+✅ MAC repository contract valid
 ```
 
-**If it fails**: Fix your `beads.yaml` files to resolve validation errors.
+**If it fails**: Fix `.mac/project.yaml` so it matches the repository's real bootstrap and test contract.
 
 #### 2. Run All Tests
 
@@ -681,7 +648,7 @@ The CI/CD pipeline (`.github/workflows/ci.yml`) runs automatically on:
 
 **Pipeline Stages:**
 
-1. **Validate Beads** - Validates all `beads.yaml` files
+1. **Validate MAC** - Checks the root repository contract
 2. **Accessibility** - Checks WCAG AA color contrast
 3. **Test Applications** - Runs tests for each app:
    - `test-missions-app` - Clojure backend tests
@@ -702,7 +669,7 @@ The CI/CD pipeline (`.github/workflows/ci.yml`) runs automatically on:
 4. ✅ **Keep tests passing** - Don't commit code that breaks existing tests
 5. ✅ **Maintain 80%+ coverage** - Add tests for new code
 6. ✅ **No linter errors** - Clean code only
-7. ✅ **Validate beads** - All `beads.yaml` files must be valid
+7. ✅ **Keep MAC current** - Task state and evidence must match the repository outcome
 
 ### Local CI/CD Simulation
 
@@ -715,8 +682,8 @@ set -e
 
 echo "🔍 Running CI/CD checks locally..."
 
-echo "1. Validating beads configuration..."
-python validate_beads.py
+echo "1. Validating MAC repository contract..."
+make validate
 
 echo "2. Checking color contrast..."
 ./scripts/check-all-contrast.sh
@@ -746,10 +713,10 @@ chmod +x scripts/ci-check-local.sh
 
 New applications are **automatically** included in CI/CD if they follow the standard structure:
 
-1. **Have a `beads.yaml` file** - Will be validated automatically
-2. **Have test scripts** - `npm test` or `pytest` or `lein test`
-3. **Follow naming conventions** - Tests in `tests/` or `test/` directory
-4. **Have a Makefile** - With standard targets (`build`, `test`, `clean`)
+1. **Have test scripts** - `npm test` or `pytest` or `lein test`
+2. **Follow naming conventions** - Tests in `tests/` or `test/` directory
+3. **Have a Makefile** - With standard targets (`build`, `test`, `clean`)
+4. **Track work in MAC** - Use the `Aviation` project for tasks and dependencies
 
 To add custom CI/CD steps, edit `.github/workflows/ci.yml`:
 
@@ -759,16 +726,16 @@ test-my-app:
   runs-on: ubuntu-latest
   steps:
     - uses: actions/checkout@v4
-    
+
     - name: Set up Node.js
       uses: actions/setup-node@v6
       with:
         node-version: '20'
-    
+
     - name: Install dependencies
       working-directory: apps/my-aviation-app
       run: npm ci
-    
+
     - name: Run tests
       working-directory: apps/my-aviation-app
       run: npm test
@@ -789,7 +756,7 @@ Common failures:
 
 | Error | Cause | Fix |
 |-------|-------|-----|
-| "beads.yaml not found" | Missing beads configuration | Add `beads.yaml` to your app |
+| "MAC repository contract invalid" | Root contract is missing or stale | Update `.mac/project.yaml` |
 | "Test failed" | Failing unit/integration tests | Fix the failing tests |
 | "Lint errors" | Code style violations | Run `npm run format` or `black` |
 | "Type error" | TypeScript type issues | Fix type errors, run `npm run type-check` |
@@ -892,44 +859,44 @@ mypy>=1.7                     # Type checker
 {
   "typescript": "^5.0.0",        // Type safety
   "@types/node": "^20.0.0",      // Node.js types
-  
+
   // React (frontends)
   "react": "^18.2.0",
   "react-dom": "^18.2.0",
   "react-router-dom": "^7.11.0",
-  
+
   // Build tools
   "vite": "^7.3.0",              // Fast bundler
   "vitest": "^4.0.16",           // Testing
   "@vitejs/plugin-react": "^5.1.2",
-  
+
   // UI libraries
   "@mui/material": "^5.15.0",    // Material UI
   "@mui/icons-material": "^5.15.0",
   "@emotion/react": "^11.11.1",
   "@emotion/styled": "^11.11.0",
-  
+
   // Forms & validation
   "react-hook-form": "^7.48.2",
   "@hookform/resolvers": "^5.2.2",
   "yup": "^1.4.0",
-  
+
   // Data fetching
   "axios": "^1.6.2",
   "react-query": "^3.39.3",
-  
+
   // Maps (flight-planner)
   "leaflet": "^1.9.4",
   "react-leaflet": "^4.2.1",
-  
+
   // State management
   "zustand": "^4.4.7",
-  
+
   // Testing
   "@testing-library/react": "^13.4.0",
   "@testing-library/jest-dom": "^6.1.5",
   "@playwright/test": "^1.50.0",
-  
+
   // Code quality
   "eslint": "^8.55.0",
   "@typescript-eslint/eslint-plugin": "^6.14.0",
@@ -953,33 +920,33 @@ mypy>=1.7                     # Type checker
 ;; project.clj
 :dependencies [
   [org.clojure/clojure "1.11.1"]
-  
+
   ;; Web framework
   [ring/ring-core "1.11.0"]
   [ring/ring-jetty-adapter "1.11.0"]
   [ring/ring-json "0.5.1"]
   [compojure "1.7.0"]
-  
+
   ;; JSON handling
   [cheshire "5.12.0"]
-  
+
   ;; Database
   [com.h2database/h2 "2.2.224"]
   [org.clojure/java.jdbc "0.7.12"]
   [honeysql "1.0.461"]
-  
+
   ;; Security
   [buddy/buddy-hashers "1.8.158"]
-  
+
   ;; Utilities
   [ring-cors "0.1.13"]
   [clj-time "0.15.2"]
   [clj-commons/clj-yaml "1.0.29"]
-  
+
   ;; API documentation
   [metosin/ring-swagger "0.26.2"]
   [metosin/compojure-api "2.0.0-alpha31"]
-  
+
   ;; Logging
   [org.clojure/tools.logging "1.2.4"]
   [ch.qos.logback/logback-classic "1.4.14"]
@@ -1792,21 +1759,21 @@ export class MyAviationService extends BackgroundService {
 
   protected async onStart(): Promise<void> {
     this.logger.info('Starting aviation service...');
-    
+
     const apiKey = this.secrets.getRequired('API_KEY');
-    
+
     // Initialize your service
     await this.initialize(apiKey);
-    
+
     this.logger.info('Aviation service started successfully');
   }
 
   protected async onStop(): Promise<void> {
     this.logger.info('Stopping aviation service...');
-    
+
     // Cleanup
     await this.cleanup();
-    
+
     this.logger.info('Aviation service stopped');
   }
 
@@ -1828,7 +1795,7 @@ import { Flight, Position } from '@aviation/shared-sdk';
 
 export async function trackFlight(callsign: string): Promise<Flight> {
   const flightData = await fetchFlightData(callsign);
-  
+
   const flight: Flight = {
     callsign: flightData.callsign,
     aircraft: {
@@ -1845,7 +1812,7 @@ export async function trackFlight(callsign: string): Promise<Flight> {
     estimatedTimeEnroute: flightData.ete,
     fuelOnBoard: flightData.fob,
   };
-  
+
   return flight;
 }
 ```
@@ -1943,7 +1910,7 @@ class Booking(db.Model):
     instructor_id = db.Column(db.Integer, db.ForeignKey('user.id'))
     start_time = db.Column(db.DateTime, nullable=False)
     end_time = db.Column(db.DateTime, nullable=False)
-    
+
     # Prevent double booking
     __table_args__ = (
         db.CheckConstraint('start_time < end_time'),
@@ -1989,19 +1956,19 @@ def admin_users():
 ```python
 def validate_foreflight_csv(df: pd.DataFrame) -> List[str]:
     errors = []
-    
+
     # Check required columns
     required = ['Date', 'Aircraft ID', 'From', 'To', 'Total Time']
     missing = set(required) - set(df.columns)
     if missing:
         errors.append(f"Missing columns: {missing}")
-    
+
     # Validate ICAO codes
     for col in ['From', 'To']:
         invalid = df[~df[col].str.match(r'^[A-Z]{4}$')]
         if not invalid.empty:
             errors.append(f"Invalid {col} codes: {invalid[col].tolist()}")
-    
+
     return errors
 ```
 
@@ -2090,66 +2057,35 @@ export class WeatherApiClient {
 
 ---
 
-## Work Organization with Beads
+## Work Organization with MAC
 
-### What are Beads?
+MAC is the sole task ledger for this repository. The `Aviation` project holds
+task state, dependencies, dispatch, review, and evidence. Do not add local
+ticket databases, per-app task YAML, or Markdown task lists.
 
-Beads are independent, composable units of work that enable:
-1. **Parallel execution** - Multiple beads can run simultaneously
-2. **Independent testing** - Each bead has its own test suite
-3. **Team collaboration** - Different teams work on different beads
-4. **Clear dependencies** - Bead relationships are explicit
-
-### Bead Structure
-
-```yaml
-version: "1.0"
-
-beads:
-  # Define each bead
-  - name: bead-name
-    description: What this bead does
-    path: src/path/to/code.ts
-    dependencies: [other-bead]  # Optional
-    parallel: true              # Can run in parallel?
-    test_path: tests/bead_test.ts
-
-# Define execution groups
-execution_groups:
-  - name: group-name
-    beads: [bead1, bead2]
-    depends_on: [other-group]
-
-# CI/CD integration
-ci:
-  test_strategy: parallel
-  max_parallel: 4
-  test_groups:
-    - name: unit-tests
-      beads: [bead1, bead2]
-```
-
-### Best Practices for Beads
-
-1. **Keep beads small and focused** - Each bead should do one thing well
-2. **Minimize dependencies** - Fewer dependencies = more parallelism
-3. **Test each bead independently** - Don't rely on other beads in tests
-4. **Document dependencies** - Make relationships explicit
-5. **Use execution groups** - Organize related beads together
-
-### Validating Beads
+### Common task commands
 
 ```bash
-# Validate all beads.yaml files
-python validate_beads.py
-
-# Checks for:
-# - Valid YAML syntax
-# - Path existence
-# - Dependency validity
-# - Circular dependencies
-# - Execution group consistency
+MAC=/Users/jkh/Src/mac/.venv/bin/mac
+$MAC task ready --project Aviation
+$MAC task show <task-id>
+$MAC task create "Task title" --project Aviation \
+  --no-ticket --description "Scope, acceptance criteria, and verification plan"
+$MAC task create "Dependent task" --project Aviation \
+  --no-ticket --dependencies <task-id> \
+  --description "Why this dependency is required"
 ```
+
+### Best practices
+
+1. Keep tasks focused on one verifiable outcome.
+2. Express dependencies with MAC task IDs.
+3. Use repository tests for implementation proof and MAC evidence for task proof.
+4. Create follow-up tasks for newly discovered work rather than Markdown TODOs.
+5. Never bypass lifecycle, review, or canonical-integration gates merely to change task state.
+
+Validate the repository execution contract with `make validate`; inspect the
+live ledger with `mac task stats --project Aviation`.
 
 ---
 
@@ -2242,7 +2178,7 @@ git checkout -b feature/my-feature
 # Edit code, add tests, update docs
 
 # 3. Run quality checks
-python validate_beads.py
+make validate
 make test
 npm run lint
 
@@ -2444,7 +2380,7 @@ describe('FlightCard', () => {
 
   test('renders flight information', () => {
     render(<FlightCard flight={mockFlight} />);
-    
+
     expect(screen.getByText('UAL123')).toBeInTheDocument();
     expect(screen.getByText('KSFO')).toBeInTheDocument();
     expect(screen.getByText('KJFK')).toBeInTheDocument();
@@ -2452,7 +2388,7 @@ describe('FlightCard', () => {
 
   test('displays aircraft information', () => {
     render(<FlightCard flight={mockFlight} />);
-    
+
     expect(screen.getByText('B738')).toBeInTheDocument();
     expect(screen.getByText('N12345')).toBeInTheDocument();
   });
@@ -2560,16 +2496,16 @@ MIT
 def calculate_distance(lat1: float, lon1: float, lat2: float, lon2: float) -> float:
     """
     Calculate the great circle distance between two points on Earth.
-    
+
     Args:
         lat1: Starting latitude in degrees
         lon1: Starting longitude in degrees
         lat2: Ending latitude in degrees
         lon2: Ending longitude in degrees
-    
+
     Returns:
         Distance in nautical miles
-    
+
     Example:
         >>> calculate_distance(37.7749, -122.4194, 40.7128, -74.0060)
         2095.8
@@ -2581,13 +2517,13 @@ def calculate_distance(lat1: float, lon1: float, lat2: float, lon2: float) -> fl
 ```typescript
 /**
  * Calculate the great circle distance between two points on Earth.
- * 
+ *
  * @param lat1 - Starting latitude in degrees
  * @param lon1 - Starting longitude in degrees
  * @param lat2 - Ending latitude in degrees
  * @param lon2 - Ending longitude in degrees
  * @returns Distance in nautical miles
- * 
+ *
  * @example
  * ```typescript
  * const distance = calculateDistance(37.7749, -122.4194, 40.7128, -74.0060);
@@ -2623,7 +2559,7 @@ Use OpenAPI/Swagger:
 async def get_airport(icao: str):
     """
     Get airport information by ICAO code.
-    
+
     - **icao**: Four-letter ICAO airport code (e.g., KSFO)
     """
     return await airport_service.find_by_icao(icao)
@@ -2707,8 +2643,8 @@ make stop-all
 ### CI/CD Checks
 
 ```bash
-# Validate beads configuration
-python validate_beads.py
+# Validate the MAC repository contract
+make validate
 
 # Check color contrast
 ./scripts/check-all-contrast.sh
@@ -2716,7 +2652,7 @@ python validate_beads.py
 # Run all CI checks locally
 make ci-check  # If available
 # OR manually:
-python validate_beads.py && ./scripts/check-all-contrast.sh && make test && npm run lint
+make validate && ./scripts/check-all-contrast.sh && make test && npm run lint
 ```
 
 ### Dependency Management
@@ -2795,7 +2731,7 @@ docker-compose down -v --rmi all
 
 - [ ] Create app directory under `apps/`
 - [ ] Add `package.json` (if TypeScript) or `requirements.txt` (if Python)
-- [ ] Create `beads.yaml` for work organization
+- [ ] Create MAC tasks for implementation work and dependencies
 - [ ] Add `Makefile` with standard targets
 - [ ] Create `README.md` with documentation
 - [ ] Implement the application code
@@ -2833,7 +2769,7 @@ For questions about this monorepo structure or conventions, please:
 4. **PUSH TO REMOTE** - This is MANDATORY:
    ```bash
    git pull --rebase
-   bd sync
+   /Users/jkh/Src/mac/.venv/bin/mac task stats --project Aviation
    git push
    git status  # MUST show "up to date with origin"
    ```

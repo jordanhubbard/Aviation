@@ -1,7 +1,7 @@
 # Seed Data Generation Implementation Spec
 
-**Bead:** [Aviation-7r4] Create seed data for testing and development
-**Priority:** P1 - High Priority  
+**MAC task:** [Aviation-7r4] Create seed data for testing and development
+**Priority:** P1 - High Priority
 **Effort:** 0.5-1 day
 **Dependencies:**
 - Backend infrastructure (repository, types)
@@ -234,7 +234,7 @@ function generateFatalities(category: 'Commercial' | 'GA'): number {
 
 function selectDamage(fatalities: number): string {
   if (fatalities > 0) return 'Destroyed';
-  
+
   const rand = Math.random();
   if (rand < 0.5) return 'None';
   if (rand < 0.8) return 'Minor';
@@ -314,7 +314,7 @@ export function selectAircraft(category: 'Commercial' | 'GA') {
   if (category === 'Commercial') {
     const aircraft = aircraftTypes[Math.floor(Math.random() * aircraftTypes.length)];
     const operator = operators[Math.floor(Math.random() * operators.length)];
-    
+
     return {
       type: aircraft.type,
       operator,
@@ -330,7 +330,7 @@ export function selectAircraft(category: 'Commercial' | 'GA') {
       'Beechcraft Bonanza',
       'Diamond DA40'
     ];
-    
+
     return {
       type: gaTypes[Math.floor(Math.random() * gaTypes.length)],
       operator: undefined,
@@ -348,7 +348,7 @@ function generateRegistration(): string {
 
 function generateNNumber(): string {
   const num = Math.floor(Math.random() * 99999);
-  const suffix = Math.random() < 0.5 ? '' : 
+  const suffix = Math.random() < 0.5 ? '' :
     String.fromCharCode(65 + Math.floor(Math.random() * 26));
   return `N${num}${suffix}`;
 }
@@ -476,7 +476,7 @@ export function generateDescription(
 function selectOutcome(fatalities: number): string {
   if (fatalities > 50) return 'destroyed';
   if (fatalities > 0) return 'substantially damaged';
-  
+
   const outcomes = [
     'able to land safely',
     'diverted to an alternate airport',
@@ -484,7 +484,7 @@ function selectOutcome(fatalities: number): string {
     'able to continue the flight',
     'evacuated without incident'
   ];
-  
+
   return outcomes[Math.floor(Math.random() * outcomes.length)];
 }
 ```

@@ -1,7 +1,7 @@
 # Shared SDK Migration Audit: aviation-missions-app
 
-**Date**: 2026-01-14  
-**Auditor**: AI Assistant  
+**Date**: 2026-01-14
+**Auditor**: AI Assistant
 **Status**: ✅ **No Migration Needed**
 
 ## Executive Summary
@@ -181,6 +181,6 @@ The aviation-missions-app is correctly designed as a standalone application with
 
 ---
 
-**Bead**: Aviation-tcy  
-**Resolution**: No migration needed  
-**Next Steps**: Close bead, document in root README if needed
+**MAC task**: Aviation-tcy
+**Resolution**: No migration needed
+**Next Steps**: Close MAC task, document in root README if needed

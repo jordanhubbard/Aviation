@@ -2,24 +2,25 @@ from __future__ import annotations
 
 from fastapi import APIRouter, Request
 
-from app.schemas.beads import BeadsErrorReport, BeadsReportResponse
-from app.services.beads_reporter import beads_issue_creator
-
+from app.schemas.mac_tasks import MacErrorReport, MacReportResponse
+from app.services.mac_reporter import mac_task_creator
 
 router = APIRouter()
 
 
-@router.get("/beads/enabled", response_model=BeadsReportResponse)
-def beads_enabled() -> BeadsReportResponse:
-    enabled = beads_issue_creator.enabled()
-    return BeadsReportResponse(enabled=enabled, created=False)
+@router.get("/mac/enabled", response_model=MacReportResponse)
+def mac_enabled() -> MacReportResponse:
+    enabled = mac_task_creator.enabled()
+    return MacReportResponse(enabled=enabled, created=False)
 
 
-@router.post("/beads/report", response_model=BeadsReportResponse)
-def report_beads_issue(payload: BeadsErrorReport, request: Request) -> BeadsReportResponse:
-    enabled = beads_issue_creator.enabled()
+@router.post("/mac/report", response_model=MacReportResponse)
+def report_mac_task(payload: MacErrorReport, request: Request) -> MacReportResponse:
+    enabled = mac_task_creator.enabled()
     if not enabled:
-        return BeadsReportResponse(enabled=False, created=False, reason="beads autoreport disabled")
+        return MacReportResponse(
+            enabled=False, created=False, reason="MAC autoreport disabled"
+        )
 
     title_prefix = {
         "frontend": "[frontend]",
@@ -40,24 +41,23 @@ def report_beads_issue(payload: BeadsErrorReport, request: Request) -> BeadsRepo
     description = payload.message
     if context:
         description += "\n\nContext:\n" + "\n".join(
-            f"- {k}: {v}" for k, v in sorted(context.items())
+            f"- {key}: {value}" for key, value in sorted(context.items())
         )
     if payload.stack:
         description += "\n\nStack:\n" + payload.stack
 
     kind = (payload.context or {}).get("kind")
-    auto_comment = f"frontend error report (kind={kind or 'unknown'})"
-    res = beads_issue_creator.create_auto_filed_issue(
+    result = mac_task_creator.create_auto_filed_task(
         title=title,
         description=description,
-        issue_type="bug",
+        task_type="bug",
         priority=1,
-        auto_filed_comment=auto_comment,
+        auto_filed_context=f"frontend error report (kind={kind or 'unknown'})",
     )
 
-    return BeadsReportResponse(
+    return MacReportResponse(
         enabled=True,
-        created=res.created,
-        issue_id=res.issue_id,
-        reason=res.reason,
+        created=result.created,
+        task_id=result.task_id,
+        reason=result.reason,
     )

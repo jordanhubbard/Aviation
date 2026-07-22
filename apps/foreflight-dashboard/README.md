@@ -14,7 +14,7 @@ A modern, stateless web application for analyzing ForeFlight logbook data. This 
 
 🐳 **Container-First Architecture**: This application is designed exclusively for containerized deployment. All operations run inside Docker containers for consistency, security, and easy deployment to any container platform.
 
-🔷 **Beads Organization**: This application uses the beads pattern for work organization, enabling parallel development and testing. See [beads.yaml](beads.yaml) for the complete bead structure.
+🔷 **MAC Task Tracking**: Work for this application is tracked in the `Aviation` project in MAC, including dependencies, dispatch, review, and evidence.
 
 ## Features
 
@@ -312,10 +312,10 @@ CORS_ORIGINS=https://yourdomain.com            # CORS allowed origins
    ```bash
    # Create ECR repository
    aws ecr create-repository --repository-name foreflight-dashboard
-   
+
    # Get login token
    aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin 123456789012.dkr.ecr.us-east-1.amazonaws.com
-   
+
    # Build and push
    docker build -t foreflight-dashboard .
    docker tag foreflight-dashboard:latest 123456789012.dkr.ecr.us-east-1.amazonaws.com/foreflight-dashboard:latest
@@ -365,7 +365,7 @@ CORS_ORIGINS=https://yourdomain.com            # CORS allowed origins
    # Install gcloud CLI and authenticate
    gcloud auth login
    gcloud config set project your-project-id
-   
+
    # Deploy directly from source
    gcloud run deploy foreflight-dashboard \
      --source . \
@@ -415,7 +415,7 @@ CORS_ORIGINS=https://yourdomain.com            # CORS allowed origins
    curl -fsSL https://get.docker.com -o get-docker.sh
    sh get-docker.sh
    sudo usermod -aG docker $USER
-   
+
    # Install Docker Compose
    sudo curl -L "https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
    sudo chmod +x /usr/local/bin/docker-compose
@@ -426,7 +426,7 @@ CORS_ORIGINS=https://yourdomain.com            # CORS allowed origins
    # Clone repository
    git clone https://github.com/jordanhubbard/foreflight-dashboard.git
    cd foreflight-dashboard
-   
+
    # Create production environment file
    cat > .env.production << EOF
    ENVIRONMENT=production
@@ -434,7 +434,7 @@ CORS_ORIGINS=https://yourdomain.com            # CORS allowed origins
    FASTAPI_PORT=5051
    REACT_DEV_PORT=3005
    EOF
-   
+
    # Deploy with Docker Compose
    docker-compose -f docker-compose.yml --env-file .env.production up -d
    ```
@@ -444,7 +444,7 @@ CORS_ORIGINS=https://yourdomain.com            # CORS allowed origins
    server {
        listen 80;
        server_name yourdomain.com;
-       
+
        location / {
           proxy_pass http://localhost:3005;
            proxy_set_header Host $host;
@@ -556,4 +556,4 @@ MIT License
 2. Create a feature branch
 3. Commit your changes
 4. Push to the branch
-5. Create a Pull Request 
+5. Create a Pull Request

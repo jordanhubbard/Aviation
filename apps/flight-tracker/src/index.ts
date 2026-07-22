@@ -1,25 +1,31 @@
-import http from 'http';
-import { BeadsIssueCreator, installNodeProcessErrorReporting } from '@aviation/shared-sdk';
-import { FlightTrackerService } from './service';
-import { FlightWebSocketServer } from './websocket-server';
-import { DataPublisher } from './data-publisher';
+import http from "http";
+import {
+  MacTaskCreator,
+  installNodeProcessErrorReporting,
+} from "@aviation/shared-sdk";
+import { FlightTrackerService } from "./service";
+import { FlightWebSocketServer } from "./websocket-server";
+import { DataPublisher } from "./data-publisher";
 
-const beadsIssueCreator = new BeadsIssueCreator({
-  defaultParent: process.env.BEADS_AUTOREPORT_PARENT || 'Aviation-hd5',
+const macTaskCreator = new MacTaskCreator({
+  project: "Aviation",
   requireDebug: true,
-  debug: process.env.NODE_ENV !== 'production',
+  debug: process.env.NODE_ENV !== "production",
 });
 
 /**
  * Flight Tracker Application Entry Point
  */
 async function main() {
-  console.log('Starting Flight Tracker Application...');
+  console.log("Starting Flight Tracker Application...");
 
-  installNodeProcessErrorReporting({ service: 'flight-tracker', issueCreator: beadsIssueCreator });
+  installNodeProcessErrorReporting({
+    service: "flight-tracker",
+    taskCreator: macTaskCreator,
+  });
 
   const service = new FlightTrackerService({
-    name: 'flight-tracker',
+    name: "flight-tracker",
     enabled: true,
     autoStart: true,
   });
@@ -29,32 +35,32 @@ async function main() {
   const dataPublisher = new DataPublisher(wsServer);
   dataPublisher.startPublishing();
 
-  const port = Number(process.env.PORT ?? '3001');
+  const port = Number(process.env.PORT ?? "3001");
   const server = http.createServer(async (req, res) => {
-    const requestUrl = new URL(req.url ?? '/', `http://localhost:${port}`);
+    const requestUrl = new URL(req.url ?? "/", `http://localhost:${port}`);
 
     const sendJson = (status: number, payload: unknown) => {
       res.writeHead(status, {
-        'Content-Type': 'application/json',
-        'Cache-Control': 'no-store',
+        "Content-Type": "application/json",
+        "Cache-Control": "no-store",
       });
       res.end(JSON.stringify(payload));
     };
 
-    if (requestUrl.pathname === '/health') {
-      sendJson(200, { status: 'ok' });
+    if (requestUrl.pathname === "/health") {
+      sendJson(200, { status: "ok" });
       return;
     }
 
-    if (requestUrl.pathname === '/api/flights' && req.method === 'GET') {
-      const bounds = ['lamin', 'lomin', 'lamax', 'lomax'].every((key) =>
-        requestUrl.searchParams.has(key)
+    if (requestUrl.pathname === "/api/flights" && req.method === "GET") {
+      const bounds = ["lamin", "lomin", "lamax", "lomax"].every((key) =>
+        requestUrl.searchParams.has(key),
       )
         ? {
-            lamin: Number(requestUrl.searchParams.get('lamin')),
-            lomin: Number(requestUrl.searchParams.get('lomin')),
-            lamax: Number(requestUrl.searchParams.get('lamax')),
-            lomax: Number(requestUrl.searchParams.get('lomax')),
+            lamin: Number(requestUrl.searchParams.get("lamin")),
+            lomin: Number(requestUrl.searchParams.get("lomin")),
+            lamax: Number(requestUrl.searchParams.get("lamax")),
+            lomax: Number(requestUrl.searchParams.get("lomax")),
           }
         : undefined;
 
@@ -67,19 +73,19 @@ async function main() {
       return;
     }
 
-    if (requestUrl.pathname === '/api/tracked' && req.method === 'GET') {
+    if (requestUrl.pathname === "/api/tracked" && req.method === "GET") {
       const tracked = service.getTrackedAircraft();
       sendJson(200, { tracked, total: tracked.length });
       return;
     }
 
-    if (requestUrl.pathname === '/api/tracked' && req.method === 'POST') {
+    if (requestUrl.pathname === "/api/tracked" && req.method === "POST") {
       const body = await new Promise<string>((resolve) => {
-        let data = '';
-        req.on('data', (chunk) => {
+        let data = "";
+        req.on("data", (chunk) => {
           data += chunk;
         });
-        req.on('end', () => resolve(data));
+        req.on("end", () => resolve(data));
       });
 
       let payload: { icao24?: string } = {};
@@ -87,35 +93,38 @@ async function main() {
         try {
           payload = JSON.parse(body) as { icao24?: string };
         } catch (error) {
-          sendJson(400, { error: 'invalid JSON payload' });
+          sendJson(400, { error: "invalid JSON payload" });
           return;
         }
       }
       if (!payload.icao24) {
-        sendJson(400, { error: 'icao24 is required' });
+        sendJson(400, { error: "icao24 is required" });
         return;
       }
       const added = service.trackAircraft(payload.icao24);
       if (!added) {
-        sendJson(404, { error: 'flight not found' });
+        sendJson(404, { error: "flight not found" });
         return;
       }
-      sendJson(200, { status: 'tracked' });
+      sendJson(200, { status: "tracked" });
       return;
     }
 
-    if (requestUrl.pathname.startsWith('/api/tracked/') && req.method === 'DELETE') {
-      const icao24 = requestUrl.pathname.replace('/api/tracked/', '').trim();
+    if (
+      requestUrl.pathname.startsWith("/api/tracked/") &&
+      req.method === "DELETE"
+    ) {
+      const icao24 = requestUrl.pathname.replace("/api/tracked/", "").trim();
       if (!icao24) {
-        sendJson(400, { error: 'icao24 is required' });
+        sendJson(400, { error: "icao24 is required" });
         return;
       }
       service.untrackAircraft(icao24);
-      sendJson(200, { status: 'removed' });
+      sendJson(200, { status: "removed" });
       return;
     }
 
-    res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
+    res.writeHead(200, { "Content-Type": "text/html; charset=utf-8" });
     res.end(`
       <!DOCTYPE html>
       <html>
@@ -530,13 +539,13 @@ async function main() {
     `);
   });
 
-  server.listen(port, '0.0.0.0', () => {
+  server.listen(port, "0.0.0.0", () => {
     console.log(`HTTP server listening on port ${port}`);
   });
 
   // Handle graceful shutdown
   const shutdown = async () => {
-    console.log('\nShutting down Flight Tracker...');
+    console.log("\nShutting down Flight Tracker...");
     await service.stop();
     await new Promise<void>((resolve) => {
       server.close(() => resolve());
@@ -544,18 +553,18 @@ async function main() {
     process.exit(0);
   };
 
-  process.on('SIGINT', () => {
+  process.on("SIGINT", () => {
     void shutdown();
   });
 
-  process.on('SIGTERM', () => {
+  process.on("SIGTERM", () => {
     void shutdown();
   });
 
-  console.log('Flight Tracker is running. Press Ctrl+C to stop.');
+  console.log("Flight Tracker is running. Press Ctrl+C to stop.");
 }
 
 main().catch((error) => {
-  console.error('Failed to start Flight Tracker:', error);
+  console.error("Failed to start Flight Tracker:", error);
   process.exit(1);
 });

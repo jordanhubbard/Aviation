@@ -1,8 +1,8 @@
 # Database Utilities Design Document
 
-> **Bead:** Database Utilities & ORM Patterns (Phase 2)  
-> **Priority:** P0 - Highest ROI  
-> **Estimated Effort:** 3-4 days  
+> **MAC task:** Database Utilities & ORM Patterns (Phase 2)
+> **Priority:** P0 - Highest ROI
+> **Estimated Effort:** 3-4 days
 > **Impact:** 4 applications (FlightSchool, ForeFlight, Aviation Missions, Accident Tracker)
 
 ---
@@ -24,7 +24,7 @@ class User(Base):
     __tablename__ = "users"
     id = Column(Integer, primary_key=True)
     created_at = Column(DateTime, server_default=func.now())
-    
+
 # Session management
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
@@ -55,7 +55,7 @@ class User(db.Model):
     __tablename__ = 'users'
     id = db.Column(db.Integer, primary_key=True)
     created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
-    
+
 # Session management
 # Handled automatically by Flask-SQLAlchemy
 ```
@@ -75,7 +75,7 @@ import { promisify } from 'util';
 class EventRepository {
     private db: sqlite3.Database;
     private dbRun: (sql: string, params?: any[]) => Promise<any>;
-    
+
     constructor(dbPath: string) {
         this.db = new Database(dbPath);
         this.dbRun = promisify(this.db.run.bind(this.db));
@@ -183,16 +183,16 @@ from sqlalchemy import Column, String, Integer
 class User(BaseModel):
     """User model with automatic timestamps."""
     __tablename__ = 'users'
-    
+
     email = Column(String(255), unique=True, nullable=False)
     first_name = Column(String(100))
     last_name = Column(String(100))
-    
+
     # Inherited from BaseModel:
     # - id (Integer, primary_key=True)
     # - created_at (DateTime, server_default=func.now())
     # - updated_at (DateTime, onupdate=func.now())
-    
+
     def to_dict(self):
         """Convert to dictionary."""
         return {
@@ -268,9 +268,9 @@ from aviation.database import BaseModel, SoftDeleteMixin
 
 class User(BaseModel, SoftDeleteMixin):
     __tablename__ = 'users'
-    
+
     email = Column(String(255))
-    
+
     # Inherited from SoftDeleteMixin:
     # - deleted_at (DateTime, nullable=True)
     # - is_deleted property
@@ -306,7 +306,7 @@ class UserRepository extends BaseRepository<User> {
     constructor(connection: DatabaseConnection) {
         super(connection, 'users');
     }
-    
+
     async findByEmail(email: string): Promise<User | null> {
         return this.findOne({ email });
     }
@@ -427,12 +427,12 @@ class User(BaseModel):
 class EventRepository {
     private db: sqlite3.Database;
     private dbRun: (sql: string, params?: any[]) => Promise<any>;
-    
+
     constructor(dbPath: string) {
         this.db = new Database(dbPath);
         this.dbRun = promisify(this.db.run.bind(this.db));
     }
-    
+
     async create(event: Event): Promise<number> {
         const result = await this.dbRun(
             'INSERT INTO events (...) VALUES (...)',
@@ -451,7 +451,7 @@ class EventRepository extends BaseRepository<Event> {
     constructor(connection: DatabaseConnection) {
         super(connection, 'events');
     }
-    
+
     // CRUD operations inherited:
     // - findAll, findById, create, update, delete
     // - findOne, exists, count
@@ -552,14 +552,14 @@ def test_base_model_timestamps():
     user = User(email='test@example.com')
     session.add(user)
     session.commit()
-    
+
     assert user.created_at is not None
     assert user.updated_at is not None
 
 def test_base_model_to_dict():
     user = User(email='test@example.com')
     data = user.to_dict()
-    
+
     assert 'id' in data
     assert 'created_at' in data
     assert 'updated_at' in data
@@ -573,10 +573,10 @@ def test_paginator():
     for i in range(50):
         session.add(User(email=f'user{i}@example.com'))
     session.commit()
-    
+
     paginator = Paginator(session.query(User), page=2, per_page=10)
     result = paginator.paginate()
-    
+
     assert result['page'] == 2
     assert len(result['items']) == 10
     assert result['total'] == 50
@@ -643,6 +643,6 @@ def test_paginator():
 
 ---
 
-**Created:** January 13, 2026  
-**Status:** Design complete, implementation ready  
+**Created:** January 13, 2026
+**Status:** Design complete, implementation ready
 **Next:** Start Phase 1 implementation

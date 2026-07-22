@@ -5,7 +5,7 @@ from typing import Any, Literal, Optional
 from pydantic import BaseModel, Field
 
 
-class BeadsErrorReport(BaseModel):
+class MacErrorReport(BaseModel):
     source: Literal["frontend", "backend", "log"] = Field(
         ..., description="Where the error originated"
     )
@@ -16,8 +16,8 @@ class BeadsErrorReport(BaseModel):
     context: dict[str, Any] = Field(default_factory=dict, description="Extra context")
 
 
-class BeadsReportResponse(BaseModel):
+class MacReportResponse(BaseModel):
     enabled: bool
     created: bool
-    issue_id: Optional[str] = None
+    task_id: Optional[str] = None
     reason: Optional[str] = None

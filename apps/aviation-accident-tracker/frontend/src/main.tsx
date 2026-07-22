@@ -1,9 +1,9 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import App from './App';
-import { installFrontendBeadsErrorReporting } from './utils/beadsReporting';
+import { installFrontendMacErrorReporting } from './utils/macReporting';
 
-installFrontendBeadsErrorReporting();
+installFrontendMacErrorReporting();
 
 ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
   <React.StrictMode>

@@ -1,22 +1,25 @@
-import { createApp } from './app.js';
-import { startScheduler } from './scheduler.js';
-import { config } from './config.js';
-import { EventRepository } from './db/repository.js';
-import { logger } from './logger.js';
-import { createServer } from 'http';
-import { runRecentIngest } from './ingest/ingestService.js';
-import { installNodeProcessErrorReporting } from '@aviation/shared-sdk';
-import { beadsIssueCreator } from './beads.js';
+import { createApp } from "./app.js";
+import { startScheduler } from "./scheduler.js";
+import { config } from "./config.js";
+import { EventRepository } from "./db/repository.js";
+import { logger } from "./logger.js";
+import { createServer } from "http";
+import { runRecentIngest } from "./ingest/ingestService.js";
+import { installNodeProcessErrorReporting } from "@aviation/shared-sdk";
+import { macTaskCreator } from "./mac.js";
 
 async function start() {
   try {
-    installNodeProcessErrorReporting({ service: 'aviation-accident-tracker-backend', issueCreator: beadsIssueCreator });
+    installNodeProcessErrorReporting({
+      service: "aviation-accident-tracker-backend",
+      taskCreator: macTaskCreator,
+    });
 
     // Initialize database
-    logger.info('Initializing database...', { path: config.databasePath });
+    logger.info("Initializing database...", { path: config.databasePath });
     const repository = new EventRepository(config.databasePath);
     await repository.initialize();
-    logger.info('Database initialized');
+    logger.info("Database initialized");
 
     // Create Express app
     const app = createApp(repository);
@@ -33,10 +36,13 @@ async function start() {
 
     // Start scheduler if enabled
     if (config.ingestion.enabled) {
-      logger.info('Starting ingestion scheduler...');
+      logger.info("Starting ingestion scheduler...");
       startScheduler(repository);
       runRecentIngest(repository).catch((error) => {
-        logger.error('Initial ingest failed', error instanceof Error ? error : new Error(String(error)));
+        logger.error(
+          "Initial ingest failed",
+          error instanceof Error ? error : new Error(String(error)),
+        );
       });
     }
 
@@ -44,21 +50,30 @@ async function start() {
       try {
         await repository.close();
       } catch (error) {
-        logger.error('Failed to close repository', error instanceof Error ? error : new Error(String(error)));
+        logger.error(
+          "Failed to close repository",
+          error instanceof Error ? error : new Error(String(error)),
+        );
       }
     };
 
-    process.on('SIGTERM', shutdown);
-    process.on('SIGINT', shutdown);
+    process.on("SIGTERM", shutdown);
+    process.on("SIGINT", shutdown);
   } catch (error) {
-    logger.error('Failed to start server', error instanceof Error ? error : new Error(String(error)));
+    logger.error(
+      "Failed to start server",
+      error instanceof Error ? error : new Error(String(error)),
+    );
 
     const err = error instanceof Error ? error : new Error(String(error));
-    beadsIssueCreator.createAutoFiledIssue({
-      title: `[backend][startup] accident-tracker: ${err.message}`.slice(0, 180),
-      description: `Where: startup\n\nMessage:\n${err.message}\n\nStack:\n${err.stack ?? '(no stack)'}`,
+    await macTaskCreator.createAutoFiledTask({
+      title: `[backend][startup] accident-tracker: ${err.message}`.slice(
+        0,
+        180,
+      ),
+      description: `Where: startup\n\nMessage:\n${err.message}\n\nStack:\n${err.stack ?? "(no stack)"}`,
       priority: 1,
-      autoFiledComment: 'backend failed to start',
+      autoFiledContext: "backend failed to start",
     });
     process.exit(1);
   }

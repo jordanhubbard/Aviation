@@ -3,8 +3,8 @@
 ## 🚨 Current Issues
 
 ### Issue 1: aviation-missions-app - Empty Missions Database
-**URL:** https://aviation-missions-production.up.railway.app/  
-**Status:** App running, but missions table is empty  
+**URL:** https://aviation-missions-production.up.railway.app/
+**Status:** App running, but missions table is empty
 **Fix Applied:** Added `FORCE_RESEED` environment variable support (commit 1755fd0)
 
 #### Steps to Fix (Manual):
@@ -45,12 +45,12 @@ railway up
 ---
 
 ### Issue 2: TypeScript Apps - Build Failures
-**Apps Affected:** 
+**Apps Affected:**
 - weather-briefing
 - flight-tracker
 - aviation-accident-tracker
 
-**Status:** All failing to build with TypeScript errors  
+**Status:** All failing to build with TypeScript errors
 **Error:** `Module '@aviation/shared-sdk' has no exported member 'fetchMetarRaw'`
 
 #### Root Cause:
@@ -116,7 +116,7 @@ Railway should now successfully build all 3 TypeScript apps after detecting comm
 
 ### Earlier Infrastructure Fixes:
 - ✅ Fixed all 7 `railway.toml` files - dockerfilePath to monorepo-relative paths
-- ✅ Fixed all 7 Dockerfiles - COPY commands to monorepo-root-relative paths  
+- ✅ Fixed all 7 Dockerfiles - COPY commands to monorepo-root-relative paths
 - ✅ Added root package-lock.json to 3 TypeScript apps
 
 ---
@@ -146,9 +146,9 @@ Railway should now successfully build all 3 TypeScript apps after detecting comm
 
 ---
 
-## 📝 Bead Tracking
+## 📝 Historical Task Tracking
 
-**Current Beads:**
+**Legacy IDs (now preserved in MAC):**
 - `Aviation-1qg.3` - Configure Railway for monorepo deployment (in_progress)
 - `Aviation-1qg.3.1` - aviation-missions-app: Missing missions (in_progress)
 

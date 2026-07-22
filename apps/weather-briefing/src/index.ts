@@ -1,28 +1,34 @@
-import http from 'http';
-import { BeadsIssueCreator, installNodeProcessErrorReporting } from '@aviation/shared-sdk';
-import { WeatherBriefingService } from './service';
-import { defaultRegionId, getRegion, regions } from './regions';
+import http from "http";
+import {
+  MacTaskCreator,
+  installNodeProcessErrorReporting,
+} from "@aviation/shared-sdk";
+import { WeatherBriefingService } from "./service";
+import { defaultRegionId, getRegion, regions } from "./regions";
 
-const beadsIssueCreator = new BeadsIssueCreator({
-  defaultParent: process.env.BEADS_AUTOREPORT_PARENT || 'Aviation-hd5',
+const macTaskCreator = new MacTaskCreator({
+  project: "Aviation",
   requireDebug: true,
-  debug: process.env.NODE_ENV !== 'production',
+  debug: process.env.NODE_ENV !== "production",
 });
 
 /**
  * Weather Briefing Application Entry Point
- * 
+ *
  * Provides aviation weather briefings using the shared SDK.
  */
 async function main() {
-  console.log('Starting Aviation Weather Briefing Service...');
-  console.log('Using @aviation/shared-sdk for weather data\n');
+  console.log("Starting Aviation Weather Briefing Service...");
+  console.log("Using @aviation/shared-sdk for weather data\n");
 
-  installNodeProcessErrorReporting({ service: 'weather-briefing', issueCreator: beadsIssueCreator });
+  installNodeProcessErrorReporting({
+    service: "weather-briefing",
+    taskCreator: macTaskCreator,
+  });
 
   // Initialize service with shared SDK
   const service = new WeatherBriefingService({
-    name: 'weather-briefing',
+    name: "weather-briefing",
     enabled: true,
     autoStart: true,
   });
@@ -30,7 +36,7 @@ async function main() {
   // Start the service
   await service.start();
 
-  const port = Number(process.env.PORT ?? '3003');
+  const port = Number(process.env.PORT ?? "3003");
   const allowedForecastDays = new Set([1, 3, 5, 7]);
   const parseForecastDays = (value: string | null): number => {
     if (!value) {
@@ -38,7 +44,7 @@ async function main() {
     }
 
     const parsed = value
-      .split(',')
+      .split(",")
       .map((part) => Number(part.trim()))
       .filter((day) => allowedForecastDays.has(day));
 
@@ -50,70 +56,90 @@ async function main() {
   };
   const regionOptionsHtml = regions
     .map((region) => {
-      const selected = region.id === defaultRegionId ? ' selected' : '';
+      const selected = region.id === defaultRegionId ? " selected" : "";
       return `<option value="${region.id}"${selected}>${region.label}</option>`;
     })
-    .join('');
+    .join("");
   const regionConfigJson = JSON.stringify(regions);
   const server = http.createServer(async (req, res) => {
-    const requestUrl = new URL(req.url ?? '/', `http://localhost:${port}`);
+    const requestUrl = new URL(req.url ?? "/", `http://localhost:${port}`);
 
-    if (requestUrl.pathname === '/health') {
-      res.writeHead(200, { 'Content-Type': 'application/json' });
-      res.end(JSON.stringify({ status: 'ok' }));
+    if (requestUrl.pathname === "/health") {
+      res.writeHead(200, { "Content-Type": "application/json" });
+      res.end(JSON.stringify({ status: "ok" }));
       return;
     }
 
-    if (requestUrl.pathname === '/briefing') {
-      const station = requestUrl.searchParams.get('station') ?? 'KSFO';
-      const forecastDays = parseForecastDays(requestUrl.searchParams.get('days'));
+    if (requestUrl.pathname === "/briefing") {
+      const station = requestUrl.searchParams.get("station") ?? "KSFO";
+      const forecastDays = parseForecastDays(
+        requestUrl.searchParams.get("days"),
+      );
       try {
         const briefing = await service.generateBriefing(station, forecastDays);
-        res.writeHead(200, { 'Content-Type': 'text/plain; charset=utf-8' });
+        res.writeHead(200, { "Content-Type": "text/plain; charset=utf-8" });
         res.end(briefing);
       } catch (error) {
-        const message = error instanceof Error ? error.message : 'Unexpected error';
-        res.writeHead(500, { 'Content-Type': 'text/plain; charset=utf-8' });
+        const message =
+          error instanceof Error ? error.message : "Unexpected error";
+        res.writeHead(500, { "Content-Type": "text/plain; charset=utf-8" });
         res.end(`Failed to generate briefing: ${message}`);
       }
       return;
     }
 
-    if (requestUrl.pathname === '/stations') {
-      const regionId = requestUrl.searchParams.get('region') ?? defaultRegionId;
+    if (requestUrl.pathname === "/stations") {
+      const regionId = requestUrl.searchParams.get("region") ?? defaultRegionId;
       const region = getRegion(regionId);
       try {
         const stations = await service.getStationSummaries(region.stations);
-        res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
+        res.writeHead(200, {
+          "Content-Type": "application/json; charset=utf-8",
+        });
         res.end(JSON.stringify({ region: region.id, stations }));
       } catch (error) {
-        const message = error instanceof Error ? error.message : 'Unexpected error';
-        res.writeHead(500, { 'Content-Type': 'application/json; charset=utf-8' });
-        res.end(JSON.stringify({ error: 'stations_failed', message }));
+        const message =
+          error instanceof Error ? error.message : "Unexpected error";
+        res.writeHead(500, {
+          "Content-Type": "application/json; charset=utf-8",
+        });
+        res.end(JSON.stringify({ error: "stations_failed", message }));
       }
       return;
     }
 
-    if (requestUrl.pathname === '/station') {
-      const code = requestUrl.searchParams.get('code') ?? '';
+    if (requestUrl.pathname === "/station") {
+      const code = requestUrl.searchParams.get("code") ?? "";
       try {
         const station = await service.getStationSnapshot(code);
         if (!station) {
-          res.writeHead(404, { 'Content-Type': 'application/json; charset=utf-8' });
-          res.end(JSON.stringify({ error: 'station_not_found', message: 'Station not found.' }));
+          res.writeHead(404, {
+            "Content-Type": "application/json; charset=utf-8",
+          });
+          res.end(
+            JSON.stringify({
+              error: "station_not_found",
+              message: "Station not found.",
+            }),
+          );
           return;
         }
-        res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
+        res.writeHead(200, {
+          "Content-Type": "application/json; charset=utf-8",
+        });
         res.end(JSON.stringify({ station }));
       } catch (error) {
-        const message = error instanceof Error ? error.message : 'Unexpected error';
-        res.writeHead(500, { 'Content-Type': 'application/json; charset=utf-8' });
-        res.end(JSON.stringify({ error: 'station_failed', message }));
+        const message =
+          error instanceof Error ? error.message : "Unexpected error";
+        res.writeHead(500, {
+          "Content-Type": "application/json; charset=utf-8",
+        });
+        res.end(JSON.stringify({ error: "station_failed", message }));
       }
       return;
     }
 
-    res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
+    res.writeHead(200, { "Content-Type": "text/html; charset=utf-8" });
     res.end(`
       <html>
         <head>
@@ -563,27 +589,27 @@ async function main() {
     `);
   });
 
-  server.listen(port, '0.0.0.0', () => {
+  server.listen(port, "0.0.0.0", () => {
     console.log(`HTTP server listening on port ${port}`);
   });
 
   // Demo: Generate a briefing for San Francisco
-  console.log('\n' + '='.repeat(60));
-  console.log('DEMO: Generating briefing for San Francisco (KSFO)...');
-  console.log('='.repeat(60) + '\n');
+  console.log("\n" + "=".repeat(60));
+  console.log("DEMO: Generating briefing for San Francisco (KSFO)...");
+  console.log("=".repeat(60) + "\n");
 
-  const briefing = await service.generateBriefing('KSFO');
+  const briefing = await service.generateBriefing("KSFO");
   console.log(briefing);
 
-  console.log('\n' + '='.repeat(60));
-  console.log('Service will continue monitoring. Try other locations:');
+  console.log("\n" + "=".repeat(60));
+  console.log("Service will continue monitoring. Try other locations:");
   console.log('  await service.generateBriefing("KJFK")');
   console.log('  await service.generateBriefing("KLAX")');
-  console.log('='.repeat(60) + '\n');
+  console.log("=".repeat(60) + "\n");
 
   // Handle graceful shutdown
   const shutdown = async () => {
-    console.log('\n\nShutting down Weather Briefing Service...');
+    console.log("\n\nShutting down Weather Briefing Service...");
     await service.stop();
     await new Promise<void>((resolve) => {
       server.close(() => resolve());
@@ -591,18 +617,18 @@ async function main() {
     process.exit(0);
   };
 
-  process.on('SIGINT', () => {
+  process.on("SIGINT", () => {
     void shutdown();
   });
 
-  process.on('SIGTERM', () => {
+  process.on("SIGTERM", () => {
     void shutdown();
   });
 
-  console.log('Weather Briefing Service is running. Press Ctrl+C to stop.\n');
+  console.log("Weather Briefing Service is running. Press Ctrl+C to stop.\n");
 }
 
 main().catch((error) => {
-  console.error('Failed to start Weather Briefing Service:', error);
+  console.error("Failed to start Weather Briefing Service:", error);
   process.exit(1);
 });

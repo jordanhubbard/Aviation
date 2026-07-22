@@ -18,7 +18,7 @@
 - fix(foreflight): implement ingest adapter error handling and stats (closes #178)
 - docs: update to reflect pnpm workspace + test infrastructure changes
 - fix(tests): resolve all test failures across monorepo + CI fixes
-- merge: beads-sync into main
+- merge: historical task-sync branch into main
 - fix(ci): resolve 3 chronic CI failures + Trivy scan findings
 - feat(aviation): AI explainer wired to all Express apps + TODO audit
 - feat(aviation): search/filter API, export (CSV/JSON/GeoJSON), stats aggregations
@@ -73,7 +73,7 @@
 - chore(deps-dev): bump the npm_and_yarn group across 2 directories with 1 update (#175)
 - chore(deps): bump typescript from 4.9.5 to 5.9.3 in the typescript group (#163)
 - chore(deps): bump rollup (#162)
-- feat: complete G1000 beads, unified aviation-config, and repo cleanup
+- feat: complete G1000 legacy tasks, unified aviation-config, and repo cleanup
 - chore(security): patch aviation-accident-tracker lockfile for minimatch 9.0.7
 - chore: refresh root package-lock.json after security overrides
 - chore(security): fix remaining Dependabot alerts (minimatch, rollup)
@@ -87,7 +87,7 @@
 - Merge ai-template conventions into CLAUDE.md
 - Add forward link to Part 5 (WebMux) in origin story
 - refactor: update g1000 packages, flight-tracker, weather-briefing, and shared deps
-- chore: migrate beads from SQLite to dolt server mode
+- chore: migrate legacy tasks from SQLite to dolt server mode
 - fix(deps): address Dependabot/npm audit vulnerabilities
 - fix(ci): fix Test Flight School and Integration Tests jobs
 - Update README.md to streamline project overview and setup instructions, including a simplified architecture description, consolidated prerequisites, and enhanced application running guidelines.
@@ -101,7 +101,7 @@
 - Fix round-5 CI failures: settings immutability, Flask deps, App.tsx comma, deploy non-blocking
 - Fix round-4 CI failures: TS type errors, broken JSX, comment-only bodies, Flask-Migrate
 - Fix round-3 CI failures: flask-login, service IndentationError, main.tsx hooks, scan non-blocking
-- Fix remaining CI failures: flask-sqlalchemy, beads config, lock file, test indentation
+- Fix remaining CI failures: flask-sqlalchemy, legacy tasks config, lock file, test indentation
 - fix: resolve CI failures across all workflow jobs
 - ci: fix workflow errors across all five workflow files
 - docs: add Part 4 origin story to README
@@ -242,34 +242,33 @@
 - [WIP] Auto-checkpoint after file changes
 - [WIP] Auto-checkpoint after file changes
 - [WIP] Auto-checkpoint after file changes
-- bd sync: 2026-01-17 23:29:08
-- bd sync: 2026-01-17 23:06:12
-- bd sync: 2026-01-17 22:43:02
-- bd sync: 2026-01-17 22:39:27
-- bd sync: 2026-01-17 22:34:50
-- bd sync: 2026-01-17 22:30:52
-- bd sync: 2026-01-17 22:28:38
-- bd sync: 2026-01-17 22:27:13
-- bd sync: 2026-01-17 22:26:13
-- bd sync: 2026-01-17 19:18:35
-- bd sync: 2026-01-17 18:46:44
-- bd sync: 2026-01-17 16:10:34
-- bd sync: 2026-01-17 14:37:10
-- bd sync: 2026-01-17 14:33:49
-- bd sync: 2026-01-17 13:44:34
-- bd sync: 2026-01-17 13:29:14
-- bd sync: 2026-01-17 00:07:17
-- bd sync: 2026-01-16 21:13:41
-- bd sync: 2026-01-16 20:04:25
-- bd sync: 2026-01-15 23:08:20
-- bd sync: 2026-01-15 19:55:09
-- bd sync: merge divergent histories (44 local + 24 remote commits)
-- bd sync: 2026-01-15 13:06:08
-- bd sync: 2026-01-15 13:04:02
-- bd sync: 2026-01-15 12:51:38
-- bd sync: 2026-01-15 12:41:55
-- bd sync: 2026-01-15 12:25:14
-- bd sync: 2026-01-15 12:21:49
-- bd sync: 2026-01-15 11:48:38
-- bd sync: 2026-01-15 11:32:16
-
+- legacy tracker sync: 2026-01-17 23:29:08
+- legacy tracker sync: 2026-01-17 23:06:12
+- legacy tracker sync: 2026-01-17 22:43:02
+- legacy tracker sync: 2026-01-17 22:39:27
+- legacy tracker sync: 2026-01-17 22:34:50
+- legacy tracker sync: 2026-01-17 22:30:52
+- legacy tracker sync: 2026-01-17 22:28:38
+- legacy tracker sync: 2026-01-17 22:27:13
+- legacy tracker sync: 2026-01-17 22:26:13
+- legacy tracker sync: 2026-01-17 19:18:35
+- legacy tracker sync: 2026-01-17 18:46:44
+- legacy tracker sync: 2026-01-17 16:10:34
+- legacy tracker sync: 2026-01-17 14:37:10
+- legacy tracker sync: 2026-01-17 14:33:49
+- legacy tracker sync: 2026-01-17 13:44:34
+- legacy tracker sync: 2026-01-17 13:29:14
+- legacy tracker sync: 2026-01-17 00:07:17
+- legacy tracker sync: 2026-01-16 21:13:41
+- legacy tracker sync: 2026-01-16 20:04:25
+- legacy tracker sync: 2026-01-15 23:08:20
+- legacy tracker sync: 2026-01-15 19:55:09
+- legacy tracker sync: merge divergent histories (44 local + 24 remote commits)
+- legacy tracker sync: 2026-01-15 13:06:08
+- legacy tracker sync: 2026-01-15 13:04:02
+- legacy tracker sync: 2026-01-15 12:51:38
+- legacy tracker sync: 2026-01-15 12:41:55
+- legacy tracker sync: 2026-01-15 12:25:14
+- legacy tracker sync: 2026-01-15 12:21:49
+- legacy tracker sync: 2026-01-15 11:48:38
+- legacy tracker sync: 2026-01-15 11:32:16

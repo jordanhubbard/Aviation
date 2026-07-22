@@ -1,6 +1,6 @@
 # Map Integration Extraction Implementation Spec
 
-**Bead:** [Aviation-r2l] Extract map integration patterns to @aviation/ui-framework
+**MAC task:** [Aviation-r2l] Extract map integration patterns to @aviation/ui-framework
 **Priority:** P0 - MVP Blocker
 **Effort:** 3-4 days
 **Dependencies:** None (but will benefit from Aviation-o2d airports, Aviation-ywm navigation)
@@ -157,7 +157,7 @@ export interface BaseMapProps {
 
 /**
  * Base map component using Leaflet and OpenStreetMap
- * 
+ *
  * @example
  * ```tsx
  * <BaseMap
@@ -288,7 +288,7 @@ export interface MarkerProps extends MarkerData {
 
 /**
  * Map marker component with popup and tooltip support
- * 
+ *
  * @example
  * ```tsx
  * <Marker
@@ -392,7 +392,7 @@ function createLeafletIcon(icon: MarkerIcon, color: string): L.Icon {
   // Default marker with custom color
   const svgIcon = `
     <svg width="25" height="41" viewBox="0 0 25 41" xmlns="http://www.w3.org/2000/svg">
-      <path d="M12.5 0C5.6 0 0 5.6 0 12.5c0 9.4 12.5 28.5 12.5 28.5S25 21.9 25 12.5C25 5.6 19.4 0 12.5 0z" 
+      <path d="M12.5 0C5.6 0 0 5.6 0 12.5c0 9.4 12.5 28.5 12.5 28.5S25 21.9 25 12.5C25 5.6 19.4 0 12.5 0z"
             fill="${color}" stroke="#fff" stroke-width="2"/>
       <circle cx="12.5" cy="12.5" r="6" fill="#fff"/>
     </svg>
@@ -429,7 +429,7 @@ export interface MarkerClusterProps {
 
 /**
  * Clustered markers component for efficient rendering of many markers
- * 
+ *
  * @example
  * ```tsx
  * <MarkerCluster
@@ -519,7 +519,7 @@ export interface PolylineProps extends PolylineData {
 
 /**
  * Polyline component for drawing routes and paths
- * 
+ *
  * @example
  * ```tsx
  * <Polyline
@@ -620,12 +620,12 @@ const initialState: MapState = {
 
 /**
  * Hook for managing map state
- * 
+ *
  * @example
  * ```tsx
  * function MyMap() {
  *   const [state, actions] = useMapState();
- *   
+ *
  *   return (
  *     <BaseMap
  *       config={{ center: state.center, zoom: state.zoom }}
@@ -714,7 +714,7 @@ describe('BaseMap', () => {
         }}
       />
     );
-    
+
     // Check map center (implementation specific)
     expect(container.querySelector('.leaflet-container')).toBeInTheDocument();
   });
@@ -725,7 +725,7 @@ describe('BaseMap', () => {
         <div data-testid="child">Child content</div>
       </BaseMap>
     );
-    
+
     expect(screen.getByTestId('child')).toBeInTheDocument();
   });
 });
@@ -741,13 +741,13 @@ describe('Marker', () => {
         />
       </BaseMap>
     );
-    
+
     // Check marker exists (implementation specific)
   });
 
   test('calls onClick when clicked', async () => {
     const handleClick = jest.fn();
-    
+
     render(
       <BaseMap>
         <Marker
@@ -757,7 +757,7 @@ describe('Marker', () => {
         />
       </BaseMap>
     );
-    
+
     // Simulate click and verify
   });
 });
@@ -775,7 +775,7 @@ describe('MarkerCluster', () => {
         <MarkerCluster markers={markers} />
       </BaseMap>
     );
-    
+
     // Check markers exist
   });
 
@@ -788,7 +788,7 @@ describe('MarkerCluster', () => {
         />
       </BaseMap>
     );
-    
+
     // Verify no clustering
   });
 });

@@ -44,7 +44,7 @@ echo "Next tag: ${next_tag}"
 ensure_clean_worktree
 
 echo "Running release validations..."
-.venv/bin/python validate_beads.py
+make validate
 ./scripts/check-all-contrast.sh
 make build || npm run build || go build
 make test || npm test

@@ -2,26 +2,15 @@
 
 Thanks for your interest in contributing to **flight-planner**.
 
-## 1) Issue tracking (required)
+## 1) Task tracking (required)
 
-This repo uses **bd (beads)** for issue tracking.
-
-- Find ready work:
+This application uses the `Aviation` project in MAC as its sole task ledger.
 
 ```bash
-bd ready --json
-```
-
-- Claim work:
-
-```bash
-bd update <id> --status in_progress --json
-```
-
-- Close work:
-
-```bash
-bd close <id> --reason "..." --json
+/Users/jkh/Src/mac/.venv/bin/mac task ready --project Aviation
+/Users/jkh/Src/mac/.venv/bin/mac task show <task-id>
+/Users/jkh/Src/mac/.venv/bin/mac task create "Follow-up" --project Aviation \
+  --no-ticket --description "Detailed context"
 ```
 
 ## 2) Development setup
@@ -115,7 +104,7 @@ Then hooks will run automatically on commits.
 
 ## 6) Pull request checklist
 
-- [ ] Work is tracked in bd and the relevant issue is closed (or clearly left `in_progress` with context).
+- [ ] Work is tracked in MAC and the relevant task has current evidence and state.
 - [ ] Backend tests pass (`pytest`).
 - [ ] Frontend checks pass (`npm run type-check`, `npm run lint`, `npm run test`).
 - [ ] If UI flows changed, Playwright e2e passes (`npm run e2e`).

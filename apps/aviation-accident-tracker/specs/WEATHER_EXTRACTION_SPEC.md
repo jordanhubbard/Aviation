@@ -1,6 +1,6 @@
 # Weather Services Extraction Implementation Spec
 
-**Bead:** [Aviation-dx3] Extract weather services to @aviation/shared-sdk
+**MAC task:** [Aviation-dx3] Extract weather services to @aviation/shared-sdk
 **Priority:** P0 - MVP Blocker
 **Effort:** 3-4 days
 **Dependencies:** Aviation-o2d (airports, for coordinate lookup)
@@ -169,7 +169,7 @@ export class OpenWeatherMapClient {
    */
   async getCurrentWeather(lat: number, lon: number): Promise<any> {
     const cacheKey = `owm:current:${lat},${lon}`;
-    
+
     return weatherCache.getOrSet(
       cacheKey,
       () => this.fetchCurrentWeather(lat, lon),
@@ -180,13 +180,13 @@ export class OpenWeatherMapClient {
   private async fetchCurrentWeather(lat: number, lon: number): Promise<any> {
     const url = `${this.baseUrl}/weather?` +
       `lat=${lat}&lon=${lon}&appid=${this.apiKey}&units=imperial`;
-    
+
     const response = await fetch(url);
-    
+
     if (!response.ok) {
       throw new Error(`OpenWeatherMap API error: ${response.status}`);
     }
-    
+
     return response.json();
   }
 
@@ -200,10 +200,10 @@ export class OpenWeatherMapClient {
       temperature: Math.round(payload.main?.temp || 0),
       wind_speed: this.mphToKnots(payload.wind?.speed),
       wind_direction: payload.wind?.deg,
-      visibility: payload.visibility ? 
+      visibility: payload.visibility ?
         Math.round(payload.visibility * 0.000621371 * 10) / 10 : undefined,
       humidity: payload.main?.humidity,
-      pressure: payload.main?.pressure ? 
+      pressure: payload.main?.pressure ?
         Math.round(payload.main.pressure * 0.02953 * 100) / 100 : undefined,
       dewpoint: payload.main?.temp && payload.main?.humidity ?
         this.calculateDewpoint(payload.main.temp, payload.main.humidity) : undefined,
@@ -268,13 +268,13 @@ export class OpenMeteoClient {
     days: number = 7
   ): Promise<ForecastDay[]> {
     const cacheKey = `open-meteo:forecast:${lat},${lon}:${days}`;
-    
+
     const data = await weatherCache.getOrSet(
       cacheKey,
       () => this.fetchForecast(lat, lon, days),
       { ttl_seconds: 600, allow_stale_on_error: true }
     );
-    
+
     return this.parseForecast(data);
   }
 
@@ -289,20 +289,20 @@ export class OpenMeteoClient {
       `windspeed_10m_max,winddirection_10m_dominant&` +
       `temperature_unit=fahrenheit&windspeed_unit=kn&` +
       `forecast_days=${Math.min(days, 16)}`;
-    
+
     const response = await fetch(url);
-    
+
     if (!response.ok) {
       throw new Error(`Open-Meteo API error: ${response.status}`);
     }
-    
+
     return response.json();
   }
 
   private parseForecast(data: any): ForecastDay[] {
     const days: ForecastDay[] = [];
     const daily = data.daily || {};
-    
+
     for (let i = 0; i < (daily.time || []).length; i++) {
       days.push({
         date: daily.time[i],
@@ -313,7 +313,7 @@ export class OpenMeteoClient {
         wind_direction: daily.winddirection_10m_dominant?.[i]
       });
     }
-    
+
     return days;
   }
 
@@ -328,12 +328,12 @@ export class OpenMeteoClient {
   ): Promise<RouteWeatherPoint[]> {
     // Sample evenly along route
     const sampledPoints = this.samplePoints(points, maxPoints);
-    
+
     // Fetch weather for each point in parallel
     const weatherPromises = sampledPoints.map(([lat, lon]) =>
       this.getCurrentWeatherAtPoint(lat, lon)
     );
-    
+
     return Promise.all(weatherPromises);
   }
 
@@ -344,15 +344,15 @@ export class OpenMeteoClient {
     if (points.length <= maxPoints) {
       return points;
     }
-    
+
     const step = (points.length - 1) / (maxPoints - 1);
     const sampled: Array<[number, number]> = [];
-    
+
     for (let i = 0; i < maxPoints; i++) {
       const index = Math.round(i * step);
       sampled.push(points[index]);
     }
-    
+
     return sampled;
   }
 
@@ -364,11 +364,11 @@ export class OpenMeteoClient {
       `latitude=${lat}&longitude=${lon}&` +
       `current_weather=true&` +
       `temperature_unit=fahrenheit&windspeed_unit=kn`;
-    
+
     const response = await fetch(url);
     const data = await response.json();
     const current = data.current_weather || {};
-    
+
     return {
       latitude: lat,
       longitude: lon,
@@ -398,7 +398,7 @@ export class OpenMeteoClient {
       75: 'Heavy snow',
       95: 'Thunderstorm'
     };
-    
+
     return codes[code] || 'Unknown';
   }
 }
@@ -427,7 +427,7 @@ export class MetarClient {
    */
   async fetchMetar(station: string): Promise<string | null> {
     const cacheKey = `metar:${station.toUpperCase()}`;
-    
+
     return weatherCache.getOrSet(
       cacheKey,
       () => this.fetchMetarRaw(station),
@@ -437,14 +437,14 @@ export class MetarClient {
 
   private async fetchMetarRaw(station: string): Promise<string | null> {
     const url = `${this.baseUrl}?ids=${station.toUpperCase()}&format=raw`;
-    
+
     try {
       const response = await fetch(url);
-      
+
       if (!response.ok) {
         return null;
       }
-      
+
       const text = await response.text();
       return text.trim() || null;
     } catch (error) {
@@ -462,13 +462,13 @@ export class MetarClient {
     stations: string[]
   ): Promise<Map<string, string | null>> {
     const results = new Map<string, string | null>();
-    
+
     // Fetch in parallel
     const promises = stations.map(async station => {
       const metar = await this.fetchMetar(station);
       results.set(station.toUpperCase(), metar);
     });
-    
+
     await Promise.all(promises);
     return results;
   }
@@ -493,7 +493,7 @@ export class MetarClient {
         parsed.temperature_f = this.celsiusToFahrenheit(this.parseTemp(temp));
         parsed.dewpoint_f = this.celsiusToFahrenheit(this.parseTemp(dew));
       }
-      
+
       // Wind: 27015G25KT
       else if (/^\d{5}(G\d+)?KT$/.test(part)) {
         const match = part.match(/^(\d{3})(\d{2})(G(\d+))?KT$/);
@@ -505,18 +505,18 @@ export class MetarClient {
           }
         }
       }
-      
+
       // Visibility: 10SM
       else if (/^\d+SM$/.test(part)) {
         parsed.visibility_sm = parseInt(part);
       }
-      
+
       // Altimeter: A2992
       else if (/^A\d{4}$/.test(part)) {
         const altim = parseInt(part.substring(1));
         parsed.altimeter_inhg = altim / 100;
       }
-      
+
       // Ceiling: BKN015, OVC025
       else if (/^(BKN|OVC)\d{3}$/.test(part)) {
         const height = parseInt(part.substring(3)) * 100;
@@ -535,7 +535,7 @@ export class MetarClient {
     const day = parseInt(timeStr.substring(0, 2));
     const hour = parseInt(timeStr.substring(2, 4));
     const minute = parseInt(timeStr.substring(4, 6));
-    
+
     const now = new Date();
     const parsed = new Date(Date.UTC(
       now.getUTCFullYear(),
@@ -544,13 +544,13 @@ export class MetarClient {
       hour,
       minute
     ));
-    
+
     return parsed.toISOString();
   }
 
   private parseTemp(temp: string): number {
-    return temp.startsWith('M') ? 
-      -parseInt(temp.substring(1)) : 
+    return temp.startsWith('M') ?
+      -parseInt(temp.substring(1)) :
       parseInt(temp);
   }
 
@@ -667,7 +667,7 @@ export class WeatherCache {
     // Fetch new data
     try {
       const value = await fetcher();
-      
+
       this.cache.set(key, {
         value,
         expires_at: now + options.ttl_seconds * 1000,
@@ -686,7 +686,7 @@ export class WeatherCache {
         console.warn(`Using stale cache for ${key}:`, error);
         return entry.value;
       }
-      
+
       throw error;
     }
   }
@@ -698,7 +698,7 @@ export class WeatherCache {
   private prune(): void {
     const entries = Array.from(this.cache.entries());
     entries.sort((a, b) => a[1].fetched_at - b[1].fetched_at);
-    
+
     // Remove oldest 20%
     const toRemove = Math.floor(this.maxSize * 0.2);
     for (let i = 0; i < toRemove; i++) {
@@ -740,7 +740,7 @@ describe('OpenWeatherMapClient', () => {
       main: { temp: 72, humidity: 65 },
       wind: { speed: 10, deg: 280 }
     };
-    
+
     const weather = client.toWeatherData('KSFO', mockPayload);
     expect(weather.airport).toBe('KSFO');
     expect(weather.temperature).toBe(72);
@@ -781,7 +781,7 @@ describe('MetarParser', () => {
   test('parses complete METAR', () => {
     const raw = 'KSFO 121856Z 27015G25KT 10SM FEW015 BKN250 12/10 A2990';
     const parsed = client.parseMetar(raw);
-    
+
     expect(parsed.station).toBe('KSFO');
     expect(parsed.wind_direction).toBe(270);
     expect(parsed.wind_speed_kt).toBe(15);
@@ -794,7 +794,7 @@ describe('MetarParser', () => {
   test('handles negative temperatures', () => {
     const raw = 'KJFK 121851Z 31008KT M05/M10 A2992';
     const parsed = client.parseMetar(raw);
-    
+
     expect(parsed.temperature_f).toBeLessThan(32);
     expect(parsed.dewpoint_f).toBeLessThan(32);
   });

@@ -1,7 +1,7 @@
 import axios, { AxiosError } from 'axios'
 import toast from 'react-hot-toast'
 
-import { reportFrontendErrorToBeads } from '../utils/beadsReporting'
+import { reportFrontendErrorToMac } from '../utils/macReporting'
 import { API_CONSTANTS } from '../utils/constants'
 
 const toastOnce = (message: string) => {
@@ -27,13 +27,13 @@ apiClient.interceptors.response.use(
     }
     const suppressToast = Boolean(config?.suppressToast)
 
-    // Avoid recursion if the beads endpoint itself errors.
+    // Avoid recursion if the MAC reporting endpoint itself errors.
     const url = String(config?.url ?? '')
-    const isBeadsEndpoint = url.includes('/beads/')
+    const isMacEndpoint = url.includes('/mac/')
 
     const status = error.response?.status
     const shouldReport =
-      !isBeadsEndpoint &&
+      !isMacEndpoint &&
       (status == null || status >= 500 || (status >= 400 && status < 500 && status !== 404))
 
     if (shouldReport) {
@@ -44,7 +44,7 @@ apiClient.interceptors.response.use(
           ? String((error.response.data as { detail: unknown }).detail)
           : undefined
 
-      void reportFrontendErrorToBeads(error, {
+      void reportFrontendErrorToMac(error, {
         kind: 'api-client',
         extra: {
           status,

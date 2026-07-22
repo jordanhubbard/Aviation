@@ -33,7 +33,7 @@ Following Aviation monorepo conventions:
 - **Frontend**: React + TypeScript + Vite
   - Canvas API or WebGL for high-performance display rendering
   - React for UI structure and component management
-- **Shared Packages**: 
+- **Shared Packages**:
   - `@aviation/shared-sdk` - Service patterns and utilities
   - `@aviation/keystore` - Secure configuration management
   - `@aviation/ui-framework` - Multi-tab integration
@@ -54,7 +54,7 @@ The PFD is the pilot's primary instrument, displaying critical flight informatio
   - Pitch ladder markings (±90°)
   - Roll pointer and slip/skid indicator
   - Bank angle reference marks (10°, 20°, 30°, 45°, 60°)
-- **Airspeed Indicator**: 
+- **Airspeed Indicator**:
   - Current airspeed (analog tape and digital readout)
   - V-speeds (Vne, Vno, Vs, Vfe, Va) - color-coded arcs
   - True airspeed (TAS) display
@@ -485,7 +485,7 @@ frontend/
 - **Service Base Classes**: Use for structuring backend services
   - `BackgroundService` - Base for flight dynamics and navigation services
   - `ServiceConfig` - Configuration management
-- **API Utilities**: 
+- **API Utilities**:
   - Rate limiting for external API calls
   - Retry logic with exponential backoff
 - **Data Validation**:
@@ -862,7 +862,7 @@ interface KnobConfig {
 class KnobController {
   private dragStartY: number;
   private currentValue: number;
-  
+
   handleMouseDown(e: MouseEvent): void { }
   handleMouseMove(e: MouseEvent): void { }
   handleMouseUp(e: MouseEvent): void { }
@@ -943,7 +943,7 @@ interface SoftkeyMenu {
 
 class SoftkeyManager {
   private menuStack: SoftkeyMenu[] = [];
-  
+
   pushMenu(menu: SoftkeyMenu): void { }
   popMenu(): void { }
   handleSoftkeyPress(index: number): void { }
@@ -984,32 +984,32 @@ interface PFDData {
   pitch: number;        // degrees
   roll: number;         // degrees
   slipSkid: number;     // degrees
-  
+
   // Speed
   indicatedAirspeed: number;  // knots
   trueAirspeed: number;       // knots
-  
+
   // Altitude
   pressureAltitude: number;   // feet
   verticalSpeed: number;      // feet per minute
   baroSetting: number;        // inches Hg
-  
+
   // Heading/Course
   magneticHeading: number;    // degrees
   selectedCourse: number;     // degrees
   courseDeviation: number;    // dots (-2 to +2)
-  
+
   // Navigation
   activeWaypoint: string;
   bearingToWaypoint: number;  // degrees
   distanceToWaypoint: number; // nm
   groundSpeed: number;        // knots
-  
+
   // Autopilot
   autopilotActive: boolean;
   lateralMode: string;        // ROL, HDG, NAV, APR
   verticalMode: string;       // PIT, VS, ALT, ALTS
-  
+
   // Alerts
   alerts: Alert[];
 }
@@ -1040,20 +1040,20 @@ interface MFDMapData {
   latitude: number;
   longitude: number;
   track: number;           // degrees
-  
+
   // Map settings
   range: number;           // nm
   orientation: 'north' | 'track' | 'heading';
-  
+
   // Flight plan
   flightPlan: Waypoint[];
   activeWaypointIndex: number;
-  
+
   // Map features
   airports: Airport[];
   navaids: Navaid[];
   airspace: Airspace[];
-  
+
   // Overlays
   terrainEnabled: boolean;
   weatherEnabled: boolean;
@@ -1123,13 +1123,13 @@ class PitchController:
         self.Kd = Kd
         self.integral = 0
         self.prev_error = 0
-    
+
     def update(self, target_pitch: float, current_pitch: float, dt: float) -> float:
         error = target_pitch - current_pitch
         self.integral += error * dt
         derivative = (error - self.prev_error) / dt
         self.prev_error = error
-        
+
         output = self.Kp * error + self.Ki * self.integral + self.Kd * derivative
         return np.clip(output, -1.0, 1.0)  # Normalized elevator input
 ```
@@ -1148,16 +1148,16 @@ class AltitudeHoldController:
     def __init__(self):
         self.pitch_controller = PitchController()
         self.target_vs = 0
-        
+
     def update(self, target_alt: float, current_alt: float, dt: float) -> float:
         # Compute desired vertical speed to reach target altitude
         alt_error = target_alt - current_alt
         self.target_vs = np.clip(alt_error * 10, -1500, 1500)  # Max ±1500 fpm
-        
+
         # Use pitch to achieve target VS
         current_vs = get_vertical_speed()
         target_pitch = self.compute_pitch_for_vs(self.target_vs, current_vs)
-        
+
         return self.pitch_controller.update(target_pitch, get_current_pitch(), dt)
 ```
 
@@ -1166,14 +1166,14 @@ class AltitudeHoldController:
 class HeadingHoldController:
     def __init__(self):
         self.roll_controller = RollController()
-        
+
     def update(self, target_hdg: float, current_hdg: float, dt: float) -> float:
         # Compute shortest angular distance
         hdg_error = normalize_angle(target_hdg - current_hdg)
-        
+
         # Convert heading error to target bank angle (max ±25°)
         target_roll = np.clip(hdg_error * 2.0, -25, 25)
-        
+
         return self.roll_controller.update(target_roll, get_current_roll(), dt)
 ```
 
@@ -1237,24 +1237,24 @@ interface Alert {
 
 class AlertManager {
   private alerts: Alert[] = [];
-  
+
   addAlert(alert: Alert): void {
     this.alerts.push(alert);
     this.sortAlertsByPriority();
     this.playAuralAlert(alert.level);
   }
-  
+
   acknowledgeAlert(id: string): void {
     const alert = this.alerts.find(a => a.id === id);
     if (alert) {
       alert.acknowledged = true;
     }
   }
-  
+
   clearAlert(id: string): void {
     this.alerts = this.alerts.filter(a => a.id !== id);
   }
-  
+
   getVisibleAlerts(): Alert[] {
     return this.alerts.slice(0, 3);
   }
@@ -1319,7 +1319,7 @@ scenario:
   description: "Practice traffic pattern at San Francisco International"
   aircraft: "cessna-172"
   duration: 600  # seconds
-  
+
   initial_conditions:
     position:
       latitude: 37.6213
@@ -1328,7 +1328,7 @@ scenario:
       heading: 280  # runway 28L
     speed: 0
     engine_running: true
-    
+
   waypoints:
     - name: "DEPARTURE"
       latitude: 37.6213
@@ -1336,28 +1336,28 @@ scenario:
       altitude: 10
       speed: 60
       time: 0
-      
+
     - name: "UPWIND"
       latitude: 37.6250
       longitude: -122.3850
       altitude: 500
       speed: 75
       time: 30
-      
+
     - name: "CROSSWIND"
       latitude: 37.6300
       longitude: -122.3900
       altitude: 1000
       speed: 80
       time: 60
-      
+
     # ... more waypoints
-    
+
   events:
     - time: 120
       type: "radio_call"
       message: "KSFO Tower, Cessna 12345, left downwind runway 28L"
-      
+
     - time: 180
       type: "checklist_reminder"
       message: "Perform pre-landing checklist"
@@ -1384,7 +1384,7 @@ interface FlightRecording {
     departure: string;
     destination: string;
   };
-  
+
   telemetry: {
     timestamp: number[];     // seconds
     latitude: number[];
@@ -1396,7 +1396,7 @@ interface FlightRecording {
     speed: number[];
     // ... more channels
   };
-  
+
   events: {
     time: number;
     type: string;
@@ -1425,11 +1425,11 @@ interface G1000Plugin {
   id: string;
   name: string;
   version: string;
-  
+
   // Lifecycle hooks
   initialize(context: PluginContext): Promise<void>;
   destroy(): Promise<void>;
-  
+
   // Optional hooks
   onFlightStateUpdate?(state: FlightState): void;
   onDisplayRender?(canvas: HTMLCanvasElement, ctx: CanvasRenderingContext2D): void;
@@ -1450,20 +1450,20 @@ class TrafficDisplayPlugin implements G1000Plugin {
   id = 'traffic-display';
   name = 'Traffic Information Service';
   version = '1.0.0';
-  
+
   async initialize(context: PluginContext): Promise<void> {
     context.registerDisplay({
       id: 'traffic',
       title: 'Traffic',
       render: this.renderTrafficDisplay.bind(this)
     });
-    
+
     context.registerMenuItem({
       label: 'Traffic',
       page: 'traffic'
     });
   }
-  
+
   private renderTrafficDisplay(canvas: HTMLCanvasElement, ctx: CanvasRenderingContext2D): void {
     // Render traffic information
   }
@@ -1477,7 +1477,7 @@ class TrafficDisplayPlugin implements G1000Plugin {
 aircraft:
   id: "cessna-172"
   name: "Cessna 172 Skyhawk"
-  
+
   performance:
     cruise_speed: 122  # knots
     stall_speed_clean: 48  # knots
@@ -1485,17 +1485,17 @@ aircraft:
     max_speed: 163  # knots (Vne)
     climb_rate: 720  # fpm at sea level
     service_ceiling: 14000  # feet
-    
+
   fuel:
     capacity: 53  # gallons
     unusable: 3  # gallons
     burn_rate: 9  # gph at cruise
-    
+
   weights:
     empty: 1691  # lbs
     max_gross: 2550  # lbs
     useful_load: 859  # lbs
-    
+
   dimensions:
     wingspan: 36  # feet
     length: 27  # feet
@@ -1506,34 +1506,34 @@ aircraft:
 ```yaml
 g1000:
   version: "NXi"  # or "Integrated" for older models
-  
+
   displays:
     pfd:
       size: "10.4 inch"
       resolution: [1024, 768]
-      
+
     mfd:
       size: "10.4 inch"
       resolution: [1024, 768]
-      
+
   features:
     synthetic_vision: true
     charts: true  # Electronic charts
     weather: true  # XM weather or ADS-B weather
     traffic: true  # TIS or ADS-B traffic
-    
+
   nav_radios:
     - id: "nav1"
       type: "VOR/ILS"
-      
+
     - id: "nav2"
       type: "VOR/ILS"
-      
+
   com_radios:
     - id: "com1"
       frequency_range: [118.0, 136.975]
       spacing: 25  # kHz (8.33 kHz in some regions)
-      
+
     - id: "com2"
       frequency_range: [118.0, 136.975]
       spacing: 25
@@ -1576,7 +1576,7 @@ WebSocket: /ws/commands
 - Basic flight state model
 - Initial aircraft model (Cessna 172)
 
-**Story Beads:**
+**Story Tasks:**
 - `story-project-setup`
 - `story-backend-scaffold`
 - `story-frontend-scaffold`
@@ -1592,7 +1592,7 @@ WebSocket: /ws/commands
 - GPS position and navigation
 - Input management (mouse/keyboard)
 
-**Story Beads:**
+**Story Tasks:**
 - `story-pfd-rendering`
 - `story-flight-physics`
 - `story-ahrs-adc`
@@ -1608,7 +1608,7 @@ WebSocket: /ws/commands
 - Map overlays (terrain, weather, traffic)
 - Softkey menu system
 
-**Story Beads:**
+**Story Tasks:**
 - `story-mfd-rendering`
 - `story-flight-plan-mgmt`
 - `story-nav-database`
@@ -1624,7 +1624,7 @@ WebSocket: /ws/commands
 - Alert and annunciation system
 - Demo flight scenarios
 
-**Story Beads:**
+**Story Tasks:**
 - `story-autopilot-lateral`
 - `story-autopilot-vertical`
 - `story-approaches`
@@ -1641,7 +1641,7 @@ WebSocket: /ws/commands
 - User manual
 - Developer API documentation
 
-**Story Beads:**
+**Story Tasks:**
 - `story-ui-polish`
 - `story-performance-opt`
 - `story-documentation`
@@ -1755,7 +1755,7 @@ WebSocket: /ws/commands
 
 - **No Proprietary Code**: Avoid reverse engineering or including Garmin's proprietary code
 - **Trademark Respect**: Use "G1000-style" or "G1000-inspired" terminology where appropriate
-- **API Security**: 
+- **API Security**:
   - Rate limiting on all endpoints
   - Authentication for admin functions
   - HTTPS only in production
@@ -1827,6 +1827,6 @@ The G1000 Simulator project will be considered successful when:
 
 The Garmin G1000 Simulator represents a significant addition to the Aviation monorepo, bringing advanced avionics simulation to pilots, students, and enthusiasts. By leveraging existing infrastructure and developing new specialized SDKs, this project will deliver a realistic, educational, and extensible platform for modern glass cockpit training.
 
-The modular architecture ensures that components can be developed, tested, and deployed independently, following the beads pattern established in the repository. The comprehensive documentation and adherence to best practices will make this project maintainable and welcoming to contributors.
+The modular architecture ensures that components can be developed, tested, and deployed independently, with work topology tracked in MAC. The comprehensive documentation and adherence to best practices will make this project maintainable and welcoming to contributors.
 
 With careful attention to legal considerations and a focus on educational value, the G1000 Simulator will serve as both a powerful training tool and a showcase of the capabilities of modern web technologies for aviation applications.

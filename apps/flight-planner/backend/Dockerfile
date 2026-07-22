@@ -55,16 +55,7 @@ ENV REPO_URL=$REPO_URL \
 
 COPY --from=builder /opt/venv /opt/venv
 
-# Optional: include Beads issue tracker and CLI for local error auto-reporting.
-ARG INSTALL_BD=false
-RUN if [ "$INSTALL_BD" = "true" ]; then \
-      apt-get update && apt-get install -y --no-install-recommends curl bash ca-certificates && \
-      rm -rf /var/lib/apt/lists/* && \
-      curl -sSL https://raw.githubusercontent.com/steveyegge/beads/main/scripts/install.sh | bash ; \
-    fi
-
 WORKDIR /app
-COPY .beads/ ./.beads/
 COPY packages/shared-sdk/python /packages/shared-sdk/python
 
 WORKDIR /app/backend

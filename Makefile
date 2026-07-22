@@ -271,9 +271,10 @@ test-docker-clojure:
 .PHONY: validate lint format audit audit-node audit-python
 
 validate:
-	@echo "🔍 Validating beads configuration..."
-	python3 validate_beads.py
-	@echo "✅ Beads configuration valid"
+	@echo "🔍 Validating MAC repository contract..."
+	@test -f .mac/project.yaml
+	@python3 -c 'import pathlib, yaml; data = yaml.safe_load(pathlib.Path(".mac/project.yaml").read_text()); assert data.get("schema") == "mac.repository_contract.v1"; assert data.get("project") == "Aviation"'
+	@echo "✅ MAC repository contract valid"
 
 lint:
 	@echo "🔍 Running linters..."

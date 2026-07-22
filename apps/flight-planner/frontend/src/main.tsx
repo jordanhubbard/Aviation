@@ -7,7 +7,7 @@ import { QueryClient, QueryClientProvider } from 'react-query'
 import { Toaster } from 'react-hot-toast'
 import App from './App.tsx'
 
-import { installFrontendBeadsErrorReporting } from './utils/beadsReporting'
+import { installFrontendMacErrorReporting } from './utils/macReporting'
 
 const reloadOnceKey = 'flight-planner:reload-once:preload-error'
 
@@ -45,7 +45,7 @@ const queryClient = new QueryClient({
   },
 })
 
-installFrontendBeadsErrorReporting()
+installFrontendMacErrorReporting()
 
 // If a new deploy happens while a user has a page open, the old HTML can reference
 // chunk filenames that no longer exist, causing dynamic import failures.

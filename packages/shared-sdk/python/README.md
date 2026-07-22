@@ -14,6 +14,13 @@ Full OAuth2 and Calendar API integration matching the TypeScript implementation.
 
 Weather data services (coming from TypeScript port).
 
+### MAC task reporting
+
+`aviation.mac_tasks.MacTaskCreator` creates idempotent runtime error tasks in
+the MAC hub. Configure `MAC_API_URL` and, when required, `MAC_API_TOKEN`; tasks
+default to the `Aviation` project. Test and CI processes stay disabled unless
+`MAC_AUTOREPORT_FORCE=1` is set explicitly.
+
 ## Installation
 
 ### Development Installation

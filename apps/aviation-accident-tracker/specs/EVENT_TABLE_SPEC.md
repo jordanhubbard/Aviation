@@ -1,6 +1,6 @@
 # Event Table Component Implementation Spec
 
-**Bead:** [Aviation-6f2] Implement event table with sorting and pagination
+**MAC task:** [Aviation-6f2] Implement event table with sorting and pagination
 **Priority:** P0 - MVP Blocker
 **Effort:** 2 days
 **Dependencies:**
@@ -74,7 +74,7 @@ export interface EventsResponse {
   limit: number;
 }
 
-export type SortField = 
+export type SortField =
   | 'date_time'
   | 'aircraft_type'
   | 'operator'
@@ -117,7 +117,7 @@ export interface EventTableProps {
 
 /**
  * Event table with sorting, pagination, and selection
- * 
+ *
  * @example
  * ```tsx
  * <EventTable

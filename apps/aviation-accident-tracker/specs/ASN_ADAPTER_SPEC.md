@@ -1,9 +1,9 @@
 # ASN Aviation Safety Network Adapter Implementation Spec
 
-**Bead:** [Aviation-gil] Implement ASN data ingestion adapter
+**MAC task:** [Aviation-gil] Implement ASN data ingestion adapter
 **Priority:** P0 - MVP Blocker
 **Effort:** 2-3 days
-**Dependencies:** 
+**Dependencies:**
 - Aviation-o2d (airports for geocoding)
 - Backend infrastructure (repository, classifier, types)
 
@@ -123,16 +123,16 @@ export class ASNAdapter implements IngestionAdapter {
 
       // 2. Fetch details for each accident (with rate limiting)
       const events: EventRecord[] = [];
-      
+
       for (const link of accidentLinks) {
         try {
           const html = await this.scraper.fetchAccidentPage(link.url);
           const parsed = this.parser.parseAccidentPage(html, link);
-          
+
           if (parsed) {
             events.push(parsed);
           }
-          
+
           // Rate limiting: 2 seconds between requests
           await this.delay(2000);
         } catch (error) {
@@ -143,7 +143,7 @@ export class ASNAdapter implements IngestionAdapter {
 
       logger.info(`Successfully fetched ${events.length} accidents from ASN`);
       return events;
-      
+
     } catch (error) {
       logger.error('ASN fetch failed:', error);
       throw error;
@@ -428,7 +428,7 @@ describe('ASNAdapter', () => {
     test('fetches recent accidents', async () => {
       // Mock scraper responses
       const events = await adapter.fetch(30);
-      
+
       expect(Array.isArray(events)).toBe(true);
       expect(events.length).toBeGreaterThan(0);
     });
@@ -442,7 +442,7 @@ describe('ASNAdapter', () => {
       const start = Date.now();
       await adapter.fetch(2); // Fetch 2 accidents
       const elapsed = Date.now() - start;
-      
+
       // Should take at least 2 seconds (rate limit)
       expect(elapsed).toBeGreaterThanOrEqual(2000);
     });
@@ -505,7 +505,7 @@ describe('ASNParser', () => {
     };
 
     const event = parser.parseAccidentPage(mockHtml, link);
-    
+
     expect(event).not.toBeNull();
     expect(event?.external_id).toBe('asn-20260113-0');
     expect(event?.aircraft_type).toBe('Boeing 737-800');
@@ -546,7 +546,7 @@ describe('ASN Integration', () => {
     const events = await adapter.fetch(7); // Last week
 
     expect(events.length).toBeGreaterThan(0);
-    
+
     // Verify structure
     events.forEach(event => {
       expect(event.external_id).toMatch(/^asn-/);

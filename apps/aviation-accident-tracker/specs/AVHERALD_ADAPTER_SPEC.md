@@ -1,6 +1,6 @@
 # AVHerald Adapter Implementation Spec
 
-**Bead:** [Aviation-82s] Implement AVHerald data ingestion adapter
+**MAC task:** [Aviation-82s] Implement AVHerald data ingestion adapter
 **Priority:** P0 - MVP Blocker
 **Effort:** 2 days
 **Dependencies:**
@@ -81,15 +81,15 @@ apps/aviation-accident-tracker/backend/src/ingest/
 ```
 Incident: United B738 at San Francisco on Jan 13th 2026, hard landing
 
-An United Airlines Boeing 737-800, registration N12345 performing 
-flight UA-123 from Chicago,IL to San Francisco,CA (USA), landed on 
-San Francisco's runway 28R at about 14:30L (22:30Z) but touched 
-down hard prompting a go around. The aircraft positioned for another 
+An United Airlines Boeing 737-800, registration N12345 performing
+flight UA-123 from Chicago,IL to San Francisco,CA (USA), landed on
+San Francisco's runway 28R at about 14:30L (22:30Z) but touched
+down hard prompting a go around. The aircraft positioned for another
 approach to runway 28R and landed safely about 20 minutes later.
 
-The FAA reported the aircraft experienced a hard landing in gusty 
-crosswind conditions. The crew executed a go-around and made a 
-successful second approach. Post-flight inspection revealed minor 
+The FAA reported the aircraft experienced a hard landing in gusty
+crosswind conditions. The crew executed a go-around and made a
+successful second approach. Post-flight inspection revealed minor
 damage to the landing gear.
 
 Aircraft: Boeing 737-800
@@ -145,16 +145,16 @@ export class AVHeraldAdapter implements IngestionAdapter {
 
       // Fetch full article content for each (with rate limiting)
       const events: EventRecord[] = [];
-      
+
       for (const article of articles) {
         try {
           const html = await this.scraper.fetchArticlePage(article.url);
           const parsed = this.parser.parseArticle(html, article);
-          
+
           if (parsed) {
             events.push(parsed);
           }
-          
+
           // Rate limiting: 3 seconds between requests (be respectful)
           await this.delay(3000);
         } catch (error) {
@@ -165,7 +165,7 @@ export class AVHeraldAdapter implements IngestionAdapter {
 
       logger.info(`Successfully fetched ${events.length} incidents from AVHerald`);
       return events;
-      
+
     } catch (error) {
       logger.error('AVHerald fetch failed:', error);
       throw error;
@@ -220,7 +220,7 @@ export class AVHeraldScraper {
       const rss = parser.parse(xml);
 
       const items = rss.rss?.channel?.item || [];
-      
+
       for (const item of items) {
         const pubDate = new Date(item.pubDate);
         if (pubDate < cutoffDate) continue; // Too old
@@ -258,7 +258,7 @@ export class AVHeraldScraper {
 
     const url = `${this.baseUrl}/h?list&opt=0`;
     const response = await fetch(url);
-    
+
     if (!response.ok) {
       throw new Error(`AVHerald fetch failed: ${response.status}`);
     }
@@ -271,13 +271,13 @@ export class AVHeraldScraper {
       const $elem = $(elem);
       const link = $elem.find('a').attr('href');
       const headline = $elem.find('a').text().trim();
-      
+
       if (!link || !headline) return;
 
       // Extract date from article text (format: "Jan 13th 2026")
       const dateText = $elem.parent().text();
       const articleDate = this.parseAVHeraldDate(dateText);
-      
+
       if (articleDate < cutoffDate) return; // Too old
 
       // Extract article ID
@@ -328,7 +328,7 @@ export class AVHeraldScraper {
 
     // Match "Jan 13th 2026" or "January 13th 2026"
     const match = text.match(/(Jan|January|Feb|February|Mar|March|Apr|April|May|Jun|June|Jul|July|Aug|August|Sep|September|Oct|October|Nov|November|Dec|December)\s+(\d+)(?:st|nd|rd|th)?\s+(\d{4})/i);
-    
+
     if (!match) return new Date();
 
     const month = months[match[1]];
@@ -371,7 +371,7 @@ export class AVHeraldParser {
     try {
       // Extract article content
       const content = $('.hcontent').text();
-      
+
       // Extract structured data from headline and content
       const data = this.extractData(article.headline, content);
 
@@ -415,7 +415,7 @@ export class AVHeraldParser {
 
     // Parse headline (format: "Incident: United B738 at San Francisco on Jan 13th 2026, hard landing")
     const headlineParts = headline.match(/(Accident|Incident|Serious Incident):\s+(.+?)\s+(at|near)\s+(.+?)\s+on\s+(.+?),\s+(.+)/);
-    
+
     if (headlineParts) {
       data.eventType = headlineParts[1]; // Accident/Incident
       data.aircraftInfo = headlineParts[2]; // "United B738"
@@ -435,7 +435,7 @@ export class AVHeraldParser {
 
   private parseAircraftInfo(info: string, data: any): void {
     // Format: "United B738" or "Delta A320" or "N12345 B738"
-    
+
     // Try to extract operator (airline name)
     const operatorMatch = info.match(/^([A-Z][a-z]+(?:\s+[A-Z][a-z]+)?)/);
     if (operatorMatch) {
@@ -535,12 +535,12 @@ export class AVHeraldParser {
   private cleanDescription(content: string): string {
     // Remove excess whitespace
     let clean = content.replace(/\s+/g, ' ').trim();
-    
+
     // Limit length
     if (clean.length > 1000) {
       clean = clean.substring(0, 997) + '...';
     }
-    
+
     return clean;
   }
 }
@@ -567,7 +567,7 @@ describe('AVHeraldAdapter', () => {
 
   test('fetches recent incidents', async () => {
     const events = await adapter.fetch(30);
-    
+
     expect(Array.isArray(events)).toBe(true);
   });
 
@@ -575,7 +575,7 @@ describe('AVHeraldAdapter', () => {
     const start = Date.now();
     await adapter.fetch(2);
     const elapsed = Date.now() - start;
-    
+
     // Should take at least 3 seconds per article
     expect(elapsed).toBeGreaterThanOrEqual(3000);
   });
@@ -591,7 +591,7 @@ describe('AVHeraldParser', () => {
   test('parses headline correctly', () => {
     const headline = 'Incident: United B738 at San Francisco on Jan 13th 2026, hard landing';
     const content = 'Test content';
-    
+
     const article = {
       id: 'test123',
       url: 'https://avherald.com/h?article=test123',
@@ -601,7 +601,7 @@ describe('AVHeraldParser', () => {
     };
 
     const event = parser.parseArticle('<div class="hcontent">Test content</div>', article);
-    
+
     expect(event).not.toBeNull();
     expect(event?.external_id).toBe('avherald-test123');
     expect(event?.operator).toContain('United');
@@ -610,7 +610,7 @@ describe('AVHeraldParser', () => {
   test('extracts aircraft type', () => {
     const data: any = {};
     parser['parseAircraftInfo']('United B738', data);
-    
+
     expect(data.operator).toBe('United');
     expect(data.type).toBe('Boeing 737-800');
   });
@@ -619,7 +619,7 @@ describe('AVHeraldParser', () => {
     const content = 'flight UA-123';
     const data: any = {};
     parser['extractFromContent'](content, data);
-    
+
     expect(data.flightNumber).toBe('UA123');
   });
 });

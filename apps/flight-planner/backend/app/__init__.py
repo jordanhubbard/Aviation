@@ -20,17 +20,17 @@ from .routers.weather import router as weather_router
 from .routers.airports import router as airports_router
 from .routers.airspace import router as airspace_router
 from .routers.terrain import router as terrain_router
-from .routers.beads import router as beads_router
+from .routers.mac_tasks import router as mac_tasks_router
 from .routers.local import router as local_router
 from fastapi import WebSocket, WebSocketDisconnect
 
 
 def create_app(settings):
     """Create and configure the FastAPI application.
-    
+
     Args:
         settings: Application settings object
-        
+
     Returns:
         Configured FastAPI application instance
     """
@@ -96,7 +96,7 @@ def create_app(settings):
     app.include_router(airports_router, prefix="/api", tags=["airports"])
     app.include_router(airspace_router, prefix="/api", tags=["airspace"])
     app.include_router(terrain_router, prefix="/api", tags=["terrain"])
-    app.include_router(beads_router, prefix="/api", tags=["beads"])
+    app.include_router(mac_tasks_router, prefix="/api", tags=["mac"])
     app.include_router(local_router, prefix="/api", tags=["local"])
 
     # Initialize AlertManager

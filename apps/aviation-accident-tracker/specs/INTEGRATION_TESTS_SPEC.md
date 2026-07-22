@@ -1,6 +1,6 @@
 # Integration Tests Implementation Spec
 
-**Bead:** [Aviation-5ra] Implement integration tests
+**MAC task:** [Aviation-5ra] Implement integration tests
 **Priority:** P1 - High Priority
 **Effort:** 1-2 days
 **Dependencies:**
@@ -64,11 +64,11 @@ describe('API Integration Tests', () => {
   beforeAll(async () => {
     // Set up test database
     process.env.DATABASE_PATH = ':memory:';
-    
+
     app = createApp();
     repository = new EventRepository();
     await repository.initialize();
-    
+
     // Seed test data
     await seedDatabase();
   });
@@ -98,10 +98,10 @@ describe('API Integration Tests', () => {
         .query({ sort: 'date_time', order: 'desc', limit: 5 })
         .expect(200);
 
-      const dates = response.body.events.map((e: any) => 
+      const dates = response.body.events.map((e: any) =>
         new Date(e.date_time).getTime()
       );
-      
+
       // Check descending order
       for (let i = 1; i < dates.length; i++) {
         expect(dates[i]).toBeLessThanOrEqual(dates[i - 1]);
@@ -243,7 +243,7 @@ describe('Data Ingestion Integration', () => {
       const events = await adapter.fetch(7); // Last 7 days
 
       expect(Array.isArray(events)).toBe(true);
-      
+
       if (events.length > 0) {
         const event = events[0];
         expect(event).toHaveProperty('external_id');
@@ -261,7 +261,7 @@ describe('Data Ingestion Integration', () => {
       const events = await adapter.fetch(7);
 
       expect(Array.isArray(events)).toBe(true);
-      
+
       if (events.length > 0) {
         const event = events[0];
         expect(event).toHaveProperty('external_id');
@@ -279,7 +279,7 @@ describe('Data Ingestion Integration', () => {
       expect(result).toHaveProperty('success');
       expect(result).toHaveProperty('eventsIngested');
       expect(result).toHaveProperty('errors');
-      
+
       // Should have attempted both sources
       expect(result.eventsIngested).toBeGreaterThanOrEqual(0);
     }, 60000); // 60s timeout

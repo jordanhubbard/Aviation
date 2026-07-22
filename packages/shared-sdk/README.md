@@ -12,6 +12,15 @@ Shared SDK for aviation applications providing common services, AI integration p
 - `AIProvider` - Interface for AI provider implementations
 - Common AI patterns and utilities
 
+### MAC runtime task reporting
+
+- `MacTaskCreator` submits idempotent error tasks to the MAC hub.
+- `installNodeProcessErrorReporting` reports uncaught Node.js process errors.
+- Configure `MAC_API_URL` and, when required, `MAC_API_TOKEN`; the project
+  defaults to `Aviation`.
+- CI and test processes do not create live tasks unless
+  `MAC_AUTOREPORT_FORCE=1` is set explicitly.
+
 ### Aviation Data Services
 
 #### Airport Database (`aviation/airports`)

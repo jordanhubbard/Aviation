@@ -1,6 +1,6 @@
 # Filters UI Component Implementation Spec
 
-**Bead:** [Aviation-czw] Implement filters UI component
+**MAC task:** [Aviation-czw] Implement filters UI component
 **Priority:** P0 - MVP Blocker
 **Effort:** 2 days
 **Dependencies:**
@@ -113,7 +113,7 @@ export interface FiltersProps {
 
 /**
  * Filters UI component for accident/incident events
- * 
+ *
  * @example
  * ```tsx
  * <Filters
@@ -203,7 +203,7 @@ export function Filters({
         <Typography variant="subtitle2" gutterBottom>
           Search
         </Typography>
-        
+
         <TextField
           label="Location"
           value={filters.location || ''}
@@ -605,7 +605,7 @@ export function useFilters(initialFilters: Partial<Filters> = {}): UseFiltersRes
   const updateFilter = useCallback((updates: Partial<Filters>) => {
     setFilters(prev => {
       const next = { ...prev, ...updates };
-      
+
       // Remove undefined/empty values
       Object.keys(next).forEach(key => {
         const value = next[key as keyof Filters];
@@ -617,7 +617,7 @@ export function useFilters(initialFilters: Partial<Filters> = {}): UseFiltersRes
           delete next[key as keyof Filters];
         }
       });
-      
+
       return next;
     });
   }, []);

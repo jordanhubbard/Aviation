@@ -1,6 +1,6 @@
 # Aviation Accident Tracker - Integration Status
 
-**Date:** January 15, 2026  
+**Date:** January 15, 2026
 **Status:** ⚠️ **PARTIALLY INTEGRATED - BUILD ERRORS**
 
 ---
@@ -11,7 +11,7 @@
 - ✅ Directory exists: `apps/aviation-accident-tracker/`
 - ✅ Backend structure complete (src/, GraphQL, API, database, ingest)
 - ✅ Frontend structure complete (React + TypeScript + Vite)
-- ✅ All beads closed (10 accident-tracker related beads)
+- ✅ All legacy tracker tasks closed (10 accident-tracker related tasks)
 
 ### 2. Documentation
 - ✅ README.md (comprehensive)
@@ -38,7 +38,7 @@
 
 **Missing/Mismatched Repository Methods:**
 - `getEventDetail()` - called but doesn't exist
-- `getStatistics()` - called but doesn't exist  
+- `getStatistics()` - called but doesn't exist
 - `listEvents()` returns wrong type (should return `{events, total}`)
 
 **Import Errors:**
@@ -130,9 +130,9 @@ async listEvents(params: ListEventsParams): Promise<{ events: EventRecord[], tot
 
 ---
 
-## 📋 Closed Beads (Work Completed)
+## 📋 Closed Legacy Tasks (Work Completed)
 
-| Bead ID | Title | Status |
+| Legacy task ID | Title | Status |
 |---------|-------|--------|
 | Aviation-a5f | Migrate accident-tracker to use shared aviation SDK | ✅ Closed |
 | Aviation-0bk | Aviation Accident Tracker: Frontend | ✅ Closed |
@@ -149,7 +149,7 @@ async listEvents(params: ListEventsParams): Promise<{ events: EventRecord[], tot
 
 ## 🎯 Recommended Next Steps
 
-1. **Create new bead:** "Fix accident-tracker build errors" (P1)
+1. **Create a MAC task:** "Fix accident-tracker build errors" (P1)
 2. **Update EventRepository** to match GraphQL resolver expectations
 3. **Fix all TypeScript compilation errors**
 4. **Add accident-tracker to root README**
@@ -179,7 +179,6 @@ These session summary files can be safely deleted:
 **Accident-tracker directory:**
 - `apps/aviation-accident-tracker/COMPLETION_STATUS.md`
 - `apps/aviation-accident-tracker/INCREMENTAL_EXECUTION_PLAN.md`
-- `apps/aviation-accident-tracker/NEW_BEADS.md`
 - `apps/aviation-accident-tracker/SESSION_COMPLETE.md`
 - `apps/aviation-accident-tracker/SHARED_CODE_EXTRACTION.md`
 - `apps/aviation-accident-tracker/SPECS_COMPLETE.md`
@@ -195,4 +194,4 @@ These session summary files can be safely deleted:
 
 ---
 
-**Summary:** The accident-tracker has extensive work completed but needs build error fixes before it can be considered fully integrated. All planning work has been converted to beads and the temporary session files can be removed.
+**Summary:** The accident-tracker has extensive work completed but needs build error fixes before it can be considered fully integrated. Historical planning records have been imported into MAC and temporary session files can be removed.

@@ -1,14 +1,14 @@
-import express from 'express';
-import { memoryRepo } from '../repo/memoryRepo.js';
-import { ListEventsParams } from '../types.js';
-import { runRecentIngest } from '../ingest/ingestService.js';
-import { searchAirports } from '../geo/airportLookup.js';
-import { EventRepository } from '../db/repository.js';
-import { config } from '../config.js';
-import { beadsIssueCreator } from '../beads.js';
+import express from "express";
+import { memoryRepo } from "../repo/memoryRepo.js";
+import { ListEventsParams } from "../types.js";
+import { runRecentIngest } from "../ingest/ingestService.js";
+import { searchAirports } from "../geo/airportLookup.js";
+import { EventRepository } from "../db/repository.js";
+import { config } from "../config.js";
+import { macTaskCreator } from "../mac.js";
 
-type BeadsErrorReport = {
-  source: 'frontend' | 'backend' | 'log' | string;
+type MacErrorReport = {
+  source: "frontend" | "backend" | "log" | string;
   message: string;
   stack?: string | null;
   url?: string | null;
@@ -18,29 +18,33 @@ type BeadsErrorReport = {
 
 export function createRouter(repository: EventRepository) {
   const router = express.Router();
-  const useMemoryRepo = config.env === 'test';
+  const useMemoryRepo = config.env === "test";
 
-  router.get('/beads/enabled', (_req, res) => {
-    res.json({ enabled: beadsIssueCreator.enabled(), created: false });
+  router.get("/mac/enabled", (_req, res) => {
+    res.json({ enabled: macTaskCreator.enabled(), created: false });
   });
 
-  router.post('/beads/report', (req, res) => {
-    const enabled = beadsIssueCreator.enabled();
+  router.post("/mac/report", async (req, res) => {
+    const enabled = macTaskCreator.enabled();
     if (!enabled) {
-      return res.json({ enabled: false, created: false, reason: 'beads autoreport disabled' });
+      return res.json({
+        enabled: false,
+        created: false,
+        reason: "MAC autoreport disabled",
+      });
     }
 
-    const payload = req.body as BeadsErrorReport;
+    const payload = req.body as MacErrorReport;
     const titlePrefix =
-      payload.source === 'frontend'
-        ? '[frontend]'
-        : payload.source === 'backend'
-          ? '[backend]'
-          : payload.source === 'log'
-            ? '[log]'
-            : '[error]';
+      payload.source === "frontend"
+        ? "[frontend]"
+        : payload.source === "backend"
+          ? "[backend]"
+          : payload.source === "log"
+            ? "[log]"
+            : "[error]";
 
-    const firstLine = String(payload.message ?? 'Error').split('\n')[0];
+    const firstLine = String(payload.message ?? "Error").split("\n")[0];
     const title = `${titlePrefix} ${firstLine.slice(0, 100)}`.trim();
 
     const context = {
@@ -50,34 +54,37 @@ export function createRouter(repository: EventRepository) {
       user_agent: payload.user_agent ?? undefined,
     };
 
-    let description = String(payload.message ?? '');
+    let description = String(payload.message ?? "");
     if (Object.keys(context).length) {
       description +=
-        '\n\nContext:\n' +
+        "\n\nContext:\n" +
         Object.entries(context)
           .sort(([a], [b]) => a.localeCompare(b))
           .map(([k, v]) => `- ${k}: ${String(v)}`)
-          .join('\n');
+          .join("\n");
     }
     if (payload.stack) {
       description += `\n\nStack:\n${payload.stack}`;
     }
 
-    const kind = payload.context && typeof payload.context === 'object' ? (payload.context as any).kind : undefined;
-    const autoFiledComment = `error report (source=${payload.source}, kind=${kind ?? 'unknown'})`;
+    const kind =
+      payload.context && typeof payload.context === "object"
+        ? (payload.context as any).kind
+        : undefined;
+    const autoFiledContext = `error report (source=${payload.source}, kind=${kind ?? "unknown"})`;
 
-    const result = beadsIssueCreator.createAutoFiledIssue({
+    const result = await macTaskCreator.createAutoFiledTask({
       title,
       description,
-      issueType: 'bug',
+      taskType: "bug",
       priority: 1,
-      autoFiledComment,
+      autoFiledContext,
     });
 
     return res.json({
       enabled: true,
       created: result.created,
-      issue_id: result.issueId,
+      task_id: result.taskId,
       reason: result.reason,
     });
   });
@@ -100,8 +107,8 @@ export function createRouter(repository: EventRepository) {
    *                   type: string
    *                   example: ok
    */
-  router.get('/health', (_req, res) => {
-    res.json({ status: 'ok' });
+  router.get("/health", (_req, res) => {
+    res.json({ status: "ok" });
   });
 
   /**
@@ -122,8 +129,8 @@ export function createRouter(repository: EventRepository) {
    *                   type: string
    *                   example: 0.1.0
    */
-  router.get('/version', (_req, res) => {
-    res.json({ version: '0.1.0' });
+  router.get("/version", (_req, res) => {
+    res.json({ version: "0.1.0" });
   });
 
   /**
@@ -189,11 +196,11 @@ export function createRouter(repository: EventRepository) {
    *             schema:
    *               $ref: '#/components/schemas/ListEventsResponse'
    */
-  router.get('/events', async (req, res, next) => {
+  router.get("/events", async (req, res, next) => {
     const params: ListEventsParams = {
       from: req.query.from as string | undefined,
       to: req.query.to as string | undefined,
-      category: (req.query.category as any) || 'all',
+      category: (req.query.category as any) || "all",
       airport: req.query.airport as string | undefined,
       country: req.query.country as string | undefined,
       region: req.query.region as string | undefined,
@@ -237,16 +244,16 @@ export function createRouter(repository: EventRepository) {
    *       404:
    *         description: Event not found
    */
-  router.get('/events/:id', async (req, res, next) => {
+  router.get("/events/:id", async (req, res, next) => {
     try {
       if (useMemoryRepo) {
         const item = memoryRepo.get(req.params.id);
-        if (!item) return res.status(404).json({ error: 'not_found' });
+        if (!item) return res.status(404).json({ error: "not_found" });
         return res.json(item);
       }
 
       const item = await repository.getEventWithSources(req.params.id);
-      if (!item) return res.status(404).json({ error: 'not_found' });
+      if (!item) return res.status(404).json({ error: "not_found" });
       return res.json(item);
     } catch (error) {
       return next(error);
@@ -275,12 +282,12 @@ export function createRouter(repository: EventRepository) {
    *       500:
    *         description: Ingest failed
    */
-  router.post('/ingest/run', (_req, res) => {
+  router.post("/ingest/run", (_req, res) => {
     runRecentIngest(repository)
-      .then((result) => res.json({ status: 'ok', result }))
+      .then((result) => res.json({ status: "ok", result }))
       .catch((err) => {
-        console.error('[ingest] failed', err);
-        res.status(500).json({ error: 'ingest_failed' });
+        console.error("[ingest] failed", err);
+        res.status(500).json({ error: "ingest_failed" });
       });
   });
 
@@ -306,8 +313,8 @@ export function createRouter(repository: EventRepository) {
    *               items:
    *                 $ref: '#/components/schemas/AirportRecord'
    */
-  router.get('/airports', (req, res) => {
-    const q = (req.query.search as string | undefined)?.trim() || '';
+  router.get("/airports", (req, res) => {
+    const q = (req.query.search as string | undefined)?.trim() || "";
     if (!q) return res.json([]);
     const results = searchAirports(q, 20);
     return res.json(results);
@@ -327,18 +334,25 @@ export function createRouter(repository: EventRepository) {
    *             schema:
    *               $ref: '#/components/schemas/FiltersOptions'
    */
-  router.get('/filters/options', async (_req, res, next) => {
+  router.get("/filters/options", async (_req, res, next) => {
     try {
       // Dynamic country/region lists derived from events in DB
       const [countryRows, regionRows] = await Promise.all([
         useMemoryRepo
           ? Promise.resolve(
-              [...new Set(memoryRepo.list({}).data.map((e: any) => e.country).filter(Boolean))].sort()
+              [
+                ...new Set(
+                  memoryRepo
+                    .list({})
+                    .data.map((e: any) => e.country)
+                    .filter(Boolean),
+                ),
+              ].sort(),
             )
-          : repository.getDistinctValues('country'),
+          : repository.getDistinctValues("country"),
         useMemoryRepo
           ? Promise.resolve([])
-          : repository.getDistinctValues('region'),
+          : repository.getDistinctValues("region"),
       ]);
 
       return res.json({ countries: countryRows, regions: regionRows });

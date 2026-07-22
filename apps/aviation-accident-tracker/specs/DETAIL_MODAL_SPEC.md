@@ -1,6 +1,6 @@
 # Event Detail Modal Component Implementation Spec
 
-**Bead:** [Aviation-c8f] Implement event detail modal
+**MAC task:** [Aviation-c8f] Implement event detail modal
 **Priority:** P1 - High Priority
 **Effort:** 1-2 days
 **Dependencies:**
@@ -63,11 +63,11 @@ export interface EventDetailModalProps {
 
 /**
  * Event detail modal with full accident/incident information
- * 
+ *
  * @example
  * ```tsx
  * const [selectedId, setSelectedId] = useState<number | null>(null);
- * 
+ *
  * <EventDetailModal
  *   eventId={selectedId}
  *   open={selectedId !== null}
@@ -553,7 +553,7 @@ export function useEventDetail(eventId: number | null): UseEventDetailResult {
 router.get('/events/:id', async (req, res) => {
   try {
     const id = parseInt(req.params.id);
-    
+
     if (isNaN(id)) {
       return res.status(400).json({ error: 'Invalid event ID' });
     }

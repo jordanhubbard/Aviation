@@ -6,13 +6,13 @@ Part of the **@aviation/shared-sdk** package, extracted from the FlightPlanner a
 
 ## Features
 
-✅ **82,870+ Airports** - Complete global airport database from OurAirports  
-✅ **Fast In-Memory Cache** - Lazy loading with sub-second lookups  
-✅ **ICAO/IATA Codes** - Support for both international standards  
-✅ **US K-Prefix Handling** - Automatic FAA code conversion (PAO → KPAO)  
-✅ **Fuzzy Text Search** - Find airports by name, city, or partial code  
-✅ **Proximity Search** - Find airports within X nm of a location  
-✅ **Distance Calculations** - Haversine distance in nautical miles  
+✅ **82,870+ Airports** - Complete global airport database from OurAirports
+✅ **Fast In-Memory Cache** - Lazy loading with sub-second lookups
+✅ **ICAO/IATA Codes** - Support for both international standards
+✅ **US K-Prefix Handling** - Automatic FAA code conversion (PAO → KPAO)
+✅ **Fuzzy Text Search** - Find airports by name, city, or partial code
+✅ **Proximity Search** - Find airports within X nm of a location
+✅ **Distance Calculations** - Haversine distance in nautical miles
 ✅ **Dual Language Support** - Identical APIs for TypeScript and Python
 
 ---
@@ -182,9 +182,9 @@ interface AirportSearchOptions {
 
 ```typescript
 // Text search (same as searchAirports)
-const results = await searchAirportsAdvanced({ 
-  query: 'International', 
-  limit: 10 
+const results = await searchAirportsAdvanced({
+  query: 'International',
+  limit: 10
 });
 
 // Proximity search (all airports within 50nm)
@@ -263,19 +263,19 @@ import { getAirport, haversineDistance } from '@aviation/shared-sdk';
 async function planRoute(departure: string, destination: string) {
   const dep = await getAirport(departure);
   const dest = await getAirport(destination);
-  
+
   if (!dep || !dest) {
     throw new Error('Airport not found');
   }
-  
+
   const distance = haversineDistance(
     dep.latitude, dep.longitude,
     dest.latitude, dest.longitude
   );
-  
+
   console.log(`Route: ${dep.icao} → ${dest.icao}`);
   console.log(`Distance: ${distance.toFixed(2)} nm`);
-  
+
   return { dep, dest, distance };
 }
 
@@ -289,9 +289,9 @@ import { searchAirports } from '@aviation/shared-sdk';
 
 async function handleSearchInput(query: string) {
   if (query.length < 2) return [];
-  
+
   const results = await searchAirports(query, 10);
-  
+
   return results.map(airport => ({
     label: `${airport.icao} - ${airport.name}`,
     value: airport.icao,
@@ -318,7 +318,7 @@ async function findNearestAirports(lat: number, lon: number, count: number = 5) 
     lon,
     limit: count
   });
-  
+
   return results.map(airport => ({
     ...airport,
     distanceMiles: (airport.distance_nm! * 1.15078).toFixed(1)
@@ -343,17 +343,17 @@ import { searchAirportsAdvanced } from '@aviation/shared-sdk';
 async function findAlternates(departure: string, maxDistance: number = 100) {
   const dep = await getAirport(departure);
   if (!dep) return [];
-  
+
   const alternates = await searchAirportsAdvanced({
     lat: dep.latitude,
     lon: dep.longitude,
     radius_nm: maxDistance,
     limit: 20
   });
-  
+
   // Filter out the departure airport and only include airports with runways
-  return alternates.filter(a => 
-    a.icao !== dep.icao && 
+  return alternates.filter(a =>
+    a.icao !== dep.icao &&
     ['large_airport', 'medium_airport'].includes(a.type)
   );
 }
@@ -370,7 +370,7 @@ import { getAirport } from '@aviation/shared-sdk';
 async function getAirportInfo(code: string) {
   const airport = await getAirport(code);
   if (!airport) return null;
-  
+
   return {
     full_name: `${airport.name} (${airport.icao}/${airport.iata})`,
     location: `${airport.city}, ${airport.country}`,
@@ -431,7 +431,7 @@ console.log(info);
    ```typescript
    // Fastest (direct lookup)
    const sfo = await getAirport('KSFO');
-   
+
    // Slower (text search)
    const results = await searchAirports('San Francisco', 1);
    ```
@@ -440,8 +440,8 @@ console.log(info);
 
 ## Data Source
 
-**Airport Data:** [OurAirports](https://ourairports.com/data/)  
-**Coverage:** 82,870+ airports worldwide  
+**Airport Data:** [OurAirports](https://ourairports.com/data/)
+**Coverage:** 82,870+ airports worldwide
 **Last Updated:** January 2026
 
 **Included Data:**
@@ -520,7 +520,7 @@ When adding features to airport search:
    # TypeScript
    npm run lint
    npm test
-   
+
    # Python
    black python/aviation/
    flake8 python/aviation/
@@ -533,5 +533,5 @@ When adding features to airport search:
 
 MIT - Part of the Aviation Monorepo
 
-**Bead:** Aviation-o2d (P0 - MVP Blocker)  
+**MAC task:** Aviation-o2d (P0 - MVP Blocker)
 **Package:** @aviation/shared-sdk v0.1.0
