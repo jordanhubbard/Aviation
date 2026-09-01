@@ -130,6 +130,19 @@ const DashboardContent: React.FC<DashboardContentProps> = ({ logbookData }) => {
     return filtered
   }, [logbookData.entries, searchTerm, aircraftFilter, sortBy, sortOrder])
 
+  const lastTwelveMonthsHours = useMemo(() => {
+    const now = new Date()
+    const cutoff = new Date(now)
+    cutoff.setFullYear(cutoff.getFullYear() - 1)
+
+    return logbookData.entries.reduce((total, entry) => {
+      const entryDate = new Date(entry.date)
+      return !Number.isNaN(entryDate.getTime()) && entryDate >= cutoff && entryDate <= now
+        ? total + (entry.total_time || 0)
+        : total
+    }, 0)
+  }, [logbookData.entries])
+
   const handleSort = (column: string) => {
     if (sortBy === column) {
       setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')
@@ -290,6 +303,10 @@ const DashboardContent: React.FC<DashboardContentProps> = ({ logbookData }) => {
                 <Grid item xs={6}>
                   <Typography variant="body2" color="text.secondary">Cross Country</Typography>
                   <Typography variant="h6">{formatTime(logbookData.recent_experience?.total_cross_country)}</Typography>
+                </Grid>
+                <Grid item xs={6}>
+                  <Typography variant="body2" color="text.secondary">Hours (Last 12 Months)</Typography>
+                  <Typography variant="h6">{formatTime(lastTwelveMonthsHours)}</Typography>
                 </Grid>
               </Grid>
             </CardContent>
