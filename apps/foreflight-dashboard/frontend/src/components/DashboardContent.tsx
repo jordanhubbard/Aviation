@@ -1,5 +1,4 @@
-import React, { useState, useMemo, useEffect } from 'react'
-import { TransitionGroup, CSSTransition } from 'react-transition-group';
+import React, { useState, useMemo } from 'react'
 import {
   Box,
   Grid,

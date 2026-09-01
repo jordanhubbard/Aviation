@@ -178,28 +178,21 @@ jobs:
     steps:
       - uses: actions/checkout@v6
 
-      - name: Set up Python
-        uses: actions/setup-python@v6
-        with:
-          python-version: '3.11'
-
-      - name: Install Python linting tools
-        run: |
-          pip install black flake8 isort
-
-      - name: Check Python formatting
-        run: |
-          black --check apps/*/src apps/*/app apps/*/backend 2>/dev/null || true
-          flake8 apps/*/src apps/*/app apps/*/backend 2>/dev/null || true
-
       - name: Set up Node.js
         uses: actions/setup-node@v6
         with:
           node-version: '20'
 
-      - name: Check JavaScript/TypeScript formatting
+      # Enforce the currently clean ForeFlight frontend first. Additional apps
+      # can be added as their existing lint debt is resolved.
+      - name: Install ForeFlight frontend dependencies
+        working-directory: apps/foreflight-dashboard/frontend
+        run: npm ci
+
+      - name: Lint ForeFlight frontend
+        working-directory: apps/foreflight-dashboard/frontend
         run: |
-          npx prettier --check "apps/**/frontend/**/*.{js,jsx,ts,tsx}" 2>/dev/null || true
+          npm run lint
 
   # Security scanning
   security:

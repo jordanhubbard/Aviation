@@ -5,7 +5,7 @@
   "main": "api.py",
   "scripts": {
     "start": "uvicorn api:app --reload",
-    "test": "python3 -m venv .venv && .venv/bin/pip install -r requirements.txt pytest httpx -q 2>/dev/null || { echo '⚠️  flight-dynamics tests skipped (pip install failed — no network or cache)'; exit 0; }; .venv/bin/pytest"
+    "test": "python3 -m venv .venv && .venv/bin/pip install -r requirements.txt pytest httpx -q && .venv/bin/pytest"
   },
   "dependencies": {},
   "devDependencies": {},

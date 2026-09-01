@@ -41,7 +41,7 @@ async function main() {
   
   const command = args[0];
   const workspaceRoot = path.resolve(__dirname, '..');
-  const keystorePath = path.join(workspaceRoot, '.keystore');
+  const keystorePath = process.env.KEYSTORE_PATH || path.join(workspaceRoot, '.keystore');
   
   const keystore = new SecureKeyStore({
     storePath: keystorePath,
@@ -160,4 +160,3 @@ main().catch(error => {
   console.error('❌ Error:', error.message);
   process.exit(1);
 });
-

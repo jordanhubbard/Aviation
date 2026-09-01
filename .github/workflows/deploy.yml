@@ -27,7 +27,6 @@ on:
           - flightplanner
           - flightschool
           - foreflight-dashboard
-          - weather-briefing
 
 env:
   REGISTRY: ghcr.io
@@ -44,7 +43,6 @@ jobs:
       deploy_flightplanner: ${{ steps.determine.outputs.deploy_flightplanner }}
       deploy_flightschool: ${{ steps.determine.outputs.deploy_flightschool }}
       deploy_foreflight: ${{ steps.determine.outputs.deploy_foreflight }}
-      deploy_weather: ${{ steps.determine.outputs.deploy_weather }}
     steps:
       - name: Determine deployment environment and apps
         id: determine
@@ -79,10 +77,6 @@ jobs:
           if [[ "$APP" == "all" || "$APP" == "foreflight-dashboard" ]]; then
             echo "deploy_foreflight=true" >> $GITHUB_OUTPUT
           fi
-          if [[ "$APP" == "all" || "$APP" == "weather-briefing" ]]; then
-            echo "deploy_weather=true" >> $GITHUB_OUTPUT
-          fi
-          
           echo "Deploying to: $ENV"
           echo "Applications: $APP"
 
@@ -91,7 +85,6 @@ jobs:
     needs: determine-deployments
     if: needs.determine-deployments.outputs.deploy_accident_tracker == 'true'
     runs-on: ubuntu-latest
-    continue-on-error: true  # non-blocking: npm workspaces not yet configured in root package.json
     permissions:
       contents: read
       packages: write
@@ -256,15 +249,15 @@ jobs:
           cache-to: type=gha,mode=max
 
   deploy-staging:
-    name: Deploy to Staging
+    name: Staging Deployment Dry Run
     needs: [determine-deployments, build-accident-tracker, build-flightplanner, build-flightschool, build-foreflight-dashboard]
     if: |
       always() && 
       needs.determine-deployments.outputs.environment == 'staging' &&
-      (needs.build-accident-tracker.result == 'success' || needs.build-accident-tracker.result == 'skipped') &&
-      (needs.build-flightplanner.result == 'success' || needs.build-flightplanner.result == 'skipped') &&
-      (needs.build-flightschool.result == 'success' || needs.build-flightschool.result == 'skipped') &&
-      (needs.build-foreflight-dashboard.result == 'success' || needs.build-foreflight-dashboard.result == 'skipped')
+      (needs.determine-deployments.outputs.deploy_accident_tracker != 'true' || needs.build-accident-tracker.result == 'success') &&
+      (needs.determine-deployments.outputs.deploy_flightplanner != 'true' || needs.build-flightplanner.result == 'success') &&
+      (needs.determine-deployments.outputs.deploy_flightschool != 'true' || needs.build-flightschool.result == 'success') &&
+      (needs.determine-deployments.outputs.deploy_foreflight != 'true' || needs.build-foreflight-dashboard.result == 'success')
     runs-on: ubuntu-latest
     environment:
       name: staging
@@ -272,18 +265,10 @@ jobs:
     steps:
       - uses: actions/checkout@v6
       
-      - name: Deploy to Railway (Staging)
-        if: needs.determine-deployments.outputs.deploy_accident_tracker == 'true'
+      - name: Report staging dry run
         run: |
-          echo "Deploying accident-tracker to Railway staging..."
-          # railway up --service accident-tracker --environment staging
-          echo "✅ Would deploy accident-tracker to staging (Railway integration needed)"
-      
-      - name: Run smoke tests
-        run: |
-          echo "Running smoke tests against staging..."
-          # Add actual smoke tests here
-          echo "✅ Smoke tests passed"
+          echo "DRY RUN: selected images built successfully; no staging deployment was performed."
+          echo "Railway integration is not configured in this workflow."
       
       - name: Notify deployment
         if: always()
@@ -294,15 +279,15 @@ jobs:
           # Add Slack/Discord notification here
 
   deploy-production:
-    name: Deploy to Production
+    name: Production Deployment Dry Run
     needs: [determine-deployments, build-accident-tracker, build-flightplanner, build-flightschool, build-foreflight-dashboard]
     if: |
       always() && 
       needs.determine-deployments.outputs.environment == 'production' &&
-      (needs.build-accident-tracker.result == 'success' || needs.build-accident-tracker.result == 'skipped') &&
-      (needs.build-flightplanner.result == 'success' || needs.build-flightplanner.result == 'skipped') &&
-      (needs.build-flightschool.result == 'success' || needs.build-flightschool.result == 'skipped') &&
-      (needs.build-foreflight-dashboard.result == 'success' || needs.build-foreflight-dashboard.result == 'skipped')
+      (needs.determine-deployments.outputs.deploy_accident_tracker != 'true' || needs.build-accident-tracker.result == 'success') &&
+      (needs.determine-deployments.outputs.deploy_flightplanner != 'true' || needs.build-flightplanner.result == 'success') &&
+      (needs.determine-deployments.outputs.deploy_flightschool != 'true' || needs.build-flightschool.result == 'success') &&
+      (needs.determine-deployments.outputs.deploy_foreflight != 'true' || needs.build-foreflight-dashboard.result == 'success')
     runs-on: ubuntu-latest
     environment:
       name: production
@@ -310,23 +295,15 @@ jobs:
     steps:
       - uses: actions/checkout@v6
       
-      - name: Deploy to Railway (Production)
-        if: needs.determine-deployments.outputs.deploy_accident_tracker == 'true'
+      - name: Report production dry run
         run: |
-          echo "Deploying accident-tracker to Railway production..."
-          # railway up --service accident-tracker --environment production
-          echo "✅ Would deploy accident-tracker to production (Railway integration needed)"
-      
-      - name: Run smoke tests
-        run: |
-          echo "Running smoke tests against production..."
-          # Add actual smoke tests here
-          echo "✅ Smoke tests passed"
+          echo "DRY RUN: selected images built successfully; no production deployment was performed."
+          echo "Railway integration is not configured in this workflow."
       
       - name: Notify deployment
         if: always()
         run: |
-          echo "🎉 Production deployment complete!"
+          echo "Production deployment dry-run status: ${{ job.status }}"
           echo "Environment: production"
           echo "Commit: ${{ github.sha }}"
           echo "Tag: ${{ github.ref }}"

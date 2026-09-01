@@ -4,10 +4,9 @@ set -e
 # Create necessary directories
 mkdir -p uploads logs
 
-# Check if we're running pytest
-if [[ "$1" == "pytest" ]]; then
-    echo "Running pytest..."
-    exec "$@"  # Execute pytest with all arguments
+# Run explicitly supplied commands instead of starting the application.
+if [[ $# -gt 0 ]]; then
+    exec "$@"
 else
     echo "🔥 Starting Modern FastAPI Application (Flask has been eliminated!) 🔥"
     cd /app

@@ -161,54 +161,63 @@ test-node:
 	@# Run each package's tests directly via its local vitest/jest binary so that
 	@# pnpm's pre-run dependency-installation check (which requires network access)
 	@# is bypassed in offline/sandboxed environments.
-	@for pkg in packages/shared-sdk packages/ai-explainer packages/ui-framework; do \
+	@ran=0; skipped=0; \
+	for pkg in packages/shared-sdk packages/ai-explainer packages/ui-framework packages/keystore; do \
 		if [ -d "$$pkg/node_modules/vitest" ]; then \
 			echo "  Testing $$pkg..."; \
-			cd $$pkg && node node_modules/vitest/vitest.mjs run && cd -; \
+			(cd $$pkg && node node_modules/vitest/vitest.mjs run) || exit 1; \
+			ran=$$((ran + 1)); \
 		elif [ -f "$$pkg/package.json" ]; then \
 			echo "  Skipping $$pkg (vitest not found in local node_modules)"; \
+			skipped=$$((skipped + 1)); \
 		fi \
-	done
-	@for pkg in packages/g1000-avionics-sdk packages/g1000-protocols packages/g1000-rendering; do \
+	done; \
+	for pkg in packages/g1000-avionics-sdk packages/g1000-protocols packages/g1000-rendering; do \
 		if [ -d "$$pkg/node_modules/.bin" ] && [ -f "$$pkg/node_modules/.bin/jest" ]; then \
 			echo "  Testing $$pkg..."; \
-			cd $$pkg && node_modules/.bin/jest --passWithNoTests && cd -; \
+			(cd $$pkg && node_modules/.bin/jest --passWithNoTests) || exit 1; \
+			ran=$$((ran + 1)); \
 		else \
 			echo "  Skipping $$pkg (jest not found in local node_modules)"; \
+			skipped=$$((skipped + 1)); \
 		fi \
-	done
-	@echo "✅ Node.js/TypeScript tests passed"
+	done; \
+	if [ $$ran -eq 0 ]; then \
+		echo "⚠️  Node.js/TypeScript tests SKIPPED ($$skipped suites unavailable)"; \
+	else \
+		echo "✅ Node.js/TypeScript tests PASSED ($$ran run, $$skipped skipped)"; \
+	fi
 
 test-python:
 	@echo "🧪 Running Python tests..."
 	@echo "   Flight Planner:"
-	@if [ -f apps/flight-planner/Makefile ]; then \
-		cd apps/flight-planner && $(MAKE) backend-test 2>/dev/null || echo "   ⚠️  Tests require setup (see app README)"; \
+	@if [ -d apps/flight-planner/.venv ] || [ -d apps/flight-planner/venv ] || python3 -c 'import pytest, fastapi, pandas' >/dev/null 2>&1; then \
+		cd apps/flight-planner && $(MAKE) backend-test; \
 	else \
-		echo "   No tests configured"; \
+		echo "   ⚠️  SKIPPED (Python test dependencies are not installed)"; \
 	fi
 	@echo ""
 	@echo "   Flight School:"
-	@if [ -f apps/flightschool/Makefile ]; then \
-		cd apps/flightschool && $(MAKE) test 2>/dev/null || echo "   ⚠️  Tests require setup (see app README)"; \
+	@if [ -x apps/flightschool/venv/bin/pytest ]; then \
+		cd apps/flightschool && $(MAKE) test; \
 	else \
-		echo "   No tests configured"; \
+		echo "   ⚠️  SKIPPED (apps/flightschool/venv is not initialized)"; \
 	fi
 	@echo ""
 	@echo "   ForeFlight Dashboard:"
-	@if [ -f apps/foreflight-dashboard/Makefile ]; then \
-		cd apps/foreflight-dashboard && $(MAKE) test 2>/dev/null || echo "   ⚠️  Tests require setup (see app README)"; \
+	@if docker info >/dev/null 2>&1; then \
+		cd apps/foreflight-dashboard && $(MAKE) test-python; \
 	else \
-		echo "   No tests configured"; \
+		echo "   ⚠️  SKIPPED (Docker is not running)"; \
 	fi
 	@echo ""
 	@echo "   G1000 Simulator:"
-	@if [ -f apps/g1000-simulator/Makefile ]; then \
-		cd apps/g1000-simulator && $(MAKE) backend-test 2>/dev/null || echo "   ⚠️  Tests require setup (see app README)"; \
+	@if [ -d apps/g1000-simulator/.venv ] || [ -d apps/g1000-simulator/venv ] || python3 -c 'import pytest, fastapi' >/dev/null 2>&1; then \
+		cd apps/g1000-simulator && $(MAKE) backend-test; \
 	else \
-		echo "   No tests configured"; \
+		echo "   ⚠️  SKIPPED (Python test dependencies are not installed)"; \
 	fi
-	@echo "✅ Python tests complete"
+	@echo "✅ Available Python tests PASSED"
 
 test-clojure:
 	@echo "🧪 Running Clojure tests..."
@@ -216,10 +225,10 @@ test-clojure:
 		if docker info >/dev/null 2>&1; then \
 			cd apps/aviation-missions-app && $(MAKE) test; \
 		else \
-			echo "   ⚠️  Docker not running — skipping Clojure container tests (CI uses lein directly)"; \
+			echo "   ⚠️  SKIPPED (Docker is not running; CI uses lein directly)"; \
 		fi \
 	fi
-	@echo "✅ Clojure tests complete"
+	@echo "✅ Available Clojure tests PASSED"
 
 #
 # DOCKER TEST TARGETS (Containerized Testing)

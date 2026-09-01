@@ -10,6 +10,7 @@ import {
   MenuItem,
   FormControl,
   InputLabel,
+  SelectChangeEvent,
 } from '@mui/material';
 import {
   PlayArrow,
@@ -119,8 +120,8 @@ const PlaybackTimeline: React.FC<PlaybackTimelineProps> = ({
     onTimeChange(newTime);
   };
 
-  const handleSpeedChange = (event: any) => {
-    setPlaybackSpeed(event.target.value);
+  const handleSpeedChange = (event: SelectChangeEvent<number>) => {
+    setPlaybackSpeed(Number(event.target.value));
   };
 
   return (
