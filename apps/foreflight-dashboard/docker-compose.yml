@@ -17,6 +17,7 @@ services:
     volumes:
       - ./src:/app/src  # Mount source code for hot reloading
       - ./frontend:/app/frontend  # Mount frontend for hot reloading
+      - /app/frontend/node_modules  # Keep container dependencies isolated from the host
       - ./uploads:/app/uploads
       - ./logs:/app/logs
       - ./data:/app/data  # Mount data directory for database
@@ -35,7 +36,7 @@ services:
     stdin_open: true
     # Set healthcheck to ensure container is running properly
     healthcheck:
-      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:5051/health')"]
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:5051/health'); urllib.request.urlopen('http://localhost:3005/')"]
       interval: 30s
       timeout: 10s
       retries: 3

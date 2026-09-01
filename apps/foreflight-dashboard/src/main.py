@@ -347,6 +347,7 @@ async def root():
     """Serve the React application."""
     # In development mode, return API info instead of serving React
     if os.environ.get('ENVIRONMENT') == 'development':
+        react_dev_port = os.environ.get('REACT_DEV_PORT', '3005')
         return HTMLResponse(content=f"""
         <!DOCTYPE html>
         <html>
@@ -366,7 +367,7 @@ async def root():
                 <div class="dev-info">
                     <strong>Development Mode Active</strong><br>
                     FastAPI backend running on port 5051<br>
-                    React dev server running on port 3001
+                    React dev server running on port {react_dev_port}
                 </div>
                 <h2>API Documentation</h2>
                 <a href="/docs" class="api-link">📚 Interactive API Docs (Swagger)</a><br>
@@ -374,7 +375,7 @@ async def root():
                 <a href="/health" class="api-link">❤️ Health Check</a>
                 
                 <h2>Frontend Application</h2>
-                <a href="http://localhost:3001" class="api-link">🎨 React Frontend (Port 3001)</a>
+                <a href="http://localhost:{react_dev_port}" class="api-link">🎨 React Frontend (Port {react_dev_port})</a>
                 
                 <h2>Quick Test</h2>
                 <p>Test authentication: <code>POST /api/auth/login</code></p>

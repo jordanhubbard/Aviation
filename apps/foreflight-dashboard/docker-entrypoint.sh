@@ -30,7 +30,7 @@ else
         echo "Starting React development server on port ${REACT_DEV_PORT:-3000}..."
         cd /app/frontend
         npm install --silent
-        npm run dev &
+        npm run dev -- --configLoader runner &
         REACT_PID=$!
         cd /app
     else
