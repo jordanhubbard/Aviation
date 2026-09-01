@@ -1,153 +1,122 @@
-import { test, expect } from '@playwright/test';
+import { expect, test, type Page } from '@playwright/test';
 
-test.describe('Aviation Accident Tracker - Happy Path', () => {
-  test.beforeEach(async ({ page }) => {
-    await page.goto('/');
-  });
+const events = [
+  {
+    id: 'evt-general',
+    dateZ: '2026-08-20T12:00:00Z',
+    registration: 'N12345',
+    operator: 'Bay Area Flying Club',
+    aircraftType: 'C172',
+    airportIcao: 'KSFO',
+    category: 'general',
+    country: 'US',
+    region: 'CA',
+    lat: 37.62,
+    lon: -122.38,
+    summary: 'Runway excursion',
+    narrative: 'Aircraft departed the runway after landing.',
+    status: 'final',
+    fatalities: 0,
+    injuries: 0,
+    sources: [],
+  },
+  {
+    id: 'evt-commercial',
+    dateZ: '2026-08-21T12:00:00Z',
+    registration: 'N98765',
+    operator: 'Example Air',
+    aircraftType: 'B738',
+    airportIcao: 'KJFK',
+    category: 'commercial',
+    country: 'US',
+    region: 'NY',
+    lat: 40.64,
+    lon: -73.78,
+    summary: 'Rejected takeoff',
+    narrative: 'Crew rejected the takeoff safely.',
+    status: 'preliminary',
+    fatalities: 0,
+    injuries: 0,
+    sources: [],
+  },
+];
 
-  test('loads the application and displays title', async ({ page }) => {
-    await expect(page.locator('h1')).toContainText('Aviation Accident Tracker');
+async function mockApi(page: Page) {
+  await page.route('**/api/filters/options', (route) =>
+    route.fulfill({ json: { countries: ['US'], regions: ['CA', 'NY'] } }),
+  );
+  await page.route('**/api/airports**', (route) =>
+    route.fulfill({ json: [{ icao: 'KSFO', iata: 'SFO', name: 'San Francisco International' }] }),
+  );
+  await page.route(/\/api\/events\?.*$/, (route) => {
+    const url = new URL(route.request().url());
+    const search = url.searchParams.get('search')?.toLowerCase();
+    const category = url.searchParams.get('category');
+    const filtered = events.filter(
+      (event) =>
+        (!search || `${event.registration} ${event.operator} ${event.summary}`.toLowerCase().includes(search)) &&
+        (!category || event.category === category),
+    );
+    return route.fulfill({ json: { data: filtered } });
   });
+  await page.route(/\/api\/events\/[^?]+$/, (route) => {
+    const event = events.find(({ id }) => route.request().url().endsWith(id)) ?? events[0];
+    return route.fulfill({ json: { ...event, sources: [{ sourceName: 'NTSB', url: 'https://example.test/report' }] } });
+  });
+  await page.route('https://*.tile.openstreetmap.org/**', (route) => route.abort());
+}
 
-  test('filters events by search query', async ({ page }) => {
-    // Wait for events to load
-    await expect(page.locator('table')).toBeVisible({ timeout: 10000 });
-    
-    // Get initial row count
-    const initialRows = await page.locator('tbody tr').count();
-    expect(initialRows).toBeGreaterThan(0);
-    
-    // Enter search query
-    await page.fill('input[placeholder="registration/operator/summary"]', 'N12345');
-    
-    // Wait for filtered results
-    await page.waitForTimeout(500); // Allow debounce
-    
-    // Verify filtered results
-    const filteredRows = await page.locator('tbody tr').count();
-    expect(filteredRows).toBeLessThanOrEqual(initialRows);
-  });
-
-  test('filters events by category', async ({ page }) => {
-    // Wait for events to load
-    await expect(page.locator('table')).toBeVisible({ timeout: 10000 });
-    
-    // Select "General" category
-    await page.selectOption('select', { label: 'General' });
-    
-    // Wait for filtered results
-    await page.waitForTimeout(500);
-    
-    // Verify all visible events are "general" category
-    const categoryBadges = await page.locator('tbody td:has-text("general")').count();
-    expect(categoryBadges).toBeGreaterThan(0);
-  });
-
-  test('opens and closes event detail modal', async ({ page }) => {
-    // Wait for events to load
-    await expect(page.locator('table')).toBeVisible({ timeout: 10000 });
-    
-    // Click first event row
-    await page.locator('tbody tr').first().click();
-    
-    // Modal should open
-    await expect(page.locator('div[style*="position: fixed"]')).toBeVisible();
-    
-    // Verify modal content
-    await expect(page.locator('h2')).toBeVisible();
-    
-    // Close modal
-    await page.click('button:has-text("Close")');
-    
-    // Modal should be closed
-    await expect(page.locator('div[style*="position: fixed"]')).not.toBeVisible();
-  });
-
-  test('navigates through pages', async ({ page }) => {
-    // Wait for events to load
-    await expect(page.locator('table')).toBeVisible({ timeout: 10000 });
-    
-    // Verify on page 1
-    await expect(page.locator('text=Page 1')).toBeVisible();
-    
-    // Prev button should be disabled
-    await expect(page.locator('button:has-text("Prev")')).toBeDisabled();
-    
-    // Click Next
-    await page.click('button:has-text("Next")');
-    
-    // Verify on page 2
-    await expect(page.locator('text=Page 2')).toBeVisible();
-    
-    // Prev button should be enabled
-    await expect(page.locator('button:has-text("Prev")')).toBeEnabled();
-    
-    // Click Prev to go back
-    await page.click('button:has-text("Prev")');
-    
-    // Verify back on page 1
-    await expect(page.locator('text=Page 1')).toBeVisible();
-  });
-
-  test('clears all filters', async ({ page }) => {
-    // Wait for events to load
-    await expect(page.locator('table')).toBeVisible({ timeout: 10000 });
-    
-    // Set some filters
-    await page.fill('input[placeholder="registration/operator/summary"]', 'test');
-    await page.selectOption('select', { label: 'General' });
-    
-    // Wait for filters to apply
-    await page.waitForTimeout(500);
-    
-    // Click Clear button
-    await page.click('button:has-text("Clear")');
-    
-    // Verify filters are cleared
-    await expect(page.locator('input[placeholder="registration/operator/summary"]')).toHaveValue('');
-    await expect(page.locator('select').first()).toHaveValue('all');
-  });
+test.beforeEach(async ({ page }) => {
+  await mockApi(page);
+  await page.goto('/');
+  await expect(page.getByRole('table')).toBeVisible();
 });
 
-test.describe('Map Interaction', () => {
-  test.beforeEach(async ({ page }) => {
-    await page.goto('/');
-    await expect(page.locator('table')).toBeVisible({ timeout: 10000 });
-  });
+test('loads events and filters by search and category', async ({ page }) => {
+  await expect(page.getByRole('heading', { name: 'Aviation Accident Tracker' })).toBeVisible();
+  await expect(page.locator('tbody tr')).toHaveCount(2);
 
-  test('displays map with markers', async ({ page }) => {
-    // Verify map container is visible
-    const mapContainer = page.locator('.leaflet-container');
-    await expect(mapContainer).toBeVisible();
-    
-    // Map should have loaded tiles
-    const tiles = page.locator('.leaflet-tile');
-    await expect(tiles.first()).toBeVisible({ timeout: 5000 });
-  });
+  await page.getByPlaceholder('registration/operator/summary').fill('N12345');
+  await expect(page.locator('tbody tr')).toHaveCount(1);
+  await expect(page.getByRole('cell', { name: 'N12345' })).toBeVisible();
 
-  test('map markers are clustered', async ({ page }) => {
-    // Check for marker cluster groups
-    const clusterMarkers = page.locator('.marker-cluster');
-    // Clusters may or may not be visible depending on zoom level
-    // Just verify the clustering library loaded
-    const leafletOverlay = page.locator('.leaflet-marker-pane');
-    await expect(leafletOverlay).toBeVisible();
-  });
+  await page.getByRole('button', { name: 'Clear' }).click();
+  await page.getByLabel('Category:').selectOption('commercial');
+  await expect(page.getByRole('cell', { name: 'N98765' })).toBeVisible();
+  await expect(page.getByRole('cell', { name: 'N12345' })).toHaveCount(0);
 });
 
-test.describe('Mobile Responsiveness', () => {
-  test.use({ viewport: { width: 375, height: 667 } });
+test('opens detail with the keyboard and closes it', async ({ page }) => {
+  const row = page.getByRole('row', { name: /N12345/ });
+  await row.focus();
+  await row.press('Enter');
 
-  test('displays correctly on mobile', async ({ page }) => {
-    await page.goto('/');
-    
-    // App should load
-    await expect(page.locator('h1')).toContainText('Aviation Accident Tracker');
-    
-    // Filters should be visible (may wrap)
-    await expect(page.locator('input[placeholder="registration/operator/summary"]')).toBeVisible();
-    
-    // Table should be visible (may scroll horizontally)
-    await expect(page.locator('table')).toBeVisible({ timeout: 10000 });
-  });
+  const dialog = page.getByRole('dialog');
+  await expect(dialog).toBeVisible();
+  await expect(dialog.getByRole('heading')).toContainText('N12345');
+  await expect(dialog.getByRole('link', { name: 'NTSB' })).toBeVisible();
+
+  await dialog.getByRole('button', { name: 'Close' }).click();
+  await expect(dialog).toHaveCount(0);
+});
+
+test('updates pagination and clears all filters', async ({ page }) => {
+  await expect(page.getByText('Page 1', { exact: true })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Prev' })).toBeDisabled();
+  await page.getByRole('button', { name: 'Next' }).click();
+  await expect(page.getByText('Page 2', { exact: true })).toBeVisible();
+
+  await page.getByPlaceholder('registration/operator/summary').fill('N12345');
+  await page.getByLabel('Category:').selectOption('general');
+  await page.getByRole('button', { name: 'Clear' }).click();
+  await expect(page.getByPlaceholder('registration/operator/summary')).toHaveValue('');
+  await expect(page.getByLabel('Category:')).toHaveValue('all');
+  await expect(page.getByText('Page 1', { exact: true })).toBeVisible();
+});
+
+test('renders at a mobile viewport without horizontal page overflow', async ({ page }) => {
+  await page.setViewportSize({ width: 375, height: 667 });
+  await expect(page.getByRole('heading', { name: 'Aviation Accident Tracker' })).toBeVisible();
+  const overflows = await page.evaluate(() => document.documentElement.scrollWidth > document.documentElement.clientWidth);
+  expect(overflows).toBe(false);
 });

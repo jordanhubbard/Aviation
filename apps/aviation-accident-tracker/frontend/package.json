@@ -9,6 +9,8 @@
     "preview": "vite preview",
     "clean": "rm -rf dist",
     "test": "vitest run",
+    "test:e2e": "playwright test",
+    "test:e2e:install": "playwright install chromium",
     "lint": "echo \"(placeholder lint)\""
   },
   "dependencies": {

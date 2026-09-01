@@ -80,3 +80,6 @@ tmp/
 temp/
 *.tmp
 .codegraph/
+# Playwright artifacts
+**/test-results/
+**/playwright-report/

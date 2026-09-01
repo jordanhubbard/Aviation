@@ -276,7 +276,8 @@ export function App() {
   };
 
   return (
-    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, padding: 16 }}>
+    <div id="accident-tracker-app" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, padding: 16 }}>
+      <style>{`.leaflet-control-attribution a { color: #005a7a; text-decoration: underline; }`}</style>
       <div style={{ gridColumn: '1 / span 2' }}>
         <h1>Aviation Accident Tracker</h1>
         {loading && <p>Loading events…</p>}
@@ -494,9 +495,18 @@ export function App() {
               {events.map((e) => (
                 <tr
                   key={e.id}
+                  tabIndex={0}
+                  aria-label={`View details for ${e.registration || 'unknown aircraft'}`}
                   onClick={() => {
                     setSelected(e);
                     setSelectedError(null);
+                  }}
+                  onKeyDown={(event) => {
+                    if (event.key === 'Enter' || event.key === ' ') {
+                      event.preventDefault();
+                      setSelected(e);
+                      setSelectedError(null);
+                    }
                   }}
                   style={{ cursor: 'pointer' }}
                 >
@@ -529,6 +539,9 @@ export function App() {
 
       {selected && (
         <div
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="event-detail-title"
           style={{
             position: 'fixed',
             inset: 0,
@@ -544,7 +557,7 @@ export function App() {
             style={{ background: 'white', padding: 24, maxWidth: 600, width: '90%', maxHeight: '80vh', overflow: 'auto' }}
             onClick={(e) => e.stopPropagation()}
           >
-            <h2>
+            <h2 id="event-detail-title">
               {selected.registration} — {selected.operator || 'Unknown'}
             </h2>
             <p>
