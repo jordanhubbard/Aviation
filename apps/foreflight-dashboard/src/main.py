@@ -164,7 +164,7 @@ static_path.mkdir(exist_ok=True)
 
 # Mount the dist directory directly for React assets
 dist_path = static_path / "dist"
-if dist_path.exists():
+if (dist_path / "assets").is_dir():
     app.mount("/assets", StaticFiles(directory=str(dist_path / "assets")), name="assets")
     
 # Mount general static files
@@ -482,7 +482,7 @@ async def process_logbook(
                 "recent_experience": recent_experience,
                 "aircraft_stats": calculate_aircraft_stats(entries_objects),
                 "logbook_filename": file.filename,
-                "error_count": 0,
+                "error_count": sum(1 for entry in entries_objects if entry.error_explanation),
                 "student_pilot": student_pilot
             }
             

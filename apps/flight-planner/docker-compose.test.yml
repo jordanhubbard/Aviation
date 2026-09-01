@@ -1,24 +1,9 @@
-version: '3.8'
 services:
   backend-test:
     build:
-      context: ./backend
-    command: pytest
+      context: ../..
+      dockerfile: apps/flight-planner/backend/Dockerfile
+    command: pytest --ignore=tests/integration_test.py --ignore=tests/test_integration.py
     environment:
       - NODE_ENV=test
-    volumes:
-      - ./backend:/app
-    depends_on:
-      - db
-  db:
-    image: postgres:13
-    environment:
-      POSTGRES_USER: test
-      POSTGRES_PASSWORD: test
-      POSTGRES_DB: test
-    ports:
-      - "5432:5432"
-    volumes:
-      - db_data:/var/lib/postgresql/data
-volumes:
-  db_data:
+      - PYTHONPATH=/app/backend

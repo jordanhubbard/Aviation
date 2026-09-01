@@ -112,3 +112,23 @@ class TestSimpleIntegration:
         # Should have processed the sample entries
         assert isinstance(result["entries"], list)
         assert len(result["entries"]) > 0  # Sample data should create entries
+
+    def test_process_logbook_reports_invalid_record_count(self, sample_csv_content):
+        """Malformed numeric values flag their record and contribute to error_count."""
+        client = TestClient(app)
+        malformed_csv = sample_csv_content.replace(
+            '2023-01-01,N125CM,KOAK,KSFO,2.0,',
+            '2023-01-01,N125CM,KOAK,KSFO,not-a-number,',
+        )
+
+        response = client.post(
+            "/api/process-logbook",
+            files={"file": ("test_logbook.csv", malformed_csv, "text/csv")},
+            data={"student_pilot": "false"},
+        )
+
+        assert response.status_code == 200
+        result = response.json()
+        flagged_entries = [entry for entry in result["entries"] if entry["error_explanation"]]
+        assert result["error_count"] == len(flagged_entries)
+        assert "Invalid numeric value for TotalTime" in result["entries"][0]["error_explanation"]

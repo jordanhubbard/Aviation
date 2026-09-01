@@ -79,3 +79,22 @@ def test_importer_dual_received_role_for_student_pilot():
         assert flights[0].pilot_role == 'STUDENT'
     finally:
         os.unlink(path)
+
+
+def test_importer_flags_invalid_numeric_values():
+    csv_content = sample_foreflight_csv().replace(
+        '2023-01-01,N125CM,KOAK,KSFO,2.0,',
+        '2023-01-01,N125CM,KOAK,KSFO,not-a-number,',
+    )
+    with tempfile.NamedTemporaryFile('w+', delete=False, suffix='.csv') as f:
+        f.write(csv_content)
+        f.flush()
+        path = f.name
+
+    try:
+        entry = ForeFlightImporter(path).get_flight_entries()[0]
+
+        assert entry.total_time == 0.0
+        assert entry.error_explanation == 'Invalid numeric value for TotalTime: not-a-number'
+    finally:
+        os.unlink(path)

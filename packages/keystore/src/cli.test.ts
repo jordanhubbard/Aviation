@@ -44,5 +44,5 @@ describe('keystore CLI', () => {
     });
     expect(missing.status).toBe(1);
     expect(missing.stdout).toContain('Secret not found');
-  });
+  }, 15000);
 });

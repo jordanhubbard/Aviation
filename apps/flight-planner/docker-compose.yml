@@ -9,7 +9,8 @@ services:
       com.aviation.app: "flight-planner"
       com.aviation.components: "backend"
     env_file:
-      - .env
+      - path: .env
+        required: false
     volumes:
       - ./backend:/app/backend
     ports:

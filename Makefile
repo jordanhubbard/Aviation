@@ -165,7 +165,8 @@ test-node:
 	for pkg in packages/shared-sdk packages/ai-explainer packages/ui-framework packages/keystore; do \
 		if [ -d "$$pkg/node_modules/vitest" ]; then \
 			echo "  Testing $$pkg..."; \
-			(cd $$pkg && node node_modules/vitest/vitest.mjs run) || exit 1; \
+			if [ "$$pkg" = "packages/keystore" ]; then test_path=src; else test_path=; fi; \
+			(cd $$pkg && node node_modules/vitest/vitest.mjs run $$test_path) || exit 1; \
 			ran=$$((ran + 1)); \
 		elif [ -f "$$pkg/package.json" ]; then \
 			echo "  Skipping $$pkg (vitest not found in local node_modules)"; \

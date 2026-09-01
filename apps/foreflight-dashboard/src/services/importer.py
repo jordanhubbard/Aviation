@@ -101,6 +101,17 @@ class ForeFlightImporter:
                 return default
         return default
 
+    def _read_float(self, row, column: str, issues: List[str]) -> float:
+        """Read a numeric CSV field and report values that cannot be parsed exactly."""
+        value = row.get(column, 0.0)
+        if pd.isna(value) or value == '':
+            return 0.0
+        try:
+            return float(value)
+        except (TypeError, ValueError):
+            issues.append(f"Invalid numeric value for {column}: {value}")
+            return 0.0
+
     def _parse_time(self, value):
         """Parse a string time (HH:MM or HH:MM:SS) into a time object."""
         if not value or str(value).lower() in ('nan', 'none', ''):
@@ -175,16 +186,16 @@ class ForeFlightImporter:
             departure_time = None
             arrival_time = None
 
-            total_time = self._clean_float(row.get('TotalTime', 0.0))
-            night_time = self._clean_float(row.get('Night', 0.0))
-            actual_inst = self._clean_float(row.get('ActualInstrument', 0.0))
-            sim_inst = self._clean_float(row.get('SimulatedInstrument', 0.0))
-            cross_country = self._clean_float(row.get('CrossCountry', 0.0))
-            dual_given = self._clean_float(row.get('DualGiven', 0.0))
-            pic_time = self._clean_float(row.get('PIC', 0.0))
-            sic_time = self._clean_float(row.get('SIC', 0.0))
-            dual_received = self._clean_float(row.get('DualReceived', 0.0))
-            solo_time = self._clean_float(row.get('Solo', 0.0))
+            total_time = self._read_float(row, 'TotalTime', row_issues)
+            night_time = self._read_float(row, 'Night', row_issues)
+            actual_inst = self._read_float(row, 'ActualInstrument', row_issues)
+            sim_inst = self._read_float(row, 'SimulatedInstrument', row_issues)
+            cross_country = self._read_float(row, 'CrossCountry', row_issues)
+            dual_given = self._read_float(row, 'DualGiven', row_issues)
+            pic_time = self._read_float(row, 'PIC', row_issues)
+            sic_time = self._read_float(row, 'SIC', row_issues)
+            dual_received = self._read_float(row, 'DualReceived', row_issues)
+            solo_time = self._read_float(row, 'Solo', row_issues)
 
             if total_time < 0:
                 row_issues.append("Total time cannot be negative")

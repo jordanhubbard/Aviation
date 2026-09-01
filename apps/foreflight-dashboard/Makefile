@@ -146,7 +146,7 @@ test:
 	@echo "Starting application for API tests..."
 	-docker-compose -f $(COMPOSE_FILE) up -d
 	@sleep 10  # Wait for services to be ready
-	docker-compose -f $(COMPOSE_FILE) exec -T foreflight-dashboard pytest tests/test_fastapi/ -v --tb=short || true
+	docker-compose -f $(COMPOSE_FILE) exec -T foreflight-dashboard pytest tests/test_fastapi/ -v --tb=short
 	@echo "Stopping test application..."
 	-docker-compose -f $(COMPOSE_FILE) down
 	@echo ""
