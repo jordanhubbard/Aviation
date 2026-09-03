@@ -34,7 +34,7 @@
     "graphql-ws": "^6.0.8",
     "node-cron": "^4.2.1",
     "pdfkit": "^0.18.0",
-    "redis": "^5.10.0",
+    "redis": "^5.11.0",
     "sqlite3": "npm:@vscode/sqlite3@^5.1.12-vscode",
     "swagger-ui-express": "^5.0.1",
     "uuid": "^13.0.0",
