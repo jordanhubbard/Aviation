@@ -2,7 +2,7 @@
 fastapi==0.135.2
 uvicorn==0.42.0
 starlette==1.0.0
-python-multipart==0.0.22
+python-multipart==0.0.24
 python-dotenv==1.2.2
 
 # Database
