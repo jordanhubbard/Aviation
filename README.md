@@ -67,7 +67,8 @@ This software is for **educational use only** and is **not approved for flight t
 
 ### The continuing adventures of Jordan Hubbard and Sir Reginald von Fluffington III
 
-> *Part 4 of an ongoing chronicle.  [← Part 3: NanoLang](https://github.com/jordanhubbard/nanolang#the-totally-true-and-not-at-all-embellished-history-of-nanolang) | [Part 5: WebMux →](https://github.com/jordanhubbard/webmux#the-totally-true-and-not-at-all-embellished-history-of-webmux)*
+> *Part 3 of an ongoing chronicle. [← Part 2: AI Code Reviewer](https://github.com/jordanhubbard/ai-code-reviewer#the-totally-true-and-not-at-all-embellished-history-of-ai-code-reviewer) | [Part 4: loom →](https://github.com/jordanhubbard/loom#the-story-of-loom)*
+> *[Chronicle index](https://github.com/jordanhubbard/ai-template/blob/main/CHRONICLE.md) · Ordered by first recorded AI-assisted commit.*
 > *Sir Reginald von Fluffington III appears throughout.  He does not endorse any of it.*
 
 The programmer was, among other things, a pilot.
@@ -102,6 +103,6 @@ The legal disclaimer was, in a sense, Sir Reginald's doing.  The programmer had 
 
 *NOT for actual flight training*, it reads, which Sir Reginald would endorse if he endorsed anything, which he does not.
 
-As of this writing, the Aviation monorepo contains eight applications in three languages, three shared packages, a CI/CD pipeline that runs security scans on every commit, and a legal disclaimer that the software is not for use in actual flight operations — a fact Sir Reginald considered self-evident from the moment he saw the sectional chart on his spot.  Sir Reginald continues to withhold his endorsement across all five projects, citing "procedural concerns," "insufficient tuna," "a general atmosphere of hubris," and, most recently, in a written statement delivered by sitting directly on top of the keyboard during preflight calculations, "aviation."
+As of this writing, the Aviation monorepo contains eight applications in three languages, three shared packages, a CI/CD pipeline that runs security scans on every commit, and a legal disclaimer that the software is not for use in actual flight operations — a fact Sir Reginald considered self-evident from the moment he saw the sectional chart on his spot.  Sir Reginald continues to withhold his endorsement across the chronicle, citing "procedural concerns," "insufficient tuna," "a general atmosphere of hubris," and, most recently, in a written statement delivered by sitting directly on top of the keyboard during preflight calculations, "aviation."
 
-What the programmer did next — building a web-native terminal multiplexer because he was tired of tmux — is documented in [Part 5: WebMux](https://github.com/jordanhubbard/webmux#the-totally-true-and-not-at-all-embellished-history-of-webmux).
+The programmer’s web-native terminal multiplexer, built because he was tired of tmux, is documented in [Part 10: WebMux](https://github.com/jordanhubbard/webmux#the-totally-true-and-not-at-all-embellished-history-of-webmux).
