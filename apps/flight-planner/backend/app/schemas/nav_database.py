@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 from datetime import datetime
+from enum import Enum
 from typing import List, Optional
 
 from pydantic import BaseModel, Field, field_validator, model_validator
@@ -125,3 +126,36 @@ class NavDataStatus(BaseModel):
     airspace_count: int = Field(..., description="Total number of airspace regions loaded", ge=0)
     last_updated: Optional[datetime] = Field(None, description="Timestamp of the most recent data update")
     source: Optional[str] = Field(None, description="Name or URL of the data source")
+
+
+class NavaidType(str, Enum):
+    """Type of navigation aid."""
+
+    VOR = "VOR"
+    VORDME = "VORDME"
+    VORTAC = "VORTAC"
+    DME = "DME"
+    NDB = "NDB"
+    TACAN = "TACAN"
+    FIX = "FIX"
+    WAYPOINT = "WAYPOINT"
+
+
+class NavDataSearchResponse(BaseModel):
+    """Airports and navaids matching a navigation database query."""
+
+    model_config = {"populate_by_name": True}
+
+    airports: List[NavAirportSchema] = Field(default_factory=list, description="Matching airports")
+    navaids: List[NavNavaidSchema] = Field(default_factory=list, description="Matching navaids")
+
+
+class NavDataProceduresResponse(BaseModel):
+    """Instrument procedures published for an airport."""
+
+    model_config = {"populate_by_name": True}
+
+    airport: Optional[NavAirportSchema] = Field(None, description="Airport the procedures belong to")
+    sids: List[NavProcedureSchema] = Field(default_factory=list, description="Standard instrument departures")
+    stars: List[NavProcedureSchema] = Field(default_factory=list, description="Standard terminal arrival routes")
+    approaches: List[NavProcedureSchema] = Field(default_factory=list, description="Instrument approach procedures")

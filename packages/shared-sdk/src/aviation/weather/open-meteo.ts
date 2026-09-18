@@ -5,7 +5,7 @@
  * Extracted from flight-planner for shared use.
  */
 
-import { weatherCache } from './cache';
+import { weatherCache } from './cache.js';
 
 export class OpenMeteoError extends Error {
   constructor(message: string) {

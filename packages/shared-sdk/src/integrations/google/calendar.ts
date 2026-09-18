@@ -8,8 +8,8 @@ import type {
   ListEventsOptions,
   Calendar,
   GoogleApiError,
-} from './types';
-import { GoogleCalendarAuth } from './auth';
+} from './types.js';
+import { GoogleCalendarAuth } from './auth.js';
 
 /**
  * Google Calendar API base URL

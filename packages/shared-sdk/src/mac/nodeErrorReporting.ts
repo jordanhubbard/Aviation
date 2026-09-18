@@ -1,4 +1,4 @@
-import { MacTaskCreator } from "./taskCreator";
+import { MacTaskCreator } from "./taskCreator.js";
 
 export type InstallNodeErrorReportingOptions = {
   service: string;

@@ -11,11 +11,54 @@
 import * as fs from 'fs';
 import * as path from 'path';
 
-import { Airport } from './types';
-import { loadAirportData, getAirportDatabase } from './service';
+import { Airport } from './types.js';
+import { loadAirportData, getAirportDatabase } from './service.js';
 
-/** Default location of the packaged dataset, relative to the built output. */
-export const BUNDLED_AIRPORTS_PATH = path.join(__dirname, '../../../data/airports_cache.json');
+/** Dataset location relative to the package root. */
+const DATA_RELATIVE_PATH = path.join('data', 'airports_cache.json');
+
+/** Overrides dataset discovery entirely. */
+const DATA_PATH_ENV = 'AVIATION_AIRPORTS_DATA';
+
+/**
+ * Locate the packaged dataset.
+ *
+ * This package is built in both CommonJS and ESM form, so neither `__dirname`
+ * nor `import.meta.url` is available in both outputs. Search upward from the
+ * working directory instead, covering the monorepo checkout and an installed
+ * dependency.
+ *
+ * @throws if the dataset cannot be found
+ */
+export function resolveBundledAirportsPath(): string {
+  const override = process.env[DATA_PATH_ENV];
+  if (override) {
+    return override;
+  }
+
+  let dir = process.cwd();
+  for (;;) {
+    const candidates = [
+      path.join(dir, 'packages', 'shared-sdk', DATA_RELATIVE_PATH),
+      path.join(dir, 'node_modules', '@aviation', 'shared-sdk', DATA_RELATIVE_PATH),
+      path.join(dir, DATA_RELATIVE_PATH),
+    ];
+    for (const candidate of candidates) {
+      if (fs.existsSync(candidate)) {
+        return candidate;
+      }
+    }
+
+    const parent = path.dirname(dir);
+    if (parent === dir) {
+      throw new Error(
+        `Could not locate ${DATA_RELATIVE_PATH} searching upward from ${process.cwd()}. ` +
+          `Set ${DATA_PATH_ENV} to point at the dataset.`
+      );
+    }
+    dir = parent;
+  }
+}
 
 function toNumber(value: unknown): number | null {
   const n = typeof value === 'number' ? value : parseFloat(String(value));
@@ -28,7 +71,7 @@ function toNumber(value: unknown): number | null {
  * @param dataPath - Override the dataset location
  * @returns Normalized airport records
  */
-export function readBundledAirports(dataPath: string = BUNDLED_AIRPORTS_PATH): Airport[] {
+export function readBundledAirports(dataPath: string = resolveBundledAirportsPath()): Airport[] {
   const raw = JSON.parse(fs.readFileSync(dataPath, 'utf8')) as Array<Record<string, unknown>>;
   const airports: Airport[] = [];
 
@@ -70,7 +113,7 @@ export function loadBundledAirports(
     return getAirportDatabase().length;
   }
 
-  const airports = readBundledAirports(options.dataPath ?? BUNDLED_AIRPORTS_PATH);
+  const airports = readBundledAirports(options.dataPath ?? resolveBundledAirportsPath());
   loadAirportData(airports, options.warmCache ?? true);
   return airports.length;
 }

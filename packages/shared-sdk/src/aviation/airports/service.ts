@@ -7,8 +7,8 @@
  * Includes LRU caching for improved performance on repeated lookups.
  */
 
-import { Airport, AirportNotFoundError } from './types';
-import { airportCodeCache, airportSearchCache, CacheStatistics } from './cache';
+import { Airport, AirportNotFoundError } from './types.js';
+import { airportCodeCache, airportSearchCache, CacheStatistics } from './cache.js';
 
 /**
  * Airport database (loaded from external source or embedded data)

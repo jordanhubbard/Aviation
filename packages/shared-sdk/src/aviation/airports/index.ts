@@ -26,10 +26,10 @@
  * ```
  */
 
-export * from './types';
-export * from './service';
-export * from './cache';
-export * from './search';
+export * from './types.js';
+export * from './service.js';
+export * from './cache.js';
+export * from './search.js';
 
 // Note: the packaged-dataset loader lives in './bundled' and is intentionally
 // not re-exported here, since it depends on Node's fs/path.

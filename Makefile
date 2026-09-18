@@ -214,15 +214,19 @@ test-python:
 	echo "   Flight Planner:"; \
 	if [ -d apps/flight-planner/.venv ] || [ -d apps/flight-planner/venv ] || python3 -c 'import pytest, fastapi, pandas' >/dev/null 2>&1; then \
 		(cd apps/flight-planner && $(MAKE) backend-test) || exit 1; ran=$$((ran + 1)); \
+	elif docker info >/dev/null 2>&1; then \
+		(cd apps/flight-planner && $(MAKE) test-docker) || exit 1; ran=$$((ran + 1)); \
 	else \
-		echo "   ⚠️  SKIPPED (Python test dependencies are not installed)"; skipped=$$((skipped + 1)); \
+		echo "   ⚠️  SKIPPED (no local venv and Docker is not running)"; skipped=$$((skipped + 1)); \
 	fi; \
 	echo ""; \
 	echo "   Flight School:"; \
 	if [ -x apps/flightschool/venv/bin/pytest ]; then \
 		(cd apps/flightschool && $(MAKE) test) || exit 1; ran=$$((ran + 1)); \
+	elif docker info >/dev/null 2>&1; then \
+		(cd apps/flightschool && $(MAKE) test-docker) || exit 1; ran=$$((ran + 1)); \
 	else \
-		echo "   ⚠️  SKIPPED (apps/flightschool/venv is not initialized)"; skipped=$$((skipped + 1)); \
+		echo "   ⚠️  SKIPPED (no local venv and Docker is not running)"; skipped=$$((skipped + 1)); \
 	fi; \
 	echo ""; \
 	echo "   ForeFlight Dashboard:"; \

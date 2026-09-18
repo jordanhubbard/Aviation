@@ -8,8 +8,8 @@
  * @module @aviation/shared-sdk/aviation/airports
  */
 
-import { Airport } from './types';
-import { getAirportDatabase, candidateCodes } from './service';
+import { Airport } from './types.js';
+import { getAirportDatabase, candidateCodes } from './service.js';
 
 /** Earth radius in nautical miles. */
 const EARTH_RADIUS_NM = 3440.065;

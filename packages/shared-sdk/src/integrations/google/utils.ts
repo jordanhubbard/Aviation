@@ -2,7 +2,7 @@
  * Google Calendar Integration - Utility Functions
  */
 
-import type { CalendarEvent, CalendarDateTime, RecurrenceRule } from './types';
+import type { CalendarEvent, CalendarDateTime, RecurrenceRule } from './types.js';
 
 /**
  * Format a Date object to CalendarDateTime format

@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { MacTaskCreator } from "../taskCreator";
+import { MacTaskCreator } from "../taskCreator.js";
 
 describe("MacTaskCreator", () => {
   const originalEnv = { ...process.env };

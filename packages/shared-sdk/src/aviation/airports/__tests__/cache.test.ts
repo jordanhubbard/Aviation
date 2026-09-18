@@ -3,7 +3,7 @@
  */
 
 import { describe, it, expect, beforeEach } from 'vitest';
-import { AirportCache } from '../cache';
+import { AirportCache } from '../cache.js';
 
 interface TestItem {
   id: string;

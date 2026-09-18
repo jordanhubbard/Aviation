@@ -12,7 +12,7 @@ import {
   getEventDuration,
   isAllDayEvent,
   isRecurringEvent,
-} from '../utils';
+} from '../utils.js';
 
 describe('formatDateTime', () => {
   it('should format date/time correctly', () => {

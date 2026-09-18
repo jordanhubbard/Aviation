@@ -5,7 +5,7 @@
  * Extracted from flight-planner for shared use.
  */
 
-import { weatherCache } from './cache';
+import { weatherCache } from './cache.js';
 
 export interface MetarData {
   wind_direction?: number;  // degrees, or null for VRB

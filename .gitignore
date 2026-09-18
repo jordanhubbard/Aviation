@@ -15,6 +15,7 @@ env/
 *.egg
 *.egg-info/
 dist/
+dist-esm/
 build/
 pip-log.txt
 pip-delete-this-directory.txt

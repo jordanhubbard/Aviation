@@ -3,8 +3,8 @@
  */
 
 import { describe, it, expect, beforeEach } from 'vitest';
-import { GoogleCalendarAuth, DEFAULT_SCOPES, GOOGLE_OAUTH_ENDPOINTS } from '../auth';
-import type { GoogleCredentials } from '../types';
+import { GoogleCalendarAuth, DEFAULT_SCOPES, GOOGLE_OAUTH_ENDPOINTS } from '../auth.js';
+import type { GoogleCredentials } from '../types.js';
 
 describe('GoogleCalendarAuth', () => {
   let auth: GoogleCalendarAuth;

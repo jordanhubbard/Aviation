@@ -2,8 +2,8 @@ export {
   MacTaskCreator,
   type CreateTaskResult,
   type CreateTaskOptions,
-} from "./taskCreator";
+} from "./taskCreator.js";
 export {
   installNodeProcessErrorReporting,
   type InstallNodeErrorReportingOptions,
-} from "./nodeErrorReporting";
+} from "./nodeErrorReporting.js";
