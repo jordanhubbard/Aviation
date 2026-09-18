@@ -3,14 +3,12 @@
   "version": "0.1.0",
   "license": "MIT",
   "private": true,
+  "packageManager": "pnpm@10.34.5",
   "workspaces": [
     "packages/*",
     "apps/*",
-    "apps/aviation-accident-tracker/backend",
-    "apps/aviation-accident-tracker/frontend",
-    "apps/g1000-simulator/backend",
-    "apps/g1000-simulator/frontend",
-    "apps/aviation-chat"
+    "apps/*/frontend",
+    "apps/*/backend"
   ],
   "scripts": {
     "build": "npm run build --workspaces --if-present",
@@ -31,7 +29,13 @@
     "typescript": "^5.9.3"
   },
   "pnpm": {
-    "onlyBuiltDependencies": ["@apollo/protobufjs", "@scarf/scarf", "@vscode/sqlite3", "esbuild", "unrs-resolver"]
+    "onlyBuiltDependencies": [
+      "@apollo/protobufjs",
+      "@scarf/scarf",
+      "@vscode/sqlite3",
+      "esbuild",
+      "unrs-resolver"
+    ]
   },
   "overrides": {
     "@tootallnate/once": ">=3.0.1",

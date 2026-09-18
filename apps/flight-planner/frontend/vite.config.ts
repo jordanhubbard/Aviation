@@ -22,9 +22,18 @@ export default defineConfig({
       },
     },
   },
+  optimizeDeps: {
+    // @aviation/shared-sdk is a linked CommonJS workspace package; without
+    // pre-bundling, Rollup cannot see its named exports and the build fails
+    // with "distanceNM is not exported".
+    include: ['@aviation/shared-sdk/aviation/navigation'],
+  },
   build: {
     outDir: 'dist',
     emptyOutDir: true,
     sourcemap: true,
+    commonjsOptions: {
+      include: [/shared-sdk/, /node_modules/],
+    },
   },
 })

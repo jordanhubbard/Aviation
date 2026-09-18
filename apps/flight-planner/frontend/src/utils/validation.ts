@@ -4,40 +4,45 @@ export interface ValidationResult {
   normalized?: string
 }
 
-export const normalizeAirportCode = (value: string): string => {
+// Accept inputs like "KPAO - Palo Alto Airport" and keep only the leading token.
+const extractAirportCodeToken = (value: string): string => {
   const trimmed = value.trim().toUpperCase()
   if (!trimmed) return ''
 
-  // Accept inputs like "KPAO - Palo Alto Airport" and keep only the code before the dash.
   const beforeDash = trimmed.split(/[-–—]/)[0]?.trim() || ''
-  const token = beforeDash.split(/\s+/)[0]?.trim() || ''
+  return beforeDash.split(/\s+/)[0]?.trim() || ''
+}
 
-  const match = token.match(/^[A-Z0-9]{3,5}$/)
-  return match ? token : ''
+export const normalizeAirportCode = (value: string): string => {
+  const token = extractAirportCodeToken(value)
+  return /^[A-Z0-9]{3,5}$/.test(token) ? token : ''
 }
 
 export const validateAirportCode = (code: string): ValidationResult => {
-  const normalized = normalizeAirportCode(code)
+  // Validate the raw token rather than the normalized code: normalization
+  // collapses every malformed input to '', which would report everything as
+  // missing and make the checks below unreachable.
+  const token = extractAirportCodeToken(code)
 
-  if (!normalized) {
+  if (!token) {
     return { valid: false, error: 'Airport code is required' }
   }
 
-  if (normalized.length < 3 || normalized.length > 5) {
-    return {
-      valid: false,
-      error: 'Airport code must be 3-5 characters',
-    }
-  }
-
-  if (!/^[A-Z0-9]+$/.test(normalized)) {
+  if (!/^[A-Z0-9]+$/.test(token)) {
     return {
       valid: false,
       error: 'Airport code must contain only letters and numbers',
     }
   }
 
-  return { valid: true, normalized }
+  if (token.length < 3 || token.length > 5) {
+    return {
+      valid: false,
+      error: 'Airport code must be 3-5 characters',
+    }
+  }
+
+  return { valid: true, normalized: token }
 }
 
 export const validateRequired = (value: string, fieldName: string): ValidationResult => {

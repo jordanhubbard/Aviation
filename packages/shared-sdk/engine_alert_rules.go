@@ -2,6 +2,7 @@ package sharedsdk
 
 import (
 	"fmt"
+	"math"
 )
 
 // EngineAlertRule defines a rule for triggering engine-related alerts.
@@ -79,9 +80,12 @@ var FuelAlertRules = []EngineAlertRule{
 		Name:        "LowFuelLevel",
 		AlertType:   FuelAlert,
 		Description: "Fuel level below minimum safe operating level",
+		// A remaining-fuel rule has a floor, not a ceiling: the safe band is
+		// "at or above 10 gal". Encoding 10 as MaxValue inverted the alert,
+		// so a full tank warned and an empty one stayed silent.
 		Threshold: EngineThreshold{
-			MinValue: 0,
-			MaxValue: 10, // Gallons
+			MinValue: 10, // Gallons
+			MaxValue: math.Inf(1),
 			Unit:     "gal",
 		},
 	},
@@ -90,8 +94,8 @@ var FuelAlertRules = []EngineAlertRule{
 		AlertType:   FuelAlert,
 		Description: "Fuel level critically low - immediate landing required",
 		Threshold: EngineThreshold{
-			MinValue: 0,
-			MaxValue: 5, // Gallons
+			MinValue: 5, // Gallons
+			MaxValue: math.Inf(1),
 			Unit:     "gal",
 		},
 	},

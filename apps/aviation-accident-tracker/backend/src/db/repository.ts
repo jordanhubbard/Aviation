@@ -9,6 +9,7 @@ const { Database } = sqlite3;
 import { promisify } from 'util';
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
+import { mkdirSync } from 'fs';
 import type { EventRecord, SourceAttribution, ListEventsParams, Category } from '../types.js';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -55,6 +56,11 @@ export class EventRepository {
   private dbExec: (sql: string) => Promise<void>;
 
   constructor(dbPath?: string) {
+    // sqlite will not create missing parent directories, so a fresh checkout
+    // fails with SQLITE_CANTOPEN before the server can start.
+    if (dbPath && dbPath !== ':memory:') {
+      mkdirSync(dirname(dbPath), { recursive: true });
+    }
     this.db = new Database(dbPath || ':memory:');
     this.dbRun = (sql, params = []) =>
       new Promise((resolve, reject) => {

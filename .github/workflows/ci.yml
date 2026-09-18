@@ -228,9 +228,9 @@ jobs:
           node-version: '20'
 
       - name: Set up pnpm
+        # Version comes from the "packageManager" field in package.json; passing
+        # a conflicting `version` input here makes action-setup fail.
         uses: pnpm/action-setup@v4
-        with:
-          version: 10
 
       - name: Verify monorepo Node.js structure
         run: pnpm install --ignore-scripts

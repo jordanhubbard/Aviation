@@ -18,7 +18,17 @@
     "strict": true,
     "noUnusedLocals": true,
     "noUnusedParameters": true,
-    "noFallthroughCasesInSwitch": true
+    "noFallthroughCasesInSwitch": true,
+
+    "baseUrl": ".",
+    "paths": {
+      // This app is still on React 18 while others are on 19. pnpm hoists a
+      // single @types/react (19) as the fallback for store packages, so
+      // react-router's .d.ts files would otherwise pull React 19 types into
+      // this compilation and break JSX. Pin every react type lookup to v18.
+      "react": ["./node_modules/@types/react"],
+      "react-dom": ["./node_modules/@types/react-dom"]
+    }
   },
   "include": [
     "src"
