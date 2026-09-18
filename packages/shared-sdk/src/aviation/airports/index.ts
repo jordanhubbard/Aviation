@@ -29,3 +29,7 @@
 export * from './types';
 export * from './service';
 export * from './cache';
+export * from './search';
+
+// Note: the packaged-dataset loader lives in './bundled' and is intentionally
+// not re-exported here, since it depends on Node's fs/path.

@@ -34,7 +34,9 @@ The Flight School application has been migrated to use the shared `@aviation/sha
 
 ### Archived Files
 
-- `app/calendar_service_old.py` - Original implementation (kept for reference)
+The pre-SDK implementation (`app/calendar_service_old.py`) and the staging copy
+(`app/calendar_service_sdk.py`) were removed once the migration settled. Both are
+recoverable from git history if ever needed.
 
 ## API Compatibility
 
@@ -218,15 +220,9 @@ Common errors:
 
 ## Rollback Plan
 
-If needed, rollback is simple:
-
-```bash
-cd apps/flightschool/app
-mv calendar_service.py calendar_service_sdk.py
-mv calendar_service_old.py calendar_service.py
-```
-
-Then revert `app/routes/settings.py` to remove SDK imports.
+This migration is complete and the pre-SDK files have been removed. To roll back,
+restore `app/calendar_service.py` from the commit preceding the migration and revert
+`app/routes/settings.py` to drop the SDK imports.
 
 ## Future Enhancements
 

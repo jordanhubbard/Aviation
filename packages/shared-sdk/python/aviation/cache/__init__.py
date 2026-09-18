@@ -1,7 +1,10 @@
 """
 Aviation Cache Module - Python Implementation
 
-Redis-based caching for improved performance.
+Caching for improved performance:
+
+- :class:`TTLCache` - in-process, dependency-free, with stale-on-error fallback
+- :class:`RedisCache` - shared/distributed caching (requires ``redis``)
 """
 
 from .redis_cache import (
@@ -12,6 +15,7 @@ from .redis_cache import (
     get_cache,
     init_cache,
 )
+from .ttl_cache import TTLCache
 
 __all__ = [
     "RedisCache",
@@ -20,4 +24,5 @@ __all__ = [
     "CacheTTL",
     "get_cache",
     "init_cache",
+    "TTLCache",
 ]

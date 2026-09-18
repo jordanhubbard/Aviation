@@ -4,6 +4,65 @@
   "description": "Shared SDK for aviation applications with weather services, AI methodology, and common utilities",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./aviation/navigation": {
+      "types": "./dist/aviation/navigation/index.d.ts",
+      "default": "./dist/aviation/navigation/index.js"
+    },
+    "./aviation/weather": {
+      "types": "./dist/aviation/weather/index.d.ts",
+      "default": "./dist/aviation/weather/index.js"
+    },
+    "./aviation/airports": {
+      "types": "./dist/aviation/airports/index.d.ts",
+      "default": "./dist/aviation/airports/index.js"
+    },
+    "./aviation/airports/bundled": {
+      "types": "./dist/aviation/airports/bundled.d.ts",
+      "default": "./dist/aviation/airports/bundled.js"
+    },
+    "./aviation/notam": {
+      "types": "./dist/aviation/notam.d.ts",
+      "default": "./dist/aviation/notam.js"
+    },
+    "./aviation/hazards": {
+      "types": "./dist/aviation/hazards.d.ts",
+      "default": "./dist/aviation/hazards.js"
+    },
+    "./aviation/weight-balance": {
+      "types": "./dist/aviation/weight-balance.d.ts",
+      "default": "./dist/aviation/weight-balance.js"
+    },
+    "./datetime": {
+      "types": "./dist/datetime/index.d.ts",
+      "default": "./dist/datetime/index.js"
+    },
+    "./cache": {
+      "types": "./dist/cache/index.d.ts",
+      "default": "./dist/cache/index.js"
+    },
+    "./g1000": {
+      "types": "./dist/g1000/index.d.ts",
+      "default": "./dist/g1000/index.js"
+    },
+    "./integrations/google": {
+      "types": "./dist/integrations/google/index.d.ts",
+      "default": "./dist/integrations/google/index.js"
+    },
+    "./plugin-sandbox": {
+      "types": "./dist/plugin-sandbox.d.ts",
+      "default": "./dist/plugin-sandbox.js"
+    },
+    "./package.json": "./package.json",
+    "./*": {
+      "types": "./dist/*.d.ts",
+      "default": "./dist/*.js"
+    }
+  },
   "scripts": {
     "build": "tsc",
     "dev": "tsc --watch",

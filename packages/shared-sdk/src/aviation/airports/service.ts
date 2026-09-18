@@ -53,7 +53,7 @@ export function getAirportDatabase(): Airport[] {
 /**
  * Normalize airport code for lookup
  */
-function normalizeCode(code: string): string {
+export function normalizeCode(code: string): string {
   return code.trim().toUpperCase();
 }
 
@@ -61,7 +61,7 @@ function normalizeCode(code: string): string {
  * Generate candidate codes for lookup
  * Handles US FAA codes (e.g., PAO -> KPAO)
  */
-function candidateCodes(code: string): Set<string> {
+export function candidateCodes(code: string): Set<string> {
   const codeUpper = normalizeCode(code);
   const codes = new Set<string>([codeUpper]);
 

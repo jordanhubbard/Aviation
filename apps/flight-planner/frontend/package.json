@@ -19,6 +19,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@aviation/shared-sdk": "workspace:*",
     "@emotion/react": "^11.11.1",
     "@emotion/styled": "^11.11.0",
     "@hookform/resolvers": "^5.2.2",

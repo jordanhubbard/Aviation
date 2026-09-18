@@ -102,3 +102,35 @@ export {
   tasToMach,
   machToTas,
 } from './time-speed-distance';
+
+// Shared navigation result types
+export type {
+  DistanceResult,
+  BearingResult,
+  TimeSpeedDistance,
+  WindCorrectionResult,
+  FuelCalculation,
+  DistanceUnit,
+  SpeedUnit,
+} from './types';
+
+// Wind triangle, crosswind limits and runway selection
+export {
+  calculateWindCorrection,
+  calculateWindComponents,
+  calculateGroundSpeed,
+  calculateEffectiveWind,
+  isCrosswindWithinLimits,
+  calculateBestRunway,
+} from './wind';
+
+// Aircraft performance altitudes
+export {
+  pressureAltitude,
+  densityAltitude,
+  densityAltitudeFromIndicated,
+  isaTemperature,
+  ISA_SEA_LEVEL_PRESSURE_INHG,
+  ISA_SEA_LEVEL_TEMP_C,
+  ISA_LAPSE_RATE_C_PER_FT,
+} from './performance';
