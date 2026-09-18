@@ -1,8 +1,20 @@
 # syntax=docker/dockerfile:1.4
 
-# Build arguments
+# Build arguments (must precede the first FROM to stay global)
 ARG PYTHON_VERSION=3.11
 ARG BUILDKIT_INLINE_CACHE=1
+
+# Frontend build. This repo is a pnpm workspace; npm cannot resolve the
+# "workspace:" protocol and no per-app npm lockfiles remain.
+FROM node:20-alpine AS frontend-build
+WORKDIR /app
+RUN corepack enable pnpm
+COPY pnpm-workspace.yaml pnpm-lock.yaml package.json ./
+COPY packages ./packages
+COPY apps ./apps
+RUN pnpm install --frozen-lockfile --filter foreflight-dashboard-frontend...
+RUN pnpm --filter foreflight-dashboard-frontend run build
+
 ARG FLASK_DEBUG=1
 ARG FLASK_ENV=development
 
@@ -57,9 +69,8 @@ RUN pip install -r requirements.txt
 # Copy the application code
 COPY apps/foreflight-dashboard/ .
 
-# Build frontend (skip if build fails during testing)
-# Note: Cache mounts removed for cloud deployment compatibility
-RUN cd frontend && npm install && (npm run build || echo "Frontend build failed, continuing...")
+# Built assets come from the frontend-build stage above.
+COPY --from=frontend-build /app/apps/foreflight-dashboard/src/static/dist /app/src/static/dist
 
 # Set Flask app environment variable
 ENV FLASK_APP=src/app.py
@@ -102,9 +113,7 @@ COPY apps/foreflight-dashboard/frontend/ /app/frontend/
 COPY apps/foreflight-dashboard/docker-entrypoint.sh /docker-entrypoint.sh
 RUN chmod +x /docker-entrypoint.sh
 
-# Build frontend for production (install all deps including devDeps for build)
-# Note: Cache mounts removed for cloud deployment compatibility
-RUN cd frontend && npm install && npm run build && npm prune --production
+COPY --from=frontend-build /app/apps/foreflight-dashboard/src/static/dist /app/src/static/dist
 
 # Set default port environment variables (can be overridden at runtime)
 # Note: Flask has been eliminated! 🔥 FastAPI now handles everything

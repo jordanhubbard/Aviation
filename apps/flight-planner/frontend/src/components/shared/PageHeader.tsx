@@ -1,9 +1,11 @@
 import React from 'react'
 import { Typography, Box, useMediaQuery } from '@mui/material'
+import type { SxProps, Theme } from '@mui/material'
 import { useTheme } from '@mui/material/styles'
 
 interface PageHeaderProps {
-  icon: React.ReactElement
+  // Typed so cloneElement can inject styling props under React 19's stricter types.
+  icon: React.ReactElement<{ sx?: SxProps<Theme>; 'aria-hidden'?: string }>
   title: string
 }
 

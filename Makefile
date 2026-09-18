@@ -9,7 +9,7 @@ PNPM := $(shell command -v pnpm >/dev/null 2>&1 && echo pnpm || (command -v core
 .PHONY: help all build clean test test-docker release
 .PHONY: build-node build-python build-clojure
 .PHONY: clean-node clean-python clean-clojure
-.PHONY: test-node test-go test-python test-clojure test-lockfiles
+.PHONY: test-node test-go test-python test-clojure
 .PHONY: test-docker-node test-docker-python test-docker-clojure
 .PHONY: run-aviation-missions run-flight-planner run-flight-school
 .PHONY: run-foreflight-dashboard run-flight-tracker run-weather-briefing
@@ -43,7 +43,6 @@ help:
 	@echo "  make clean-node          - Clean Node.js artifacts"
 	@echo "  make clean-python        - Clean Python artifacts"
 	@echo "  make clean-clojure       - Clean Clojure artifacts"
-	@echo "  make test-lockfiles      - Check lockfile peer dependencies (what npm ci enforces)"
 	@echo "  make test-node           - Test Node.js applications locally"
 	@echo "  make test-python         - Test Python applications locally"
 	@echo "  make test-clojure        - Test Clojure applications locally"
@@ -151,17 +150,10 @@ clean-clojure:
 # TEST TARGETS
 #
 
-test: test-lockfiles test-node test-go test-python test-clojure
+test: test-node test-go test-python test-clojure
 	@echo ""
 	@echo "✅ All tests complete!"
 
-test-lockfiles:
-	@echo "🧪 Checking lockfile peer dependencies..."
-	@# The app containers install with `npm ci`, which refuses a tree containing
-	@# a conflicting peer dependency. Catching that here keeps the failure out of
-	@# the deploy workflow, where it costs a full image build to discover.
-	@node --test tests/lockfile-peers.test.mjs > /dev/null
-	@node scripts/check-lockfile-peers.mjs
 
 test-node:
 	@echo "🧪 Running Node.js/TypeScript tests..."

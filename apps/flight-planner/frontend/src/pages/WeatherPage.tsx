@@ -106,7 +106,7 @@ const WeatherPage: React.FC = () => {
             title="Airport Weather"
             onSubmit={getWeather}
             buttonText="Get Weather"
-            isLoading={weatherMutation.isLoading}
+            isLoading={weatherMutation.isPending}
           >
             <Grid item xs={12}>
               <Box sx={{ position: 'relative' }}>
@@ -120,7 +120,7 @@ const WeatherPage: React.FC = () => {
                   onBlur={() => setTimeout(() => setShowHistory(false), 200)}
                   helperText={validationError || 'Enter ICAO or IATA code'}
                   error={!!validationError}
-                  disabled={weatherMutation.isLoading}
+                  disabled={weatherMutation.isPending}
                   InputProps={{
                     endAdornment: currentAirport && (
                       <InputAdornment position="end">
@@ -151,7 +151,7 @@ const WeatherPage: React.FC = () => {
         </Grid>
 
         <Grid item xs={12} md={6}>
-          {weatherMutation.isLoading ? (
+          {weatherMutation.isPending ? (
             <LoadingState message="Fetching weather data..." />
           ) : weatherData ? (
             <ResultsSection title={`Current Weather - ${weatherData.airport}`}>

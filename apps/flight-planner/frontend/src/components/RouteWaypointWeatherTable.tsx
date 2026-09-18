@@ -11,7 +11,7 @@ import {
   WbSunny,
 } from '@mui/icons-material'
 import { DataGrid, type GridColDef } from '@mui/x-data-grid'
-import { useQueries } from 'react-query'
+import { useQueries } from '@tanstack/react-query'
 
 import { weatherService } from '../services'
 import type { FlightCategory, FlightPlan, WeatherData } from '../types'
@@ -109,15 +109,15 @@ const RouteWaypointWeatherTable: React.FC<Props> = ({ plan }) => {
     [waypoints],
   )
 
-  const weatherQueries = useQueries(
-    waypoints.map((code) => ({
+  const weatherQueries = useQueries({
+    queries: waypoints.map((code) => ({
       queryKey: ['weather', code, 'summary'],
       queryFn: () => weatherService.getWeather(code, { suppressToast: true }),
       enabled: Boolean(code),
       staleTime: 5 * 60 * 1000,
       retry: 0,
     })),
-  ) as Array<{ data?: WeatherData; isLoading: boolean; isError: boolean }>
+  }) as Array<{ data?: WeatherData; isLoading: boolean; isError: boolean }>
 
   const weatherByCode = useMemo(() => {
     const m = new Map<string, WeatherData | null>()

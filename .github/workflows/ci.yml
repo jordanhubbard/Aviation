@@ -165,13 +165,16 @@ jobs:
         working-directory: apps/foreflight-dashboard
         run: pytest
 
+      # Installed from the workspace root: this repo is a pnpm workspace and
+      # no longer carries per-app npm lockfiles.
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+
       - name: Install frontend dependencies
-        working-directory: apps/foreflight-dashboard/frontend
-        run: npm ci
+        run: pnpm install --frozen-lockfile --filter foreflight-dashboard-frontend...
 
       - name: Build frontend
-        working-directory: apps/foreflight-dashboard/frontend
-        run: npm run build
+        run: pnpm --filter foreflight-dashboard-frontend run build
 
   # Lint and format check
   lint:
@@ -187,14 +190,14 @@ jobs:
 
       # Enforce the currently clean ForeFlight frontend first. Additional apps
       # can be added as their existing lint debt is resolved.
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+
       - name: Install ForeFlight frontend dependencies
-        working-directory: apps/foreflight-dashboard/frontend
-        run: npm ci
+        run: pnpm install --frozen-lockfile --filter foreflight-dashboard-frontend...
 
       - name: Lint ForeFlight frontend
-        working-directory: apps/foreflight-dashboard/frontend
-        run: |
-          npm run lint
+        run: pnpm --filter foreflight-dashboard-frontend run lint
 
   # Security scanning
   security:

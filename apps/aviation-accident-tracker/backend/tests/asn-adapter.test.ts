@@ -1,40 +1,91 @@
 /**
- * Unit tests for ASNAdapter
+ * Unit tests for the ASN adapter (src/ingest/adapters/asnAdapter.ts).
+ *
+ * This is the adapter the ingest pipeline actually uses; a parallel
+ * class-based implementation used to live alongside it and carried the only
+ * tests, so coverage moved here when that duplicate was removed.
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { ASNAdapter } from '../src/ingest/asn-adapter';
+import { fetchRecentAsn, parseAsnListPage } from '../src/ingest/adapters/asnAdapter.js';
 
-// Minimal HTML page that looks like ASN's datatable
-const MOCK_ASN_HTML = `
-<html><body>
-<table class="datatable">
-  <tr><th>Date</th><th>Type</th><th>Registration</th><th>Operator</th><th>Fat.</th><th>Location</th></tr>
-  <tr>
-    <td><a href="/database/record.php?id=20240315-1">2024-03-15</a></td>
-    <td>Cessna 172</td>
-    <td>N12345</td>
-    <td>Private</td>
-    <td>0</td>
-    <td>United States</td>
-  </tr>
-  <tr>
-    <td><a href="/database/record.php?id=20240310-2">2024-03-10</a></td>
-    <td>Boeing 737-800</td>
-    <td>G-XYZW</td>
-    <td>British Airways</td>
-    <td>2</td>
-    <td>United Kingdom</td>
-  </tr>
-</table>
-</body></html>
-`;
+const FETCHED_AT = '2026-01-01T00:00:00.000Z';
 
-describe('ASNAdapter', () => {
-  let adapter: ASNAdapter;
+// ASN's year listing wraps each accident in <tr class="list"> with
+// <td class="list"> cells: date, type, registration, operator, fatalities, location.
+function asnRow(
+  href: string,
+  date: string,
+  type: string,
+  registration: string,
+  operator: string,
+  fatalities: string,
+  location: string
+): string {
+  return `<tr class="list">
+    <td class="list"><a href=${href}>${date}</a></td>
+    <td class="list">${type}</td>
+    <td class="list">${registration}</td>
+    <td class="list">${operator}</td>
+    <td class="list">${fatalities}</td>
+    <td class="list">${location}</td>
+  </tr>`;
+}
 
+const MOCK_ASN_HTML = `<html><body><table>
+${asnRow('/database/record.php?id=20240315-1', '2024-03-15', 'Cessna 172', 'N12345', 'Private', '0', 'United States')}
+${asnRow('/database/record.php?id=20240310-2', '2024-03-10', 'Boeing 737-800', 'G-XYZW', 'British Airways', '2', 'United Kingdom')}
+</table></body></html>`;
+
+describe('parseAsnListPage', () => {
+  it('parses each listing row into a RawEvent', () => {
+    const events = parseAsnListPage(MOCK_ASN_HTML, FETCHED_AT);
+    expect(events).toHaveLength(2);
+
+    const [first] = events;
+    expect(first.source).toBe('asn');
+    expect(first.registration).toBe('N12345');
+    expect(first.aircraftType).toBe('Cessna 172');
+    expect(first.operator).toBe('Private');
+    expect(first.dateZ.slice(0, 10)).toBe('2024-03-15');
+    expect(first.fetchedAt).toBe(FETCHED_AT);
+    expect(first.status).toBe('preliminary');
+  });
+
+  it('builds an absolute source url from the row link', () => {
+    const [first] = parseAsnListPage(MOCK_ASN_HTML, FETCHED_AT);
+    expect(first.url).toBe('https://aviation-safety.net/database/record.php?id=20240315-1');
+    expect(first.id).toBe(first.url);
+  });
+
+  it('parses the fatalities column', () => {
+    const events = parseAsnListPage(MOCK_ASN_HTML, FETCHED_AT);
+    expect(events[0].fatalities).toBe(0);
+    expect(events[1].fatalities).toBe(2);
+  });
+
+  it('falls back to UNKNOWN when the registration cell is empty', () => {
+    const html = `<html><table>${asnRow('/r/1', '2024-03-15', 'Cessna 172', '', 'Private', '0', 'United States')}</table></html>`;
+    expect(parseAsnListPage(html, FETCHED_AT)[0].registration).toBe('UNKNOWN');
+  });
+
+  it('skips rows with too few cells', () => {
+    const html = '<html><table><tr class="list"><td class="list">2024-03-15</td></tr></table></html>';
+    expect(parseAsnListPage(html, FETCHED_AT)).toEqual([]);
+  });
+
+  it('skips rows whose date cannot be parsed', () => {
+    const html = `<html><table>${asnRow('/r/1', 'not-a-date', 'Cessna 172', 'N12345', 'Private', '0', 'US')}</table></html>`;
+    expect(parseAsnListPage(html, FETCHED_AT)).toEqual([]);
+  });
+
+  it('returns [] for markup with no listing rows', () => {
+    expect(parseAsnListPage('<html><body>No table here</body></html>', FETCHED_AT)).toEqual([]);
+  });
+});
+
+describe('fetchRecentAsn', () => {
   beforeEach(() => {
-    adapter = new ASNAdapter();
     vi.stubGlobal('fetch', vi.fn());
   });
 
@@ -42,66 +93,40 @@ describe('ASNAdapter', () => {
     vi.unstubAllGlobals();
   });
 
-  describe('fetchRecent', () => {
-    it('returns [] and logs warning when fetch returns 403', async () => {
-      vi.mocked(fetch).mockResolvedValueOnce(
-        new Response('Forbidden', { status: 403 })
-      );
-      const result = await adapter.fetchRecent(30);
-      expect(result).toEqual([]);
-    });
+  it('returns [] when the listing responds 403', async () => {
+    vi.mocked(fetch).mockImplementation(async () => new Response('Forbidden', { status: 403 }));
+    await expect(fetchRecentAsn()).resolves.toEqual([]);
+  });
 
-    it('returns [] and logs warning when fetch returns 429', async () => {
-      vi.mocked(fetch).mockResolvedValueOnce(
-        new Response('Too Many Requests', { status: 429 })
-      );
-      const result = await adapter.fetchRecent(30);
-      expect(result).toEqual([]);
-    });
+  it('returns [] when the listing responds 429', async () => {
+    vi.mocked(fetch).mockImplementation(async () => new Response('Too Many Requests', { status: 429 }));
+    await expect(fetchRecentAsn()).resolves.toEqual([]);
+  });
 
-    it('returns [] when fetch throws a network error', async () => {
-      vi.mocked(fetch).mockRejectedValueOnce(new Error('Network failure'));
-      const result = await adapter.fetchRecent(30);
-      expect(result).toEqual([]);
-    });
+  it('returns [] when the request throws', async () => {
+    vi.mocked(fetch).mockImplementation(async () => { throw new Error('Network failure'); });
+    await expect(fetchRecentAsn()).resolves.toEqual([]);
+  });
 
-    it('returns [] when HTML contains no parseable datatable', async () => {
-      vi.mocked(fetch).mockResolvedValueOnce(
-        new Response('<html><body>No table here</body></html>', { status: 200 })
-      );
-      const result = await adapter.fetchRecent(30);
-      expect(result).toEqual([]);
-    });
+  it('returns [] when the page has no parseable rows', async () => {
+    vi.mocked(fetch).mockImplementation(async () => new Response('<html><body>nothing</body></html>', { status: 200 }));
+    await expect(fetchRecentAsn()).resolves.toEqual([]);
+  });
 
-    it('parses EventRecords from valid HTML and filters by window', async () => {
-      vi.mocked(fetch).mockResolvedValueOnce(
-        new Response(MOCK_ASN_HTML, { status: 200 })
-      );
-      // windowDays=365*10 ensures both rows pass the cutoff filter
-      const result = await adapter.fetchRecent(3650);
-      expect(result.length).toBe(2);
-      expect(result[0].registration).toBe('N12345');
-      expect(result[0].aircraftType).toBe('Cessna 172');
-      expect(result[0].dateZ).toBe('2024-03-15');
-      expect(result[0].sourceName ?? result[0].sources[0].sourceName).toBe('asn');
-    });
+  it('returns parsed events for a listing within the ingest window', async () => {
+    const today = new Date().toISOString().slice(0, 10);
+    const html = `<html><table>${asnRow('/r/1', today, 'Cessna 172', 'N12345', 'Private', '0', 'United States')}</table></html>`;
+    vi.mocked(fetch).mockImplementation(async () => new Response(html, { status: 200 }));
 
-    it('excludes events outside the retention window (pre-2000)', async () => {
-      const oldHtml = MOCK_ASN_HTML.replace('2024-03-15', '1999-06-01').replace('2024-03-10', '1998-01-01');
-      vi.mocked(fetch).mockResolvedValueOnce(
-        new Response(oldHtml, { status: 200 })
-      );
-      const result = await adapter.fetchRecent(3650);
-      expect(result).toEqual([]);
-    });
+    const events = await fetchRecentAsn();
+    expect(events.length).toBeGreaterThan(0);
+    expect(events[0].registration).toBe('N12345');
+    expect(events[0].source).toBe('asn');
+  });
 
-    it('excludes events outside the windowDays cutoff', async () => {
-      vi.mocked(fetch).mockResolvedValueOnce(
-        new Response(MOCK_ASN_HTML, { status: 200 })
-      );
-      // windowDays=1 — both 2024 dates are well outside a 1-day window
-      const result = await adapter.fetchRecent(1);
-      expect(result).toEqual([]);
-    });
+  it('stops before events older than the ingest window', async () => {
+    const html = `<html><table>${asnRow('/r/1', '1999-06-01', 'Cessna 172', 'N12345', 'Private', '0', 'United States')}</table></html>`;
+    vi.mocked(fetch).mockImplementation(async () => new Response(html, { status: 200 }));
+    await expect(fetchRecentAsn()).resolves.toEqual([]);
   });
 });

@@ -17,7 +17,7 @@ import {
 import { DataGrid, type GridColDef } from '@mui/x-data-grid'
 import { LocalAirport, Search, LocationOn } from '@mui/icons-material'
 import toast from 'react-hot-toast'
-import { useQuery } from 'react-query'
+import { useQuery } from '@tanstack/react-query'
 import {
   PageHeader,
   FormSection,
@@ -108,23 +108,21 @@ const AirportsPage: React.FC = () => {
   const airports = searchMutation.data || []
   const selectedAirport = detailsMutation.data
 
-  const airspaceQuery = useQuery(
-    ['airspace', selectedAirport?.icao, selectedAirport?.latitude, selectedAirport?.longitude],
-    () =>
+  const airspaceQuery = useQuery({
+    queryKey: ['airspace', selectedAirport?.icao, selectedAirport?.latitude, selectedAirport?.longitude],
+    queryFn: () =>
       airspaceService.getNearby({
         lat: selectedAirport?.latitude as number,
         lon: selectedAirport?.longitude as number,
         radiusNm: AIRSPACE_RADIUS_NM,
       }),
-    {
-      enabled:
-        !!selectedAirport &&
-        typeof selectedAirport.latitude === 'number' &&
-        typeof selectedAirport.longitude === 'number',
-      staleTime: 30 * 60 * 1000,
-      retry: 1,
-    },
-  )
+    enabled:
+      !!selectedAirport &&
+      typeof selectedAirport.latitude === 'number' &&
+      typeof selectedAirport.longitude === 'number',
+    staleTime: 30 * 60 * 1000,
+    retry: 1,
+  })
 
   const forecast = useForecast(selectedAirport?.icao || '', forecastDays)
 
@@ -162,7 +160,7 @@ const AirportsPage: React.FC = () => {
             title="Search Airports"
             onSubmit={handleSearch}
             buttonText="Search Airports"
-            isLoading={searchMutation.isLoading}
+            isLoading={searchMutation.isPending}
           >
             <Grid item xs={12}>
               <Box sx={{ position: 'relative' }}>
@@ -176,7 +174,7 @@ const AirportsPage: React.FC = () => {
                   onBlur={() => setTimeout(() => setShowHistory(false), 200)}
                   helperText={searchError || 'Enter airport name, city, or ICAO/IATA code'}
                   error={!!searchError}
-                  disabled={searchMutation.isLoading}
+                  disabled={searchMutation.isPending}
                   InputProps={{
                     startAdornment: <Search sx={{ mr: 1, color: 'action.disabled' }} />,
                   }}
@@ -196,7 +194,7 @@ const AirportsPage: React.FC = () => {
             </Grid>
           </FormSection>
 
-          {searchMutation.isLoading ? (
+          {searchMutation.isPending ? (
             <Box sx={{ mt: 3 }}>
               <LoadingState message="Searching airports..." />
             </Box>
@@ -224,7 +222,7 @@ const AirportsPage: React.FC = () => {
         </Grid>
 
         <Grid item xs={12} md={6}>
-          {detailsMutation.isLoading ? (
+          {detailsMutation.isPending ? (
             <LoadingState message="Loading airport details..." />
           ) : selectedAirport ? (
             <ResultsSection title="Airport Details">
