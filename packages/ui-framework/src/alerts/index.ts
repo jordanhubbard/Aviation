@@ -3,7 +3,7 @@
  * Provides alert management, types, and utilities for the aviation UI framework
  */
 
-export * from './types';
-export * from './manager';
-export * from './persistence';
-export * from './event-emitter';
+export * from './types.js';
+export * from './manager.js';
+export * from './persistence.js';
+export * from './event-emitter.js';

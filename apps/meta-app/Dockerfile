@@ -8,39 +8,31 @@ WORKDIR /app
 
 RUN apk add --no-cache python3 make g++
 
+# This repo is a pnpm workspace and its packages use the "workspace:" protocol,
+# which npm cannot resolve (EUNSUPPORTEDPROTOCOL). Use the pinned pnpm.
+RUN corepack enable pnpm
+
 ENV NODE_ENV=development
 
-COPY apps/meta-app/package*.json ./
-COPY package-lock.json ./
+# Workspace manifests first so dependency installation caches independently of source.
+COPY pnpm-workspace.yaml pnpm-lock.yaml package.json ./
 
-COPY packages/shared-sdk ./packages/shared-sdk
-COPY packages/keystore ./packages/keystore
-COPY packages/ui-framework ./packages/ui-framework
+# The lockfile describes every workspace member, so they must all be present
+# for --frozen-lockfile to succeed.
+COPY packages ./packages
+COPY apps ./apps
 
 FROM base AS build
 
 ARG VITE_META_APP_MODE=launcher
 ENV VITE_META_APP_MODE=${VITE_META_APP_MODE}
 
-RUN npm ci
-
-RUN cd packages/shared-sdk && npm run build && cd ../..
-RUN cd packages/keystore && npm run build && cd ../..
-RUN cd packages/ui-framework && npm run build && cd ../..
-
-COPY apps/meta-app/index.html ./
-COPY apps/meta-app/vite.config.ts ./
-COPY apps/meta-app/tsconfig.json ./
-COPY apps/meta-app/tsconfig.node.json ./
-COPY apps/meta-app/src ./src
-
-RUN npm install --no-save @rollup/rollup-linux-x64-musl
-
-RUN npm run build
+RUN pnpm install --frozen-lockfile --filter @aviation/meta-app...
+RUN pnpm --filter @aviation/meta-app... run build
 
 FROM nginxinc/nginx-unprivileged:1.25-alpine AS production
 
 COPY apps/meta-app/nginx.conf /etc/nginx/conf.d/default.conf
-COPY --from=build /app/dist /usr/share/nginx/html
+COPY --from=build /app/apps/meta-app/dist /usr/share/nginx/html
 
 EXPOSE 8080

@@ -1,6 +1,6 @@
 import * as React from 'react';
-import type { PaneConfig, TabTheme } from '../types';
-import { ensureMultiTabStyles } from '../styles';
+import type { PaneConfig, TabTheme } from '../types.js';
+import { ensureMultiTabStyles } from '../styles.js';
 
 export interface PaneContainerProps {
   activePane: PaneConfig | null;

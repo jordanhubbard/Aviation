@@ -47,7 +47,8 @@ class TestPIDController:
         assert ctrl.update(5.0, dt=-0.1) == 0.0
 
     def test_integral_accumulates(self) -> None:
-        ctrl = self._make_controller(ki=1.0)
+        # kp defaults to 1.0 in the helper, so isolate the integral term explicitly.
+        ctrl = self._make_controller(kp=0.0, ki=1.0)
         ctrl.update(1.0, dt=0.5)  # integral = 0.5
         out = ctrl.update(1.0, dt=0.5)  # integral = 1.0, output = 1.0
         assert abs(out - 1.0) < 1e-9

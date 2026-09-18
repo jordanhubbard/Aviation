@@ -11,7 +11,6 @@ app = create_app(settings)
 client = TestClient(app)
 
 
-@pytest.mark.xfail(reason="the /ws telemetry hub endpoint is not wired up; the socket closes immediately", strict=False)
 def test_connect():
     with client.websocket_connect("/ws") as websocket:
         hub = TelemetryStreamingHub()
@@ -20,7 +19,6 @@ def test_connect():
         assert websocket is not None
 
 
-@pytest.mark.xfail(reason="the /ws telemetry hub endpoint is not wired up; the socket closes immediately", strict=False)
 def test_disconnect():
     with client.websocket_connect("/ws") as websocket:
         hub = TelemetryStreamingHub()
@@ -28,7 +26,6 @@ def test_disconnect():
         assert websocket is not None
 
 
-@pytest.mark.xfail(reason="the /ws telemetry hub endpoint is not wired up; the socket closes immediately", strict=False)
 def test_broadcast():
     with client.websocket_connect("/ws") as websocket:
         hub = TelemetryStreamingHub()

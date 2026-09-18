@@ -5,7 +5,7 @@
 import React from 'react';
 import { MapContainer, TileLayer } from 'react-leaflet';
 import type { LatLngExpression } from 'leaflet';
-import { DEFAULT_TILE_LAYERS } from '../constants';
+import { DEFAULT_TILE_LAYERS } from '../constants.js';
 import 'leaflet/dist/leaflet.css';
 
 export interface BaseMapProps {

@@ -25,14 +25,32 @@ else:
 # Save flight recordings to file
 def save_flight_recordings():
     with open(FLIGHT_RECORDINGS_FILE, 'w') as file:
-        json.dump([fr if isinstance(fr, dict) else fr.dict() for fr in flight_recordings], file)
+        json.dump([fr if isinstance(fr, dict) else fr.model_dump() for fr in flight_recordings], file)
+
+
+def _next_recording_id() -> int:
+    """Smallest unused positive id."""
+    used = {
+        fr["metadata"].get("id")
+        for fr in flight_recordings
+        if isinstance(fr.get("metadata"), dict)
+    }
+    candidate = 1
+    while candidate in used:
+        candidate += 1
+    return candidate
 
 
 @router.post("/", response_model=FlightRecording)
 def create_flight_recording(flight_recording: FlightRecording):
-    flight_recordings.append(flight_recording.dict())
+    # Without an assigned id the read/update/delete lookups below can never
+    # match, so every created recording was unreachable.
+    stored = flight_recording.model_dump()
+    stored["metadata"] = {**stored.get("metadata", {})}
+    stored["metadata"].setdefault("id", _next_recording_id())
+    flight_recordings.append(stored)
     save_flight_recordings()
-    return flight_recording
+    return stored
 
 @router.get("/{flight_recording_id}", response_model=FlightRecording)
 def read_flight_recording(flight_recording_id: int):
@@ -45,9 +63,11 @@ def read_flight_recording(flight_recording_id: int):
 def update_flight_recording(flight_recording_id: int, flight_recording: FlightRecording):
     for idx, fr in enumerate(flight_recordings):
         if fr['metadata'].get('id') == flight_recording_id:
-            flight_recordings[idx] = flight_recording.dict()
+            stored = flight_recording.model_dump()
+            stored["metadata"] = {**stored.get("metadata", {}), "id": flight_recording_id}
+            flight_recordings[idx] = stored
             save_flight_recordings()
-            return flight_recording
+            return stored
     raise HTTPException(status_code=404, detail="Flight recording not found")
 
 @router.delete("/{flight_recording_id}")

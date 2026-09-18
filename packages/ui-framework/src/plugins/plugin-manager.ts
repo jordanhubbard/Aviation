@@ -4,7 +4,7 @@
  * Manages plugin lifecycle, initialization, and communication with the simulator.
  */
 
-import type { G1000Plugin, PluginContext, PluginServices, MenuManager, MenuItem, FlightState, PluginEntry, PluginStatus } from './types'
+import type { G1000Plugin, PluginContext, PluginServices, MenuManager, MenuItem, FlightState, PluginEntry, PluginStatus } from './types.js'
 
 export interface PluginManagerConfig {
   maxMemory?: number

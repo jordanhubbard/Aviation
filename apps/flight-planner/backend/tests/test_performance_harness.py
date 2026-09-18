@@ -1,10 +1,12 @@
 
 import pytest
+import pytest_asyncio
 import time
 from app.services.telemetry_streaming_hub import TelemetryStreamingHub
+from app.services.alerts import AlertService
 from app.services.flight_dynamics import FlightDynamicsService, AircraftState
 
-@pytest.fixture
+@pytest_asyncio.fixture
 async def telemetry_hub():
     hub = TelemetryStreamingHub()
     yield hub
@@ -12,11 +14,10 @@ async def telemetry_hub():
 @pytest.fixture
 def flight_dynamics_service():
     aircraft_state = AircraftState(position=(0, 0), velocity=100, altitude=10000, heading=90, fuel_level=100)
-    alert_service = None  # Mock or create a real alert service
+    alert_service = AlertService(fuel_threshold=10, oil_threshold=25, electrical_threshold=20)
     service = FlightDynamicsService(aircraft_state, alert_service)
     return service
 
-@pytest.mark.xfail(reason="async test requires pytest-asyncio, which is not installed in the backend image", strict=False)
 @pytest.mark.asyncio
 async def test_telemetry_latency(telemetry_hub):
     # Simulate telemetry data
@@ -30,7 +31,6 @@ async def test_telemetry_latency(telemetry_hub):
     assert latency < 0.1  # Example threshold
 
 
-@pytest.mark.xfail(reason="FlightDynamicsService.update_state does not accept the documented keyword arguments", strict=False)
 def test_frame_time_profiling(flight_dynamics_service):
     start_time = time.time()
     for _ in range(100):  # Simulate 100 frames

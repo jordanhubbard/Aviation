@@ -239,8 +239,10 @@ test-python:
 	echo "   G1000 Simulator:"; \
 	if [ -d apps/g1000-simulator/.venv ] || [ -d apps/g1000-simulator/venv ] || python3 -c 'import pytest, fastapi' >/dev/null 2>&1; then \
 		(cd apps/g1000-simulator && $(MAKE) backend-test) || exit 1; ran=$$((ran + 1)); \
+	elif docker info >/dev/null 2>&1; then \
+		(cd apps/g1000-simulator && $(MAKE) test-docker) || exit 1; ran=$$((ran + 1)); \
 	else \
-		echo "   ⚠️  SKIPPED (Python test dependencies are not installed)"; skipped=$$((skipped + 1)); \
+		echo "   ⚠️  SKIPPED (no local venv and Docker is not running)"; skipped=$$((skipped + 1)); \
 	fi; \
 	if [ $$ran -eq 0 ]; then \
 		echo "⚠️  Python tests SKIPPED (0 run, $$skipped unavailable) - this is NOT a pass"; \

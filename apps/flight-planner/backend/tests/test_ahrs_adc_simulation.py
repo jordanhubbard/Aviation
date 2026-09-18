@@ -1,19 +1,22 @@
 import unittest
 
-import pytest
 from app.services.ahrs_adc_simulation import AHRS, ADC
 
 class TestAHRSSimulation(unittest.TestCase):
     def setUp(self):
         self.ahrs = AHRS()
 
-    @pytest.mark.xfail(reason="AHRS.compute_attitude returns an undefined AttitudeData; the AHRS/ADC module is still an unimplemented stub", strict=False)
     def test_compute_attitude(self):
         attitude = self.ahrs.compute_attitude(10, 20, 30)
-        self.assertEqual(attitude.pitch, 0.0)
-        self.assertEqual(attitude.roll, 0.0)
-        self.assertEqual(attitude.yaw, 0.0)
-        pass
+        self.assertEqual(attitude.pitch, 10.0)
+        self.assertEqual(attitude.roll, 20.0)
+        self.assertEqual(attitude.yaw, 30.0)
+
+    def test_compute_attitude_normalizes(self):
+        attitude = self.ahrs.compute_attitude(190, -190, 370)
+        self.assertEqual(attitude.pitch, -170.0)
+        self.assertEqual(attitude.roll, 170.0)
+        self.assertEqual(attitude.yaw, 10.0)
 
     def test_magnetic_heading(self):
         heading = self.ahrs.magnetic_heading(100, 5)

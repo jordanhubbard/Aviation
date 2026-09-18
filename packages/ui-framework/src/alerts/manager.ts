@@ -11,9 +11,9 @@ import {
   AlertEventCallback,
   ALERT_PRIORITY,
   DEFAULT_MAX_VISIBLE_ALERTS,
-} from './types';
-import { AlertEventEmitter } from './event-emitter';
-import { AlertPersistence } from './persistence';
+} from './types.js';
+import { AlertEventEmitter } from './event-emitter.js';
+import { AlertPersistence } from './persistence.js';
 
 function generateAlertId(): string {
   return `alert-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;

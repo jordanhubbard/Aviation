@@ -8,4 +8,4 @@ export {
   createCircleIcon,
   createAirplaneIcon,
   toFlightCategory,
-} from './icons';
+} from './icons.js';

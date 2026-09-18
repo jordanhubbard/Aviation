@@ -2,7 +2,7 @@
  * Alert persistence layer for storing and retrieving alerts from local storage
  */
 
-import { Alert, AlertLevel } from './types';
+import { Alert, AlertLevel } from './types.js';
 
 /**
  * Storage key for persisted alerts

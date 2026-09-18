@@ -96,17 +96,19 @@ jobs:
         working-directory: apps/flight-planner
         run: pytest --ignore=tests/integration_test.py --ignore=tests/test_integration.py
 
+      # This frontend depends on workspace packages via the "workspace:" protocol,
+      # which npm cannot resolve; install from the workspace root with pnpm.
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+
       - name: Install frontend dependencies
-        working-directory: apps/flight-planner/frontend
-        run: npm ci
+        run: pnpm install --frozen-lockfile --filter flight-planner-frontend...
 
       - name: Type check frontend
-        working-directory: apps/flight-planner/frontend
-        run: npm run type-check
+        run: pnpm --filter flight-planner-frontend run type-check
 
       - name: Lint frontend
-        working-directory: apps/flight-planner/frontend
-        run: npm run lint
+        run: pnpm --filter flight-planner-frontend run lint
 
   # Test flightschool
   test-flightschool:

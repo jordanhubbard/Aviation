@@ -1,6 +1,8 @@
 """Unit tests for the AHRS service (apps/g1000-simulator/backend/app/services/ahrs.py)."""
 from __future__ import annotations
 
+import pytest
+
 import math
 import sys
 import os
@@ -78,7 +80,8 @@ def test_magnetic_variation_positive_longitude() -> None:
 
 def test_magnetic_variation_negative_longitude() -> None:
     variation = estimate_magnetic_variation(37.0, -122.0)
-    assert variation == -12.2  # -122 * 0.1
+    # -122 * 0.1 is not exactly representable in binary floating point.
+    assert variation == pytest.approx(-12.2)
 
 
 def test_magnetic_variation_clamps_positive() -> None:

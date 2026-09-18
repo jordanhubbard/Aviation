@@ -2,7 +2,7 @@
  * Aviation Map Framework - Constants
  */
 
-import type { FlightCategory, MapColors } from './types';
+import type { FlightCategory, MapColors } from './types.js';
 
 /**
  * Standard flight category colors

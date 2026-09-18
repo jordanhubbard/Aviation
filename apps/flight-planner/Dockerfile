@@ -1,11 +1,19 @@
 FROM node:20-alpine AS frontend-build
 
-WORKDIR /app/frontend
-COPY apps/flight-planner/frontend/package.json apps/flight-planner/frontend/package-lock.json ./
-RUN npm ci
+WORKDIR /app
 
-COPY apps/flight-planner/frontend/ ./
-RUN npm run build
+# The frontend depends on workspace packages via the "workspace:" protocol,
+# which npm cannot resolve (EUNSUPPORTEDPROTOCOL). Use the pinned pnpm.
+RUN corepack enable pnpm
+
+COPY pnpm-workspace.yaml pnpm-lock.yaml package.json ./
+# The lockfile describes every workspace member, so they must all be present
+# for --frozen-lockfile to succeed.
+COPY packages ./packages
+COPY apps ./apps
+
+RUN pnpm install --frozen-lockfile --filter flight-planner-frontend...
+RUN pnpm --filter flight-planner-frontend... run build
 
 
 FROM python:3.12-slim AS base
@@ -69,7 +77,7 @@ COPY packages/keystore/python /packages/keystore/python
 WORKDIR /app
 WORKDIR /app/backend
 COPY apps/flight-planner/backend/ ./
-COPY --from=frontend-build /app/frontend/dist/ /app/backend/static/
+COPY --from=frontend-build /app/apps/flight-planner/frontend/dist/ /app/backend/static/
 
 EXPOSE 8000
 

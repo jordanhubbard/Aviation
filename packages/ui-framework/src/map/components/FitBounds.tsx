@@ -4,7 +4,7 @@
 
 import React from 'react';
 import type { LatLngExpression } from 'leaflet';
-import { useFitBounds, type UseFitBoundsOptions } from '../hooks/useFitBounds';
+import { useFitBounds, type UseFitBoundsOptions } from '../hooks/useFitBounds.js';
 
 export interface FitBoundsProps extends UseFitBoundsOptions {
   /**

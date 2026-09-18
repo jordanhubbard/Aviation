@@ -9,7 +9,7 @@ import {
   createWindBarbIcon,
   createCircleIcon,
   createAirplaneIcon,
-} from '../icons';
+} from '../icons.js';
 
 describe('toFlightCategory', () => {
   it('should return valid flight categories', () => {

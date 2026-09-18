@@ -9,7 +9,7 @@ import {
   movePane,
   normalizePaneOrder,
   sortPanes,
-} from '../state';
+} from '../state.js';
 
 const panes = [
   { id: 'b', title: 'Bravo', component: () => null, order: 2 },

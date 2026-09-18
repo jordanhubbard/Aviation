@@ -1,2 +1,2 @@
-export { PaneContainer } from './PaneContainer';
-export { TabNavigation } from './TabNavigation';
+export { PaneContainer } from './PaneContainer.js';
+export { TabNavigation } from './TabNavigation.js';

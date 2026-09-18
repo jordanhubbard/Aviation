@@ -1,141 +1,65 @@
 # syntax=docker/dockerfile:1.4
 
-# Build arguments
 ARG NODE_VERSION=20
 ARG BUILDKIT_INLINE_CACHE=1
 
-# Base stage with Node.js
 FROM node:${NODE_VERSION}-alpine AS base
 WORKDIR /app
 
-# Install build dependencies
 RUN apk add --no-cache python3 make g++ sqlite
 
-# Set environment variables
+# This repo is a pnpm workspace and its packages use the "workspace:" protocol,
+# which npm cannot resolve (EUNSUPPORTEDPROTOCOL). Use the pinned pnpm.
+RUN corepack enable pnpm
+
 ENV NODE_ENV=development \
     PYTHONUNBUFFERED=1
 
-# Copy package files for dependency installation
-COPY package.json ./
-COPY package-lock.json ./
-COPY apps/aviation-accident-tracker/backend/package*.json ./backend/
-COPY apps/aviation-accident-tracker/frontend/package*.json ./frontend/
+# Workspace manifests first so dependency installation caches independently of source.
+COPY pnpm-workspace.yaml pnpm-lock.yaml package.json ./
 
-# Ensure workspace paths exist for npm workspaces
-RUN mkdir -p apps/aviation-accident-tracker \
-    && ln -sf /app/backend /app/apps/aviation-accident-tracker/backend \
-    && ln -sf /app/frontend /app/apps/aviation-accident-tracker/frontend
+# The lockfile describes every workspace member, so they must all be present
+# for --frozen-lockfile to succeed.
+COPY packages ./packages
+COPY apps ./apps
 
-# Install shared SDK dependencies (from monorepo workspace)
-COPY packages/shared-sdk ./packages/shared-sdk
-COPY packages/keystore ./packages/keystore
-COPY packages/ui-framework ./packages/ui-framework
+# The entrypoint addresses the app as /app/backend and /app/frontend; keep those
+# stable while the real files live in their workspace locations.
+RUN ln -sfn /app/apps/aviation-accident-tracker/backend /app/backend \
+    && ln -sfn /app/apps/aviation-accident-tracker/frontend /app/frontend
 
-# Development stage
 FROM base AS development
 
-# Install workspace dependencies (including dev dependencies)
-RUN npm ci \
-    --workspace @aviation/accident-tracker-backend \
-    --workspace @aviation/accident-tracker-frontend \
-    --workspace @aviation/shared-sdk \
-    --workspace @aviation/keystore \
-    --workspace @aviation/ui-framework
+RUN pnpm install --frozen-lockfile \
+      --filter @aviation/accident-tracker-backend... \
+      --filter @aviation/accident-tracker-frontend...
 
-# Build shared packages in order (dependencies first)
-WORKDIR /app/packages/shared-sdk
-RUN npm run build
+RUN pnpm --filter @aviation/accident-tracker-backend... run build
+RUN pnpm --filter @aviation/accident-tracker-frontend... run build
 
-WORKDIR /app/packages/keystore
-RUN npm run build
-
-WORKDIR /app/packages/ui-framework
-RUN npm run build
-
-# Return to app directory
-WORKDIR /app
-
-# Copy source code
-COPY apps/aviation-accident-tracker/backend ./backend
-COPY apps/aviation-accident-tracker/frontend ./frontend
-
-# Build backend TypeScript (now shared-sdk dist folder exists)
-WORKDIR /app/backend
-RUN npm run build
-
-# Build frontend assets for production
-WORKDIR /app
-RUN npm install --no-save --no-package-lock --legacy-peer-deps @rollup/rollup-linux-x64-musl
-WORKDIR /app/frontend
-RUN npm run build
-
-# Return to app directory
-WORKDIR /app
-
-# Copy entrypoint script
 COPY apps/aviation-accident-tracker/docker-entrypoint.sh /docker-entrypoint.sh
 RUN chmod +x /docker-entrypoint.sh
 
-# Create necessary directories
-RUN mkdir -p data logs
+RUN mkdir -p /app/apps/aviation-accident-tracker/data logs
 
-# Expose ports
-# 3002 = Backend API (Express)
-# 5173 = Frontend dev server (Vite)
+# 3002 = Backend API (Express), 5173 = Frontend dev server (Vite)
 EXPOSE 3002 5173
 
-# Set healthcheck
 HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
   CMD node -e "require('http').get('http://localhost:3002/health', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})"
 
-# Use the entrypoint script
 ENTRYPOINT ["/docker-entrypoint.sh"]
 
-# Testing stage for running tests
 FROM development AS testing
-
-# Set testing environment variables
 ENV NODE_ENV=test
+WORKDIR /app/apps/aviation-accident-tracker/backend
+ENTRYPOINT []
+CMD ["pnpm", "test"]
 
-# Default command for testing
-CMD ["npm", "test"]
-
-# Production stage - optimized for smaller size
-FROM base AS production
-
-# Copy pre-built shared packages from development stage (includes dist/ folders)
-COPY --from=development /app/packages/shared-sdk ./packages/shared-sdk
-COPY --from=development /app/packages/keystore ./packages/keystore
-COPY --from=development /app/packages/ui-framework ./packages/ui-framework
-
-# Install only production dependencies (backend only)
+FROM development AS production
 ENV NODE_ENV=production
-RUN npm ci --omit=dev \
-    --workspace @aviation/accident-tracker-backend \
-    --workspace @aviation/shared-sdk \
-    --workspace @aviation/keystore
-
-# Copy built backend from development stage
-COPY --from=development /app/backend/dist ./backend/dist
-COPY apps/aviation-accident-tracker/backend/package*.json ./backend/
-COPY apps/aviation-accident-tracker/backend/src/db/schema.sql ./backend/src/db/schema.sql
-
-# Copy pre-built frontend assets from development stage
-COPY --from=development /app/frontend/dist ./frontend/dist
-
-# Copy entrypoint script
-COPY apps/aviation-accident-tracker/docker-entrypoint.sh /docker-entrypoint.sh
-RUN chmod +x /docker-entrypoint.sh
-
-# Create necessary directories
-RUN mkdir -p data logs
-
-# Expose backend port only (frontend is served as static files)
+WORKDIR /app
 EXPOSE 3002
-
-# Set healthcheck
 HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
   CMD node -e "require('http').get('http://localhost:3002/health', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})"
-
-# Use the entrypoint script
 ENTRYPOINT ["/docker-entrypoint.sh"]

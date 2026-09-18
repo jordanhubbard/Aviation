@@ -1,12 +1,17 @@
 FROM node:20-alpine AS build
 
-WORKDIR /app/frontend
+WORKDIR /app
 
-COPY frontend/package.json frontend/package-lock.json ./
-RUN npm ci
+# Build context is the repo root. The frontend depends on workspace packages via
+# the "workspace:" protocol, which npm cannot resolve (EUNSUPPORTEDPROTOCOL).
+RUN corepack enable pnpm
 
-COPY frontend/ ./
-RUN npm run build
+COPY pnpm-workspace.yaml pnpm-lock.yaml package.json ./
+COPY packages ./packages
+COPY apps ./apps
+
+RUN pnpm install --frozen-lockfile --filter flight-planner-frontend...
+RUN pnpm --filter flight-planner-frontend... run build
 
 
 FROM nginx:1.27-alpine AS runtime
@@ -22,11 +27,11 @@ ENV PORT=80 \
     BACKEND_HOST=backend \
     BACKEND_PORT=8000
 
-COPY --from=build /app/frontend/dist/ /usr/share/nginx/html/
+COPY --from=build /app/apps/flight-planner/frontend/dist/ /usr/share/nginx/html/
 
-COPY frontend/nginx.conf.template /etc/nginx/templates/default.conf.template
-COPY frontend/docker-entrypoint.d/10-backend-url.sh /docker-entrypoint.d/10-backend-url.sh
-COPY frontend/docker-entrypoint.d/99-env.sh /docker-entrypoint.d/99-env.sh
+COPY apps/flight-planner/frontend/nginx.conf.template /etc/nginx/templates/default.conf.template
+COPY apps/flight-planner/frontend/docker-entrypoint.d/10-backend-url.sh /docker-entrypoint.d/10-backend-url.sh
+COPY apps/flight-planner/frontend/docker-entrypoint.d/99-env.sh /docker-entrypoint.d/99-env.sh
 RUN chmod +x /docker-entrypoint.d/10-backend-url.sh /docker-entrypoint.d/99-env.sh
 
 EXPOSE 80
