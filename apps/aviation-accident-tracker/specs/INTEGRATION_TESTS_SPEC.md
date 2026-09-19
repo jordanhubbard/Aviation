@@ -218,83 +218,57 @@ describe('API Integration Tests', () => {
 
 ### Data Ingestion Tests
 
+The ingest pipeline is `adapters/* -> normalize -> dedupe -> repository`, driven
+by `runRecentIngest`. An earlier class-based implementation (`ASNAdapter`,
+`AVHeraldAdapter`, `IngestionOrchestrator`) existed alongside it, carried all the
+tests, and was imported by nothing the service ran; it has been removed. Drive
+the real pipeline, and mock the transports so the suite is deterministic and
+needs no network.
+
 ```typescript
 // apps/aviation-accident-tracker/backend/tests/integration/ingestion.test.ts
 
-import { describe, test, expect, beforeEach } from 'vitest';
-import { ASNAdapter } from '../../src/ingest/asn-adapter.js';
-import { AVHeraldAdapter } from '../../src/ingest/avherald-adapter.js';
-import { IngestionOrchestrator } from '../../src/ingest/orchestrator.js';
-import { EventRepository } from '../../src/db/repository.js';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { runRecentIngest } from '../../src/ingest/ingestService.js';
+import { memoryRepo } from '../../src/repo/memoryRepo.js';
 
-describe('Data Ingestion Integration', () => {
-  let repository: EventRepository;
-  let orchestrator: IngestionOrchestrator;
+const ASN_HOST = 'aviation-safety.net';
 
-  beforeEach(async () => {
-    repository = new EventRepository();
-    await repository.initialize();
-    orchestrator = new IngestionOrchestrator(repository);
+describe('ingest pipeline', () => {
+  beforeEach(() => vi.stubGlobal('fetch', vi.fn()));
+  afterEach(() => vi.unstubAllGlobals());
+
+  it('normalizes and persists events from both sources', async () => {
+    // Route by URL so both adapters resolve in one pass.
+    vi.mocked(fetch).mockImplementation(async (input: any) =>
+      String(input).includes(ASN_HOST)
+        ? new Response(asnListingHtml, { status: 200 })
+        : new Response(avHeraldRss, { status: 200 }),
+    );
+
+    const result = await runRecentIngest();
+
+    expect(result.totalNormalized).toBeGreaterThan(0);
+    expect(result.inserted + result.updated).toBeGreaterThan(0);
   });
 
-  describe('ASN Adapter', () => {
-    test('fetches and parses real data', async () => {
-      const adapter = new ASNAdapter();
-      const events = await adapter.fetch(7); // Last 7 days
-
-      expect(Array.isArray(events)).toBe(true);
-
-      if (events.length > 0) {
-        const event = events[0];
-        expect(event).toHaveProperty('external_id');
-        expect(event.external_id).toMatch(/^asn-/);
-        expect(event).toHaveProperty('source', 'ASN');
-        expect(event).toHaveProperty('date_time');
-        expect(event).toHaveProperty('aircraft_type');
-      }
-    }, 30000); // 30s timeout for network requests
-  });
-
-  describe('AVHerald Adapter', () => {
-    test('fetches and parses real data', async () => {
-      const adapter = new AVHeraldAdapter();
-      const events = await adapter.fetch(7);
-
-      expect(Array.isArray(events)).toBe(true);
-
-      if (events.length > 0) {
-        const event = events[0];
-        expect(event).toHaveProperty('external_id');
-        expect(event.external_id).toMatch(/^avherald-/);
-        expect(event).toHaveProperty('source', 'AVHerald');
-        expect(event).toHaveProperty('date_time');
-      }
-    }, 30000);
-  });
-
-  describe('Orchestrator', () => {
-    test('runs full ingestion pipeline', async () => {
-      const result = await orchestrator.run({ daysBack: 7 });
-
-      expect(result).toHaveProperty('success');
-      expect(result).toHaveProperty('eventsIngested');
-      expect(result).toHaveProperty('errors');
-
-      // Should have attempted both sources
-      expect(result.eventsIngested).toBeGreaterThanOrEqual(0);
-    }, 60000); // 60s timeout
-
-    test('deduplicates events', async () => {
-      // Run ingestion twice
-      await orchestrator.run({ daysBack: 7 });
-      const result2 = await orchestrator.run({ daysBack: 7 });
-
-      // Second run should find fewer new events (duplicates filtered)
-      expect(result2.eventsIngested).toBeLessThan(100);
-    }, 60000);
+  it('re-ingesting the same source data updates rather than duplicating', async () => {
+    await runRecentIngest();
+    const before = memoryRepo.list({ limit: 500 }).total;
+    await runRecentIngest();
+    expect(memoryRepo.list({ limit: 500 }).total).toBe(before);
   });
 });
 ```
+
+A `Response` body can only be read once and the ASN adapter paginates, so each
+mocked call must return a **fresh** `Response` — `mockResolvedValue` with a single
+instance fails with "Body is unusable".
+
+Parser-level assertions belong in the unit suites (`tests/asn-adapter.test.ts`,
+`tests/avherald-adapter.test.ts`), which import the exported `parseAsnListPage`,
+`parseAsnRss` and `parseAvHeraldRss` directly and need neither network nor
+fixtures.
 
 ---
 

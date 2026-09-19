@@ -84,3 +84,6 @@ temp/
 # Playwright artifacts
 **/test-results/
 **/playwright-report/
+
+# Throwaway venv created by `make audit-python`
+.venv-audit/

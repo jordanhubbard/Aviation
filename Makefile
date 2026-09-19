@@ -333,12 +333,25 @@ audit: audit-node audit-python
 
 audit-node:
 	@echo "🔐 Running Node.js security audit..."
-	$(PNPM) audit --recursive || true
+	@# pnpm audit covers the whole workspace; there is no --recursive flag.
+	$(PNPM) audit || true
 	@echo "✅ Node.js audit complete"
 
 audit-python:
 	@echo "🔐 Running Python security audit..."
-	@$(PYTHON_AUDIT) -m venv .venv-audit
+	@# Pick an interpreter that can actually build a venv. A python3.12 whose
+	@# ensurepip is broken still imports ensurepip, so probe by creating one.
+	@rm -rf .venv-audit
+	@for py in $(PYTHON_AUDIT) python3.12 python3; do \
+		command -v $$py >/dev/null 2>&1 || continue; \
+		if $$py -m venv .venv-audit >/dev/null 2>&1; then \
+			echo "   using $$py"; break; \
+		fi; \
+		rm -rf .venv-audit; \
+	done
+	@if [ ! -x ./.venv-audit/bin/pip ]; then \
+		echo "   ⚠️  SKIPPED (no interpreter here can create a venv)"; exit 0; \
+	fi
 	@./.venv-audit/bin/pip install -q --upgrade pip pip-audit
 	@grep -v "^-e " apps/flight-planner/requirements.txt > /tmp/flight-planner-requirements.txt
 	@./.venv-audit/bin/pip-audit -r apps/foreflight-dashboard/requirements.txt || \

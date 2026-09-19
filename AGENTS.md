@@ -49,6 +49,33 @@ Aviation/
 └── LICENSE                        # MIT License
 ```
 
+### Package Manager: pnpm (not npm)
+
+This repository is a **pnpm workspace**, and its internal packages depend on one
+another through the `workspace:` protocol (`"@aviation/shared-sdk": "workspace:*"`).
+**npm cannot parse that protocol** — `npm ci` and `npm install` fail outright with
+`EUNSUPPORTEDPROTOCOL`. There are no committed npm lockfiles; `pnpm-lock.yaml` is
+the single source of truth.
+
+The version is pinned by the `packageManager` field in the root `package.json`, so
+you do not need pnpm pre-installed — `corepack` provisions it:
+
+```bash
+corepack enable pnpm          # or let the Makefile resolve it for you
+make build                    # resolves pnpm via PATH, else corepack
+```
+
+Useful forms:
+
+```bash
+pnpm install --frozen-lockfile                        # exact lockfile install
+pnpm --filter @aviation/weather-briefing... run build  # a package and its deps
+pnpm --recursive run build                             # everything
+```
+
+`...` after a filter means "and everything it depends on" — that is how the
+Dockerfiles build an app together with its workspace packages.
+
 ### Architecture Principles
 
 1. **Modular Services**: Each aviation application is self-contained
@@ -199,19 +226,21 @@ clean:
 	rm -rf dist node_modules
 ```
 
-#### 6. Add to Root package.json Workspace
+#### 6. Workspace Registration (usually automatic)
 
-Edit `/Users/jkh/Src/Aviation/package.json`:
+`pnpm-workspace.yaml` and the root `package.json` glob the members:
 
-```json
-{
-  "workspaces": [
-    "packages/*",
-    "apps/*",
-    "apps/my-aviation-app"
-  ]
-}
+```yaml
+packages:
+  - "packages/*"
+  - "apps/*"
+  - "apps/*/frontend"
+  - "apps/*/backend"
 ```
+
+An app at `apps/my-aviation-app`, or a nested `apps/my-app/frontend`, is picked up
+with no edit. Only add an explicit entry for a layout these globs miss — and if you
+do, add it to **both** files so they stay in agreement.
 
 #### 7. Create README.md
 
@@ -500,17 +529,27 @@ Apps can offer an in-app chat so users can ask OpenClaw for advice in context. E
 
 Each app can be deployed standalone with Docker.
 
+Build context is the **repo root**, because workspace packages live outside the
+app directory:
+
 ```dockerfile
 # Dockerfile
 FROM node:20-alpine
 
 WORKDIR /app
-COPY package*.json ./
-RUN npm ci --only=production
+RUN corepack enable pnpm
 
-COPY dist ./dist
-COPY public ./public
+# Workspace manifests first so installs cache independently of source.
+COPY pnpm-workspace.yaml pnpm-lock.yaml package.json ./
+# The lockfile describes every member, so all must be present for
+# --frozen-lockfile to succeed.
+COPY packages ./packages
+COPY apps ./apps
 
+RUN pnpm install --frozen-lockfile --filter @aviation/my-aviation-app...
+RUN pnpm --filter @aviation/my-aviation-app... run build
+
+WORKDIR /app/apps/my-aviation-app
 EXPOSE 3003
 CMD ["node", "dist/index.js"]
 ```
@@ -732,13 +771,15 @@ test-my-app:
       with:
         node-version: '20'
 
+    - name: Set up pnpm
+      uses: pnpm/action-setup@v4   # version comes from packageManager
+
+    # Install from the workspace root, not the app directory.
     - name: Install dependencies
-      working-directory: apps/my-aviation-app
-      run: npm ci
+      run: pnpm install --frozen-lockfile --filter @aviation/my-aviation-app...
 
     - name: Run tests
-      working-directory: apps/my-aviation-app
-      run: npm test
+      run: pnpm --filter @aviation/my-aviation-app run test
 ```
 
 ### Debugging CI/CD Failures
@@ -860,15 +901,15 @@ mypy>=1.7                     # Type checker
   "typescript": "^5.0.0",        // Type safety
   "@types/node": "^20.0.0",      // Node.js types
 
-  // React (frontends)
-  "react": "^18.2.0",
-  "react-dom": "^18.2.0",
+  // React (frontends) - the whole repo is on 19; do not introduce 18
+  "react": "^19.2.4",
+  "react-dom": "^19.2.4",
   "react-router-dom": "^7.11.0",
 
-  // Build tools
-  "vite": "^7.3.0",              // Fast bundler
+  // Build tools (plugin-react 6 requires vite 8)
+  "vite": "^8.0.2",              // Fast bundler
   "vitest": "^4.0.16",           // Testing
-  "@vitejs/plugin-react": "^5.1.2",
+  "@vitejs/plugin-react": "^6.0.1",
 
   // UI libraries
   "@mui/material": "^5.15.0",    // Material UI
@@ -881,19 +922,19 @@ mypy>=1.7                     # Type checker
   "@hookform/resolvers": "^5.2.2",
   "yup": "^1.4.0",
 
-  // Data fetching
+  // Data fetching (react-query v3 is unmaintained and peer-caps at React 18)
   "axios": "^1.6.2",
-  "react-query": "^3.39.3",
+  "@tanstack/react-query": "^5.103.1",
 
-  // Maps (flight-planner)
+  // Maps (flight-planner) - v5 is the React 19 line
   "leaflet": "^1.9.4",
-  "react-leaflet": "^4.2.1",
+  "react-leaflet": "^5.0.0",
 
   // State management
   "zustand": "^4.4.7",
 
   // Testing
-  "@testing-library/react": "^13.4.0",
+  "@testing-library/react": "^16.3.2",
   "@testing-library/jest-dom": "^6.1.5",
   "@playwright/test": "^1.50.0",
 

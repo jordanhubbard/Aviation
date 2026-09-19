@@ -5,12 +5,18 @@
 
 A monorepo of aviation-related applications with shared CI/CD, keystore-based secrets, and common packages. See [docs/](docs/) for setup and architecture.
 
-**Prerequisites:** Node.js 20+, pnpm 9+, Python 3.11+ (for Python apps), Java 11+ (for Clojure).
+**Prerequisites:** Node.js 20+, Docker, and Python 3.11+ for the Python apps.
+pnpm does not need installing — the version is pinned in `package.json` and
+provisioned by corepack. Docker covers the Clojure app and the containerised
+test suites, so a local JDK/Leiningen is not required.
+
+> This is a **pnpm workspace** and its packages use the `workspace:` protocol.
+> `npm install` / `npm ci` cannot resolve it and will fail; use pnpm.
 
 ```bash
 git clone https://github.com/jordanhubbard/Aviation.git && cd Aviation
-pnpm install
-npm run keystore:init   # one-time
+corepack pnpm install
+corepack pnpm run keystore:init   # one-time
 ```
 
 ## Running the apps
@@ -20,11 +26,11 @@ npm run keystore:init   # one-time
 | **Meta App** (all-in-one UI) | `cd apps/meta-app && make dev` → http://localhost:3100 |
 | **Aviation Accident Tracker** | `cd apps/aviation-accident-tracker && make docker-up` (frontend 5173, backend 3002) or `make start` for backend only |
 | **Aviation Missions App** | `cd apps/aviation-missions-app && make start` (port 3000) |
-| **Flight Planner** | Backend: `cd apps/flight-planner && .venv/bin/uvicorn backend.main:app --reload --port 8000` — Frontend: `cd apps/flight-planner/frontend && npm run dev` |
+| **Flight Planner** | Backend: `cd apps/flight-planner && .venv/bin/uvicorn backend.main:app --reload --port 8000` — Frontend: `pnpm --filter flight-planner-frontend run dev` |
 | **Flight School** | `cd apps/flightschool && make demo` or `make start` (port 5000) |
 | **ForeFlight Dashboard** | `cd apps/foreflight-dashboard && make start` or `make dev` |
-| **Flight Tracker** | `cd apps/flight-tracker && npm run build && npm start` (port 3001) |
-| **Weather Briefing** | `cd apps/weather-briefing && npm run build && npm start` (port 3002) |
+| **Flight Tracker** | `pnpm --filter @aviation/flight-tracker... run build && cd apps/flight-tracker && node dist/index.js` (port 3001) |
+| **Weather Briefing** | `pnpm --filter @aviation/weather-briefing... run build && cd apps/weather-briefing && node dist/index.js` (port 3003) |
 
 From repo root: `make build` / `make test` / `make help` for global build and test.
 
