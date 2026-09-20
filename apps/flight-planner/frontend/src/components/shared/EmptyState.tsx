@@ -1,8 +1,10 @@
 import React from 'react'
 import { Paper, Typography, Box } from '@mui/material'
+import type { SxProps, Theme } from '@mui/material'
 
 interface EmptyStateProps {
-  icon: React.ReactElement
+  // Typed so cloneElement can inject styling props under React 19's stricter types.
+  icon: React.ReactElement<{ sx?: SxProps<Theme> }>
   message: string
 }
 

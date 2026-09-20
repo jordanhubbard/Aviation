@@ -5,15 +5,17 @@ platforms:
   - darwin
   - linux
 toolchain:
+  # pnpm is provisioned by corepack from the packageManager pin rather than
+  # installed globally; the Clojure app builds and tests inside Docker, so lein
+  # and a local JDK are not preconditions.
   required_commands:
     - git
     - python3
     - node
-    - pnpm
-    - java
-    - lein
+    - corepack
+    - docker
 bootstrap:
-  command: pnpm install
+  command: corepack pnpm install
   creates:
     - node_modules
 test:

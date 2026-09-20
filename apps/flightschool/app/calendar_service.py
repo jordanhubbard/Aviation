@@ -10,12 +10,9 @@ from app.models import Booking, User
 from app import db
 
 # Import shared SDK Google Calendar components
-import sys
-import os
+from app.utils.paths import add_package_path
 
-sys.path.insert(
-    0, os.path.join(os.path.dirname(__file__), "../../..", "packages/shared-sdk/python")
-)
+add_package_path("shared-sdk/python")
 
 from aviation.integrations.google import (
     GoogleCalendarAuth,

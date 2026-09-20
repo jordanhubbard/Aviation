@@ -9,7 +9,7 @@ import {
   metersToNm,
   DEFAULT_TILE_LAYERS,
   OPENWEATHER_LAYERS,
-} from '../constants';
+} from '../constants.js';
 
 describe('CATEGORY_COLORS', () => {
   it('should have all flight categories defined', () => {

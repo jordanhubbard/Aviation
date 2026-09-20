@@ -1,0 +1,10 @@
+services:
+  backend-test:
+    build:
+      context: ../..
+      dockerfile: apps/g1000-simulator/Dockerfile
+      target: testing
+    environment:
+      - PYTHONPATH=/app/backend:/app/packages/flight-dynamics
+    labels:
+      com.aviation.app: "g1000-simulator"

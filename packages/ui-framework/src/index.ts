@@ -4,11 +4,11 @@
  */
 
 // Map components and utilities
-export * from './map';
+export * from './map/index.js';
 // Multi-tab UI components
-export * from './multi-tab';
+export * from './multi-tab/index.js';
 // OpenClaw in-app chat
-export * from './chat';
+export * from './chat/index.js';
 
 /**
  * UI Modality Types

@@ -1,2 +1,2 @@
-export { ChatPanel } from './ChatPanel';
-export type { ChatPanelProps, ChatMessage } from './ChatPanel';
+export { ChatPanel } from './ChatPanel.js';
+export type { ChatPanelProps, ChatMessage } from './ChatPanel.js';

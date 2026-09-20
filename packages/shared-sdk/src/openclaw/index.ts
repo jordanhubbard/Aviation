@@ -1,2 +1,2 @@
-export { createOpenClawClient } from './client';
-export type { OpenClawClientConfig, SendMessageParams, SendMessageResult } from './types';
+export { createOpenClawClient } from './client.js';
+export type { OpenClawClientConfig, SendMessageParams, SendMessageResult } from './types.js';

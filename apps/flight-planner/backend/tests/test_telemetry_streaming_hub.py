@@ -2,7 +2,11 @@ import pytest
 from fastapi import WebSocket
 from fastapi.testclient import TestClient
 from app.services.telemetry_streaming_hub import TelemetryStreamingHub, SubscriptionFilter
-from app import app
+from app import create_app
+from app.config import settings
+
+# `app` exposes create_app(settings); there is no module-level instance.
+app = create_app(settings)
 
 client = TestClient(app)
 

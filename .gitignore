@@ -15,6 +15,7 @@ env/
 *.egg
 *.egg-info/
 dist/
+dist-esm/
 build/
 pip-log.txt
 pip-delete-this-directory.txt
@@ -83,3 +84,6 @@ temp/
 # Playwright artifacts
 **/test-results/
 **/playwright-report/
+
+# Throwaway venv created by `make audit-python`
+.venv-audit/

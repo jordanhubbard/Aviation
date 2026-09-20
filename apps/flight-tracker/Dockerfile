@@ -1,102 +1,54 @@
 # syntax=docker/dockerfile:1.4
 
-# Build arguments
 ARG NODE_VERSION=20
 ARG BUILDKIT_INLINE_CACHE=1
 
-# Base stage with Node.js
 FROM node:${NODE_VERSION}-alpine AS base
 WORKDIR /app
 
-# Install build dependencies
 RUN apk add --no-cache python3 make g++
 
-# Set environment variables
+# This repo is a pnpm workspace and its packages use the "workspace:" protocol,
+# which npm cannot resolve (EUNSUPPORTEDPROTOCOL). Use the pinned pnpm.
+RUN corepack enable pnpm
+
 ENV NODE_ENV=development \
     PYTHONUNBUFFERED=1
 
-# Copy package files for dependency installation
-COPY apps/flight-tracker/package*.json ./
-COPY package-lock.json ./
+# Workspace manifests first so dependency installation caches independently of source.
+COPY pnpm-workspace.yaml pnpm-lock.yaml package.json ./
 
-# Install shared SDK dependencies (from monorepo workspace)
-COPY packages/shared-sdk ./packages/shared-sdk
-COPY packages/keystore ./packages/keystore
-COPY packages/ui-framework ./packages/ui-framework
+# The lockfile describes every workspace member, so they must all be present
+# for --frozen-lockfile to succeed.
+COPY packages ./packages
+COPY apps ./apps
 
-# Development stage
 FROM base AS development
 
-# Install all dependencies (including dev dependencies) - this sets up workspace symlinks
-RUN npm ci
+RUN pnpm install --frozen-lockfile --filter @aviation/flight-tracker...
+RUN pnpm --filter @aviation/flight-tracker... run build
 
-# Build shared packages in order (dependencies first)
-WORKDIR /app/packages/shared-sdk
-RUN npm run build
-
-WORKDIR /app/packages/keystore
-RUN npm run build
-
-WORKDIR /app/packages/ui-framework
-RUN npm run build
-
-# Return to app directory
-WORKDIR /app
-
-# Copy source code
-COPY apps/flight-tracker/src ./src
-COPY apps/flight-tracker/tsconfig.json ./
-
-# Build TypeScript (now shared-sdk dist folder exists)
-RUN npm run build
-
-# Create necessary directories
+WORKDIR /app/apps/flight-tracker
 RUN mkdir -p logs
 
-# Expose port (if needed for API in future)
 EXPOSE 3001
 
-# Set healthcheck (basic process check)
 HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
-  CMD pgrep -f "node.*flight-tracker" || exit 1
+  CMD pgrep -f "node.*dist/index.js" || exit 1
 
-# Start the service
-CMD ["npm", "start"]
+CMD ["node", "dist/index.js"]
 
-# Testing stage for running tests
 FROM development AS testing
-
-# Set testing environment variables
 ENV NODE_ENV=test
+WORKDIR /app/apps/flight-tracker
+CMD ["pnpm", "test"]
 
-# Default command for testing
-CMD ["npm", "test"]
-
-# Production stage - optimized for smaller size
-FROM base AS production
-
-# Copy pre-built shared packages from development stage (includes dist/ folders)
-COPY --from=development /app/packages/shared-sdk ./packages/shared-sdk
-COPY --from=development /app/packages/keystore ./packages/keystore
-COPY --from=development /app/packages/ui-framework ./packages/ui-framework
-
-# Install only production dependencies (workspace links to already-built packages)
+FROM development AS production
 ENV NODE_ENV=production
-RUN npm ci --omit=dev
-
-# Copy built app code from development stage
-COPY --from=development /app/dist ./dist
-COPY apps/flight-tracker/package*.json ./
-
-# Create necessary directories
-RUN mkdir -p logs
-
-# Expose port
+WORKDIR /app
+RUN pnpm prune --prod || true
+WORKDIR /app/apps/flight-tracker
 EXPOSE 3001
-
-# Set healthcheck
 HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
-  CMD pgrep -f "node.*flight-tracker" || exit 1
-
-# Start the service
-CMD ["npm", "start"]
+  CMD pgrep -f "node.*dist/index.js" || exit 1
+CMD ["node", "dist/index.js"]

@@ -3,7 +3,7 @@
  * These events are emitted when alert state changes occur
  */
 
-import { Alert, AlertLevel } from './types';
+import { Alert, AlertLevel } from './types.js';
 
 /**
  * Event types for alert state changes

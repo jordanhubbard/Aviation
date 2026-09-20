@@ -37,11 +37,11 @@ export {
   GoogleCalendarAuth,
   DEFAULT_SCOPES,
   GOOGLE_OAUTH_ENDPOINTS,
-} from './auth';
+} from './auth.js';
 
 export {
   GoogleCalendarClient,
-} from './calendar';
+} from './calendar.js';
 
 export {
   formatDateTime,
@@ -54,7 +54,7 @@ export {
   isAllDayEvent,
   isRecurringEvent,
   formatEventDisplay,
-} from './utils';
+} from './utils.js';
 
 export type {
   GoogleCredentials,
@@ -67,4 +67,4 @@ export type {
   Calendar,
   TokenRefreshResponse,
   GoogleApiError,
-} from './types';
+} from './types.js';

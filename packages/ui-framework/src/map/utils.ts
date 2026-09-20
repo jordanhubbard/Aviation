@@ -5,7 +5,7 @@
  * Extracted from flight-planner for shared use.
  */
 
-import type { MapPosition, MapBounds } from './types';
+import type { MapPosition, MapBounds } from './types.js';
 
 /**
  * Convert nautical miles to meters

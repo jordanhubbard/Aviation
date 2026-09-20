@@ -68,7 +68,7 @@ const FlightPlannerPage: React.FC = () => {
     },
   )
 
-  const isLoading = isRouteStreaming || localPlanMutation.isLoading
+  const isLoading = isRouteStreaming || localPlanMutation.isPending
   const error = routeStreamError || localPlanMutation.error
 
   const cancelRoutePlanning = () => {

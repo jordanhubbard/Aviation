@@ -37,9 +37,9 @@ export type {
   WeatherOverlayType,
   WeatherOverlays,
   MapConfig,
-} from './types';
+} from './types.js';
 
-export { FLIGHT_CATEGORY_COLORS } from './types';
+export { FLIGHT_CATEGORY_COLORS } from './types.js';
 
 // Utilities
 export {
@@ -53,7 +53,11 @@ export {
   formatPosition,
   osmTileUrl,
   owmOverlayUrl,
-} from './utils';
+} from './utils.js';
 
 // Wind barbs
-export { windBarbSvg } from './utils/icons';
+export { windBarbSvg } from './utils/icons.js';
+
+// Marker clustering
+export type { MapMarkerInput, ClusterOptions, NormalizedMarker } from './clustering.js';
+export { normalizeMarkers, defaultClusterOptions } from './clustering.js';

@@ -4,6 +4,7 @@ import { MapContainer, TileLayer, Marker, Popup, useMapEvents } from 'react-leaf
 import L from 'leaflet';
 // import MarkerClusterGroup from 'react-leaflet-cluster'; // Package doesn't exist, clustering temporarily disabled
 import debounce from 'lodash.debounce';
+import { distanceKM } from '@aviation/shared-sdk/aviation/navigation';
 import { Badge } from './components/Badge';
 import { reportFrontendErrorToMac } from './utils/macReporting';
 // import { normalizeMarkers, defaultClusterOptions } from '@aviation/ui-framework';
@@ -54,20 +55,6 @@ function formatInputDate(date: Date) {
   const month = String(date.getMonth() + 1).padStart(2, '0');
   const day = String(date.getDate()).padStart(2, '0');
   return `${year}-${month}-${day}`;
-}
-
-function toRadians(value: number) {
-  return (value * Math.PI) / 180;
-}
-
-function distanceKm(lat1: number, lon1: number, lat2: number, lon2: number) {
-  const dLat = toRadians(lat2 - lat1);
-  const dLon = toRadians(lon2 - lon1);
-  const rLat1 = toRadians(lat1);
-  const rLat2 = toRadians(lat2);
-  const a = Math.sin(dLat / 2) ** 2 + Math.cos(rLat1) * Math.cos(rLat2) * Math.sin(dLon / 2) ** 2;
-  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-  return 6371 * c;
 }
 
 function MapClickHandler({ onMapClick }: { onMapClick: (lat: number, lon: number) => void }) {
@@ -263,7 +250,7 @@ export function App() {
     let nearest: CountryCentroid | null = null;
     let nearestDistance = Number.POSITIVE_INFINITY;
     for (const entry of countryCentroids) {
-      const candidateDistance = distanceKm(lat, lon, entry.lat, entry.lon);
+      const candidateDistance = distanceKM(lat, lon, entry.lat, entry.lon);
       if (candidateDistance < nearestDistance) {
         nearestDistance = candidateDistance;
         nearest = entry;

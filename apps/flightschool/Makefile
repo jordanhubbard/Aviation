@@ -1,3 +1,7 @@
+# Compose v2 ships as a docker plugin ("docker compose"); the standalone
+# "docker-compose" binary is absent on modern installs. Prefer the plugin.
+COMPOSE := $(shell docker compose version >/dev/null 2>&1 && echo "docker compose" || echo "docker-compose")
+
 .PHONY: help env init run test clean lint format db-migrate db-upgrade db-downgrade test-data check-aircraft-images frontend-test docker-build docker-up docker-down docker-test test-docker docker-logs
 
 # Default target when just running 'make'
@@ -138,25 +142,25 @@ frontend-test:
 
 # Docker targets
 docker-build:
-	docker-compose build
+	$(COMPOSE) build
 
 docker-up:
-	docker-compose up -d
+	$(COMPOSE) up -d
 	@echo "✅ FlightSchool started in Docker!"
 	@echo "🚀 Web UI: http://localhost:$(PORT)"
 
 docker-down:
-	docker-compose down
+	$(COMPOSE) down
 
 docker-test: test-docker
 
 test-docker:
 	@echo "🧪 Running tests in Docker..."
-	docker-compose -f docker-compose.test.yml up --build --abort-on-container-exit
-	docker-compose -f docker-compose.test.yml down -v
+	$(COMPOSE) -f docker-compose.test.yml up --build --abort-on-container-exit
+	$(COMPOSE) -f docker-compose.test.yml down -v
 
 docker-logs:
-	docker-compose logs -f
+	$(COMPOSE) logs -f
 
 # Error if running on Windows
 ifeq ($(OS),Windows_NT)

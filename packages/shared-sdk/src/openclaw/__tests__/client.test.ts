@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { createOpenClawClient } from '../client';
+import { createOpenClawClient } from '../client.js';
 
 describe('createOpenClawClient', () => {
   const mockFetch = vi.fn();

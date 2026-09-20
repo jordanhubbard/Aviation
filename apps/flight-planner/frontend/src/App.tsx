@@ -2,7 +2,7 @@ import { lazy, Suspense, useEffect, useMemo, useState } from 'react'
 import { Routes, Route, useLocation } from 'react-router-dom'
 import { Container, AppBar, Toolbar, Typography, Box, Button } from '@mui/material'
 import { BugReport } from '@mui/icons-material'
-import { motion, AnimatePresence } from 'framer-motion'
+import { motion, AnimatePresence, type Variants } from 'framer-motion'
 import { ThemeProvider, createTheme } from '@mui/material/styles'
 import useMediaQuery from '@mui/material/useMediaQuery'
 import Navigation from './components/Navigation'
@@ -45,7 +45,7 @@ function MissingRoute() {
 }
 
 // Animation variants for page transitions
-const pageVariants = {
+const pageVariants: Variants = {
   initial: {
     opacity: 0,
     y: 20,

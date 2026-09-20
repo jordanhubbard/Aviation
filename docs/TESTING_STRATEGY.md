@@ -13,7 +13,16 @@ make test
 pnpm --recursive --if-present run test
 ```
 
-Clojure tests require Docker to be running; the `test-clojure` target in the root Makefile gracefully skips when Docker is unavailable.
+`make test` runs four language suites: `test-node`, `test-go`, `test-python` and
+`test-clojure`.
+
+Several suites run **inside Docker**. The Python apps and the Clojure app each
+ship a `docker-compose.test.yml`, and the root `test-python` target falls back to
+it when no local virtualenv is present — that fallback is how flight-planner,
+flightschool and g1000-simulator get exercised on a machine with no Python
+environment set up. Where a suite genuinely cannot run, the target says so and
+counts it as skipped rather than reporting a pass: a run where nothing executed
+prints `⚠️  Python tests SKIPPED (0 run, N unavailable) - this is NOT a pass`.
 
 ## Test Frameworks by Package Type
 
@@ -24,20 +33,41 @@ Clojure tests require Docker to be running; the `test-clojure` target in the roo
 | Python apps | **pytest** |
 | Clojure apps | **clojure.test** (requires Docker) |
 
-## Current Test Counts (as of last session)
+## Current Test Counts
+
+JavaScript/TypeScript — 13 suites, 0 skipped:
 
 | Package | Tests passing |
 |---------|--------------|
-| `apps/aviation-accident-tracker` — frontend | 62 (10 test files) |
-| `apps/aviation-accident-tracker` — backend | 34 |
-| `apps/g1000-simulator` | 68 |
-| `packages/shared-sdk` | 162 |
+| `packages/shared-sdk` | 273 |
 | `packages/ui-framework` | 36 |
 | `packages/ai-explainer` | 11 |
-| `packages/flight-dynamics` (Python) | 5 |
+| `packages/keystore` | 4 |
+| `apps/aviation-accident-tracker` — backend | 42 |
+| `apps/aviation-accident-tracker` — frontend | 62 (10 test files) |
+| `apps/flight-planner` — frontend | 6 |
+| `apps/foreflight-dashboard` — frontend | passes with no tests |
+| `apps/flight-tracker` | 47 |
+| `apps/g1000-simulator` | 68 |
 | `packages/g1000-avionics-sdk`, `g1000-protocols`, `g1000-rendering` | pass with no tests (`--passWithNoTests`) |
-| Python apps total | 64 pass, 25 skipped |
-| Clojure (`aviation-missions-app`) | tested via `lein test` in CI |
+
+Python — 4 suites, 0 skipped, 400 tests:
+
+| App | Tests |
+|-----|-------|
+| `apps/foreflight-dashboard` | 185 |
+| `apps/g1000-simulator` (backend) | 97 |
+| `apps/flightschool` | 64 pass, 25 skipped |
+| `apps/flight-planner` (backend) | 54 |
+
+Go — `go test ./...` over `packages/shared-sdk` and `packages/g1000-protocols`.
+
+Clojure — `aviation-missions-app`, via its Docker test image.
+
+Application suites are part of `make test`; for a while they existed but were
+never invoked, so the command reported success while exercising only the shared
+packages. Keep new suites wired into `test-node` or `test-python` rather than
+relying on a per-app `make test`.
 
 ## Unit Testing
 - **Objective**: Validate individual components and functions for correctness.

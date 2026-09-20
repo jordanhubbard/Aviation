@@ -1,7 +1,7 @@
 import * as React from 'react';
-import type { PaneConfig, TabReorderDirection, TabTheme } from '../types';
-import { getRelativePaneId, isPaneCloseable } from '../state';
-import { ensureMultiTabStyles } from '../styles';
+import type { PaneConfig, TabReorderDirection, TabTheme } from '../types.js';
+import { getRelativePaneId, isPaneCloseable } from '../state.js';
+import { ensureMultiTabStyles } from '../styles.js';
 
 export interface TabNavigationProps {
   panes: PaneConfig[];

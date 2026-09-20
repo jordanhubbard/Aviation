@@ -3,6 +3,10 @@
 
 # Port Configuration (can be overridden by environment variables)
 # Note: Flask has been eliminated! 🔥 FastAPI now handles everything
+# Compose v2 ships as a docker plugin ("docker compose"); the standalone
+# "docker-compose" binary is absent on modern installs. Prefer the plugin.
+COMPOSE := $(shell docker compose version >/dev/null 2>&1 && echo "docker compose" || echo "docker-compose")
+
 FASTAPI_PORT ?= 5051
 REACT_DEV_PORT ?= 3005
 
@@ -65,8 +69,8 @@ help:
 start:
 	@echo "🚀 Starting ForeFlight Dashboard..."
 	@echo "Building and starting services with optimized BuildKit..."
-	docker-compose -f $(COMPOSE_FILE) build $(COMPOSE_BUILD_OPTS)
-	docker-compose -f $(COMPOSE_FILE) up -d
+	$(COMPOSE) -f $(COMPOSE_FILE) build $(COMPOSE_BUILD_OPTS)
+	$(COMPOSE) -f $(COMPOSE_FILE) up -d
 	@echo "✅ Stateless application - no database initialization needed"
 	@echo "✅ Modern FastAPI Application started successfully!"
 	@echo ""
@@ -82,7 +86,7 @@ start:
 .PHONY: stop
 stop:
 	@echo "🛑 Stopping ForeFlight Dashboard..."
-	-docker-compose -f $(COMPOSE_FILE) down 2>/dev/null || true
+	-$(COMPOSE) -f $(COMPOSE_FILE) down 2>/dev/null || true
 	@echo "✅ Application stopped successfully!"
 
 restart: stop start
@@ -92,13 +96,13 @@ restart: stop start
 logs:
 	@echo "📋 Viewing ForeFlight Dashboard logs..."
 	@echo "Press Ctrl+C to stop viewing logs"
-	docker-compose -f $(COMPOSE_FILE) logs -f
+	$(COMPOSE) -f $(COMPOSE_FILE) logs -f
 
 # Clean up everything - stop, remove container, clean images, and reset data
 .PHONY: clean
 clean: stop
 	@echo "🧹 Cleaning up Docker resources..."
-	-docker-compose -f $(COMPOSE_FILE) down -v --rmi all --remove-orphans 2>/dev/null || true
+	-$(COMPOSE) -f $(COMPOSE_FILE) down -v --rmi all --remove-orphans 2>/dev/null || true
 	-docker rmi $(IMAGE_NAME):latest 2>/dev/null || true
 	-docker rmi $(IMAGE_NAME):dev 2>/dev/null || true
 	-docker rmi $(IMAGE_NAME):prod 2>/dev/null || true
@@ -137,18 +141,18 @@ clean-cache:
 test:
 	@echo "🧪 Running comprehensive test suite..."
 	@echo "📦 Building test containers with optimized BuildKit..."
-	docker-compose -f $(COMPOSE_FILE) build $(COMPOSE_BUILD_OPTS)
+	$(COMPOSE) -f $(COMPOSE_FILE) build $(COMPOSE_BUILD_OPTS)
 	@echo ""
 	@echo "🐍 Running Python/FastAPI tests..."
-	docker-compose -f $(COMPOSE_FILE) run --rm foreflight-dashboard pytest tests/ -v --cov=src --cov-report=html --cov-report=term --cov-report=xml
+	$(COMPOSE) -f $(COMPOSE_FILE) run --rm foreflight-dashboard pytest tests/ -v --cov=src --cov-report=html --cov-report=term --cov-report=xml
 	@echo ""
 	@echo "🌐 Running API endpoint integration tests..."
 	@echo "Starting application for API tests..."
-	-docker-compose -f $(COMPOSE_FILE) up -d
+	-$(COMPOSE) -f $(COMPOSE_FILE) up -d
 	@sleep 10  # Wait for services to be ready
-	docker-compose -f $(COMPOSE_FILE) exec -T foreflight-dashboard pytest tests/test_fastapi/ -v --tb=short
+	$(COMPOSE) -f $(COMPOSE_FILE) exec -T foreflight-dashboard pytest tests/test_fastapi/ -v --tb=short
 	@echo "Stopping test application..."
-	-docker-compose -f $(COMPOSE_FILE) down
+	-$(COMPOSE) -f $(COMPOSE_FILE) down
 	@echo ""
 	@echo "✅ All tests completed!"
 	@echo "📊 Coverage report: htmlcov/index.html"
@@ -160,8 +164,8 @@ test:
 .PHONY: test-python
 test-python:
 	@echo "🐍 Running Python tests only..."
-	docker-compose -f $(COMPOSE_FILE) build $(COMPOSE_BUILD_OPTS)
-	docker-compose -f $(COMPOSE_FILE) run --rm foreflight-dashboard pytest tests/ -v --cov=src --cov-report=term
+	$(COMPOSE) -f $(COMPOSE_FILE) build $(COMPOSE_BUILD_OPTS)
+	$(COMPOSE) -f $(COMPOSE_FILE) run --rm foreflight-dashboard pytest tests/ -v --cov=src --cov-report=term
 	@echo "✅ Python tests completed!"
 
 
@@ -169,11 +173,11 @@ test-python:
 .PHONY: test-api
 test-api:
 	@echo "🌐 Running API integration tests..."
-	docker-compose -f $(COMPOSE_FILE) build $(COMPOSE_BUILD_OPTS)
-	docker-compose -f $(COMPOSE_FILE) up -d
+	$(COMPOSE) -f $(COMPOSE_FILE) build $(COMPOSE_BUILD_OPTS)
+	$(COMPOSE) -f $(COMPOSE_FILE) up -d
 	@sleep 10  # Wait for services to be ready
-	docker-compose -f $(COMPOSE_FILE) exec -T foreflight-dashboard pytest tests/test_fastapi/ -v
-	docker-compose -f $(COMPOSE_FILE) down
+	$(COMPOSE) -f $(COMPOSE_FILE) exec -T foreflight-dashboard pytest tests/test_fastapi/ -v
+	$(COMPOSE) -f $(COMPOSE_FILE) down
 	@echo "✅ API tests completed!"
 
 # Create test accounts from JSON file using lightweight API
@@ -231,9 +235,9 @@ build-prod:
 start-prod:
 	@echo "🚀 Starting ForeFlight Dashboard in PRODUCTION mode..."
 	@echo "📦 Building production image..."
-	docker-compose -f docker-compose.yml -f docker-compose.prod.yml build
+	$(COMPOSE) -f docker-compose.yml -f docker-compose.prod.yml build
 	@echo "🌐 Starting production services..."
-	docker-compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+	$(COMPOSE) -f docker-compose.yml -f docker-compose.prod.yml up -d
 	@echo "✅ Stateless application - no database initialization needed"
 	@echo "✅ Production application started successfully!"
 	@echo ""
@@ -245,10 +249,10 @@ start-prod:
 
 stop-prod:
 	@echo "🛑 Stopping production application..."
-	docker-compose -f docker-compose.yml -f docker-compose.prod.yml down
+	$(COMPOSE) -f docker-compose.yml -f docker-compose.prod.yml down
 	@echo "✅ Production application stopped!"
 
 logs-prod:
 	@echo "📋 Viewing production logs..."
 	@echo "Press Ctrl+C to stop viewing logs"
-	docker-compose -f docker-compose.yml -f docker-compose.prod.yml logs -f
+	$(COMPOSE) -f docker-compose.yml -f docker-compose.prod.yml logs -f

@@ -4,7 +4,7 @@
 
 import React from 'react';
 import { TileLayer } from 'react-leaflet';
-import { OPENWEATHER_LAYERS, type WeatherOverlayType } from '../constants';
+import { OPENWEATHER_LAYERS, type WeatherOverlayType } from '../constants.js';
 
 export interface WeatherOverlayProps {
   /**

@@ -1,7 +1,11 @@
 import pytest
 from app.services.flight_recording_service import router as flight_recording_router
 from fastapi.testclient import TestClient
-from app import app
+from app import create_app
+from app.config import settings
+
+# `app` exposes create_app(settings); there is no module-level instance.
+app = create_app(settings)
 from app.services.flight_plan_service import router as flight_plan_router
 
 app.include_router(flight_plan_router, prefix="/flight-plans", tags=["flight-plans"])

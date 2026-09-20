@@ -28,6 +28,8 @@ export interface Airport {
   elevation?: number;
   /** Airport type (e.g., large_airport, small_airport, heliport) */
   type?: string;
+  /** Distance in nautical miles; only populated by proximity searches */
+  distance_nm?: number;
 }
 
 /**

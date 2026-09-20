@@ -1,5 +1,5 @@
-export type { IMultiTabWebUI, PaneConfig, TabReorderDirection, TabTheme } from './types';
-export { MultiTabWebUI } from './registry';
+export type { IMultiTabWebUI, PaneConfig, TabReorderDirection, TabTheme } from './types.js';
+export { MultiTabWebUI } from './registry.js';
 export {
   closePane,
   getDefaultActiveId,
@@ -10,6 +10,6 @@ export {
   movePane,
   normalizePaneOrder,
   sortPanes,
-} from './state';
-export { PaneContainer, TabNavigation } from './components';
-export { ensureMultiTabStyles } from './styles';
+} from './state.js';
+export { PaneContainer, TabNavigation } from './components/index.js';
+export { ensureMultiTabStyles } from './styles.js';

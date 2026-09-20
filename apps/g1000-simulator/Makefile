@@ -1,4 +1,4 @@
-.PHONY: all run start dev-up test backend-test
+.PHONY: all run start dev-up test backend-test test-docker
 
 all:
 	@echo "Building g1000-simulator"
@@ -20,11 +20,17 @@ test:
 	node node_modules/.bin/jest --passWithNoTests
 
 # Run Python backend tests following the flight-planner pattern.
+COMPOSE := $(shell docker compose version >/dev/null 2>&1 && echo "docker compose" || echo "docker-compose")
+
 backend-test:
 	@if [ -d ".venv" ]; then \
-		PYTHONPATH=backend .venv/bin/pytest backend/tests/ -ra; \
+		PYTHONPATH=backend .venv/bin/pytest backend/tests/ tests/backend/ -ra; \
 	elif [ -d "venv" ]; then \
-		PYTHONPATH=backend venv/bin/pytest backend/tests/ -ra; \
+		PYTHONPATH=backend venv/bin/pytest backend/tests/ tests/backend/ -ra; \
 	else \
-		PYTHONPATH=backend python3 -m pytest backend/tests/ -ra; \
+		PYTHONPATH=backend python3 -m pytest backend/tests/ tests/backend/ -ra; \
 	fi
+
+test-docker:
+	$(COMPOSE) -f docker-compose.test.yml up --build --abort-on-container-exit
+	$(COMPOSE) -f docker-compose.test.yml down -v

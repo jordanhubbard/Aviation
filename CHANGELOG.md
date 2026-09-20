@@ -1,5 +1,111 @@
 # Changelog
 
+## Unreleased
+
+Build, test and container infrastructure repair, plus the React 19 unification.
+
+### The suite builds and runs again
+
+- `make build` invoked a bare `pnpm`, which is not installed and not implied by
+  anything in the tree, so the monorepo was unbuildable from a clean checkout.
+  The package manager is now pinned via `packageManager` and resolved through
+  corepack when absent from `PATH`.
+- Five projects declared TypeScript `^6`, which removed `moduleResolution:
+  node10`; their builds died on TS5107. Moved to `node16`/`bundler` per package.
+- `apps/flight-planner/frontend` and `apps/aviation-missions-app/frontend` were
+  never listed as workspaces, so their dependencies never installed and they were
+  excluded from every build. The workspace globs now cover `apps/*/frontend` and
+  `apps/*/backend`.
+- Two startup defects in aviation-accident-tracker: sqlite cannot create its own
+  parent directory, and Express 5 rejects the bare `*` route.
+
+### Containers and CI
+
+- Seven Dockerfiles installed with npm, which cannot parse the `workspace:`
+  protocol the packages use (`EUNSUPPORTEDPROTOCOL`), so no app image could
+  build. All now install with pnpm from the workspace root; the remaining CI
+  `npm ci` steps moved with them.
+- Removed five committed npm lockfiles. They described React 17/18 trees, were
+  unused once the images moved to pnpm, and still passed the peer guard — whose
+  own premise ("the container builds install with `npm ci`") no longer held.
+  `pnpm-lock.yaml` is the only lockfile.
+- Added a root `.dockerignore`; every image builds from the repo root and was
+  shipping `node_modules` and `.git` as build context.
+- The MAC repository contract required `pnpm` and `lein` binaries that are not
+  installed and not needed (corepack and Docker cover both).
+
+### Tests actually run
+
+- `make test` exercised no application suites at all, and the Python and Clojure
+  targets printed success even when every suite had been skipped. All six
+  application JS/TS suites are wired in, skips are reported honestly, and Go is
+  covered for the first time.
+- Python went from one suite to four (185 tests to 400) by falling back to the
+  Docker test paths that already existed but were never invoked. flight-planner
+  contributed zero tests before this: all four of its blocked files failed to
+  collect. g1000-simulator ran only one of its two test directories, leaving 97
+  tests unexecuted.
+
+### Defects found by newly-running tests
+
+- `CheckFuelAlert` was inverted: `LowFuelLevel` encoded its 10 gal floor as
+  `MaxValue`, so a full tank warned and an empty one stayed silent.
+- Both PID controllers differenced against `prev_error = 0` on the first sample,
+  producing a derivative kick of `error/dt` — a control-surface spike at the
+  moment a mode engages.
+- `nav_database` imported three names its schema module never defined and built
+  `NavProcedureSchema` from fields it does not have.
+- The flight-recording endpoints returned 404 for everything because `create`
+  never assigned an id; the `/ws` telemetry endpoint was never registered;
+  `AHRS.compute_attitude` returned an undefined type.
+- Airport lookups in aviation-accident-tracker silently returned nothing: the
+  service queried the SDK database but never loaded it.
+- `validateAirportCode` reported every malformed code as "required" because
+  normalization collapsed them all to `''`.
+
+### shared-sdk
+
+- The barrel hid much of the package. `wind.ts` (crosswind limits, runway
+  selection), weight & balance, and the only TAF client were unreachable from
+  the package root; seven navigation result types were unnameable.
+- Added pressure/density altitude, which existed only inside dead files.
+- Ships ESM alongside CommonJS. Browser consumers previously depended on bundler
+  interop luck — Vite 8 coped, Vite 7 did not.
+- Promoted flight-planner's `TTLCache` into the Python SDK; the only cache there
+  was Redis-backed and would have forced new infrastructure on consumers.
+
+### React 19
+
+- flight-planner and foreflight-dashboard were the last apps on React 18, held
+  there by tsconfig `paths` pins forcing their react types to a local v18 copy.
+  Both are now on 19 and the pins are gone.
+- MUI 5 already declares `react ^19`, so no `Grid` call sites needed touching.
+  The work was react-query v3 (unmaintained, peer-caps at 18) moving to
+  `@tanstack/react-query` v5 across 11 files, plus react-leaflet 4→5,
+  framer-motion 10→12, `@mui/x-charts` 6→7, testing-library 13→16 and vite 8.
+- `ui-framework` and `aviation-config` advertised React 18 peers while depending
+  on react-leaflet 5; both now say 19.
+
+### Duplication removed
+
+- aviation-accident-tracker carried two complete ingest implementations. The one
+  the service runs had no tests; the one with all the tests was imported by
+  nothing but its own tests. Coverage moved onto the live path (33 cases,
+  including a pipeline test that previously hit the network and was excluded
+  from the run).
+- `ui-framework`'s `map.ts` shadowed the richer `map/` directory, making bounds
+  math, wind barbs and hooks unreachable from the barrel — which is why
+  flight-planner duplicated `windBarbSvg` locally.
+- Retired a vestigial `g1000` stub superseded by `packages/g1000-rendering`, and
+  eleven dependencies that no source file imported.
+
+### Security
+
+- `make audit` reported zero known vulnerabilities after bumping starlette,
+  PyJWT, python-multipart and pytest in foreflight-dashboard. `audit-python`
+  previously failed outright: it preferred a `python3.12` whose `ensurepip` is
+  broken, and `audit-node` passed an option pnpm does not have.
+
 ## v0.1.1 - 2026-04-02
 
 - fix(lint): stub out broken eslint lint script in g1000-simulator (no config)

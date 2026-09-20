@@ -3,8 +3,8 @@
  */
 
 import L from 'leaflet';
-import type { FlightCategory } from '../types';
-import { CATEGORY_COLORS } from '../constants';
+import type { FlightCategory } from '../types.js';
+import { CATEGORY_COLORS } from '../constants.js';
 
 /**
  * Generate SVG for wind barb

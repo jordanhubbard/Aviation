@@ -2,6 +2,10 @@
 # Clojure Backend + Pure JavaScript Frontend
 
 # Port Configuration (can be overridden by environment variables)
+# Compose v2 ships as a docker plugin ("docker compose"); the standalone
+# "docker-compose" binary is absent on modern installs. Prefer the plugin.
+COMPOSE := $(shell docker compose version >/dev/null 2>&1 && echo "docker compose" || echo "docker-compose")
+
 PORT ?= 8080
 API_PORT ?= 3000
 

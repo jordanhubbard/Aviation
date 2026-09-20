@@ -7,7 +7,7 @@ import type {
   GoogleCredentials,
   TokenRefreshResponse,
   GoogleApiError,
-} from './types';
+} from './types.js';
 
 /**
  * Default OAuth2 scopes for Google Calendar

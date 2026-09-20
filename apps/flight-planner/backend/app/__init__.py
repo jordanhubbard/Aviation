@@ -9,6 +9,7 @@ from .services.envelope_protection import EnvelopeProtection
 from .services.ahrs_adc_simulation import AHRS, ADC
 from .services.gps_simulation import GPSSimulationService, GPSState
 from .services.telemetry_recording import TelemetryRecordingService, TelemetrySnapshot
+from .services.telemetry_streaming_hub import TelemetryStreamingHub
 from .services.approaches import ApproachProcedure, ApproachType, ApproachCategory, Waypoint, MissedApproachAction
 from .routes.alerts import router as alerts_router
 from .routers.settings import router as settings_router
@@ -111,6 +112,23 @@ def create_app(settings):
 
     # Initialize TelemetryRecordingService
     app.telemetry_recording_service = TelemetryRecordingService()
+
+    # Telemetry streaming hub: clients connect here and receive broadcasts.
+    app.telemetry_hub = TelemetryStreamingHub()
+
+    @app.websocket("/ws")
+    async def websocket_hub(websocket: WebSocket):
+        hub = app.telemetry_hub
+        await hub.connect(websocket)
+        try:
+            while True:
+                message = await websocket.receive_json()
+                await hub.broadcast(message.get("type", "telemetry"), message.get("data", {}))
+        except WebSocketDisconnect:
+            hub.remove(websocket)
+        except Exception as e:
+            print(f"Telemetry hub error: {e}")
+            hub.remove(websocket)
 
     # Example WebSocket endpoint
     @app.websocket("/ws/telemetry")

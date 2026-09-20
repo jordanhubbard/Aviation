@@ -3,7 +3,7 @@
  * Provides a pub/sub mechanism for alert state changes
  */
 
-import { AlertEvent, AlertEventCallback } from './types';
+import { AlertEvent, AlertEventCallback } from './types.js';
 
 /**
  * Simple event emitter for alert events

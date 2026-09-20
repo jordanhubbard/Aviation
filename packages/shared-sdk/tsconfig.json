@@ -1,11 +1,11 @@
 {
   "compilerOptions": {
     "target": "ES2020",
-    "module": "commonjs",
+    "module": "node16",
     "lib": [
       "ES2020"
     ],
-    "moduleResolution": "node",
+    "moduleResolution": "node16",
     "declaration": true,
     "declarationMap": true,
     "sourceMap": true,
@@ -25,8 +25,6 @@
     "node_modules",
     "dist",
     "**/__tests__/**",
-    "**/*.test.ts",
-    "src/config.ts",
-    "src/g1000"
+    "**/*.test.ts"
   ]
 }

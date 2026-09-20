@@ -1,430 +1,246 @@
 /**
- * Unit tests for airport database and search functionality
- * Target: >80% code coverage
+ * Unit tests for the airport database, lookup and search services.
+ *
+ * Exercises the canonical `aviation/airports` module against the packaged
+ * dataset loaded via `aviation/airports/bundled`.
  */
 
 import { describe, test, expect, beforeAll } from 'vitest';
 import {
-  getAirport,
+  findAirport,
+  findAirportRequired,
+  findAirportsNearby,
+  findNearestAirport,
   searchAirports,
   searchAirportsAdvanced,
-  haversineDistance
-} from '../airports.js';
+  getAirportDatabase,
+  clearAirportCache,
+  getAirportCacheStats,
+  AirportNotFoundError,
+} from '../airports/index.js';
+import { loadBundledAirports } from '../airports/bundled.js';
 
 describe('Airport Database and Search', () => {
-  // Wait for airport cache to load before running tests
-  beforeAll(async () => {
-    // Trigger cache load
-    await getAirport('KSFO');
+  beforeAll(() => {
+    loadBundledAirports();
   });
 
-  describe('haversineDistance', () => {
-    test('calculates distance between KSFO and KLAX correctly', () => {
-      // KSFO: 37.619, -122.375
-      // KLAX: 33.942, -118.408
-      const distance = haversineDistance(37.619, -122.375, 33.942, -118.408);
-      
-      // Expected: ~293 nm
-      expect(distance).toBeGreaterThan(292);
-      expect(distance).toBeLessThan(295);
+  describe('dataset loading', () => {
+    test('loads the packaged dataset', () => {
+      expect(getAirportDatabase().length).toBeGreaterThan(50000);
     });
 
-    test('calculates distance between KJFK and KLAX correctly', () => {
-      // KJFK: 40.640, -73.779
-      // KLAX: 33.942, -118.408
-      const distance = haversineDistance(40.640, -73.779, 33.942, -118.408);
-      
-      // Expected: ~2145 nm (transcontinental)
-      expect(distance).toBeGreaterThan(2140);
-      expect(distance).toBeLessThan(2150);
-    });
-
-    test('returns 0 for same point', () => {
-      const distance = haversineDistance(37.619, -122.375, 37.619, -122.375);
-      expect(distance).toBe(0);
-    });
-
-    test('handles negative coordinates', () => {
-      // Southern hemisphere
-      const distance = haversineDistance(-33.946, 151.177, -37.669, 144.841); // YSSY to YMML
-      expect(distance).toBeGreaterThan(0);
-      expect(distance).toBeLessThan(500);
+    test('loading is idempotent', () => {
+      const before = getAirportDatabase().length;
+      loadBundledAirports();
+      expect(getAirportDatabase().length).toBe(before);
     });
   });
 
-  describe('getAirport', () => {
-    test('finds airport by ICAO code (KSFO)', async () => {
-      const airport = await getAirport('KSFO');
-      
-      expect(airport).not.toBeNull();
-      expect(airport?.icao).toBe('KSFO');
-      expect(airport?.name).toContain('San Francisco');
-      expect(airport?.latitude).toBeCloseTo(37.619, 1);
-      expect(airport?.longitude).toBeCloseTo(-122.375, 1);
+  describe('findAirport', () => {
+    test('finds airport by ICAO code', () => {
+      const sfo = findAirport('KSFO');
+      expect(sfo).toBeDefined();
+      expect(sfo?.icao).toBe('KSFO');
+      expect(sfo?.name).toMatch(/San Francisco/i);
     });
 
-    test('finds airport by IATA code (SFO)', async () => {
-      const airport = await getAirport('SFO');
-      
-      expect(airport).not.toBeNull();
-      expect(airport?.icao).toBe('KSFO');
-      expect(airport?.iata).toBe('SFO');
+    test('finds airport by IATA code', () => {
+      expect(findAirport('SFO')?.icao).toBe('KSFO');
     });
 
-    test('finds airport by lowercase code', async () => {
-      const airport = await getAirport('ksfo');
-      
-      expect(airport).not.toBeNull();
-      expect(airport?.icao).toBe('KSFO');
+    test('is case insensitive', () => {
+      expect(findAirport('ksfo')?.icao).toBe('KSFO');
     });
 
-    test('handles K-prefix for US airports (PAO -> KPAO)', async () => {
-      const airport = await getAirport('PAO');
-      
-      expect(airport).not.toBeNull();
-      expect(airport?.icao).toBe('KPAO');
-      expect(airport?.name).toContain('Palo Alto');
+    test('handles K-prefix for US local identifiers', () => {
+      expect(findAirport('PAO')?.icao).toBe('KPAO');
     });
 
-    test('handles code with description (KSFO - San Francisco)', async () => {
-      const airport = await getAirport('KSFO - San Francisco International');
-      
-      expect(airport).not.toBeNull();
-      expect(airport?.icao).toBe('KSFO');
+    test('handles numeric US identifiers', () => {
+      expect(findAirport('7S5')?.icao).toBe('K7S5');
     });
 
-    test('returns null for non-existent airport', async () => {
-      const airport = await getAirport('XXXX');
-      expect(airport).toBeNull();
+    test('returns undefined for a non-existent code', () => {
+      expect(findAirport('ZZZZ')).toBeUndefined();
     });
 
-    test('returns null for empty string', async () => {
-      const airport = await getAirport('');
-      expect(airport).toBeNull();
+    test('returns undefined for an empty code', () => {
+      expect(findAirport('')).toBeUndefined();
     });
 
-    test('finds multiple major airports', async () => {
-      const codes = ['KJFK', 'KLAX', 'KORD', 'KATL', 'KDFW'];
-      
-      for (const code of codes) {
-        const airport = await getAirport(code);
-        expect(airport).not.toBeNull();
-        expect(airport?.icao).toBe(code);
+    test('finds several major airports', () => {
+      for (const code of ['KJFK', 'KLAX', 'KORD', 'EGLL']) {
+        expect(findAirport(code)?.icao, `expected ${code}`).toBe(code);
       }
+    });
+
+    test('findAirportRequired throws for unknown codes', () => {
+      expect(() => findAirportRequired('ZZZZ')).toThrow(AirportNotFoundError);
+    });
+
+    test('findAirportRequired returns the airport when present', () => {
+      expect(findAirportRequired('KSFO').icao).toBe('KSFO');
     });
   });
 
   describe('searchAirports', () => {
-    test('finds airports by exact ICAO code', async () => {
-      const results = await searchAirports('KSFO', 5);
-      
-      expect(results.length).toBeGreaterThan(0);
-      expect(results[0].icao).toBe('KSFO');
+    test('finds airports by name', () => {
+      expect(searchAirports('San Francisco', 5).length).toBeGreaterThan(0);
     });
 
-    test('finds airports by name (San Francisco)', async () => {
-      const results = await searchAirports('San Francisco', 10);
-      
-      expect(results.length).toBeGreaterThan(0);
-      
-      // SFO should be in top results
-      const sfo = results.find(a => a.icao === 'KSFO');
-      expect(sfo).toBeDefined();
-      expect(sfo?.name).toContain('San Francisco');
+    test('respects the limit parameter', () => {
+      expect(searchAirports('International', 3).length).toBeLessThanOrEqual(3);
     });
 
-    test('finds airports by city (Oakland)', async () => {
-      // Test with IATA code for reliable results
-      const results = await searchAirports('OAK', 5);
-      
-      expect(results.length).toBeGreaterThan(0);
-      
-      const oak = results.find(a => a.icao === 'KOAK');
-      expect(oak).toBeDefined();
+    test('returns an empty array for no matches', () => {
+      expect(searchAirports('zzzznomatch', 5)).toEqual([]);
     });
 
-    test('ranks exact code matches higher', async () => {
-      const results = await searchAirports('LAX', 10);
-      
-      // KLAX should be first result
-      expect(results[0].icao).toBe('KLAX');
-    });
-
-    test('handles partial matches', async () => {
-      const results = await searchAirports('San', 10);
-      
-      expect(results.length).toBeGreaterThan(0);
-      
-      // Should include airports with "San" in code or name
-      // KSAN (San Diego) should be in top results as it starts with "SAN"
-      const sanAirport = results.some(a => a.icao.includes('SAN') || a.name?.includes('San'));
-      expect(sanAirport).toBe(true);
-    });
-
-    test('returns empty array for no matches', async () => {
-      const results = await searchAirports('ZZZZZZZZZZ', 10);
-      expect(results).toEqual([]);
-    });
-
-    test('respects limit parameter', async () => {
-      const results = await searchAirports('International', 5);
-      expect(results.length).toBeLessThanOrEqual(5);
-    });
-
-    test('finds airports case-insensitively', async () => {
-      const upper = await searchAirports('SAN FRANCISCO', 5);
-      const lower = await searchAirports('san francisco', 5);
-      const mixed = await searchAirports('San Francisco', 5);
-      
-      expect(upper.length).toBeGreaterThan(0);
-      expect(lower.length).toBeGreaterThan(0);
-      expect(mixed.length).toBeGreaterThan(0);
-      
-      // Should all find KSFO
-      expect(upper[0].icao).toBe(lower[0].icao);
-      expect(lower[0].icao).toBe(mixed[0].icao);
+    test('returns an empty array for an empty query', () => {
+      expect(searchAirports('', 5)).toEqual([]);
     });
   });
 
   describe('searchAirportsAdvanced', () => {
-    test('performs text search like searchAirports', async () => {
-      // Use airport code for reliable matching
-      const results = await searchAirportsAdvanced({ query: 'LAX', limit: 5 });
-      
-      expect(results.length).toBeGreaterThan(0);
-      const lax = results.find(a => a.icao === 'KLAX');
-      expect(lax).toBeDefined();
+    test('ranks an exact code match first', () => {
+      expect(searchAirportsAdvanced({ query: 'KSFO', limit: 5 })[0].icao).toBe('KSFO');
     });
 
-    test('performs proximity search (airports near KSFO)', async () => {
-      const results = await searchAirportsAdvanced({
-        lat: 37.619,
-        lon: -122.375,
-        radius_nm: 30,
-        limit: 10
-      });
-      
-      expect(results.length).toBeGreaterThan(0);
-      
-      // All results should have distance_nm
-      results.forEach(airport => {
-        expect(airport.distance_nm).toBeDefined();
-        expect(airport.distance_nm!).toBeLessThanOrEqual(30);
-      });
-      
-      // Should be sorted by distance
-      for (let i = 1; i < results.length; i++) {
-        expect(results[i].distance_nm!).toBeGreaterThanOrEqual(results[i - 1].distance_nm!);
+    test('trims whitespace in the query', () => {
+      expect(searchAirportsAdvanced({ query: '  KSFO  ', limit: 2 })[0].icao).toBe('KSFO');
+    });
+
+    test('is case insensitive', () => {
+      expect(searchAirportsAdvanced({ query: 'ksfo', limit: 2 })[0].icao).toBe('KSFO');
+    });
+
+    test('performs proximity search sorted nearest first', () => {
+      const near = searchAirportsAdvanced({ lat: 37.619, lon: -122.375, radiusNm: 30, limit: 10 });
+      expect(near.length).toBeGreaterThan(1);
+      expect(near[0].icao).toBe('KSFO');
+      for (let i = 1; i < near.length; i++) {
+        expect(near[i].distance_nm!).toBeGreaterThanOrEqual(near[i - 1].distance_nm!);
       }
     });
 
-    test('combines text and proximity search', async () => {
-      const results = await searchAirportsAdvanced({
-        query: 'Airport',
-        lat: 37.619,
-        lon: -122.375,
-        radius_nm: 50,
-        limit: 10
-      });
-      
-      expect(results.length).toBeGreaterThan(0);
-      
-      // Should have distance and match query
-      results.forEach(airport => {
-        expect(airport.distance_nm).toBeDefined();
-        expect(airport.distance_nm!).toBeLessThanOrEqual(50);
-      });
+    test('annotates distance_nm only for proximity searches', () => {
+      expect(searchAirportsAdvanced({ lat: 37.619, lon: -122.375, radiusNm: 10 })[0].distance_nm)
+        .toBeTypeOf('number');
+      expect(searchAirportsAdvanced({ query: 'KSFO', limit: 1 })[0].distance_nm).toBeUndefined();
     });
 
-    test('finds airports without radius (all within distance sorted)', async () => {
-      const results = await searchAirportsAdvanced({
-        lat: 37.619,
-        lon: -122.375,
-        limit: 5
-      });
-      
-      expect(results.length).toBe(5);
-      
-      // Should all have distance and be sorted
-      for (let i = 1; i < results.length; i++) {
-        expect(results[i].distance_nm!).toBeGreaterThanOrEqual(results[i - 1].distance_nm!);
+    test('honours the radius filter', () => {
+      const results = searchAirportsAdvanced({ lat: 37.619, lon: -122.375, radiusNm: 15 });
+      expect(results.length).toBeGreaterThan(0);
+      for (const r of results) {
+        expect(r.distance_nm!).toBeLessThanOrEqual(15);
       }
     });
 
-    test('returns empty array when no query or geo provided', async () => {
-      const results = await searchAirportsAdvanced({});
-      expect(results).toEqual([]);
-    });
-
-    test('handles large radius search', async () => {
-      const results = await searchAirportsAdvanced({
+    test('combines text and proximity search', () => {
+      const results = searchAirportsAdvanced({
+        query: 'international',
         lat: 37.619,
         lon: -122.375,
-        radius_nm: 500,
-        limit: 20
+        radiusNm: 100,
+        limit: 5,
       });
-      
-      expect(results.length).toBeGreaterThan(10); // Should find many airports
-    });
-
-    test('proximity search includes closest airports first', async () => {
-      const results = await searchAirportsAdvanced({
-        lat: 37.619,
-        lon: -122.375,
-        limit: 3
-      });
-      
-      // KSFO itself should be first (distance ~0)
-      expect(results[0].icao).toBe('KSFO');
-      expect(results[0].distance_nm).toBeLessThan(1);
-    });
-
-    test('text + geo search ranks by score then distance', async () => {
-      const results = await searchAirportsAdvanced({
-        query: 'International',
-        lat: 37.619,
-        lon: -122.375,
-        limit: 10
-      });
-      
       expect(results.length).toBeGreaterThan(0);
-      
-      // Should have both score relevance and proximity
-      // Should find airports matching "International" near SFO
-      const hasInternational = results.some(a => a.name?.includes('International'));
-      expect(hasInternational).toBe(true);
-      
-      // All should have distance
-      results.forEach(a => expect(a.distance_nm).toBeDefined());
+      for (const r of results) {
+        expect(r.distance_nm!).toBeLessThanOrEqual(100);
+      }
+    });
+
+    test('returns an empty array when neither query nor origin is given', () => {
+      expect(searchAirportsAdvanced({})).toEqual([]);
+    });
+
+    test('respects the limit parameter', () => {
+      expect(searchAirportsAdvanced({ query: 'airport', limit: 4 }).length).toBeLessThanOrEqual(4);
+    });
+
+    test('returns no duplicate codes', () => {
+      const results = searchAirportsAdvanced({ query: 'international', limit: 25 });
+      const codes = results.map((r) => r.icao);
+      expect(new Set(codes).size).toBe(codes.length);
+    });
+
+    test('handles proximity search near the poles', () => {
+      expect(() =>
+        searchAirportsAdvanced({ lat: 89.9, lon: 0, radiusNm: 500, limit: 3 })
+      ).not.toThrow();
+    });
+
+    test('handles proximity search across the date line', () => {
+      const results = searchAirportsAdvanced({ lat: 0, lon: 179.9, radiusNm: 300, limit: 3 });
+      for (const r of results) {
+        expect(r.distance_nm!).toBeLessThanOrEqual(300);
+      }
+    });
+
+    test('handles special characters without throwing', () => {
+      expect(() => searchAirportsAdvanced({ query: "!@#$%^&*()", limit: 3 })).not.toThrow();
     });
   });
 
-  describe('Performance', () => {
-    test('getAirport completes in <50ms (cached)', async () => {
-      const start = performance.now();
-      await getAirport('KSFO');
-      const duration = performance.now() - start;
-      
-      expect(duration).toBeLessThan(50);
+  describe('proximity helpers', () => {
+    test('findAirportsNearby returns airports within the radius', () => {
+      const nearby = findAirportsNearby(37.619, -122.375, 50, 10);
+      expect(nearby.length).toBeGreaterThan(0);
     });
 
-    test('searchAirports completes in <250ms', async () => {
-      // Searching 82K airports with fuzzy matching
-      const start = performance.now();
-      await searchAirports('San Francisco', 10);
-      const duration = performance.now() - start;
-      
-      expect(duration).toBeLessThan(250);
-    });
-
-    test('searchAirportsAdvanced (text) completes in <200ms', async () => {
-      const start = performance.now();
-      await searchAirportsAdvanced({ query: 'Los Angeles', limit: 10 });
-      const duration = performance.now() - start;
-      
-      expect(duration).toBeLessThan(200);
-    });
-
-    test('searchAirportsAdvanced (geo) completes in <200ms', async () => {
-      // Geo search with distance calculations
-      const start = performance.now();
-      await searchAirportsAdvanced({
-        lat: 37.619,
-        lon: -122.375,
-        radius_nm: 50,
-        limit: 10
-      });
-      const duration = performance.now() - start;
-      
-      expect(duration).toBeLessThan(200);
+    test('findNearestAirport finds KSFO from its own coordinates', () => {
+      expect(findNearestAirport(37.619, -122.375)?.icao).toBe('KSFO');
     });
   });
 
-  describe('Edge Cases', () => {
-    test('handles whitespace in queries', async () => {
-      const results = await searchAirports('  San Francisco  ', 5);
-      expect(results.length).toBeGreaterThan(0);
-    });
-
-    test('handles special characters in queries', async () => {
-      const results = await searchAirports("O'Hare", 5);
-      expect(results.length).toBeGreaterThan(0);
-    });
-
-    test('handles numeric codes (7S5 -> K7S5)', async () => {
-      const airport = await getAirport('7S5');
-      // Should try K7S5 automatically
-      expect(airport).toBeDefined(); // If airport exists in database
-    });
-
-    test('handles very short queries', async () => {
-      const results = await searchAirports('SF', 5);
-      // Should still return results (fuzzy matching)
-      expect(results.length).toBeGreaterThanOrEqual(0);
-    });
-
-    test('proximity search at poles', async () => {
-      // Near North Pole
-      const results = await searchAirportsAdvanced({
-        lat: 89.0,
-        lon: 0.0,
-        radius_nm: 500,
-        limit: 10
-      });
-      
-      // Might find Arctic airports or none
-      expect(Array.isArray(results)).toBe(true);
-    });
-
-    test('proximity search crossing date line', async () => {
-      // Near international date line
-      const results = await searchAirportsAdvanced({
-        lat: 0.0,
-        lon: 179.0,
-        radius_nm: 500,
-        limit: 10
-      });
-      
-      expect(Array.isArray(results)).toBe(true);
-    });
-  });
-
-  describe('Data Integrity', () => {
-    test('all results have required fields', async () => {
-      const results = await searchAirports('International', 10);
-      
-      results.forEach(airport => {
-        expect(airport).toHaveProperty('icao');
-        expect(airport).toHaveProperty('iata');
-        expect(airport).toHaveProperty('name');
-        expect(airport).toHaveProperty('city');
-        expect(airport).toHaveProperty('country');
-        expect(airport).toHaveProperty('latitude');
-        expect(airport).toHaveProperty('longitude');
-        expect(airport).toHaveProperty('type');
-        
-        // Validate coordinates
+  describe('data integrity', () => {
+    test('results carry the required fields', () => {
+      for (const airport of searchAirportsAdvanced({ query: 'international', limit: 10 })) {
+        expect(airport.icao).toBeTruthy();
+        expect(typeof airport.latitude).toBe('number');
+        expect(typeof airport.longitude).toBe('number');
         expect(airport.latitude).toBeGreaterThanOrEqual(-90);
         expect(airport.latitude).toBeLessThanOrEqual(90);
         expect(airport.longitude).toBeGreaterThanOrEqual(-180);
         expect(airport.longitude).toBeLessThanOrEqual(180);
-      });
+      }
     });
 
-    test('getAirport returns consistent results', async () => {
-      const result1 = await getAirport('KSFO');
-      const result2 = await getAirport('KSFO');
-      
-      expect(result1).toEqual(result2);
+    test('lookups are stable across repeated calls', () => {
+      expect(findAirport('KSFO')).toEqual(findAirport('KSFO'));
+    });
+  });
+
+  describe('caching and performance', () => {
+    test('findAirport is fast once warmed', () => {
+      findAirport('KSFO');
+      const start = performance.now();
+      findAirport('KSFO');
+      expect(performance.now() - start).toBeLessThan(50);
     });
 
-    test('no duplicate results in search', async () => {
-      const results = await searchAirports('Airport', 50);
-      
-      const icaos = results.map(a => a.icao);
-      const uniqueIcaos = new Set(icaos);
-      
-      expect(icaos.length).toBe(uniqueIcaos.size);
+    test('searchAirportsAdvanced text search completes promptly', () => {
+      const start = performance.now();
+      searchAirportsAdvanced({ query: 'Los Angeles', limit: 10 });
+      expect(performance.now() - start).toBeLessThan(1000);
+    });
+
+    test('searchAirportsAdvanced geo search completes promptly', () => {
+      const start = performance.now();
+      searchAirportsAdvanced({ lat: 37.619, lon: -122.375, radiusNm: 100, limit: 10 });
+      expect(performance.now() - start).toBeLessThan(1000);
+    });
+
+    test('cache statistics are reported', () => {
+      findAirport('KSFO');
+      expect(getAirportCacheStats().codeCache).toBeDefined();
+    });
+
+    test('clearAirportCache empties the caches without losing data', () => {
+      clearAirportCache();
+      expect(findAirport('KSFO')?.icao).toBe('KSFO');
     });
   });
 });

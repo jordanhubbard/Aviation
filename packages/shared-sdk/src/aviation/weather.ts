@@ -52,4 +52,4 @@ export class AviationWeatherClient {
   }
 }
 
-export * from './weather/index';
+export * from './weather/index.js';

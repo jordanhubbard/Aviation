@@ -1,3 +1,7 @@
+# Compose v2 ships as a docker plugin ("docker compose"); the standalone
+# "docker-compose" binary is absent on modern installs. Prefer the plugin.
+COMPOSE := $(shell docker compose version >/dev/null 2>&1 && echo "docker compose" || echo "docker-compose")
+
 .PHONY: help build clean test start docker-build docker-up docker-down docker-test test-docker
 
 help:
@@ -35,24 +39,24 @@ start:
 
 # Docker targets
 docker-build:
-	docker-compose build
+	$(COMPOSE) build
 
 docker-up:
-	docker-compose up -d
+	$(COMPOSE) up -d
 	@echo "✅ Services started!"
 	@echo "🎯 Frontend: http://localhost:5173"
 	@echo "🔧 Backend: http://localhost:3002"
 	@echo "📚 API Docs: http://localhost:3002/api-docs"
 
 docker-down:
-	docker-compose down
+	$(COMPOSE) down
 
 docker-test: test-docker
 
 test-docker:
 	@echo "🧪 Running tests in Docker..."
-	docker-compose -f docker-compose.test.yml up --build --abort-on-container-exit
-	docker-compose -f docker-compose.test.yml down -v
+	$(COMPOSE) -f docker-compose.test.yml up --build --abort-on-container-exit
+	$(COMPOSE) -f docker-compose.test.yml down -v
 
 docker-logs:
-	docker-compose logs -f
+	$(COMPOSE) logs -f

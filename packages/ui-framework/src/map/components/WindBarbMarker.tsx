@@ -5,8 +5,8 @@
 import React from 'react';
 import { Marker, Popup } from 'react-leaflet';
 import type { LatLngExpression } from 'leaflet';
-import { createWindBarbIcon } from '../utils/icons';
-import type { FlightCategory } from '../types';
+import { createWindBarbIcon } from '../utils/icons.js';
+import type { FlightCategory } from '../types.js';
 
 export interface WindBarbMarkerProps {
   /**

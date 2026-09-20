@@ -21,7 +21,7 @@
  */
 
 // Cache
-export { WeatherCache, weatherCache } from './cache';
+export { WeatherCache, weatherCache } from './cache.js';
 
 // METAR
 export {
@@ -29,7 +29,7 @@ export {
   fetchMetarRaws,
   parseMetar,
   type MetarData,
-} from './metar';
+} from './metar.js';
 
 // OpenWeatherMap
 export {
@@ -38,7 +38,7 @@ export {
   OpenWeatherMapError,
   type OpenWeatherMapResponse,
   type WeatherData,
-} from './openweathermap';
+} from './openweathermap.js';
 
 // Open-Meteo
 export {
@@ -50,7 +50,7 @@ export {
   type CurrentWeather,
   type DailyForecast,
   type HourlyForecast,
-} from './open-meteo';
+} from './open-meteo.js';
 
 // Flight Category
 export {
@@ -68,4 +68,4 @@ export {
   type FlightCategoryThresholds,
   type DepartureWindow,
   type HourlyData,
-} from './flight-category';
+} from './flight-category.js';

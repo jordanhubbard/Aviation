@@ -1,11 +1,11 @@
 packages:
   - "packages/*"
   - "apps/*"
-  - "apps/aviation-accident-tracker/backend"
-  - "apps/aviation-accident-tracker/frontend"
-  - "apps/g1000-simulator/backend"
-  - "apps/g1000-simulator/frontend"
-  - "apps/aviation-chat"
+  # Nested app workspaces. Globbed rather than listed individually so a new
+  # frontend/backend is picked up automatically; previously flight-planner and
+  # aviation-missions-app frontends were omitted and never had deps installed.
+  - "apps/*/frontend"
+  - "apps/*/backend"
 allowBuilds:
   '@apollo/protobufjs': true
   '@scarf/scarf': false

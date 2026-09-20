@@ -1,4 +1,4 @@
-import type { PaneConfig, TabReorderDirection } from './types';
+import type { PaneConfig, TabReorderDirection } from './types.js';
 
 export const sortPanes = (panes: PaneConfig[]): PaneConfig[] => {
   return [...panes].sort((a, b) => {

@@ -34,7 +34,7 @@ export {
   destination,
   greatCircleRoute,
   convert,
-} from './distance';
+} from './distance.js';
 
 // Bearing and heading calculations
 export {
@@ -49,7 +49,7 @@ export {
   reciprocalHeading,
   headingDifference,
   isHeadingInRange,
-} from './bearing';
+} from './bearing.js';
 
 // Coordinate utilities
 export {
@@ -67,7 +67,7 @@ export {
   formatCoordinate,
   boundingBox,
   isInBoundingBox,
-} from './coordinates';
+} from './coordinates.js';
 
 // Fuel calculations
 export {
@@ -84,7 +84,7 @@ export {
   alternateFuelRequired,
   specificRange,
   specificEndurance,
-} from './fuel';
+} from './fuel.js';
 
 // Time-speed-distance calculations
 export {
@@ -101,4 +101,36 @@ export {
   iasToTas,
   tasToMach,
   machToTas,
-} from './time-speed-distance';
+} from './time-speed-distance.js';
+
+// Shared navigation result types
+export type {
+  DistanceResult,
+  BearingResult,
+  TimeSpeedDistance,
+  WindCorrectionResult,
+  FuelCalculation,
+  DistanceUnit,
+  SpeedUnit,
+} from './types.js';
+
+// Wind triangle, crosswind limits and runway selection
+export {
+  calculateWindCorrection,
+  calculateWindComponents,
+  calculateGroundSpeed,
+  calculateEffectiveWind,
+  isCrosswindWithinLimits,
+  calculateBestRunway,
+} from './wind.js';
+
+// Aircraft performance altitudes
+export {
+  pressureAltitude,
+  densityAltitude,
+  densityAltitudeFromIndicated,
+  isaTemperature,
+  ISA_SEA_LEVEL_PRESSURE_INHG,
+  ISA_SEA_LEVEL_TEMP_C,
+  ISA_LAPSE_RATE_C_PER_FT,
+} from './performance.js';

@@ -4,7 +4,7 @@
  * Provides bearing calculations for navigation between waypoints.
  */
 
-import { toRadians, toDegrees } from './distance';
+import { toRadians, toDegrees } from './distance.js';
 
 /**
  * Calculate initial bearing (forward azimuth) from point 1 to point 2

@@ -2,7 +2,7 @@ import React, { useMemo } from 'react'
 import { Box, useMediaQuery } from '@mui/material'
 import { useTheme } from '@mui/material/styles'
 import { MapContainer, TileLayer, Circle, CircleMarker, Marker, Popup, useMap } from 'react-leaflet'
-import { useQueries } from 'react-query'
+import { useQueries } from '@tanstack/react-query'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
 
@@ -141,15 +141,15 @@ const LocalMap: React.FC<Props> = ({ plan, overlays }) => {
     return out
   }, [plan.center, plan.nearby_airports])
 
-  const stationWeatherQueries = useQueries(
-    weatherStations.map((s) => ({
+  const stationWeatherQueries = useQueries({
+    queries: weatherStations.map((s) => ({
       queryKey: ['weather', s.code],
       queryFn: () => weatherService.getWeather(s.code, { suppressToast: true }),
       enabled: Boolean(s.code),
       staleTime: 5 * 60 * 1000,
       retry: 0,
     })),
-  ) as Array<{ data?: WeatherData }>
+  }) as Array<{ data?: WeatherData }>
 
   const weatherByCode = useMemo(() => {
     const m = new Map<string, WeatherData>()

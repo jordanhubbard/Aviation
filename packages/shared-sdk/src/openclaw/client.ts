@@ -5,7 +5,7 @@
  * Caller must provide baseUrl and apiKey (e.g. from keystore); no direct env access here.
  */
 
-import type { OpenClawClientConfig, SendMessageParams, SendMessageResult } from './types';
+import type { OpenClawClientConfig, SendMessageParams, SendMessageResult } from './types.js';
 
 const DEFAULT_MODEL = 'openclaw:main';
 
@@ -97,4 +97,4 @@ export function createOpenClawClient(config: OpenClawClientConfig) {
   };
 }
 
-export type { OpenClawClientConfig, SendMessageParams, SendMessageResult } from './types';
+export type { OpenClawClientConfig, SendMessageParams, SendMessageResult } from './types.js';

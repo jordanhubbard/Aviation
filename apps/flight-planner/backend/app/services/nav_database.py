@@ -87,17 +87,25 @@ class NavDatabase:
         """
         airport = self._airports.get(airport_code.upper())
 
+        icao = airport.icao if airport else airport_code.upper()
+
         sids = [
-            NavProcedureSchema(name="DEPARTURE1", type="SID", runway="04L", initial_altitude_ft=2000),
-            NavProcedureSchema(name="DEPARTURE2", type="SID", runway="04R", initial_altitude_ft=2000),
+            NavProcedureSchema(identifier="DEPARTURE1", airport_icao=icao,
+                               procedure_type="SID", transitions=["04L"]),
+            NavProcedureSchema(identifier="DEPARTURE2", airport_icao=icao,
+                               procedure_type="SID", transitions=["04R"]),
         ]
         stars = [
-            NavProcedureSchema(name="ARRIVAL1", type="STAR", runway="22L", initial_altitude_ft=5000),
-            NavProcedureSchema(name="ARRIVAL2", type="STAR", runway="22R", initial_altitude_ft=5000),
+            NavProcedureSchema(identifier="ARRIVAL1", airport_icao=icao,
+                               procedure_type="STAR", transitions=["22L"]),
+            NavProcedureSchema(identifier="ARRIVAL2", airport_icao=icao,
+                               procedure_type="STAR", transitions=["22R"]),
         ]
         approaches = [
-            NavProcedureSchema(name="ILS 04L", type="APPROACH", runway="04L"),
-            NavProcedureSchema(name="VOR 22L", type="APPROACH", runway="22L"),
+            NavProcedureSchema(identifier="ILS 04L", airport_icao=icao,
+                               procedure_type="APPROACH", transitions=["04L"]),
+            NavProcedureSchema(identifier="VOR 22L", airport_icao=icao,
+                               procedure_type="APPROACH", transitions=["22L"]),
         ]
 
         return NavDataProceduresResponse(

@@ -24,7 +24,7 @@ function resolveFixturePath(): string | null {
   return null;
 }
 
-function parseRss(xml: string): RawEvent[] {
+export function parseAvHeraldRss(xml: string): RawEvent[] {
   const items = xml.split('<item>').slice(1);
   const events: RawEvent[] = [];
   for (const chunk of items) {
@@ -100,7 +100,7 @@ export async function fetchRecentAvHerald(): Promise<RawEvent[]> {
       throw new Error(`AVHerald feed HTTP ${resp.status}`);
     }
     const xml = await resp.text();
-    const parsed = parseRss(xml);
+    const parsed = parseAvHeraldRss(xml);
     if (parsed.length >= 1) return parsed.slice(0, 40);
     // fall through to fixture
   } catch (err) {
@@ -113,7 +113,7 @@ export async function fetchRecentAvHerald(): Promise<RawEvent[]> {
     if (fixturePath) {
       try {
         const xml = fs.readFileSync(fixturePath, 'utf-8');
-        const parsed = parseRss(xml);
+        const parsed = parseAvHeraldRss(xml);
         if (parsed.length >= 1) return parsed;
       } catch (err) {
         console.warn('[avherald] fixture read failed', err);

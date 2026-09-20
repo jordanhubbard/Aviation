@@ -1,64 +1,123 @@
-// apps/aviation-accident-tracker/backend/tests/integration/ingestion.test.ts
+/**
+ * Integration test for the ingest pipeline: adapters -> normalize -> dedupe -> repo.
+ *
+ * Previously this exercised a parallel class-based ingest implementation that
+ * the service never used, hit the live network, and was excluded from the test
+ * run. It now drives the real pipeline (runRecentIngest) with mocked transports,
+ * so it is deterministic and runs by default.
+ */
 
-import { describe, test, expect, beforeEach } from 'vitest';
-import { ASNAdapter } from '../../src/ingest/asn-adapter.js';
-import { AVHeraldAdapter } from '../../src/ingest/avherald-adapter.js';
-import { IngestionOrchestrator } from '../../src/ingest/orchestrator.js';
-import { EventRepository } from '../../src/db/repository.js';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { runRecentIngest } from '../../src/ingest/ingestService.js';
+import { memoryRepo } from '../../src/repo/memoryRepo.js';
 
-describe('Data Ingestion Integration', () => {
-  let repository: EventRepository;
-  let orchestrator: IngestionOrchestrator;
+const ASN_HOST = 'aviation-safety.net';
 
-  beforeEach(async () => {
-    repository = new EventRepository();
-    await repository.initialize();
-    orchestrator = new IngestionOrchestrator(repository);
+function asnPage(date: string, registration: string): string {
+  return `<html><table><tr class="list">
+    <td class="list"><a href=/database/record.php?id=${registration}>${date}</a></td>
+    <td class="list">Cessna 172</td>
+    <td class="list">${registration}</td>
+    <td class="list">Private</td>
+    <td class="list">0</td>
+    <td class="list">United States</td>
+  </tr></table></html>`;
+}
+
+function avHeraldFeed(link: string, title: string, pubDate: string): string {
+  return `<?xml version="1.0"?><rss><channel>
+    <item><title>${title}</title><link>${link}</link><pubDate>${pubDate}</pubDate></item>
+  </channel></rss>`;
+}
+
+/** Route mocked fetch by URL so both adapters can run in one pass. */
+function mockSources(asnHtml: string, avHeraldXml: string) {
+  vi.mocked(fetch).mockImplementation(async (input: any) => {
+    const url = String(input);
+    if (url.includes(ASN_HOST)) {
+      return new Response(asnHtml, { status: 200 });
+    }
+    return new Response(avHeraldXml, { status: 200 });
+  });
+}
+
+describe('ingest pipeline', () => {
+  const today = new Date().toISOString().slice(0, 10);
+  const pubDate = new Date().toUTCString();
+
+  beforeEach(() => {
+    vi.stubGlobal('fetch', vi.fn());
   });
 
-  describe('ASN Adapter', () => {
-    test('fetches and parses real data', async () => {
-      const adapter = new ASNAdapter();
-      const events = await adapter.fetch(7); // Last 7 days
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
 
-      expect(Array.isArray(events)).toBe(true);
-      
-      if (events.length > 0) {
-        const event = events[0];
-        expect(event).toHaveProperty('external_id');
-        expect(event.external_id).toMatch(/^asn-/);
-        expect(event).toHaveProperty('source', 'ASN');
-        expect(event).toHaveProperty('date_time');
-        expect(event).toHaveProperty('aircraft_type');
+  it('normalizes and persists events from both sources', async () => {
+    mockSources(
+      asnPage(today, 'N12345'),
+      avHeraldFeed('https://avherald.com/h?article=1', 'Incident: Example A320 at London, engine shutdown', pubDate)
+    );
+
+    const result = await runRecentIngest();
+
+    expect(result.totalNormalized).toBeGreaterThan(0);
+    expect(result.inserted + result.updated).toBeGreaterThan(0);
+  });
+
+  it('reports counts that account for every normalized event', async () => {
+    mockSources(
+      asnPage(today, 'N54321'),
+      avHeraldFeed('https://avherald.com/h?article=2', 'Accident: Asia Air B789 at Tokyo, runway excursion', pubDate)
+    );
+
+    const result = await runRecentIngest();
+
+    // Dedupe may collapse records, so persisted <= normalized.
+    expect(result.inserted + result.updated).toBeLessThanOrEqual(result.totalNormalized);
+  });
+
+  it('makes ingested events retrievable from the repository', async () => {
+    const registration = 'N99999';
+    mockSources(
+      asnPage(today, registration),
+      avHeraldFeed('https://avherald.com/h?article=3', 'Incident: Example at Paris', pubDate)
+    );
+
+    await runRecentIngest();
+
+    const { data } = memoryRepo.list({ limit: 200 });
+    expect(data.some((e) => e.registration === registration)).toBe(true);
+  });
+
+  it('re-ingesting the same source data updates rather than duplicating', async () => {
+    const registration = 'N77777';
+    mockSources(
+      asnPage(today, registration),
+      avHeraldFeed('https://avherald.com/h?article=4', 'Incident: Example at Berlin', pubDate)
+    );
+
+    await runRecentIngest();
+    const before = memoryRepo.list({ limit: 500 }).total;
+
+    await runRecentIngest();
+    const after = memoryRepo.list({ limit: 500 }).total;
+
+    expect(after).toBe(before);
+  });
+
+  it('still completes when one source fails', async () => {
+    vi.mocked(fetch).mockImplementation(async (input: any) => {
+      if (String(input).includes(ASN_HOST)) {
+        throw new Error('ASN unreachable');
       }
-    }, 30000); // 30s timeout for network requests
-  });
-
-  describe('AVHerald Adapter', () => {
-    test('fetches and parses real data', async () => {
-      const adapter = new AVHeraldAdapter();
-      const events = await adapter.fetch(7);
-
-      expect(Array.isArray(events)).toBe(true);
-      
-      if (events.length > 0) {
-        const event = events[0];
-        expect(event).toHaveProperty('external_id');
-        expect(event.external_id).toMatch(/^avherald-/);
-        expect(event).toHaveProperty('source', 'AVHerald');
-        expect(event).toHaveProperty('date_time');
-        expect(event).toHaveProperty('aircraft_type');
-      }
-    }, 30000); // 30s timeout for network requests
-  });
-
-  describe('Ingestion Orchestrator', () => {
-    test('orchestrates ingestion from all sources', async () => {
-      const result = await orchestrator.runIngestion(7);
-
-      expect(result).toHaveProperty('success', true);
-      expect(result).toHaveProperty('totalEventsIngested');
-      expect(result.totalEventsIngested).toBeGreaterThan(0);
+      return new Response(
+        avHeraldFeed('https://avherald.com/h?article=5', 'Incident: Example at Madrid', pubDate),
+        { status: 200 }
+      );
     });
+
+    const result = await runRecentIngest();
+    expect(result.totalNormalized).toBeGreaterThan(0);
   });
 });

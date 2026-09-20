@@ -12,4 +12,4 @@ export {
   CacheTTL,
   getCache,
   initCache,
-} from './redis-cache';
+} from './redis-cache.js';

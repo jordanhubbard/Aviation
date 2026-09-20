@@ -1,0 +1,28 @@
+# Build contexts for the app images are the repo root, so without this every
+# build ships node_modules and .git.
+**/node_modules
+.git
+.github
+
+# Build outputs (images build these themselves)
+**/dist
+**/dist-esm
+**/build
+**/.vite
+**/*.tsbuildinfo
+
+# Local state
+**/venv
+**/.venv
+**/__pycache__
+**/.pytest_cache
+**/coverage
+**/logs
+**/*.log
+**/.DS_Store
+
+# Secrets / local env
+**/.env
+**/.env.local
+**/.env.*.local
+.keystore

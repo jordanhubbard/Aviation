@@ -20,6 +20,17 @@ export * from './aviation/notam.js';
 // Aviation hazard services (SIGMETs / AIRMETs / TFRs)
 export * from './aviation/hazards.js';
 
+// Aviation weight & balance (CG envelope calculations)
+export * from './aviation/weight-balance.js';
+
+// AviationWeather.gov client (raw METAR + TAF forecasts)
+export {
+  AviationWeatherClient,
+  type MetarResponse,
+  type TafResponse,
+  type WeatherClientOptions,
+} from './aviation/weather.js';
+
 // Date/Time utilities
 export * from './datetime/index.js';
 

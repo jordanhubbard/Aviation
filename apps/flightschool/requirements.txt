@@ -15,3 +15,8 @@ Flask-SQLAlchemy==3.1.1
 Flask-WTF==1.2.2
 email-validator>=2.0.0
 Werkzeug>=3.1.0
+
+# The shared aviation SDK (@aviation/shared-sdk python package) is installed
+# separately: the Dockerfile pip-installs it from /packages, and local runs
+# resolve it via app/utils/paths.py::add_package_path. A relative -e entry here
+# would break the image build, which installs requirements before copying it in.

@@ -1,5 +1,5 @@
-import type { IMultiTabWebUI, PaneConfig, TabReorderDirection } from './types';
-import { movePane, sortPanes } from './state';
+import type { IMultiTabWebUI, PaneConfig, TabReorderDirection } from './types.js';
+import { movePane, sortPanes } from './state.js';
 
 /**
  * In-memory registry for multi-tab panes

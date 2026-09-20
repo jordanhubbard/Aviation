@@ -4,10 +4,143 @@
   "description": "Shared SDK for aviation applications with weather services, AI methodology, and common utilities",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": {
+        "types": "./dist-esm/index.d.ts",
+        "default": "./dist-esm/index.js"
+      },
+      "require": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.js"
+      }
+    },
+    "./aviation/navigation": {
+      "import": {
+        "types": "./dist-esm/aviation/navigation/index.d.ts",
+        "default": "./dist-esm/aviation/navigation/index.js"
+      },
+      "require": {
+        "types": "./dist/aviation/navigation/index.d.ts",
+        "default": "./dist/aviation/navigation/index.js"
+      }
+    },
+    "./aviation/weather": {
+      "import": {
+        "types": "./dist-esm/aviation/weather/index.d.ts",
+        "default": "./dist-esm/aviation/weather/index.js"
+      },
+      "require": {
+        "types": "./dist/aviation/weather/index.d.ts",
+        "default": "./dist/aviation/weather/index.js"
+      }
+    },
+    "./aviation/airports": {
+      "import": {
+        "types": "./dist-esm/aviation/airports/index.d.ts",
+        "default": "./dist-esm/aviation/airports/index.js"
+      },
+      "require": {
+        "types": "./dist/aviation/airports/index.d.ts",
+        "default": "./dist/aviation/airports/index.js"
+      }
+    },
+    "./aviation/airports/bundled": {
+      "import": {
+        "types": "./dist-esm/aviation/airports/bundled.d.ts",
+        "default": "./dist-esm/aviation/airports/bundled.js"
+      },
+      "require": {
+        "types": "./dist/aviation/airports/bundled.d.ts",
+        "default": "./dist/aviation/airports/bundled.js"
+      }
+    },
+    "./aviation/notam": {
+      "import": {
+        "types": "./dist-esm/aviation/notam.d.ts",
+        "default": "./dist-esm/aviation/notam.js"
+      },
+      "require": {
+        "types": "./dist/aviation/notam.d.ts",
+        "default": "./dist/aviation/notam.js"
+      }
+    },
+    "./aviation/hazards": {
+      "import": {
+        "types": "./dist-esm/aviation/hazards.d.ts",
+        "default": "./dist-esm/aviation/hazards.js"
+      },
+      "require": {
+        "types": "./dist/aviation/hazards.d.ts",
+        "default": "./dist/aviation/hazards.js"
+      }
+    },
+    "./aviation/weight-balance": {
+      "import": {
+        "types": "./dist-esm/aviation/weight-balance.d.ts",
+        "default": "./dist-esm/aviation/weight-balance.js"
+      },
+      "require": {
+        "types": "./dist/aviation/weight-balance.d.ts",
+        "default": "./dist/aviation/weight-balance.js"
+      }
+    },
+    "./datetime": {
+      "import": {
+        "types": "./dist-esm/datetime/index.d.ts",
+        "default": "./dist-esm/datetime/index.js"
+      },
+      "require": {
+        "types": "./dist/datetime/index.d.ts",
+        "default": "./dist/datetime/index.js"
+      }
+    },
+    "./cache": {
+      "import": {
+        "types": "./dist-esm/cache/index.d.ts",
+        "default": "./dist-esm/cache/index.js"
+      },
+      "require": {
+        "types": "./dist/cache/index.d.ts",
+        "default": "./dist/cache/index.js"
+      }
+    },
+    "./integrations/google": {
+      "import": {
+        "types": "./dist-esm/integrations/google/index.d.ts",
+        "default": "./dist-esm/integrations/google/index.js"
+      },
+      "require": {
+        "types": "./dist/integrations/google/index.d.ts",
+        "default": "./dist/integrations/google/index.js"
+      }
+    },
+    "./plugin-sandbox": {
+      "import": {
+        "types": "./dist-esm/plugin-sandbox.d.ts",
+        "default": "./dist-esm/plugin-sandbox.js"
+      },
+      "require": {
+        "types": "./dist/plugin-sandbox.d.ts",
+        "default": "./dist/plugin-sandbox.js"
+      }
+    },
+    "./package.json": "./package.json",
+    "./*": {
+      "import": {
+        "types": "./dist-esm/*.d.ts",
+        "default": "./dist-esm/*.js"
+      },
+      "require": {
+        "types": "./dist/*.d.ts",
+        "default": "./dist/*.js"
+      }
+    }
+  },
   "scripts": {
-    "build": "tsc",
+    "build": "tsc && tsc -p tsconfig.esm.json && node scripts/write-esm-marker.mjs",
     "dev": "tsc --watch",
-    "clean": "rm -rf dist",
+    "clean": "rm -rf dist dist-esm",
     "test": "vitest run"
   },
   "keywords": [
@@ -27,5 +160,6 @@
     "@types/node": "^25.5.0",
     "typescript": "^6.0.2",
     "vitest": "^4.1.1"
-  }
+  },
+  "module": "dist-esm/index.js"
 }

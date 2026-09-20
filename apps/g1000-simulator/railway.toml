@@ -1,6 +1,8 @@
 [build]
 builder = "DOCKERFILE"
-dockerfilePath = "Dockerfile"
+# Path is relative to the repo root, which is the build context the Dockerfile
+# now needs in order to resolve pnpm workspace packages.
+dockerfilePath = "apps/g1000-simulator/Dockerfile"
 
 [deploy]
 startCommand = ""

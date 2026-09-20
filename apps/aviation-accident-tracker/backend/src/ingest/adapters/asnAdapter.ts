@@ -71,7 +71,7 @@ function extractAirportCodes(location: string): { airportIata?: string; airportI
   return { airportIata, airportIcao };
 }
 
-function parseRss(xml: string): RawEvent[] {
+export function parseAsnRss(xml: string): RawEvent[] {
   const items = xml.split('<item>').slice(1);
   const events: RawEvent[] = [];
   for (const chunk of items) {
@@ -121,7 +121,7 @@ function extractOperator(text: string): string | undefined {
   return undefined;
 }
 
-function parseAsnListPage(html: string, fetchedAt: string): RawEvent[] {
+export function parseAsnListPage(html: string, fetchedAt: string): RawEvent[] {
   const rowPattern = new RegExp('<tr class="list">([\\s\\S]*?)</tr>', 'g');
   const cellPattern = new RegExp('<td class="list">([\\s\\S]*?)</td>', 'g');
   const rows = [...html.matchAll(rowPattern)];
@@ -235,7 +235,7 @@ export async function fetchRecentAsn(): Promise<RawEvent[]> {
 
   try {
     const xml = fs.readFileSync(fixturePath, 'utf-8');
-    const parsed = parseRss(xml);
+    const parsed = parseAsnRss(xml);
     if (parsed.length >= 1) return parsed;
   } catch (err) {
     console.warn('[asn] fixture read failed', err);

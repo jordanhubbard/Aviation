@@ -60,7 +60,9 @@ export function createApp(repository: EventRepository) {
   if (fs.existsSync(frontendIndexPath)) {
     app.use(express.static(frontendDistPath));
 
-    app.get('*', (req, res, next) => {
+    // Express 5 (path-to-regexp v8) requires a named wildcard; bare '*' throws.
+    // '/{*splat}' keeps the Express 4 behaviour of also matching '/'.
+    app.get('/{*splat}', (req, res, next) => {
       if (req.path.startsWith('/api')) {
         return next();
       }

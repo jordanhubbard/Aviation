@@ -16,6 +16,26 @@ This document outlines the strategy for managing dependencies and performing reg
 
 ### Dependency Managers
 - **pnpm** (workspaces): For JavaScript/TypeScript dependencies. Internal package references use `workspace:*` protocol. `pnpm-workspace.yaml` defines the workspace packages.
+
+  **npm will not work here.** It cannot parse the `workspace:` protocol and
+  fails with `EUNSUPPORTEDPROTOCOL`, so `npm ci` and `npm install` are not
+  usable in this repo — including inside Dockerfiles and CI. There are no
+  committed npm lockfiles; `pnpm-lock.yaml` is the single source of truth. The
+  pnpm version is pinned by `packageManager` in the root `package.json` and
+  provisioned by corepack, so no global install is required:
+
+  ```bash
+  corepack pnpm install                       # exact, from the lockfile
+  pnpm --filter <pkg>... run build            # a package and its dependencies
+  ```
+
+  Dockerfiles build from the **repo root** so the workspace packages are in
+  context, and install with `pnpm install --frozen-lockfile --filter <pkg>...`.
+
+  Frontends on React must stay on the version the rest of the repo uses (19).
+  Mixing versions reintroduces a subtle failure: pnpm hoists a single
+  `@types/react` as the fallback for store packages, so a React 18 app ends up
+  compiling against React 19 types dragged in through a dependency's `.d.ts`.
 - **pip** (with virtualenv): For Python dependencies. Python packages create a `.venv` virtualenv for isolation.
 - **Leiningen**: For Clojure dependencies.
 

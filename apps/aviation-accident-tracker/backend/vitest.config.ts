@@ -12,8 +12,6 @@ export default defineConfig({
       'tests/integration/end-to-end.test.ts',
       'tests/integration/database.test.ts',
       'src/tests/api.test.ts',
-      // These hit real external APIs — skip in CI
-      'tests/integration/ingestion.test.ts',
     ],
     coverage: {
       reporter: ['text', 'json'],

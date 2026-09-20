@@ -1,5 +1,5 @@
 import unittest
-from ..app.services.gps_simulation import GPSSimulationService, GPSState
+from app.services.gps_simulation import GPSSimulationService, GPSState
 
 class TestGPSSimulationService(unittest.TestCase):
     def setUp(self):
