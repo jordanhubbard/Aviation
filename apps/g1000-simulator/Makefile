@@ -24,11 +24,11 @@ COMPOSE := $(shell docker compose version >/dev/null 2>&1 && echo "docker compos
 
 backend-test:
 	@if [ -d ".venv" ]; then \
-		PYTHONPATH=backend .venv/bin/pytest backend/tests/ tests/backend/ -ra; \
+		PYTHONPATH=backend:../../packages/flight-dynamics .venv/bin/pytest --import-mode=importlib backend/tests/ tests/backend/ -ra; \
 	elif [ -d "venv" ]; then \
-		PYTHONPATH=backend venv/bin/pytest backend/tests/ tests/backend/ -ra; \
+		PYTHONPATH=backend:../../packages/flight-dynamics venv/bin/pytest --import-mode=importlib backend/tests/ tests/backend/ -ra; \
 	else \
-		PYTHONPATH=backend python3 -m pytest backend/tests/ tests/backend/ -ra; \
+		PYTHONPATH=backend:../../packages/flight-dynamics python3 -m pytest --import-mode=importlib backend/tests/ tests/backend/ -ra; \
 	fi
 
 test-docker:

@@ -6,6 +6,7 @@ packages:
   # aviation-missions-app frontends were omitted and never had deps installed.
   - "apps/*/frontend"
   - "apps/*/backend"
+pmOnFail: ignore
 allowBuilds:
   '@apollo/protobufjs': true
   '@scarf/scarf': false

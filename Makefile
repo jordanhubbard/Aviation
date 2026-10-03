@@ -157,6 +157,8 @@ test: test-node test-go test-python test-clojure
 
 test-node:
 	@echo "🧪 Running Node.js/TypeScript tests..."
+	$(PNPM) --filter @aviation/shared-sdk run build
+	$(PNPM) --filter @aviation/keystore run build
 	@# Run each package's tests directly via its local vitest/jest binary so that
 	@# pnpm's pre-run dependency-installation check (which requires network access)
 	@# is bypassed in offline/sandboxed environments.

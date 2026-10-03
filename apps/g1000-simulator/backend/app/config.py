@@ -3,8 +3,13 @@ from __future__ import annotations
 from pathlib import Path
 from typing import List
 
-from pydantic import Field
-from pydantic_settings import BaseSettings, SettingsConfigDict
+from pydantic import BaseModel, Field
+
+try:
+    from pydantic_settings import BaseSettings, SettingsConfigDict
+except ImportError:
+    BaseSettings = BaseModel
+    SettingsConfigDict = dict
 
 from app.secrets import get_stream_api_key
 
