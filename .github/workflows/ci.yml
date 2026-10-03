@@ -104,6 +104,9 @@ jobs:
       - name: Install frontend dependencies
         run: pnpm install --frozen-lockfile --filter flight-planner-frontend...
 
+      - name: Build shared SDK
+        run: pnpm --filter @aviation/shared-sdk run build
+
       - name: Type check frontend
         run: pnpm --filter flight-planner-frontend run type-check
 
