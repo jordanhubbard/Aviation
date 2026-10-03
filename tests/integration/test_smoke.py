@@ -25,7 +25,7 @@ def test_requirements_parseable():
 def test_flight_planner_app_module_structure():
     """flight-planner app directory has expected structure."""
     base = os.path.join(os.path.dirname(__file__), "..", "..", "apps", "flight-planner")
-    assert os.path.isfile(os.path.join(base, "main.py")), "main.py missing"
+    assert os.path.isfile(os.path.join(base, "backend", "main.py")), "backend/main.py missing"
     assert os.path.isfile(os.path.join(base, "requirements.txt")), "requirements.txt missing"
 
 
