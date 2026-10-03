@@ -25,7 +25,6 @@ jobs:
   # Trivy filesystem scan — no Docker Hub credentials required
   trivy:
     runs-on: ubuntu-latest
-    continue-on-error: true  # non-blocking: finding real CVEs in dependencies we can't patch immediately
     steps:
       - uses: actions/checkout@v6
       - name: Run Trivy Vulnerability Scanner (filesystem)
@@ -36,7 +35,6 @@ jobs:
           format: 'table'
           exit-code: '1'
           ignore-unfixed: true
-          trivyignores: 'CVE-2024-29415,GHSA-67mh-4wv8-2f99,GHSA-vg6x-rcgg-rjx6,CVE-2026-31802'
           severity: 'CRITICAL,HIGH'
 
   # Snyk — requires SNYK_TOKEN secret
@@ -55,7 +53,6 @@ jobs:
   # pip-audit for Python dependency CVEs
   pip-audit:
     runs-on: ubuntu-latest
-    continue-on-error: true  # non-blocking: suppress on unpatchable transitive CVEs
     steps:
       - uses: actions/checkout@v6
       - name: Set up Python
@@ -63,11 +60,12 @@ jobs:
         with:
           python-version: '3.11'
       - name: Install local packages and dependencies
-        working-directory: apps/flight-planner
         run: |
           python -m pip install --upgrade pip
           pip install pip-audit
-          pip install -r requirements.txt
+          pip install -e packages/shared-sdk/python
+          grep -v '^-e ' apps/flight-planner/requirements.txt >/tmp/flight-planner-requirements.txt
+          pip install -r /tmp/flight-planner-requirements.txt
       - name: Run pip-audit
         # Skip local packages (aviation-shared-sdk) — they have no PyPI CVE data
         run: pip-audit --skip-editable
