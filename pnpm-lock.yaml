@@ -4,6 +4,12 @@ settings:
   autoInstallPeers: true
   excludeLinksFromLockfile: false
 
+overrides:
+  ip-address: '>=10.3.1'
+  react-router@^7.0.0: 7.18.4
+  react-router-dom@^7.0.0: 7.18.4
+  ws: '>=8.21.0'
+
 importers:
 
   .:
@@ -67,7 +73,7 @@ importers:
         version: 0.4.2(graphql@16.13.2)
       graphql-ws:
         specifier: ^6.0.8
-        version: 6.0.8(graphql@16.13.2)(ws@8.20.0)
+        version: 6.0.8(graphql@16.13.2)(ws@8.22.0)
       node-cron:
         specifier: ^4.2.1
         version: 4.2.1
@@ -87,8 +93,8 @@ importers:
         specifier: ^13.0.0
         version: 13.0.0
       ws:
-        specifier: ^8.16.0
-        version: 8.20.0
+        specifier: '>=8.21.0'
+        version: 8.22.0
       yaml:
         specifier: ^2.8.3
         version: 2.8.3
@@ -154,8 +160,8 @@ importers:
         specifier: ^4.2.1
         version: 4.2.1(leaflet@1.9.4)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
       react-router-dom:
-        specifier: ^7.11.0
-        version: 7.13.2(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
+        specifier: 7.18.4
+        version: 7.18.4(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
     devDependencies:
       '@axe-core/playwright':
         specifier: ^4.11.1
@@ -305,8 +311,8 @@ importers:
         specifier: ^5.0.0
         version: 5.0.0(leaflet@1.9.4)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
       react-router-dom:
-        specifier: ^7.11.0
-        version: 7.13.2(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
+        specifier: 7.18.4
+        version: 7.18.4(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
       yup:
         specifier: ^1.4.0
         version: 1.7.1
@@ -393,8 +399,8 @@ importers:
         specifier: workspace:*
         version: link:../../packages/ui-framework
       ws:
-        specifier: ^8.18.0
-        version: 8.20.0
+        specifier: '>=8.21.0'
+        version: 8.22.0
     devDependencies:
       '@types/jest':
         specifier: ^30.0.0
@@ -518,8 +524,8 @@ importers:
         specifier: ^9.0.1
         version: 9.0.1
       ws:
-        specifier: ^8.14.2
-        version: 8.20.0
+        specifier: '>=8.21.0'
+        version: 8.22.0
     devDependencies:
       '@types/jest':
         specifier: ^30.0.0
@@ -573,8 +579,8 @@ importers:
         specifier: ^4.18.0
         version: 4.22.1
       ws:
-        specifier: ^8.16.0
-        version: 8.20.0
+        specifier: '>=8.21.0'
+        version: 8.22.0
     devDependencies:
       '@types/cors':
         specifier: ^2.8.17
@@ -607,8 +613,8 @@ importers:
         specifier: ^19.0.0
         version: 19.2.4(react@19.2.4)
       react-router-dom:
-        specifier: ^7.0.0
-        version: 7.13.2(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
+        specifier: 7.18.4
+        version: 7.18.4(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
       zustand:
         specifier: ^5.0.0
         version: 5.0.12(@types/react@19.2.14)(immer@11.1.18)(react@19.2.4)(use-sync-external-store@1.7.0(react@19.2.4))
@@ -647,8 +653,8 @@ importers:
         specifier: ^19.2.4
         version: 19.2.4(react@19.2.4)
       react-router-dom:
-        specifier: ^7.11.0
-        version: 7.13.2(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
+        specifier: 7.18.4
+        version: 7.18.4(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
     devDependencies:
       '@types/react':
         specifier: ^19.2.14
@@ -4315,7 +4321,7 @@ packages:
       '@fastify/websocket': ^10 || ^11
       crossws: ~0.3
       graphql: ^15.10.1 || ^16
-      ws: ^8
+      ws: '>=8.21.0'
     peerDependenciesMeta:
       '@fastify/websocket':
         optional: true
@@ -4462,8 +4468,8 @@ packages:
     resolution: {integrity: sha512-5Hh7Y1wQbvY5ooGgPbDaL5iYLAPzMTUrjMulskHLH6wnv/A+1q5rgEaiuqEjB+oxGXIVZs1FF+R/KPN3ZSQYYg==}
     engines: {node: '>=12'}
 
-  ip-address@10.1.0:
-    resolution: {integrity: sha512-XXADHxXmvT9+CRxhXg56LJovE+bmWnEWB78LB83VZTprKTmaC5QfruXocxzTZ2Kl0DNwKuBdlIhjL8LeY8Sf8Q==}
+  ip-address@10.7.3:
+    resolution: {integrity: sha512-A1kdq/tSb5QjvKvAMgIoEvDBIgL7qaqVP/jkvSwYYRZ9iEzvPpopxp2wQfu3SuZRHtpHNxMn8Fs0bS+gf5Xmwg==}
     engines: {node: '>= 12'}
 
   ipaddr.js@1.9.1:
@@ -5466,8 +5472,8 @@ packages:
       react: '>=16.8'
       react-dom: '>=16.8'
 
-  react-router-dom@7.13.2:
-    resolution: {integrity: sha512-aR7SUORwTqAW0JDeiWF07e9SBE9qGpByR9I8kJT5h/FrBKxPMS6TiC7rmVO+gC0q52Bx7JnjWe8Z1sR9faN4YA==}
+  react-router-dom@7.18.4:
+    resolution: {integrity: sha512-yrfmJHIpDG7taCpqKjT1G5B6q3O2K+RN8/fgNf0lTjCwiPbQ0ei6vXX9ZjQR+7ld8Tr7Z5xmyMnZ8YJrphWQUw==}
     engines: {node: '>=20.0.0'}
     peerDependencies:
       react: '>=18'
@@ -5479,8 +5485,8 @@ packages:
     peerDependencies:
       react: '>=16.8'
 
-  react-router@7.13.2:
-    resolution: {integrity: sha512-tX1Aee+ArlKQP+NIUd7SE6Li+CiGKwQtbS+FfRxPX6Pe4vHOo6nr9d++u5cwg+Z8K/x8tP+7qLmujDtfrAoUJA==}
+  react-router@7.18.4:
+    resolution: {integrity: sha512-PUPQcMhMGRAslLcvtlPz/kmzBEWPhLdgLFrL7pLNepBL6dX0lWj4WD2cUYVgYCuT3jxvghYFg81cDTj44DhetQ==}
     engines: {node: '>=20.0.0'}
     peerDependencies:
       react: '>=18'
@@ -6422,8 +6428,8 @@ packages:
     resolution: {integrity: sha512-+QU2zd6OTD8XWIJCbffaiQeH9U73qIqafo1x6V1snCWYGJf6cVE0cDR4D8xRzcEnfI21IFrUPzPGtcPf8AC+Rw==}
     engines: {node: ^14.17.0 || ^16.13.0 || >=18.0.0}
 
-  ws@8.20.0:
-    resolution: {integrity: sha512-sAt8BhgNbzCtgGbt2OxmpuryO63ZoDk/sqaB/znQm94T4fCEsy/yV+7CdC1kJhOU9lboAEU7R3kquuycDoibVA==}
+  ws@8.22.0:
+    resolution: {integrity: sha512-Ydggc987+RO0AnWtZ/7Wq9FtNvcrL1b/RO0ud9mWjUPgDrsAAwQSF51sm2hm1XofbU/4jkpGEsLFsZZxU+1DOg==}
     engines: {node: '>=10.0.0'}
     peerDependencies:
       bufferutil: ^4.0.1
@@ -9737,7 +9743,7 @@ snapshots:
   express-rate-limit@8.3.2(express@5.2.1):
     dependencies:
       express: 5.2.1
-      ip-address: 10.1.0
+      ip-address: 10.7.3
 
   express@4.22.1:
     dependencies:
@@ -10083,11 +10089,11 @@ snapshots:
       graphql: 16.13.2
       warning: 4.0.3
 
-  graphql-ws@6.0.8(graphql@16.13.2)(ws@8.20.0):
+  graphql-ws@6.0.8(graphql@16.13.2)(ws@8.22.0):
     dependencies:
       graphql: 16.13.2
     optionalDependencies:
-      ws: 8.20.0
+      ws: 8.22.0
 
   graphql@16.13.2: {}
 
@@ -10239,7 +10245,7 @@ snapshots:
 
   internmap@2.0.3: {}
 
-  ip-address@10.1.0: {}
+  ip-address@10.7.3: {}
 
   ipaddr.js@1.9.1: {}
 
@@ -10763,7 +10769,7 @@ snapshots:
       whatwg-encoding: 3.1.1
       whatwg-mimetype: 4.0.0
       whatwg-url: 14.2.0
-      ws: 8.20.0
+      ws: 8.22.0
       xml-name-validator: 5.0.0
     transitivePeerDependencies:
       - bufferutil
@@ -11413,18 +11419,18 @@ snapshots:
       react-dom: 19.2.4(react@19.2.4)
       react-router: 6.30.6(react@19.2.4)
 
-  react-router-dom@7.13.2(react-dom@19.2.4(react@19.2.4))(react@19.2.4):
+  react-router-dom@7.18.4(react-dom@19.2.4(react@19.2.4))(react@19.2.4):
     dependencies:
       react: 19.2.4
       react-dom: 19.2.4(react@19.2.4)
-      react-router: 7.13.2(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
+      react-router: 7.18.4(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
 
   react-router@6.30.6(react@19.2.4):
     dependencies:
       '@remix-run/router': 1.23.4
       react: 19.2.4
 
-  react-router@7.13.2(react-dom@19.2.4(react@19.2.4))(react@19.2.4):
+  react-router@7.18.4(react-dom@19.2.4(react@19.2.4))(react@19.2.4):
     dependencies:
       cookie: 1.1.1
       react: 19.2.4
@@ -12545,7 +12551,7 @@ snapshots:
       imurmurhash: 0.1.4
       signal-exit: 4.1.0
 
-  ws@8.20.0: {}
+  ws@8.22.0: {}
 
   xml-name-validator@5.0.0: {}
 
