@@ -4,7 +4,7 @@
   "host": "146.190.134.110",
   "registry_owner": "jordanhubbard",
   "apps": [
-    {"name": "aviation-accident-tracker", "registry_image": "accident-tracker", "port": 18766, "container_port": 3002, "health": "/health", "memory_mb": 768, "volumes": ["data:/app/data"], "environment": {"DATABASE_PATH": "/app/data/events.db", "ENABLE_CRON": "false"}},
+    {"name": "aviation-accident-tracker", "registry_image": "accident-tracker", "port": 18766, "container_port": 3002, "health": "/health", "memory_mb": 768, "volumes": ["data:/app/data"], "environment": {"DATABASE_PATH": "/app/data/events.db", "ENABLE_CRON": "true"}},
     {"name": "aviation-chat", "port": 18767, "container_port": 31416, "health": "/health", "memory_mb": 512},
     {"name": "aviation-missions-app", "registry_image": "aviation-monorepo-missions-app", "port": 18768, "container_port": 3000, "health": "/health", "memory_mb": 2048, "volumes": ["data:/app/data"]},
     {"name": "flight-planner", "registry_image": "flightplanner", "port": 18769, "container_port": 8000, "health": "/api/health", "memory_mb": 2048, "volumes": ["data:/app/data"]},
