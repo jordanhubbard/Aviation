@@ -20,7 +20,7 @@ type ResolvedAppLink = AppLink & { url: string };
 
 const metaAppMode = import.meta.env.VITE_META_APP_MODE ?? 'tabs';
 const isLauncher = metaAppMode === 'launcher';
-const repoBaseUrl = 'https://github.com/jordanhubbard/Aviation/tree/main/apps';
+const repoBaseUrl = 'https://github.com/jordanhubbard/Aviation/tree/main/components/legacy-project-wrapper/implementation/apps';
 
 const appLinks: AppLink[] = [
   {
@@ -87,7 +87,7 @@ const appLinks: AppLink[] = [
     localUrl: 'http://localhost:8010',
     productionUrl: 'https://kmlab.jordanhubbard.net/',
     envUrl: import.meta.env.VITE_FLIGHT_TRACK_ANALYZER_URL,
-    sourceUrl: 'https://github.com/jordanhubbard/Aviation/tree/main/components/legacy-project-wrapper/implementation/apps/flight-track-analyzer',
+    sourceUrl: `${repoBaseUrl}/flight-track-analyzer`,
   },
   {
     id: 'tracker',
