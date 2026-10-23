@@ -51,7 +51,7 @@ release-visible outcome to `CHANGELOG.md`; Git preserves prior queue states.
   `components/legacy-project-wrapper/implementation`.
 - **Evidence:** Phase 1.2 lift-and-shift identity `sha256:c5ca4361ba010f6e8d81c93398468f9f4f8b8cc352504bc8535fa74b7c6e9990`.
 
-### [ ] ADOPT-003 — Preserve Aviation interfaces and integrate flight analyzer
+### [x] ADOPT-003 — Preserve Aviation interfaces and integrate flight analyzer
 
 - **Priority:** P0
 - **Owner:** components/legacy-project-wrapper and flight-analyzer
@@ -66,4 +66,4 @@ release-visible outcome to `CHANGELOG.md`; Git preserves prior queue states.
   - [x] Literate AI project validate and verify pass (authority, two locks, current retained receipt at 4646278fb)
   - [x] Existing Aviation app tests and all 54 KMLab tests pass in the merged tree (`make test`: 13 Node suites, Go, 61 analyzer tests)
   - [x] Synthetic touchdown tests exercise airport elevation, GPS bias, touch-and-go, and go-around (`app/tests/test_airports.py`)
-  - [ ] Hosted CI confirms retained apps and new analyzer after push
+  - [x] Hosted CI confirms retained apps and new analyzer after push (PR #304, a5fa6fa9d: 19 checks passed, Dependabot skipped)
