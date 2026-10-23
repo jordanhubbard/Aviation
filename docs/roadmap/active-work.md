@@ -68,7 +68,7 @@ release-visible outcome to `CHANGELOG.md`; Git preserves prior queue states.
   - [x] Synthetic touchdown tests exercise airport elevation, GPS bias, touch-and-go, and go-around (`app/tests/test_airports.py`)
   - [x] Hosted CI confirms retained apps and new analyzer after push (PR #304, a5fa6fa9d: 19 checks passed, Dependabot skipped)
 
-### [ ] ADOPT-004 — Repair retained deployment workflow after conversion
+### [x] ADOPT-004 — Repair retained deployment workflow after conversion
 
 - **Priority:** P0
 - **Owner:** workflows/deploy.yml
@@ -76,6 +76,6 @@ release-visible outcome to `CHANGELOG.md`; Git preserves prior queue states.
 - **Conclusion:** The job-level working directory is unavailable before checkout, and Docker builds must use the real retained implementation as context so workspace COPY instructions see actual files.
 - **Depends on:** ADOPT-003 merged adoption
 - **Implementation:**
-  - [ ] Remove the unnecessary workflow-wide working directory and point Docker actions at the retained implementation.
+  - [x] Remove the unnecessary workflow-wide working directory and point Docker actions at the retained implementation (`.github/workflows/deploy.yml` in PR #305).
 - **Evidence:**
-  - [ ] Workflow YAML parses, pull-request checks pass, and the exact post-merge main deploy workflow reaches its intended staging dry run.
+  - [x] Workflow YAML parses, PR #305 passed 19 checks, and exact main run 39905597056 built four images and passed the staging dry run at c8b958a34.
