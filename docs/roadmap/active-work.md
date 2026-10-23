@@ -59,11 +59,11 @@ release-visible outcome to `CHANGELOG.md`; Git preserves prior queue states.
 - **Conclusion:** The CLI lift-and-shift preserved retained source and wrapper parity but moved the old workspace paths and workflows below the retained Component. Restore compatible entrypoints, then add the analyzer as an Aviation application and use the existing bundled airport dataset as optional corroborating touchdown evidence.
 - **Depends on:** ADOPT-002 retained source boundary; KMLab FLIGHT-002
 - **Implementation:**
-  - [ ] Restore root workspace and CI entrypoints against the retained implementation
-  - [ ] Integrate KMLab source, API, UI, tests, and runtime paths as an Aviation app
-  - [ ] Add airport identity and MSL elevation to landing analysis with bias, missing-data, and proximity safeguards
+  - [x] Restore root workspace and CI entrypoints against the retained implementation (root symlinks, Make wrapper, and GitHub workflows)
+  - [x] Integrate KMLab source, API, UI, tests, and runtime paths as an Aviation app (`apps/flight-track-analyzer`)
+  - [x] Add airport identity and MSL elevation to landing analysis with bias, missing-data, and proximity safeguards (61 analyzer tests)
 - **Evidence:**
-  - [ ] Literate AI project validate and verify pass
-  - [ ] Existing Aviation app tests and all 54 KMLab tests pass in the merged tree
-  - [ ] Synthetic touchdown tests exercise airport elevation, GPS bias, touch-and-go, and go-around
+  - [x] Literate AI project validate and verify pass (authority, two locks, current retained receipt at 4646278fb)
+  - [x] Existing Aviation app tests and all 54 KMLab tests pass in the merged tree (`make test`: 13 Node suites, Go, 61 analyzer tests)
+  - [x] Synthetic touchdown tests exercise airport elevation, GPS bias, touch-and-go, and go-around (`app/tests/test_airports.py`)
   - [ ] Hosted CI confirms retained apps and new analyzer after push
