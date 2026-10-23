@@ -98,6 +98,11 @@ def image_name(app: dict, revision: str) -> str:
     return f"aviation/{app['name']}:{revision[:12]}"
 
 
+def registry_image_name(config: dict, app: dict, revision: str) -> str:
+    registry_image = app.get("registry_image", app["name"])
+    return f"ghcr.io/{config['registry_owner']}/{registry_image}:sha-{revision}"
+
+
 def build(app: dict, revision: str) -> str:
     image = image_name(app, revision)
     print(f"Building {app['name']} from {revision}", flush=True)
@@ -110,8 +115,7 @@ def build(app: dict, revision: str) -> str:
 
 
 def fetch_image(config: dict, app: dict, revision: str) -> str:
-    registry_image = app.get("registry_image", app["name"])
-    source = f"ghcr.io/{config['registry_owner']}/{registry_image}:sha-{revision}"
+    source = registry_image_name(config, app, revision)
     target = image_name(app, revision)
     with tempfile.TemporaryDirectory(prefix="aviation-docker-auth-") as config_dir:
         env = {**os.environ, "DOCKER_CONFIG": config_dir}
@@ -183,12 +187,29 @@ def ship_image(host: str, image: str) -> None:
         raise RuntimeError(f"failed to transfer {image}")
 
 
+def prepare_remote_image(config: dict, app: dict, revision: str, host: str) -> None:
+    source = registry_image_name(config, app, revision)
+    target = image_name(app, revision)
+    try:
+        run("ssh", host, "docker", "pull", "--platform", "linux/amd64", source)
+    except subprocess.CalledProcessError:
+        print(f"Remote pull failed for {app['name']}; transferring the exact image instead", flush=True)
+        ship_image(host, fetch_image(config, app, revision))
+    else:
+        run("ssh", host, "docker", "tag", source, target)
+    image_revision = output(
+        "ssh", host, "docker", "image", "inspect", target,
+        "--format", '{{index .Config.Labels "org.opencontainers.image.revision"}}',
+    )
+    if image_revision != revision:
+        raise RuntimeError(f"remote image revision label does not match Git HEAD for {app['name']}")
+
+
 def deploy(config: dict, app: dict, revision: str, host: str) -> None:
     if app.get("runtime") == "native":
         run("make", "-C", str(IMPLEMENTATION / "apps" / app["name"]), "deploy", f"DEPLOY_HOST={host}")
         return
-    image = fetch_image(config, app, revision)
-    ship_image(host, image)
+    prepare_remote_image(config, app, revision, host)
     with tempfile.TemporaryDirectory(prefix="aviation-deploy-") as temp:
         stage = Path(temp)
         render(app, revision, stage)
