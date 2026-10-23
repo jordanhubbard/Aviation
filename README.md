@@ -11,6 +11,9 @@ Run `make build` or `make test` for the retained workspace, or inspect its
 Literate AI state with `litai status`. The root [project guide](docs/README.md)
 tracks the adoption; the [existing Aviation documentation](components/legacy-project-wrapper/implementation/docs/)
 covers the applications and their APIs.
+The [deployment guide](components/legacy-project-wrapper/implementation/deploy/README.md)
+describes the per-app systemd/Caddy services, DNS names, and `make deploy-*`
+commands for the hosted instance.
 
 The applications are educational tools and are not approved for real flight
 operations. See [LEGAL.md](LEGAL.md).
