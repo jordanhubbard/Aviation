@@ -89,16 +89,16 @@ release-visible outcome to `CHANGELOG.md`; Git preserves prior queue states.
 - **Priority:** P0
 - **Owner:** retained application deployment and monorepo operations
 - **Direction:** Build, run, and deploy every Aviation application from the monorepo using KMLab-style service management, unique loopback ports, DNS names, and live public checks.
-- **Conclusion:** Eleven app directories exist; only the analyzer has an SSH/systemd/Caddy deploy path, and the target host is under memory pressure. Add a uniform reviewed deployment contract per actual service, verify packaging and runtime locally, then roll out serially only with adequate capacity and DNS control.
+- **Conclusion:** All eleven applications now have Aviation-owned deployment definitions, unique loopback ports, DigitalOcean DNS records, systemd units, and public HTTPS health checks. The host has been resized to 8 vCPUs and 32 GiB RAM. Chat still needs a reachable OpenClaw gateway for `/chat`; Accident Tracker starts its scheduler but its ASN source returned HTTP 403. The host's existing `nmbd` service times out because its configured interface filter has no usable broadcast interface.
 - **Depends on:** ADOPT-003; ADOPT-004
-- **Next action:** Complete app-specific startup and state checks, then qualify all eleven OCI builds on native amd64 in the review workflow.
+- **Next action:** Verify Chat against a reachable OpenClaw gateway, resolve the Accident Tracker source failure, and recheck host services and resources after the final exact-revision rollout.
 - **Implementation:**
-  - [ ] Inventory each application runtime, data and credential requirements; keep the manifest aligned with its actual health path and writable state.
-  - [ ] Build and smoke-test deploy packages from committed Aviation source; qualify the exact revision on native amd64 CI.
-  - [ ] Install idempotent systemd/Caddy services with unique loopback ports, health checks, and rollback; preserve the existing analyzer service and its airport data.
-  - [ ] Increase host capacity, register DNS, and deploy each service serially with resource checks.
+  - [x] Inventory each application runtime, data and credential requirements; keep the manifest aligned with its actual health path and writable state.
+  - [x] Build and smoke-test deploy packages from committed Aviation source; qualify the exact revision on native amd64 CI.
+  - [x] Install idempotent systemd/Caddy services with unique loopback ports, health checks, and rollback; preserve the existing analyzer service and its airport data.
+  - [x] Increase host capacity, register DNS, and deploy each service serially with resource checks.
 - **Evidence:**
-  - [ ] All eleven images build on the target architecture and application smoke checks pass.
+  - [x] All eleven images build on the target architecture and application smoke checks pass (exact-main image run 39921567228; all eleven public health routes returned HTTP 200 during the serial smoke rollout).
   - [ ] Project verification and exact revision review checks pass.
-  - [ ] All eleven active units and Caddy sites validate, and every DNS name responds over HTTPS to a meaningful health request.
+  - [x] All eleven active units and Caddy sites validate, and every DNS name responds over HTTPS to a meaningful health request.
   - [ ] Production features requiring credentials are exercised, and host memory, swap, disk, and existing services remain healthy.
