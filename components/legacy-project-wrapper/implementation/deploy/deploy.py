@@ -11,6 +11,7 @@ import argparse
 import json
 import os
 import re
+import shlex
 import socket
 import subprocess
 import sys
@@ -199,7 +200,7 @@ def prepare_remote_image(config: dict, app: dict, revision: str, host: str) -> N
         run("ssh", host, "docker", "tag", source, target)
     image_revision = output(
         "ssh", host, "docker", "image", "inspect", target,
-        "--format", '{{index .Config.Labels "org.opencontainers.image.revision"}}',
+        "--format", shlex.quote('{{index .Config.Labels "org.opencontainers.image.revision"}}'),
     )
     if image_revision != revision:
         raise RuntimeError(f"remote image revision label does not match Git HEAD for {app['name']}")
