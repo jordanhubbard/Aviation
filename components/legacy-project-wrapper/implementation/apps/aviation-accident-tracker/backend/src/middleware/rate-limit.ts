@@ -3,7 +3,6 @@
  */
 
 import rateLimit from 'express-rate-limit';
-import { Request, Response } from 'express';
 
 /**
  * Rate limiter for public API endpoints
@@ -18,7 +17,7 @@ export const publicRateLimiter = rateLimit({
   },
   standardHeaders: true,
   legacyHeaders: false,
-  handler: (req: Request, res: Response) => {
+  handler: (_req, res) => {
     res.status(429).json({
       error: 'Rate limit exceeded',
       message: 'Too many requests. Please try again later.',
@@ -42,11 +41,11 @@ export const authenticatedRateLimiter = rateLimit({
   },
   standardHeaders: true,
   legacyHeaders: false,
-  keyGenerator: (req: Request) => {
+  keyGenerator: (req) => {
     // Use API key as identifier instead of IP
     return (req as any).apiKey || req.ip || 'unknown';
   },
-  handler: (req: Request, res: Response) => {
+  handler: (_req, res) => {
     res.status(429).json({
       error: 'Rate limit exceeded',
       message: 'Too many requests with this API key. Please try again later.',
@@ -70,7 +69,7 @@ export const ingestionRateLimiter = rateLimit({
   },
   standardHeaders: true,
   legacyHeaders: false,
-  handler: (req: Request, res: Response) => {
+  handler: (_req, res) => {
     res.status(429).json({
       error: 'Rate limit exceeded',
       message: 'Too many ingestion requests. Please wait before retrying.',

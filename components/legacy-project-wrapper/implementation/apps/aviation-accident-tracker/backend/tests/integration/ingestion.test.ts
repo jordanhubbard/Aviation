@@ -11,6 +11,10 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { runRecentIngest } from '../../src/ingest/ingestService.js';
 import { memoryRepo } from '../../src/repo/memoryRepo.js';
 
+vi.mock('../../src/ingest/adapters/ntsbAdapter.js', () => ({
+  fetchRecentNtsb: vi.fn().mockResolvedValue([]),
+}));
+
 const ASN_HOST = 'aviation-safety.net';
 
 function asnPage(date: string, registration: string): string {
