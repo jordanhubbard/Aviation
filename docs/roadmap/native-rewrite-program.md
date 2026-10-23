@@ -7,6 +7,10 @@
 The retained implementation at `components/legacy-project-wrapper/implementation` remains source-authority
 until each boundary earns transfer under ADR 0002.
 
+The initial application, package, asset, and harness map is in the
+[native boundary inventory](native-boundary-inventory.md). It is a partial source-evidence pass;
+public contracts and file-by-file authority classification remain open.
+
 ## Ordered work
 
 1. [ ] Produce a boundary inventory: deployables, public interfaces, data schemas,
