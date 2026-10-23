@@ -6,7 +6,7 @@ ARG BUILDKIT_INLINE_CACHE=1
 FROM node:${NODE_VERSION}-alpine AS base
 WORKDIR /app
 
-RUN apk add --no-cache python3 make g++ sqlite
+RUN apk add --no-cache python3 make g++ sqlite mdbtools-utils
 
 # This repo is a pnpm workspace and its packages use the "workspace:" protocol,
 # which npm cannot resolve (EUNSUPPORTEDPROTOCOL). Use the pinned pnpm.

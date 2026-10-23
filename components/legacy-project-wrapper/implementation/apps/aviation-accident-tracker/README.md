@@ -8,7 +8,7 @@ The Aviation Accident Tracker ingests, deduplicates, and serves aviation acciden
 
 ### Key Features
 
-- **Multi-Source Ingestion**: ASN (Aviation Safety Network), AVHerald
+- **Multi-Source Ingestion**: NTSB weekly public data, ASN (Aviation Safety Network), AVHerald
 - **Deduplication**: Smart merging based on (date_z, registration) with fuzzy fallback
 - **Classification**: Automated GA (General Aviation) vs Commercial categorization
 - **Provenance**: Full source tracking with URLs, fetch times, and checksums
@@ -328,9 +328,9 @@ The application includes built-in scheduled data ingestion that runs automatical
 ### Configuration
 
 - **Schedule**: Every 6 hours by default (`0 */6 * * *`)
-- **Customization**: Set `INGEST_CRON` environment variable (cron format)
+- **Customization**: Set `INGESTION_CRON` environment variable (cron format)
 - **Enable/Disable**: Set `ENABLE_CRON=false` to disable automatic ingestion
-- **Window**: Ingests events from the last 40 days (configurable)
+- **Window**: Ingests events from the last 400 days by default (`INGESTION_WINDOW_DAYS`)
 
 ### Monitoring
 
@@ -355,7 +355,7 @@ Use the `/api/ingest/run` endpoint to manually trigger ingestion outside the sch
 ### How It Works
 
 1. **Cron Job**: Runs on schedule (default: every 6 hours)
-2. **Recent Window**: Fetches events from last 40 days from all sources
+2. **Recent Window**: Filters events by `INGESTION_WINDOW_DAYS`; NTSB downloads at most the 12 weekly updates published in the last 90 days
 3. **Deduplication**: Automatically merges data from multiple sources
 4. **Error Handling**: Failures are logged and reported in health endpoint
 5. **Graceful**: Does not interrupt running server, runs in background
@@ -399,6 +399,12 @@ json
    - Recent incidents feed
    - RSS/Atom or HTML parsing
    - Updates: daily
+
+3. **NTSB** — `source_name: 'ntsb'`
+   - Public weekly MDB archives from the [NTSB download directory](https://data.ntsb.gov/avdata/FileDirectory/)
+   - US accident and incident records, including case number, aircraft, injuries, and coordinates when available
+   - Requires `mdb-export` from `mdbtools-utils` and Python 3 in the runtime image
+   - The NTSB feed covers US investigations; ASN and AVHerald availability controls broader coverage
 
 ### Deduplication Strategy
 

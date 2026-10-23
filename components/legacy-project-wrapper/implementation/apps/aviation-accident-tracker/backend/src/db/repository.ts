@@ -226,6 +226,14 @@ export class EventRepository {
    * Add a source entry for an event
    */
   async addSource(eventId: string, source: SourceAttribution): Promise<string> {
+    const existing = await this.dbGet(
+      'SELECT id FROM sources WHERE event_id = ? AND source_name = ? AND url = ?',
+      [Number(eventId), source.sourceName, source.url]
+    );
+    if (existing) {
+      await this.dbRun('UPDATE sources SET fetched_at = ? WHERE id = ?', [source.fetchedAt, existing.id]);
+      return String(existing.id);
+    }
     const result = await this.dbRun(
       `INSERT INTO sources (event_id, source_name, url, fetched_at, checksum, raw_fragment)
        VALUES (?, ?, ?, ?, ?, ?)`,

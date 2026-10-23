@@ -1,6 +1,7 @@
 import { memoryRepo } from '../repo/memoryRepo.js';
 import { fetchRecentAsn } from './adapters/asnAdapter.js';
 import { fetchRecentAvHerald } from './adapters/avHeraldAdapter.js';
+import { fetchRecentNtsb } from './adapters/ntsbAdapter.js';
 import { dedupe, fuzzyDedup } from './dedupe.js';
 import { normalize } from './normalize.js';
 import { IngestResult, NormalizedEvent } from './types.js';
@@ -12,6 +13,7 @@ export async function runRecentIngest(repository?: EventRepository): Promise<Ing
   const raw = [
     ...(await fetchRecentAsn()),
     ...(await fetchRecentAvHerald()),
+    ...(await fetchRecentNtsb()),
   ];
 
   const normalized: NormalizedEvent[] = raw.map(normalize);
