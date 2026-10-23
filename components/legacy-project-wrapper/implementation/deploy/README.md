@@ -19,8 +19,9 @@ make deploy-verify APP=flight-planner
 
 Use `APP=all` to process all eleven apps serially. Building and deploying require
 a clean committed worktree. Each image receives the exact Git revision in its tag
-and OCI label; deployment pulls the exact CI image from GHCR using the local
-`gh` login, transfers it over SSH, and writes the systemd
+and OCI label; deployment pulls the exact CI image from GHCR on do-host1,
+falling back to a local authenticated pull and SSH transfer when necessary.
+It verifies the image revision on the host, then writes the systemd
 unit and Caddy site, then checks the local service. The DNS command creates only
 missing A records and stops if a name already points elsewhere. The verify
 command checks public HTTPS and the active unit. `.github/workflows/deploy.yml`
