@@ -47,8 +47,9 @@ release-visible outcome to `CHANGELOG.md`; Git preserves prior queue states.
   [ADR 0002](../decisions/0002-native-literate-ai-rewrite.md) through the
   [native rewrite program](native-rewrite-program.md), preserving retained source
   authority until each boundary independently qualifies.
-- **Next action:** Produce the evidence-linked boundary inventory for
-  `components/legacy-project-wrapper/implementation`.
+- **Next action:** Complete the public contract and file-by-file classification
+  of the initial map in `docs/roadmap/native-boundary-inventory.md` before
+  selecting the first native boundary.
 - **Evidence:** Phase 1.2 lift-and-shift identity `sha256:c5ca4361ba010f6e8d81c93398468f9f4f8b8cc352504bc8535fa74b7c6e9990`.
   Retained conversion stage is backed by current test receipt
   `sha256:60e252aceb5834018a21d3ec5a75b667c564e207ea3cf02d475b3245640c3c79`;
