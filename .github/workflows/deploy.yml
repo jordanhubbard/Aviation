@@ -32,6 +32,10 @@ env:
   REGISTRY: ghcr.io
   IMAGE_PREFIX: ${{ github.repository_owner }}
 
+defaults:
+  run:
+    working-directory: components/legacy-project-wrapper/implementation
+
 jobs:
   determine-deployments:
     name: Determine What to Deploy

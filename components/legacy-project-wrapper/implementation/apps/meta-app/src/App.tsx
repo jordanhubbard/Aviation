@@ -1,0 +1,326 @@
+import { useState } from 'react';
+import { TabNavigation, PaneContainer } from '@aviation/ui-framework';
+import type { PaneConfig } from '@aviation/ui-framework';
+import { ConfigPanel, SERVICE_REGISTRY } from '@aviation/aviation-config';
+import './App.css';
+
+type AppLink = {
+  id: string;
+  title: string;
+  tabTitle: string;
+  description: string;
+  icon: string;
+  localUrl: string;
+  productionUrl: string;
+  envUrl?: string;
+  sourceUrl: string;
+};
+
+type ResolvedAppLink = AppLink & { url: string };
+
+const metaAppMode = import.meta.env.VITE_META_APP_MODE ?? 'tabs';
+const isLauncher = metaAppMode === 'launcher';
+const repoBaseUrl = 'https://github.com/jordanhubbard/Aviation/tree/main/apps';
+
+const appLinks: AppLink[] = [
+  {
+    id: 'accident-tracker',
+    title: 'Aviation Accident Tracker',
+    tabTitle: 'Accident Tracker',
+    description: 'Track and visualize aviation accidents with provenance and classification.',
+    icon: '⚠️',
+    localUrl: 'http://localhost:8080',
+    productionUrl: 'https://aviation-accidents-production.up.railway.app/',
+    envUrl: import.meta.env.VITE_ACCIDENT_TRACKER_URL,
+    sourceUrl: `${repoBaseUrl}/aviation-accident-tracker`,
+  },
+  {
+    id: 'missions',
+    title: 'Aviation Missions',
+    tabTitle: 'Missions',
+    description: 'Mission management and tracking system.',
+    icon: '📋',
+    localUrl: 'http://localhost:3000',
+    productionUrl: 'https://aviation-missions-production.up.railway.app/',
+    envUrl: import.meta.env.VITE_MISSIONS_URL,
+    sourceUrl: `${repoBaseUrl}/aviation-missions-app`,
+  },
+  {
+    id: 'flight-planner',
+    title: 'Flight Planner',
+    tabTitle: 'Flight Planner',
+    description: 'VFR flight planning with terrain analysis and weather integration.',
+    icon: '🗺️',
+    localUrl: 'http://localhost:5001',
+    productionUrl: 'https://flight-planner-production.up.railway.app/',
+    envUrl: import.meta.env.VITE_FLIGHT_PLANNER_URL,
+    sourceUrl: `${repoBaseUrl}/flight-planner`,
+  },
+  {
+    id: 'flight-school',
+    title: 'Flight School',
+    tabTitle: 'Flight School',
+    description: 'Flight school management with booking and scheduling.',
+    icon: '🎓',
+    localUrl: 'http://localhost:5000',
+    productionUrl: 'https://flightschool-production.up.railway.app/',
+    envUrl: import.meta.env.VITE_FLIGHT_SCHOOL_URL,
+    sourceUrl: `${repoBaseUrl}/flightschool`,
+  },
+  {
+    id: 'foreflight',
+    title: 'ForeFlight Dashboard',
+    tabTitle: 'ForeFlight',
+    description: 'Logbook analysis and statistics dashboard.',
+    icon: '📊',
+    localUrl: 'http://localhost:3001',
+    productionUrl: 'https://foreflight-dashboard-production.up.railway.app/',
+    envUrl: import.meta.env.VITE_FOREFLIGHT_URL,
+    sourceUrl: `${repoBaseUrl}/foreflight-dashboard`,
+  },
+  {
+    id: 'flight-track-analyzer',
+    title: 'Flight Track Analyzer',
+    tabTitle: 'Track Analyzer',
+    description: 'KML flight analysis with airport MSL elevation and touchdown evidence.',
+    icon: '📈',
+    localUrl: 'http://localhost:8010',
+    productionUrl: 'https://kmlab.jordanhubbard.net/',
+    envUrl: import.meta.env.VITE_FLIGHT_TRACK_ANALYZER_URL,
+    sourceUrl: 'https://github.com/jordanhubbard/Aviation/tree/main/components/legacy-project-wrapper/implementation/apps/flight-track-analyzer',
+  },
+  {
+    id: 'tracker',
+    title: 'Flight Tracker',
+    tabTitle: 'Tracker',
+    description: 'Real-time flight tracking service.',
+    icon: '✈️',
+    localUrl: 'http://localhost:3002',
+    productionUrl: 'https://flight-tracker-production-384f.up.railway.app/',
+    envUrl: import.meta.env.VITE_FLIGHT_TRACKER_URL,
+    sourceUrl: `${repoBaseUrl}/flight-tracker`,
+  },
+  {
+    id: 'g1000-simulator',
+    title: 'G1000 Simulator',
+    tabTitle: 'G1000',
+    description: 'Glass cockpit simulator with live telemetry and autopilot targets.',
+    icon: '🖥️',
+    localUrl: 'http://localhost:8000',
+    productionUrl: 'https://g1000-simulator-production.up.railway.app/',
+    envUrl: import.meta.env.VITE_G1000_SIMULATOR_URL,
+    sourceUrl: `${repoBaseUrl}/g1000-simulator`,
+  },
+  {
+    id: 'weather',
+    title: 'Weather Briefing',
+    tabTitle: 'Weather',
+    description: 'Aviation weather briefing service.',
+    icon: '🌤️',
+    localUrl: 'http://localhost:3003',
+    productionUrl: 'https://weather-briefing-production.up.railway.app/',
+    envUrl: import.meta.env.VITE_WEATHER_BRIEFING_URL,
+    sourceUrl: `${repoBaseUrl}/weather-briefing`,
+  },
+];
+
+const resolvedApps: ResolvedAppLink[] = appLinks.map((app) => ({
+  ...app,
+  url: app.envUrl || app.productionUrl,
+}));
+
+const aviationPanes: PaneConfig[] = [
+  ...resolvedApps.map((app, index) => ({
+    id: app.id,
+    title: app.tabTitle,
+    icon: app.icon,
+    component: () => <AppPane app={app} />,
+    order: index + 1,
+    defaultOpen: index === 0,
+  })),
+  {
+    id: 'settings',
+    title: 'Settings',
+    icon: '⚙️',
+    component: () => <SettingsPane />,
+    order: 99,
+    defaultOpen: false,
+  },
+];
+
+function AppPane({ app }: { app: ResolvedAppLink }) {
+  return (
+    <div className="pane-content">
+      <h1>{app.title}</h1>
+      <p>{app.description}</p>
+      <div className="pane-links">
+        <a className="pane-link" href={app.url} target="_blank" rel="noopener noreferrer">
+          Open {app.tabTitle} →
+        </a>
+        <a className="pane-link pane-link-secondary" href={app.sourceUrl} target="_blank" rel="noopener noreferrer">
+          View source
+        </a>
+      </div>
+    </div>
+  );
+}
+
+function SettingsPane() {
+  return (
+    <div className="pane-content settings-pane">
+      <h1>Aviation Suite Settings</h1>
+      <p className="settings-note">
+        The meta-app has no backend. Configure each service from within the individual app, or use
+        the CLI:{' '}
+        <code>npm run keystore set &lt;service&gt; &lt;key&gt; &lt;value&gt;</code>
+      </p>
+
+      <section className="settings-section">
+        <h2>Per-App Settings</h2>
+        <ul className="settings-app-links">
+          {resolvedApps.map((app) => (
+            <li key={app.id}>
+              <span className="settings-app-icon">{app.icon}</span>{' '}
+              <a href={`${app.url}/settings`} target="_blank" rel="noopener noreferrer">
+                {app.title} Settings →
+              </a>
+            </li>
+          ))}
+        </ul>
+      </section>
+
+      <section className="settings-section">
+        <h2>Service Registry</h2>
+        <ConfigPanel title="Aviation Suite Settings" />
+        <table className="settings-registry-table">
+          <thead>
+            <tr>
+              <th>Service</th>
+              <th>Category</th>
+              <th>Apps</th>
+            </tr>
+          </thead>
+          <tbody>
+            {SERVICE_REGISTRY.map((svc) => (
+              <tr key={svc.id}>
+                <td>{svc.name}</td>
+                <td>{svc.category}</td>
+                <td>{svc.appScope?.join(', ') ?? '—'}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </section>
+    </div>
+  );
+}
+
+function App() {
+  const [activeId, setActiveId] = useState<string>(resolvedApps[0]?.id ?? '');
+
+  const activePane = aviationPanes.find((p) => p.id === activeId) || null;
+  const subtitle = isLauncher
+    ? 'Launch aviation apps on demand'
+    : 'Unified aviation application dashboard';
+
+  return (
+    <div className="meta-app">
+      <header className="meta-app-header">
+        <h1 className="meta-app-title">🛩️ Aviation Suite</h1>
+        <p className="meta-app-subtitle">{subtitle}</p>
+      </header>
+
+      {isLauncher ? (
+        <main className="meta-app-main">
+          {activeId === 'settings' ? (
+            <div>
+              <button
+                className="launcher-back-btn"
+                onClick={() => setActiveId(resolvedApps[0]?.id ?? '')}
+              >
+                ← Back to Launcher
+              </button>
+              <SettingsPane />
+            </div>
+          ) : (
+            <div className="launcher-grid">
+              {resolvedApps.map((app) => (
+                <div
+                  key={app.id}
+                  className="launcher-card"
+                >
+                  <div className="launcher-card-header">
+                    <span className="launcher-card-icon">{app.icon}</span>
+                    <h2 className="launcher-card-title">{app.title}</h2>
+                  </div>
+                  <p className="launcher-card-description">{app.description}</p>
+                  <div className="launcher-card-actions">
+                    <a
+                      className="launcher-card-cta"
+                      href={app.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      Open {app.tabTitle} →
+                    </a>
+                    <a
+                      className="launcher-card-source"
+                      href={app.sourceUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      Source
+                    </a>
+                  </div>
+                </div>
+              ))}
+              <div
+                className="launcher-card"
+                onClick={() => setActiveId('settings')}
+                style={{ cursor: 'pointer' }}
+              >
+                <div className="launcher-card-header">
+                  <span className="launcher-card-icon">⚙️</span>
+                  <h2 className="launcher-card-title">Settings</h2>
+                </div>
+                <p className="launcher-card-description">Configure API keys and service settings for all aviation apps.</p>
+                <div className="launcher-card-actions">
+                  <span className="launcher-card-cta">Open Settings →</span>
+                </div>
+              </div>
+            </div>
+          )}
+        </main>
+      ) : (
+        <>
+          <TabNavigation
+            panes={aviationPanes}
+            activeId={activeId}
+            onTabSelect={setActiveId}
+            useDefaultStyles={false}
+            className="meta-app-tabs"
+          />
+
+          <main className="meta-app-main">
+            <PaneContainer
+              activePane={activePane}
+              className="meta-app-pane"
+              useDefaultStyles={false}
+              emptyState={
+                <div className="meta-app-empty">
+                  <p>No application selected</p>
+                </div>
+              }
+            />
+          </main>
+        </>
+      )}
+
+      <footer className="meta-app-footer">
+        <p>Aviation Monorepo Meta App • {resolvedApps.length} Applications + Settings</p>
+      </footer>
+    </div>
+  );
+}
+
+export default App;

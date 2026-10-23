@@ -1,0 +1,142 @@
+{
+  "$schema": "http://cyclonedx.org/schema/bom-1.7.schema.json",
+  "bomFormat": "CycloneDX",
+  "specVersion": "1.7",
+  "serialNumber": "urn:uuid:3dbe7fc6-6bcc-4e72-b052-7337ee5aaad4",
+  "version": 1,
+  "metadata": {
+    "timestamp": "2026-09-03T00:00:00Z",
+    "component": {
+      "type": "application",
+      "bom-ref": "urn:literate-ai:toolchain:os-base",
+      "name": "literate-ai-os-base-toolchain",
+      "version": "1.0.0"
+    },
+    "properties": [
+      {"name": "literate-ai:base-toolchain:role", "value": "universal"},
+      {"name": "literate-ai:base-toolchain:default-coding-agent", "value": "codex"}
+    ]
+  },
+  "components": [
+    {
+      "type": "application",
+      "bom-ref": "urn:literate-ai:capability:python",
+      "name": "Python runtime",
+      "version": ">=3.11,<4",
+      "properties": [
+        {"name": "literate-ai:base-toolchain:capability", "value": "python"},
+        {"name": "literate-ai:base-toolchain:probe-kind", "value": "current-python"},
+        {"name": "literate-ai:base-toolchain:reason", "value": "Python 3.11 or newer is the stage-zero runtime and creates isolated Literate AI environments."}
+      ]
+    },
+    {
+      "type": "application",
+      "bom-ref": "urn:literate-ai:capability:python-venv",
+      "name": "Python isolated-environment support",
+      "version": ">=3.11,<4",
+      "properties": [
+        {"name": "literate-ai:base-toolchain:capability", "value": "python-venv"},
+        {"name": "literate-ai:base-toolchain:probe-kind", "value": "python-module"},
+        {"name": "literate-ai:base-toolchain:probe-arguments", "value": "[\"-c\",\"import ensurepip,venv\"]"},
+        {"name": "literate-ai:base-toolchain:reason", "value": "The installer creates isolated environments with pip instead of mutating system Python."}
+      ]
+    },
+    {
+      "type": "application",
+      "bom-ref": "urn:literate-ai:capability:git",
+      "name": "Git",
+      "version": ">=2.30,<3",
+      "properties": [
+        {"name": "literate-ai:base-toolchain:capability", "value": "git"},
+        {"name": "literate-ai:base-toolchain:probe-kind", "value": "command"},
+        {"name": "literate-ai:base-toolchain:probe-candidates", "value": "[\"git\",\"git.exe\"]"},
+        {"name": "literate-ai:base-toolchain:probe-arguments", "value": "[\"--version\"]"},
+        {"name": "literate-ai:base-toolchain:reason", "value": "Git binds source acquisition and installation to exact revisions."}
+      ]
+    },
+    {
+      "type": "application",
+      "bom-ref": "urn:literate-ai:capability:git-lfs",
+      "name": "Git LFS",
+      "version": ">=3,<4",
+      "properties": [
+        {"name": "literate-ai:base-toolchain:capability", "value": "git-lfs"},
+        {"name": "literate-ai:base-toolchain:probe-kind", "value": "command"},
+        {"name": "literate-ai:base-toolchain:probe-candidates", "value": "[\"git-lfs\",\"git-lfs.exe\"]"},
+        {"name": "literate-ai:base-toolchain:probe-arguments", "value": "[\"version\"]"},
+        {"name": "literate-ai:base-toolchain:reason", "value": "Git LFS materializes pointer-backed content for exact repository checkouts."}
+      ]
+    },
+    {
+      "type": "application",
+      "bom-ref": "urn:literate-ai:capability:coding-agent:codex",
+      "name": "OpenAI Codex CLI",
+      "version": ">=0.143,<1",
+      "properties": [
+        {"name": "literate-ai:base-toolchain:capability", "value": "codex"},
+        {"name": "literate-ai:base-toolchain:group", "value": "coding-agent"},
+        {"name": "literate-ai:base-toolchain:probe-kind", "value": "command"},
+        {"name": "literate-ai:base-toolchain:probe-candidates", "value": "[\"codex\",\"codex.cmd\",\"codex.exe\"]"},
+        {"name": "literate-ai:base-toolchain:probe-arguments", "value": "[\"--version\"]"},
+        {"name": "literate-ai:base-toolchain:installer-kind", "value": "host-realization"},
+        {"name": "literate-ai:base-toolchain:reason", "value": "Codex is one supported exact coding-agent realization."}
+      ]
+    },
+    {
+      "type": "application",
+      "bom-ref": "urn:literate-ai:capability:coding-agent:claude",
+      "name": "Anthropic Claude Code",
+      "version": ">=2.1,<3",
+      "properties": [
+        {"name": "literate-ai:base-toolchain:capability", "value": "claude"},
+        {"name": "literate-ai:base-toolchain:group", "value": "coding-agent"},
+        {"name": "literate-ai:base-toolchain:probe-kind", "value": "command"},
+        {"name": "literate-ai:base-toolchain:probe-candidates", "value": "[\"claude\",\"claude.cmd\",\"claude.exe\"]"},
+        {"name": "literate-ai:base-toolchain:probe-arguments", "value": "[\"--version\"]"},
+        {"name": "literate-ai:base-toolchain:installer-kind", "value": "host-realization"},
+        {"name": "literate-ai:base-toolchain:reason", "value": "Claude Code is one supported exact coding-agent realization."}
+      ]
+    },
+    {
+      "type": "application",
+      "bom-ref": "urn:literate-ai:capability:coding-agent:cursor-agent",
+      "name": "Cursor Agent CLI",
+      "version": ">=2026.9,<2027",
+      "properties": [
+        {"name": "literate-ai:base-toolchain:capability", "value": "cursor-agent"},
+        {"name": "literate-ai:base-toolchain:group", "value": "coding-agent"},
+        {"name": "literate-ai:base-toolchain:probe-kind", "value": "command"},
+        {"name": "literate-ai:base-toolchain:probe-candidates", "value": "[\"cursor-agent\",\"cursor-agent.cmd\",\"cursor-agent.exe\",\"agent\",\"agent.cmd\",\"agent.exe\"]"},
+        {"name": "literate-ai:base-toolchain:probe-arguments", "value": "[\"--version\"]"},
+        {"name": "literate-ai:base-toolchain:installer-kind", "value": "host-realization"},
+        {"name": "literate-ai:base-toolchain:reason", "value": "Cursor Agent is one supported exact coding-agent realization; its tuple leaf pins the provider archive."}
+      ]
+    },
+    {
+      "type": "application",
+      "bom-ref": "urn:literate-ai:capability:coding-agent:opencode",
+      "name": "OpenCode",
+      "version": ">=1.18,<2",
+      "properties": [
+        {"name": "literate-ai:base-toolchain:capability", "value": "opencode"},
+        {"name": "literate-ai:base-toolchain:group", "value": "coding-agent"},
+        {"name": "literate-ai:base-toolchain:probe-kind", "value": "command"},
+        {"name": "literate-ai:base-toolchain:probe-candidates", "value": "[\"opencode\",\"opencode.cmd\",\"opencode.exe\"]"},
+        {"name": "literate-ai:base-toolchain:probe-arguments", "value": "[\"--version\"]"},
+        {"name": "literate-ai:base-toolchain:installer-kind", "value": "host-realization"},
+        {"name": "literate-ai:base-toolchain:reason", "value": "OpenCode is one supported exact coding-agent realization."}
+      ]
+    }
+  ],
+  "dependencies": [
+    {"ref": "urn:literate-ai:toolchain:os-base", "dependsOn": ["urn:literate-ai:capability:python", "urn:literate-ai:capability:python-venv", "urn:literate-ai:capability:git", "urn:literate-ai:capability:git-lfs", "urn:literate-ai:capability:coding-agent:codex", "urn:literate-ai:capability:coding-agent:claude", "urn:literate-ai:capability:coding-agent:cursor-agent", "urn:literate-ai:capability:coding-agent:opencode"]},
+    {"ref": "urn:literate-ai:capability:python", "dependsOn": []},
+    {"ref": "urn:literate-ai:capability:python-venv", "dependsOn": []},
+    {"ref": "urn:literate-ai:capability:git", "dependsOn": []},
+    {"ref": "urn:literate-ai:capability:git-lfs", "dependsOn": []},
+    {"ref": "urn:literate-ai:capability:coding-agent:codex", "dependsOn": []},
+    {"ref": "urn:literate-ai:capability:coding-agent:claude", "dependsOn": []},
+    {"ref": "urn:literate-ai:capability:coding-agent:cursor-agent", "dependsOn": []},
+    {"ref": "urn:literate-ai:capability:coding-agent:opencode", "dependsOn": []}
+  ]
+}

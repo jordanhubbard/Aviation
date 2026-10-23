@@ -1,0 +1,43 @@
+# Docker Compose for Aviation Caching Layer
+# Usage: docker-compose -f docker-compose.cache.yml up -d
+
+version: '3.8'
+
+services:
+  redis:
+    image: redis:7-alpine
+    container_name: aviation-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+    restart: unless-stopped
+    networks:
+      - aviation-network
+
+  redis-commander:
+    image: redis commander/redis-commander:latest
+    container_name: aviation-redis-ui
+    environment:
+      - REDIS_HOSTS=local:redis:6379
+    ports:
+      - "8081:8081"
+    depends_on:
+      - redis
+    networks:
+      - aviation-network
+    restart: unless-stopped
+
+volumes:
+  redis-data:
+    driver: local
+
+networks:
+  aviation-network:
+    driver: bridge

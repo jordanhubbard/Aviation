@@ -1,4 +1,1 @@
-initialised=2026-02-23T02:55:43Z
-os_family=debian
-commands=bash -c 'apt-get update && apt-get install -y nodejs npm'
-bash -c 'npm install'
+components/legacy-project-wrapper/implementation/.loom-env-ready

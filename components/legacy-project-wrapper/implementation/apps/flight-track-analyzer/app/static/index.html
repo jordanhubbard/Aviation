@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Flight Track Analyzer</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header class="top">
+  <h1>Flight Track Analyzer</h1>
+  <nav id="nav">
+    <button data-view="flights" class="active">Flights</button>
+    <button data-view="summary">Summary</button>
+    <button data-view="performance">Performance</button>
+  </nav>
+  <button id="help-btn" class="help-btn" aria-label="Help: how the analysis works" title="Help: how the analysis works">?</button>
+</header>
+<main id="view" aria-live="polite"></main>
+<script type="module" src="app.js"></script>
+</body>
+</html>

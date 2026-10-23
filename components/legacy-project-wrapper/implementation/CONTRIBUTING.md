@@ -1,0 +1,303 @@
+# Contributing to Aviation Monorepo
+
+Thank you for your interest in contributing! This document provides guidelines for contributing to the Aviation monorepo.
+
+## Getting Started
+
+### Repository Structure
+
+This is a monorepo containing aviation-related applications and SDKs:
+
+- **apps/** - Complete applications (web apps, CLIs, etc.)
+- **packages/** - Shared libraries and SDKs
+- **AGENTS.md** - Guidelines for LLM agents and automated tools
+- **README.md** - Repository overview
+
+### Development Setup
+
+1. **Clone the repository**
+   ```bash
+   git clone https://github.com/jordanhubbard/Aviation.git
+   cd Aviation
+   ```
+
+2. **Set up the application you want to work on**
+   ```bash
+   cd apps/<app-name>
+   # Follow the app's README.md for specific setup instructions
+   ```
+
+## Code Style
+
+### Python
+
+We use Black for formatting and follow PEP 8 conventions:
+
+- **Formatter**: Black (line length: 88)
+- **Type hints**: Required for all function signatures
+- **Docstrings**: Required for all public functions and classes
+- **Import order**: Use isort with Black profile
+
+Example:
+```python
+from typing import List, Optional
+
+def process_flight_data(data: List[dict], validate: bool = True) -> Optional[dict]:
+    """Process flight data from CSV import.
+
+    Args:
+        data: List of flight records as dictionaries
+        validate: Whether to validate the data
+
+    Returns:
+        Processed flight data or None if validation fails
+    """
+    # Implementation
+    pass
+```
+
+### TypeScript/JavaScript
+
+We use ESLint and Prettier:
+
+- **Formatter**: Prettier
+- **Linting**: ESLint with TypeScript strict mode
+- **React**: Functional components with hooks
+- **Exports**: Named exports preferred over default exports
+- **Indentation**: 2 spaces
+
+Example:
+```typescript
+interface FlightData {
+  date: string;
+  aircraft: string;
+  duration: number;
+}
+
+export const processFlightData = (data: FlightData[]): number => {
+  return data.reduce((total, flight) => total + flight.duration, 0);
+};
+```
+
+### Documentation
+
+- Every app/package must have a comprehensive README.md
+- Use clear, concise language
+- Include code examples where helpful
+- Keep documentation up-to-date with code changes
+
+## Work Organization with MAC
+
+MAC is the sole task ledger for this monorepo. Do not create repository-local
+ticket databases or Markdown task lists.
+
+Use the current CLI from `/Users/jkh/Src/mac` when available:
+
+```bash
+/Users/jkh/Src/mac/.venv/bin/mac task ready --project Aviation
+/Users/jkh/Src/mac/.venv/bin/mac task create "Task title" \
+  --project Aviation --no-ticket --description "Detailed context"
+/Users/jkh/Src/mac/.venv/bin/mac task show <task-id>
+```
+
+Declare dependencies with MAC task IDs. Keep implementation code and tests in
+their normal application/package directories; task topology belongs in MAC.
+
+## Testing
+
+### Writing Tests
+
+- Aim for 80%+ code coverage
+- Write unit tests for individual functions
+- Write integration tests for multi-component workflows
+- Make tests fast and deterministic
+- Use descriptive test names
+
+### Running Tests
+
+```bash
+# Python tests
+pytest
+
+# With coverage
+pytest --cov=src --cov-report=html
+
+# JavaScript/TypeScript tests
+npm test
+
+# With coverage
+npm test -- --coverage
+```
+
+## Git Workflow
+
+### Branch Naming
+
+- Features: `feature/short-description`
+- Bug fixes: `fix/short-description`
+- Documentation: `docs/short-description`
+- Refactoring: `refactor/short-description`
+
+### Commit Messages
+
+Follow [Conventional Commits](https://www.conventionalcommits.org/):
+
+```
+<type>(<scope>): <subject>
+
+<body>
+
+<footer>
+```
+
+**Types:**
+- `feat`: New feature
+- `fix`: Bug fix
+- `docs`: Documentation changes
+- `style`: Code style changes (formatting, etc.)
+- `refactor`: Code refactoring
+- `test`: Adding or updating tests
+- `chore`: Maintenance tasks
+
+**Examples:**
+```
+feat(foreflight-dashboard): add ICAO aircraft validation
+
+Implement ICAO aircraft code validation with fuzzy matching
+for typos and suggestions for invalid codes.
+
+Closes #123
+```
+
+```
+fix(csv-import): handle missing time fields
+
+Previously would crash on CSV files with missing duration fields.
+Now handles gracefully with appropriate error message.
+```
+
+### Pull Requests
+
+1. **Fork and branch** - Create a feature branch from `main`
+2. **Make changes** - Follow code style and add tests
+3. **Test locally** - Ensure all tests pass
+4. **Commit** - Use conventional commit messages
+5. **Push** - Push to your fork
+6. **Open PR** - Create pull request with clear description
+7. **Review** - Address any review feedback
+8. **Merge** - PR will be merged after approval
+
+### PR Description Template
+
+```markdown
+## Description
+Brief description of changes
+
+## Type of Change
+- [ ] Bug fix
+- [ ] New feature
+- [ ] Breaking change
+- [ ] Documentation update
+
+## Testing
+- [ ] Unit tests added/updated
+- [ ] Integration tests added/updated
+- [ ] All tests passing
+- [ ] Manual testing performed
+
+## Checklist
+- [ ] Code follows style guidelines
+- [ ] Self-review completed
+- [ ] Comments added for complex code
+- [ ] Documentation updated
+- [ ] No new warnings generated
+```
+
+## Code Review
+
+### For Reviewers
+
+- Be constructive and respectful
+- Explain reasoning for requested changes
+- Approve when satisfied or request changes
+- Check for:
+  - Code style compliance
+  - Test coverage
+  - Documentation updates
+  - Breaking changes
+  - Security concerns
+
+### For Authors
+
+- Respond to all feedback
+- Make requested changes or discuss alternatives
+- Re-request review after changes
+- Keep PRs focused and reasonably sized
+- Write clear PR descriptions
+
+## Building and Deployment
+
+### Docker
+
+Most applications use Docker for deployment:
+
+```bash
+cd apps/<app-name>
+
+# Build
+docker-compose build
+
+# Run
+docker-compose up
+
+# Run in background
+docker-compose up -d
+
+# View logs
+docker-compose logs -f
+
+# Stop
+docker-compose down
+```
+
+### Production Deployment
+
+See individual application README files for deployment instructions. Common platforms:
+- Railway.app
+- DigitalOcean App Platform
+- AWS ECS/Fargate
+- Google Cloud Run
+- Azure Container Instances
+
+## Questions or Issues?
+
+- **Found a bug?** Open an issue with reproduction steps
+- **Have a question?** Check existing issues or open a new one
+- **Want to contribute?** Open an issue to discuss before starting large changes
+- **Need help?** Reach out in the issue comments
+
+## Legal Considerations
+
+### Attribution and Data Sources
+
+When contributing code that uses external data sources, ensure proper attribution:
+
+- **OurAirports** - Provide attribution in code comments and documentation
+- **OpenAIP** - Include attribution notices in relevant modules
+- **OpenStreetMap** - Follow ODbL attribution requirements
+- **Other sources** - Always document data sources and their licenses
+
+See [LEGAL.md](LEGAL.md) for complete attribution requirements and legal guidelines.
+
+### Educational Use Disclaimer
+
+This project is for educational purposes only. When contributing:
+
+- Do not add features that suggest real-world flight operation use
+- Include disclaimers in documentation for aviation-related features
+- Ensure all flight planning/weather features include appropriate warnings
+- Reference the educational-only nature in relevant docstrings
+
+## License
+
+By contributing, you agree that your contributions will be licensed under the MIT License. See [LICENSE](LICENSE) and [LEGAL.md](LEGAL.md) for details.
