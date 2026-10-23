@@ -59,3 +59,6 @@ ENV PYTHONPATH=/app/backend:/app/packages/flight-dynamics
 # importlib import mode: tests/backend/ has an __init__.py, so the default
 # prepend mode infers the package name "backend" and collides with the real one.
 CMD ["pytest", "backend/tests", "tests/backend", "-ra", "--import-mode=importlib"]
+
+# Default deployment image; the testing stage above remains available with --target testing.
+FROM runtime AS production
