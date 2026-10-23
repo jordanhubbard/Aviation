@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Restored the Aviation deployment workflow after source relocation: all four image builds and the staging dry run pass on main.
+
 - Adopted the Aviation monorepo into Literate AI with retained application entrypoints, current locks, and retained test evidence.
 - Integrated Flight Track Analyzer with bundled airport MSL elevations to support calibrated touchdown detection, plus API, UI, tests, and CI.
 - Updated retained dependencies to resolve Trivy findings reported during the conversion.
