@@ -37,7 +37,7 @@
     "redis": "^5.10.0",
     "sqlite3": "npm:@vscode/sqlite3@^5.1.12-vscode",
     "swagger-ui-express": "^5.0.1",
-    "uuid": "^13.0.0",
+    "uuid": "^14.0.0",
     "ws": "^8.16.0",
     "yaml": "^2.8.3",
     "@aviation/ai-explainer": "workspace:*"
