@@ -1,8 +1,1 @@
-# Root requirements.txt — used by integration-tests CI workflow.
-# Contains only packages needed to run the integration test suite
-# (not application deps, which live in apps/*/requirements.txt).
-pytest
-pytest-asyncio
-pytest-cov
-requests
-websocket-client
+components/legacy-project-wrapper/implementation/requirements.txt

@@ -10,6 +10,10 @@ on:
     branches:
       - main
 
+defaults:
+  run:
+    working-directory: components/legacy-project-wrapper/implementation
+
 jobs:
   # Dependabot metadata — only meaningful on Dependabot PRs
   dependabot:

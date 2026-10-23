@@ -1,0 +1,28 @@
+{
+  "schema": "literate-ai/release-policy@2",
+  "version_scheme": "semver",
+  "version_authority": {
+    "path": "literate.project.json",
+    "format": "json-pointer",
+    "selectors": ["/version"]
+  },
+  "version_mirrors": [],
+  "contributions": {
+    "current_milestone": "{version}"
+  },
+  "allowed_transitions": ["patch", "minor", "major", "prerelease", "explicit"],
+  "gate": {
+    "argv": ["litai", "test", "samples/hello-component", "--target", "host"],
+    "timeout_seconds": 86400
+  },
+  "changelog": {
+    "path": "CHANGELOG.md",
+    "unreleased_heading": "## Unreleased"
+  },
+  "tag": {
+    "prefix": "v",
+    "signed": false
+  },
+  "remote": "origin",
+  "provider": null
+}

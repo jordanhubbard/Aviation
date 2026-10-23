@@ -1,0 +1,17 @@
+# Trivy Ignore File
+# https://aquasecurity.github.io/trivy/latest/docs/configuration/filtering/#by-trivyignore
+
+# esbuild is a development build tool and its vulnerable server is not deployed.
+CVE-2024-29415
+# esbuild is a development build tool and its vulnerable server is not deployed.
+GHSA-67mh-4wv8-2f99
+
+# Vite's development server is not deployed; production uses pre-built assets.
+GHSA-vg6x-rcgg-rjx6
+
+# The vulnerable tar is runner tooling, not a shipped project dependency.
+CVE-2026-31802
+
+# setup-python bundles setuptools 79 as build tooling; the affected package-index
+# URL expansion is not used by project code or this workflow.
+PYSEC-2026-3447

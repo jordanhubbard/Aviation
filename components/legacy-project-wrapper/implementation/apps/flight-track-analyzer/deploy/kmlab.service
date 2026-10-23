@@ -1,0 +1,23 @@
+[Unit]
+Description=KMLab flight track analyzer
+After=network.target
+
+[Service]
+User=kmlab
+Group=kmlab
+WorkingDirectory=/opt/kmlab/app
+Environment=KMLAB_DATA_DIR=/var/lib/kmlab
+# Optional LLM settings (ANTHROPIC_API_KEY=... or KMLAB_LLM_BASE_URL=...). Absent file = no LLM features.
+EnvironmentFile=-/etc/kmlab.env
+ExecStart=/opt/kmlab/venv/bin/python run.py --host 127.0.0.1 --port 18765
+Restart=on-failure
+RestartSec=3
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+PrivateTmp=true
+ReadWritePaths=/var/lib/kmlab
+MemoryMax=1G
+
+[Install]
+WantedBy=multi-user.target
