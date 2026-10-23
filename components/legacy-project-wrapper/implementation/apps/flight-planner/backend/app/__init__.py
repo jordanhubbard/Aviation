@@ -1,5 +1,9 @@
 # Initialize the backend application
+from pathlib import Path
+
 from fastapi import FastAPI
+from fastapi.responses import FileResponse
+from fastapi.staticfiles import StaticFiles
 from .routers.flight_plan import router as flight_plan_router
 from .services.alert_manager import AlertManager
 from .services.websocket_protocol import WebSocketProtocol, MessageType
@@ -162,5 +166,15 @@ def create_app(settings):
             print(f"Commands WebSocket error: {e}")
         finally:
             await protocol.disconnect()
+
+    static_root = Path(__file__).resolve().parents[1] / "static"
+    if (static_root / "index.html").is_file():
+        @app.get("/", include_in_schema=False)
+        @app.get("/weather", include_in_schema=False)
+        @app.get("/airports", include_in_schema=False)
+        def frontend_page() -> FileResponse:
+            return FileResponse(static_root / "index.html")
+
+        app.mount("/", StaticFiles(directory=static_root, html=True), name="frontend")
 
     return app
