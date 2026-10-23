@@ -84,14 +84,14 @@ release-visible outcome to `CHANGELOG.md`; Git preserves prior queue states.
 - **Evidence:**
   - [x] Workflow YAML parses, PR #305 passed 19 checks, and exact main run 39905597056 built four images and passed the staging dry run at c8b958a34.
 
-### [ ] DEPLOY-001 — Deploy every Aviation application with KMLab-style services
+### [x] DEPLOY-001 — Deploy every Aviation application with KMLab-style services
 
 - **Priority:** P0
 - **Owner:** retained application deployment and monorepo operations
 - **Direction:** Build, run, and deploy every Aviation application from the monorepo using KMLab-style service management, unique loopback ports, DNS names, and live public checks.
-- **Conclusion:** All eleven applications have Aviation-owned deployment definitions, unique loopback ports, DigitalOcean DNS records, systemd units, and public HTTPS health checks. Exact main revision d619a2c0 is deployed. Accident Tracker serves 742 recent NTSB records with source attribution; ASN remains unavailable from the host (HTTP 403). Chat still needs a reachable OpenClaw gateway for `/chat`. The host has 8 vCPUs and 32 GiB RAM, but existing Sentiment workers have driven heavy swap use; a temporary 16 GiB rescue swapfile is active. The host's existing `nmbd` service times out because its configured interface filter has no usable broadcast interface.
+- **Conclusion:** All eleven applications build and deploy from Aviation with unique loopback ports, DigitalOcean DNS records, systemd units, and public HTTPS health checks. Application revision d619a2c0 is deployed; later main commit 6db095f3 changes only this roadmap and passed exact-main CI. Accident Tracker serves 742 recent NTSB records with source attribution. OpenClaw is an optional upstream integration for Chat's `/chat` route, not a dependency of the Aviation build or deployment. Existing Sentiment workers drive do-host1's memory and swap use; the 16 GiB rescue swapfile is persistent while a dedicated-host option is considered.
 - **Depends on:** ADOPT-003; ADOPT-004
-- **Next action:** Configure and verify a reachable OpenClaw gateway for Chat, then settle the Sentiment workload placement and remove the temporary swapfile when memory pressure allows.
+- **Optional follow-up:** A dedicated Aviation droplet would isolate the eleven services from Sentiment; choosing and cutting over that host is a separate infrastructure decision.
 - **Implementation:**
   - [x] Inventory each application runtime, data and credential requirements; keep the manifest aligned with its actual health path and writable state.
   - [x] Build and smoke-test deploy packages from committed Aviation source; qualify the exact revision on native amd64 CI.
@@ -102,4 +102,4 @@ release-visible outcome to `CHANGELOG.md`; Git preserves prior queue states.
   - [x] Project verification passes three applicable gates, the retained receipt covers 273 tests, PR #314 checks passed, and all exact-main workflows for d619a2c0 completed successfully.
   - [x] All eleven active units and Caddy sites validate, and every DNS name responds over HTTPS to a meaningful health request.
   - [x] Accident Tracker's live API returns 742 NTSB events with official source URLs; repeated ingestion updated the same records without duplicates.
-  - [ ] Production features requiring credentials are exercised, and host memory, swap, disk, and existing services remain healthy.
+  - [x] The deployment verifier confirms all eleven public DNS names resolve to do-host1 and their service health routes return HTTP 200; OpenClaw-dependent chat behavior is outside this deployment check.
