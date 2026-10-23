@@ -89,16 +89,17 @@ release-visible outcome to `CHANGELOG.md`; Git preserves prior queue states.
 - **Priority:** P0
 - **Owner:** retained application deployment and monorepo operations
 - **Direction:** Build, run, and deploy every Aviation application from the monorepo using KMLab-style service management, unique loopback ports, DNS names, and live public checks.
-- **Conclusion:** All eleven applications now have Aviation-owned deployment definitions, unique loopback ports, DigitalOcean DNS records, systemd units, and public HTTPS health checks. The host has been resized to 8 vCPUs and 32 GiB RAM. Chat still needs a reachable OpenClaw gateway for `/chat`; Accident Tracker starts its scheduler but its ASN source returned HTTP 403. The host's existing `nmbd` service times out because its configured interface filter has no usable broadcast interface.
+- **Conclusion:** All eleven applications have Aviation-owned deployment definitions, unique loopback ports, DigitalOcean DNS records, systemd units, and public HTTPS health checks. Exact main revision d619a2c0 is deployed. Accident Tracker serves 742 recent NTSB records with source attribution; ASN remains unavailable from the host (HTTP 403). Chat still needs a reachable OpenClaw gateway for `/chat`. The host has 8 vCPUs and 32 GiB RAM, but existing Sentiment workers have driven heavy swap use; a temporary 16 GiB rescue swapfile is active. The host's existing `nmbd` service times out because its configured interface filter has no usable broadcast interface.
 - **Depends on:** ADOPT-003; ADOPT-004
-- **Next action:** Verify Chat against a reachable OpenClaw gateway, resolve the Accident Tracker source failure, and recheck host services and resources after the final exact-revision rollout.
+- **Next action:** Configure and verify a reachable OpenClaw gateway for Chat, then settle the Sentiment workload placement and remove the temporary swapfile when memory pressure allows.
 - **Implementation:**
   - [x] Inventory each application runtime, data and credential requirements; keep the manifest aligned with its actual health path and writable state.
   - [x] Build and smoke-test deploy packages from committed Aviation source; qualify the exact revision on native amd64 CI.
   - [x] Install idempotent systemd/Caddy services with unique loopback ports, health checks, and rollback; preserve the existing analyzer service and its airport data.
   - [x] Increase host capacity, register DNS, and deploy each service serially with resource checks.
 - **Evidence:**
-  - [x] All eleven images build on the target architecture and application smoke checks pass (exact-main image run 39921567228; all eleven public health routes returned HTTP 200 during the serial smoke rollout).
-  - [ ] Project verification and exact revision review checks pass.
+  - [x] All eleven application build gates pass, including native analyzer tests and ten target-architecture container images (exact-main image run 39927730949; all eleven public health routes returned HTTP 200 after the serial rollout).
+  - [x] Project verification passes three applicable gates, the retained receipt covers 273 tests, PR #314 checks passed, and all exact-main workflows for d619a2c0 completed successfully.
   - [x] All eleven active units and Caddy sites validate, and every DNS name responds over HTTPS to a meaningful health request.
+  - [x] Accident Tracker's live API returns 742 NTSB events with official source URLs; repeated ingestion updated the same records without duplicates.
   - [ ] Production features requiring credentials are exercised, and host memory, swap, disk, and existing services remain healthy.
