@@ -7,6 +7,7 @@ User=kmlab
 Group=kmlab
 WorkingDirectory=/opt/kmlab/app
 Environment=KMLAB_DATA_DIR=/var/lib/kmlab
+Environment=AVIATION_AIRPORTS_DATA=/opt/kmlab/data/airports_cache.json
 # Optional LLM settings (ANTHROPIC_API_KEY=... or KMLAB_LLM_BASE_URL=...). Absent file = no LLM features.
 EnvironmentFile=-/etc/kmlab.env
 ExecStart=/opt/kmlab/venv/bin/python run.py --host 127.0.0.1 --port 18765

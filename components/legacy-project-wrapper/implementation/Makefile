@@ -15,7 +15,10 @@ PNPM := $(shell command -v pnpm >/dev/null 2>&1 && echo pnpm || (command -v core
 .PHONY: run-foreflight-dashboard run-flight-tracker run-weather-briefing
 .PHONY: run-g1000-simulator
 .PHONY: run-flight-track-analyzer
+.PHONY: deploy-check deploy-build deploy-dns deploy-app deploy-verify
 .PHONY: stop-all
+
+APP ?= all
 
 # Default target
 help:
@@ -39,6 +42,11 @@ help:
 	@echo "  make run-g1000-simulator      - Run G1000 Simulator (backend + frontend)"
 	@echo "  make run-flight-track-analyzer - Run Flight Track Analyzer (port 8010)"
 	@echo "  make stop-all                 - Stop all running applications"
+	@echo "  make deploy-check             - Validate all eleven deployment definitions"
+	@echo "  make deploy-build APP=name    - Build a committed app image for do-host1"
+	@echo "  make deploy-dns APP=name      - Register its DNS name (DIGITALOCEAN_TOKEN_FILE required)"
+	@echo "  make deploy-app APP=name      - Build and install its systemd/Caddy service"
+	@echo "  make deploy-verify APP=name   - Check public HTTPS health and active service"
 	@echo ""
 	@echo "Component targets:"
 	@echo "  make build-node          - Build Node.js/TypeScript applications"
@@ -422,6 +430,21 @@ run-g1000-simulator:
 run-flight-track-analyzer:
 	@echo "🚀 Starting Flight Track Analyzer..."
 	$(MAKE) -C apps/flight-track-analyzer run PORT=8010
+
+deploy-check:
+	python3 deploy/deploy.py check
+
+deploy-build:
+	python3 deploy/deploy.py build --app $(APP)
+
+deploy-dns:
+	python3 deploy/deploy.py dns --app $(APP)
+
+deploy-app:
+	python3 deploy/deploy.py deploy --app $(APP)
+
+deploy-verify:
+	python3 deploy/deploy.py verify --app $(APP)
 
 run-aviation-accident-tracker:
 	@echo "🚀 Starting Aviation Accident Tracker (backend placeholder)..."

@@ -17,6 +17,9 @@ are in feet MSL. The nearest valid airport within 5 km is reported on events;
 an airport elevation can extend an observed GPS ground reference to a landing
 without a stationary block. Altitude alone does not confirm touchdown. When
 airport data is missing or inconsistent, track-derived analysis remains in use.
+The native host deployment includes the bundled airport cache and sets
+`AVIATION_AIRPORTS_DATA` to its installed path. Use the monorepo
+[deployment guide](../../deploy/README.md) for the public service workflow.
 
 The [Component specification](../../../../../components/flight-analyzer/component.md)
 defines intended behavior. The implementation is retained source while the
