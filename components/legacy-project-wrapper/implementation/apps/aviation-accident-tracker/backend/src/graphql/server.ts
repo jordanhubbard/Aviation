@@ -13,7 +13,7 @@ import { join } from 'path';
 import { createComplexityLimitRule } from 'graphql-validation-complexity';
 import { EventRepository } from '../db/repository';
 import { resolvers, GraphQLContext } from './resolvers';
-import type { Express } from 'express';
+import type { Express, RequestHandler } from 'express';
 import type { Server as HTTPServer } from 'http';
 import DataLoader from 'dataloader';
 
@@ -162,7 +162,7 @@ export async function createGraphQLServer(
           loaders,
         } as GraphQLContext & { loaders: ReturnType<typeof createLoaders> };
       },
-    })
+    }) as unknown as RequestHandler
   );
 
   console.log('✅ GraphQL server ready at /graphql');

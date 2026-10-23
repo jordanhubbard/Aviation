@@ -10,7 +10,7 @@
     "dev": "tsc --watch & nodemon dist/index.js",
     "start": "node dist/index.js",
     "clean": "rm -rf dist",
-    "test": "vitest run --reporter=verbose",
+    "test": "vitest run --reporter=verbose && python3 -m unittest discover -s tests -p 'test_*.py'",
     "test:watch": "vitest watch",
     "seed": "tsx scripts/seed-data.ts",
     "lint": "echo \"(placeholder lint)\"",

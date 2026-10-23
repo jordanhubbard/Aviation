@@ -1,4 +1,4 @@
-export type SourceSystem = 'asn' | 'avherald';
+export type SourceSystem = 'asn' | 'avherald' | 'ntsb';
 
 export interface RawEvent {
   source: SourceSystem;
