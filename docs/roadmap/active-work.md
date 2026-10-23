@@ -67,3 +67,15 @@ release-visible outcome to `CHANGELOG.md`; Git preserves prior queue states.
   - [x] Existing Aviation app tests and all 54 KMLab tests pass in the merged tree (`make test`: 13 Node suites, Go, 61 analyzer tests)
   - [x] Synthetic touchdown tests exercise airport elevation, GPS bias, touch-and-go, and go-around (`app/tests/test_airports.py`)
   - [x] Hosted CI confirms retained apps and new analyzer after push (PR #304, a5fa6fa9d: 19 checks passed, Dependabot skipped)
+
+### [ ] ADOPT-004 — Repair retained deployment workflow after conversion
+
+- **Priority:** P0
+- **Owner:** workflows/deploy.yml
+- **Direction:** Restore the main-branch deployment dry run after the Literate AI source relocation.
+- **Conclusion:** The job-level working directory is unavailable before checkout, and Docker builds must use the real retained implementation as context so workspace COPY instructions see actual files.
+- **Depends on:** ADOPT-003 merged adoption
+- **Implementation:**
+  - [ ] Remove the unnecessary workflow-wide working directory and point Docker actions at the retained implementation.
+- **Evidence:**
+  - [ ] Workflow YAML parses, pull-request checks pass, and the exact post-merge main deploy workflow reaches its intended staging dry run.

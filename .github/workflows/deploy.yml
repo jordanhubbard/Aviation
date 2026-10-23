@@ -32,10 +32,6 @@ env:
   REGISTRY: ghcr.io
   IMAGE_PREFIX: ${{ github.repository_owner }}
 
-defaults:
-  run:
-    working-directory: components/legacy-project-wrapper/implementation
-
 jobs:
   determine-deployments:
     name: Determine What to Deploy
@@ -118,8 +114,8 @@ jobs:
       - name: Build and push backend
         uses: docker/build-push-action@v7
         with:
-          context: .
-          file: ./apps/aviation-accident-tracker/Dockerfile
+          context: ./components/legacy-project-wrapper/implementation
+          file: ./components/legacy-project-wrapper/implementation/apps/aviation-accident-tracker/Dockerfile
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
@@ -160,8 +156,8 @@ jobs:
       - name: Build and push
         uses: docker/build-push-action@v7
         with:
-          context: .
-          file: ./apps/flight-planner/Dockerfile
+          context: ./components/legacy-project-wrapper/implementation
+          file: ./components/legacy-project-wrapper/implementation/apps/flight-planner/Dockerfile
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
@@ -202,8 +198,8 @@ jobs:
       - name: Build and push
         uses: docker/build-push-action@v7
         with:
-          context: .
-          file: ./apps/flightschool/Dockerfile
+          context: ./components/legacy-project-wrapper/implementation
+          file: ./components/legacy-project-wrapper/implementation/apps/flightschool/Dockerfile
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
@@ -244,8 +240,8 @@ jobs:
       - name: Build and push
         uses: docker/build-push-action@v7
         with:
-          context: .
-          file: ./apps/foreflight-dashboard/Dockerfile
+          context: ./components/legacy-project-wrapper/implementation
+          file: ./components/legacy-project-wrapper/implementation/apps/foreflight-dashboard/Dockerfile
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
