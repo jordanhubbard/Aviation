@@ -21,7 +21,7 @@
     "@aviation/shared-sdk": "workspace:*",
     "@aviation/keystore": "workspace:*",
     "@aviation/ui-framework": "workspace:*",
-    "ws": "^8.18.0"
+    "ws": "^8.20.1"
   },
   "devDependencies": {
     "@types/jest": "^30.0.0",
