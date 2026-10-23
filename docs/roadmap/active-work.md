@@ -50,6 +50,9 @@ release-visible outcome to `CHANGELOG.md`; Git preserves prior queue states.
 - **Next action:** Produce the evidence-linked boundary inventory for
   `components/legacy-project-wrapper/implementation`.
 - **Evidence:** Phase 1.2 lift-and-shift identity `sha256:c5ca4361ba010f6e8d81c93398468f9f4f8b8cc352504bc8535fa74b7c6e9990`.
+  Retained conversion stage is backed by current test receipt
+  `sha256:60e252aceb5834018a21d3ec5a75b667c564e207ea3cf02d475b3245640c3c79`;
+  original source remains release authority.
 
 ### [x] ADOPT-003 — Preserve Aviation interfaces and integrate flight analyzer
 
