@@ -1,1 +1,1 @@
-{"evidence_identities":["sha256:0cbf06243d97641efb001f0394beaa8283e3b1cc767d816834cb9438883c4d9e"],"prior_state_identity":null,"project_id":"aviation","release_authority":"original-source","schema":"literate-ai/conversion-authority@1","stage":"wrapped"}
+{"evidence_identities":["sha256:60e252aceb5834018a21d3ec5a75b667c564e207ea3cf02d475b3245640c3c79"],"prior_state_identity":"sha256:367496d4e7bf2e5be31916cd04b1e4a815a2b89eed62dd66660d00c38ca0a2d0","project_id":"aviation","release_authority":"original-source","schema":"literate-ai/conversion-authority@1","stage":"retained"}
