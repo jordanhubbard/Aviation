@@ -30,6 +30,29 @@ describe('App Component', () => {
   });
 
   describe('Initial Rendering', () => {
+    it('expands a row to fetch and link its known citations', async () => {
+      const fetchMock = vi.fn((url: RequestInfo | URL) => {
+        const path = url.toString();
+        if (path === '/api/events/1') return Promise.resolve({ ok: true, json: () => Promise.resolve({
+          ...mockEvents[0], sources: [{ sourceName: 'AVweb', title: 'N12345 accident report',
+            url: 'https://avweb.com/report/n12345' }],
+        }) } as Response);
+        if (path.startsWith('/api/events?')) return Promise.resolve({ json: () => Promise.resolve({
+          data: mockEvents.map(event => ({ ...event, sources: [] })),
+        }) } as Response);
+        if (path.startsWith('/api/filters/options')) return Promise.resolve({ json: () => Promise.resolve(mockFilterOptions) } as Response);
+        return Promise.resolve({ json: () => Promise.resolve(mockAirports) } as Response);
+      });
+      global.fetch = fetchMock as typeof fetch;
+      render(<App />);
+      const button = await screen.findByRole('button', { name: 'Show citations for N12345' });
+      await userEvent.click(button);
+      const link = await screen.findByRole('link', { name: 'N12345 accident report' });
+      expect(link).toHaveAttribute('href', 'https://avweb.com/report/n12345');
+      expect(button).toHaveAttribute('aria-expanded', 'true');
+      expect(fetchMock).toHaveBeenCalledWith('/api/events/1');
+    });
+
     it('renders the app title', () => {
       render(<App />);
       expect(screen.getByText('Aviation Accident Tracker')).toBeInTheDocument();

@@ -440,8 +440,11 @@ components:
           example: '101'
         sourceName:
           type: string
-          enum: [asn, avherald]
           example: asn
+        title:
+          type: string
+          nullable: true
+          description: Publisher headline when the source is an article
         url:
           type: string
           format: uri

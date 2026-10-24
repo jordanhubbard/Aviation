@@ -10,6 +10,16 @@ const app = express();
 app.use(cors({ origin: true }));
 app.use(express.json());
 
+app.get('/', (_req, res) => {
+  res.type('html').send(`<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Aviation Chat</title></head><body>
+<main><h1>Aviation Chat</h1>
+<p>This service provides chat to Aviation applications through an API. It does not have a standalone chat interface.</p>
+<p>Applications send requests to <code>POST /chat</code>. The service can forward them to an optional OpenClaw gateway when configured.</p>
+<p><a href="/health">Service health</a></p></main></body></html>`);
+});
+
 const secrets = createSecretLoader('aviation-chat');
 
 // Resolve OpenClaw Gateway URL: env first (Railway/deploy), then keystore, then default.

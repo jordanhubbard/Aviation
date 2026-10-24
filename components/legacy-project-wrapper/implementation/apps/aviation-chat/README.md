@@ -4,6 +4,8 @@
 
 Proxy service for OpenClaw in-app chat. Receives requests from app UIs, loads each app's **CLAUDE.md** (or **AI_CONTEXT.md**) as context, and forwards to the OpenClaw Gateway with user and app identity. Keeps conversation history in memory per (userId, appId, conversationId) so multi-turn works.
 
+The public root URL is an informational page. Chat is an API-only integration through `POST /chat`; it has no standalone browser conversation interface.
+
 **Railway (and other platforms):** Config is read from **environment variables first**, then keystore. Set `OPENCLAW_GATEWAY_HOST` (or `OPENCLAW_BASE_URL`) and `OPENCLAW_API_KEY` (or `OPENCLAW_GATEWAY_TOKEN` / `OPENCLAW_GATEWAY_PASSWORD`) in the Railway service so the proxy can reach OpenClaw without a local key vault.
 
 ## Quick start

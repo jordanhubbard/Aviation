@@ -25,6 +25,7 @@ import type { Airport, FlightPlan, FlightPlanRequest, LocalPlanRequest, RoutePla
 import { FormSection } from './shared'
 import ModeSelector, { type PlanMode } from './ModeSelector'
 import ProcedureSelection from './ProcedureSelection'
+import { loadSavedFlightPlans } from '../services/savedFlightPlans'
 
 type Props = {
   isLoading: boolean
@@ -41,9 +42,9 @@ const FlightPlanningForm: React.FC<Props> = ({ isLoading, onSubmit }) => {
   const [open, setOpen] = useState(false)
 
   useEffect(() => {
-    fetch('/api/flight-plans')
-      .then(response => response.json())
-      .then((data: FlightPlan[]) => setFlightPlans(data))
+    loadSavedFlightPlans()
+      .then(setFlightPlans)
+      .catch(() => setFlightPlans([]))
   }, [])
 
   const handleLoad = (plan: FlightPlan) => {

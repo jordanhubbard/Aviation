@@ -70,8 +70,7 @@ jobs:
           pip install -e packages/shared-sdk/python
           grep -v '^-e ' apps/flight-planner/requirements.txt >/tmp/flight-planner-requirements.txt
           pip install -r /tmp/flight-planner-requirements.txt
+          python -m pip install 'setuptools>=84.1.0'
       - name: Run pip-audit
         # Skip local packages (aviation-shared-sdk) — they have no PyPI CVE data
-        # setup-python currently bundles setuptools 79; the finding only affects
-        # package-index URL expansion, which this workflow does not use.
-        run: pip-audit --skip-editable --ignore-vuln PYSEC-2026-3447
+        run: pip-audit --skip-editable

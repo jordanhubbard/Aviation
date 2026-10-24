@@ -46,6 +46,7 @@ CREATE TABLE IF NOT EXISTS sources (
     
     -- Source metadata
     source_name TEXT NOT NULL, -- e.g. 'asn', 'avherald'
+    title TEXT,
     url TEXT NOT NULL,
     fetched_at TEXT NOT NULL DEFAULT (datetime('now')),
     checksum TEXT, -- Hash of raw content for change detection
@@ -54,6 +55,12 @@ CREATE TABLE IF NOT EXISTS sources (
     created_at TEXT NOT NULL DEFAULT (datetime('now')),
     
     FOREIGN KEY (event_id) REFERENCES events(id) ON DELETE CASCADE
+);
+
+-- Publisher searches are retried after seven days so later coverage appears.
+CREATE TABLE IF NOT EXISTS media_checks (
+    event_id INTEGER PRIMARY KEY REFERENCES events(id) ON DELETE CASCADE,
+    checked_at TEXT NOT NULL
 );
 
 -- Indexes for performance

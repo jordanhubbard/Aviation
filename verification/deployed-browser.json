@@ -1,0 +1,16 @@
+{
+  "schema": "aviation/deployed-browser-smoke@1",
+  "apps": {
+    "aviation-accident-tracker": { "rootText": "Aviation Accident Tracker", "interaction": "citation-disclosure" },
+    "aviation-chat": { "rootText": "Aviation Chat", "interaction": "invalid-chat-request" },
+    "aviation-missions-app": { "rootText": "Aviation Mission Management" },
+    "flight-planner": { "rootText": "Flight Planner", "interaction": "saved-plans-dialog" },
+    "flight-track-analyzer": { "rootText": "Flight Track Analyzer" },
+    "flight-tracker": { "rootText": "Flight Tracker" },
+    "flightschool": { "rootText": "Flight School" },
+    "foreflight-dashboard": { "rootText": "ForeFlight Logbook Dashboard" },
+    "g1000-simulator": { "rootText": "G1000 Simulator" },
+    "meta-app": { "rootText": "Aviation Suite" },
+    "weather-briefing": { "rootText": "Aviation Weather Briefing" }
+  }
+}

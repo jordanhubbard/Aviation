@@ -42,6 +42,7 @@ export interface NormalizedEvent {
   status?: string;
   sources: {
     sourceName: string;
+    title?: string;
     url: string;
     fetchedAt: string;
     checksum?: string;
