@@ -35,6 +35,22 @@ describe('media feed citations', () => {
     expect(mediaCitations({ ...event, registration: 'N744C' }, articles)).toEqual([]);
   });
 
+  it('rejects missing registrations even when ordinary article text says none', () => {
+    expect(mediaCitations({ ...event, registration: 'None' }, [{
+      publisher: 'AOPA', title: 'A Legacy of Firsts',
+      url: 'https://www.aopa.org/news-and-media/all-news/2026/october/16/a-legacy-of-firsts',
+      publishedAt: '2026-10-21T12:00:00Z', excerpt: 'None of the pilots reported an issue.',
+    }])).toEqual([]);
+  });
+
+  it('requires accident context as well as a matching registration', () => {
+    expect(mediaCitations(event, [{
+      publisher: 'AVweb', title: 'N744CJ completes restoration',
+      url: 'https://avweb.com/aircraft/n744cj',
+      publishedAt: '2026-10-21T12:00:00Z', excerpt: 'Aircraft N744CJ flew today.',
+    }])).toEqual([]);
+  });
+
   it('accepts publisher archive results only when their article text names the aircraft', async () => {
     const response = JSON.stringify([{ date: '2026-10-21T12:00:00',
       link: 'https://www.aerotime.aero/articles/n744cj',
