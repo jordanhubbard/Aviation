@@ -4,6 +4,11 @@ import { findAirport } from '../geo/airportLookup.js';
 import { classifyCauses } from './causes.js';
 
 function classifyCategory(raw: RawEvent): 'general' | 'commercial' | 'unknown' {
+  // NTSB's coded operation is more reliable than guessing from an operator name.
+  const part = raw.farPart?.replace(/^0+/, '');
+  if (part === '91') return 'general';
+  if (part === '121' || part === '135') return 'commercial';
+  if (raw.source === 'ntsb') return 'unknown';
   const op = (raw.operator || '').toLowerCase();
   if (!op) return 'unknown';
   if (op.includes('airlines') || op.includes('airways') || op.includes('airline')) return 'commercial';

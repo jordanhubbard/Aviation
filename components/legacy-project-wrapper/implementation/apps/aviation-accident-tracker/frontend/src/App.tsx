@@ -7,6 +7,7 @@ import debounce from 'lodash.debounce';
 import { distanceKM } from '@aviation/shared-sdk/aviation/navigation';
 import { Badge } from './components/Badge';
 import { reportFrontendErrorToMac } from './utils/macReporting';
+import { countryLabel, regionLabel, parseSearchQuery } from './searchQuery';
 // import { normalizeMarkers, defaultClusterOptions } from '@aviation/ui-framework';
 
 type EventRecord = {
@@ -72,7 +73,10 @@ export function App() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState('');
-  const [category, setCategory] = useState<'all' | 'general' | 'commercial'>('all');
+  const [category, setCategory] = useState<'all' | 'general' | 'commercial' | 'unknown'>('all');
+  const [cause, setCause] = useState('');
+  const [naturalQuery, setNaturalQuery] = useState('');
+  const [syncStatus, setSyncStatus] = useState<{ lastSuccessAt: string | null; lastError: string | null } | null>(null);
   const [page, setPage] = useState(0);
   const pageSize = 50;
 
@@ -141,6 +145,7 @@ export function App() {
     params.set('limit', String(pageSize));
     params.set('offset', String(page * pageSize));
     if (search.trim()) params.set('search', search.trim());
+    if (cause) params.set('cause', cause);
     if (category !== 'all') params.set('category', category);
     if (airportQuery.trim()) params.set('airport', airportQuery.trim());
     if (country) params.set('country', country);
@@ -161,7 +166,27 @@ export function App() {
         setError(String(err));
         setLoading(false);
       });
-  }, [search, category, page, airportQuery, country, region, from, to]);
+  }, [search, cause, category, page, airportQuery, country, region, from, to]);
+
+  useEffect(() => {
+    const refresh = () => fetch('/api/ingest/status').then(r => r.json()).then(setSyncStatus).catch(() => setSyncStatus(null));
+    void refresh();
+    const timer = window.setInterval(refresh, 60_000);
+    return () => window.clearInterval(timer);
+  }, []);
+
+  const applyNaturalQuery = () => {
+    const parsed = parseSearchQuery(naturalQuery, options.countries, options.regions);
+    setSearch(parsed.search ?? '');
+    setCause(parsed.cause ?? '');
+    setCategory(parsed.category ?? 'all');
+    setCountry(parsed.country ?? '');
+    setRegion(parsed.region ?? '');
+    setFrom(parsed.from ?? '');
+    setTo(parsed.to ?? '');
+    setRangePreset('');
+    setPage(0);
+  };
 
   const toggleSources = async (event: EventRecord) => {
     if (expandedId === event.id) {
@@ -201,7 +226,7 @@ export function App() {
       return;
     }
 
-    // List payload intentionally omits sources for performance; hydrate from detail endpoint.
+    // Older list payloads may omit sources; hydrate those from the detail endpoint.
     if (selected.sources && selected.sources.length > 0) {
       setSelectedLoading(false);
       return;
@@ -293,9 +318,21 @@ export function App() {
       <style>{`.leaflet-control-attribution a { color: #005a7a; text-decoration: underline; }`}</style>
       <div style={{ gridColumn: '1 / span 2' }}>
         <h1>Aviation Accident Tracker</h1>
+        <p>Last successful sync: {syncStatus?.lastSuccessAt ? new Date(syncStatus.lastSuccessAt).toLocaleString() : 'Not recorded yet'}{syncStatus?.lastError ? ' · Latest sync failed' : ''}</p>
         {loading && <p>Loading events…</p>}
         {error && <p style={{ color: 'red' }}>Error: {error}</p>}
         {!loading && events.length === 0 && <p>No events yet. Run backend seed or ingestion.</p>}
+      </div>
+
+      <div style={{ gridColumn: '1 / span 2', display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+        <label>
+          Describe accidents:{' '}
+          <input value={naturalQuery} onChange={event => setNaturalQuery(event.target.value)}
+            onKeyDown={event => { if (event.key === 'Enter') applyNaturalQuery(); }}
+            placeholder="Engine failure in California last 30 days" style={{ minWidth: 310 }} />
+        </label>
+        <button type="button" onClick={applyNaturalQuery}>Apply query</button>
+        <small>Understands causes, category, place, and date; other words search event text.</small>
       </div>
 
       <div style={{ gridColumn: '1 / span 2', display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
@@ -321,8 +358,9 @@ export function App() {
             }}
           >
             <option value="all">All</option>
-            <option value="general">General</option>
-            <option value="commercial">Commercial</option>
+            <option value="general">General aviation</option>
+            <option value="commercial">Commercial aviation</option>
+            <option value="unknown">Unknown</option>
           </select>
         </label>
         <label>
@@ -337,7 +375,7 @@ export function App() {
             <option value="">All</option>
             {options.countries.map((c) => (
               <option key={c} value={c}>
-                {c}
+                {countryLabel(c)}
               </option>
             ))}
           </select>
@@ -354,7 +392,7 @@ export function App() {
             <option value="">All</option>
             {options.regions.map((r) => (
               <option key={r} value={r}>
-                {r}
+                {regionLabel(r)}
               </option>
             ))}
           </select>
@@ -427,6 +465,8 @@ export function App() {
         <button
           onClick={() => {
             setSearch('');
+            setCause('');
+            setNaturalQuery('');
             setCategory('all');
             setAirportQuery('');
             setAirportOptions([]);
@@ -444,6 +484,7 @@ export function App() {
           Filters active:{' '}
           {[
             search && 'search',
+            cause && 'cause',
             category !== 'all' && 'category',
             airportQuery && 'airport',
             country && 'country',
@@ -503,6 +544,7 @@ export function App() {
                 <th>Type</th>
                 <th>Airport</th>
                 <th>Category</th>
+                <th>Source</th>
                 <th>Cause(s)</th>
               </tr>
             </thead>
@@ -547,6 +589,8 @@ export function App() {
                       {e.category}
                     </Badge>
                   </td>
+                  <td>{e.sources?.length ? <a href={e.sources[0].url} target="_blank" rel="noopener noreferrer"
+                    onClick={event => event.stopPropagation()}>{e.sources[0].sourceName.toUpperCase()}{e.sources.length > 1 ? ` +${e.sources.length - 1}` : ''}</a> : '—'}</td>
                   <td>{e.causes?.length ? e.causes.filter((cause, index, all) =>
                     all.findIndex(candidate => candidate.label === cause.label) === index).map(cause => (
                     <span key={cause.label} title={`${cause.basis === 'official' ? 'Official probable cause' : cause.basis === 'occurrence' ? 'NTSB occurrence' : 'Reported mechanism'}: ${cause.sourceName}`}
@@ -557,7 +601,7 @@ export function App() {
                 </tr>
                 {expandedId === e.id && (
                   <tr id={`citations-${e.id}`}>
-                    <td colSpan={8} style={{ padding: '10px 24px', background: '#f7f9fc' }}>
+                    <td colSpan={9} style={{ padding: '10px 24px', background: '#f7f9fc' }}>
                       <strong>Known citations</strong>
                       {e.causes?.length ? <ul aria-label="Cause evidence">{e.causes.map(cause => (
                         <li key={`${cause.label}-${cause.url}`}>

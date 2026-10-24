@@ -50,6 +50,25 @@
   (when (:body response)
     (json/parse-string (:body response) true)))
 
+(deftest completion-feedback-is-bound-to-the-completion
+  (let [mission (db/create-mission! {:title "Pattern practice" :category "Training" :difficulty 2
+                                     :objective "Practice" :mission_description "Fly patterns"
+                                     :why_description "Proficiency"})
+        other (db/create-mission! {:title "Other" :category "Training" :difficulty 2
+                                   :objective "Practice" :mission_description "Other patterns"
+                                   :why_description "Proficiency"})
+        id (:id mission)
+        completion (db/mark-mission-completed! id {:pilot_name "Alex"})
+        path (str "/missions/" id "/completed/" (:id completion) "/feedback")
+        posted (app (json-request :post path {:author_name "Jordan" :content "Useful short-field practice"}))
+        list-response (app (mock/request :get (str "/missions/" id "/completed")))
+        wrong-path (str "/missions/" (:id other) "/completed/" (:id completion) "/feedback")]
+    (is (= 201 (:status posted)))
+    (is (= "Useful short-field practice"
+           (get-in (parse-json-response list-response) [:completions 0 :feedback 0 :content])))
+    (is (= 404 (:status (app (json-request :post wrong-path {:author_name "Jordan" :content "Wrong mission"})))))
+    (is (= 400 (:status (app (json-request :post path {:author_name "Jordan" :content " "})))))))
+
 ;; Health check endpoint tests
 (deftest test-health-endpoint
   (testing "Health endpoint returns system status"

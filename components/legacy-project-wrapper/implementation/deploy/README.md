@@ -1,6 +1,6 @@
 # Aviation deployment on do-host1
 
-The [application manifest](apps.json) is the list of all eleven apps, their public
+The [application manifest](apps.json) is the list of all twelve apps, their public
 names, health paths, and unique loopback ports. `make deploy-check` rejects missing
 apps, missing Dockerfiles, and duplicate names or ports. The analyzer keeps its
 native Python systemd service on port 18765; the other apps run as Docker images
@@ -17,7 +17,7 @@ make deploy-app APP=flight-planner
 make deploy-verify APP=flight-planner
 ```
 
-Use `APP=all` to process all eleven apps serially. Building and deploying require
+Use `APP=all` to process all twelve apps serially. Building and deploying require
 a clean committed worktree. Each image receives the exact Git revision in its tag
 and OCI label; deployment pulls the exact CI image from GHCR on do-host1,
 falling back to a local authenticated pull and SSH transfer when necessary.
@@ -30,7 +30,7 @@ also opens a citation disclosure. `deploy-app` runs this gate after each app
 install. Install root pnpm dependencies and set
 `PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH` to Chrome if managed Chromium is absent.
 `.github/workflows/deploy.yml`
-builds and publishes the same eleven image definitions on `main` and release tags;
+builds and publishes the same twelve image definitions on `main` and release tags;
 the workflow does not change live services.
 
 Application environment overrides and credentials belong in root-owned
@@ -46,6 +46,18 @@ a session key for ForeFlight Dashboard on first install. Aviation Chat needs
 `OPENCLAW_BASE_URL` and `OPENCLAW_API_KEY` in its protected environment file for
 `/chat` to work; `/health` reports process health only. Other optional external
 API integrations likewise need their own credentials and feature checks.
+
+The shared Submit feedback control in all apps posts to Meta App's
+`/api/feedback` endpoint. Set `GITHUB_ISSUES_TOKEN` in the root-owned
+`/etc/aviation/meta-app.env` before deploying Meta App. The token needs issue
+creation access to `jordanhubbard/Aviation`. The endpoint validates the app
+origin and page, limits submissions to five per source IP per hour, and returns
+the new issue URL. The browser never receives the token.
+
+GA Preflight Check stores aircraft profiles and risk notes in the pilot's local
+browser storage. It requires the aircraft's current POH/AFM figures and computes
+takeoff and landing weight and longitudinal CG from entered station arms and
+planned fuel burn. It does not use generic aircraft defaults for loading limits.
 
 The deployment only binds application ports to 127.0.0.1. Public access goes
 through each app's HTTPS hostname. Keep the host's memory and swap health in view

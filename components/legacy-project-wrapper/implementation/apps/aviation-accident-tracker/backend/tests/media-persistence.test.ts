@@ -36,6 +36,19 @@ describe('media attribution persistence', () => {
         { label: 'Loss of control', sourceName: 'NTSB', url: 'https://data.ntsb.gov/update.zip', basis: 'official' },
         { label: 'Engine failure', sourceName: 'AVweb', url: 'https://avweb.com/report', basis: 'reported' },
       ]);
+      expect((await repository.listEvents({})).events[0].sources).toEqual([
+        expect.objectContaining({ sourceName: 'AVweb', title: 'Accident report' }),
+      ]);
+      expect((await repository.listEvents({ cause: 'Engine failure' })).total).toBe(1);
+      expect((await repository.listEvents({ cause: 'CFIT' })).total).toBe(0);
+      expect((await repository.getIngestStatus()).lastSuccessAt).toBeNull();
+      await repository.recordIngestStart();
+      await repository.recordIngestResult({ inserted: 1, updated: 0 });
+      expect((await repository.getIngestStatus()).lastSuccessAt).toMatch(/^\d{4}-\d\d-\d\dT/);
+      await repository.recordIngestStart();
+      await repository.recordIngestResult({ inserted: 0, updated: 0 }, 'network unavailable');
+      expect((await repository.getIngestStatus()).lastError).toBe('network unavailable');
+      expect((await repository.getIngestStatus()).lastSuccessAt).toMatch(/^\d{4}-\d\d-\d\dT/);
       expect((await repository.listEventsNeedingMediaSearch(10)).map(event => event.id)).toContain(eventId);
       await repository.markMediaSearched(eventId);
       expect((await repository.listEventsNeedingMediaSearch(10)).map(event => event.id)).not.toContain(eventId);

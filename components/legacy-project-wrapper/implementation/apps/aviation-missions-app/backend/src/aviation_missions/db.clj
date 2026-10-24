@@ -151,6 +151,16 @@
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         FOREIGN KEY (mission_id) REFERENCES missions(id) ON DELETE CASCADE
       )"])
+
+  (jdbc/execute! db-spec
+    ["CREATE TABLE IF NOT EXISTS completion_feedback (
+        id BIGINT AUTO_INCREMENT PRIMARY KEY,
+        completion_id BIGINT NOT NULL,
+        author_name VARCHAR(100) NOT NULL,
+        content TEXT NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (completion_id) REFERENCES mission_completions(id) ON DELETE CASCADE
+      )"])
   
   (jdbc/execute! db-spec
     ["CREATE TABLE IF NOT EXISTS submissions (
@@ -400,8 +410,23 @@
     ["SELECT * FROM mission_completions WHERE id = ?" id])))
 
 (defn get-completions-for-mission [mission-id]
-  (jdbc/query db-spec
-    ["SELECT * FROM mission_completions WHERE mission_id = ? ORDER BY created_at DESC" mission-id]))
+  (mapv (fn [completion]
+          (assoc completion :feedback
+            (jdbc/query db-spec
+              ["SELECT * FROM completion_feedback WHERE completion_id = ? ORDER BY created_at ASC, id ASC"
+               (:id completion)])))
+    (jdbc/query db-spec
+      ["SELECT * FROM mission_completions WHERE mission_id = ? ORDER BY created_at DESC" mission-id])))
+
+(defn add-completion-feedback! [mission-id completion-id author-name content]
+  (when (first (jdbc/query db-spec
+                 ["SELECT id FROM mission_completions WHERE id = ? AND mission_id = ?"
+                  completion-id mission-id]))
+    (let [result (jdbc/insert! db-spec :completion_feedback
+                   {:completion_id completion-id :author_name author-name :content content
+                    :created_at (coerce/to-timestamp (time/now))})]
+      (first (jdbc/query db-spec
+        ["SELECT * FROM completion_feedback WHERE id = ?" (generated-id result)])))))
 
 (defn mark-mission-completed! [mission-id completion-data]
   (let [result (jdbc/insert! db-spec :mission_completions

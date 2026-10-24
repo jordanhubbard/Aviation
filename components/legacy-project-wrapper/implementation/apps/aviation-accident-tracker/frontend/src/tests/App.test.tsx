@@ -308,7 +308,7 @@ describe('App Component', () => {
         expect(within(modal!).getByText(/Cessna 172/)).toBeInTheDocument();
         
         // Check source link
-        const sourceLink = screen.getByRole('link', { name: /ASN/i });
+        const sourceLink = within(modal!).getByRole('link', { name: /ASN/i });
         expect(sourceLink).toHaveAttribute('href', 'https://aviation-safety.net/database/record.php?id=20240115-0');
         expect(sourceLink).toHaveAttribute('target', '_blank');
       });
@@ -418,7 +418,7 @@ describe('App Component', () => {
       });
 
       await waitFor(() => {
-        const sourceLink = screen.getByRole('link', { name: /ASN/i });
+        const sourceLink = screen.getAllByRole('link', { name: /ASN/i }).find(link => link.getAttribute('rel') === 'noreferrer');
         expect(sourceLink).toHaveAttribute('href', detailEvent.sources[0].url);
       });
     });

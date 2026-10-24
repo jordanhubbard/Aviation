@@ -80,6 +80,8 @@ def convert(events, aircraft, source_url, cutoff, fetched_at, narratives=(), fin
             "summary": summary,
             "status": "reported",
         }
+        if plane.get("far_part"):
+            raw["farPart"] = plane["far_part"].strip()
         if make_model:
             raw["aircraftType"] = make_model
         if causes_by_event.get(row["ev_id"]):

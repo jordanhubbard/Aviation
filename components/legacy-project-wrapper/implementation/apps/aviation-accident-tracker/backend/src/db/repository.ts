@@ -269,6 +269,42 @@ export class EventRepository {
           ELSE causes.basis END`, [Number(eventId), cause.label, cause.sourceName, cause.url, cause.basis]);
   }
 
+  async recordIngestStart(): Promise<void> {
+    await this.dbRun(`INSERT INTO ingest_status (id, last_attempt_at, last_error)
+      VALUES (1, strftime('%Y-%m-%dT%H:%M:%fZ','now'), NULL)
+      ON CONFLICT(id) DO UPDATE SET last_attempt_at = excluded.last_attempt_at, last_error = NULL`);
+  }
+
+  async recordIngestResult(result: { inserted: number; updated: number }, error?: string): Promise<void> {
+    if (error) {
+      await this.dbRun('UPDATE ingest_status SET last_error = ? WHERE id = 1', [error.slice(0, 500)]);
+    } else {
+      await this.dbRun(`UPDATE ingest_status SET last_success_at = strftime('%Y-%m-%dT%H:%M:%fZ','now'),
+        last_error = NULL, inserted = ?, updated = ? WHERE id = 1`, [result.inserted, result.updated]);
+    }
+  }
+
+  async getIngestStatus(): Promise<any> {
+    return await this.dbGet('SELECT last_attempt_at AS lastAttemptAt, last_success_at AS lastSuccessAt, last_error AS lastError, inserted, updated FROM ingest_status WHERE id = 1') ?? {
+      lastAttemptAt: null, lastSuccessAt: null, lastError: null, inserted: null, updated: null,
+    };
+  }
+
+  private async sourcesFor(rows: DbEvent[]): Promise<Map<number, SourceAttribution[]>> {
+    const result = new Map<number, SourceAttribution[]>();
+    for (let start = 0; start < rows.length; start += 500) {
+      const ids = rows.slice(start, start + 500).map(row => row.id);
+      if (!ids.length) continue;
+      const found: DbSource[] = await this.dbAll(`SELECT * FROM sources WHERE event_id IN (${ids.map(() => '?').join(',')}) ORDER BY id`, ids);
+      for (const row of found) {
+        const values = result.get(row.event_id) ?? [];
+        values.push(this.dbSourceToAttribution(row));
+        result.set(row.event_id, values);
+      }
+    }
+    return result;
+  }
+
   private async causesFor(rows: DbEvent[]): Promise<Map<number, CauseAttribution[]>> {
     const result = new Map<number, CauseAttribution[]>();
     if (!rows.length) return result;
@@ -347,6 +383,10 @@ export class EventRepository {
       const searchPattern = `%${params.search}%`;
       sqlParams.push(searchPattern, searchPattern, searchPattern);
     }
+    if (params.cause) {
+      conditions.push('EXISTS (SELECT 1 FROM causes WHERE causes.event_id = events.id AND causes.label = ?)');
+      sqlParams.push(params.cause);
+    }
 
     const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
     const limit = params.limit || 50;
@@ -366,8 +406,8 @@ export class EventRepository {
 
     const rows: DbEvent[] = await this.dbAll(sql, sqlParams);
     
-    const causes = await this.causesFor(rows);
-    const events = rows.map(row => this.dbEventToRecord(row, [], causes.get(row.id) ?? []));
+    const [causes, sources] = await Promise.all([this.causesFor(rows), this.sourcesFor(rows)]);
+    const events = rows.map(row => this.dbEventToRecord(row, sources.get(row.id) ?? [], causes.get(row.id) ?? []));
     
     return { events, total };
   }
@@ -407,6 +447,10 @@ export class EventRepository {
       conditions.push('(summary LIKE ? OR operator LIKE ? OR registration LIKE ?)');
       const searchPattern = `%${params.search}%`;
       sqlParams.push(searchPattern, searchPattern, searchPattern);
+    }
+    if (params.cause) {
+      conditions.push('EXISTS (SELECT 1 FROM causes WHERE causes.event_id = events.id AND causes.label = ?)');
+      sqlParams.push(params.cause);
     }
 
     const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
@@ -477,6 +521,10 @@ export class EventRepository {
       conditions.push('(summary LIKE ? OR operator LIKE ? OR registration LIKE ?)');
       const searchPattern = `%${params.search}%`;
       sqlParams.push(searchPattern, searchPattern, searchPattern);
+    }
+    if (params.cause) {
+      conditions.push('EXISTS (SELECT 1 FROM causes WHERE causes.event_id = events.id AND causes.label = ?)');
+      sqlParams.push(params.cause);
     }
 
     const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';

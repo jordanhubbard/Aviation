@@ -37,7 +37,14 @@ try {
       if (!response || response.status() >= 400 || badPage || pageErrors.length || !body.includes(expectedText)) {
         throw new Error(`HTTP ${response?.status()} marker=${body.includes(expectedText)} fallback=${badPage} errors=${pageErrors.join('; ')}`);
       }
+      const feedbackButton = page.getByRole('button', { name: 'Submit feedback' });
+      await feedbackButton.waitFor({ timeout: 10_000 });
+      await feedbackButton.click();
+      await page.getByRole('dialog').getByText('Your comment will create an issue').waitFor();
+      await page.getByRole('button', { name: 'Cancel' }).click();
       if (contract.apps[app.name].interaction === 'citation-disclosure') {
+        await page.getByRole('columnheader', { name: 'Source' }).waitFor();
+        await page.getByText('Last successful sync:').waitFor();
         await page.getByRole('columnheader', { name: 'Cause(s)' }).waitFor({ timeout: 10_000 });
         const firstRow = page.locator('tbody tr').first();
         const causeCell = firstRow.locator('td').last();
@@ -57,6 +64,13 @@ try {
           throw new Error(`Meta App destinations differ from deployment manifest: missing=${missing.join(', ')} count=${links.length}/${expected.length}`);
         }
       }
+      if (app.name === 'aviation-missions-app') {
+        const completed = page.getByRole('button', { name: /Completed/i }).first();
+        await completed.waitFor({ timeout: 10_000 });
+        await completed.click();
+        await page.getByText('Completed missions and feedback').waitFor({ timeout: 10_000 });
+        await page.getByRole('button', { name: 'Mark completed' }).waitFor();
+      }
       if (contract.apps[app.name].interaction === 'saved-plans-dialog') {
         await page.getByText('Select a planning mode and enter details to generate a plan').waitFor({ timeout: 10_000 });
         if (await page.getByText(/^Joystick:/).count() || await page.locator('main canvas').count()) {
@@ -64,6 +78,29 @@ try {
         }
         await page.getByRole('button', { name: 'Load Flight Plan' }).click();
         await page.getByRole('dialog', { name: 'Load Flight Plan' }).waitFor({ timeout: 10_000 });
+      }
+      if (contract.apps[app.name].interaction === 'weight-balance') {
+        await page.locator('#registration').fill('N12345');
+        await page.locator('#emptyWeight').fill('1500');
+        await page.locator('#emptyArm').fill('39');
+        await page.locator('#maxGross').fill('2300');
+        await page.locator('#fuelArm').fill('48');
+        await page.locator('.station-name').first().fill('Front seats');
+        await page.locator('.station-arm').first().fill('37');
+        await page.locator('.station-weight').first().fill('170');
+        await page.locator('.envelope-row').first().locator('.envelope-weight').fill('1500');
+        await page.locator('.envelope-row').first().locator('.forward').fill('35');
+        await page.locator('.envelope-row').first().locator('.aft').fill('47');
+        await page.locator('.envelope-row').nth(1).locator('.envelope-weight').fill('2300');
+        await page.locator('.envelope-row').nth(1).locator('.forward').fill('41');
+        await page.locator('.envelope-row').nth(1).locator('.aft').fill('47');
+        await page.locator('#fuelGallons').fill('40');
+        await page.locator('#fuelBurnGallons').fill('20');
+        await page.getByRole('button', { name: 'Calculate takeoff and landing' }).click();
+        const result = await page.locator('#results').innerText();
+        if (!result.includes('1910.00') || !result.includes('1790.00') || !result.includes('Within entered limits')) {
+          throw new Error(`Preflight loading result did not match known calculation: ${result}`);
+        }
       }
       if (contract.apps[app.name].interaction === 'invalid-chat-request') {
         const invalid = await page.request.post(`https://${hostname}.${manifest.domain}/chat`, { data: {} });

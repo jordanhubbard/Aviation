@@ -11,6 +11,18 @@ import { logger } from '../logger.js';
 import { fetchMediaArticles, mediaCitations, mediaCauses, searchPublisherArticles } from './mediaFeeds.js';
 
 export async function runRecentIngest(repository?: EventRepository): Promise<IngestResult> {
+  if (repository && config.env !== 'test') await repository.recordIngestStart();
+  try {
+    return await ingest(repository);
+  } catch (error) {
+    if (repository && config.env !== 'test') {
+      await repository.recordIngestResult({ inserted: 0, updated: 0 }, String(error));
+    }
+    throw error;
+  }
+}
+
+async function ingest(repository?: EventRepository): Promise<IngestResult> {
   const [asn, herald, ntsb, media] = await Promise.all([
     fetchRecentAsn(), fetchRecentAvHerald(), fetchRecentNtsb(), fetchMediaArticles(),
   ]);
@@ -45,6 +57,7 @@ export async function runRecentIngest(repository?: EventRepository): Promise<Ing
   const repo = repository ?? new EventRepository(config.databasePath);
   if (!repository) {
     await repo.initialize();
+    await repo.recordIngestStart();
   }
 
   try {
@@ -78,7 +91,9 @@ export async function runRecentIngest(repository?: EventRepository): Promise<Ing
         await repo.markMediaSearched(event.id);
       }));
     }
+    await repo.recordIngestResult({ inserted, updated });
   } catch (error) {
+    await repo.recordIngestResult({ inserted, updated }, String(error));
     logger.error('Ingest persistence failed', error instanceof Error ? error : new Error(String(error)));
     throw error;
   } finally {
@@ -87,9 +102,10 @@ export async function runRecentIngest(repository?: EventRepository): Promise<Ing
     }
   }
 
-  return {
+  const result = {
     inserted,
     updated,
     totalNormalized: normalized.length,
   };
+  return result;
 }

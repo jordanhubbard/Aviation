@@ -1,4 +1,4 @@
-import { fuzzyDedup } from '../dedupe.js';
+import { dedupe, fuzzyDedup } from '../dedupe.js';
 import { NormalizedEvent } from '../types.js';
 
 const base: NormalizedEvent = {
@@ -27,5 +27,14 @@ describe('fuzzyDedup', () => {
     const other: NormalizedEvent = { ...base, id: 'c', registration: 'G-TEST', country: 'GB' };
     const result = fuzzyDedup([base, other], 0.9);
     expect(result).toHaveLength(2);
+  });
+
+  it('retains a known operation category when merging source reports', () => {
+    const unknown = { ...base, category: 'unknown' as const };
+    const ntsb = { ...base, id: 'ntsb', category: 'general' as const,
+      dateZ: '2025-12-02T00:00:00Z' };
+    expect(fuzzyDedup([unknown, ntsb], 0.7)[0].category).toBe('general');
+    expect(fuzzyDedup([ntsb, unknown], 0.7)[0].category).toBe('general');
+    expect(dedupe([ntsb, { ...unknown, dateZ: ntsb.dateZ }])[0].category).toBe('general');
   });
 });

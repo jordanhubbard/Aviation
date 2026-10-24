@@ -25,6 +25,7 @@ on:
           - foreflight-dashboard
           - g1000-simulator
           - meta-app
+          - preflight-check
           - weather-briefing
 
 jobs:

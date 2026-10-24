@@ -432,7 +432,7 @@ class AviationMissionApp {
                             <span class="stat-label">Comments</span>
                         </button>
 
-                        <button class="stat-item stat-button" onclick="event.stopPropagation(); app.markCompleted(${mission.id})" title="Mark mission as completed">
+                        <button class="stat-item stat-button" onclick="event.stopPropagation(); app.viewCompletions(${mission.id})" title="View completions and feedback">
                             <span class="stat-icon">✓</span>
                             <span class="stat-count">${mission.completion_count || 0}</span>
                             <span class="stat-label">Completed</span>
@@ -1089,10 +1089,79 @@ class AviationMissionApp {
 
             alert(`Mission marked as completed! Great job, ${pilotName}!`);
             this.loadMissions(); // Refresh the mission list
+            this.viewCompletions(id);
         } catch (error) {
             console.error('Error marking mission completed:', error);
             alert('Failed to mark mission as completed. Please try again.');
         }
+    }
+
+    async viewCompletions(id) {
+        try {
+            const response = await fetch(`${this.apiBaseUrl}/missions/${id}/completed`);
+            if (!response.ok) throw new Error('Failed to fetch completions');
+            const data = await response.json();
+            this.showCompletionsModal(id, data.completions || []);
+        } catch (error) {
+            console.error('Error fetching completions:', error);
+            alert('Failed to load completions. Please try again.');
+        }
+    }
+
+    showCompletionsModal(missionId, completions) {
+        document.querySelector('.modal-overlay')?.remove();
+        const modal = document.createElement('div');
+        modal.className = 'modal-overlay';
+        modal.innerHTML = `
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2>Completed missions and feedback</h2>
+                    <button class="modal-close" onclick="this.closest('.modal-overlay').remove()">×</button>
+                </div>
+                <div class="modal-body">
+                    <button class="btn-mission primary" onclick="app.markCompleted(${missionId})">Mark completed</button>
+                    ${completions.length ? completions.map(completion => `
+                        <section class="comment">
+                            <h3>${this.escapeHtml(completion.pilot_name)} · ${this.escapeHtml(String(completion.completion_date).slice(0, 10))}</h3>
+                            ${completion.notes ? `<p>${this.escapeHtml(completion.notes)}</p>` : ''}
+                            ${(completion.feedback || []).map(item => `
+                                <div class="comment">
+                                    <strong>${this.escapeHtml(item.author_name)}</strong>
+                                    <p>${this.escapeHtml(item.content)}</p>
+                                </div>
+                            `).join('')}
+                            <form class="completion-feedback-form" data-completion-id="${completion.id}">
+                                <label>Your name <input name="author_name" required maxlength="100"></label>
+                                <label>Feedback <textarea name="content" required maxlength="5000" rows="3"></textarea></label>
+                                <button type="submit" class="btn-mission primary">Post feedback</button>
+                            </form>
+                        </section>
+                    `).join('') : '<p>No completions yet.</p>'}
+                </div>
+            </div>`;
+        document.body.appendChild(modal);
+        modal.addEventListener('click', event => { if (event.target === modal) modal.remove(); });
+        modal.querySelectorAll('.completion-feedback-form').forEach(form => {
+            form.addEventListener('submit', event => {
+                event.preventDefault();
+                this.submitCompletionFeedback(missionId, Number(form.dataset.completionId), form);
+            });
+        });
+    }
+
+    async submitCompletionFeedback(missionId, completionId, form) {
+        const author_name = form.elements.author_name.value.trim();
+        const content = form.elements.content.value.trim();
+        if (!author_name || !content) return;
+        const response = await fetch(`${this.apiBaseUrl}/missions/${missionId}/completed/${completionId}/feedback`, {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ author_name, content })
+        });
+        if (!response.ok) {
+            alert('Failed to post feedback. Please try again.');
+            return;
+        }
+        this.viewCompletions(missionId);
     }
 
     showMissionDetailModal(mission) {

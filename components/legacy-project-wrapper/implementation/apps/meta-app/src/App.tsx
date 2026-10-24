@@ -133,6 +133,16 @@ const appLinks: AppLink[] = [
     envUrl: import.meta.env.VITE_WEATHER_BRIEFING_URL,
     sourceUrl: `${repoBaseUrl}/weather-briefing`,
   },
+  {
+    id: 'preflight-check',
+    title: 'GA Preflight Check',
+    tabTitle: 'Preflight',
+    description: 'Aircraft-specific weight and balance plus a pilot risk review.',
+    icon: '⚖️',
+    localUrl: 'http://localhost:18776',
+    productionUrl: 'https://preflight-check.jordanhubbard.net/',
+    sourceUrl: `${repoBaseUrl}/preflight-check`,
+  },
 ];
 
 const resolvedApps: ResolvedAppLink[] = appLinks.map((app) => ({

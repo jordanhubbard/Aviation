@@ -400,6 +400,26 @@
       (-> (response {:error "Failed to mark mission as completed" :details (.getMessage e)})
           (status 500)))))
 
+(defn add-completion-feedback [id completion-id request]
+  (try
+    (let [mission-id (Integer/parseInt id)
+          completion-id (Integer/parseInt completion-id)
+          author (some-> request :body :author_name str/trim)
+          content (some-> request :body :content str/trim)]
+      (cond
+        (or (str/blank? author) (str/blank? content)
+            (> (count author) 100) (> (count content) 5000))
+        (-> (response {:error "A name and feedback comment are required (100/5000 character limits)"}) (status 400))
+
+        :else
+        (if-let [feedback (db/add-completion-feedback! mission-id completion-id author content)]
+          (-> (response {:feedback feedback}) (status 201))
+          (-> (response {:error "Completion not found for mission"}) (status 404)))))
+    (catch NumberFormatException _
+      (-> (response {:error "Invalid mission or completion ID"}) (status 400)))
+    (catch Exception e
+      (-> (response {:error "Failed to add completion feedback" :details (.getMessage e)}) (status 500)))))
+
 (defn get-submissions
   "Get all mission submissions"
   [_request]

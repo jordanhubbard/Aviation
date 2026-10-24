@@ -47,6 +47,7 @@ export interface ListEventsParams {
   country?: string;
   region?: string;
   search?: string;
+  cause?: string;
   limit?: number;
   offset?: number;
 }

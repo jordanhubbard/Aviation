@@ -222,3 +222,51 @@ release-visible outcome to `CHANGELOG.md`; Git preserves prior queue states.
   - [x] Meta App and dependencies build; the manifest browser check rejects the current deployed launcher because Aviation Chat is missing (9/10 destinations).
   - [x] Retained source scope, test receipt, and `litai verify` passed for PR #325; all PR checks passed and merged at b350ad59d.
   - [x] Exact-main CI 40123358725 and image run 40123358794 passed. do-host1 runs the b350ad59d Meta App image; the public browser gate confirmed all ten outbound links match the manifest, and all eleven app roots passed.
+
+### [ ] ACCIDENT-003 — Improve tracker provenance, freshness, filters, and search
+
+- **Priority:** P1
+- **Owner:** retained Accident Tracker backend, frontend, and deployment browser contract
+- **Direction:** Show source and last sync time, make category filtering useful, expand abbreviations in selectors, and support natural-language accident search without an external token.
+- **Conclusion:** The live category filter applies correctly but all 742 events are unknown because NTSB FAR part is dropped. Preserve source attributions in list rows, persist successful ingest time, classify NTSB operation from FAR part, display full country/state labels, and map plain-language search to explicit supported filters with a deterministic parser.
+- **Depends on:** ACCIDENT-002 sourced causes
+- **Implementation:**
+  - [ ] Add list-row sources, durable ingest status, NTSB operation classification, readable filter labels, and a deterministic query parser with UI and post-deployment coverage.
+- **Evidence:**
+  - [ ] Backend and frontend tests, public category counts, live sync status and search checks, Literate AI verification, reviewed CI, exact-main image and browser gate.
+
+### [ ] MISSIONS-001 — Add written feedback under completed missions
+
+- **Priority:** P1
+- **Owner:** retained Aviation Missions backend and frontend
+- **Direction:** Allow pilots to add comments under a completed mission.
+- **Conclusion:** The Completed action currently records a pilot name and empty notes but offers no way to view or submit feedback later. Add a completion detail view with written feedback persisted against the completion, with no file attachments.
+- **Depends on:** Existing mission completions API
+- **Implementation:**
+  - [ ] Persist feedback comments for a completion and render submission and history beneath Completed.
+- **Evidence:**
+  - [ ] Clojure API and DB tests, rendered browser submission check, Literate AI verification, reviewed CI, exact-main image and deployment.
+
+### [ ] FEEDBACK-001 — Submit contextual GitHub feedback from every Aviation app
+
+- **Priority:** P1
+- **Owner:** Aviation
+- **Direction:** Add a shared feedback widget and server issue endpoint to all eleven deployed apps
+- **Conclusion:** A feedback control in every app should collect a short description and create an Aviation monorepo issue with the current app, page, and browser context; keep GitHub credentials on the server and limit abuse.
+- **Depends on:** none
+- **Implementation:**
+  - [ ] Build a shared widget served by meta-app, install it in each app document, provide a server-side GitHub Issues endpoint with validation and rate limits, and provision a scoped credential on do-host1.
+- **Evidence:**
+  - [ ] Unit and browser tests, exact-commit CI, then live issue creation and all-app smoke checks.
+
+### [ ] PREFLIGHT-001 — Add GA preflight weight and balance application
+
+- **Priority:** P1
+- **Owner:** Aviation
+- **Direction:** Build a preflight tool for aircraft-specific loading, takeoff and landing CG, and pilot risk review
+- **Conclusion:** The suite covers weather and route planning but lacks an aircraft-specific loading and preflight risk workspace. FAA AC 91-92 and Weight and Balance Handbook support this capability.
+- **Depends on:** none
+- **Implementation:**
+  - [ ] Add a browser-local preflight app requiring user-entered POH/AFM limits and stations; compute takeoff and landing weight/CG against an envelope, persist profiles locally, and link from Meta App.
+- **Evidence:**
+  - [ ] Math unit tests, browser smoke, exact-commit CI, and live deployment.
