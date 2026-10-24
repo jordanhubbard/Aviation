@@ -104,7 +104,7 @@ release-visible outcome to `CHANGELOG.md`; Git preserves prior queue states.
   - [x] Accident Tracker's live API returns 742 NTSB events with official source URLs; repeated ingestion updated the same records without duplicates.
   - [x] The deployment verifier confirms all eleven public DNS names resolve to do-host1 and their service health routes return HTTP 200; OpenClaw-dependent chat behavior is outside this deployment check.
 
-### [ ] ACCIDENT-001 — Discover and display accident citations
+### [x] ACCIDENT-001 — Discover and display accident citations
 
 - **Priority:** P1
 - **Owner:** retained Accident Tracker backend, frontend, and source attribution contract
@@ -115,9 +115,9 @@ release-visible outcome to `CHANGELOG.md`; Git preserves prior queue states.
   - [x] Add bounded concurrent media feed discovery and persistence; expose citation metadata; add expandable table rows and targeted tests.
 - **Evidence:**
   - [x] Deterministic matching and persistence tests, frontend interaction test, and application build pass locally.
-  - [ ] Live source discovery and row disclosure pass after deployment.
+  - [x] PR #317 and citation correction PR #318 merged; exact-main image run 40108419185 passed. The public event API exposes the verified AeroTime N514AX crash article with its NTSB source, and the browser disclosure passes. An unrelated AOPA link was removed and did not recur after ingestion.
 
-### [ ] CHAT-001 — Explain Aviation Chat at its root URL
+### [x] CHAT-001 — Explain Aviation Chat at its root URL
 
 - **Priority:** P2
 - **Owner:** retained Aviation Chat service
@@ -128,9 +128,9 @@ release-visible outcome to `CHANGELOG.md`; Git preserves prior queue states.
   - [x] Add a root route and document the API-only behavior.
 - **Evidence:**
   - [x] Service build passes locally.
-  - [ ] Live HTTP root/health checks pass after deployment.
+  - [x] Public root and health return HTTP 200; the full eleven-service browser sweep confirms the root, and an invalid POST /chat returns HTTP 400.
 
-### [ ] FLIGHT-001 — Repair deployed Flight Planner and add browser deployment gates
+### [x] FLIGHT-001 — Repair deployed Flight Planner and add browser deployment gates
 
 - **Priority:** P0
 - **Owner:** retained Flight Planner frontend and Aviation deployment verification
@@ -141,10 +141,10 @@ release-visible outcome to `CHANGELOG.md`; Git preserves prior queue states.
   - [x] Repair fetch and saved-plan mapping; add regression coverage; add post-deployment rendered checks for browser apps and API-only chat.
 - **Evidence:**
   - [x] Live browser reproduction, frontend tests, and full build pass locally; the new browser gate rejects the deployed error page.
-  - [ ] Deployed browser smoke passes without error boundaries.
+  - [x] Public Chromium sweep loads Flight Planner, opens its saved-plans dialog without an error boundary, and passes for all eleven service roots.
   - [x] Retained source scope and test receipt are refreshed; `litai verify` passes all three applicable gates.
 
-### [ ] FORE-001 — Accept overlapping solo and PIC logbook time
+### [x] FORE-001 — Accept overlapping solo and PIC logbook time
 
 - **Priority:** P1
 - **Owner:** retained ForeFlight Dashboard validator and deployed browser contract
@@ -155,4 +155,4 @@ release-visible outcome to `CHANGELOG.md`; Git preserves prior queue states.
   - [x] Correct the validator, add model and upload regressions, and add a post-deployment browser upload check.
 - **Evidence:**
   - [x] ForeFlight Dashboard test suite passes locally (188 tests).
-  - [ ] Public upload returns zero validation errors and the rendered dashboard shows no error for matching solo and PIC time.
+  - [x] PR #319 merged; exact-main ForeFlight image deployed. Public Chromium gate uploads 0.2 total / 0.2 PIC / 0.2 solo CSV, observes zero validation errors, and renders the dashboard without an error banner; full eleven-service sweep passes.
