@@ -73,6 +73,15 @@ CREATE TABLE IF NOT EXISTS media_checks (
     checked_at TEXT NOT NULL
 );
 
+CREATE TABLE IF NOT EXISTS ingest_status (
+    id INTEGER PRIMARY KEY CHECK(id = 1),
+    last_attempt_at TEXT,
+    last_success_at TEXT,
+    last_error TEXT,
+    inserted INTEGER,
+    updated INTEGER
+);
+
 -- Indexes for performance
 
 -- Primary query: recent events descending

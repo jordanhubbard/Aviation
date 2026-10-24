@@ -23,13 +23,14 @@ class NTSBParserTest(unittest.TestCase):
             {"ev_id": "old", "ev_type": "ACC", "ev_date": "08/01/26 00:00:00"},
         ]
         aircraft = [{"ev_id": "20261014204002", "regis_no": "N931TT",
-                     "acft_make": "PIPER", "acft_model": "PA-46"}]
+                     "acft_make": "PIPER", "acft_model": "PA-46", "far_part": "091"}]
         result = module.convert(
             events, aircraft, "https://data.ntsb.gov/file.zip",
             datetime(2026, 9, 1, tzinfo=timezone.utc), "2026-10-23T00:00:00Z"
         )
         self.assertEqual(len(result), 1)
         self.assertEqual(result[0]["registration"], "N931TT")
+        self.assertEqual(result[0]["farPart"], "091")
         self.assertEqual(result[0]["fatalities"], 5)
         self.assertEqual(result[0]["injuries"], 3)
         self.assertEqual(result[0]["airportIcao"], "KMSN")

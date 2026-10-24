@@ -205,6 +205,7 @@ export function createRouter(repository: EventRepository) {
       country: req.query.country as string | undefined,
       region: req.query.region as string | undefined,
       search: req.query.search as string | undefined,
+      cause: req.query.cause as string | undefined,
       limit: req.query.limit ? Number(req.query.limit) : undefined,
       offset: req.query.offset ? Number(req.query.offset) : undefined,
     };
@@ -217,6 +218,14 @@ export function createRouter(repository: EventRepository) {
 
       const result = await repository.listEvents(params);
       return res.json({ total: result.total, data: result.events });
+    } catch (error) {
+      return next(error);
+    }
+  });
+
+  router.get('/ingest/status', async (_req, res, next) => {
+    try {
+      return res.json(await repository.getIngestStatus());
     } catch (error) {
       return next(error);
     }

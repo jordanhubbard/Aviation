@@ -534,6 +534,7 @@ async function main() {
             setInterval(refreshFlights, 10000);
             setInterval(refreshTracked, 5000);
           </script>
+          <script defer src="https://meta-app.jordanhubbard.net/feedback-widget.js"></script>
         </body>
       </html>
     `);

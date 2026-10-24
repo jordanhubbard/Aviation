@@ -11,6 +11,7 @@
     "foreflight-dashboard": { "rootText": "ForeFlight Logbook Dashboard", "interaction": "solo-pic-upload" },
     "g1000-simulator": { "rootText": "G1000 Simulator" },
     "meta-app": { "rootText": "Aviation Suite" },
+    "preflight-check": { "rootText": "GA Preflight Check", "interaction": "weight-balance" },
     "weather-briefing": { "rootText": "Aviation Weather Briefing" }
   }
 }

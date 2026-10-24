@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>GA Preflight Check</title><link rel="stylesheet" href="/style.css"></head><body>
+<header><h1>GA Preflight Check</h1><p>Aircraft loading and a pilot risk review in one place.</p></header>
+<main>
+  <section><h2>Aircraft profile</h2>
+    <p>Enter figures from this aircraft’s current POH/AFM and weight and balance record. Profiles stay in this browser.</p>
+    <label>Registration <input id="registration" placeholder="N12345" required></label>
+    <div class="grid">
+      <label>Empty weight (lb) <input id="emptyWeight" type="number" min="1" step="any"></label>
+      <label>Empty CG arm (in) <input id="emptyArm" type="number" step="any"></label>
+      <label>Maximum gross weight (lb) <input id="maxGross" type="number" min="1" step="any"></label>
+      <label>Fuel arm (in) <input id="fuelArm" type="number" step="any"></label>
+      <label>Fuel density (lb/gal) <input id="fuelDensity" type="number" min="0.1" step="any" value="6"></label>
+    </div>
+    <h3>Loading stations</h3><div id="stations"></div><button type="button" id="addStation">Add station</button>
+    <h3>CG envelope</h3><p>Enter at least two weight rows, each with forward and aft CG limits in inches. Values are interpolated between rows.</p>
+    <div id="envelope"></div><button type="button" id="addEnvelope">Add envelope row</button>
+    <p><button type="button" id="saveProfile">Save aircraft profile</button> <button type="button" id="clearProfile">Clear profile</button></p>
+  </section>
+  <section><h2>Flight loading</h2>
+    <div id="loads"></div>
+    <div class="grid"><label>Fuel at takeoff (gal) <input id="fuelGallons" type="number" min="0" step="any"></label>
+    <label>Planned fuel burn (gal) <input id="fuelBurnGallons" type="number" min="0" step="any"></label></div>
+    <button type="button" id="calculate">Calculate takeoff and landing</button>
+    <div id="results" role="status" aria-live="polite"></div>
+  </section>
+  <section><h2>Pilot risk review</h2><p>Record your own decision for each PAVE area before departure.</p>
+    <div class="grid"><label><input type="checkbox" class="risk" data-risk="pilot"> Pilot: currency, health, and personal minimums checked</label>
+    <label><input type="checkbox" class="risk" data-risk="aircraft"> Aircraft: airworthiness and performance checked</label>
+    <label><input type="checkbox" class="risk" data-risk="environment"> enVironment: weather, NOTAMs, runway, terrain checked</label>
+    <label><input type="checkbox" class="risk" data-risk="external"> External pressures: alternatives and diversion plan checked</label></div>
+    <label>Notes and mitigations <textarea id="riskNotes" rows="4"></textarea></label>
+    <p id="riskStatus" role="status"></p>
+    <nav><a href="https://weather-briefing.jordanhubbard.net/">Weather briefing</a>
+    <a href="https://flight-planner.jordanhubbard.net/">Flight planner</a>
+    <a href="https://notams.aim.faa.gov/notamSearch/" target="_blank" rel="noopener noreferrer">FAA NOTAM search</a></nav>
+  </section>
+  <section><h2>References</h2><p>Review your aircraft’s current POH/AFM and limitations before use. This calculator uses the entered data and linear envelope interpolation; it does not include aircraft specific performance charts.</p>
+    <a href="https://www.faa.gov/regulations_policies/advisory_circulars/index.cfm/go/document.information/documentID/1036892">FAA preflight briefing guidance</a> ·
+    <a href="https://www.faa.gov/sites/faa.gov/files/regulations_policies/handbooks_manuals/aviation/FAA-H-8083-1.pdf">FAA Weight &amp; Balance Handbook</a></section>
+</main><script type="module" src="/app.js"></script><script defer src="https://meta-app.jordanhubbard.net/feedback-widget.js"></script></body></html>

@@ -9,6 +9,7 @@ export interface RawEvent {
   registration: string;
   aircraftType?: string;
   operator?: string;
+  farPart?: string; // NTSB operation regulation code, when supplied
   airportIcao?: string;
   airportIata?: string;
   country?: string;
