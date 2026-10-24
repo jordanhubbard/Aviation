@@ -35,6 +35,17 @@ const appLinks: AppLink[] = [
     sourceUrl: `${repoBaseUrl}/aviation-accident-tracker`,
   },
   {
+    id: 'aviation-chat',
+    title: 'Aviation Chat',
+    tabTitle: 'Chat',
+    description: 'API proxy for app-aware aviation assistance and service information.',
+    icon: '💬',
+    localUrl: 'http://localhost:31416',
+    productionUrl: 'https://aviation-chat.jordanhubbard.net/',
+    envUrl: import.meta.env.VITE_AVIATION_CHAT_URL,
+    sourceUrl: `${repoBaseUrl}/aviation-chat`,
+  },
+  {
     id: 'missions',
     title: 'Aviation Missions',
     tabTitle: 'Missions',

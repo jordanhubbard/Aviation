@@ -6,8 +6,6 @@ import { motion, AnimatePresence, type Variants } from 'framer-motion'
 import { ThemeProvider, createTheme } from '@mui/material/styles'
 import useMediaQuery from '@mui/material/useMediaQuery'
 import Navigation from './components/Navigation'
-import G1000Controls from './components/G1000Controls'
-import CanvasRenderer from './components/CanvasRenderer'
 import KeyboardShortcuts from './components/KeyboardShortcuts'
 import { ErrorBoundary } from './components/ErrorBoundary'
 import { LoadingState } from './components/shared'
@@ -186,7 +184,6 @@ function App() {
           <Button variant="contained" onClick={() => setThemeMode('high-contrast')}>High Contrast Mode</Button>
         </Box>
         <KeyboardShortcuts />
-<G1000Controls />
 
         <Container
           maxWidth="xl"
@@ -194,7 +191,6 @@ function App() {
           component="main"
           role="main"
         >
-          <CanvasRenderer />
           <Suspense fallback={<LoadingState message="Loading page..." />}>
             <AnimatePresence mode="wait">
               <motion.div

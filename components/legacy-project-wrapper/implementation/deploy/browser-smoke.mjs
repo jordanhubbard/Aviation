@@ -47,7 +47,21 @@ try {
         await page.getByText('Known citations').waitFor({ timeout: 10_000 });
         if (await page.getByRole('alert').count()) throw new Error('Citation disclosure failed');
       }
+      if (app.name === 'meta-app') {
+        const links = await page.locator('.launcher-card-cta[href]').evaluateAll(elements =>
+          elements.map(element => element.getAttribute('href')));
+        const expected = manifest.apps.filter(entry => entry.name !== 'meta-app').map(entry =>
+          `https://${entry.hostname || entry.name}.${manifest.domain}/`);
+        const missing = expected.filter(destination => !links.includes(destination));
+        if (missing.length || links.length !== expected.length) {
+          throw new Error(`Meta App destinations differ from deployment manifest: missing=${missing.join(', ')} count=${links.length}/${expected.length}`);
+        }
+      }
       if (contract.apps[app.name].interaction === 'saved-plans-dialog') {
+        await page.getByText('Select a planning mode and enter details to generate a plan').waitFor({ timeout: 10_000 });
+        if (await page.getByText(/^Joystick:/).count() || await page.locator('main canvas').count()) {
+          throw new Error('Flight Planner initial view contains simulator demo controls or canvas');
+        }
         await page.getByRole('button', { name: 'Load Flight Plan' }).click();
         await page.getByRole('dialog', { name: 'Load Flight Plan' }).waitFor({ timeout: 10_000 });
       }
