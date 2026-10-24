@@ -26,6 +26,13 @@ export interface MediaArticle {
   excerpt: string;
 }
 
+function searchableRegistration(value: string): boolean {
+  return /^[A-Z0-9-]{4,10}$/.test(value) && /[0-9-]/.test(value)
+    && !['UNKNOWN', 'NONE', 'NULL', 'N/A', 'UNKN'].includes(value);
+}
+
+const ACCIDENT_CONTEXT = /\b(?:accident|crash(?:ed|es)?|incident|emergency|fatal(?:ity|ities)?|collision|wreck(?:age)?|forced landing|hard landing|investigat(?:e|ion|ing)|overrun|runway excursion|downed|went down|missing aircraft)\b/i;
+
 function decode(value: string): string {
   return value.replace(/<!\[CDATA\[([\s\S]*?)\]\]>/g, '$1')
     .replace(/<[^>]*>/g, ' ')
@@ -74,7 +81,7 @@ export async function fetchMediaArticles(): Promise<MediaArticle[]> {
 }
 
 export async function searchPublisherArticles(registration: string): Promise<MediaArticle[]> {
-  if (!/^[A-Z0-9-]{4,10}$/.test(registration) || registration === 'UNKNOWN') return [];
+  if (!searchableRegistration(registration)) return [];
   const results = await Promise.allSettled(SEARCH_PUBLISHERS.map(async publisher => {
     const url = new URL(`https://${publisher.host}/wp-json/wp/v2/posts`);
     url.searchParams.set('search', registration);
@@ -99,8 +106,10 @@ export async function searchPublisherArticles(registration: string): Promise<Med
       if (link.protocol !== 'https:' || (link.hostname !== domain && !link.hostname.endsWith(`.${domain}`))) return [];
       const published = Date.parse(post.date);
       if (!Number.isFinite(published)) return [];
+      const match = pattern.exec(content);
+      const excerpt = match ? content.slice(Math.max(0, match.index - 350), match.index + 500) : '';
       return [{ publisher: publisher.name, title, url: link.toString(),
-        publishedAt: new Date(published).toISOString(), excerpt: registration }];
+        publishedAt: new Date(published).toISOString(), excerpt }];
     });
   }));
   return results.flatMap((result, index) => {
@@ -112,7 +121,7 @@ export async function searchPublisherArticles(registration: string): Promise<Med
 
 export function mediaCitations(event: Pick<NormalizedEvent, 'registration' | 'dateZ' | 'sources'>, articles: MediaArticle[]): SourceAttribution[] {
   const registration = event.registration.toUpperCase().trim();
-  if (registration === 'UNKNOWN' || !/^[A-Z0-9-]{4,10}$/.test(registration)) return [];
+  if (!searchableRegistration(registration)) return [];
   const escaped = registration.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
   const registrationPattern = new RegExp(`(^|[^A-Z0-9])${escaped}(?=$|[^A-Z0-9])`, 'i');
   const eventDay = Date.parse(event.dateZ);
@@ -124,7 +133,8 @@ export function mediaCitations(event: Pick<NormalizedEvent, 'registration' | 'da
     const published = Date.parse(article.publishedAt);
     if (!Number.isFinite(published) || published < eventDay - 2 * 86_400_000
         || published > eventDay + 365 * 86_400_000) continue;
-    if (!registrationPattern.test(`${article.title} ${article.excerpt}`) || seen.has(article.url)) continue;
+    const report = `${article.title} ${article.excerpt}`;
+    if (!registrationPattern.test(report) || !ACCIDENT_CONTEXT.test(report) || seen.has(article.url)) continue;
     if ((perPublisher.get(article.publisher) ?? 0) >= 3) continue;
     seen.add(article.url);
     perPublisher.set(article.publisher, (perPublisher.get(article.publisher) ?? 0) + 1);
