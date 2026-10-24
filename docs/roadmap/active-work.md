@@ -256,6 +256,7 @@ release-visible outcome to `CHANGELOG.md`; Git preserves prior queue states.
 - **Depends on:** none
 - **Implementation:**
   - [ ] Build a shared widget served by meta-app, install it in each app document, provide a server-side GitHub Issues endpoint with validation and rate limits, and provision a scoped credential on do-host1.
+  - [ ] Load the widget independently on KMLab, where its module graph delays deferred scripts; allow the widget and issue API in ForeFlight Dashboard's CSP; verify the rendered buttons on both deployed hostnames.
 - **Evidence:**
   - [ ] Unit and browser tests, exact-commit CI, then live issue creation and all-app smoke checks.
 

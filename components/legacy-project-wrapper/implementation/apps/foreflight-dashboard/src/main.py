@@ -124,11 +124,11 @@ async def add_security_headers(request: Request, call_next):
     # Content Security Policy
     response.headers["Content-Security-Policy"] = (
         "default-src 'self'; "
-        "script-src 'self' 'unsafe-inline' 'unsafe-eval'; "
+        "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://meta-app.jordanhubbard.net; "
         "style-src 'self' 'unsafe-inline'; "
         "img-src 'self' data: https:; "
         "font-src 'self' data:; "
-        "connect-src 'self' https://codecov.io;"
+        "connect-src 'self' https://codecov.io https://meta-app.jordanhubbard.net;"
     )
     # HTTP Strict Transport Security
     response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
