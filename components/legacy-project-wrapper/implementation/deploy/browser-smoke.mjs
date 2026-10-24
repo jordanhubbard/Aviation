@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // Post-deployment browser gate for the actual public hostnames in apps.json.
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { chromium } from '@playwright/test';
 
 const manifest = JSON.parse(readFileSync(new URL('./apps.json', import.meta.url), 'utf8'));
@@ -15,7 +15,9 @@ if (contract.schema !== 'aviation/deployed-browser-smoke@1'
   throw new Error('Browser acceptance contract must cover every deployed app');
 }
 
-const executablePath = process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH || undefined;
+const systemChrome = '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome';
+const executablePath = process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH
+  || (existsSync(chromium.executablePath()) ? undefined : (existsSync(systemChrome) ? systemChrome : undefined));
 const browser = await chromium.launch({ headless: true, ...(executablePath ? { executablePath } : {}) });
 const failures = [];
 try {
