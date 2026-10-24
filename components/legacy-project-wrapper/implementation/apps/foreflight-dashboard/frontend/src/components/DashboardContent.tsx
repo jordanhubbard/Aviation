@@ -577,6 +577,7 @@ const DashboardContent: React.FC<DashboardContentProps> = ({ logbookData }) => {
                       <TableCell sx={{ padding: '2px 4px !important', textAlign: 'center' }}>
                         <IconButton
                           size="small"
+                          aria-label={expandedRows.has(index) ? 'Collapse flight details' : 'Expand flight details'}
                           onClick={() => toggleRowExpansion(index)}
                           sx={{ padding: '4px' }}
                         >

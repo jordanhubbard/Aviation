@@ -7,6 +7,7 @@
 - Deployment verification now renders all eleven public application roots in Chromium and checks key Accident Tracker, Flight Planner, and Chat interactions.
 - ForeFlight Dashboard accepts solo time that overlaps PIC time and verifies a synthetic logbook upload in the post-deployment browser gate.
 - ForeFlight Dashboard no longer rejects rapid pattern-work landing counts based on a fixed four-minute-per-landing assumption; post-deployment browser checks cover eight landings in half an hour.
+- ForeFlight Dashboard invalid aircraft type guidance now points to ICAO's current Doc 8643 search page instead of obsolete references.
 
 - Restored the Aviation deployment workflow after source relocation: all four image builds and the staging dry run pass on main.
 

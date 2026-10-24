@@ -97,6 +97,25 @@ try {
         }
         await page.getByRole('button', { name: 'Upload New Logbook' }).waitFor({ timeout: 10_000 });
         if (await page.getByText('Data Validation Errors').count()) throw new Error('Dashboard displays pattern validation errors');
+
+        const invalidCodeCsv = csv.replace('N125CM,CH7A,', 'N125CM,C82S,');
+        if (invalidCodeCsv === csv) throw new Error('Invalid-code fixture was not generated');
+        await page.getByRole('button', { name: 'Upload New Logbook' }).click();
+        await page.locator('#file-input').setInputFiles({ name: 'invalid-code-smoke.csv',
+          mimeType: 'text/csv', buffer: Buffer.from(invalidCodeCsv) });
+        const invalidProcessed = page.waitForResponse(response => response.url().includes('/api/process-logbook'));
+        await page.getByRole('button', { name: 'Process Logbook' }).click();
+        const invalidUpload = await invalidProcessed;
+        if (invalidUpload.status() !== 200) throw new Error(`Invalid-code upload returned HTTP ${invalidUpload.status()}`);
+        const invalidResult = await invalidUpload.json();
+        const icaoUrl = 'https://www.icao.int/operational-safety/doc-8643-aircraft-type-designators/search';
+        if (!invalidResult.entries?.[0]?.error_explanation?.includes(icaoUrl)
+          || invalidResult.entries[0].error_explanation.includes('icaodesignators.com')) {
+          throw new Error(`ICAO remediation is stale: ${JSON.stringify(invalidResult.entries?.[0]?.error_explanation)}`);
+        }
+        await page.getByRole('button', { name: 'Expand flight details' }).first().click();
+        await page.getByText('Data Validation Errors').waitFor({ timeout: 10_000 });
+        await page.getByText(icaoUrl, { exact: false }).waitFor({ timeout: 10_000 });
       }
       if (pageErrors.length) throw new Error(`Browser errors: ${pageErrors.join('; ')}`);
       console.log(`browser ok: ${url}`);

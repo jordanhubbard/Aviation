@@ -7,9 +7,7 @@ IMPORTANT: This validator contains 200+ common aircraft types likely to appear
 in pilot logbooks, but is NOT a complete copy of ICAO Doc 8643. For complete
 and authoritative validation, refer to:
 
-- Official ICAO Database: https://cfapps.icao.int/doc8643/hdr_8643.cfm
-- ICAO Doc 8643: https://www.icao.int/safety/OPS/OPS-Section/Pages/aircraft-type-designators.aspx
-- Searchable Database: https://www.icaodesignators.com/
+- Official ICAO Doc 8643 search: https://www.icao.int/operational-safety/doc-8643-aircraft-type-designators/search
 
 If you encounter a valid ICAO code that is flagged as invalid, please:
 1. Verify the code at the official ICAO database
@@ -21,6 +19,8 @@ Coverage: ~200 aircraft types covering GA, Commercial, Military, Experimental
 """
 
 from typing import Set, Dict, Optional
+
+ICAO_SEARCH_URL = "https://www.icao.int/operational-safety/doc-8643-aircraft-type-designators/search"
 
 # Common ICAO Aircraft Type Designators
 # Based on ICAO Doc 8643 and common aircraft in pilot logbooks
@@ -382,18 +382,15 @@ def get_validation_error_message(code: str) -> str:
     if suggestions:
         message += f". Similar codes: {', '.join(suggestions)}"
     
-    message += (
-        f". Verify at: https://www.icaodesignators.com/ or "
-        f"https://skybrary.aero/aircraft-types"
-    )
+    message += f". Verify in ICAO Doc 8643: {ICAO_SEARCH_URL}"
     
     return message
 
 
 # Official ICAO resources for reference
 ICAO_RESOURCES = {
-    "official_database": "https://www.icao.int/safety/OPS/OPS-Section/Pages/aircraft-type-designators.aspx",
-    "searchable_database": "https://www.icaodesignators.com/",
+    "official_database": ICAO_SEARCH_URL,
+    "searchable_database": ICAO_SEARCH_URL,
     "skybrary_reference": "https://skybrary.aero/aircraft-types",
     "faa_reference": "https://www.faa.gov/air_traffic/publications/atpubs/aim_html/",
     "contact_email": "ICAOAPI@icao.int"

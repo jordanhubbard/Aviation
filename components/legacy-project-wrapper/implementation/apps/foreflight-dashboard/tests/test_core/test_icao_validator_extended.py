@@ -5,7 +5,9 @@ from src.core.icao_validator import (
     is_valid_icao_code,
     get_icao_info,
     suggest_similar_codes,
-    get_validation_error_message
+    get_validation_error_message,
+    ICAO_RESOURCES,
+    ICAO_SEARCH_URL,
 )
 
 
@@ -107,6 +109,14 @@ class TestICAOValidatorExtended:
         assert isinstance(message, str)
         assert len(message) > 0
         assert "invalid" in message.lower() or "not found" in message.lower()
+
+    def test_invalid_c82s_points_to_current_icao_search(self):
+        message = get_validation_error_message("C82S")
+        assert "Invalid ICAO aircraft type code: 'C82S'" in message
+        assert ICAO_SEARCH_URL in message
+        assert "icaodesignators.com" not in message
+        assert ICAO_RESOURCES["official_database"] == ICAO_SEARCH_URL
+        assert ICAO_RESOURCES["searchable_database"] == ICAO_SEARCH_URL
     
     def test_get_validation_error_message_with_suggestions(self):
         """Test error message includes suggestions when available."""

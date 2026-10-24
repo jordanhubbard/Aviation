@@ -168,3 +168,15 @@ release-visible outcome to `CHANGELOG.md`; Git preserves prior queue states.
   - [x] Remove the 15-landings-per-hour error and add representative model and upload regressions.
 - **Evidence:**
   - [ ] Local ForeFlight tests, current Literate AI receipt, and public post-deployment upload of eight landings in 0.5 hours pass without a validation error.
+
+### [ ] FORE-003 — Repair ICAO designator verification link
+
+- **Priority:** P1
+- **Owner:** retained ForeFlight Dashboard ICAO validator
+- **Direction:** Give pilots a working authoritative lookup when an aircraft type code is invalid.
+- **Conclusion:** The error links to a nonresolving domain and the validator documents two obsolete ICAO URLs; use ICAO current Doc 8643 search page as the single remediation destination.
+- **Depends on:** FORE-001
+- **Implementation:**
+  - [x] Update validation message and resource metadata, and test the exact C82S remediation URL.
+- **Evidence:**
+  - [ ] Official ICAO search page returns HTTP 200, ForeFlight tests and Literate AI verification pass, and deployed invalid-code upload shows the new URL.
