@@ -156,3 +156,15 @@ release-visible outcome to `CHANGELOG.md`; Git preserves prior queue states.
 - **Evidence:**
   - [x] ForeFlight Dashboard test suite passes locally (188 tests).
   - [x] PR #319 merged; exact-main ForeFlight image deployed. Public Chromium gate uploads 0.2 total / 0.2 PIC / 0.2 solo CSV, observes zero validation errors, and renders the dashboard without an error banner; full eleven-service sweep passes.
+
+### [ ] FORE-002 — Avoid false excessive-landing errors
+
+- **Priority:** P1
+- **Owner:** retained ForeFlight Dashboard validator and deployed browser contract
+- **Direction:** Accept rapid pattern-work landing counts, including eight landings in half an hour, without declaring valid data erroneous.
+- **Conclusion:** The current rule assumes a four-minute minimum between landings and cannot infer an impossible rate from total flight time alone; remove the frequency heuristic as a data validation error while retaining concrete consistency checks.
+- **Depends on:** FORE-001
+- **Implementation:**
+  - [x] Remove the 15-landings-per-hour error and add representative model and upload regressions.
+- **Evidence:**
+  - [ ] Local ForeFlight tests, current Literate AI receipt, and public post-deployment upload of eight landings in 0.5 hours pass without a validation error.

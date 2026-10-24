@@ -77,6 +77,26 @@ try {
         }
         await page.getByRole('button', { name: 'Upload New Logbook' }).waitFor({ timeout: 10_000 });
         if (await page.getByText('Data Validation Errors').count()) throw new Error('Dashboard displays validation errors');
+
+        const patternCsv = csv.replace(
+          '2023-01-01,N125CM,KOAK,KSFO,0.2,0.0,0.0,0.0,0.0,0.0,0.2,0.0,0.0,0.2,1,0,',
+          '2023-01-01,N125CM,KOAK,KSFO,0.5,0.0,0.0,0.0,0.0,0.0,0.5,0.0,0.0,0.5,8,0,',
+        );
+        if (patternCsv === csv) throw new Error('Pattern-work fixture was not generated');
+        await page.getByRole('button', { name: 'Upload New Logbook' }).click();
+        await page.locator('#file-input').setInputFiles({ name: 'tight-pattern-smoke.csv',
+          mimeType: 'text/csv', buffer: Buffer.from(patternCsv) });
+        const patternProcessed = page.waitForResponse(response => response.url().includes('/api/process-logbook'));
+        await page.getByRole('button', { name: 'Process Logbook' }).click();
+        const patternUpload = await patternProcessed;
+        if (patternUpload.status() !== 200) throw new Error(`Pattern upload returned HTTP ${patternUpload.status()}`);
+        const patternResult = await patternUpload.json();
+        if (patternResult.error_count !== 0 || patternResult.entries?.[0]?.total_time !== 0.5
+          || patternResult.entries?.[0]?.landings_day !== 8) {
+          throw new Error(`Pattern upload validation failed: ${JSON.stringify(patternResult.entries?.[0]?.error_explanation)}`);
+        }
+        await page.getByRole('button', { name: 'Upload New Logbook' }).waitFor({ timeout: 10_000 });
+        if (await page.getByText('Data Validation Errors').count()) throw new Error('Dashboard displays pattern validation errors');
       }
       if (pageErrors.length) throw new Error(`Browser errors: ${pageErrors.join('; ')}`);
       console.log(`browser ok: ${url}`);

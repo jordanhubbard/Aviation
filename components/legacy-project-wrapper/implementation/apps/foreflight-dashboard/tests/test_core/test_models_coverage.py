@@ -387,25 +387,29 @@ class TestLogbookEntryValidationCoverage:
             # If no error, the validation logic may have been updated to allow this case
             assert entry.error_explanation is None
 
-    def test_excessive_landings_validation(self):
-        """Test excessive landings validation."""
+    def test_tight_pattern_landings_are_not_a_data_error(self):
+        """A short pattern has no universal minimum time between landings."""
         entry = self.create_valid_entry()
-        entry.total_time = 1.0  # 1 hour
-        entry.landings_day = 20  # 20 landings in 1 hour = 20 per hour (> 15 threshold)
+        entry.total_time = 0.5
+        entry.pic_time = 0.5
+        entry.conditions.day = 0.5
+        entry.landings_day = 8
         entry.landings_night = 0
         
         entry.validate_entry()
-        assert "Excessive landings for flight time" in entry.error_explanation
+        assert entry.error_explanation is None
 
-    def test_reasonable_landings_validation(self):
-        """Test reasonable landings don't trigger validation."""
+    def test_high_pattern_count_is_not_a_data_error(self):
+        """A landing rate alone cannot establish invalid logbook data."""
         entry = self.create_valid_entry()
-        entry.total_time = 1.0  # 1 hour
-        entry.landings_day = 12  # 12 landings in 1 hour = 12 per hour (< 15 threshold)
+        entry.total_time = 1.0
+        entry.pic_time = 1.0
+        entry.conditions.day = 1.0
+        entry.landings_day = 20
         entry.landings_night = 0
         
         entry.validate_entry()
-        assert entry.error_explanation is None or "Excessive landings" not in entry.error_explanation
+        assert entry.error_explanation is None
 
     def test_night_landings_without_night_time(self):
         """Test night landings without night flight time."""

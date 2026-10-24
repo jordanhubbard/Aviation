@@ -395,14 +395,6 @@ class LogbookEntry(BaseModel):
                 if not has_route_info:
                     issues.append("Cross-country time logged for flight with same departure and destination airport and no intermediate stops indicated")
         
-        # Check for excessive landings vs flight time
-        total_landings = (self.landings_day or 0) + (self.landings_night or 0)
-        if total_landings > 0 and self.total_time > 0:
-            # Rough check: more than 15 landings per hour (4 minutes per landing) is very aggressive even for tight pattern work
-            landings_per_hour = total_landings / self.total_time
-            if landings_per_hour > 15:
-                issues.append(f"Excessive landings for flight time ({total_landings} landings in {self.total_time:.1f} hours)")
-        
         # Check night time vs night landings consistency
         if (self.landings_night or 0) > 0 and (self.conditions.night or 0) == 0:
             issues.append("Night landings logged without night flight time")
