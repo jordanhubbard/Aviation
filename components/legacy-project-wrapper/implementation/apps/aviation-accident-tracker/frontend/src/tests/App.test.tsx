@@ -30,6 +30,21 @@ describe('App Component', () => {
   });
 
   describe('Initial Rendering', () => {
+    it('shows sourced cause badges separately from category and Unknown when unavailable', async () => {
+      global.fetch = vi.fn((url: RequestInfo | URL) => {
+        if (url.toString().startsWith('/api/events?')) return Promise.resolve({ json: () => Promise.resolve({
+          data: mockEvents.map((event, index) => ({ ...event, causes: index === 0 ? [{
+            label: 'Engine failure', sourceName: 'NTSB', url: 'https://data.ntsb.gov/report', basis: 'official',
+          }] : [] })),
+        }) } as Response);
+        if (url.toString().startsWith('/api/filters/options')) return Promise.resolve({ json: () => Promise.resolve(mockFilterOptions) } as Response);
+        return Promise.resolve({ json: () => Promise.resolve(mockAirports) } as Response);
+      }) as typeof fetch;
+      render(<App />);
+      expect(await screen.findByRole('columnheader', { name: 'Cause(s)' })).toBeInTheDocument();
+      expect(await screen.findByText('Engine failure')).toBeInTheDocument();
+      expect(screen.getAllByText('Unknown').length).toBeGreaterThan(0);
+    });
     it('expands a row to fetch and link its known citations', async () => {
       const fetchMock = vi.fn((url: RequestInfo | URL) => {
         const path = url.toString();

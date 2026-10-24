@@ -9,7 +9,8 @@ export function dedupe(events: NormalizedEvent[]): NormalizedEvent[] {
       const existing = seen.get(key)!;
       const mergedSources = [...existing.sources, ...ev.sources];
       const newer = existing.updatedAt > ev.updatedAt ? existing.updatedAt : ev.updatedAt;
-      seen.set(key, { ...existing, ...ev, sources: mergedSources, updatedAt: newer });
+      seen.set(key, { ...existing, ...ev, sources: mergedSources,
+        causes: [...(existing.causes ?? []), ...(ev.causes ?? [])], updatedAt: newer });
     } else {
       seen.set(key, ev);
     }
@@ -75,6 +76,7 @@ function mergeEvents(a: NormalizedEvent, b: NormalizedEvent): NormalizedEvent {
     narrative: b.narrative || a.narrative,
     status: b.status || a.status,
     sources: [...a.sources, ...b.sources],
+    causes: [...(a.causes ?? []), ...(b.causes ?? [])],
     updatedAt: new Date(Math.max(new Date(a.updatedAt).getTime(), new Date(b.updatedAt).getTime())).toISOString(),
   };
 }

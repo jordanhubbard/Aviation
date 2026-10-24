@@ -36,10 +36,22 @@ def coordinate(value, low, high):
         return None
 
 
-def convert(events, aircraft, source_url, cutoff, fetched_at):
+def convert(events, aircraft, source_url, cutoff, fetched_at, narratives=(), findings=(), sequences=()):
     aircraft_by_event = {}
     for row in aircraft:
         aircraft_by_event.setdefault(row["ev_id"], row)
+
+    causes_by_event = {}
+    for row in narratives:
+        if row.get("narr_cause", "").strip():
+            causes_by_event.setdefault(row["ev_id"], []).append(row["narr_cause"].strip())
+    for row in findings:
+        if row.get("cm_inPc", "").upper() == "T" and row.get("finding_description", "").strip():
+            causes_by_event.setdefault(row["ev_id"], []).append(row["finding_description"].strip())
+    occurrences_by_event = {}
+    for row in sequences:
+        if row.get("Occurrence_Description", "").strip():
+            occurrences_by_event.setdefault(row["ev_id"], []).append(row["Occurrence_Description"].strip())
 
     output = []
     for row in events:
@@ -70,6 +82,10 @@ def convert(events, aircraft, source_url, cutoff, fetched_at):
         }
         if make_model:
             raw["aircraftType"] = make_model
+        if causes_by_event.get(row["ev_id"]):
+            raw["causeText"] = ". ".join(causes_by_event[row["ev_id"]])
+        if occurrences_by_event.get(row["ev_id"]):
+            raw["occurrenceText"] = ". ".join(occurrences_by_event[row["ev_id"]])
         airport = row.get("ev_nr_apt_id") or ""
         if len(airport) == 4 and airport.isalpha():
             raw["airportIcao"] = airport
@@ -107,6 +123,9 @@ def main():
             source_url,
             cutoff,
             fetched_at,
+            export_table(database, "narratives"),
+            export_table(database, "Findings"),
+            export_table(database, "Events_Sequence"),
         )
         json.dump(result, sys.stdout)
 

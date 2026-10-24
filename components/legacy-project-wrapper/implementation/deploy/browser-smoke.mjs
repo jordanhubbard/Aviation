@@ -38,6 +38,10 @@ try {
         throw new Error(`HTTP ${response?.status()} marker=${body.includes(expectedText)} fallback=${badPage} errors=${pageErrors.join('; ')}`);
       }
       if (contract.apps[app.name].interaction === 'citation-disclosure') {
+        await page.getByRole('columnheader', { name: 'Cause(s)' }).waitFor({ timeout: 10_000 });
+        const firstRow = page.locator('tbody tr').first();
+        const causeCell = firstRow.locator('td').last();
+        if (!(await causeCell.innerText()).trim()) throw new Error('Accident cause badge missing');
         const disclose = page.getByRole('button', { name: /^Show citations for / }).first();
         await disclose.click();
         await page.getByText('Known citations').waitFor({ timeout: 10_000 });

@@ -35,6 +35,19 @@ class NTSBParserTest(unittest.TestCase):
         self.assertEqual(result[0]["airportIcao"], "KMSN")
         self.assertEqual((result[0]["lat"], result[0]["lon"]), (43.5, -89.25))
 
+    def test_only_probable_cause_findings_are_extracted(self):
+        event = {"ev_id": "case-1", "ev_type": "ACC", "ev_date": "10/14/26 00:00:00"}
+        result = module.convert([event], [], "https://data.ntsb.gov/report",
+            datetime(2026, 9, 1, tzinfo=timezone.utc), "2026-10-23T00:00:00Z",
+            [{"ev_id": "case-1", "narr_cause": "Engine failure caused a forced landing."}],
+            [{"ev_id": "case-1", "cm_inPc": "T", "finding_description": "Loss of control"},
+             {"ev_id": "case-1", "cm_inPc": "F", "finding_description": "Weather"}],
+            [{"ev_id": "case-1", "Occurrence_Description": "Loss of control in flight"}])
+        self.assertIn("Engine failure", result[0]["causeText"])
+        self.assertIn("Loss of control", result[0]["causeText"])
+        self.assertNotIn("Weather", result[0]["causeText"])
+        self.assertEqual(result[0]["occurrenceText"], "Loss of control in flight")
+
 
 if __name__ == "__main__":
     unittest.main()

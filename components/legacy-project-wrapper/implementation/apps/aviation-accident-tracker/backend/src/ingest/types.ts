@@ -20,6 +20,8 @@ export interface RawEvent {
   summary?: string;
   narrative?: string;
   status?: string;
+  causeText?: string; // NTSB probable-cause statement or cited findings only
+  occurrenceText?: string; // NTSB event sequence, not a probable-cause finding
 }
 
 export interface NormalizedEvent {
@@ -40,6 +42,7 @@ export interface NormalizedEvent {
   summary?: string;
   narrative?: string;
   status?: string;
+  causes: import('../types.js').CauseAttribution[];
   sources: {
     sourceName: string;
     title?: string;

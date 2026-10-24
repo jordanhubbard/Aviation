@@ -8,6 +8,13 @@ export interface SourceAttribution {
   checksum?: string;
 }
 
+export interface CauseAttribution {
+  label: string;
+  sourceName: string;
+  url: string;
+  basis: 'official' | 'occurrence' | 'reported';
+}
+
 export interface EventRecord {
   id: string;
   dateZ: string; // ISO in Z
@@ -26,6 +33,7 @@ export interface EventRecord {
   summary?: string;
   narrative?: string;
   status?: string; // preliminary/final/unknown
+  causes?: CauseAttribution[];
   sources: SourceAttribution[];
   createdAt: string;
   updatedAt: string;
