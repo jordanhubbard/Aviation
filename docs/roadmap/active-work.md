@@ -272,7 +272,7 @@ release-visible outcome to `CHANGELOG.md`; Git preserves prior queue states.
 - **Evidence:**
   - [x] Calculation unit tests, live browser weight/CG example and Meta App link, exact-main CI/image build, DNS and deployment verification passed at preflight-check.jordanhubbard.net.
 
-### [ ] META-002 — Show only pilot-facing apps in Meta App
+### [x] META-002 — Show only pilot-facing apps in Meta App
 
 - **Priority:** P2
 - **Owner:** retained Meta App and deployment browser verification
@@ -282,4 +282,4 @@ release-visible outcome to `CHANGELOG.md`; Git preserves prior queue states.
 - **Implementation:**
   - [x] Remove Aviation Chat from the launcher app list while retaining its API deployment; update the browser contract to expect only pilot-facing destinations.
 - **Evidence:**
-  - [ ] Meta App build and rendered launcher check, retained Literate AI receipt, reviewed CI, exact-main Meta App image and public browser deployment.
+  - [x] Meta App production build and rendered launcher check showed ten pilot-facing destinations and no Chat card. The 273-test retained harness and `litai verify` passed; PR #330 merged at 302c8dbe6 with all 32 checks green. Exact-main image run 40129107242 succeeded, the 302c8dbe6 Meta App image was deployed, and all 12 public browser and health checks passed, including the separately running Chat API.
