@@ -143,3 +143,16 @@ release-visible outcome to `CHANGELOG.md`; Git preserves prior queue states.
   - [x] Live browser reproduction, frontend tests, and full build pass locally; the new browser gate rejects the deployed error page.
   - [ ] Deployed browser smoke passes without error boundaries.
   - [x] Retained source scope and test receipt are refreshed; `litai verify` passes all three applicable gates.
+
+### [ ] FORE-001 — Accept overlapping solo and PIC logbook time
+
+- **Priority:** P1
+- **Owner:** retained ForeFlight Dashboard validator and deployed browser contract
+- **Direction:** Treat solo time as overlapping PIC time for a certificated pilot, and verify a representative ForeFlight upload after deployment.
+- **Conclusion:** The existing time-accountability sum counts solo and PIC twice. Preserve both fields and show a validation error only when the covered flight time is inconsistent.
+- **Depends on:** ForeFlight CSV importer and public deployment browser gate
+- **Implementation:**
+  - [x] Correct the validator, add model and upload regressions, and add a post-deployment browser upload check.
+- **Evidence:**
+  - [x] ForeFlight Dashboard test suite passes locally (188 tests).
+  - [ ] Public upload returns zero validation errors and the rendered dashboard shows no error for matching solo and PIC time.

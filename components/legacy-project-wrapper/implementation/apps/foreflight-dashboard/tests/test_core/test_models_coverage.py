@@ -514,7 +514,7 @@ class TestLogbookEntryValidationCoverage:
         
         entry.validate_entry()
         # Should not have time accountability error
-        assert entry.error_explanation is None or "should equal sum of PIC time" not in entry.error_explanation
+        assert entry.error_explanation is None or "does not match PIC" not in entry.error_explanation
 
     def test_time_accountability_outside_tolerance(self):
         """Test time accountability outside rounding tolerance."""
@@ -524,7 +524,7 @@ class TestLogbookEntryValidationCoverage:
         entry.dual_received = 0.5  # 1.0 + 0.5 = 1.5 ≠ 2.0 (difference > 0.1)
         
         entry.validate_entry()
-        assert "should equal sum of PIC time" in entry.error_explanation
+        assert "does not match PIC" in entry.error_explanation
 
     def test_auto_pic_time_assignment(self):
         """Test automatic PIC time assignment for PIC role."""
