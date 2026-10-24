@@ -24,7 +24,12 @@ falling back to a local authenticated pull and SSH transfer when necessary.
 It verifies the image revision on the host, then writes the systemd
 unit and Caddy site, then checks the local service. The DNS command creates only
 missing A records and stops if a name already points elsewhere. The verify
-command checks public HTTPS and the active unit. `.github/workflows/deploy.yml`
+command checks public HTTPS, the active unit, and renders the public root in
+Chromium. It rejects browser errors and visible error pages; Accident Tracker
+also opens a citation disclosure. `deploy-app` runs this gate after each app
+install. Install root pnpm dependencies and set
+`PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH` to Chrome if managed Chromium is absent.
+`.github/workflows/deploy.yml`
 builds and publishes the same eleven image definitions on `main` and release tags;
 the workflow does not change live services.
 

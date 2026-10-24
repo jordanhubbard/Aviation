@@ -2,6 +2,7 @@ export type Category = 'general' | 'commercial' | 'unknown';
 
 export interface SourceAttribution {
   sourceName: string;
+  title?: string;
   url: string;
   fetchedAt: string; // ISO in Z
   checksum?: string;

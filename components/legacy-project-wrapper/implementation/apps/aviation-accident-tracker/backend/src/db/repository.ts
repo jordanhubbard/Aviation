@@ -41,6 +41,7 @@ interface DbSource {
   id: number;
   event_id: number;
   source_name: string;
+  title?: string;
   url: string;
   fetched_at: string;
   checksum?: string;
@@ -88,6 +89,11 @@ export class EventRepository {
     const schema = await fs.readFile(schemaPath, 'utf-8');
     
     await this.dbExec(schema);
+    // CREATE TABLE IF NOT EXISTS leaves preexisting deployments at the old shape.
+    const columns: { name: string }[] = await this.dbAll('PRAGMA table_info(sources)');
+    if (!columns.some(column => column.name === 'title')) {
+      await this.dbExec('ALTER TABLE sources ADD COLUMN title TEXT');
+    }
   }
 
   /**
@@ -124,6 +130,7 @@ export class EventRepository {
   private dbSourceToAttribution(dbSource: DbSource): SourceAttribution {
     return {
       sourceName: dbSource.source_name,
+      title: dbSource.title,
       url: dbSource.url,
       fetchedAt: dbSource.fetched_at,
       checksum: dbSource.checksum
@@ -231,15 +238,17 @@ export class EventRepository {
       [Number(eventId), source.sourceName, source.url]
     );
     if (existing) {
-      await this.dbRun('UPDATE sources SET fetched_at = ? WHERE id = ?', [source.fetchedAt, existing.id]);
+      await this.dbRun('UPDATE sources SET fetched_at = ?, title = COALESCE(?, title) WHERE id = ?',
+        [source.fetchedAt, source.title ?? null, existing.id]);
       return String(existing.id);
     }
     const result = await this.dbRun(
-      `INSERT INTO sources (event_id, source_name, url, fetched_at, checksum, raw_fragment)
-       VALUES (?, ?, ?, ?, ?, ?)`,
+      `INSERT INTO sources (event_id, source_name, title, url, fetched_at, checksum, raw_fragment)
+       VALUES (?, ?, ?, ?, ?, ?, ?)`,
       [
         Number(eventId),
         source.sourceName,
+        source.title ?? null,
         source.url,
         source.fetchedAt,
         source.checksum,
@@ -247,6 +256,22 @@ export class EventRepository {
       ]
     );
     return String(result.lastID);
+  }
+
+  async listEventsNeedingMediaSearch(limit: number): Promise<EventRecord[]> {
+    const rows: DbEvent[] = await this.dbAll(`
+      SELECT events.* FROM events LEFT JOIN media_checks ON media_checks.event_id = events.id
+      WHERE events.date_z >= datetime('now', '-400 days')
+        AND (media_checks.checked_at IS NULL OR media_checks.checked_at < datetime('now', '-7 days'))
+      ORDER BY CASE WHEN media_checks.checked_at IS NULL THEN 0 ELSE 1 END,
+        events.created_at DESC, events.date_z DESC
+      LIMIT ?`, [limit]);
+    return rows.map(row => this.dbEventToRecord(row));
+  }
+
+  async markMediaSearched(eventId: string): Promise<void> {
+    await this.dbRun(`INSERT INTO media_checks (event_id, checked_at) VALUES (?, datetime('now'))
+      ON CONFLICT(event_id) DO UPDATE SET checked_at = excluded.checked_at`, [Number(eventId)]);
   }
 
   /**

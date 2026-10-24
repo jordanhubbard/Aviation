@@ -9,6 +9,7 @@ The Aviation Accident Tracker ingests, deduplicates, and serves aviation acciden
 ### Key Features
 
 - **Multi-Source Ingestion**: NTSB weekly public data, ASN (Aviation Safety Network), AVHerald
+- **Media citations**: Each ingest run reads AVweb, FLYING, AeroTime, AOPA, and Plane & Pilot feeds. It also searches the public article archives of AVweb, FLYING, AeroTime, and Plane & Pilot for up to 24 recent or previously unsearched accidents per run. Registration and publication date must match before a link is saved. Searches are retried after seven days so later reports can appear. Only publisher, headline, link, and fetch time are stored; article bodies stay with their publishers.
 - **Deduplication**: Smart merging based on (date_z, registration) with fuzzy fallback
 - **Classification**: Automated GA (General Aviation) vs Commercial categorization
 - **Provenance**: Full source tracking with URLs, fetch times, and checksums
@@ -18,6 +19,7 @@ The Aviation Accident Tracker ingests, deduplicates, and serves aviation acciden
 - **Advanced Filters**: Date range, category, airport, country/region, text search
 - **Sortable Table**: Paginated results with key details
 - **Detail View**: Complete narratives with source attribution
+- **Expandable citations**: Open the triangle on an event row for official and media source links.
 - **Dual API**: REST + GraphQL APIs for maximum flexibility
 - **Real-Time Subscriptions**: WebSocket support for live event updates
 

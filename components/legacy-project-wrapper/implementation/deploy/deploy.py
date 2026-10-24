@@ -25,6 +25,7 @@ HERE = Path(__file__).resolve().parent
 IMPLEMENTATION = HERE.parent
 REPO = Path(__file__).resolve().parents[4]
 MANIFEST = HERE / "apps.json"
+BROWSER_CONTRACT = REPO / "verification" / "deployed-browser.json"
 REMOTE_INSTALL = HERE / "install.sh"
 
 
@@ -39,6 +40,9 @@ def output(*argv: str, cwd: Path | None = None) -> str:
 def load_manifest() -> tuple[dict, list[dict]]:
     config = json.loads(MANIFEST.read_text())
     apps = config["apps"]
+    browser_contract = json.loads(BROWSER_CONTRACT.read_text())
+    if browser_contract.get("schema") != "aviation/deployed-browser-smoke@1" or set(browser_contract.get("apps", {})) != {app["name"] for app in apps}:
+        raise ValueError("browser acceptance contract must cover every application")
     names: set[str] = set()
     hostnames: set[str] = set()
     ports: set[int] = set()
@@ -274,6 +278,7 @@ def verify(config: dict, apps: list[dict], host: str) -> None:
                 raise RuntimeError(f"public health check failed: {url}: {last_error}")
             time.sleep(5)
         run("ssh", host, "systemctl", "is-active", "kmlab" if app.get("runtime") == "native" else f"aviation-{app['name']}")
+    run("node", str(HERE / "browser-smoke.mjs"), apps[0]["name"] if len(apps) == 1 else "all", cwd=IMPLEMENTATION)
 
 
 def main() -> None:
@@ -307,6 +312,7 @@ def main() -> None:
                 build(app, revision)
             else:
                 deploy(config, app, revision, args.ssh_host)
+                verify(config, [app], args.ssh_host)
 
 
 if __name__ == "__main__":

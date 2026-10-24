@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { Fragment, useEffect, useMemo, useState } from 'react';
 import 'leaflet/dist/leaflet.css';
 import { MapContainer, TileLayer, Marker, Popup, useMapEvents } from 'react-leaflet';
 import L from 'leaflet';
@@ -27,7 +27,7 @@ type EventRecord = {
   summary?: string;
   narrative?: string;
   status?: string;
-  sources: { sourceName: string; url: string; fetchedAt?: string }[];
+  sources: { sourceName: string; title?: string; url: string; fetchedAt?: string }[];
 };
 
 type CountryCentroid = {
@@ -79,6 +79,9 @@ export function App() {
   const [selected, setSelected] = useState<EventRecord | null>(null);
   const [selectedLoading, setSelectedLoading] = useState(false);
   const [selectedError, setSelectedError] = useState<string | null>(null);
+  const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [expandedLoading, setExpandedLoading] = useState(false);
+  const [expandedError, setExpandedError] = useState<string | null>(null);
   const [airportQuery, setAirportQuery] = useState('');
   const [airportOptions, setAirportOptions] = useState<{ label: string; code: string }[]>([]);
   const [country, setCountry] = useState('');
@@ -132,6 +135,7 @@ export function App() {
 
   useEffect(() => {
     setLoading(true);
+    setExpandedId(null);
     const params = new URLSearchParams();
     params.set('limit', String(pageSize));
     params.set('offset', String(page * pageSize));
@@ -157,6 +161,27 @@ export function App() {
         setLoading(false);
       });
   }, [search, category, page, airportQuery, country, region, from, to]);
+
+  const toggleSources = async (event: EventRecord) => {
+    if (expandedId === event.id) {
+      setExpandedId(null);
+      return;
+    }
+    setExpandedId(event.id);
+    setExpandedError(null);
+    if (event.sources?.length) return;
+    setExpandedLoading(true);
+    try {
+      const response = await fetch(`/api/events/${encodeURIComponent(event.id)}`);
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      const detail: EventRecord = await response.json();
+      setEvents(previous => previous.map(row => row.id === detail.id ? { ...row, ...detail } : row));
+    } catch (error) {
+      setExpandedError(String(error));
+    } finally {
+      setExpandedLoading(false);
+    }
+  };
 
   useEffect(() => {
     fetch('/api/filters/options')
@@ -470,6 +495,7 @@ export function App() {
           <table style={{ width: '100%', borderCollapse: 'collapse' }}>
             <thead>
               <tr>
+                <th aria-label="Citations" />
                 <th>Date (Z)</th>
                 <th>Reg</th>
                 <th>Operator</th>
@@ -480,6 +506,7 @@ export function App() {
             </thead>
             <tbody>
               {events.map((e) => (
+                <Fragment key={e.id}>
                 <tr
                   key={e.id}
                   tabIndex={0}
@@ -497,6 +524,14 @@ export function App() {
                   }}
                   style={{ cursor: 'pointer' }}
                 >
+                  <td>
+                    <button type="button" aria-label={`Show citations for ${e.registration}`}
+                      aria-expanded={expandedId === e.id} aria-controls={`citations-${e.id}`}
+                      onClick={event => { event.stopPropagation(); void toggleSources(e); }}
+                      style={{ border: 0, background: 'transparent', cursor: 'pointer' }}>
+                      {expandedId === e.id ? '▾' : '▸'}
+                    </button>
+                  </td>
                   <td>{formatDate(e.dateZ)}</td>
                   <td>{e.registration}</td>
                   <td>{e.operator || '—'}</td>
@@ -511,6 +546,22 @@ export function App() {
                     </Badge>
                   </td>
                 </tr>
+                {expandedId === e.id && (
+                  <tr id={`citations-${e.id}`}>
+                    <td colSpan={7} style={{ padding: '10px 24px', background: '#f7f9fc' }}>
+                      <strong>Known citations</strong>
+                      {expandedLoading ? <p>Loading citations…</p> : expandedError ? <p role="alert">{expandedError}</p>
+                        : e.sources?.length ? <ul style={{ margin: '6px 0' }}>{e.sources.map(source => (
+                          <li key={`${source.sourceName}-${source.url}`}>
+                            <a href={source.url} target="_blank" rel="noopener noreferrer">
+                              {source.title || source.sourceName}
+                            </a> {source.title && <span>— {source.sourceName}</span>}
+                          </li>
+                        ))}</ul> : <p>No citations are available yet.</p>}
+                    </td>
+                  </tr>
+                )}
+                </Fragment>
               ))}
             </tbody>
           </table>
@@ -583,7 +634,7 @@ export function App() {
                   ? selected.sources.map((s) => (
                       <span key={s.url} style={{ marginRight: 8 }}>
                         <a href={s.url} target="_blank" rel="noreferrer">
-                          {s.sourceName || 'source'}
+                          {s.title || s.sourceName || 'source'}
                         </a>
                       </span>
                     ))

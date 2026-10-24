@@ -8,16 +8,19 @@ import { IngestResult, NormalizedEvent } from './types.js';
 import { EventRepository } from '../db/repository.js';
 import { config } from '../config.js';
 import { logger } from '../logger.js';
+import { fetchMediaArticles, mediaCitations, searchPublisherArticles } from './mediaFeeds.js';
 
 export async function runRecentIngest(repository?: EventRepository): Promise<IngestResult> {
-  const raw = [
-    ...(await fetchRecentAsn()),
-    ...(await fetchRecentAvHerald()),
-    ...(await fetchRecentNtsb()),
-  ];
+  const [asn, herald, ntsb, media] = await Promise.all([
+    fetchRecentAsn(), fetchRecentAvHerald(), fetchRecentNtsb(), fetchMediaArticles(),
+  ]);
+  const raw = [...asn, ...herald, ...ntsb];
 
   const normalized: NormalizedEvent[] = raw.map(normalize);
   const deduped = fuzzyDedup(dedupe(normalized));
+  for (const event of deduped) {
+    event.sources.push(...mediaCitations(event, media));
+  }
 
   const useMemoryRepo = config.env === 'test';
   let inserted = 0;
@@ -52,6 +55,19 @@ export async function runRecentIngest(repository?: EventRepository): Promise<Ing
       for (const source of ev.sources) {
         await repo.addSource(eventId, source);
       }
+    }
+
+    // Search publisher archives for newly discovered cases and bounded backfill.
+    // The cursor survives restarts; later reports are checked again after a week.
+    const needingSearch = await repo.listEventsNeedingMediaSearch(24);
+    for (let start = 0; start < needingSearch.length; start += 3) {
+      await Promise.all(needingSearch.slice(start, start + 3).map(async event => {
+        const articles = await searchPublisherArticles(event.registration.toUpperCase().trim());
+        for (const source of mediaCitations(event, articles)) {
+          await repo.addSource(event.id, source);
+        }
+        await repo.markMediaSearched(event.id);
+      }));
     }
   } catch (error) {
     logger.error('Ingest persistence failed', error instanceof Error ? error : new Error(String(error)));

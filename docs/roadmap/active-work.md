@@ -103,3 +103,43 @@ release-visible outcome to `CHANGELOG.md`; Git preserves prior queue states.
   - [x] All eleven active units and Caddy sites validate, and every DNS name responds over HTTPS to a meaningful health request.
   - [x] Accident Tracker's live API returns 742 NTSB events with official source URLs; repeated ingestion updated the same records without duplicates.
   - [x] The deployment verifier confirms all eleven public DNS names resolve to do-host1 and their service health routes return HTTP 200; OpenClaw-dependent chat behavior is outside this deployment check.
+
+### [ ] ACCIDENT-001 — Discover and display accident citations
+
+- **Priority:** P1
+- **Owner:** retained Accident Tracker backend, frontend, and source attribution contract
+- **Direction:** Find relevant media and aviation reports when accident records are ingested and show citations in an expandable table row.
+- **Conclusion:** Reuse event source attribution, discover bounded feed articles with registration and date matching, preserve provenance and deduplication, and render accessible inline citations.
+- **Depends on:** Existing NTSB ingest and source repository
+- **Implementation:**
+  - [x] Add bounded concurrent media feed discovery and persistence; expose citation metadata; add expandable table rows and targeted tests.
+- **Evidence:**
+  - [x] Deterministic matching and persistence tests, frontend interaction test, and application build pass locally.
+  - [ ] Live source discovery and row disclosure pass after deployment.
+
+### [ ] CHAT-001 — Explain Aviation Chat at its root URL
+
+- **Priority:** P2
+- **Owner:** retained Aviation Chat service
+- **Direction:** Make the public root URL explain what Aviation Chat does instead of showing Cannot GET /.
+- **Conclusion:** The service is an API proxy with POST /chat and no browser UI; serve a simple informational root page.
+- **Depends on:** none
+- **Implementation:**
+  - [x] Add a root route and document the API-only behavior.
+- **Evidence:**
+  - [x] Service build passes locally.
+  - [ ] Live HTTP root/health checks pass after deployment.
+
+### [ ] FLIGHT-001 — Repair deployed Flight Planner and add browser deployment gates
+
+- **Priority:** P0
+- **Owner:** retained Flight Planner frontend and Aviation deployment verification
+- **Direction:** Fix the live TypeError and verify rendered application behavior after deployment under Literate AI gates.
+- **Conclusion:** The frontend requests a nonexistent /api/flight-plans route, accepts its 404 JSON body as an array, and crashes at render; use the available /flight-plans/ route with response validation, then make browser smoke checks a deployment gate.
+- **Depends on:** none
+- **Implementation:**
+  - [x] Repair fetch and saved-plan mapping; add regression coverage; add post-deployment rendered checks for browser apps and API-only chat.
+- **Evidence:**
+  - [x] Live browser reproduction, frontend tests, and full build pass locally; the new browser gate rejects the deployed error page.
+  - [ ] Deployed browser smoke passes without error boundaries.
+  - [ ] Project verification receipt is refreshed; current local check reports project.test_receipt_stale.
