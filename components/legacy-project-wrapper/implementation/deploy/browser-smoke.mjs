@@ -53,6 +53,12 @@ try {
         await disclose.click();
         await page.getByText('Known citations').waitFor({ timeout: 10_000 });
         if (await page.getByRole('alert').count()) throw new Error('Citation disclosure failed');
+        await page.getByPlaceholder('Engine failure in California last 30 days').fill('general aviation in California');
+        await page.getByRole('button', { name: 'Apply query' }).click();
+        const selectedFilters = await page.locator('select').evaluateAll(elements => elements.map(element => element.value));
+        if (selectedFilters[0] !== 'general' || selectedFilters[2] !== 'CA') {
+          throw new Error(`Natural-language query did not apply category and region: ${selectedFilters}`);
+        }
       }
       if (app.name === 'meta-app') {
         const links = await page.locator('.launcher-card-cta[href]').evaluateAll(elements =>
@@ -70,6 +76,27 @@ try {
         await completed.click();
         await page.getByText('Completed missions and feedback').waitFor({ timeout: 10_000 });
         await page.getByRole('button', { name: 'Mark completed' }).waitFor();
+        let postedFeedback;
+        await page.route('**/missions/424242/completed/777/feedback', async route => {
+          postedFeedback = route.request().postDataJSON();
+          await route.fulfill({ status: 201, contentType: 'application/json',
+            body: JSON.stringify({ feedback: { id: 1, ...postedFeedback } }) });
+        });
+        await page.route('**/missions/424242/completed', async route => {
+          await route.fulfill({ status: 200, contentType: 'application/json',
+            body: JSON.stringify({ completions: [{ id: 777, pilot_name: 'Browser Test Pilot',
+              completion_date: '2026-10-24', feedback: postedFeedback
+                ? [{ id: 1, ...postedFeedback }] : [] }] }) });
+        });
+        await page.evaluate(() => window.app.viewCompletions(424242));
+        await page.locator('.completion-feedback-form input[name=author_name]').fill('Browser Test');
+        await page.locator('.completion-feedback-form textarea[name=content]').fill('Synthetic feedback, intercepted in browser.');
+        await page.getByRole('button', { name: 'Post feedback' }).click();
+        await page.getByText('Synthetic feedback, intercepted in browser.').waitFor();
+        if (postedFeedback?.author_name !== 'Browser Test'
+          || postedFeedback?.content !== 'Synthetic feedback, intercepted in browser.') {
+          throw new Error('Completed mission feedback payload did not match the browser form');
+        }
       }
       if (contract.apps[app.name].interaction === 'saved-plans-dialog') {
         await page.getByText('Select a planning mode and enter details to generate a plan').waitFor({ timeout: 10_000 });
