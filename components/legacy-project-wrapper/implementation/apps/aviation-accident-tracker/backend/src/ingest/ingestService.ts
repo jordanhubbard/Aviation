@@ -8,7 +8,7 @@ import { IngestResult, NormalizedEvent } from './types.js';
 import { EventRepository } from '../db/repository.js';
 import { config } from '../config.js';
 import { logger } from '../logger.js';
-import { fetchMediaArticles, mediaCitations, searchPublisherArticles } from './mediaFeeds.js';
+import { fetchMediaArticles, mediaCitations, mediaCauses, searchPublisherArticles } from './mediaFeeds.js';
 
 export async function runRecentIngest(repository?: EventRepository): Promise<IngestResult> {
   const [asn, herald, ntsb, media] = await Promise.all([
@@ -19,7 +19,9 @@ export async function runRecentIngest(repository?: EventRepository): Promise<Ing
   const normalized: NormalizedEvent[] = raw.map(normalize);
   const deduped = fuzzyDedup(dedupe(normalized));
   for (const event of deduped) {
-    event.sources.push(...mediaCitations(event, media));
+    const citations = mediaCitations(event, media);
+    event.sources.push(...citations);
+    event.causes.push(...mediaCauses(citations, media));
   }
 
   const useMemoryRepo = config.env === 'test';
@@ -55,6 +57,9 @@ export async function runRecentIngest(repository?: EventRepository): Promise<Ing
       for (const source of ev.sources) {
         await repo.addSource(eventId, source);
       }
+      for (const cause of ev.causes) {
+        await repo.addCause(eventId, cause);
+      }
     }
 
     // Search publisher archives for newly discovered cases and bounded backfill.
@@ -63,8 +68,12 @@ export async function runRecentIngest(repository?: EventRepository): Promise<Ing
     for (let start = 0; start < needingSearch.length; start += 3) {
       await Promise.all(needingSearch.slice(start, start + 3).map(async event => {
         const articles = await searchPublisherArticles(event.registration.toUpperCase().trim());
-        for (const source of mediaCitations(event, articles)) {
+        const citations = mediaCitations(event, articles);
+        for (const source of citations) {
           await repo.addSource(event.id, source);
+        }
+        for (const cause of mediaCauses(citations, articles)) {
+          await repo.addCause(event.id, cause);
         }
         await repo.markMediaSearched(event.id);
       }));

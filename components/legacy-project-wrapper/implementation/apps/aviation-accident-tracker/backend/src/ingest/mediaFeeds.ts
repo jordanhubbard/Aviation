@@ -1,5 +1,7 @@
 import type { NormalizedEvent } from './types.js';
 import type { SourceAttribution } from '../types.js';
+import type { CauseAttribution } from '../types.js';
+import { classifyCauses } from './causes.js';
 
 // Fetch each publisher once per ingest run. Store links and headlines only; article
 // text remains with its publisher. A failed feed must not delay official ingestion.
@@ -142,4 +144,13 @@ export function mediaCitations(event: Pick<NormalizedEvent, 'registration' | 'da
       fetchedAt: new Date().toISOString() });
   }
   return citations;
+}
+
+export function mediaCauses(citations: SourceAttribution[], articles: MediaArticle[]): CauseAttribution[] {
+  const byUrl = new Map(articles.map(article => [article.url, article]));
+  return citations.flatMap(source => {
+    const article = byUrl.get(source.url);
+    return article ? classifyCauses(`${article.title}. ${article.excerpt}`,
+      source.sourceName, source.url, 'reported') : [];
+  });
 }

@@ -57,6 +57,16 @@ CREATE TABLE IF NOT EXISTS sources (
     FOREIGN KEY (event_id) REFERENCES events(id) ON DELETE CASCADE
 );
 
+-- Each label retains the document that explicitly supports it.
+CREATE TABLE IF NOT EXISTS causes (
+    event_id INTEGER NOT NULL REFERENCES events(id) ON DELETE CASCADE,
+    label TEXT NOT NULL,
+    source_name TEXT NOT NULL,
+    url TEXT NOT NULL,
+    basis TEXT NOT NULL CHECK(basis IN ('official', 'occurrence', 'reported')),
+    PRIMARY KEY (event_id, label, url)
+);
+
 -- Publisher searches are retried after seven days so later coverage appears.
 CREATE TABLE IF NOT EXISTS media_checks (
     event_id INTEGER PRIMARY KEY REFERENCES events(id) ON DELETE CASCADE,
@@ -86,3 +96,4 @@ CREATE INDEX IF NOT EXISTS idx_events_location ON events(country, region);
 -- Source lookup
 CREATE INDEX IF NOT EXISTS idx_sources_event ON sources(event_id);
 CREATE INDEX IF NOT EXISTS idx_sources_url ON sources(url);
+CREATE INDEX IF NOT EXISTS idx_causes_event ON causes(event_id);

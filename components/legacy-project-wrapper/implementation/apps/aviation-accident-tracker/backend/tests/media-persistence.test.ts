@@ -21,8 +21,20 @@ describe('media attribution persistence', () => {
       const eventId = await repository.upsertEvent({ dateZ: new Date().toISOString(), registration: 'N744CJ' });
       await repository.addSource(eventId, { sourceName: 'AVweb', title: 'Accident report',
         url: 'https://avweb.com/report', fetchedAt: new Date().toISOString() });
+      await repository.addCause(eventId, { label: 'Engine failure', sourceName: 'AVweb',
+        url: 'https://avweb.com/report', basis: 'reported' });
+      await repository.addCause(eventId, { label: 'Loss of control', sourceName: 'NTSB event sequence',
+        url: 'https://data.ntsb.gov/update.zip', basis: 'occurrence' });
+      await repository.addCause(eventId, { label: 'Loss of control', sourceName: 'NTSB',
+        url: 'https://data.ntsb.gov/update.zip', basis: 'official' });
+      await repository.addCause(eventId, { label: 'Engine failure', sourceName: 'AVweb',
+        url: 'https://avweb.com/report', basis: 'reported' });
       expect((await repository.getEventWithSources(eventId))?.sources).toEqual([
         expect.objectContaining({ sourceName: 'AVweb', title: 'Accident report' }),
+      ]);
+      expect((await repository.listEvents({})).events[0].causes).toEqual([
+        { label: 'Loss of control', sourceName: 'NTSB', url: 'https://data.ntsb.gov/update.zip', basis: 'official' },
+        { label: 'Engine failure', sourceName: 'AVweb', url: 'https://avweb.com/report', basis: 'reported' },
       ]);
       expect((await repository.listEventsNeedingMediaSearch(10)).map(event => event.id)).toContain(eventId);
       await repository.markMediaSearched(eventId);

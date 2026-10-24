@@ -27,6 +27,7 @@ type EventRecord = {
   summary?: string;
   narrative?: string;
   status?: string;
+  causes?: { label: string; sourceName: string; url: string; basis: 'official' | 'occurrence' | 'reported' }[];
   sources: { sourceName: string; title?: string; url: string; fetchedAt?: string }[];
 };
 
@@ -502,6 +503,7 @@ export function App() {
                 <th>Type</th>
                 <th>Airport</th>
                 <th>Category</th>
+                <th>Cause(s)</th>
               </tr>
             </thead>
             <tbody>
@@ -545,11 +547,24 @@ export function App() {
                       {e.category}
                     </Badge>
                   </td>
+                  <td>{e.causes?.length ? e.causes.filter((cause, index, all) =>
+                    all.findIndex(candidate => candidate.label === cause.label) === index).map(cause => (
+                    <span key={cause.label} title={`${cause.basis === 'official' ? 'Official probable cause' : cause.basis === 'occurrence' ? 'NTSB occurrence' : 'Reported mechanism'}: ${cause.sourceName}`}
+                      style={{ display: 'inline-block', marginRight: 4 }}>
+                      <Badge color={cause.basis === 'official' ? '#e3f2fd' : '#fff3cd'} border="#ccc">{cause.label}</Badge>
+                    </span>
+                  )) : <Badge color="#eee" border="#ccc">Unknown</Badge>}</td>
                 </tr>
                 {expandedId === e.id && (
                   <tr id={`citations-${e.id}`}>
-                    <td colSpan={7} style={{ padding: '10px 24px', background: '#f7f9fc' }}>
+                    <td colSpan={8} style={{ padding: '10px 24px', background: '#f7f9fc' }}>
                       <strong>Known citations</strong>
+                      {e.causes?.length ? <ul aria-label="Cause evidence">{e.causes.map(cause => (
+                        <li key={`${cause.label}-${cause.url}`}>
+                          {cause.label} ({cause.basis === 'official' ? 'official probable cause' : cause.basis === 'occurrence' ? 'NTSB occurrence' : 'reported mechanism'}):{' '}
+                          <a href={cause.url} target="_blank" rel="noopener noreferrer">{cause.sourceName}</a>
+                        </li>
+                      ))}</ul> : null}
                       {expandedLoading ? <p>Loading citations…</p> : expandedError ? <p role="alert">{expandedError}</p>
                         : e.sources?.length ? <ul style={{ margin: '6px 0' }}>{e.sources.map(source => (
                           <li key={`${source.sourceName}-${source.url}`}>

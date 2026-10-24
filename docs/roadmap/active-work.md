@@ -180,3 +180,17 @@ release-visible outcome to `CHANGELOG.md`; Git preserves prior queue states.
   - [x] Update validation message and resource metadata, and test the exact C82S remediation URL.
 - **Evidence:**
   - [x] ICAO's current Doc 8643 search page returned HTTP 200. PR #321 merged at eeb4e684b; 190 ForeFlight tests and Literate AI verification pass. The deployed public browser upload of invalid C82S shows the current ICAO URL in the expanded row, and the full eleven-service sweep passes.
+
+### [ ] ACCIDENT-002 — Show sourced accident cause badges
+
+- **Priority:** P1
+- **Owner:** retained Accident Tracker ingestion, repository, and frontend
+- **Direction:** Classify accident causes from available accident data and relevant reports, showing Unknown only when no supported cause is available.
+- **Conclusion:** NTSB weekly data carries probable-cause narratives and findings, while matched aviation reports can state mechanisms; store sourced cause labels separately from flight category and show them in accident rows.
+- **Depends on:** ACCIDENT-001 citation ingestion
+- **Implementation:**
+  - [x] Extract explicit cause labels from NTSB probable-cause data and matched reports; persist attribution across ingestion and deduplication; render cause badges and evidence in row details.
+- **Evidence:**
+  - [x] Local backend extraction and persistence tests (51 Vitest, 2 Python), frontend interaction tests (64 Vitest), and both app builds pass.
+  - [ ] Literate AI retained receipt and verify pass.
+  - [ ] Reviewed CI, exact-main image, deployed public browser and API verification.

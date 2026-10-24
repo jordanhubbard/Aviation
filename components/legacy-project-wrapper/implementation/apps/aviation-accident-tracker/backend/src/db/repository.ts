@@ -10,7 +10,7 @@ import { promisify } from 'util';
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
 import { mkdirSync } from 'fs';
-import type { EventRecord, SourceAttribution, ListEventsParams, Category } from '../types.js';
+import type { EventRecord, SourceAttribution, CauseAttribution, ListEventsParams, Category } from '../types.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -99,7 +99,7 @@ export class EventRepository {
   /**
    * Convert DB row to EventRecord type
    */
-  private dbEventToRecord(dbEvent: DbEvent, sources: SourceAttribution[] = []): EventRecord {
+  private dbEventToRecord(dbEvent: DbEvent, sources: SourceAttribution[] = [], causes: CauseAttribution[] = []): EventRecord {
     return {
       id: String(dbEvent.id),
       dateZ: dbEvent.date_z,
@@ -118,6 +118,7 @@ export class EventRepository {
       summary: dbEvent.summary,
       narrative: dbEvent.narrative,
       status: dbEvent.status,
+      causes,
       sources,
       createdAt: dbEvent.created_at,
       updatedAt: dbEvent.updated_at
@@ -258,6 +259,33 @@ export class EventRepository {
     return String(result.lastID);
   }
 
+  async addCause(eventId: string, cause: CauseAttribution): Promise<void> {
+    await this.dbRun(`INSERT INTO causes (event_id, label, source_name, url, basis)
+      VALUES (?, ?, ?, ?, ?)
+      ON CONFLICT(event_id, label, url) DO UPDATE SET
+        source_name = CASE WHEN excluded.basis = 'official' THEN excluded.source_name ELSE causes.source_name END,
+        basis = CASE WHEN excluded.basis = 'official' THEN 'official'
+          WHEN causes.basis = 'reported' AND excluded.basis = 'occurrence' THEN 'occurrence'
+          ELSE causes.basis END`, [Number(eventId), cause.label, cause.sourceName, cause.url, cause.basis]);
+  }
+
+  private async causesFor(rows: DbEvent[]): Promise<Map<number, CauseAttribution[]>> {
+    const result = new Map<number, CauseAttribution[]>();
+    if (!rows.length) return result;
+    for (let start = 0; start < rows.length; start += 500) {
+      const ids = rows.slice(start, start + 500).map(row => row.id);
+      const found = await this.dbAll(`SELECT event_id, label, source_name, url, basis FROM causes
+        WHERE event_id IN (${ids.map(() => '?').join(',')})
+        ORDER BY CASE basis WHEN 'official' THEN 0 WHEN 'occurrence' THEN 1 ELSE 2 END, label`, ids);
+      for (const row of found) {
+        const values = result.get(row.event_id) ?? [];
+        values.push({ label: row.label, sourceName: row.source_name, url: row.url, basis: row.basis });
+        result.set(row.event_id, values);
+      }
+    }
+    return result;
+  }
+
   async listEventsNeedingMediaSearch(limit: number): Promise<EventRecord[]> {
     const rows: DbEvent[] = await this.dbAll(`
       SELECT events.* FROM events LEFT JOIN media_checks ON media_checks.event_id = events.id
@@ -338,8 +366,8 @@ export class EventRepository {
 
     const rows: DbEvent[] = await this.dbAll(sql, sqlParams);
     
-    // For list view, we don't include sources (performance)
-    const events = rows.map(row => this.dbEventToRecord(row, []));
+    const causes = await this.causesFor(rows);
+    const events = rows.map(row => this.dbEventToRecord(row, [], causes.get(row.id) ?? []));
     
     return { events, total };
   }
@@ -389,7 +417,8 @@ export class EventRepository {
     `;
 
     const rows: DbEvent[] = await this.dbAll(sql, sqlParams);
-    return rows.map(row => this.dbEventToRecord(row, []));
+    const causes = await this.causesFor(rows);
+    return rows.map(row => this.dbEventToRecord(row, [], causes.get(row.id) ?? []));
   }
 
   /**
@@ -402,7 +431,8 @@ export class EventRepository {
     const dbSources: DbSource[] = await this.dbAll('SELECT * FROM sources WHERE event_id = ?', [Number(id)]);
     const sources = dbSources.map(s => this.dbSourceToAttribution(s));
 
-    return this.dbEventToRecord(event, sources);
+    const causes = await this.causesFor([event]);
+    return this.dbEventToRecord(event, sources, causes.get(event.id) ?? []);
   }
 
   /**

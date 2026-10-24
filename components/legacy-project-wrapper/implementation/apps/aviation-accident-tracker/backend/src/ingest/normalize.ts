@@ -1,6 +1,7 @@
 import { RawEvent, NormalizedEvent } from './types.js';
 import { v4 as uuidv4 } from 'uuid';
 import { findAirport } from '../geo/airportLookup.js';
+import { classifyCauses } from './causes.js';
 
 function classifyCategory(raw: RawEvent): 'general' | 'commercial' | 'unknown' {
   const op = (raw.operator || '').toLowerCase();
@@ -30,6 +31,11 @@ export function normalize(raw: RawEvent): NormalizedEvent {
     summary: raw.summary,
     narrative: raw.narrative,
     status: raw.status,
+    causes: [
+      ...classifyCauses(raw.causeText ?? (raw.source === 'ntsb' ? '' : `${raw.summary ?? ''}. ${raw.narrative ?? ''}`),
+        raw.source, raw.url, raw.source === 'ntsb' ? 'official' : 'reported'),
+      ...classifyCauses(raw.occurrenceText ?? '', 'NTSB event sequence', raw.url, 'occurrence'),
+    ],
     sources: [
       {
         sourceName: raw.source,
