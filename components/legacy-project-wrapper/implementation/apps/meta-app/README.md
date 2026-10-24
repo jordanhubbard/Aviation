@@ -22,16 +22,20 @@ The Meta App serves as a central hub for the Aviation Suite, allowing users to:
 
 ## Applications
 
-The Meta App integrates these aviation applications:
+The Meta App links to every other application in the deployed Aviation manifest:
 
-1. **⚠️ Accident Tracker** - Track and visualize aviation accidents (port 8080)
-2. **📋 Missions** - Mission management system (port 3000)
-3. **🗺️ Flight Planner** - VFR flight planning (port 5001)
-4. **🎓 Flight School** - Flight school management (port 5000)
-5. **📊 ForeFlight** - Logbook analysis dashboard (port 3001)
-6. **✈️ Tracker** - Real-time flight tracking (port 3002)
-7. **🌤️ Weather** - Aviation weather briefing (port 3003)
-8. **📈 Flight Track Analyzer** - KML flight and touchdown analysis (port 8010)
+1. **⚠️ Accident Tracker** - Accident reports and classifications
+2. **💬 Aviation Chat** - App-aware assistance API and service information
+3. **📋 Missions** - Mission management
+4. **🗺️ Flight Planner** - VFR planning
+5. **🎓 Flight School** - Booking and scheduling
+6. **📊 ForeFlight Dashboard** - Logbook analysis
+7. **📈 Flight Track Analyzer** - KML flight and touchdown analysis
+8. **✈️ Flight Tracker** - Flight tracking
+9. **🖥️ G1000 Simulator** - Glass cockpit simulation
+10. **🌤️ Weather Briefing** - Aviation weather
+
+Meta App is the eleventh application and serves as the current navigation page.
 
 ## Quick Start
 

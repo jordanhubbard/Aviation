@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Flight Planner opens on its planning form and empty state without unrelated G1000 demo controls or a sample canvas.
+- Meta App links to all ten other deployed Aviation applications, with a manifest-based browser check for missing destinations.
 - Accident Tracker labels explicit accident mechanisms from NTSB probable-cause data and matched reports, shows Unknown when no cause is supported, and links each classification to its source.
 - Accident Tracker discovers matching publisher headlines during ingestion, stores citation titles and links, and expands citations beneath each event row.
 - Flight Planner loads saved plans from its deployed API route and rejects invalid responses; Aviation Chat explains its API-only role at its root URL.

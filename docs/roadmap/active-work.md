@@ -194,3 +194,29 @@ release-visible outcome to `CHANGELOG.md`; Git preserves prior queue states.
   - [x] Local backend extraction and persistence tests (51 Vitest, 2 Python), frontend interaction tests (64 Vitest), and both app builds pass.
   - [x] Literate AI retained test receipt refreshed and `litai verify` passed for implementation commit 396a0ce5a.
   - [x] PR #323 checks passed and merged at b03fd66e3; exact-main CI 40121936341 and image build 40121936340 passed. The image was deployed on do-host1, public health and browser checks passed, and all eleven public app browser checks passed. Live API returned 742 events with 30 loss-of-control, 21 engine-failure, 3 CFIT, 8 fuel-exhaustion, and 1 weather attribution; a Chromium row check verified N30718's badge and NTSB source link. Unclassified events still show Unknown.
+
+### [ ] FLIGHT-002 — Remove unrelated planner demo controls and canvas
+
+- **Priority:** P2
+- **Owner:** retained Flight Planner frontend
+- **Direction:** Explain and correct the initial blank canvas and joystick controls visible in Flight Planner.
+- **Conclusion:** App.tsx mounts a G1000 demo control and fixed sample canvas globally; neither powers the real plan maps. Remove those shell mounts while preserving the form and its existing pre-plan empty state. MAC task task_429cbcaff6a84f06a383bac4c1c9eb83 tracks the same work.
+- **Depends on:** FLIGHT-001 deployed planner
+- **Implementation:**
+  - [x] Remove global demo components from the planner shell and cover the initial view in a rendered post-deployment browser check.
+- **Evidence:**
+  - [x] Flight Planner frontend build and 8 tests pass; the new browser check rejects the current deployed demo controls.
+  - [ ] Literate AI verification, reviewed CI, exact-main image, and deployed browser check.
+
+### [ ] META-001 — Navigate to every Aviation service from Meta App
+
+- **Priority:** P2
+- **Owner:** retained Meta App and deployment browser verification
+- **Direction:** Ensure all deployed Aviation applications can be opened from Meta App.
+- **Conclusion:** The deployed manifest has eleven entries; Meta App is the current application and has links to nine of the other ten. Add the missing Aviation Chat destination and use the manifest as the browser gate for destination completeness. MAC task task_c7befa4095b74be7967535e52557d21b tracks the same work.
+- **Depends on:** DEPLOY-001 public DNS
+- **Implementation:**
+  - [x] Add Aviation Chat destination to Meta App and assert each other deployed application has a matching launch link.
+- **Evidence:**
+  - [x] Meta App and dependencies build; the manifest browser check rejects the current deployed launcher because Aviation Chat is missing (9/10 destinations).
+  - [ ] Literate AI verification, reviewed CI, exact-main deployment of both changed apps, and passing public browser checks.

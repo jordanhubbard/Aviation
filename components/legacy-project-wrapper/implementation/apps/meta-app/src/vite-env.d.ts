@@ -3,6 +3,7 @@
 interface ImportMetaEnv {
   readonly VITE_META_APP_MODE?: 'tabs' | 'launcher';
   readonly VITE_ACCIDENT_TRACKER_URL?: string;
+  readonly VITE_AVIATION_CHAT_URL?: string;
   readonly VITE_MISSIONS_URL?: string;
   readonly VITE_FLIGHT_PLANNER_URL?: string;
   readonly VITE_FLIGHT_SCHOOL_URL?: string;
