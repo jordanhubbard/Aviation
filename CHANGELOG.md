@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- Accident Tracker now shows source citations and last successful sync, classifies NTSB operations, offers readable filters, and turns plain-language searches into supported filters without an external token.
+- Aviation Missions now stores written feedback on individual completed missions and shows comments under each completion.
+- Every Aviation application now has a feedback button that files a contextual issue in the Aviation repository; the button is included in deployed browser checks.
+- Preflight Check adds aircraft-specific weight and balance calculations for takeoff and landing, plus a local PAVE risk checklist and a Meta App launch link.
+- Meta App now lists only pilot-facing applications; the Aviation Chat API remains available to applications without appearing as a launcher card.
 - Flight Planner opens on its planning form and empty state without unrelated G1000 demo controls or a sample canvas.
 - Meta App links to all ten other deployed Aviation applications, with a manifest-based browser check for missing destinations.
 - Accident Tracker labels explicit accident mechanisms from NTSB probable-cause data and matched reports, shows Unknown when no cause is supported, and links each classification to its source.

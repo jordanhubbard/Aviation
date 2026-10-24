@@ -22,20 +22,20 @@ The Meta App serves as a central hub for the Aviation Suite, allowing users to:
 
 ## Applications
 
-The Meta App links to every other application in the deployed Aviation manifest:
+The Meta App links to pilot-facing applications in the deployed Aviation manifest. Aviation Chat remains an internal API service and has no launcher card.
 
 1. **⚠️ Accident Tracker** - Accident reports and classifications
-2. **💬 Aviation Chat** - App-aware assistance API and service information
-3. **📋 Missions** - Mission management
-4. **🗺️ Flight Planner** - VFR planning
-5. **🎓 Flight School** - Booking and scheduling
-6. **📊 ForeFlight Dashboard** - Logbook analysis
-7. **📈 Flight Track Analyzer** - KML flight and touchdown analysis
-8. **✈️ Flight Tracker** - Flight tracking
-9. **🖥️ G1000 Simulator** - Glass cockpit simulation
-10. **🌤️ Weather Briefing** - Aviation weather
+2. **📋 Missions** - Mission management
+3. **🗺️ Flight Planner** - VFR planning
+4. **🎓 Flight School** - Booking and scheduling
+5. **📊 ForeFlight Dashboard** - Logbook analysis
+6. **📈 Flight Track Analyzer** - KML flight and touchdown analysis
+7. **✈️ Flight Tracker** - Flight tracking
+8. **🖥️ G1000 Simulator** - Glass cockpit simulation
+9. **🌤️ Weather Briefing** - Aviation weather
+10. **🛫 Preflight Check** - Aircraft loading and pilot risk review
 
-Meta App is the eleventh application and serves as the current navigation page.
+Meta App serves as the current navigation page for the pilot-facing apps.
 
 ## Quick Start
 
