@@ -181,16 +181,16 @@ release-visible outcome to `CHANGELOG.md`; Git preserves prior queue states.
 - **Evidence:**
   - [x] ICAO's current Doc 8643 search page returned HTTP 200. PR #321 merged at eeb4e684b; 190 ForeFlight tests and Literate AI verification pass. The deployed public browser upload of invalid C82S shows the current ICAO URL in the expanded row, and the full eleven-service sweep passes.
 
-### [ ] ACCIDENT-002 — Show sourced accident cause badges
+### [x] ACCIDENT-002 — Show sourced accident cause badges
 
 - **Priority:** P1
 - **Owner:** retained Accident Tracker ingestion, repository, and frontend
 - **Direction:** Classify accident causes from available accident data and relevant reports, showing Unknown only when no supported cause is available.
-- **Conclusion:** NTSB weekly data carries probable-cause narratives and findings, while matched aviation reports can state mechanisms; store sourced cause labels separately from flight category and show them in accident rows.
+- **Conclusion:** NTSB weekly data carries probable-cause narratives, flagged findings, and event sequences, while matched aviation reports can state mechanisms. Store sourced labels separately from flight category, distinguish official cause, NTSB occurrence, and reported mechanism, and show them in accident rows.
 - **Depends on:** ACCIDENT-001 citation ingestion
 - **Implementation:**
   - [x] Extract explicit cause labels from NTSB probable-cause data and matched reports; persist attribution across ingestion and deduplication; render cause badges and evidence in row details.
 - **Evidence:**
   - [x] Local backend extraction and persistence tests (51 Vitest, 2 Python), frontend interaction tests (64 Vitest), and both app builds pass.
-  - [ ] Literate AI retained receipt and verify pass.
-  - [ ] Reviewed CI, exact-main image, deployed public browser and API verification.
+  - [x] Literate AI retained test receipt refreshed and `litai verify` passed for implementation commit 396a0ce5a.
+  - [x] PR #323 checks passed and merged at b03fd66e3; exact-main CI 40121936341 and image build 40121936340 passed. The image was deployed on do-host1, public health and browser checks passed, and all eleven public app browser checks passed. Live API returned 742 events with 30 loss-of-control, 21 engine-failure, 3 CFIT, 8 fuel-exhaustion, and 1 weather attribution; a Chromium row check verified N30718's badge and NTSB source link. Unclassified events still show Unknown.
