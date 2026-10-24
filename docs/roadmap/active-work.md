@@ -195,7 +195,7 @@ release-visible outcome to `CHANGELOG.md`; Git preserves prior queue states.
   - [x] Literate AI retained test receipt refreshed and `litai verify` passed for implementation commit 396a0ce5a.
   - [x] PR #323 checks passed and merged at b03fd66e3; exact-main CI 40121936341 and image build 40121936340 passed. The image was deployed on do-host1, public health and browser checks passed, and all eleven public app browser checks passed. Live API returned 742 events with 30 loss-of-control, 21 engine-failure, 3 CFIT, 8 fuel-exhaustion, and 1 weather attribution; a Chromium row check verified N30718's badge and NTSB source link. Unclassified events still show Unknown.
 
-### [ ] FLIGHT-002 — Remove unrelated planner demo controls and canvas
+### [x] FLIGHT-002 — Remove unrelated planner demo controls and canvas
 
 - **Priority:** P2
 - **Owner:** retained Flight Planner frontend
@@ -206,9 +206,10 @@ release-visible outcome to `CHANGELOG.md`; Git preserves prior queue states.
   - [x] Remove global demo components from the planner shell and cover the initial view in a rendered post-deployment browser check.
 - **Evidence:**
   - [x] Flight Planner frontend build and 8 tests pass; the new browser check rejects the current deployed demo controls.
-  - [ ] Literate AI verification, reviewed CI, exact-main image, and deployed browser check.
+  - [x] Retained source scope, test receipt, and `litai verify` passed for PR #325; all PR checks passed and merged at b350ad59d.
+  - [x] Exact-main CI 40123358725 and image run 40123358794 passed. do-host1 runs the b350ad59d Flight Planner image; public health, initial-view browser check, and eleven-app sweep passed.
 
-### [ ] META-001 — Navigate to every Aviation service from Meta App
+### [x] META-001 — Navigate to every Aviation service from Meta App
 
 - **Priority:** P2
 - **Owner:** retained Meta App and deployment browser verification
@@ -219,4 +220,5 @@ release-visible outcome to `CHANGELOG.md`; Git preserves prior queue states.
   - [x] Add Aviation Chat destination to Meta App and assert each other deployed application has a matching launch link.
 - **Evidence:**
   - [x] Meta App and dependencies build; the manifest browser check rejects the current deployed launcher because Aviation Chat is missing (9/10 destinations).
-  - [ ] Literate AI verification, reviewed CI, exact-main deployment of both changed apps, and passing public browser checks.
+  - [x] Retained source scope, test receipt, and `litai verify` passed for PR #325; all PR checks passed and merged at b350ad59d.
+  - [x] Exact-main CI 40123358725 and image run 40123358794 passed. do-host1 runs the b350ad59d Meta App image; the public browser gate confirmed all ten outbound links match the manifest, and all eleven app roots passed.
