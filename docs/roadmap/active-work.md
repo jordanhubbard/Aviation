@@ -271,3 +271,15 @@ release-visible outcome to `CHANGELOG.md`; Git preserves prior queue states.
   - [x] Add a browser-local preflight app requiring user-entered POH/AFM limits and stations; compute takeoff and landing weight/CG against an envelope, persist profiles locally, and link from Meta App.
 - **Evidence:**
   - [x] Calculation unit tests, live browser weight/CG example and Meta App link, exact-main CI/image build, DNS and deployment verification passed at preflight-check.jordanhubbard.net.
+
+### [ ] META-002 — Show only pilot-facing apps in Meta App
+
+- **Priority:** P2
+- **Owner:** retained Meta App and deployment browser verification
+- **Direction:** Remove the internal Aviation Chat API from the Meta App launcher because it has no user-facing UI.
+- **Conclusion:** Keep Aviation Chat deployed as an API service, but exclude it from Meta App navigation and from the launcher destination contract.
+- **Depends on:** META-001
+- **Implementation:**
+  - [x] Remove Aviation Chat from the launcher app list while retaining its API deployment; update the browser contract to expect only pilot-facing destinations.
+- **Evidence:**
+  - [ ] Meta App build and rendered launcher check, retained Literate AI receipt, reviewed CI, exact-main Meta App image and public browser deployment.
