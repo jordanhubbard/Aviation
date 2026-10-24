@@ -142,4 +142,4 @@ release-visible outcome to `CHANGELOG.md`; Git preserves prior queue states.
 - **Evidence:**
   - [x] Live browser reproduction, frontend tests, and full build pass locally; the new browser gate rejects the deployed error page.
   - [ ] Deployed browser smoke passes without error boundaries.
-  - [ ] Project verification receipt is refreshed; current local check reports project.test_receipt_stale.
+  - [x] Retained source scope and test receipt are refreshed; `litai verify` passes all three applicable gates.
