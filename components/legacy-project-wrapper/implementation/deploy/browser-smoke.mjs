@@ -49,6 +49,34 @@ try {
         const invalid = await page.request.post(`https://${hostname}.${manifest.domain}/chat`, { data: {} });
         if (invalid.status() !== 400) throw new Error(`Invalid chat request returned HTTP ${invalid.status()}`);
       }
+      if (contract.apps[app.name].interaction === 'solo-pic-upload') {
+        const csv = [
+          'ForeFlight Logbook Import,This row is required for importing into ForeFlight. Do not delete or modify.,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,',
+          ',,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,',
+          'Aircraft Table,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,',
+          'AircraftID,TypeCode,Year,Make,Model,GearType,EngineType,equipType (FAA),aircraftClass (FAA),complexAircraft (FAA),taa (FAA),highPerformance (FAA),pressurized (FAA),,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,',
+          'N125CM,CH7A,,Bellanca,7ECA,fixed_tailwheel,Piston,aircraft,airplane_single_engine_land,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,',
+          ',,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,',
+          'Flights Table,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,',
+          'Date,AircraftID,From,To,TotalTime,Night,ActualInstrument,SimulatedInstrument,CrossCountry,DualGiven,PIC,SIC,DualReceived,Solo,DayLandingsFullStop,NightLandingsFullStop,PilotComments,InstructorComments,Distance',
+          '2023-01-01,N125CM,KOAK,KSFO,0.2,0.0,0.0,0.0,0.0,0.0,0.2,0.0,0.0,0.2,1,0,First solo,,10',
+          '',
+        ].join('\n');
+        await page.locator('#file-input').setInputFiles({ name: 'solo-pic-smoke.csv',
+          mimeType: 'text/csv', buffer: Buffer.from(csv) });
+        const processed = page.waitForResponse(response => response.url().includes('/api/process-logbook'));
+        await page.getByRole('button', { name: 'Process Logbook' }).click();
+        const upload = await processed;
+        if (upload.status() !== 200) throw new Error(`Logbook upload returned HTTP ${upload.status()}`);
+        const result = await upload.json();
+        if (result.error_count !== 0 || result.entries?.[0]?.pic_time !== 0.2
+          || result.entries?.[0]?.solo_time !== 0.2) {
+          throw new Error(`Solo/PIC upload validation failed: ${JSON.stringify(result.entries?.[0]?.error_explanation)}`);
+        }
+        await page.getByRole('button', { name: 'Upload New Logbook' }).waitFor({ timeout: 10_000 });
+        if (await page.getByText('Data Validation Errors').count()) throw new Error('Dashboard displays validation errors');
+      }
+      if (pageErrors.length) throw new Error(`Browser errors: ${pageErrors.join('; ')}`);
       console.log(`browser ok: ${url}`);
     } catch (error) {
       failures.push(`${app.name}: ${String(error)}`);

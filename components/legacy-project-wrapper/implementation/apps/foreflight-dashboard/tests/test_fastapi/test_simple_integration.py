@@ -113,6 +113,22 @@ class TestSimpleIntegration:
         assert isinstance(result["entries"], list)
         assert len(result["entries"]) > 0  # Sample data should create entries
 
+    def test_process_logbook_accepts_overlapping_solo_and_pic(self, sample_csv_content):
+        """A real ForeFlight upload may report the same 0.2 hours as PIC and solo."""
+        sample = sample_csv_content.replace(
+            '2023-01-01,N125CM,KOAK,KSFO,2.0,0.0,0.0,0.0,0.0,0.0,2.0,0.0,0.0,2.0,',
+            '2023-01-01,N125CM,KOAK,KSFO,0.2,0.0,0.0,0.0,0.0,0.0,0.2,0.0,0.0,0.2,',
+        )
+        response = TestClient(app).post('/api/process-logbook',
+            files={'file': ('solo-pic.csv', sample.encode(), 'text/csv')},
+            data={'student_pilot': 'false'})
+        assert response.status_code == 200
+        entry = response.json()['entries'][0]
+        assert entry['total_time'] == 0.2
+        assert entry['pic_time'] == 0.2
+        assert entry['solo_time'] == 0.2
+        assert entry['error_explanation'] is None
+
     def test_process_logbook_reports_invalid_record_count(self, sample_csv_content):
         """Malformed numeric values flag their record and contribute to error_count."""
         client = TestClient(app)

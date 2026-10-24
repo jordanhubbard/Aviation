@@ -209,7 +209,30 @@ def test_time_accountability():
     entry.pic_time = 0.0
     entry.validate_entry()
     assert entry.error_explanation is not None
-    assert "should equal sum of PIC time" in entry.error_explanation
+    assert "does not match PIC" in entry.error_explanation
+
+def test_solo_time_overlaps_pic_time():
+    """ForeFlight records the same solo flight time as PIC and solo."""
+    entry = create_valid_entry()
+    entry.total_time = 0.2
+    entry.conditions.day = 0.2
+    entry.pilot_role = "PIC"
+    entry.pic_time = 0.2
+    entry.dual_received = 0.0
+    entry.solo_time = 0.2
+    entry.validate_entry()
+    assert entry.error_explanation is None
+
+def test_student_solo_still_accounts_for_flight_time():
+    entry = create_valid_entry()
+    entry.total_time = 0.2
+    entry.conditions.day = 0.2
+    entry.pilot_role = "STUDENT"
+    entry.pic_time = 0.0
+    entry.dual_received = 0.0
+    entry.solo_time = 0.2
+    entry.validate_entry()
+    assert entry.error_explanation is None
 
 def test_future_date():
     """Test validation of future dates."""
@@ -239,4 +262,4 @@ def test_future_date():
             landings_night=0,
             dual_received=0.0,
             solo_time=0.0
-        ) 
+        )

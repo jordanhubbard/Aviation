@@ -311,7 +311,7 @@ class LogbookEntry(BaseModel):
             
             # For certificated pilots logging both PIC and dual:
             # If both PIC and dual equal total time, it's valid (flight review, IPC, checkout)
-            # Otherwise, they should sum to total time (mixed logging)
+            # Otherwise, account for the time without counting solo twice.
             if self.pic_time > 0 and self.dual_received > 0 and self.pilot_role != "STUDENT":
                 pic_equals_total = abs(self.pic_time - self.total_time) <= 0.1
                 dual_equals_total = abs(self.dual_received - self.total_time) <= 0.1
@@ -321,15 +321,19 @@ class LogbookEntry(BaseModel):
                     # This is valid - no error
                     pass
                 else:
-                    # Otherwise, they should sum to total (mixed logging)
-                    total_accounted_time = self.dual_received + self.pic_time + self.solo_time
+                    # Otherwise, account for mixed logging without counting solo twice.
+                    # Solo is a subset of PIC for a certificated pilot, not
+                    # another block of flight time to add to PIC.
+                    solo_outside_pic = max(0.0, self.solo_time - self.pic_time)
+                    total_accounted_time = self.dual_received + self.pic_time + solo_outside_pic
                     if abs(total_accounted_time - self.total_time) > 0.1:
-                        issues.append(f"Total time ({self.total_time:.1f}) should equal sum of PIC time ({self.pic_time:.1f}), dual received ({self.dual_received:.1f}), and solo time ({self.solo_time:.1f})")
-            # For student pilots or single-type logging: PIC + dual should equal total
+                        issues.append(f"Total time ({self.total_time:.1f}) does not match PIC ({self.pic_time:.1f}), dual received ({self.dual_received:.1f}), and solo ({self.solo_time:.1f}) time (solo can overlap PIC)")
+            # For student pilots or single-type logging, account for solo overlap.
             elif self.pilot_role == "STUDENT" or (self.pic_time > 0 and self.dual_received == 0) or (self.pic_time == 0 and self.dual_received > 0):
-                total_accounted_time = self.dual_received + self.pic_time + self.solo_time
+                solo_outside_pic = self.solo_time if self.pilot_role == "STUDENT" else max(0.0, self.solo_time - self.pic_time)
+                total_accounted_time = self.dual_received + self.pic_time + solo_outside_pic
                 if abs(total_accounted_time - self.total_time) > 0.1:  # Allow 0.1 hour difference for rounding
-                    issues.append(f"Total time ({self.total_time:.1f}) should equal sum of PIC time ({self.pic_time:.1f}), dual received ({self.dual_received:.1f}), and solo time ({self.solo_time:.1f})")
+                    issues.append(f"Total time ({self.total_time:.1f}) does not match PIC ({self.pic_time:.1f}), dual received ({self.dual_received:.1f}), and solo ({self.solo_time:.1f}) time (solo can overlap PIC)")
 
         # Check pilot role vs time logging conflicts
         if self.pilot_role == "STUDENT" and self.pic_time > 0:
@@ -342,7 +346,7 @@ class LogbookEntry(BaseModel):
         # This should NOT be flagged as an error for certificated pilots
         # Only student pilots cannot log PIC time while receiving dual
             
-        if self.pilot_role == "STUDENT" and self.dual_received == 0 and self.total_time > 0:
+        if self.pilot_role == "STUDENT" and self.dual_received == 0 and self.solo_time == 0 and self.total_time > 0:
             issues.append("Student pilot flights should typically log dual received time")
 
         # Check cross-country time validity
@@ -435,4 +439,4 @@ class LogbookEntry(BaseModel):
         else:
             self.warning_explanation = None 
 
-# InstructorEndorsement is now defined as a SQLAlchemy model in src.core.database 
+# InstructorEndorsement is now defined as a SQLAlchemy model in src.core.database
