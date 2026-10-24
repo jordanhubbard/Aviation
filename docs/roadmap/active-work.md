@@ -157,7 +157,7 @@ release-visible outcome to `CHANGELOG.md`; Git preserves prior queue states.
   - [x] ForeFlight Dashboard test suite passes locally (188 tests).
   - [x] PR #319 merged; exact-main ForeFlight image deployed. Public Chromium gate uploads 0.2 total / 0.2 PIC / 0.2 solo CSV, observes zero validation errors, and renders the dashboard without an error banner; full eleven-service sweep passes.
 
-### [ ] FORE-002 — Avoid false excessive-landing errors
+### [x] FORE-002 — Avoid false excessive-landing errors
 
 - **Priority:** P1
 - **Owner:** retained ForeFlight Dashboard validator and deployed browser contract
@@ -167,9 +167,9 @@ release-visible outcome to `CHANGELOG.md`; Git preserves prior queue states.
 - **Implementation:**
   - [x] Remove the 15-landings-per-hour error and add representative model and upload regressions.
 - **Evidence:**
-  - [ ] Local ForeFlight tests, current Literate AI receipt, and public post-deployment upload of eight landings in 0.5 hours pass without a validation error.
+  - [x] PR #321 merged at eeb4e684b; 190 local ForeFlight tests, the 273-test retained receipt, and three Literate AI gates pass. The exact-main image is deployed; its public Chromium upload of eight landings in 0.5 hours returns zero errors, and the full eleven-service browser sweep passes.
 
-### [ ] FORE-003 — Repair ICAO designator verification link
+### [x] FORE-003 — Repair ICAO designator verification link
 
 - **Priority:** P1
 - **Owner:** retained ForeFlight Dashboard ICAO validator
@@ -179,4 +179,4 @@ release-visible outcome to `CHANGELOG.md`; Git preserves prior queue states.
 - **Implementation:**
   - [x] Update validation message and resource metadata, and test the exact C82S remediation URL.
 - **Evidence:**
-  - [ ] Official ICAO search page returns HTTP 200, ForeFlight tests and Literate AI verification pass, and deployed invalid-code upload shows the new URL.
+  - [x] ICAO's current Doc 8643 search page returned HTTP 200. PR #321 merged at eeb4e684b; 190 ForeFlight tests and Literate AI verification pass. The deployed public browser upload of invalid C82S shows the current ICAO URL in the expanded row, and the full eleven-service sweep passes.
