@@ -9,7 +9,9 @@ export function dedupe(events: NormalizedEvent[]): NormalizedEvent[] {
       const existing = seen.get(key)!;
       const mergedSources = [...existing.sources, ...ev.sources];
       const newer = existing.updatedAt > ev.updatedAt ? existing.updatedAt : ev.updatedAt;
-      seen.set(key, { ...existing, ...ev, sources: mergedSources,
+      seen.set(key, { ...existing, ...ev,
+        category: ev.category === 'unknown' ? existing.category : ev.category,
+        sources: mergedSources,
         causes: [...(existing.causes ?? []), ...(ev.causes ?? [])], updatedAt: newer });
     } else {
       seen.set(key, ev);
@@ -64,6 +66,7 @@ function mergeEvents(a: NormalizedEvent, b: NormalizedEvent): NormalizedEvent {
   return {
     ...a,
     // prefer non-empty fields from b
+    category: b.category === 'unknown' ? a.category : b.category,
     aircraftType: b.aircraftType || a.aircraftType,
     operator: b.operator || a.operator,
     airportIcao: b.airportIcao || a.airportIcao,
