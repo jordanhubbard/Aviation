@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% block title %}Maintenance Types{% endblock %}
+{% block content %}
+<div class="container mt-4">
+  <h1>Maintenance Types</h1>
+  <table class="table table-striped">
+    <thead><tr><th>Name</th><th>Description</th><th>Calendar interval</th><th>Operating hours</th></tr></thead>
+    <tbody>
+      {% for item in types %}
+      <tr><td>{{ item.name }}</td><td>{{ item.description or '' }}</td>
+          <td>{{ item.interval_days if item.interval_days is not none else '—' }}</td>
+          <td>{{ item.interval_hours if item.interval_hours is not none else '—' }}</td></tr>
+      {% else %}
+      <tr><td colspan="4">No maintenance types recorded.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

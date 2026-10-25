@@ -108,15 +108,24 @@
                 <div class="modal-body">
                     <div class="mb-3">
                         <label for="aircraft" class="form-label">Aircraft</label>
-                        {{ form.aircraft_id(class="form-select", id="aircraft") }}
+                        <select class="form-select" id="aircraft" name="aircraft_id" required>
+                            {% for aircraft in aircraft_list %}<option value="{{ aircraft.id }}">{{ aircraft.registration }}</option>{% endfor %}
+                        </select>
                     </div>
                     <div class="mb-3">
                         <label for="instructor" class="form-label">Instructor (optional)</label>
-                        {{ form.instructor_id(class="form-select", id="instructor") }}
+                        <select class="form-select" id="instructor" name="instructor_id">
+                            <option value="">No preference</option>
+                            {% for instructor in instructors %}<option value="{{ instructor.id }}">{{ instructor.full_name }}</option>{% endfor %}
+                        </select>
                     </div>
                     <div class="mb-3">
                         <label for="dayOfWeek" class="form-label">Day of Week</label>
-                        {{ form.day_of_week(class="form-select", id="dayOfWeek") }}
+                        <select class="form-select" id="dayOfWeek" name="day_of_week">
+                            {% for day in ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'] %}
+                            <option value="{{ loop.index0 }}">{{ day }}</option>
+                            {% endfor %}
+                        </select>
                     </div>
                     <div class="mb-3">
                         <label for="startTime" class="form-label">Start Time</label>

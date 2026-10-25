@@ -1,5 +1,6 @@
 /** Shared remote E2E contract. Import through @aviation/shared-sdk/e2e on test workers only. */
 import { createHmac, randomUUID, timingSafeEqual } from 'node:crypto';
+import { resolve } from 'node:path';
 
 export const E2E_HEADERS = {
   run: 'x-aviation-test-run',
@@ -25,6 +26,11 @@ export function createE2ERunId(): E2ERunId {
 export function parseE2ERunId(value: unknown): E2ERunId {
   if (typeof value !== 'string' || !RUN_PATTERN.test(value)) throw new Error('Invalid E2E run ID');
   return value as E2ERunId;
+}
+
+/** Resolve a run-owned SQLite file under the caller's dedicated test root. */
+export function isolatedSqlitePath(root: string, runId: E2ERunId): string {
+  return resolve(root, `${parseE2ERunId(runId)}.db`);
 }
 
 export function tagTestData<T extends object>(runId: E2ERunId, value: T): TestTagged<T> {
@@ -105,8 +111,9 @@ export class E2ERunError extends Error {
 }
 
 /** Execute cleanup in reverse order even when the test or an earlier cleanup fails. */
-export async function withE2ERun<T>(secret: string, test: (run: E2ERun) => Promise<T>): Promise<T> {
-  const id = createE2ERunId();
+export async function withE2ERun<T>(secret: string, test: (run: E2ERun) => Promise<T>,
+  existingRunId?: E2ERunId): Promise<T> {
+  const id = existingRunId ? parseE2ERunId(existingRunId) : createE2ERunId();
   const cleanup: Array<() => Promise<void> | void> = [];
   const run: E2ERun = {
     id,

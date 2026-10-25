@@ -152,6 +152,8 @@ def flight_status(booking_id):
             current_user.is_admin):
         flash('You are not authorized to view this flight.', 'error')
         return redirect(url_for('booking.dashboard'))
+    if booking.check_in is None:
+        return redirect(url_for('flight.check_in', booking_id=booking_id))
     
     # Get maintenance records and squawks for the aircraft
     maintenance_records = MaintenanceRecord.query.filter_by(aircraft_id=booking.aircraft_id).order_by(MaintenanceRecord.performed_at.desc()).limit(5).all()
@@ -175,6 +177,10 @@ def flight_summary(booking_id):
             current_user.is_admin):
         flash('You are not authorized to view this flight.', 'error')
         return redirect(url_for('booking.dashboard'))
+    if booking.check_in is None:
+        return redirect(url_for('flight.check_in', booking_id=booking_id))
+    if booking.check_out is None:
+        return redirect(url_for('flight.flight_status', booking_id=booking_id))
     
     return render_template('flight/summary.html', booking=booking)
 

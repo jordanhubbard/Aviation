@@ -17,6 +17,7 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
+from aviation.e2e import isolated_run_directory
 
 from . import aggregate, e2e, llm, poh
 from .kml import MAX_BYTES, KmlError
@@ -97,12 +98,12 @@ def create_app(data_dir: str | None = None) -> FastAPI:
         if run is None:
             return await call_next(request)
         if (request.url.path == f"/__e2e/runs/{run}" and request.method == "GET"
-                and not (test_root / run).exists()):
+                and not isolated_run_directory(test_root, run).exists()):
             return JSONResponse({"count": 0, "is_test_data": True, "test_run_id": run})
         with test_lock:
             remove_expired_runs()
             if run not in test_stores:
-                test_stores[run] = Store(test_root / run)
+                test_stores[run] = Store(isolated_run_directory(test_root, run))
                 with sqlite3.connect(test_stores[run].db_path) as connection:
                     connection.execute("CREATE TABLE IF NOT EXISTS e2e_runs "
                                        "(test_run_id TEXT PRIMARY KEY, is_test_data INTEGER NOT NULL CHECK(is_test_data=1))")
@@ -133,7 +134,7 @@ def create_app(data_dir: str | None = None) -> FastAPI:
             raise HTTPException(403, "E2E run mismatch")
         with test_lock:
             test_stores.pop(run_id, None)
-            shutil.rmtree(test_root / run_id, ignore_errors=False)
+            shutil.rmtree(isolated_run_directory(test_root, run_id), ignore_errors=False)
         return {"deleted": run_id, "is_test_data": True, "test_run_id": run_id}
 
     @app.post("/__e2e/fixtures")

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { assertTestDataForRun, createE2ERunId, parseE2ERunId, seedRemoteFixture,
+import { assertTestDataForRun, createE2ERunId, isolatedSqlitePath, parseE2ERunId, seedRemoteFixture,
   signE2EHeaders, standardE2EFixtures, tagTestData, verifyE2EHeaders, withE2ERun,
   installE2EApiHeaders, installE2ENetworkMocks, standardE2EMocks, runE2EScreens } from '../index.js';
 
@@ -17,6 +17,8 @@ describe('remote E2E isolation contract', () => {
     expect(() => parseE2ERunId('production')).toThrow();
     expect(Object.values(standardE2EFixtures(runId)).every(record =>
       record.is_test_data && record.test_run_id === runId)).toBe(true);
+    expect(isolatedSqlitePath('/tmp/aviation-e2e', runId)).toBe(`/tmp/aviation-e2e/${runId}.db`);
+    expect(() => isolatedSqlitePath('/tmp/aviation-e2e', '../production' as typeof runId)).toThrow();
   });
 
   it('binds short-lived credentials to the intended app and run', () => {

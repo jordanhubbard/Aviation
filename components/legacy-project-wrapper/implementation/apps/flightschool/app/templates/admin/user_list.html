@@ -33,7 +33,7 @@
                     </div>
                 </div>
             </div>
-            
+
             <div class="card">
                 <div class="card-header bg-primary text-white">
                     <h5 class="mb-0">Quick Actions</h5>
@@ -48,7 +48,7 @@
                 </div>
             </div>
         </div>
-        
+
         <div class="col-md-9">
             <div class="card">
                 <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
@@ -106,14 +106,14 @@
                                             <a href="{{ url_for('admin.edit_user', id=user.id) }}" class="btn btn-primary">
                                                 <i class="fas fa-edit"></i>
                                             </a>
-                                            <a href="{{ url_for('admin.view_user', id=user.id) }}" class="btn btn-info">
+                                            <a href="{{ url_for('admin.edit_user', id=user.id) }}" class="btn btn-info">
                                                 <i class="fas fa-eye"></i>
                                             </a>
                                             <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#deleteModal{{ user.id }}">
                                                 <i class="fas fa-trash"></i>
                                             </button>
                                         </div>
-                                        
+
                                         <!-- Delete Modal -->
                                         <div class="modal fade" id="deleteModal{{ user.id }}" tabindex="-1" aria-labelledby="deleteModalLabel{{ user.id }}" aria-hidden="true">
                                             <div class="modal-dialog">
@@ -146,7 +146,7 @@
                             </tbody>
                         </table>
                     </div>
-                    
+
                     <!-- Pagination controls -->
                     <nav aria-label="User list pagination">
                         <ul class="pagination justify-content-center">
@@ -166,4 +166,4 @@
         </div>
     </div>
 </div>
-{% endblock %} 
+{% endblock %}

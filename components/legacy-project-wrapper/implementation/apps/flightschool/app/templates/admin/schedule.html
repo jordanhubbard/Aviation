@@ -61,11 +61,11 @@
                                         </td>
                                         <td>
                                             <div class="btn-group">
-                                                <a href="{{ url_for('admin.edit_booking', booking_id=booking.id) }}" class="btn btn-sm btn-outline-primary">
+                                                <a href="{{ url_for('admin.edit_booking', id=booking.id) }}" class="btn btn-sm btn-outline-primary">
                                                     <i class="fas fa-edit"></i>
                                                 </a>
                                                 {% if booking.status == 'confirmed' %}
-                                                <form method="POST" action="{{ url_for('admin.cancel_booking', booking_id=booking.id) }}" class="d-inline">
+                                                <form method="POST" action="{{ url_for('booking.cancel_booking', booking_id=booking.id) }}" class="d-inline">
                                                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
                                                     <button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirm('Are you sure you want to cancel this booking?')">
                                                         <i class="fas fa-times"></i>
@@ -116,4 +116,4 @@
         }, 1000);
     });
 </script>
-{% endblock %} 
+{% endblock %}

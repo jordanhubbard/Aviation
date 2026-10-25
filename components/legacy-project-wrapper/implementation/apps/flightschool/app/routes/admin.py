@@ -1,6 +1,6 @@
 from flask import Blueprint, render_template, flash, redirect, url_for, request
 from flask_login import login_required, current_user
-from app.models import User, Aircraft, Booking, MaintenanceRecord, MaintenanceType
+from app.models import User, Aircraft, Booking, MaintenanceRecord, MaintenanceType, RecurringBooking, Squawk
 from datetime import datetime, timedelta
 from app.services.educational_enhancements import get_performance_tracking_data, get_knowledge_tests_data, get_achievements_data
 from app import db
@@ -60,7 +60,7 @@ def dashboard():
 def users():
     """Display user management page."""
     users = User.query.order_by(User.last_name).all()
-    return render_template('admin/users.html', users=users)
+    return render_template('admin/user_list.html', users=users)
 
 
 @admin_bp.route('/aircraft')
@@ -116,7 +116,7 @@ def maintenance_records():
 @admin_required
 def squawks():
     """Display aircraft squawks."""
-    return render_template('admin/squawks.html')
+    return render_template('admin/squawks.html', squawks=Squawk.query.order_by(Squawk.created_at.desc()).all())
 
 
 @admin_bp.route('/audit-logs')
@@ -336,7 +336,7 @@ def maintenance_types():
 def instructors():
     """Display instructor management page."""
     instructors = User.query.filter_by(is_instructor=True).order_by(User.last_name).all()
-    return render_template('admin/instructors.html', instructors=instructors)
+    return render_template('admin/instructor_list.html', instructors=instructors)
 
 
 @admin_bp.route('/instructor/create', methods=['GET', 'POST'])
@@ -486,8 +486,10 @@ def waitlist():
 @admin_required
 def recurring_bookings():
     """Display recurring bookings management page."""
-    recurring = Booking.query.filter_by(is_recurring=True).order_by(Booking.start_time).all()
-    return render_template('admin/recurring_bookings.html', bookings=recurring)
+    recurring = RecurringBooking.query.order_by(RecurringBooking.start_date).all()
+    return render_template('admin/recurring_bookings.html', bookings=recurring,
+                           instructors=User.query.filter_by(is_instructor=True).all(),
+                           aircraft_list=Aircraft.query.all())
 
 
 @admin_bp.route('/flight-logs')

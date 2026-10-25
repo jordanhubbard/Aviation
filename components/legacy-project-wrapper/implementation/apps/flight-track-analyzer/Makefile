@@ -15,10 +15,11 @@ help:
 	@echo "make deploy     ship the committed tree to $(DEPLOY_HOST) (override DEPLOY_HOST=)"
 	@echo "make clean     remove the venv and caches"
 
-$(PY): app/requirements.txt
+$(PY): app/requirements.txt ../../packages/shared-sdk/python/setup.py
 	$(PYTHON) -m venv $(VENV)
 	$(PY) -m pip install -q --upgrade pip
 	$(PY) -m pip install -q -r app/requirements.txt
+	$(PY) -m pip install -q -e ../../packages/shared-sdk/python
 	@touch $(PY)
 
 install: $(PY)
@@ -28,7 +29,7 @@ build: install
 	@if command -v node >/dev/null 2>&1; then \
 	  for f in app/static/*.js; do node --input-type=module --check < $$f || exit 1; done; \
 	else echo "node not found: skipping JS syntax check"; fi
-	cd app && $(PY) -m pytest -q
+	cd app && PYTHONPATH=$(abspath ../../packages/shared-sdk/python) $(PY) -m pytest -q
 
 test: build
 

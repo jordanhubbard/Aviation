@@ -1,7 +1,6 @@
 import { existsSync } from 'node:fs';
 import { mkdir, readdir, stat, unlink } from 'node:fs/promises';
-import { join } from 'node:path';
-import { assertTestDataForRun, parseE2ERunId, verifyE2EHeaders,
+import { assertTestDataForRun, isolatedSqlitePath, parseE2ERunId, verifyE2EHeaders,
   type E2ERunId, type HeaderSource } from '@aviation/shared-sdk/e2e';
 import { EventRepository } from '../db/repository.js';
 
@@ -16,7 +15,7 @@ export class AccidentE2EManager {
   }
 
   private path(runId: E2ERunId): string {
-    return join(this.directory, `${parseE2ERunId(runId)}.db`);
+    return isolatedSqlitePath(this.directory, runId);
   }
 
   async repository(runId: E2ERunId): Promise<EventRepository> {

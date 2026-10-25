@@ -1,6 +1,6 @@
-from flask import Blueprint, render_template, flash, redirect, url_for
+from flask import Blueprint, render_template, flash, redirect, url_for, request, jsonify
 from flask_login import login_required, current_user
-from app.models import Booking, Aircraft, User
+from app.models import Booking, Aircraft, User, RecurringBooking, WaitlistEntry, WeatherMinima
 from datetime import datetime, timedelta
 from app import db
 from functools import wraps
@@ -80,29 +80,83 @@ def dashboard():
 @login_required
 def weather_minima():
     """Display weather minima requirements."""
-    return render_template('booking/weather_minima.html')
+    return render_template('booking/weather_minima.html', minima=WeatherMinima.query.order_by(WeatherMinima.category).all())
 
 
 @booking_bp.route('/recurring')
 @login_required
 def recurring_bookings():
     """Display and manage recurring bookings."""
-    recurring = Booking.query.filter_by(
-        student_id=current_user.id,
-        is_recurring=True
-    ).order_by(Booking.start_time).all()
-    return render_template('booking/recurring.html', bookings=recurring)
+    recurring = RecurringBooking.query.filter_by(student_id=current_user.id).order_by(RecurringBooking.start_date).all()
+    return render_template('booking/recurring_bookings.html', bookings=recurring,
+                           aircraft_list=Aircraft.query.filter_by(status='available').order_by(Aircraft.registration).all(),
+                           instructors=User.query.filter_by(is_instructor=True, status='active').all())
+
+
+@booking_bp.route('/recurring/create', methods=['POST'])
+@login_required
+def create_recurring_booking():
+    try:
+        aircraft_id = int(request.form['aircraft_id'])
+        instructor_id = int(request.form['instructor_id']) if request.form.get('instructor_id') else None
+        weekday = int(request.form['day_of_week'])
+        start_time = datetime.strptime(request.form['start_time'], '%H:%M').time()
+        duration = float(request.form['duration_hours'])
+        start_date = datetime.fromisoformat(request.form['start_date'])
+        end_date = datetime.fromisoformat(request.form['end_date']) if request.form.get('end_date') else None
+    except (KeyError, TypeError, ValueError):
+        flash('Enter a valid recurring booking schedule.', 'error')
+        return redirect(url_for('booking.recurring_bookings'))
+    if (not Aircraft.query.filter_by(id=aircraft_id, status='available').first()
+            or (instructor_id and not User.query.filter_by(id=instructor_id, is_instructor=True, status='active').first())
+            or not 0 <= weekday <= 6 or not 0.5 <= duration <= 8
+            or start_date.date() < datetime.now().date()
+            or (end_date and end_date < start_date)):
+        flash('The recurring booking schedule is invalid.', 'error')
+        return redirect(url_for('booking.recurring_bookings'))
+    db.session.add(RecurringBooking(student_id=current_user.id, instructor_id=instructor_id,
+                                    aircraft_id=aircraft_id, day_of_week=weekday, start_time=start_time,
+                                    duration_hours=duration, start_date=start_date, end_date=end_date))
+    db.session.commit()
+    flash('Recurring booking request created.', 'success')
+    return redirect(url_for('booking.recurring_bookings'))
 
 
 @booking_bp.route('/waitlist')
 @login_required
 def waitlist():
     """Display and manage waitlist entries."""
-    waitlist_entries = Booking.query.filter_by(
-        student_id=current_user.id,
-        status='waitlist'
-    ).order_by(Booking.created_at).all()
-    return render_template('booking/waitlist.html', entries=waitlist_entries)
+    waitlist_entries = WaitlistEntry.query.filter_by(student_id=current_user.id).order_by(WaitlistEntry.created_at).all()
+    return render_template('booking/waitlist.html', entries=waitlist_entries,
+                           aircraft_list=Aircraft.query.filter_by(status='available').order_by(Aircraft.registration).all(),
+                           instructors=User.query.filter_by(is_instructor=True, status='active').all())
+
+
+@booking_bp.route('/waitlist/join', methods=['POST'])
+@login_required
+def join_waitlist():
+    """Record a pilot's availability request against a real aircraft."""
+    try:
+        aircraft_id = int(request.form['aircraft_id'])
+        instructor_id = int(request.form['instructor_id']) if request.form.get('instructor_id') else None
+        requested_date = datetime.fromisoformat(request.form['requested_date'])
+        duration = float(request.form['duration_hours'])
+        preference = request.form['time_preference']
+    except (KeyError, TypeError, ValueError):
+        flash('Enter a valid aircraft, date, time preference, and duration.', 'error')
+        return redirect(url_for('booking.waitlist'))
+    if (not Aircraft.query.filter_by(id=aircraft_id, status='available').first()
+            or (instructor_id and not User.query.filter_by(id=instructor_id, is_instructor=True, status='active').first())
+            or preference not in {'morning', 'afternoon', 'evening'}
+            or not 0.5 <= duration <= 8 or requested_date.date() < datetime.now().date()):
+        flash('The requested waitlist slot is invalid.', 'error')
+        return redirect(url_for('booking.waitlist'))
+    db.session.add(WaitlistEntry(student_id=current_user.id, instructor_id=instructor_id,
+                                 aircraft_id=aircraft_id, requested_date=requested_date,
+                                 duration_hours=duration, time_preference=preference))
+    db.session.commit()
+    flash('Added to the waitlist.', 'success')
+    return redirect(url_for('booking.waitlist'))
 
 
 @booking_bp.route('/create', methods=['GET', 'POST'])
