@@ -8,6 +8,9 @@ import { createE2ERunId } from '@aviation/shared-sdk/e2e';
 
 const appId = process.argv[2];
 const launch = {
+  'aviation-accident-tracker': { port: 3002, readyStatus: 200,
+    environment: runId => [`DATABASE_PATH=/tmp/aviation-e2e/${runId}/events.db`,
+      'ENABLE_CRON=false', 'PORT=3002'] },
   flightschool: { port: 5000, command: `python -m scripts.seed_e2e && exec gunicorn --bind 0.0.0.0:5000 --workers 1 'app:create_app("e2e")'` },
   'flight-planner': { port: 8000, command: 'exec uvicorn main:app --host 0.0.0.0 --port 8000 --workers 1' },
   'aviation-missions-app': { port: 3000, command: 'exec java -jar /app/aviation-missions.jar' },
@@ -49,7 +52,7 @@ const waitForHttp = async port => {
       });
       // The isolated instance requires signed headers. Its 403 proves the
       // application worker has booted, unlike Docker's early TCP listener.
-      if (response.status === 403) return;
+      if (response.status === (launch.readyStatus ?? 403)) return;
     } catch { /* the image may still be seeding its database */ }
     await new Promise(resolve => setTimeout(resolve, 1000));
   }
@@ -71,7 +74,8 @@ try {
       ? `AVIATION_E2E_DB=/tmp/aviation-e2e/${runId}.db`
       : `AVIATION_E2E_DATA_DIR=/tmp/aviation-e2e/${runId}`,
     '-e', `AVIATION_E2E_SECRET=${secret}`,
-    image, 'sh', '-c', launch.command);
+    ...(launch.environment?.(runId) ?? []).flatMap(value => ['-e', value]),
+    image, ...(launch.command ? ['sh', '-c', launch.command] : []));
   const published = docker('port', name, `${launch.port}/tcp`);
   const remotePort = Number(published.match(/^127\.0\.0\.1:(\d+)$/)?.[1]);
   if (!Number.isInteger(remotePort) || remotePort < 1 || remotePort > 65535) {

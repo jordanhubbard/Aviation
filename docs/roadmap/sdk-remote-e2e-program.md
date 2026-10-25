@@ -23,7 +23,9 @@ database, tagged seed rows, signed traffic, and a tagged comment write/read.
 Planner has a production-image adapter with a separate run-scoped JSON store,
 signed traffic, and tagged plan and recording write/read/delete. Both passed
 local isolated browser runs. Production instances reject test credentials.
-Flight School has a local
+Accident Tracker also passed a local signed browser run in a throwaway
+production-image container with its production and run-scoped SQLite files
+under tmpfs. Flight School has a local
 production-image adapter that launches a signed, isolated SQLite instance,
 visits 57 declared GET screens using separate admin, instructor, and student
 sessions, writes a tagged waitlist entry, verifies it in the test database,
