@@ -27,7 +27,7 @@ app.get('/', (_req, res) => {
 <p>This service provides chat to Aviation applications through an API. It does not have a standalone chat interface.</p>
 <p>Applications send requests to <code>POST /chat</code>. The service can forward them to an optional OpenClaw gateway when configured.</p>
 <p><a href="/health">Service health</a></p></main>
-<script defer src="https://meta-app.jordanhubbard.net/feedback-widget.js"></script></body></html>`);
+<script defer data-aviation-app="aviation-chat" src="https://meta-app.jordanhubbard.net/feedback-widget.js"></script></body></html>`);
 });
 
 const secrets = createSecretLoader('aviation-chat');

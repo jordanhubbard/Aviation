@@ -1,7 +1,8 @@
 (() => {
   if (document.getElementById('aviation-feedback-button')) return;
   const host = location.hostname.split('.')[0];
-  const app = host === 'kmlab' ? 'flight-track-analyzer' : host;
+  const app = document.currentScript?.dataset.aviationApp ||
+    (host === 'kmlab' ? 'flight-track-analyzer' : host);
   const style = document.createElement('style');
   style.textContent = '#aviation-feedback-button{position:fixed;right:16px;bottom:16px;z-index:2147483646;background:#123c64;color:white;border:1px solid white;border-radius:8px;padding:9px 13px;cursor:pointer;box-shadow:0 2px 8px #0006}#aviation-feedback-dialog{z-index:2147483647;border:1px solid #567;border-radius:10px;max-width:min(90vw,500px);width:100%;padding:20px}#aviation-feedback-dialog textarea{box-sizing:border-box;width:100%;min-height:130px;margin:8px 0}#aviation-feedback-dialog menu{display:flex;justify-content:flex-end;gap:8px;padding:0}';
   document.head.appendChild(style);

@@ -8,6 +8,7 @@ import { createE2ERunId } from '@aviation/shared-sdk/e2e';
 
 const appId = process.argv[2];
 const launch = {
+  'aviation-chat': { port: 31416, readyStatus: 200 },
   'aviation-accident-tracker': { port: 3002, readyStatus: 200,
     environment: runId => [`DATABASE_PATH=/tmp/aviation-e2e/${runId}/events.db`,
       'ENABLE_CRON=false', 'PORT=3002'] },
@@ -117,7 +118,7 @@ try {
       }
       const remaining = docker('ps', '-a', '--filter', `name=^/${name}$`, '--format', '{{.ID}}');
       if (remaining) throw new Error(`Isolated E2E container still exists: ${remaining}`);
-      console.log(`Removed isolated ${appId} test database with container ${name}`);
+      console.log(`Removed isolated ${appId} test instance and storage with container ${name}`);
     } catch (error) { failed = true; console.error(error); }
   }
 }

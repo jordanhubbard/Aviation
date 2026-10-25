@@ -32,15 +32,28 @@ sessions, writes a tagged waitlist entry, verifies it in the test database,
 then removes the database with its throwaway container. That sweep also
 found and fixed previously broken Flight School routes and templates.
 
+The deployment verifier now checks each running revision, requires the
+independent [remote E2E inventory](../../verification/remote-e2e.json), and
+dispatches all twelve adapters after the public browser smoke. The four
+persistent Docker services use temporary containers. KMLab's native deploy
+records its exact revision and installs a temporary remote process runner;
+that runner's local EOF cleanup and revision rejection tests passed. These
+new remote paths have not yet been exercised against a deployment of this
+branch. SDK browser tracing retains a Playwright trace on failure and removes
+it on success. All twelve adapters now exercise the shared feedback widget
+with a mocked issue submission and verify its application and page context.
+The local KMLab browser run passed against a disposable native server and
+left no run-scoped SQLite files. Local production-image Chat and G1000
+branch-preview browser runs also passed.
+
 This remains a **partial checkpoint**: the G1000's currently shipped UI has
 only dashboard and settings routes; its simulator components and plan store
 are not exposed through those routes. Other product surfaces still need a
 complete inventory. Planner and Missions browser fixtures still mock some
 API responses after the real storage lifecycle checks.
-Remote credential provisioning, independently declared complete
-screen inventories, post-deployment gate integration, and full deployed-build
-evidence remain open. The retained harness receipt must be renewed after each
-source checkpoint.
+The declared inventories still need a route-by-route completeness audit and
+full deployed-build evidence. The retained harness receipt must be renewed
+after each source checkpoint.
 
 ## Acceptance contract
 

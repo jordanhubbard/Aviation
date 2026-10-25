@@ -1,0 +1,17 @@
+{
+  "schema": "aviation/remote-e2e-inventory@1",
+  "apps": {
+    "aviation-accident-tracker": { "kind": "screens", "ids": ["list", "filters", "citations", "detail-map", "feedback"] },
+    "aviation-chat": { "kind": "endpoints", "ids": ["root", "health", "chat-invalid", "chat-mock", "chat-auth"], "sharedFeedback": true },
+    "aviation-missions-app": { "kind": "screens", "ids": ["mission-list", "filters", "brief", "comments", "completed-feedback", "completion-submit", "suggest-edit", "create-form", "admin-login", "admin-dashboard", "feedback"] },
+    "flight-planner": { "kind": "screens", "ids": ["planner", "saved-plan", "local-results", "weather", "airports", "feedback"] },
+    "flight-track-analyzer": { "kind": "screens", "ids": ["flights", "flight-detail", "summary", "performance", "help", "feedback"] },
+    "flight-tracker": { "kind": "screens", "ids": ["dashboard", "track", "remove", "feedback"] },
+    "flightschool": { "kind": "dynamic-flask-routes", "minimum": 50, "sharedFeedback": true },
+    "foreflight-dashboard": { "kind": "screens", "ids": ["upload", "dashboard", "flight-detail", "search", "reset", "feedback"] },
+    "g1000-simulator": { "kind": "screens", "ids": ["dashboard", "settings", "feedback"] },
+    "meta-app": { "kind": "screens", "ids": ["launcher", "settings", "feedback"] },
+    "preflight-check": { "kind": "screens", "ids": ["aircraft-profile", "loading", "risk", "references", "feedback"] },
+    "weather-briefing": { "kind": "screens", "ids": ["map-stations", "custom-station", "briefing", "forecast", "feedback"] }
+  }
+}

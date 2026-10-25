@@ -584,7 +584,7 @@ async function main() {
 
             void loadRegion(DEFAULT_REGION_ID);
           </script>
-          <script defer src="https://meta-app.jordanhubbard.net/feedback-widget.js"></script>
+          <script defer data-aviation-app="weather-briefing" src="https://meta-app.jordanhubbard.net/feedback-widget.js"></script>
         </body>
       </html>
     `);
