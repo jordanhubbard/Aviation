@@ -86,6 +86,8 @@ describe('remote E2E isolation contract', () => {
       await routes[0].handler({ fulfill: async (options: { body: string }) => { body = options.body; } });
       expect(JSON.parse(body)).toMatchObject({ is_test_data: true, test_run_id: run.id, station: 'KOAK' });
       await expect(installE2ENetworkMocks({ route: async () => {} }, 'https://weather.example.test/', run,
+        [{ path: '/briefing', response: weather, textBody: 'untagged text' }])).rejects.toThrow('contain its run ID');
+      await expect(installE2ENetworkMocks({ route: async () => {} }, 'https://weather.example.test/', run,
         [{ path: '//other.example.test/steal', response: weather }])).rejects.toThrow('same-origin');
     });
   });

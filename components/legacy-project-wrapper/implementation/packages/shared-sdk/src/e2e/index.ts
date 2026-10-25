@@ -130,7 +130,7 @@ export async function withE2ERun<T>(secret: string, test: (run: E2ERun) => Promi
   return result as T;
 }
 
-export { standardE2EFixtures, standardE2EMocks } from './fixtures.js';
+export { standardE2EFixtures, standardE2EMocks, standardForeFlightCsv } from './fixtures.js';
 export { seedRemoteFixture, type FixtureApi } from './client.js';
 export { installE2EApiHeaders, installE2ENetworkMocks, runE2EScreens,
   type E2EBrowserPage, type E2EBrowserRoute, type E2ENetworkMock, type E2EScreen } from './browser.js';

@@ -10,6 +10,7 @@ export interface E2ENetworkMock {
   path: string;
   response: object;
   status?: number;
+  textBody?: string;
 }
 
 /** Serve SDK mock responses for exact same-origin paths; no external request is made. */
@@ -24,10 +25,14 @@ export async function installE2ENetworkMocks(page: E2EBrowserPage, baseUrl: stri
       || (mock.response as { is_test_data?: boolean }).is_test_data !== true) {
       throw new Error('E2E mock response is not tagged for this run');
     }
+    if (mock.textBody !== undefined && !mock.textBody.includes(run.id)) {
+      throw new Error('E2E text mock must contain its run ID');
+    }
     await page.route(`${origin}${mock.path}`, async route => {
       if (!route.fulfill) throw new Error('Browser route cannot fulfill E2E mock');
-      await route.fulfill({ status: mock.status ?? 200, contentType: 'application/json',
-        body: JSON.stringify(mock.response) });
+      await route.fulfill({ status: mock.status ?? 200,
+        contentType: mock.textBody === undefined ? 'application/json' : 'text/plain; charset=utf-8',
+        body: mock.textBody ?? JSON.stringify(mock.response) });
     });
   }
 }

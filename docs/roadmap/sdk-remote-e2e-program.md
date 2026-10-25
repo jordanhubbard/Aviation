@@ -8,14 +8,22 @@
 
 The SDK run contract, signed credentials, tagged fixtures, network mocks, browser
 inventory helper, and failure cleanup are implemented and unit tested. Accident
-Tracker uses a separate SQLite file for each run; its event, citation, and run
-rows carry explicit test tags. A local production build passed remote-style
-browser traversal of the list, filters, citations, detail, and map, followed by
-zero-residual cleanup. Preflight Check passed profile, loading, risk, and
-reference screens in an isolated browser with storage cleanup. Meta App passed
-launcher destination and settings traversal in an isolated browser. The other
-nine applications, remote credential provisioning, post-deployment integration,
-and retained harness receipt remain open.
+Tracker and Flight Track Analyzer use separate SQLite databases for each run with
+explicit database tags. Local production server and browser checks passed for both,
+including zero-residual cleanup. Preflight Check, Meta App, Weather Briefing,
+Aviation Chat, and G1000 Simulator passed local browser or endpoint checks.
+Flight Tracker, Flight Planner, and ForeFlight Dashboard passed checks against
+their public deployments, with isolated browser mocks or stateless sample input.
+
+This is a **partial checkpoint**: Missions and Flight School have no remote E2E
+adapter yet. The Planner's saved-plan persistence, G1000 simulator and plan
+lifecycles, and some other product surfaces are not covered by the initial
+adapters. The public runs of Flight Tracker, Flight Planner, and ForeFlight
+Dashboard exercised the currently deployed build, not this branch's exact
+revision. Remote credential provisioning, independently declared complete
+screen inventories, post-deployment gate integration, and full deployed-build
+evidence remain open. The retained harness receipt must be renewed after these
+source changes.
 
 ## Acceptance contract
 

@@ -2,6 +2,13 @@
 from __future__ import annotations
 
 import os
+import base64
+import binascii
+import shutil
+import sqlite3
+import threading
+import time
+from contextvars import ContextVar
 from pathlib import Path
 
 import httpx
@@ -11,7 +18,7 @@ from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
-from . import aggregate, llm, poh
+from . import aggregate, e2e, llm, poh
 from .kml import MAX_BYTES, KmlError
 from .store import Store
 
@@ -51,10 +58,101 @@ class PohBody(BaseModel):
     notes: str = Field("", max_length=300)
 
 
+class E2EFixture(BaseModel):
+    fixture_type: str
+    record: dict
+
+
 def create_app(data_dir: str | None = None) -> FastAPI:
     app = FastAPI(title="Flight track analyzer", docs_url="/api/docs", openapi_url="/api/openapi.json")
     store = Store(data_dir or os.environ.get("KMLAB_DATA_DIR", "data"))
     app.state.store = store
+    active = ContextVar("kmlab_store", default=store)
+    test_root = store.root / "__e2e"
+    test_stores: dict[str, Store] = {}
+    test_lock = threading.RLock()
+
+    def remove_expired_runs():
+        if not test_root.exists():
+            return
+        cutoff = time.time() - 3600
+        for child in test_root.iterdir():
+            if child.is_dir() and e2e.RUN_ID.fullmatch(child.name) and child.stat().st_mtime < cutoff:
+                test_stores.pop(child.name, None)
+                shutil.rmtree(child)
+
+    def current_store() -> Store:
+        return active.get()
+
+    @app.middleware("http")
+    async def isolate_e2e(request: Request, call_next):
+        if not request.url.path.startswith(("/api/", "/__e2e/")):
+            return await call_next(request)
+        try:
+            run = e2e.verified_run(request)
+        except HTTPException as error:
+            return JSONResponse({"error": error.detail}, status_code=error.status_code)
+        if request.url.path.startswith("/__e2e/") and run is None:
+            return JSONResponse({"error": "E2E credentials required"}, status_code=403)
+        if run is None:
+            return await call_next(request)
+        if (request.url.path == f"/__e2e/runs/{run}" and request.method == "GET"
+                and not (test_root / run).exists()):
+            return JSONResponse({"count": 0, "is_test_data": True, "test_run_id": run})
+        with test_lock:
+            remove_expired_runs()
+            if run not in test_stores:
+                test_stores[run] = Store(test_root / run)
+                with sqlite3.connect(test_stores[run].db_path) as connection:
+                    connection.execute("CREATE TABLE IF NOT EXISTS e2e_runs "
+                                       "(test_run_id TEXT PRIMARY KEY, is_test_data INTEGER NOT NULL CHECK(is_test_data=1))")
+                    connection.execute("INSERT OR IGNORE INTO e2e_runs VALUES (?, 1)", (run,))
+                    for table in ("aircraft", "flights", "flight_conditions", "events", "patterns", "poh_meta", "poh_reference"):
+                        cols = {row[1] for row in connection.execute(f"PRAGMA table_info({table})")}
+                        if "is_test_data" not in cols:
+                            connection.execute(f"ALTER TABLE {table} ADD COLUMN is_test_data INTEGER NOT NULL DEFAULT 1 CHECK(is_test_data=1)")
+                        if "test_run_id" not in cols:
+                            connection.execute(f"ALTER TABLE {table} ADD COLUMN test_run_id TEXT NOT NULL DEFAULT '{run}' CHECK(test_run_id='{run}')")
+            selected = test_stores[run]
+        token = active.set(selected)
+        request.state.e2e_run = run
+        try:
+            return await call_next(request)
+        finally:
+            active.reset(token)
+
+    @app.get("/__e2e/runs/{run_id}")
+    def e2e_status(run_id: str, request: Request):
+        if run_id != request.state.e2e_run:
+            raise HTTPException(403, "E2E run mismatch")
+        return {"count": len(current_store().list()), "is_test_data": True, "test_run_id": run_id}
+
+    @app.delete("/__e2e/runs/{run_id}")
+    def e2e_cleanup(run_id: str, request: Request):
+        if run_id != request.state.e2e_run:
+            raise HTTPException(403, "E2E run mismatch")
+        with test_lock:
+            test_stores.pop(run_id, None)
+            shutil.rmtree(test_root / run_id, ignore_errors=False)
+        return {"deleted": run_id, "is_test_data": True, "test_run_id": run_id}
+
+    @app.post("/__e2e/fixtures")
+    def e2e_fixture(body: E2EFixture, request: Request):
+        run = request.state.e2e_run
+        record = body.record
+        if (body.fixture_type != "flight" or record.get("is_test_data") is not True
+                or record.get("test_run_id") != run or record.get("aircraft") != "E2E"):
+            raise HTTPException(422, "invalid tagged E2E flight")
+        try:
+            data = base64.b64decode(record["kml_base64"], validate=True)
+        except (KeyError, TypeError, ValueError, binascii.Error):
+            raise HTTPException(422, "invalid KML fixture") from None
+        if len(data) > MAX_BYTES:
+            raise HTTPException(413, "KML fixture too large")
+        flights = current_store().ingest(data, f"{run}.kml", "E2E")
+        if not flights or any("error" in flight for flight in flights):
+            raise HTTPException(422, "KML fixture analysis failed")
+        return {"id": flights[0]["id"], "count": len(flights), "is_test_data": True, "test_run_id": run}
 
     @app.exception_handler(HTTPException)
     async def _http(_: Request, e: HTTPException):
@@ -87,7 +185,7 @@ def create_app(data_dir: str | None = None) -> FastAPI:
         if len(tails) != len(files):
             raise HTTPException(422, {"message": "an aircraft tail number is required for every file "
                                       f"(got {len(tails)} for {len(files)} file(s))", "files": names})
-        bad = [n for n, t in zip(names, tails) if not store.valid_tail(t)]
+        bad = [n for n, t in zip(names, tails) if not current_store().valid_tail(t)]
         if bad:
             raise HTTPException(422, {"message": "aircraft tail number missing or invalid "
                                       "(letters, digits or '-', max 10)", "files": bad})
@@ -99,7 +197,7 @@ def create_app(data_dir: str | None = None) -> FastAPI:
                 results.append({"filename": name, "error": "file too large"})
                 continue
             try:
-                for r in store.ingest(data, name, tail):
+                for r in current_store().ingest(data, name, tail):
                     results.append({"filename": name, **r})
             except KmlError as e:
                 results.append({"filename": name, "error": str(e)})
@@ -109,75 +207,75 @@ def create_app(data_dir: str | None = None) -> FastAPI:
 
     @app.get("/api/flights")
     def list_flights():
-        return {"flights": store.list()}
+        return {"flights": current_store().list()}
 
     @app.get("/api/flights/{fid}")
     def get_flight(fid: str, target_agl_ft: float | None = Query(None, gt=100, lt=5000)):
-        a = store.get(fid, target_agl_ft)
+        a = current_store().get(fid, target_agl_ft)
         if a is None:
             raise HTTPException(404, "flight not found")
         return a
 
     @app.delete("/api/flights/{fid}")
     def delete_flight(fid: str):
-        if not store.delete(fid):
+        if not current_store().delete(fid):
             raise HTTPException(404, "flight not found")
         return {"deleted": fid}
 
     @app.get("/api/summary")
     def summary(ids: str | None = None, aircraft: str | None = None):
-        want = [i for i in (ids or "").split(",") if i] or [r["id"] for r in store.list(_tail(aircraft) if aircraft else None)]
-        flights = [a for a in (store.get(i) for i in want) if a]
+        want = [i for i in (ids or "").split(",") if i] or [r["id"] for r in current_store().list(_tail(aircraft) if aircraft else None)]
+        flights = [a for a in (current_store().get(i) for i in want) if a]
         return aggregate.summarize(flights)
 
     @app.get("/api/flights/{fid}/meta")
     def get_meta(fid: str):
-        a = store.get(fid)
+        a = current_store().get(fid)
         if a is None:
             raise HTTPException(404, "flight not found")
-        return {**store.get_meta(fid), "aircraft_guess": poh.guess_aircraft(a), "field_elev_ft": (a["fields"] or [{}])[0].get("elev_ft")}
+        return {**current_store().get_meta(fid), "aircraft_guess": poh.guess_aircraft(a), "field_elev_ft": (a["fields"] or [{}])[0].get("elev_ft")}
 
     @app.put("/api/flights/{fid}/meta")
     def put_meta(fid: str, body: MetaBody):
-        if store.get(fid) is None:
+        if current_store().get(fid) is None:
             raise HTTPException(404, "flight not found")
         d = body.model_dump()
         d["aircraft"] = (d["aircraft"] or "").strip().upper()
-        if not store.valid_tail(d["aircraft"]):
+        if not current_store().valid_tail(d["aircraft"]):
             raise HTTPException(422, "every flight needs an aircraft tail number (letters, digits or '-', max 10)")
         if (d["wind_kt"] is None) != (d["wind_from_deg"] is None):
             raise HTTPException(422, "give both wind direction and speed, or neither")
-        return store.set_meta(fid, d)
+        return current_store().set_meta(fid, d)
 
     @app.get("/api/aircraft")
     def aircraft_list():
-        return {"aircraft": store.aircraft_list()}
+        return {"aircraft": current_store().aircraft_list()}
 
     def _tail(t: str) -> str:
         t = t.upper()
-        if not store.valid_tail(t):
+        if not current_store().valid_tail(t):
             raise HTTPException(422, "invalid aircraft id")
         return t
 
     @app.get("/api/aircraft/{tail}/poh")
     def get_poh(tail: str):
-        return store.get_poh(_tail(tail))
+        return current_store().get_poh(_tail(tail))
 
     @app.put("/api/aircraft/{tail}/poh")
     def put_poh(tail: str, body: PohBody):
-        return store.set_poh(_tail(tail), body.model_dump())
+        return current_store().set_poh(_tail(tail), body.model_dump())
 
     @app.get("/api/performance")
     def performance(aircraft: str | None = None):
         want = _tail(aircraft) if aircraft else None
         by_tail: dict = {}
-        for r in store.list(want):
-            a = store.get(r["id"])
+        for r in current_store().list(want):
+            a = current_store().get(r["id"])
             if a:
-                by_tail.setdefault(r["aircraft"], []).extend(poh.event_rows(a, store.get_meta(r["id"])))
+                by_tail.setdefault(r["aircraft"], []).extend(poh.event_rows(a, current_store().get_meta(r["id"])))
         out = []
         for tail, rows in sorted(by_tail.items()):
-            ref = store.get_poh(tail)
+            ref = current_store().get_poh(tail)
             out.append({"aircraft": tail, "has_poh": bool(ref["takeoff"] or ref["landing"]), "poh_notes": ref.get("notes"),
                         "poh_weight_lb": ref.get("weight_lb"), "flights": len({x["flight_id"] for x in rows}),
                         "sections": poh.build(rows, ref)})
@@ -190,7 +288,7 @@ def create_app(data_dir: str | None = None) -> FastAPI:
     @app.post("/api/flights/{fid}/debrief")
     def debrief(fid: str, body: DebriefBody | None = None):
         _need_llm()
-        a = store.get(fid)
+        a = current_store().get(fid)
         if a is None:
             raise HTTPException(404, "flight not found")
         try:
@@ -201,8 +299,8 @@ def create_app(data_dir: str | None = None) -> FastAPI:
     @app.post("/api/ask")
     def ask(body: AskBody):
         _need_llm()
-        ids = body.flight_ids or [r["id"] for r in store.list()][:5]
-        flights = [a for a in (store.get(i) for i in ids) if a]
+        ids = body.flight_ids or [r["id"] for r in current_store().list()][:5]
+        flights = [a for a in (current_store().get(i) for i in ids) if a]
         if not flights:
             raise HTTPException(404, "no flights to ask about")
         try:

@@ -5,10 +5,19 @@ import { createOpenClawClient } from '@aviation/shared-sdk';
 import { loadAppContext } from './context';
 import { getHistory, appendTurn } from './memory';
 import { ExplainerClient, explainerRoute } from '@aviation/ai-explainer';
+import { tagTestData, verifyE2EHeaders } from '@aviation/shared-sdk/e2e';
 
 const app = express();
 app.use(cors({ origin: true }));
 app.use(express.json());
+app.use((req, res, next) => {
+  try {
+    const runId = verifyE2EHeaders('aviation-chat', req.headers, process.env.AVIATION_E2E_SECRET);
+    if (runId && req.path !== '/chat') return res.status(403).json({ error: 'E2E route not supported' });
+    res.locals.e2eRunId = runId;
+    return next();
+  } catch (_error) { return res.status(403).json({ error: 'Invalid E2E credentials' }); }
+});
 
 app.get('/', (_req, res) => {
   res.type('html').send(`<!doctype html>
@@ -69,6 +78,15 @@ app.post('/chat', async (req, res) => {
       return;
     }
     const conversationId = typeof req.body.conversationId === 'string' ? req.body.conversationId : undefined;
+
+    if (res.locals.e2eRunId) {
+      // Exercise the public chat contract without calling the gateway or writing memory.
+      res.json(tagTestData(res.locals.e2eRunId, {
+        content: `Synthetic Aviation chat response for ${appId}`,
+        model: 'e2e-mock', finishReason: 'stop',
+      }));
+      return;
+    }
 
     if (!apiKey) {
       res.status(503).json({
