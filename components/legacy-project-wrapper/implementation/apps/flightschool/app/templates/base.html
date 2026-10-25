@@ -130,14 +130,17 @@
             });
         });
 
-        // Add CSRF token to fetch requests
-        function fetch(url, options = {}) {
-            if (!options.headers) {
-                options.headers = {};
+        // Add CSRF only to this app's requests, while retaining the native fetch.
+        const aviationNativeFetch = window.fetch.bind(window);
+        window.fetch = function(url, options = {}) {
+            const target = new URL(url instanceof Request ? url.url : url, location.href);
+            if (target.origin === location.origin) {
+                const headers = new Headers(options.headers || (url instanceof Request ? url.headers : undefined));
+                headers.set('X-CSRFToken', csrfToken);
+                options = { ...options, headers };
             }
-            options.headers['X-CSRFToken'] = csrfToken;
-            return window.fetch(url, options);
-        }
+            return aviationNativeFetch(url, options);
+        };
     </script>
     {% block extra_js %}{% endblock %}
 <script defer data-aviation-app="flightschool" src="https://meta-app.jordanhubbard.net/feedback-widget.js"></script>
