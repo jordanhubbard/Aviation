@@ -38,6 +38,8 @@ jobs:
       - uses: actions/checkout@v6
       - name: Check all application definitions
         run: python3 components/legacy-project-wrapper/implementation/deploy/deploy.py check
+      - name: Check post-deployment E2E dispatch
+        run: python3 -m unittest discover -s components/legacy-project-wrapper/implementation/deploy -p 'test_*.py'
       - name: Select images
         id: matrix
         env:

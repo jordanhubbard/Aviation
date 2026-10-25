@@ -6,6 +6,7 @@ import { searchAirports } from "../geo/airportLookup.js";
 import { EventRepository } from "../db/repository.js";
 import { config } from "../config.js";
 import { macTaskCreator } from "../mac.js";
+import { AccidentE2EManager } from '../e2e/manager.js';
 
 type MacErrorReport = {
   source: "frontend" | "backend" | "log" | string;
@@ -16,9 +17,28 @@ type MacErrorReport = {
   context?: Record<string, unknown>;
 };
 
-export function createRouter(repository: EventRepository) {
+export function createRouter(repository: EventRepository, e2e?: AccidentE2EManager) {
   const router = express.Router();
   const useMemoryRepo = config.env === "test";
+  router.use(async (req, res, next) => {
+    try {
+      const runId = e2e?.authenticate(req.headers) ?? null;
+      if (runId) {
+        const readOnly = req.method === 'GET' && (
+          req.path === '/events' || /^\/events\/[^/]+$/.test(req.path)
+          || req.path === '/filters/options' || req.path === '/ingest/status'
+          || req.path === '/airports' || req.path === '/health' || req.path === '/version');
+        if (!readOnly) return res.status(403).json({ error: 'E2E API route not supported' });
+        res.locals.e2eRepository = await e2e!.repository(runId);
+      }
+      else if (!e2e && Object.keys(req.headers).some(header => header.startsWith('x-aviation-test-'))) {
+        return res.status(403).json({ error: 'E2E credentials are not configured' });
+      }
+      return next();
+    } catch (_error) { return res.status(403).json({ error: 'Invalid E2E credentials' }); }
+  });
+  const activeRepository = (res: express.Response): EventRepository =>
+    (res.locals.e2eRepository as EventRepository | undefined) ?? repository;
 
   router.get("/mac/enabled", (_req, res) => {
     res.json({ enabled: macTaskCreator.enabled(), created: false });
@@ -211,12 +231,12 @@ export function createRouter(repository: EventRepository) {
     };
 
     try {
-      if (useMemoryRepo) {
+      if (useMemoryRepo && !res.locals.e2eRepository) {
         const result = memoryRepo.list(params);
         return res.json(result);
       }
 
-      const result = await repository.listEvents(params);
+      const result = await activeRepository(res).listEvents(params);
       return res.json({ total: result.total, data: result.events });
     } catch (error) {
       return next(error);
@@ -225,7 +245,7 @@ export function createRouter(repository: EventRepository) {
 
   router.get('/ingest/status', async (_req, res, next) => {
     try {
-      return res.json(await repository.getIngestStatus());
+      return res.json(await activeRepository(res).getIngestStatus());
     } catch (error) {
       return next(error);
     }
@@ -255,13 +275,13 @@ export function createRouter(repository: EventRepository) {
    */
   router.get("/events/:id", async (req, res, next) => {
     try {
-      if (useMemoryRepo) {
+      if (useMemoryRepo && !res.locals.e2eRepository) {
         const item = memoryRepo.get(req.params.id);
         if (!item) return res.status(404).json({ error: "not_found" });
         return res.json(item);
       }
 
-      const item = await repository.getEventWithSources(req.params.id);
+      const item = await activeRepository(res).getEventWithSources(req.params.id);
       if (!item) return res.status(404).json({ error: "not_found" });
       return res.json(item);
     } catch (error) {
@@ -292,6 +312,7 @@ export function createRouter(repository: EventRepository) {
    *         description: Ingest failed
    */
   router.post("/ingest/run", (_req, res) => {
+    if (res.locals.e2eRepository) return res.status(403).json({ error: 'Ingest is unavailable in E2E runs' });
     runRecentIngest(repository)
       .then((result) => res.json({ status: "ok", result }))
       .catch((err) => {
@@ -347,7 +368,7 @@ export function createRouter(repository: EventRepository) {
     try {
       // Dynamic country/region lists derived from events in DB
       const [countryRows, regionRows] = await Promise.all([
-        useMemoryRepo
+        useMemoryRepo && !res.locals.e2eRepository
           ? Promise.resolve(
               [
                 ...new Set(
@@ -358,10 +379,10 @@ export function createRouter(repository: EventRepository) {
                 ),
               ].sort(),
             )
-          : repository.getDistinctValues("country"),
-        useMemoryRepo
+          : activeRepository(res).getDistinctValues("country"),
+        useMemoryRepo && !res.locals.e2eRepository
           ? Promise.resolve([])
-          : repository.getDistinctValues("region"),
+          : activeRepository(res).getDistinctValues("region"),
       ]);
 
       return res.json({ countries: countryRows, regions: regionRows });
@@ -370,5 +391,33 @@ export function createRouter(repository: EventRepository) {
     }
   });
 
+  return router;
+}
+
+export function createE2ERouter(manager: AccidentE2EManager) {
+  const router = express.Router();
+  router.use((req, res, next) => {
+    try {
+      const runId = manager.authenticate(req.headers);
+      if (!runId) return res.status(404).json({ error: 'Not found' });
+      res.locals.e2eRunId = runId;
+      return next();
+    } catch (_error) { return res.status(403).json({ error: 'Invalid E2E credentials' }); }
+  });
+  router.post('/fixtures', async (req, res) => {
+    try {
+      const result = await manager.seed(res.locals.e2eRunId, req.body?.fixture_type, req.body?.record);
+      return res.status(201).json(result);
+    } catch (error) { return res.status(400).json({ error: String(error) }); }
+  });
+  router.get('/runs/:runId', async (req, res) => {
+    if (req.params.runId !== res.locals.e2eRunId) return res.status(403).json({ error: 'Wrong E2E run' });
+    return res.json({ count: await manager.count(res.locals.e2eRunId) });
+  });
+  router.delete('/runs/:runId', async (req, res) => {
+    if (req.params.runId !== res.locals.e2eRunId) return res.status(403).json({ error: 'Wrong E2E run' });
+    await manager.delete(res.locals.e2eRunId);
+    return res.json({ deleted: true });
+  });
   return router;
 }

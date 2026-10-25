@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% block title %}Calendar Settings{% endblock %}
+{% block content %}
+<div class="container mt-4">
+  <h1>Calendar Settings</h1>
+  {% if current_user.google_calendar_enabled %}
+    <p>Your Google Calendar is connected.</p>
+    <a class="btn btn-outline-danger" href="{{ url_for('settings.calendar_disconnect') }}">Disconnect calendar</a>
+  {% else %}
+    <p>Connect your Google Calendar to synchronize flight bookings.</p>
+    <a class="btn btn-primary" href="{{ url_for('settings.calendar_authorize') }}">Connect calendar</a>
+  {% endif %}
+</div>
+{% endblock %}

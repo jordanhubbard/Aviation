@@ -7,6 +7,8 @@ import { createServer } from "http";
 import { runRecentIngest } from "./ingest/ingestService.js";
 import { installNodeProcessErrorReporting } from "@aviation/shared-sdk";
 import { macTaskCreator } from "./mac.js";
+import { AccidentE2EManager } from './e2e/manager.js';
+import { dirname, join } from 'node:path';
 
 async function start() {
   try {
@@ -22,7 +24,14 @@ async function start() {
     logger.info("Database initialized");
 
     // Create Express app
-    const app = createApp(repository);
+    const e2e = new AccidentE2EManager(process.env['AVIATION_E2E_SECRET'],
+      join(dirname(config.databasePath), 'e2e'));
+    if (process.env['AVIATION_E2E_SECRET']) {
+      await e2e.sweepExpired();
+      setInterval(() => e2e.sweepExpired().catch(error => logger.error('E2E cleanup failed', error)),
+        60 * 60 * 1000).unref();
+    }
+    const app = createApp(repository, e2e);
     const port = config.port;
     const httpServer = createServer(app);
 

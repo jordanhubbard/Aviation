@@ -13,6 +13,7 @@ from enum import Enum
 from datetime import datetime
 import json
 import os
+from app.e2e import assert_store_isolated, data_dir, stored_record
 from pathlib import Path
 import xml.etree.ElementTree as ET
 from io import StringIO
@@ -61,8 +62,9 @@ class FlightPlan(BaseModel):
         else:
             raise ValueError(f"Waypoint {waypoint_name} not found in flight plan.")
 
-FLIGHT_PLANS_FILE = os.path.join(os.path.dirname(__file__), '..', '..', '..', 'data', 'flight_plans.json')
-RECENT_PLANS_FILE = os.path.join(os.path.dirname(__file__), '..', '..', '..', 'data', 'recent_flight_plans.json')
+_DATA_DIR = data_dir(os.path.join(os.path.dirname(__file__), '..', '..', '..', 'data'))
+FLIGHT_PLANS_FILE = str(_DATA_DIR / 'flight_plans.json')
+RECENT_PLANS_FILE = str(_DATA_DIR / 'recent_flight_plans.json')
 
 # Ensure data directory exists
 os.makedirs(os.path.dirname(FLIGHT_PLANS_FILE), exist_ok=True)
@@ -70,12 +72,14 @@ os.makedirs(os.path.dirname(FLIGHT_PLANS_FILE), exist_ok=True)
 if os.path.exists(FLIGHT_PLANS_FILE):
     with open(FLIGHT_PLANS_FILE, 'r') as file:
         flight_plans = json.load(file)
+        assert_store_isolated(flight_plans)
 else:
     flight_plans = []
 
 if os.path.exists(RECENT_PLANS_FILE):
     with open(RECENT_PLANS_FILE, 'r') as file:
         recent_plans = json.load(file)
+        assert_store_isolated(recent_plans)
 else:
     recent_plans = []
 
@@ -104,11 +108,11 @@ def update_recent_plans(flight_plan_id: int, name: str):
     # Remove if already exists
     recent_plans = [p for p in recent_plans if p['id'] != flight_plan_id]
     # Add to front
-    recent_plans.insert(0, {
+    recent_plans.insert(0, stored_record({
         'id': flight_plan_id,
         'name': name,
         'accessed_at': datetime.now().isoformat()
-    })
+    }))
     # Keep only last 10
     recent_plans = recent_plans[:10]
     with open(RECENT_PLANS_FILE, 'w') as file:
@@ -245,7 +249,7 @@ def create_flight_plan(flight_plan: FlightPlan) -> FlightPlan:
         if "exceeded" in (pitch_status, bank_status, overspeed_status, stall_status):
             raise HTTPException(status_code=400, detail=f"Envelope protection limit exceeded: {pitch_status}, {bank_status}, {overspeed_status}, {stall_status}")
 
-    flight_plans.append(flight_plan.dict())
+    flight_plans.append(stored_record(flight_plan.dict()))
     save_flight_plans()
     return flight_plan
 
@@ -260,7 +264,7 @@ def read_flight_plan(flight_plan_id: int) -> FlightPlan:
 def update_flight_plan(flight_plan_id: int, flight_plan: FlightPlan) -> FlightPlan:
     for idx, fp in enumerate(flight_plans):
         if fp.id == flight_plan_id:
-            flight_plans[idx] = flight_plan.dict()
+            flight_plans[idx] = stored_record(flight_plan.dict())
             return flight_plan
     raise HTTPException(status_code=404, detail="Flight plan not found")
 

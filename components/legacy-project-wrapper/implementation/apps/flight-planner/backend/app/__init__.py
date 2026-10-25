@@ -1,8 +1,10 @@
 # Initialize the backend application
 from pathlib import Path
 
-from fastapi import FastAPI
-from fastapi.responses import FileResponse
+from fastapi import FastAPI, Request
+from fastapi.responses import FileResponse, JSONResponse
+from aviation.e2e import verify_e2e_headers
+from .e2e import RUN_ID as E2E_RUN_ID, SECRET as E2E_SECRET
 from fastapi.staticfiles import StaticFiles
 from .routers.flight_plan import router as flight_plan_router
 from .services.alert_manager import AlertManager
@@ -46,6 +48,27 @@ def create_app(settings):
         title='Flight Planner API',
         version='0.1.0'
     )
+
+    @app.middleware('http')
+    async def separate_test_traffic(request: Request, call_next):
+        try:
+            signed_run = verify_e2e_headers('flight-planner', request.headers, E2E_SECRET)
+            if (E2E_RUN_ID and signed_run != E2E_RUN_ID) or (not E2E_RUN_ID and signed_run):
+                return JSONResponse({'error': 'E2E credential rejected'}, status_code=403)
+        except ValueError:
+            return JSONResponse({'error': 'Invalid E2E credential'}, status_code=403)
+        return await call_next(request)
+
+    if E2E_RUN_ID:
+        @app.get('/__e2e/status', include_in_schema=False)
+        def e2e_status():
+            from .routers.flight_plan import _plans
+            from .services.flight_recording_service import flight_recordings
+            return {'test_run_id': E2E_RUN_ID, 'is_test_data': True,
+                    'saved_plan_count': sum(p.get('is_test_data') is True and p.get('test_run_id') == E2E_RUN_ID
+                                            for p in _plans.values()),
+                    'recording_count': sum(r.get('is_test_data') is True and r.get('test_run_id') == E2E_RUN_ID
+                                           for r in flight_recordings)}
 
     # Define REST API endpoints
     @app.post('/api/control/autopilot/engage')

@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% block title %}Weather Minima{% endblock %}
+{% block content %}
+<div class="container mt-4">
+  <h1>Weather Minima</h1>
+  <p>Review your school's recorded minima before accepting a flight.</p>
+  <table class="table table-striped">
+    <thead><tr><th>Category</th><th>Ceiling (ft)</th><th>Visibility (sm)</th><th>Wind (kt)</th><th>Crosswind (kt)</th></tr></thead>
+    <tbody>
+      {% for item in minima %}
+      <tr><td>{{ item.category }}</td><td>{{ item.ceiling_min }}</td><td>{{ item.visibility_min }}</td>
+          <td>{{ item.wind_max }}</td><td>{{ item.crosswind_max }}</td></tr>
+      {% else %}
+      <tr><td colspan="5">No weather minima recorded.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

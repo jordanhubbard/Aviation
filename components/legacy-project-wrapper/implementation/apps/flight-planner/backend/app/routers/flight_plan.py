@@ -9,6 +9,7 @@ from typing import Dict, List, Optional
 from uuid import uuid4
 
 from fastapi import APIRouter, HTTPException
+from app.e2e import assert_store_isolated, data_dir, stored_record
 
 from app.schemas.flight_plan import (
     CreateFlightPlanRequest,
@@ -27,7 +28,7 @@ router = APIRouter()
 # Storage helpers
 # ---------------------------------------------------------------------------
 
-_DATA_DIR = os.path.join(os.path.dirname(__file__), "..", "..", "..", "data")
+_DATA_DIR = str(data_dir(os.path.join(os.path.dirname(__file__), "..", "..", "..", "data")))
 _PLANS_FILE = os.path.join(_DATA_DIR, "saved_flight_plans.json")
 
 # In-memory store: plan_id -> SavedFlightPlan (as dict for JSON-serialisable storage)
@@ -41,8 +42,11 @@ def _load_plans() -> None:
             with open(_PLANS_FILE, "r") as fh:
                 data = json.load(fh)
             if isinstance(data, list):
+                assert_store_isolated(data)
                 for item in data:
                     _plans[item["metadata"]["id"]] = item
+        except RuntimeError:
+            raise
         except Exception:
             pass
 
@@ -184,7 +188,7 @@ def create_flight_plan(req: CreateFlightPlanRequest) -> SavedFlightPlan:
         fuel_required_gal=req.fuel_required_gal,
         notes=req.notes,
     )
-    _plans[plan.metadata.id] = json.loads(plan.model_dump_json())
+    _plans[plan.metadata.id] = stored_record(json.loads(plan.model_dump_json()))
     _save_plans()
     return plan
 
@@ -212,7 +216,7 @@ def update_flight_plan(plan_id: str, req: UpdateFlightPlanRequest) -> SavedFligh
     plan_dict["metadata"] = meta_dict
     plan_dict.update(plan_updates)
     updated = SavedFlightPlan(**plan_dict)
-    _plans[plan_id] = json.loads(updated.model_dump_json())
+    _plans[plan_id] = stored_record(json.loads(updated.model_dump_json()))
     _save_plans()
     return updated
 

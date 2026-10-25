@@ -1,4 +1,4 @@
-from flask import Flask, render_template, current_app, session
+from flask import Flask, render_template, current_app, session, request, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager
 from flask_migrate import Migrate
@@ -7,6 +7,7 @@ from flask_wtf.csrf import CSRFProtect
 from config import config
 from datetime import datetime
 import os
+from pathlib import Path
 
 # Initialize extensions
 db = SQLAlchemy()
@@ -19,6 +20,18 @@ csrf = CSRFProtect()
 
 def create_app(config_name='default'):
     """Application factory."""
+    if config_name == 'e2e':
+        from aviation.e2e import isolated_sqlite_path
+        run = os.environ.get('AVIATION_E2E_RUN_ID', '')
+        database = Path(os.environ.get('AVIATION_E2E_DB', '')).resolve()
+        root = Path('/tmp/aviation-e2e').resolve()
+        try:
+            expected_database = isolated_sqlite_path(root, run)
+        except ValueError as error:
+            raise RuntimeError('Flight School E2E requires a valid run ID') from error
+        if (database != expected_database
+                or len(os.environ.get('AVIATION_E2E_SECRET', '')) < 32):
+            raise RuntimeError('Flight School E2E requires a tagged, isolated database path')
     app = Flask(__name__)
     app.config.from_object(config[config_name])
 
@@ -42,6 +55,15 @@ def create_app(config_name='default'):
 
     @app.before_request
     def before_request():
+        if config_name == 'e2e':
+            from aviation.e2e import verify_e2e_headers
+            try:
+                signed_run = verify_e2e_headers('flightschool', request.headers,
+                                                os.environ.get('AVIATION_E2E_SECRET'))
+                if signed_run != run:
+                    return jsonify({'error': 'E2E credential required'}), 403
+            except ValueError:
+                return jsonify({'error': 'Invalid E2E credential'}), 403
         if '_id' not in session:
             session['_id'] = os.urandom(16).hex()
             session.modified = True
@@ -70,6 +92,24 @@ def create_app(config_name='default'):
     app.register_blueprint(settings_blueprint.settings_bp, url_prefix='/settings')
     app.register_blueprint(flight_blueprint.flight_bp)
     app.register_blueprint(api_settings_bp)
+
+    if config_name == 'e2e':
+        @app.route('/__e2e/status')
+        def e2e_status():
+            from sqlalchemy import text
+            with db.engine.connect() as connection:
+                count = connection.execute(text('SELECT count(*) FROM users WHERE is_test_data=1 '
+                                                'AND test_run_id=:run'), {'run': run}).scalar_one()
+                waitlist_count = connection.execute(text('SELECT count(*) FROM waitlist_entry WHERE is_test_data=1 '
+                                                         'AND test_run_id=:run'), {'run': run}).scalar_one()
+            return jsonify({'count': count, 'waitlist_count': waitlist_count,
+                            'is_test_data': True, 'test_run_id': run})
+
+        @app.route('/__e2e/routes')
+        def e2e_routes():
+            return jsonify({'routes': sorted(str(rule) for rule in app.url_map.iter_rules()
+                                            if 'GET' in rule.methods and rule.endpoint != 'static'),
+                            'is_test_data': True, 'test_run_id': run})
 
     # Exempt the settings API from CSRF protection (JSON API, not form-based).
     csrf.exempt(api_settings_bp)

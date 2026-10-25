@@ -63,7 +63,7 @@
             <div class="card shadow-sm">
                 <div class="card-body">
                     <h5 class="card-title">My Students</h5>
-                    <p class="display-4">{{ current_user.students|length }}</p>
+                    <p class="display-4">{{ students_count }}</p>
                     <a href="{{ url_for('instructor.students') }}" class="btn btn-outline-primary">View Students</a>
                 </div>
             </div>
@@ -98,7 +98,7 @@
                                             <td>{{ lesson.aircraft.registration }}</td>
                                             <td>{{ lesson.duration }} minutes</td>
                                             <td>
-                                                <a href="{{ url_for('booking.view', id=lesson.id) }}" 
+                                                <a href="{{ url_for('booking.view_booking', booking_id=lesson.id) }}"
                                                    class="btn btn-sm btn-outline-primary">
                                                     <i class="fas fa-eye"></i> View
                                                 </a>
@@ -147,11 +147,11 @@
                                             <td>{{ request.duration }} minutes</td>
                                             <td>
                                                 <div class="btn-group">
-                                                    <a href="{{ url_for('booking.approve', id=request.id) }}" 
+                                                    <a href="{{ url_for('booking.approve', id=request.id) }}"
                                                        class="btn btn-sm btn-success">
                                                         <i class="fas fa-check"></i> Approve
                                                     </a>
-                                                    <a href="{{ url_for('booking.reject', id=request.id) }}" 
+                                                    <a href="{{ url_for('booking.reject', id=request.id) }}"
                                                        class="btn btn-sm btn-danger">
                                                         <i class="fas fa-times"></i> Reject
                                                     </a>
@@ -172,4 +172,4 @@
         </div>
     </div>
 </div>
-{% endblock %} 
+{% endblock %}

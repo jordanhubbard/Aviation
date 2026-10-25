@@ -21,9 +21,7 @@
                 <div class="card-body">
                     <h5 class="card-title">{{ instructor.full_name }}</h5>
                     <p class="card-text">
-                        <strong>Certificates:</strong> {{ instructor.certificates|join(', ') }}<br>
-                        <strong>Ratings:</strong> {{ instructor.ratings|join(', ') }}<br>
-                        <strong>Experience:</strong> {{ instructor.total_hours }} hours
+                        <strong>Certificates:</strong> {{ instructor.certificates or 'Not listed' }}
                     </p>
                     {% if instructor.bio %}
                     <p class="card-text">{{ instructor.bio }}</p>

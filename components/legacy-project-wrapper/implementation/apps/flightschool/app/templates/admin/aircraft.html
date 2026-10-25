@@ -34,8 +34,7 @@
                         <tr>
                             <td>{{ aircraft.registration }}</td>
                             <td>
-                                <img src="{{ url_for('static', filename='images/aircraft/' + aircraft.registration.lower() + '.jpg') }}" 
-                                     onerror="this.onerror=null; this.src='{{ url_for('static', filename='images/aircraft/' + aircraft.get_type_image()) }}';"
+                                <img src="{{ aircraft.image_url }}"
                                      alt="{{ aircraft.registration }}" 
                                      class="img-thumbnail" style="max-width: 80px;">
                             </td>
@@ -112,19 +111,19 @@
                 <div class="card-body">
                     <div class="list-group">
                         {% for aircraft in aircraft %}
-                            {% if aircraft.time_to_next_oil_change < 10 or aircraft.time_to_next_100hr < 10 %}
+                            {% if (aircraft.time_to_next_oil_change is not none and aircraft.time_to_next_oil_change < 10) or (aircraft.time_to_next_100hr is not none and aircraft.time_to_next_100hr < 10) %}
                                 <div class="list-group-item">
                                     <div class="d-flex w-100 justify-content-between">
                                         <h5 class="mb-1">{{ aircraft.registration }}</h5>
                                         <small>{{ aircraft.make }} {{ aircraft.model }}</small>
                                     </div>
-                                    {% if aircraft.time_to_next_oil_change < 10 %}
+                                    {% if aircraft.time_to_next_oil_change is not none and aircraft.time_to_next_oil_change < 10 %}
                                         <p class="mb-1">
                                             <i class="fas fa-oil-can text-danger"></i> 
                                             Oil change due in {{ aircraft.time_to_next_oil_change }} hours
                                         </p>
                                     {% endif %}
-                                    {% if aircraft.time_to_next_100hr < 10 %}
+                                    {% if aircraft.time_to_next_100hr is not none and aircraft.time_to_next_100hr < 10 %}
                                         <p class="mb-1">
                                             <i class="fas fa-clock text-danger"></i> 
                                             100hr inspection due in {{ aircraft.time_to_next_100hr }} hours

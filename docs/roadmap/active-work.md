@@ -283,3 +283,17 @@ release-visible outcome to `CHANGELOG.md`; Git preserves prior queue states.
   - [x] Remove Aviation Chat from the launcher app list while retaining its API deployment; update the browser contract to expect only pilot-facing destinations.
 - **Evidence:**
   - [x] Meta App production build and rendered launcher check showed ten pilot-facing destinations and no Chat card. The 273-test retained harness and `litai verify` passed; PR #330 merged at 302c8dbe6 with all 32 checks green. Exact-main image run 40129107242 succeeded, the 302c8dbe6 Meta App image was deployed, and all 12 public browser and health checks passed, including the separately running Chat API.
+
+<a id="e2e-001"></a>
+### [ ] E2E-001 — SDK-owned isolated remote application E2E harness
+
+- **Priority:** P1
+- **Owner:** shared SDK, all deployed apps, and deployment verification
+- **Direction:** Exercise every application screen remotely with SDK-provided mocks and sample data that is explicitly tagged and isolated from production records, then clean it up after each test run.
+- **Conclusion:** The current remote browser gate covers roots and selected interactions only. Build reusable SDK E2E fixtures and lifecycle controls, enforce production/test data separation in every persistent app, inventory and exercise all app screens, verify cleanup after both success and failure, and make this a post-deployment gate.
+- **Depends on:** DEPLOY-001 public DNS and existing browser smoke gate
+- **Implementation:**
+  - [ ] Define SDK test-run identity, isolation and cleanup contracts; implement reusable browser/HTTP fixtures and mock data; adapt each of the twelve services including non-Node runtimes; cover every navigable screen and persist/read/delete flows where applicable; run the suite after deployment.
+- **Evidence:**
+  - [ ] SDK unit and isolation tests, per-app screen and data lifecycle coverage matrix, failure cleanup tests, retained Literate AI receipt, reviewed CI, and live post-deployment E2E run without production data leakage.
+- **Detailed program:** [SDK remote E2E program](sdk-remote-e2e-program.md).

@@ -30,14 +30,25 @@ CREATE TABLE IF NOT EXISTS events (
     summary TEXT,
     narrative TEXT,
     status TEXT, -- e.g. 'preliminary', 'final', 'ongoing'
+    is_test_data INTEGER NOT NULL DEFAULT 0 CHECK(is_test_data IN (0, 1)),
+    test_run_id TEXT,
     
     -- Timestamps
     created_at TEXT NOT NULL DEFAULT (datetime('now')),
     updated_at TEXT NOT NULL DEFAULT (datetime('now')),
     
     -- Uniqueness constraint on dedupe key
-    UNIQUE(date_z, registration)
+    UNIQUE(date_z, registration),
+    CHECK((is_test_data = 0 AND test_run_id IS NULL) OR (is_test_data = 1 AND test_run_id IS NOT NULL))
 );
+
+-- Test databases are separate files; these tags allow an independent residual audit.
+CREATE TABLE IF NOT EXISTS e2e_runs (
+    run_id TEXT PRIMARY KEY,
+    is_test_data INTEGER NOT NULL DEFAULT 1 CHECK(is_test_data = 1),
+    created_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
 
 -- Sources table: provenance tracking
 CREATE TABLE IF NOT EXISTS sources (
@@ -51,10 +62,13 @@ CREATE TABLE IF NOT EXISTS sources (
     fetched_at TEXT NOT NULL DEFAULT (datetime('now')),
     checksum TEXT, -- Hash of raw content for change detection
     raw_fragment TEXT, -- Optional: store raw HTML/JSON snippet
+    is_test_data INTEGER NOT NULL DEFAULT 0 CHECK(is_test_data IN (0, 1)),
+    test_run_id TEXT,
     
     created_at TEXT NOT NULL DEFAULT (datetime('now')),
     
-    FOREIGN KEY (event_id) REFERENCES events(id) ON DELETE CASCADE
+    FOREIGN KEY (event_id) REFERENCES events(id) ON DELETE CASCADE,
+    CHECK((is_test_data = 0 AND test_run_id IS NULL) OR (is_test_data = 1 AND test_run_id IS NOT NULL))
 );
 
 -- Each label retains the document that explicitly supports it.

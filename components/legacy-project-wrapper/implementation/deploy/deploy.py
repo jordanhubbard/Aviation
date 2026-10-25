@@ -26,11 +26,12 @@ IMPLEMENTATION = HERE.parent
 REPO = Path(__file__).resolve().parents[4]
 MANIFEST = HERE / "apps.json"
 BROWSER_CONTRACT = REPO / "verification" / "deployed-browser.json"
+REMOTE_E2E_CONTRACT = REPO / "verification" / "remote-e2e.json"
 REMOTE_INSTALL = HERE / "install.sh"
 
 
-def run(*argv: str, cwd: Path | None = None) -> None:
-    subprocess.run(argv, cwd=cwd, check=True)
+def run(*argv: str, cwd: Path | None = None, env: dict[str, str] | None = None) -> None:
+    subprocess.run(argv, cwd=cwd, env=env, check=True)
 
 
 def output(*argv: str, cwd: Path | None = None) -> str:
@@ -43,6 +44,21 @@ def load_manifest() -> tuple[dict, list[dict]]:
     browser_contract = json.loads(BROWSER_CONTRACT.read_text())
     if browser_contract.get("schema") != "aviation/deployed-browser-smoke@1" or set(browser_contract.get("apps", {})) != {app["name"] for app in apps}:
         raise ValueError("browser acceptance contract must cover every application")
+    e2e_contract = json.loads(REMOTE_E2E_CONTRACT.read_text())
+    if e2e_contract.get("schema") != "aviation/remote-e2e-inventory@1" or set(e2e_contract.get("apps", {})) != {app["name"] for app in apps}:
+        raise ValueError("remote E2E inventory must cover every application")
+    for app_name, entry in e2e_contract["apps"].items():
+        if app_name == "flightschool":
+            if entry != {"kind": "dynamic-flask-routes", "minimum": 50, "sharedFeedback": True}:
+                raise ValueError("Flight School must declare dynamic route coverage")
+        elif (entry.get("kind") not in {"screens", "endpoints"}
+              or not isinstance(entry.get("ids"), list) or not entry["ids"]
+              or not all(isinstance(item, str) and item for item in entry["ids"])
+              or len(entry["ids"]) != len(set(entry["ids"]))
+              or (entry["kind"] == "screens" and "feedback" not in entry["ids"])):
+            raise ValueError(f"invalid remote E2E inventory for {app_name}")
+        if app_name == "aviation-chat" and entry.get("sharedFeedback") is not True:
+            raise ValueError("Aviation Chat must exercise its shared feedback widget")
     names: set[str] = set()
     hostnames: set[str] = set()
     ports: set[int] = set()
@@ -199,7 +215,11 @@ def prepare_remote_image(config: dict, app: dict, revision: str, host: str) -> N
         run("ssh", host, "docker", "pull", "--platform", "linux/amd64", source)
     except subprocess.CalledProcessError:
         print(f"Remote pull failed for {app['name']}; transferring the exact image instead", flush=True)
-        ship_image(host, fetch_image(config, app, revision))
+        try:
+            image = fetch_image(config, app, revision)
+        except subprocess.CalledProcessError:
+            image = build(app, revision)
+        ship_image(host, image)
     else:
         run("ssh", host, "docker", "tag", source, target)
     image_revision = output(
@@ -258,6 +278,7 @@ def register_dns(config: dict, apps: list[dict], token_file: Path) -> None:
 
 
 def verify(config: dict, apps: list[dict], host: str) -> None:
+    revision = committed_revision()
     for app in apps:
         name = app.get("hostname", app["name"])
         url = f"https://{name}.{config['domain']}{app['health']}"
@@ -278,7 +299,31 @@ def verify(config: dict, apps: list[dict], host: str) -> None:
                 raise RuntimeError(f"public health check failed: {url}: {last_error}")
             time.sleep(5)
         run("ssh", host, "systemctl", "is-active", "kmlab" if app.get("runtime") == "native" else f"aviation-{app['name']}")
+        if app.get("runtime") == "native":
+            running_revision = output("ssh", host, "cat", "/opt/kmlab/revision")
+        else:
+            running_revision = output(
+                "docker", "-H", f"ssh://{host}", "inspect", "--type", "container",
+                f"aviation-{app['name']}", "--format",
+                '{{index .Config.Labels "org.opencontainers.image.revision"}}',
+            )
+        if running_revision != revision:
+            raise RuntimeError(f"{app['name']} runs {running_revision}, expected {revision}")
     run("node", str(HERE / "browser-smoke.mjs"), apps[0]["name"] if len(apps) == 1 else "all", cwd=IMPLEMENTATION)
+    isolated_images = {"aviation-accident-tracker", "aviation-chat", "aviation-missions-app", "flight-planner", "flightschool"}
+    for app in apps:
+        name = app["name"]
+        if app.get("runtime") == "native":
+            script = "isolated-native-e2e.mjs"
+            env = {**os.environ, "AVIATION_E2E_SSH_HOST": host, "AVIATION_E2E_REVISION": revision}
+        elif name in isolated_images:
+            script = "isolated-e2e.mjs"
+            env = {**os.environ, "AVIATION_E2E_SSH_HOST": host, "AVIATION_E2E_REVISION": revision,
+                   "AVIATION_E2E_IMAGE": image_name(app, revision)}
+        else:
+            script = "remote-e2e.mjs"
+            env = None
+        run("node", str(HERE / script), name, cwd=IMPLEMENTATION, env=env)
 
 
 def main() -> None:
@@ -307,7 +352,9 @@ def main() -> None:
         verify(config, apps, args.ssh_host)
     else:
         revision = committed_revision()
-        for app in apps:
+        deployment_apps = (sorted(apps, key=lambda app: app["name"] != "meta-app")
+                           if args.command == "deploy" else apps)
+        for app in deployment_apps:
             if args.command == "build":
                 build(app, revision)
             else:

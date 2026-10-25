@@ -35,9 +35,14 @@ def dashboard():
         Booking.status == 'pending'
     ).order_by(Booking.created_at).all()
 
+    students_count = User.query.join(Booking, Booking.student_id == User.id).filter(
+        Booking.instructor_id == current_user.id
+    ).distinct().count()
+
     return render_template('instructor/dashboard.html',
                          upcoming_lessons=upcoming_lessons,
                          pending_requests=pending_requests,
+                         students_count=students_count,
                          scenario_builder=True,
                          performance_tracking=True)
 
@@ -50,7 +55,7 @@ def schedule():
     # Get all bookings for the next 30 days
     start_date = datetime.now()
     end_date = start_date + timedelta(days=30)
-    
+
     schedule = Booking.query.filter(
         Booking.instructor_id == current_user.id,
         Booking.start_time >= start_date,
@@ -66,9 +71,9 @@ def schedule():
 def students():
     """Display instructor's students."""
     # Get all students assigned to this instructor
-    students = User.query.filter_by(
-        instructor_id=current_user.id,
-        status='active'
-    ).order_by(User.last_name).all()
+    students = User.query.join(Booking, Booking.student_id == User.id).filter(
+        Booking.instructor_id == current_user.id,
+        User.status == 'active'
+    ).distinct().order_by(User.last_name).all()
 
-    return render_template('instructor/students.html', students=students) 
+    return render_template('instructor/students.html', students=students)

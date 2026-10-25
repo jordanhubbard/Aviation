@@ -86,9 +86,15 @@ class ProductionConfig(Config):
     DEBUG = False
     TESTING = False
 
+class E2EConfig(ProductionConfig):
+    """Isolated remote browser instance; selected only by the E2E launch command."""
+    SQLALCHEMY_DATABASE_URI = 'sqlite:///' + os.environ.get('AVIATION_E2E_DB', '/tmp/aviation-e2e/missing.db')
+    WTF_CSRF_ENABLED = False
+
 config = {
     'development': DevelopmentConfig,
     'testing': TestingConfig,
     'production': ProductionConfig,
+    'e2e': E2EConfig,
     'default': DevelopmentConfig
 }

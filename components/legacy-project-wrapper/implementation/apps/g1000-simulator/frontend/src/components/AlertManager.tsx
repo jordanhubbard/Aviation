@@ -1,32 +1,9 @@
 // AlertManager.tsx
-import React, { useState } from 'react';
-
-interface Alert {
-  id: string;
-  level: 'warning' | 'caution' | 'advisory';
-  message: string;
-  timestamp: Date;
-  acknowledged: boolean;
-}
+import React from 'react';
+import { useAlertStore } from '../stores/alertStore';
 
 const AlertManager: React.FC = () => {
-  const [alerts, setAlerts] = useState<Alert[]>([]);
-
-  const addAlert = (alert: Alert) => {
-    setAlerts((prevAlerts) => {
-      const newAlerts = [...prevAlerts, alert];
-      newAlerts.sort((a, b) => a.level.localeCompare(b.level));
-      return newAlerts.slice(0, 3);
-    });
-  };
-
-  const acknowledgeAlert = (id: string) => {
-    setAlerts((prevAlerts) =>
-      prevAlerts.map((alert) =>
-        alert.id === id ? { ...alert, acknowledged: true } : alert
-      )
-    );
-  };
+  const { alerts, acknowledgeAlert } = useAlertStore();
 
   return (
     <div>

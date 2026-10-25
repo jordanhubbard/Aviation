@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block title %}Instructor Schedule - {{ config.SCHOOL_NAME }}{% endblock %}
+{% block content %}
+<div class="container py-5">
+  <h1>Instructor Schedule</h1>
+  <div class="table-responsive">
+    <table class="table table-striped">
+      <thead><tr><th>Starts</th><th>Ends</th><th>Student</th><th>Aircraft</th><th>Status</th><th></th></tr></thead>
+      <tbody>
+        {% for lesson in schedule %}
+        <tr>
+          <td>{{ lesson.start_time|datetime }}</td>
+          <td>{{ lesson.end_time|datetime }}</td>
+          <td>{{ lesson.student.full_name }}</td>
+          <td>{{ lesson.aircraft.registration }}</td>
+          <td>{{ lesson.status|title }}</td>
+          <td><a href="{{ url_for('booking.view_booking', booking_id=lesson.id) }}">View booking</a></td>
+        </tr>
+        {% else %}
+        <tr><td colspan="6">No lessons are scheduled in the next 30 days.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

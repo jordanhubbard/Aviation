@@ -584,7 +584,7 @@ async function main() {
 
             void loadRegion(DEFAULT_REGION_ID);
           </script>
-          <script defer src="https://meta-app.jordanhubbard.net/feedback-widget.js"></script>
+          <script defer data-aviation-app="weather-briefing" src="https://meta-app.jordanhubbard.net/feedback-widget.js"></script>
         </body>
       </html>
     `);
@@ -594,19 +594,21 @@ async function main() {
     console.log(`HTTP server listening on port ${port}`);
   });
 
-  // Demo: Generate a briefing for San Francisco
-  console.log("\n" + "=".repeat(60));
-  console.log("DEMO: Generating briefing for San Francisco (KSFO)...");
-  console.log("=".repeat(60) + "\n");
+  // The browser E2E runner supplies deterministic weather responses itself.
+  if (process.env.AVIATION_E2E_OFFLINE !== "true") {
+    console.log("\n" + "=".repeat(60));
+    console.log("DEMO: Generating briefing for San Francisco (KSFO)...");
+    console.log("=".repeat(60) + "\n");
 
-  const briefing = await service.generateBriefing("KSFO");
-  console.log(briefing);
+    const briefing = await service.generateBriefing("KSFO");
+    console.log(briefing);
 
-  console.log("\n" + "=".repeat(60));
-  console.log("Service will continue monitoring. Try other locations:");
-  console.log('  await service.generateBriefing("KJFK")');
-  console.log('  await service.generateBriefing("KLAX")');
-  console.log("=".repeat(60) + "\n");
+    console.log("\n" + "=".repeat(60));
+    console.log("Service will continue monitoring. Try other locations:");
+    console.log('  await service.generateBriefing("KJFK")');
+    console.log('  await service.generateBriefing("KLAX")');
+    console.log("=".repeat(60) + "\n");
+  }
 
   // Handle graceful shutdown
   const shutdown = async () => {

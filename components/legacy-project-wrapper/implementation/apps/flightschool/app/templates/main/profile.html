@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% block title %}My Profile{% endblock %}
+{% block content %}
+<div class="container mt-4">
+  <h1>My Profile</h1>
+  <dl class="row">
+    <dt class="col-sm-3">Name</dt><dd class="col-sm-9">{{ user.full_name }}</dd>
+    <dt class="col-sm-3">Email</dt><dd class="col-sm-9">{{ user.email }}</dd>
+    <dt class="col-sm-3">Role</dt><dd class="col-sm-9">{{ user.role|title }}</dd>
+  </dl>
+  <a class="btn btn-primary" href="{{ url_for('auth.account_settings') }}">Edit account settings</a>
+</div>
+{% endblock %}
