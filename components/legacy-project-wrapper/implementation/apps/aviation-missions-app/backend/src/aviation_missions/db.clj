@@ -4,7 +4,8 @@
             [clj-time.coerce :as coerce]
             [clojure.tools.logging :as log]
             [clojure.java.shell :as shell]
-            [clojure.string :as str]))
+            [clojure.string :as str]
+            [aviation-missions.e2e :as e2e]))
 
 (def ^:private default-pilot-experience "Beginner (< 100 hours)")
 
@@ -58,7 +59,8 @@
 (def db-spec
   {:classname "org.h2.Driver"
    :subprotocol "h2"
-   :subname (or (get-database-url)
+   :subname (or (when (e2e/enabled?) (str "file:" e2e/test-data-dir "/missions"))
+                (get-database-url)
                 (System/getenv "DATABASE_URL")
                 "./data/aviation-missions")
    :user "sa"
@@ -278,6 +280,29 @@
       )"])
   
   (log/info "✅ STARTUP PHASE 1 COMPLETE: Database initialized with all tables"))
+
+(defn tag-test-schema!
+  "Confine every test row to the signed run's private H2 database."
+  []
+  (when (e2e/enabled?)
+    (jdbc/execute! db-spec ["CREATE TABLE IF NOT EXISTS e2e_runs
+                             (test_run_id VARCHAR(36) PRIMARY KEY,
+                              is_test_data BOOLEAN NOT NULL CHECK (is_test_data = TRUE))"])
+    (jdbc/execute! db-spec ["MERGE INTO e2e_runs (test_run_id, is_test_data) KEY(test_run_id) VALUES (?, TRUE)"
+                            e2e/run-id])
+    (doseq [table ["missions" "comments" "mission_ratings" "reviews" "mission_completions"
+                   "completion_feedback" "submissions" "mission_updates" "admin_sessions"]]
+      (jdbc/execute! db-spec [(str "ALTER TABLE " table
+                                   " ADD COLUMN IF NOT EXISTS is_test_data BOOLEAN DEFAULT TRUE NOT NULL"
+                                   " CHECK (is_test_data = TRUE)")])
+      (jdbc/execute! db-spec [(str "ALTER TABLE " table
+                                   " ADD COLUMN IF NOT EXISTS test_run_id VARCHAR(36) DEFAULT '"
+                                   e2e/run-id "' NOT NULL CHECK (test_run_id = '" e2e/run-id "')")]))))
+
+(defn test-mission-count []
+  (when (e2e/enabled?)
+    (:count (first (jdbc/query db-spec ["SELECT COUNT(*) AS count FROM missions
+                                         WHERE is_test_data = TRUE AND test_run_id = ?" e2e/run-id])))))
 
 ;; Mission CRUD operations
 (defn get-all-missions []

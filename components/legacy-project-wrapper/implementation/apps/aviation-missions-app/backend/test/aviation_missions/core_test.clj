@@ -52,6 +52,14 @@
   "Create authorization header"
   {"Authorization" (str "Bearer " token)})
 
+(deftest production-rejects-test-traffic
+  (let [normal (app (mock/request :get "/health"))
+        tagged (app (assoc-in (mock/request :get "/health")
+                              [:headers "x-aviation-test-run"]
+                              (str "e2e_" (apply str (repeat 32 "a")))))]
+    (is (= 200 (:status normal)))
+    (is (= 403 (:status tagged)))))
+
 ;; Route existence tests
 (deftest test-route-existence
   "Test that all defined routes actually exist and are callable"

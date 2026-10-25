@@ -74,13 +74,18 @@ function getHeader(source: HeaderSource, name: string): string | undefined {
   return typeof value === 'string' ? value : undefined;
 }
 
+function hasHeader(source: HeaderSource, name: string): boolean {
+  if (typeof source.get === 'function') return source.get(name) != null;
+  return Object.keys(source).some(key => key.toLowerCase() === name);
+}
+
 /** Missing credentials mean a production request; partial/invalid credentials are always rejected. */
 export function verifyE2EHeaders(appId: string, source: HeaderSource, secret: string | undefined,
   now = Date.now()): E2ERunId | null {
   const run = getHeader(source, E2E_HEADERS.run);
   const expires = getHeader(source, E2E_HEADERS.expires);
   const supplied = getHeader(source, E2E_HEADERS.signature);
-  if (!run && !expires && !supplied) return null;
+  if (!Object.values(E2E_HEADERS).some(name => hasHeader(source, name))) return null;
   if (!secret || !run || !expires || !supplied) throw new Error('Incomplete E2E credentials');
   const runId = parseE2ERunId(run);
   if (!/^\d{13}$/.test(expires)) throw new Error('Invalid E2E expiration');

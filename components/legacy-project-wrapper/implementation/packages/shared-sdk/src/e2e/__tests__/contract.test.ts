@@ -29,6 +29,7 @@ describe('remote E2E isolation contract', () => {
     expect(() => verifyE2EHeaders('flightschool', headers, secret, now)).toThrow();
     expect(() => verifyE2EHeaders('aviation-missions-app', headers, secret, now + 900_001)).toThrow();
     expect(() => verifyE2EHeaders('aviation-missions-app', { 'x-aviation-test-run': runId }, secret, now)).toThrow();
+    expect(() => verifyE2EHeaders('aviation-missions-app', { 'x-aviation-test-run': '' }, secret, now)).toThrow();
     expect(verifyE2EHeaders('aviation-missions-app', {}, secret, now)).toBeNull();
   });
 

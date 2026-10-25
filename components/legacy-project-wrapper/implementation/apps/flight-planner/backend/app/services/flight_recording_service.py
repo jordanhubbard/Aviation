@@ -3,6 +3,7 @@ from pydantic import BaseModel
 from typing import List
 import json
 import os
+from app.e2e import assert_store_isolated, data_dir, stored_record
 
 router = APIRouter()
 
@@ -11,12 +12,13 @@ class FlightRecording(BaseModel):
     telemetry: dict
     events: List[dict]
 
-FLIGHT_RECORDINGS_FILE = 'flight_recordings.json'
+FLIGHT_RECORDINGS_FILE = str(data_dir('.') / 'flight_recordings.json')
 
 if os.path.exists(FLIGHT_RECORDINGS_FILE):
     with open(FLIGHT_RECORDINGS_FILE, 'r') as file:
         try:
             flight_recordings = json.load(file)
+            assert_store_isolated(flight_recordings)
         except json.JSONDecodeError:
             flight_recordings = []
 else:
@@ -24,6 +26,7 @@ else:
 
 # Save flight recordings to file
 def save_flight_recordings():
+    os.makedirs(os.path.dirname(FLIGHT_RECORDINGS_FILE) or '.', exist_ok=True)
     with open(FLIGHT_RECORDINGS_FILE, 'w') as file:
         json.dump([fr if isinstance(fr, dict) else fr.model_dump() for fr in flight_recordings], file)
 
@@ -48,7 +51,7 @@ def create_flight_recording(flight_recording: FlightRecording):
     stored = flight_recording.model_dump()
     stored["metadata"] = {**stored.get("metadata", {})}
     stored["metadata"].setdefault("id", _next_recording_id())
-    flight_recordings.append(stored)
+    flight_recordings.append(stored_record(stored))
     save_flight_recordings()
     return stored
 
@@ -65,7 +68,7 @@ def update_flight_recording(flight_recording_id: int, flight_recording: FlightRe
         if fr['metadata'].get('id') == flight_recording_id:
             stored = flight_recording.model_dump()
             stored["metadata"] = {**stored.get("metadata", {}), "id": flight_recording_id}
-            flight_recordings[idx] = stored
+            flight_recordings[idx] = stored_record(stored)
             save_flight_recordings()
             return stored
     raise HTTPException(status_code=404, detail="Flight recording not found")

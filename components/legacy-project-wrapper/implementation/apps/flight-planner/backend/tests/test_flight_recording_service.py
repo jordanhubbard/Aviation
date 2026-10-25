@@ -1,4 +1,5 @@
 import pytest
+from app.services import flight_recording_service
 from app.services.flight_recording_service import router as flight_recording_router
 from fastapi.testclient import TestClient
 from app import create_app
@@ -11,6 +12,19 @@ from app.services.flight_plan_service import router as flight_plan_router
 app.include_router(flight_plan_router, prefix="/flight-plans", tags=["flight-plans"])
 
 client = TestClient(app)
+
+
+@pytest.fixture(autouse=True)
+def isolated_recording_store(tmp_path, monkeypatch):
+    """Keep each recording test out of the application's normal JSON store."""
+    original = list(flight_recording_service.flight_recordings)
+    monkeypatch.setattr(flight_recording_service, 'FLIGHT_RECORDINGS_FILE',
+                        str(tmp_path / 'flight_recordings.json'))
+    flight_recording_service.flight_recordings.clear()
+    try:
+        yield
+    finally:
+        flight_recording_service.flight_recordings[:] = original
 
 SAMPLE_RECORDING = {
     "metadata": {

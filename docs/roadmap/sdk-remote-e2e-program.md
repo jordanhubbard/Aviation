@@ -18,17 +18,23 @@ their public deployments, with isolated browser mocks or stateless sample input.
 
 The public runs of Flight Tracker, Flight Planner, and ForeFlight Dashboard
 exercised the currently deployed build, not this branch's exact revision.
-Missions has a public browser adapter backed by SDK tagged network
-mocks; it does not yet exercise the H2 backend. Flight School has a local
+Missions now has a production-image adapter with a separate run-scoped H2
+database, tagged seed rows, signed traffic, and a tagged comment write/read.
+Planner has a production-image adapter with a separate run-scoped JSON store,
+signed traffic, and tagged plan and recording write/read/delete. Both passed
+local isolated browser runs. Production instances reject test credentials.
+Flight School has a local
 production-image adapter that launches a signed, isolated SQLite instance,
 visits 57 declared GET screens using separate admin, instructor, and student
 sessions, writes a tagged waitlist entry, verifies it in the test database,
 then removes the database with its throwaway container. That sweep also
 found and fixed previously broken Flight School routes and templates.
 
-This remains a **partial checkpoint**: the Missions H2 backend, Planner's
-saved-plan and recording persistence, G1000 simulator and plan lifecycles,
-and some other product surfaces are not covered by the initial adapters.
+This remains a **partial checkpoint**: the G1000's currently shipped UI has
+only dashboard and settings routes; its simulator components and plan store
+are not exposed through those routes. Other product surfaces still need a
+complete inventory. Planner and Missions browser fixtures still mock some
+API responses after the real storage lifecycle checks.
 Remote credential provisioning, independently declared complete
 screen inventories, post-deployment gate integration, and full deployed-build
 evidence remain open. The retained harness receipt must be renewed after each

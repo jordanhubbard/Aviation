@@ -12,6 +12,7 @@
             [ring.middleware.not-modified :refer [wrap-not-modified]]
             [ring.util.response :refer [response resource-response content-type]]
             [aviation-missions.db :as db]
+            [aviation-missions.e2e :as e2e]
             [aviation-missions.handlers :as handlers]
             [aviation-missions.missions-storage :as storage]
             [aviation-missions.swagger :as swagger]
@@ -55,6 +56,11 @@
        "</html>"))
 
 (defroutes app-routes
+  (GET "/__e2e/status" []
+    (if (e2e/enabled?)
+      (response {:is_test_data true :test_run_id e2e/run-id
+                 :mission_count (db/test-mission-count)})
+      {:status 404 :body {:error "Not found"}}))
   ;; API Documentation
   (GET "/swagger.json" [] swagger/swagger-spec)
   (GET "/api" []
@@ -145,7 +151,8 @@
       ;; Disable anti-forgery and frame options for API compatibility
       (wrap-defaults (-> site-defaults
                          (assoc-in [:security :anti-forgery] false)
-                         (assoc-in [:security :frame-options] false)))))
+                         (assoc-in [:security :frame-options] false)))
+      e2e/wrap-test-traffic))
 
 (defn -main
   "Start the server"
@@ -154,6 +161,7 @@
 
   ;; Phase 1: Database initialization
   (db/init-db!)
+  (db/tag-test-schema!)
 
   ;; Phase 2: Mission data loading
   (log/info "📊 STARTUP PHASE 2: Loading mission data...")

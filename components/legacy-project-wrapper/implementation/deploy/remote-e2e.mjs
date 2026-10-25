@@ -115,9 +115,33 @@ if (appId === 'flightschool') {
   } finally { await browser.close(); }
   console.log(`remote E2E passed: ${appId} (${baseUrl}); isolated instance cleanup is external`);
 } else if (appId === 'aviation-missions-app') {
+  const isolatedRunId = process.env.AVIATION_E2E_RUN_ID
+    ? parseE2ERunId(process.env.AVIATION_E2E_RUN_ID) : undefined;
   const browser = await chromium.launch({ headless: true, ...(executable ? { executablePath: executable } : {}) });
   try {
     await withE2ERun(secret, async run => {
+      if (isolatedRunId) {
+        const headers = { ...run.headersFor(appId), 'content-type': 'application/json' };
+        const status = await fetch(new URL('/__e2e/status', baseUrl), { headers });
+        const state = status.ok ? await status.json() : null;
+        if (!state || state.is_test_data !== true || state.test_run_id !== run.id || state.mission_count < 1) {
+          throw new Error('Missions isolated H2 store lacks tagged seed missions');
+        }
+        const missions = await fetch(new URL('/missions', baseUrl), { headers });
+        if (!missions.ok) throw new Error(`Missions test list failed: HTTP ${missions.status}`);
+        const first = (await missions.json()).missions?.[0];
+        if (!first || first.is_test_data !== true || first.test_run_id !== run.id) {
+          throw new Error('Missions list exposed an untagged test record');
+        }
+        const created = await fetch(new URL(`/missions/${first.id}/comments`, baseUrl), {
+          method: 'POST', headers, body: JSON.stringify({ author_name: 'E2E Pilot', content: `Run ${run.id}` }),
+        });
+        if (created.status !== 201) throw new Error(`Missions test comment failed: HTTP ${created.status}`);
+        const comment = (await created.json()).comment;
+        if (!comment || comment.is_test_data !== true || comment.test_run_id !== run.id) {
+          throw new Error('Missions test comment was not tagged in H2');
+        }
+      }
       const context = await browser.newContext();
       const page = await context.newPage();
       run.onCleanup(async () => {
@@ -141,7 +165,9 @@ if (appId === 'flightschool') {
         const path = new URL(request.url()).pathname;
         const method = request.method();
         if (!/^(\/missions|\/submissions|\/updates|\/admin\/)/.test(path)) {
-          await route.continue(); return;
+          await route.continue(isolatedRunId ? { headers: {
+            ...request.headers(), ...run.headersFor(appId),
+          } } : undefined); return;
         }
         let body;
         if (path === '/missions' && method === 'GET') body = run.tag({ missions: [mission] });
@@ -236,7 +262,7 @@ if (appId === 'flightschool') {
           },
         },
       ]);
-    });
+    }, isolatedRunId);
   } finally { await browser.close(); }
   console.log(`remote E2E passed: ${appId} (${baseUrl}); mocked browser data removed`);
 } else if (appId === 'flight-track-analyzer') {
@@ -308,9 +334,50 @@ if (appId === 'flightschool') {
   } finally { await browser.close(); }
   console.log(`remote E2E passed: ${appId} (${baseUrl}); tagged SQLite run removed`);
 } else if (appId === 'flight-planner') {
+  const isolatedRunId = process.env.AVIATION_E2E_RUN_ID
+    ? parseE2ERunId(process.env.AVIATION_E2E_RUN_ID) : undefined;
   const browser = await chromium.launch({ headless: true, ...(executable ? { executablePath: executable } : {}) });
   try {
     await withE2ERun(secret, async run => {
+      if (isolatedRunId) {
+        const headers = { ...run.headersFor(appId), 'content-type': 'application/json' };
+        const statusUrl = new URL('/__e2e/status', baseUrl);
+        const initial = await fetch(statusUrl, { headers });
+        if (!initial.ok || (await initial.json()).saved_plan_count !== 0) {
+          throw new Error('Planner isolated test store did not start empty');
+        }
+        const created = await fetch(new URL('/flight-plans/', baseUrl), { method: 'POST', headers,
+          body: JSON.stringify({ name: `E2E saved plan ${run.id}`, origin: 'KOAK', destination: 'KSFO' }) });
+        if (created.status !== 201) throw new Error(`Planner test plan create failed: HTTP ${created.status}`);
+        const planId = (await created.json()).metadata.id;
+        let recordingId;
+        run.onCleanup(async () => {
+          const deleted = await fetch(new URL(`/flight-plans/${planId}`, baseUrl), {
+            method: 'DELETE', headers: run.headersFor(appId),
+          });
+          if (deleted.status !== 204) throw new Error(`Planner test plan cleanup failed: HTTP ${deleted.status}`);
+          if (recordingId !== undefined) {
+            const removedRecording = await fetch(new URL(`/flight-recordings/${recordingId}`, baseUrl), {
+              method: 'DELETE', headers: run.headersFor(appId),
+            });
+            if (!removedRecording.ok) throw new Error(`Planner test recording cleanup failed: HTTP ${removedRecording.status}`);
+          }
+          const status = await fetch(statusUrl, { headers: run.headersFor(appId) });
+          const counts = status.ok ? await status.json() : null;
+          if (!counts || counts.saved_plan_count !== 0 || counts.recording_count !== 0) {
+            throw new Error('Planner test records remain after cleanup');
+          }
+        });
+        const recording = await fetch(new URL('/flight-recordings/', baseUrl), { method: 'POST', headers,
+          body: JSON.stringify({ metadata: { name: `E2E recording ${run.id}` }, telemetry: {}, events: [] }) });
+        if (!recording.ok) throw new Error(`Planner test recording create failed: HTTP ${recording.status}`);
+        recordingId = (await recording.json()).metadata.id;
+        const status = await fetch(statusUrl, { headers: run.headersFor(appId) });
+        const counts = status.ok ? await status.json() : null;
+        if (!counts || counts.saved_plan_count !== 1 || counts.recording_count !== 1) {
+          throw new Error('Planner test records were not tagged in the isolated store');
+        }
+      }
       const context = await browser.newContext();
       const page = await context.newPage();
       run.onCleanup(async () => {
@@ -321,6 +388,9 @@ if (appId === 'flightschool') {
       const mocks = standardE2EMocks(run.id).planner;
       const airport = mocks.airport;
       const origin = new URL(baseUrl).origin;
+      if (isolatedRunId) await page.route(`${origin}/**`, route => route.continue({ headers: {
+        ...route.request().headers(), ...run.headersFor(appId),
+      } }));
       await page.route(`${origin}/flight-plans/**`, async route => {
         if (route.request().method() !== 'GET') throw new Error('Planner E2E attempted a production plan write');
         await route.fulfill({ status: 200, contentType: 'application/json',
@@ -412,7 +482,7 @@ if (appId === 'flightschool') {
           },
         },
       ]);
-    });
+    }, isolatedRunId);
   } finally { await browser.close(); }
   console.log(`remote E2E passed: ${appId} (${baseUrl}); browser fixtures removed`);
 } else if (appId === 'foreflight-dashboard') {

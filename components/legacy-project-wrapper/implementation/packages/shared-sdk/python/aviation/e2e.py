@@ -25,13 +25,23 @@ def isolated_sqlite_path(root: str | Path, run_id: str) -> Path:
     return isolated_run_directory(root, run_id).with_suffix(".db")
 
 
+def tag_test_record(run_id: str, record: dict) -> dict:
+    """Add immutable run tags to a fixture before it reaches test storage."""
+    if not RUN_ID_PATTERN.fullmatch(run_id):
+        raise ValueError("invalid E2E run ID")
+    if "is_test_data" in record or "test_run_id" in record:
+        raise ValueError("record already has test isolation fields")
+    return {**record, "is_test_data": True, "test_run_id": run_id}
+
+
 def verify_e2e_headers(app_id: str, headers: Mapping[str, str], secret: str | None,
                        now_ms: int | None = None) -> str | None:
     """Return the run ID, return None for normal traffic, or reject a bad test credential."""
     run = headers.get("x-aviation-test-run")
     expiry = headers.get("x-aviation-test-expires")
     signature = headers.get("x-aviation-test-signature")
-    if not any((run, expiry, signature)):
+    if not any(key in headers for key in ("x-aviation-test-run", "x-aviation-test-expires",
+                                          "x-aviation-test-signature")):
         return None
     if (not secret or len(secret) < 32 or not APP_ID_PATTERN.fullmatch(app_id)
             or not run or not RUN_ID_PATTERN.fullmatch(run)

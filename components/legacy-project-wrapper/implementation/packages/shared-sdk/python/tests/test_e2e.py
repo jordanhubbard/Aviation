@@ -4,7 +4,7 @@ from pathlib import Path
 
 import pytest
 
-from aviation.e2e import isolated_run_directory, isolated_sqlite_path, verify_e2e_headers
+from aviation.e2e import isolated_run_directory, isolated_sqlite_path, tag_test_record, verify_e2e_headers
 
 
 def test_app_bound_short_lived_credential_and_fail_closed():
@@ -21,10 +21,14 @@ def test_app_bound_short_lived_credential_and_fail_closed():
     assert isolated_run_directory('/tmp/aviation-e2e', run).name == run
     with pytest.raises(ValueError):
         isolated_sqlite_path('/tmp/aviation-e2e', '../production')
+    assert tag_test_record(run, {'name': 'sample'}) == {'name': 'sample', 'is_test_data': True, 'test_run_id': run}
+    with pytest.raises(ValueError):
+        tag_test_record(run, {'is_test_data': False})
     for app, data, instant in [
         ('flight-planner', headers, now),
         ('flightschool', {**headers, 'x-aviation-test-signature': '0' * 64}, now),
         ('flightschool', {'x-aviation-test-run': run}, now),
+        ('flightschool', {'x-aviation-test-run': ''}, now),
         ('flightschool', headers, now + 61000),
     ]:
         with pytest.raises(ValueError):

@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-/** Run an exact Flight School image in a throwaway SQLite instance, then destroy it. */
+/** Run an exact persistent-app image with a throwaway tagged store, then destroy it. */
 import { spawn, spawnSync } from 'node:child_process';
 import { createServer } from 'node:net';
 import { randomBytes } from 'node:crypto';
@@ -7,7 +7,12 @@ import { fileURLToPath } from 'node:url';
 import { createE2ERunId } from '@aviation/shared-sdk/e2e';
 
 const appId = process.argv[2];
-if (appId !== 'flightschool') throw new Error(`No isolated E2E runtime for ${appId || '(missing app)'}`);
+const launch = {
+  flightschool: { port: 5000, command: `python -m scripts.seed_e2e && exec gunicorn --bind 0.0.0.0:5000 --workers 1 'app:create_app("e2e")'` },
+  'flight-planner': { port: 8000, command: 'exec uvicorn main:app --host 0.0.0.0 --port 8000 --workers 1' },
+  'aviation-missions-app': { port: 3000, command: 'exec java -jar /app/aviation-missions.jar' },
+}[appId];
+if (!launch) throw new Error(`No isolated E2E runtime for ${appId || '(missing app)'}`);
 const image = process.env.AVIATION_E2E_IMAGE;
 const revision = process.env.AVIATION_E2E_REVISION;
 const sshHost = process.env.AVIATION_E2E_SSH_HOST;
@@ -17,7 +22,7 @@ if (sshHost && (!revision || !/^[0-9a-f]{40}$/.test(revision))) {
 }
 const runId = createE2ERunId();
 const secret = randomBytes(32).toString('hex');
-const name = `aviation-e2e-flightschool-${runId.slice(-12)}`;
+const name = `aviation-e2e-${appId}-${runId.slice(-12)}`;
 const docker = (...args) => {
   const result = spawnSync('docker', [...(sshHost ? ['-H', `ssh://${sshHost}`] : []), ...args], {
     encoding: 'utf8', timeout: 120000,
@@ -57,15 +62,21 @@ let failed = false;
 try {
   const label = docker('image', 'inspect', image, '--format', '{{index .Config.Labels "org.opencontainers.image.revision"}}');
   if (revision && label !== revision) throw new Error(`Image revision ${label} does not match ${revision}`);
-  const remotePort = await freePort();
   attempted = true;
   docker('run', '-d', '--name', name, '--label', `aviation.e2e.run=${runId}`,
     '--tmpfs', '/tmp/aviation-e2e:rw,size=64m',
-    '-p', `127.0.0.1:${remotePort}:5000`,
+    '-p', `127.0.0.1::${launch.port}`,
     '-e', `AVIATION_E2E_RUN_ID=${runId}`,
-    '-e', `AVIATION_E2E_DB=/tmp/aviation-e2e/${runId}.db`,
+    '-e', appId === 'flightschool'
+      ? `AVIATION_E2E_DB=/tmp/aviation-e2e/${runId}.db`
+      : `AVIATION_E2E_DATA_DIR=/tmp/aviation-e2e/${runId}`,
     '-e', `AVIATION_E2E_SECRET=${secret}`,
-    image, 'sh', '-c', `python -m scripts.seed_e2e && exec gunicorn --bind 0.0.0.0:5000 --workers 1 'app:create_app("e2e")'`);
+    image, 'sh', '-c', launch.command);
+  const published = docker('port', name, `${launch.port}/tcp`);
+  const remotePort = Number(published.match(/^127\.0\.0\.1:(\d+)$/)?.[1]);
+  if (!Number.isInteger(remotePort) || remotePort < 1 || remotePort > 65535) {
+    throw new Error(`Unexpected E2E port mapping: ${published}`);
+  }
   let localPort = remotePort;
   if (sshHost) {
     localPort = await freePort();
@@ -80,7 +91,7 @@ try {
   });
   if (result.stdout) process.stdout.write(result.stdout);
   if (result.stderr) process.stderr.write(result.stderr);
-  if (result.status !== 0) throw new Error(`Flight School browser run failed (${result.status})`);
+  if (result.status !== 0) throw new Error(`${appId} browser run failed (${result.status})`);
 } catch (error) {
   failed = true;
   console.error(error);
