@@ -175,6 +175,7 @@ test-node:
 	@echo "🧪 Running Node.js/TypeScript tests..."
 	$(PNPM) install --frozen-lockfile
 	$(PNPM) --filter @aviation/shared-sdk run build
+	$(PNPM) --filter @aviation/ai-explainer run build
 	$(PNPM) --filter @aviation/keystore run build
 	@# Ask pnpm to resolve each package's test binary from the workspace. This
 	@# keeps the root test command portable across fresh and retained checkouts.

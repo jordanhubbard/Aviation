@@ -15,6 +15,16 @@
         "default": "./dist/index.js"
       }
     },
+    "./e2e": {
+      "import": {
+        "types": "./dist-esm/e2e/index.d.ts",
+        "default": "./dist-esm/e2e/index.js"
+      },
+      "require": {
+        "types": "./dist/e2e/index.d.ts",
+        "default": "./dist/e2e/index.js"
+      }
+    },
     "./aviation/navigation": {
       "import": {
         "types": "./dist-esm/aviation/navigation/index.d.ts",

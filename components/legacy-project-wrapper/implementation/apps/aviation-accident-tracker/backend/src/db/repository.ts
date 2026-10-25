@@ -11,6 +11,7 @@ import { fileURLToPath } from 'url';
 import { dirname } from 'path';
 import { mkdirSync } from 'fs';
 import type { EventRecord, SourceAttribution, CauseAttribution, ListEventsParams, Category } from '../types.js';
+import { assertTestDataForRun, type E2ERunId } from '@aviation/shared-sdk/e2e';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -94,6 +95,60 @@ export class EventRepository {
     if (!columns.some(column => column.name === 'title')) {
       await this.dbExec('ALTER TABLE sources ADD COLUMN title TEXT');
     }
+    if (!columns.some(column => column.name === 'is_test_data')) {
+      await this.dbExec('ALTER TABLE sources ADD COLUMN is_test_data INTEGER NOT NULL DEFAULT 0');
+    }
+    if (!columns.some(column => column.name === 'test_run_id')) {
+      await this.dbExec('ALTER TABLE sources ADD COLUMN test_run_id TEXT');
+    }
+    const eventColumns: { name: string }[] = await this.dbAll('PRAGMA table_info(events)');
+    if (!eventColumns.some(column => column.name === 'is_test_data')) {
+      await this.dbExec('ALTER TABLE events ADD COLUMN is_test_data INTEGER NOT NULL DEFAULT 0');
+    }
+    if (!eventColumns.some(column => column.name === 'test_run_id')) {
+      await this.dbExec('ALTER TABLE events ADD COLUMN test_run_id TEXT');
+    }
+    await this.dbExec('CREATE INDEX IF NOT EXISTS idx_events_test_run ON events(test_run_id) WHERE is_test_data = 1');
+    await this.dbExec('CREATE INDEX IF NOT EXISTS idx_sources_test_run ON sources(test_run_id) WHERE is_test_data = 1');
+  }
+
+  async seedTestEvent(runId: E2ERunId, value: unknown): Promise<string> {
+    assertTestDataForRun(value, runId);
+    const event = value as unknown as Partial<EventRecord> & { dateZ: string; registration: string };
+    if (typeof event.dateZ !== 'string' || !/^20\d\d-\d\d-\d\dT/.test(event.dateZ)
+      || typeof event.registration !== 'string' || !/^[A-Z0-9-]{2,16}$/.test(event.registration)) {
+      throw new Error('Invalid E2E accident fixture');
+    }
+    for (const source of event.sources ?? []) {
+      if (source.sourceName !== 'e2e-fixture'
+        || !source.url.startsWith(`https://example.invalid/e2e/${runId}`)) {
+        throw new Error('E2E source must use the inert fixture URL');
+      }
+    }
+    await this.dbRun('INSERT OR IGNORE INTO e2e_runs (run_id, is_test_data) VALUES (?, 1)', [runId]);
+    const result = await this.dbRun(
+      `INSERT INTO events (date_z, registration, aircraft_type, category, country, region,
+         latitude, longitude, summary, status, is_test_data, test_run_id)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, ?)`,
+      [event.dateZ, event.registration, event.aircraftType ?? 'CESSNA 172',
+        event.category ?? 'general', event.country ?? 'USA', event.region ?? 'CA',
+        event.lat ?? null, event.lon ?? null,
+        event.summary ?? 'Synthetic E2E event', event.status ?? 'reported', runId]
+    );
+    const id = String(result.lastID);
+    for (const source of event.sources ?? []) {
+      await this.dbRun(`INSERT INTO sources (event_id, source_name, title, url, fetched_at,
+        is_test_data, test_run_id) VALUES (?, ?, ?, ?, ?, 1, ?)`,
+      [Number(id), source.sourceName, source.title ?? null, source.url, source.fetchedAt, runId]);
+    }
+    return id;
+  }
+
+  async countTestEvents(runId: E2ERunId): Promise<number> {
+    const row = await this.dbGet(`SELECT
+      (SELECT COUNT(*) FROM events WHERE is_test_data = 1 AND test_run_id = ?) +
+      (SELECT COUNT(*) FROM sources WHERE is_test_data = 1 AND test_run_id = ?) AS count`, [runId, runId]);
+    return Number(row?.count ?? 0);
   }
 
   /**

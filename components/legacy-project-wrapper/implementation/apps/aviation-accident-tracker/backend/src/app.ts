@@ -3,16 +3,17 @@ import cors from 'cors';
 import fs from 'fs';
 import path from 'path';
 import swaggerUi from 'swagger-ui-express';
-import { createRouter } from './api/routes.js';
+import { createRouter, createE2ERouter } from './api/routes.js';
 import { getLastRun } from './scheduler.js';
 import { logger } from './logger.js';
 import { config } from './config.js';
 import { EventRepository } from './db/repository.js';
 import { ExplainerClient, explainerRoute } from '@aviation/ai-explainer';
+import { AccidentE2EManager } from './e2e/manager.js';
 
 const SERVICE_VERSION = '0.1.0';
 
-export function createApp(repository: EventRepository) {
+export function createApp(repository: EventRepository, e2e?: AccidentE2EManager) {
   const app = express();
 
   // Middleware
@@ -23,6 +24,15 @@ export function createApp(repository: EventRepository) {
   app.use((req, _res, next) => {
     logger.info(`${req.method} ${req.path}`, { query: req.query, ip: req.ip });
     next();
+  });
+
+  // Test credentials must never fall through to production GraphQL or AI routes.
+  app.use((req, res, next) => {
+    const hasTestHeaders = Object.keys(req.headers).some(header => header.startsWith('x-aviation-test-'));
+    const testApi = req.path.startsWith('/api/') || req.path.startsWith('/__e2e/');
+    const staticPage = req.method === 'GET' && (req.path === '/' || req.path.startsWith('/assets/'));
+    if (hasTestHeaders && !testApi && !staticPage) return res.status(403).json({ error: 'E2E route not supported' });
+    return next();
   });
 
   // Health check (include scheduler last run)
@@ -52,7 +62,8 @@ export function createApp(repository: EventRepository) {
   app.use(/* @ts-ignore Express 5 Router type issue */ explainerRoute(explainer) as any);
 
   // API routes
-  app.use('/api', createRouter(repository));
+  app.use('/api', createRouter(repository, e2e));
+  if (e2e) app.use('/__e2e', createE2ERouter(e2e));
 
   const frontendDistPath = path.resolve(process.cwd(), '..', 'frontend', 'dist');
   const frontendIndexPath = path.join(frontendDistPath, 'index.html');
