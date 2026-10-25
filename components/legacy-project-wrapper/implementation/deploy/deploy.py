@@ -215,7 +215,11 @@ def prepare_remote_image(config: dict, app: dict, revision: str, host: str) -> N
         run("ssh", host, "docker", "pull", "--platform", "linux/amd64", source)
     except subprocess.CalledProcessError:
         print(f"Remote pull failed for {app['name']}; transferring the exact image instead", flush=True)
-        ship_image(host, fetch_image(config, app, revision))
+        try:
+            image = fetch_image(config, app, revision)
+        except subprocess.CalledProcessError:
+            image = build(app, revision)
+        ship_image(host, image)
     else:
         run("ssh", host, "docker", "tag", source, target)
     image_revision = output(

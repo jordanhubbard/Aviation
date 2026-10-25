@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import importlib.util
+import subprocess
 import unittest
 from pathlib import Path
 from unittest.mock import patch
@@ -24,6 +25,20 @@ class HealthyResponse:
 
 
 class VerifyTests(unittest.TestCase):
+    def test_missing_registry_image_builds_and_ships_committed_source(self):
+        config, apps = deployment.load_manifest()
+        app = next(item for item in apps if item['name'] == 'meta-app')
+        revision = 'a' * 40
+        failed_pull = subprocess.CalledProcessError(1, 'docker pull')
+        with (patch.object(deployment, 'run', side_effect=failed_pull),
+              patch.object(deployment, 'fetch_image', side_effect=failed_pull),
+              patch.object(deployment, 'build', return_value=deployment.image_name(app, revision)) as build,
+              patch.object(deployment, 'ship_image') as ship,
+              patch.object(deployment, 'output', return_value=revision)):
+            deployment.prepare_remote_image(config, app, revision, 'pilot@example-host')
+        build.assert_called_once_with(app, revision)
+        ship.assert_called_once_with('pilot@example-host', deployment.image_name(app, revision))
+
     def test_every_app_runs_its_remote_adapter_after_revision_check(self):
         config, apps = deployment.load_manifest()
         revision = 'a' * 40
