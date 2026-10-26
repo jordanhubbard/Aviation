@@ -5,6 +5,10 @@ analysis applications with shared aviation data and UI packages. The existing
 applications are retained under `components/legacy-project-wrapper/implementation`
 while their native Literate AI Components are developed and qualified.
 
+KMLab's Flight Track Analyzer is fully contained here. Aviation is its sole source
+for development, tests, builds, and deployment; the original KMLab repository is
+archived and retained only as a historical record.
+
 Start with [getting started](user/getting-started.md) for installation and usage.
 See [active work](roadmap/active-work.md) for current development status.
 
