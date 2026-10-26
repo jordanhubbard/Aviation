@@ -107,13 +107,13 @@ stages:
 ---
 # Dev
 
-The default named workflow selected when a Component does not point at a different
-one. This workflow defines the ordered model and guarded lifecycle stages.
+The permissive, fast-iteration named workflow. Pair it with `routing/production/staging/dev/routing.json` for a
+routing policy that allows model fallback and ordinary source disclosure.
 
 ## Stage: plan
 
-Plan a complete implementation from only the accepted specification, selected Flavors, and exact skills.
+Plan the exact implementation for the supplied specification and selected Flavor recipe.
 
 ## Stage: generate
 
-Generate the complete disposable source tree, current tests, build files, CycloneDX source SBOM, and runnable entrypoint.
+Generate the complete source tree for the exact approved plan and recipe.

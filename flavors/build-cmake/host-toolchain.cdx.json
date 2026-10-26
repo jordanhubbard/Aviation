@@ -1,0 +1,25 @@
+{
+  "$schema": "http://cyclonedx.org/schema/bom-1.7.schema.json",
+  "bomFormat": "CycloneDX",
+  "specVersion": "1.7",
+  "serialNumber": "urn:uuid:450e1603-ab74-4418-8bd4-35ad493b9264",
+  "version": 1,
+  "metadata": {
+    "component": {"type": "application", "bom-ref": "urn:literate-ai:toolchain:build-cmake", "name": "build-cmake", "version": "1.0.0"},
+    "properties": [{"name": "literate-ai:base-toolchain:role", "value": "mixin"}]
+  },
+  "components": [{
+    "type": "application", "bom-ref": "urn:literate-ai:capability:cmake", "name": "CMake", "version": ">=3.25,<5",
+    "properties": [
+      {"name": "literate-ai:base-toolchain:capability", "value": "cmake"},
+      {"name": "literate-ai:base-toolchain:probe-kind", "value": "command"},
+      {"name": "literate-ai:base-toolchain:probe-candidates", "value": "[\"cmake\",\"cmake.exe\"]"},
+      {"name": "literate-ai:base-toolchain:probe-arguments", "value": "[\"--version\"]"},
+      {"name": "literate-ai:base-toolchain:reason", "value": "The selected CMake build Flavor configures and builds its generated project."}
+    ]
+  }],
+  "dependencies": [
+    {"ref": "urn:literate-ai:toolchain:build-cmake", "dependsOn": ["urn:literate-ai:capability:cmake"]},
+    {"ref": "urn:literate-ai:capability:cmake", "dependsOn": []}
+  ]
+}

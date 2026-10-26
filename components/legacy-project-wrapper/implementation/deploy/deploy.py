@@ -75,6 +75,8 @@ def load_manifest() -> tuple[dict, list[dict]]:
         port = app["port"]
         if not re.fullmatch(r"[a-z0-9]+(?:-[a-z0-9]+)*", name):
             raise ValueError(f"invalid app name: {name}")
+        if not isinstance(app.get("launcher_visible", True), bool):
+            raise ValueError(f"invalid launcher visibility for {name}")
         if not re.fullmatch(r"[a-z0-9]+(?:-[a-z0-9]+)*", hostname):
             raise ValueError(f"invalid hostname: {hostname}")
         if not re.fullmatch(r"[a-z0-9]+(?:-[a-z0-9]+)*", registry_image):

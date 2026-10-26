@@ -1,0 +1,4 @@
+interface:
+  display_name: "Generate NVIDIA CUDA application"
+  short_description: "Generate a tested CUDA application from exact specs"
+  default_prompt: "Generate this specification as a CUDA application using the observed and locked NVIDIA stack."

@@ -1,0 +1,7 @@
+{
+  "schema": "urn:literate-ai:schema:v2:toolchain-constraint",
+  "toolchain": "swift",
+  "command": ["swiftc"],
+  "remediation": "Select a supported Linux distribution and architecture, install its Swift toolchain, and expose swiftc on PATH.",
+  "remediation_uri": "https://www.swift.org/install/linux/"
+}

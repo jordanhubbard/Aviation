@@ -1,0 +1,14 @@
+{
+  "schema": "urn:literate-ai:schema:v2:standard-language-command-profile",
+  "target": "cpp",
+  "toolchain": "cpp",
+  "source_entrypoint": "source/main.cpp",
+  "generated_test_entrypoint": "source/tests/litai_test.cpp",
+  "artifact_layout": "file",
+  "artifact_entrypoint": "run",
+  "bazel_output_path": "run",
+  "build_strategy": "cpp-executable",
+  "runtime_strategy": "native-executable",
+  "media_type": "application/vnd.literate-ai.native-executable",
+  "cpp_library_kind": "static"
+}

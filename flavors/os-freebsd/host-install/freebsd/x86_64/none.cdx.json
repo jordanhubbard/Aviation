@@ -1,0 +1,368 @@
+{
+  "$schema": "http://cyclonedx.org/schema/bom-1.7.schema.json",
+  "bomFormat": "CycloneDX",
+  "specVersion": "1.7",
+  "serialNumber": "urn:uuid:a6f39d5a-face-4e3f-a4fe-47c19f643310",
+  "version": 1,
+  "metadata": {
+    "component": {
+      "type": "application",
+      "bom-ref": "urn:literate-ai:host-install:freebsd:x86_64:none",
+      "name": "literate-ai-host-install-freebsd-x86-64",
+      "version": "1.0.0"
+    },
+    "properties": [
+      {
+        "name": "literate-ai:host-install:operating-system",
+        "value": "freebsd"
+      },
+      {
+        "name": "literate-ai:host-install:architecture",
+        "value": "x86_64"
+      },
+      {
+        "name": "literate-ai:host-install:accelerator",
+        "value": "none"
+      },
+      {
+        "name": "literate-ai:host-install:package-manager",
+        "value": "pkg"
+      },
+      {
+        "name": "literate-ai:host-install:manager-executable",
+        "value": "pkg"
+      },
+      {
+        "name": "literate-ai:host-install:query-executable",
+        "value": "pkg"
+      },
+      {
+        "name": "literate-ai:host-install:query-arguments",
+        "value": "[\"query\",\"%n-%v\",\"{package}\"]"
+      },
+      {
+        "name": "literate-ai:host-install:install-executable",
+        "value": "pkg"
+      },
+      {
+        "name": "literate-ai:host-install:install-arguments",
+        "value": "[\"install\",\"-y\",\"{packages}\"]"
+      },
+      {
+        "name": "literate-ai:host-install:install-mode",
+        "value": "batch"
+      },
+      {
+        "name": "literate-ai:host-install:elevation-executable",
+        "value": "sudo"
+      }
+    ]
+  },
+  "components": [
+    {
+      "type": "application",
+      "bom-ref": "urn:literate-ai:host-install:freebsd:package:python312",
+      "name": "FreeBSD python312",
+      "version": ">=3.11,<4",
+      "properties": [
+        {
+          "name": "literate-ai:host-install:realization-kind",
+          "value": "native-package"
+        },
+        {
+          "name": "literate-ai:host-install:manager-package",
+          "value": "python312"
+        },
+        {
+          "name": "literate-ai:host-install:base-capabilities",
+          "value": "[\"python\",\"python-venv\"]"
+        },
+        {
+          "name": "literate-ai:host-install:path-entries",
+          "value": "[\"/usr/local/bin\",\"/usr/local/sbin\"]"
+        }
+      ]
+    },
+    {
+      "type": "application",
+      "bom-ref": "urn:literate-ai:host-install:freebsd:package:py312-sqlite3",
+      "name": "FreeBSD py312-sqlite3",
+      "version": ">=3.12,<4",
+      "properties": [
+        {
+          "name": "literate-ai:host-install:realization-kind",
+          "value": "native-package"
+        },
+        {
+          "name": "literate-ai:host-install:manager-package",
+          "value": "py312-sqlite3"
+        },
+        {
+          "name": "literate-ai:host-install:base-capabilities",
+          "value": "[\"python-sqlite3\"]"
+        },
+        {
+          "name": "literate-ai:host-install:path-entries",
+          "value": "[\"/usr/local/bin\",\"/usr/local/sbin\"]"
+        }
+      ]
+    },
+    {
+      "type": "application",
+      "bom-ref": "urn:literate-ai:host-install:freebsd:package:git",
+      "name": "FreeBSD git",
+      "version": ">=2.30,<3",
+      "properties": [
+        {
+          "name": "literate-ai:host-install:realization-kind",
+          "value": "native-package"
+        },
+        {
+          "name": "literate-ai:host-install:manager-package",
+          "value": "git"
+        },
+        {
+          "name": "literate-ai:host-install:base-capabilities",
+          "value": "[\"git\"]"
+        },
+        {
+          "name": "literate-ai:host-install:path-entries",
+          "value": "[\"/usr/local/bin\",\"/usr/local/sbin\"]"
+        }
+      ]
+    },
+    {
+      "type": "application",
+      "bom-ref": "urn:literate-ai:host-install:freebsd:package:git-lfs",
+      "name": "FreeBSD git-lfs",
+      "version": ">=3,<4",
+      "properties": [
+        {
+          "name": "literate-ai:host-install:realization-kind",
+          "value": "native-package"
+        },
+        {
+          "name": "literate-ai:host-install:manager-package",
+          "value": "git-lfs"
+        },
+        {
+          "name": "literate-ai:host-install:base-capabilities",
+          "value": "[\"git-lfs\"]"
+        },
+        {
+          "name": "literate-ai:host-install:path-entries",
+          "value": "[\"/usr/local/bin\",\"/usr/local/sbin\"]"
+        }
+      ]
+    },
+    {
+      "type": "application",
+      "bom-ref": "urn:literate-ai:host-install:freebsd:package:codex",
+      "name": "FreeBSD codex",
+      "version": ">=0.143,<1",
+      "properties": [
+        {
+          "name": "literate-ai:host-install:realization-kind",
+          "value": "native-package"
+        },
+        {
+          "name": "literate-ai:host-install:manager-package",
+          "value": "codex"
+        },
+        {
+          "name": "literate-ai:host-install:base-capabilities",
+          "value": "[\"codex\"]"
+        },
+        {
+          "name": "literate-ai:host-install:path-entries",
+          "value": "[\"/usr/local/bin\",\"/usr/local/sbin\"]"
+        }
+      ]
+    },
+    {
+      "type": "application",
+      "bom-ref": "urn:literate-ai:host-install:freebsd:package:gmake",
+      "name": "FreeBSD gmake",
+      "version": ">=3.81,<5",
+      "properties": [
+        {
+          "name": "literate-ai:host-install:realization-kind",
+          "value": "native-package"
+        },
+        {
+          "name": "literate-ai:host-install:manager-package",
+          "value": "gmake"
+        },
+        {
+          "name": "literate-ai:host-install:base-capabilities",
+          "value": "[\"make\"]"
+        },
+        {
+          "name": "literate-ai:host-install:path-entries",
+          "value": "[\"/usr/local/bin\",\"/usr/local/sbin\"]"
+        },
+        {
+          "name": "literate-ai:host-install:probe-candidates",
+          "value": "[\"gmake\"]"
+        },
+        {
+          "name": "literate-ai:host-install:probe-arguments",
+          "value": "[\"--version\"]"
+        }
+      ]
+    },
+    {
+      "type": "application",
+      "bom-ref": "urn:literate-ai:host-install:freebsd:package:node24",
+      "name": "FreeBSD node24",
+      "version": ">=24,<25",
+      "properties": [
+        {
+          "name": "literate-ai:host-install:realization-kind",
+          "value": "native-package"
+        },
+        {
+          "name": "literate-ai:host-install:manager-package",
+          "value": "node24"
+        },
+        {
+          "name": "literate-ai:host-install:base-capabilities",
+          "value": "[\"node\"]"
+        },
+        {
+          "name": "literate-ai:host-install:path-entries",
+          "value": "[\"/usr/local/bin\",\"/usr/local/sbin\"]"
+        }
+      ]
+    },
+    {
+      "type": "application",
+      "bom-ref": "urn:literate-ai:host-install:freebsd:package:npm-node24",
+      "name": "FreeBSD npm-node24",
+      "version": ">=10,<13",
+      "properties": [
+        {
+          "name": "literate-ai:host-install:realization-kind",
+          "value": "native-package"
+        },
+        {
+          "name": "literate-ai:host-install:manager-package",
+          "value": "npm-node24"
+        },
+        {
+          "name": "literate-ai:host-install:base-capabilities",
+          "value": "[\"npm\"]"
+        },
+        {
+          "name": "literate-ai:host-install:path-entries",
+          "value": "[\"/usr/local/bin\",\"/usr/local/sbin\"]"
+        }
+      ]
+    },
+    {
+      "type": "application",
+      "bom-ref": "urn:literate-ai:host-install:freebsd:package:rust",
+      "name": "FreeBSD rust",
+      "version": ">=1.75,<2",
+      "properties": [
+        {
+          "name": "literate-ai:host-install:realization-kind",
+          "value": "native-package"
+        },
+        {
+          "name": "literate-ai:host-install:manager-package",
+          "value": "rust"
+        },
+        {
+          "name": "literate-ai:host-install:base-capabilities",
+          "value": "[\"rustc\",\"cargo\"]"
+        },
+        {
+          "name": "literate-ai:host-install:path-entries",
+          "value": "[\"/usr/local/bin\",\"/usr/local/sbin\"]"
+        }
+      ]
+    },
+    {
+      "type": "application",
+      "bom-ref": "urn:literate-ai:host-install:freebsd:package:cmake-core",
+      "name": "FreeBSD cmake-core",
+      "version": ">=3.25,<5",
+      "properties": [
+        {
+          "name": "literate-ai:host-install:realization-kind",
+          "value": "native-package"
+        },
+        {
+          "name": "literate-ai:host-install:manager-package",
+          "value": "cmake-core"
+        },
+        {
+          "name": "literate-ai:host-install:base-capabilities",
+          "value": "[\"cmake\"]"
+        },
+        {
+          "name": "literate-ai:host-install:path-entries",
+          "value": "[\"/usr/local/bin\",\"/usr/local/sbin\"]"
+        }
+      ]
+    }
+  ],
+  "dependencies": [
+    {
+      "ref": "urn:literate-ai:host-install:freebsd:x86_64:none",
+      "dependsOn": [
+        "urn:literate-ai:host-install:freebsd:package:python312",
+        "urn:literate-ai:host-install:freebsd:package:py312-sqlite3",
+        "urn:literate-ai:host-install:freebsd:package:git",
+        "urn:literate-ai:host-install:freebsd:package:git-lfs",
+        "urn:literate-ai:host-install:freebsd:package:codex",
+        "urn:literate-ai:host-install:freebsd:package:gmake",
+        "urn:literate-ai:host-install:freebsd:package:node24",
+        "urn:literate-ai:host-install:freebsd:package:npm-node24",
+        "urn:literate-ai:host-install:freebsd:package:rust",
+        "urn:literate-ai:host-install:freebsd:package:cmake-core"
+      ]
+    },
+    {
+      "ref": "urn:literate-ai:host-install:freebsd:package:python312",
+      "dependsOn": []
+    },
+    {
+      "ref": "urn:literate-ai:host-install:freebsd:package:py312-sqlite3",
+      "dependsOn": []
+    },
+    {
+      "ref": "urn:literate-ai:host-install:freebsd:package:git",
+      "dependsOn": []
+    },
+    {
+      "ref": "urn:literate-ai:host-install:freebsd:package:git-lfs",
+      "dependsOn": []
+    },
+    {
+      "ref": "urn:literate-ai:host-install:freebsd:package:codex",
+      "dependsOn": []
+    },
+    {
+      "ref": "urn:literate-ai:host-install:freebsd:package:gmake",
+      "dependsOn": []
+    },
+    {
+      "ref": "urn:literate-ai:host-install:freebsd:package:node24",
+      "dependsOn": []
+    },
+    {
+      "ref": "urn:literate-ai:host-install:freebsd:package:npm-node24",
+      "dependsOn": []
+    },
+    {
+      "ref": "urn:literate-ai:host-install:freebsd:package:rust",
+      "dependsOn": []
+    },
+    {
+      "ref": "urn:literate-ai:host-install:freebsd:package:cmake-core",
+      "dependsOn": []
+    }
+  ]
+}

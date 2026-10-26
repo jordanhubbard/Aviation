@@ -1,0 +1,13 @@
+{
+  "schema": "urn:literate-ai:schema:v2:standard-language-command-profile",
+  "target": "javascript",
+  "toolchain": "node",
+  "source_entrypoint": "source/main.js",
+  "generated_test_entrypoint": "source/tests/litai_test.js",
+  "artifact_layout": "tree",
+  "artifact_entrypoint": "source/main.js",
+  "bazel_output_path": "run.js",
+  "build_strategy": "javascript-tree",
+  "runtime_strategy": "javascript",
+  "media_type": "application/javascript"
+}

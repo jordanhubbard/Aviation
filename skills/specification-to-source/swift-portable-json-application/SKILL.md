@@ -5,7 +5,7 @@ metadata:
   author: "Literate AI maintainers <literate-ai-maintainers@users.noreply.github.com>"
 schema: "urn:literate-ai:schema:v1:specification-to-source-skill"
 skill_id: "swift-portable-json-application"
-version: "1.0.6"
+version: "1.0.7"
 title: "Swift portable JSON application"
 stages:
   - "generate"
@@ -39,9 +39,16 @@ collections with `String(decoding: bytes, as: UTF8.self)` when replacement is ac
 or `String(validating: bytes, as: UTF8.self)` when invalid UTF-8 must be rejected. Do not
 emit Foundation-only `String(bytes:encoding:)` calls. When assembling generated-test JSON,
 concatenate the `outcomes.joined(separator: ",")` value between literal prefix and suffix
-strings; do not escape the separator literal inside string interpolation. Compile
-`source/main.swift` together with `source/tests/litai_test.swift` using the selected
-`swiftc` realization before returning the tree.
+strings; do not escape the separator literal inside string interpolation.
+
+The native builder compiles every `.swift` file beneath `source/` together into one
+executable. Put the only top-level executable statements in `source/main.swift`;
+support and test files contain declarations only. Do not use `@main` with this
+`main.swift` entrypoint, or generate an independent Swift cleanup/tool executable
+inside this tree. Before returning the tree, compile the complete, recursively
+collected Swift source set in one invocation of the selected `swiftc`, with `-O`
+and without `-parse-as-library`, then run the resulting executable's generated
+test and smoke modes. Checking only the main and test files misses helper conflicts.
 
 Treat toolchain installation as selected realization policy, not source-generation
 policy. For missing prerequisites, defer to <https://www.swift.org/install/macos/>,

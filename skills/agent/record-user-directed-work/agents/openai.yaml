@@ -1,0 +1,4 @@
+interface:
+  display_name: "Record User-Directed Work"
+  short_description: "Turn user direction into durable planned work"
+  default_prompt: "Use $record-user-directed-work to record this request as reasoned repository work before implementing it."

@@ -28,6 +28,7 @@ contributions:
 conflicts: []
 co_requisites: []
 order_before:
+  - "flavor://literate-ai/os-freebsd"
   - "flavor://literate-ai/os-linux"
   - "flavor://literate-ai/os-macos"
   - "flavor://literate-ai/os-windows"

@@ -1,0 +1,25 @@
+{
+  "$schema": "http://cyclonedx.org/schema/bom-1.7.schema.json",
+  "bomFormat": "CycloneDX",
+  "specVersion": "1.7",
+  "serialNumber": "urn:uuid:f4024699-ac95-4678-8145-c7a2a9848c67",
+  "version": 1,
+  "metadata": {
+    "component": {"type": "application", "bom-ref": "urn:literate-ai:toolchain:package-npm", "name": "package-npm", "version": "1.0.0"},
+    "properties": [{"name": "literate-ai:base-toolchain:role", "value": "mixin"}]
+  },
+  "components": [{
+    "type": "application", "bom-ref": "urn:literate-ai:capability:npm", "name": "npm", "version": ">=9,<13",
+    "properties": [
+      {"name": "literate-ai:base-toolchain:capability", "value": "npm"},
+      {"name": "literate-ai:base-toolchain:probe-kind", "value": "command"},
+      {"name": "literate-ai:base-toolchain:probe-candidates", "value": "[\"npm\",\"npm.cmd\"]"},
+      {"name": "literate-ai:base-toolchain:probe-arguments", "value": "[\"--version\"]"},
+      {"name": "literate-ai:base-toolchain:reason", "value": "The selected npm packaging Flavor resolves and builds an npm package closure."}
+    ]
+  }],
+  "dependencies": [
+    {"ref": "urn:literate-ai:toolchain:package-npm", "dependsOn": ["urn:literate-ai:capability:npm"]},
+    {"ref": "urn:literate-ai:capability:npm", "dependsOn": []}
+  ]
+}

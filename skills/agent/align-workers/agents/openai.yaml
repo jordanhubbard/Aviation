@@ -1,0 +1,4 @@
+interface:
+  display_name: "Align Workers"
+  short_description: "Probe, inventory and align workers with the template"
+  default_prompt: "Use $align-workers to inventory my Literate AI workers and bring them into alignment."
