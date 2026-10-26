@@ -1,0 +1,13 @@
+{
+  "schema": "urn:literate-ai:schema:v2:standard-language-command-profile",
+  "target": "rust",
+  "toolchain": "rust",
+  "source_entrypoint": "source/main.rs",
+  "generated_test_entrypoint": "source/tests/litai_test.rs",
+  "artifact_layout": "file",
+  "artifact_entrypoint": "run",
+  "bazel_output_path": "run",
+  "build_strategy": "rust-executable",
+  "runtime_strategy": "native-executable",
+  "media_type": "application/vnd.literate-ai.native-executable"
+}

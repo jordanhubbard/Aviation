@@ -41,15 +41,24 @@ conventions.
    do not invent framework configuration fields or imply that the planned automatic
    provisioning handoff already exists. Materialize assignments outside version control.
    Never copy routing commands, credentials, API keys, or resolved nodes into the project.
-5. Run the installed host-tool preflight on each assigned worker before Git acquisition
-   or sample execution. Treat coding-agent authentication as a separate readiness gate.
+5. Run the detect-before-install skill on each assigned worker before Git acquisition or
+   sample execution. Then follow the checkout-git-repository skill for any Git-backed
+   workspace so shallow history, recursive submodules, and LFS hydration share one
+   fail-closed contract. That bootstrap also attempts NTP synchronization to
+   `time.nist.gov`; log and continue if it fails. Treat coding-agent authentication as
+   a separate readiness gate.
 6. Run `litai worker probe --all` to refresh the reported user-state
    `worker_observations` inventory. Review degraded NVIDIA results before
    selecting CUDA work: missing `nvidia-smi` means no discoverable NVIDIA device, while
    an installed command that cannot query its driver is an unknown/degraded state, not
    an empty inventory. Never copy observed capacity into authored minimum requirements.
-7. Run one sample first, then expand the sample glob only after all workers pass
+7. Run `litai worker align --all` (the align-workers skill) and resolve every finding
+   before dispatch; it checks the repository template, your coding CLI and model on
+   each worker, declared files and secrets, and free disk.
+8. Run one sample first, then expand the sample glob only after all workers pass
    platform, source-authority, and toolchain preflight.
+
+For complex projects where minimum turnaround matters, prefer user-supplied runners over hosted CI/CD workers: the host running the coding CLI first, then aligned `workers.json` workers, and CI/CD only for platform and action cells those cannot cover or when the project marks CI mandatory. See `skills/agent/align-workers/SKILL.md`.
 
 The checked-in examples define only synthetic workers and selections. Real worker and
 matrix files are durable user configuration outside the project tree.

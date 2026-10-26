@@ -1,0 +1,7 @@
+{
+  "schema": "urn:literate-ai:schema:v2:standard-npm-command-profile",
+  "target": "npm",
+  "toolchain": "npm",
+  "manifest": "source/package.json",
+  "lockfile": "source/package-lock.json"
+}

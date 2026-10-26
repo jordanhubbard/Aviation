@@ -1,0 +1,13 @@
+{
+  "schema": "urn:literate-ai:schema:v2:standard-language-command-profile",
+  "target": "elixir",
+  "toolchain": "elixir",
+  "source_entrypoint": "source/main.exs",
+  "generated_test_entrypoint": "source/tests/litai_test.exs",
+  "artifact_layout": "tree",
+  "artifact_entrypoint": "source/main.exs",
+  "bazel_output_path": "run.exs",
+  "build_strategy": "elixir-tree",
+  "runtime_strategy": "elixir",
+  "media_type": "text/x-elixir"
+}

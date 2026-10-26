@@ -1,0 +1,9 @@
+{
+  "schema": "literate-ai/generation-routing@1",
+  "routing_id": "production-coding-cli",
+  "version": "1.0.0",
+  "group_id": "production-e2e",
+  "required_locality": "local",
+  "fallback_allowed": false,
+  "data_egress": "source-allowed"
+}

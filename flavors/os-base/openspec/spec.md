@@ -19,7 +19,12 @@ The coding-agent capability SHALL be satisfied by one supported provider. An exp
 provider selection SHALL require that exact provider and SHALL NOT fall back to another
 installed provider. Without an explicit selection, an installed provider SHALL be
 chosen in declared order; when none exists, the declared default MAY be installed only
-after the installation-consent boundary.
+after the installation-consent boundary. A concrete OS realization SHALL close every
+non-alternative capability and declare at least one supported coding-agent provider.
+It need not invent realizations for providers unavailable on that platform. Only
+declared providers are eligible for automatic selection; an explicitly selected
+provider absent from the tuple SHALL fail before acquisition or another provider's
+execution.
 
 #### Scenario: Selected provider is absent
 
@@ -27,6 +32,13 @@ after the installation-consent boundary.
 - **THEN** preflight reports Claude missing or installs the declared Claude realization
   after consent
 - **AND** generation does not begin through Codex
+
+#### Scenario: Provider has no platform realization
+
+- **WHEN** the selected OS tuple declares Codex and the operator explicitly selects
+  Cursor, which has no realization in that tuple
+- **THEN** preflight names the unavailable selection and the tuple's supported providers
+- **AND** an ambient Cursor command cannot qualify that unsupported realization
 
 ### Requirement: Authentication remains separate
 

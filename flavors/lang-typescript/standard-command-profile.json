@@ -1,0 +1,13 @@
+{
+  "schema": "urn:literate-ai:schema:v2:standard-language-command-profile",
+  "target": "typescript",
+  "toolchain": "node",
+  "source_entrypoint": "source/main.ts",
+  "generated_test_entrypoint": "source/tests/litai_test.ts",
+  "artifact_layout": "tree",
+  "artifact_entrypoint": "source/main.ts",
+  "bazel_output_path": "run.ts",
+  "build_strategy": "typescript-tree",
+  "runtime_strategy": "javascript",
+  "media_type": "application/typescript"
+}

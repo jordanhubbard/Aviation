@@ -1,0 +1,7 @@
+{
+  "schema": "urn:literate-ai:schema:v2:standard-cmake-command-profile",
+  "target": "cmake",
+  "toolchain": "cmake",
+  "cmakelists": "source/CMakeLists.txt",
+  "build_target": "litai_artifact"
+}

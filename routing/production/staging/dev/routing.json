@@ -2,8 +2,8 @@
   "schema": "literate-ai/generation-routing@1",
   "routing_id": "dev-coding-cli",
   "version": "1.0.0",
-  "group_id": "regenerative-generation",
+  "group_id": "dev-e2e",
   "required_locality": null,
-  "fallback_allowed": false,
+  "fallback_allowed": true,
   "data_egress": "source-allowed"
 }

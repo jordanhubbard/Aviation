@@ -1,0 +1,11 @@
+{
+  "schema": "urn:literate-ai:schema:v2:toolchain-constraint",
+  "toolchain": "hex",
+  "minimum_version": [
+    2,
+    5
+  ],
+  "maximum_exclusive_version": [
+    3
+  ]
+}

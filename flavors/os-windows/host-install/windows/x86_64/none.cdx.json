@@ -1,0 +1,622 @@
+{
+  "$schema": "http://cyclonedx.org/schema/bom-1.7.schema.json",
+  "bomFormat": "CycloneDX",
+  "specVersion": "1.7",
+  "version": 1,
+  "metadata": {
+    "timestamp": "2026-09-03T00:00:00Z",
+    "component": {
+      "type": "application",
+      "bom-ref": "urn:literate-ai:host-install:windows:x86_64:none",
+      "name": "literate-ai-host-install-windows-x86-64",
+      "version": "1.0.0"
+    },
+    "properties": [
+      {
+        "name": "literate-ai:host-install:operating-system",
+        "value": "windows"
+      },
+      {
+        "name": "literate-ai:host-install:architecture",
+        "value": "x86_64"
+      },
+      {
+        "name": "literate-ai:host-install:accelerator",
+        "value": "none"
+      },
+      {
+        "name": "literate-ai:host-install:package-manager",
+        "value": "winget"
+      },
+      {
+        "name": "literate-ai:host-install:manager-executable",
+        "value": "winget.exe"
+      },
+      {
+        "name": "literate-ai:host-install:query-executable",
+        "value": "winget.exe"
+      },
+      {
+        "name": "literate-ai:host-install:query-arguments",
+        "value": "[\"list\",\"--id\",\"{package}\",\"--exact\",\"--source\",\"winget\",\"--accept-source-agreements\",\"--disable-interactivity\"]"
+      },
+      {
+        "name": "literate-ai:host-install:install-executable",
+        "value": "winget.exe"
+      },
+      {
+        "name": "literate-ai:host-install:install-arguments",
+        "value": "[\"install\",\"--id\",\"{package}\",\"--exact\",\"--source\",\"winget\",\"--silent\",\"--accept-package-agreements\",\"--accept-source-agreements\",\"--disable-interactivity\"]"
+      },
+      {
+        "name": "literate-ai:host-install:install-mode",
+        "value": "each"
+      }
+    ]
+  },
+  "components": [
+    {
+      "type": "application",
+      "bom-ref": "pkg:generic/winget-python-python-3.13",
+      "name": "WinGet Python 3.13",
+      "version": ">=3.11,<4",
+      "properties": [
+        {
+          "name": "literate-ai:host-install:realization-kind",
+          "value": "native-package"
+        },
+        {
+          "name": "literate-ai:host-install:manager-package",
+          "value": "Python.Python.3.13"
+        },
+        {
+          "name": "literate-ai:host-install:base-capabilities",
+          "value": "[\"python\",\"python-venv\"]"
+        }
+      ]
+    },
+    {
+      "type": "application",
+      "bom-ref": "pkg:generic/winget-git-git",
+      "name": "WinGet Git for Windows",
+      "version": ">=2.30,<3",
+      "properties": [
+        {
+          "name": "literate-ai:host-install:realization-kind",
+          "value": "native-package"
+        },
+        {
+          "name": "literate-ai:host-install:manager-package",
+          "value": "Git.Git"
+        },
+        {
+          "name": "literate-ai:host-install:base-capabilities",
+          "value": "[\"git\",\"bash\"]"
+        },
+        {
+          "name": "literate-ai:host-install:path-entries",
+          "value": "[\"%ProgramFiles%/Git/cmd\",\"%ProgramFiles%/Git/bin\"]"
+        }
+      ]
+    },
+    {
+      "type": "application",
+      "bom-ref": "pkg:generic/winget-github-git-lfs",
+      "name": "WinGet Git LFS",
+      "version": ">=3,<4",
+      "properties": [
+        {
+          "name": "literate-ai:host-install:realization-kind",
+          "value": "native-package"
+        },
+        {
+          "name": "literate-ai:host-install:manager-package",
+          "value": "GitHub.GitLFS"
+        },
+        {
+          "name": "literate-ai:host-install:base-capabilities",
+          "value": "[\"git-lfs\"]"
+        },
+        {
+          "name": "literate-ai:host-install:path-entries",
+          "value": "[\"%ProgramFiles%/Git/cmd\",\"%ProgramFiles%/Git LFS\"]"
+        }
+      ]
+    },
+    {
+      "type": "application",
+      "bom-ref": "pkg:generic/winget-microsoft-vc-runtime",
+      "name": "WinGet Microsoft Visual C++ Redistributable",
+      "version": ">=14,<15",
+      "properties": [
+        {
+          "name": "literate-ai:host-install:realization-kind",
+          "value": "native-package"
+        },
+        {
+          "name": "literate-ai:host-install:manager-package",
+          "value": "Microsoft.VCRedist.2015+.x64"
+        },
+        {
+          "name": "literate-ai:host-install:base-capabilities",
+          "value": "[\"vcruntime\"]"
+        }
+      ]
+    },
+    {
+      "type": "application",
+      "bom-ref": "pkg:generic/winget-nodejs-lts",
+      "name": "WinGet Node.js LTS",
+      "version": ">=20.19,<27",
+      "properties": [
+        {
+          "name": "literate-ai:host-install:realization-kind",
+          "value": "native-package"
+        },
+        {
+          "name": "literate-ai:host-install:manager-package",
+          "value": "OpenJS.NodeJS.LTS"
+        },
+        {
+          "name": "literate-ai:host-install:base-capabilities",
+          "value": "[\"node\",\"npm\"]"
+        },
+        {
+          "name": "literate-ai:host-install:path-entries",
+          "value": "[\"%ProgramFiles%/nodejs\"]"
+        }
+      ]
+    },
+    {
+      "type": "application",
+      "bom-ref": "pkg:generic/cursor-agent-windows-x64",
+      "name": "Cursor Agent for Windows x86-64",
+      "version": "2026.09.02-c22c1a3",
+      "properties": [
+        {
+          "name": "literate-ai:host-install:realization-kind",
+          "value": "managed-archive"
+        },
+        {
+          "name": "literate-ai:host-install:base-capabilities",
+          "value": "[\"cursor-agent\"]"
+        },
+        {
+          "name": "literate-ai:host-install:artifact-url",
+          "value": "https://downloads.cursor.com/lab/2026.09.02-c22c1a3/windows/x64/agent-cli-package.zip"
+        },
+        {
+          "name": "literate-ai:host-install:artifact-digest",
+          "value": "2a560a7629828fa00c1d6a67eef5ea9bd3e99609abd45cb02ef2e743e83b9d47"
+        },
+        {
+          "name": "literate-ai:host-install:archive-format",
+          "value": "zip"
+        },
+        {
+          "name": "literate-ai:host-install:strip-prefix",
+          "value": "dist-package"
+        },
+        {
+          "name": "literate-ai:host-install:path-entries",
+          "value": "[\".\"]"
+        },
+        {
+          "name": "literate-ai:host-install:artifact-digest-algorithm",
+          "value": "sha256"
+        },
+        {
+          "name": "literate-ai:host-install:executable-path",
+          "value": "cursor-agent.cmd"
+        },
+        {
+          "name": "literate-ai:host-install:executable-name",
+          "value": "cursor-agent.cmd"
+        }
+      ]
+    },
+    {
+      "type": "application",
+      "bom-ref": "pkg:generic/winget-msvc-build-tools",
+      "name": "WinGet MSVC Build Tools",
+      "version": ">=12,<100",
+      "properties": [
+        {
+          "name": "literate-ai:host-install:realization-kind",
+          "value": "native-package"
+        },
+        {
+          "name": "literate-ai:host-install:manager-package",
+          "value": "Microsoft.VisualStudio.2022.BuildTools"
+        },
+        {
+          "name": "literate-ai:host-install:base-capabilities",
+          "value": "[\"cxx\"]"
+        },
+        {
+          "name": "literate-ai:host-install:probe-candidates",
+          "value": "[\"cl.exe\"]"
+        },
+        {
+          "name": "literate-ai:host-install:probe-arguments",
+          "value": "[\"/?\"]"
+        },
+        {
+          "name": "literate-ai:host-install:install-arguments",
+          "value": "[\"install\",\"--id\",\"{package}\",\"--exact\",\"--silent\",\"--disable-interactivity\",\"--accept-package-agreements\",\"--accept-source-agreements\",\"--override\",\"--wait --quiet --norestart --nocache --add Microsoft.VisualStudio.Workload.VCTools --includeRecommended\"]"
+        }
+      ]
+    },
+    {
+      "type": "application",
+      "bom-ref": "pkg:generic/winget-gnuwin32-make",
+      "name": "WinGet GNU Make",
+      "version": ">=3.81,<5",
+      "properties": [
+        {
+          "name": "literate-ai:host-install:realization-kind",
+          "value": "native-package"
+        },
+        {
+          "name": "literate-ai:host-install:manager-package",
+          "value": "GnuWin32.Make"
+        },
+        {
+          "name": "literate-ai:host-install:base-capabilities",
+          "value": "[\"make\"]"
+        },
+        {
+          "name": "literate-ai:host-install:path-entries",
+          "value": "[\"%ProgramFiles(x86)%/GnuWin32/bin\",\"%ProgramFiles%/GnuWin32/bin\"]"
+        }
+      ]
+    },
+    {
+      "type": "application",
+      "bom-ref": "pkg:generic/winget-kitware-cmake",
+      "name": "WinGet CMake",
+      "version": ">=3.25,<5",
+      "properties": [
+        {
+          "name": "literate-ai:host-install:realization-kind",
+          "value": "native-package"
+        },
+        {
+          "name": "literate-ai:host-install:manager-package",
+          "value": "Kitware.CMake"
+        },
+        {
+          "name": "literate-ai:host-install:base-capabilities",
+          "value": "[\"cmake\"]"
+        },
+        {
+          "name": "literate-ai:host-install:path-entries",
+          "value": "[\"%ProgramFiles%/CMake/bin\"]"
+        }
+      ]
+    },
+    {
+      "type": "application",
+      "bom-ref": "pkg:generic/winget-bazel-bazelisk",
+      "name": "WinGet Bazelisk",
+      "version": ">=7,<10",
+      "properties": [
+        {
+          "name": "literate-ai:host-install:realization-kind",
+          "value": "native-package"
+        },
+        {
+          "name": "literate-ai:host-install:manager-package",
+          "value": "Bazel.Bazelisk"
+        },
+        {
+          "name": "literate-ai:host-install:base-capabilities",
+          "value": "[\"bazel\"]"
+        },
+        {
+          "name": "literate-ai:host-install:path-entries",
+          "value": "[\"%LOCALAPPDATA%/Microsoft/WinGet/Links\"]"
+        }
+      ]
+    },
+    {
+      "type": "application",
+      "bom-ref": "pkg:generic/winget-rustlang-rustup",
+      "name": "WinGet Rustup",
+      "version": ">=1.75,<2",
+      "properties": [
+        {
+          "name": "literate-ai:host-install:realization-kind",
+          "value": "native-package"
+        },
+        {
+          "name": "literate-ai:host-install:manager-package",
+          "value": "Rustlang.Rustup"
+        },
+        {
+          "name": "literate-ai:host-install:base-capabilities",
+          "value": "[\"rustc\",\"cargo\"]"
+        },
+        {
+          "name": "literate-ai:host-install:path-entries",
+          "value": "[\"%USERPROFILE%/.cargo/bin\"]"
+        }
+      ]
+    },
+    {
+      "type": "application",
+      "bom-ref": "pkg:generic/codex-windows-x64",
+      "name": "Codex for Windows x64",
+      "version": "0.153.0",
+      "properties": [
+        {
+          "name": "literate-ai:host-install:realization-kind",
+          "value": "managed-archive"
+        },
+        {
+          "name": "literate-ai:host-install:base-capabilities",
+          "value": "[\"codex\"]"
+        },
+        {
+          "name": "literate-ai:host-install:artifact-url",
+          "value": "https://github.com/openai/codex/releases/download/rust-v0.153.0/codex-package-x86_64-pc-windows-msvc.tar.gz"
+        },
+        {
+          "name": "literate-ai:host-install:artifact-digest-algorithm",
+          "value": "sha256"
+        },
+        {
+          "name": "literate-ai:host-install:artifact-digest",
+          "value": "dba6a113d7ab279b30772fcdc5d7f352c3a28556a49a1ea311b4ac8603dec807"
+        },
+        {
+          "name": "literate-ai:host-install:archive-format",
+          "value": "tar.gz"
+        },
+        {
+          "name": "literate-ai:host-install:strip-prefix",
+          "value": "."
+        },
+        {
+          "name": "literate-ai:host-install:path-entries",
+          "value": "[\"bin\"]"
+        },
+        {
+          "name": "literate-ai:host-install:executable-path",
+          "value": "bin/codex.exe"
+        },
+        {
+          "name": "literate-ai:host-install:executable-name",
+          "value": "codex.exe"
+        },
+        {
+          "name": "literate-ai:host-install:required-runtime-paths",
+          "value": "[\"bin/codex-code-mode-host.exe\",\"codex-package.json\",\"codex-path/rg.exe\",\"codex-resources/codex-command-runner.exe\",\"codex-resources/codex-windows-sandbox-setup.exe\"]"
+        }
+      ]
+    },
+    {
+      "type": "application",
+      "bom-ref": "pkg:generic/claude-code-windows-x64",
+      "name": "Claude Code for Windows x64",
+      "version": "2.1.259",
+      "properties": [
+        {
+          "name": "literate-ai:host-install:realization-kind",
+          "value": "managed-archive"
+        },
+        {
+          "name": "literate-ai:host-install:base-capabilities",
+          "value": "[\"claude\"]"
+        },
+        {
+          "name": "literate-ai:host-install:artifact-url",
+          "value": "https://registry.npmjs.org/@anthropic-ai/claude-code-win32-x64/-/claude-code-win32-x64-2.1.259.tgz"
+        },
+        {
+          "name": "literate-ai:host-install:artifact-digest-algorithm",
+          "value": "sha512"
+        },
+        {
+          "name": "literate-ai:host-install:artifact-digest",
+          "value": "3726ccad98cffc0653a7166d7ace550e2e8d784b7a3d1c58476038fa977097589de51f634969a99bd3ce5dab1d80c8703ca09850204831bb70b14d09c773de0f"
+        },
+        {
+          "name": "literate-ai:host-install:archive-format",
+          "value": "tar.gz"
+        },
+        {
+          "name": "literate-ai:host-install:strip-prefix",
+          "value": "package"
+        },
+        {
+          "name": "literate-ai:host-install:path-entries",
+          "value": "[\".\"]"
+        },
+        {
+          "name": "literate-ai:host-install:executable-path",
+          "value": "claude.exe"
+        },
+        {
+          "name": "literate-ai:host-install:executable-name",
+          "value": "claude.exe"
+        }
+      ]
+    },
+    {
+      "type": "application",
+      "bom-ref": "pkg:generic/opencode-windows-x64",
+      "name": "OpenCode for Windows x64",
+      "version": "1.18.27",
+      "properties": [
+        {
+          "name": "literate-ai:host-install:realization-kind",
+          "value": "managed-archive"
+        },
+        {
+          "name": "literate-ai:host-install:base-capabilities",
+          "value": "[\"opencode\"]"
+        },
+        {
+          "name": "literate-ai:host-install:artifact-url",
+          "value": "https://github.com/anomalyco/opencode/releases/download/v1.18.27/opencode-windows-x64.zip"
+        },
+        {
+          "name": "literate-ai:host-install:artifact-digest-algorithm",
+          "value": "sha256"
+        },
+        {
+          "name": "literate-ai:host-install:artifact-digest",
+          "value": "ac26bb6f0309e9a6de279b64dc7bec5e69ab9b79c1a4e2d947d68d213b7eb575"
+        },
+        {
+          "name": "literate-ai:host-install:archive-format",
+          "value": "zip"
+        },
+        {
+          "name": "literate-ai:host-install:strip-prefix",
+          "value": "."
+        },
+        {
+          "name": "literate-ai:host-install:path-entries",
+          "value": "[\".\"]"
+        },
+        {
+          "name": "literate-ai:host-install:executable-path",
+          "value": "opencode.exe"
+        },
+        {
+          "name": "literate-ai:host-install:executable-name",
+          "value": "opencode.exe"
+        }
+      ]
+    },
+    {
+      "type": "application",
+      "bom-ref": "pkg:generic/winget-elixir",
+      "name": "Elixir runtime",
+      "version": ">=1.18",
+      "properties": [
+        {
+          "name": "literate-ai:host-install:realization-kind",
+          "value": "native-package"
+        },
+        {
+          "name": "literate-ai:host-install:manager-package",
+          "value": "Elixir.Elixir"
+        },
+        {
+          "name": "literate-ai:host-install:base-capabilities",
+          "value": "[\"elixir\"]"
+        }
+      ]
+    },
+    {
+      "type": "application",
+      "bom-ref": "pkg:generic/winget-erlang",
+      "name": "Erlang/OTP runtime",
+      "version": ">=27",
+      "properties": [
+        {
+          "name": "literate-ai:host-install:realization-kind",
+          "value": "native-package"
+        },
+        {
+          "name": "literate-ai:host-install:manager-package",
+          "value": "Erlang.ErlangOTP"
+        },
+        {
+          "name": "literate-ai:host-install:base-capabilities",
+          "value": "[\"erlang\"]"
+        }
+      ]
+    }
+  ],
+  "dependencies": [
+    {
+      "ref": "urn:literate-ai:host-install:windows:x86_64:none",
+      "dependsOn": [
+        "pkg:generic/winget-python-python-3.13",
+        "pkg:generic/winget-git-git",
+        "pkg:generic/winget-github-git-lfs",
+        "pkg:generic/winget-microsoft-vc-runtime",
+        "pkg:generic/winget-nodejs-lts",
+        "pkg:generic/cursor-agent-windows-x64",
+        "pkg:generic/winget-msvc-build-tools",
+        "pkg:generic/winget-gnuwin32-make",
+        "pkg:generic/winget-kitware-cmake",
+        "pkg:generic/winget-bazel-bazelisk",
+        "pkg:generic/winget-rustlang-rustup",
+        "pkg:generic/codex-windows-x64",
+        "pkg:generic/claude-code-windows-x64",
+        "pkg:generic/opencode-windows-x64",
+        "pkg:generic/winget-elixir",
+        "pkg:generic/winget-erlang"
+      ]
+    },
+    {
+      "ref": "pkg:generic/winget-python-python-3.13",
+      "dependsOn": []
+    },
+    {
+      "ref": "pkg:generic/winget-git-git",
+      "dependsOn": []
+    },
+    {
+      "ref": "pkg:generic/winget-github-git-lfs",
+      "dependsOn": []
+    },
+    {
+      "ref": "pkg:generic/winget-microsoft-vc-runtime",
+      "dependsOn": []
+    },
+    {
+      "ref": "pkg:generic/winget-nodejs-lts",
+      "dependsOn": []
+    },
+    {
+      "ref": "pkg:generic/cursor-agent-windows-x64",
+      "dependsOn": []
+    },
+    {
+      "ref": "pkg:generic/winget-msvc-build-tools",
+      "dependsOn": []
+    },
+    {
+      "ref": "pkg:generic/winget-gnuwin32-make",
+      "dependsOn": []
+    },
+    {
+      "ref": "pkg:generic/winget-kitware-cmake",
+      "dependsOn": []
+    },
+    {
+      "ref": "pkg:generic/winget-bazel-bazelisk",
+      "dependsOn": []
+    },
+    {
+      "ref": "pkg:generic/winget-rustlang-rustup",
+      "dependsOn": []
+    },
+    {
+      "ref": "pkg:generic/codex-windows-x64",
+      "dependsOn": []
+    },
+    {
+      "ref": "pkg:generic/claude-code-windows-x64",
+      "dependsOn": []
+    },
+    {
+      "ref": "pkg:generic/opencode-windows-x64",
+      "dependsOn": []
+    },
+    {
+      "ref": "pkg:generic/winget-elixir",
+      "dependsOn": []
+    },
+    {
+      "ref": "pkg:generic/winget-erlang",
+      "dependsOn": []
+    }
+  ]
+}

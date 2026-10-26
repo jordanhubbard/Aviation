@@ -3,6 +3,8 @@
 This file is the durable resumption queue for user-directed and discovered work. Before
 implementation, follow `skills/agent/record-user-directed-work/SKILL.md`.
 Keep detailed designs in focused roadmap documents and link them here.
+Record release scope in the [release-goal manifest](release-goals.json); the release
+gate cross-checks it against this queue.
 
 ## Detailed-roadmap lifecycle
 

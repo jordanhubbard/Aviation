@@ -914,7 +914,7 @@ if (appId === 'flightschool') {
   console.log(`remote E2E passed: ${appId} (${baseUrl}); browser fixtures removed`);
 } else if (appId === 'meta-app') {
   const manifest = JSON.parse(readFileSync(new URL('./apps.json', import.meta.url), 'utf8'));
-  const expected = manifest.apps.filter(app => app.name !== 'meta-app' && app.name !== 'aviation-chat')
+  const expected = manifest.apps.filter(app => app.launcher_visible !== false)
     .map(app => `https://${app.hostname || app.name}.${manifest.domain}/`);
   const browser = traceE2EBrowser(await chromium.launch({ headless: true, ...(executable ? { executablePath: executable } : {}) }), appId, process.env.AVIATION_E2E_TRACE_DIR);
   try {

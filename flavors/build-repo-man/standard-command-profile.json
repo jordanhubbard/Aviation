@@ -1,0 +1,7 @@
+{
+  "schema": "urn:literate-ai:schema:v2:standard-repo-man-command-profile",
+  "target": "repo-man",
+  "toolchain": "repo.sh",
+  "entrypoint": "repo.sh",
+  "build_target": "build"
+}

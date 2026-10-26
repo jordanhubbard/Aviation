@@ -1,0 +1,4 @@
+interface:
+  display_name: "Configure Test Workers"
+  short_description: "Supply private local or dynamic test workers"
+  default_prompt: "Use $configure-test-workers to configure my private cross-platform Literate AI test matrix."
