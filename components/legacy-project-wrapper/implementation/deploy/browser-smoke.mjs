@@ -63,7 +63,7 @@ try {
       if (app.name === 'meta-app') {
         const links = await page.locator('.launcher-card-cta[href]').evaluateAll(elements =>
           elements.map(element => element.getAttribute('href')));
-        const expected = manifest.apps.filter(entry => entry.name !== 'meta-app' && entry.name !== 'aviation-chat').map(entry =>
+        const expected = manifest.apps.filter(entry => entry.launcher_visible !== false).map(entry =>
           `https://${entry.hostname || entry.name}.${manifest.domain}/`);
         const missing = expected.filter(destination => !links.includes(destination));
         if (missing.length || links.length !== expected.length) {
