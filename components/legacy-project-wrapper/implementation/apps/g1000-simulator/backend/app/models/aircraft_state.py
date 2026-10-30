@@ -4,6 +4,9 @@ from dataclasses import dataclass
 import time
 from typing import Dict
 
+from aviation_flight_dynamics.aircraft import C172_CONFIG as SDK_C172_CONFIG
+from aviation_flight_dynamics.performance import compute_cruise_performance
+
 
 @dataclass(frozen=True)
 class AircraftPerformance:
@@ -47,28 +50,30 @@ class AircraftConfig:
 
 
 C172_CONFIG = AircraftConfig(
-    id="cessna-172",
-    name="Cessna 172 Skyhawk",
+    id=SDK_C172_CONFIG.aircraft_id,
+    name=SDK_C172_CONFIG.name,
     performance=AircraftPerformance(
-        cruise_speed_kt=122.0,
-        stall_speed_clean_kt=48.0,
-        stall_speed_landing_kt=40.0,
-        max_speed_kt=163.0,
-        climb_rate_fpm=720.0,
-        service_ceiling_ft=14000.0,
+        cruise_speed_kt=SDK_C172_CONFIG.performance.cruise_speed_kt,
+        stall_speed_clean_kt=SDK_C172_CONFIG.limits.stall_speed_clean_kt,
+        stall_speed_landing_kt=SDK_C172_CONFIG.limits.stall_speed_landing_kt,
+        max_speed_kt=SDK_C172_CONFIG.limits.never_exceed_speed_kt,
+        climb_rate_fpm=SDK_C172_CONFIG.performance.climb_rate_fpm,
+        service_ceiling_ft=SDK_C172_CONFIG.performance.service_ceiling_ft,
     ),
     fuel=FuelConfig(
-        capacity_gal=53.0,
-        unusable_gal=3.0,
-        burn_rate_gph=9.0,
+        capacity_gal=SDK_C172_CONFIG.fuel.capacity_gal,
+        unusable_gal=SDK_C172_CONFIG.fuel.unusable_gal,
+        burn_rate_gph=compute_cruise_performance(
+            SDK_C172_CONFIG, power_setting=0.9
+        ).fuel_flow_gph,
     ),
     weights=WeightConfig(
-        empty_lbs=1691.0,
-        max_gross_lbs=2550.0,
-        useful_load_lbs=859.0,
+        empty_lbs=SDK_C172_CONFIG.mass_properties.empty_weight_lbs,
+        max_gross_lbs=SDK_C172_CONFIG.mass_properties.max_gross_weight_lbs,
+        useful_load_lbs=SDK_C172_CONFIG.mass_properties.max_payload_lbs,
     ),
     dimensions=Dimensions(
-        wingspan_ft=36.0,
+        wingspan_ft=SDK_C172_CONFIG.aerodynamics.geometry.wing_span_ft,
         length_ft=27.0,
         height_ft=9.0,
     ),

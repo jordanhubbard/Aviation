@@ -81,6 +81,14 @@ def test_pid_vector_has_no_first_sample_derivative_kick() -> None:
     assert outputs == pytest.approx(case["expected_outputs"])
 
 
+def test_bounded_pid_vector_clamps_integral_and_output() -> None:
+    case = VECTORS["pid_bounded"]
+    controller = PIDController(PIDGains(**case["config"]))
+    outputs = [controller.update(error, dt) for error, dt in case["samples"]]
+    assert outputs == pytest.approx(case["expected_outputs"])
+    assert controller.integral == pytest.approx(-1.0)
+
+
 def test_bundled_aircraft_models_validate() -> None:
     models = [C172_CONFIG, C182_CONFIG, SR22_CONFIG]
     actual = []
@@ -137,6 +145,9 @@ def test_compatibility_formulas_match_vectors() -> None:
 
 
 def test_invalid_controls_and_time_step_fail_closed() -> None:
+    with pytest.raises(ValueError, match="PID gains and bounds"):
+        PIDController(PIDGains(1.0, 0.0, 0.0, output_min=1.0, output_max=-1.0))
+
     with pytest.raises(ValueError, match="throttle"):
         ControlInputs(1.1, 1.0, 1.0, 0.0, 0.0, 0.0)
 

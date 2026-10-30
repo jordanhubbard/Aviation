@@ -224,7 +224,7 @@ class FlightDynamicsSimulator:
             else:
                 self.autopilot.vertical_armed = ""
             if vertical_mode == "PIT":
-                self._pitch_hold_deg = self.state.pitch_degitch_deg
+                self._pitch_hold_deg = self.state.pitch_deg
             elif vertical_mode == "VS":
                 self.autopilot.target_vertical_speed_fpm = self.state.vertical_speed_fpm
             self.pitch_pid.reset()

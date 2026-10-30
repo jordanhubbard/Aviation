@@ -5,8 +5,8 @@
 - Promoted atmosphere, deterministic wind, aircraft performance/model validation,
   rigid-body integration, scalar physics, and autopilot PID primitives into an
   `aviation.flight-dynamics` Component with independently runnable acceptance
-  vectors; Flight Planner now delegates its duplicate formulas and PID state to the
-  common package.
+  vectors; Flight Planner delegates its duplicate formulas and PID state, while
+  G1000 delegates bounded PID behavior and common C172 model data to the package.
 - Promoted navaids, procedures, airspace ingestion, provenance, and freshness into an
   `aviation.nav-data` Component with shared TypeScript/Python acceptance vectors;
   Flight Planner and G1000 now delegate their common navigation-data catalogs to the

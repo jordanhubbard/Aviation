@@ -18,6 +18,11 @@ weather provider, or external service.
 - **WHEN** the declared gains, errors, and time steps are applied in order
 - **THEN** both outputs match and the first sample has no derivative kick
 
+### Scenario: A bounded PID controller saturates
+
+- **WHEN** declared integral and output bounds are exceeded
+- **THEN** both controller state and actuator output clamp to those bounds
+
 ## Requirement: Performance and models agree
 
 ### Scenario: Bundled aircraft are validated and a C172 is evaluated
