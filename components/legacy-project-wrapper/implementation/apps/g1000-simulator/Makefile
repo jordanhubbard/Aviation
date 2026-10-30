@@ -24,11 +24,11 @@ COMPOSE := $(shell docker compose version >/dev/null 2>&1 && echo "docker compos
 
 backend-test:
 	@if [ -d ".venv" ]; then \
-		PYTHONPATH=backend:../../packages/flight-dynamics:../../packages/g1000-avionics-sdk/python .venv/bin/pytest --import-mode=importlib backend/tests/ tests/backend/ -ra; \
+		PYTHONPATH=backend:../../packages/shared-sdk/python:../../packages/flight-dynamics:../../packages/g1000-avionics-sdk/python .venv/bin/pytest --import-mode=importlib backend/tests/ tests/backend/ -ra; \
 	elif [ -d "venv" ]; then \
-		PYTHONPATH=backend:../../packages/flight-dynamics:../../packages/g1000-avionics-sdk/python venv/bin/pytest --import-mode=importlib backend/tests/ tests/backend/ -ra; \
+		PYTHONPATH=backend:../../packages/shared-sdk/python:../../packages/flight-dynamics:../../packages/g1000-avionics-sdk/python venv/bin/pytest --import-mode=importlib backend/tests/ tests/backend/ -ra; \
 	else \
-		PYTHONPATH=backend:../../packages/flight-dynamics:../../packages/g1000-avionics-sdk/python python3 -m pytest --import-mode=importlib backend/tests/ tests/backend/ -ra; \
+		PYTHONPATH=backend:../../packages/shared-sdk/python:../../packages/flight-dynamics:../../packages/g1000-avionics-sdk/python python3 -m pytest --import-mode=importlib backend/tests/ tests/backend/ -ra; \
 	fi
 
 test-docker:

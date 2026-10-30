@@ -86,6 +86,10 @@ release-visible outcome to `CHANGELOG.md`; Git preserves prior queue states.
     authority until separately qualified.
   - [x] Qualify shared AHRS, ADC, and GPS device models with cross-language vectors and
     migrate G1000 and Flight Planner away from app-private implementations and stubs.
+  - [x] Qualify deterministic ADF and DME receiver models with cross-language station,
+    tuning, geometry, service-volume, and unavailable-signal vectors; make G1000 consume
+    the common models and the common navigation-data catalog instead of fixed-zero
+    app-private placeholders.
   - [ ] Promote airports, weather, procedures/nav-data, flight dynamics, avionics
     protocols/rendering, shared UI, configuration, and integration infrastructure into
     explicit Components with owned tests and contracts.
@@ -93,9 +97,9 @@ release-visible outcome to `CHANGELOG.md`; Git preserves prior queue states.
     aviation implementations after parity qualification.
   - [ ] Classify and remove or intentionally retain every remainder beneath the legacy
     wrapper.
-- **Next action:** Define real radio-model contracts and acceptance vectors before
-  deciding whether G1000's ADF/DME behavior belongs in the common SDK; keep simulator
-  orchestration and physical-device I/O app-private.
+- **Next action:** Qualify audio-panel/marker-beacon and transponder state behavior as
+  common avionics device contracts, then migrate G1000's remaining app-private device
+  state while keeping simulator orchestration and physical-device I/O app-private.
 - **Evidence:** Phase 1.2 lift-and-shift identity `sha256:c5ca4361ba010f6e8d81c93398468f9f4f8b8cc352504bc8535fa74b7c6e9990`.
   Retained conversion stage is backed by current test receipt
   `sha256:60e252aceb5834018a21d3ec5a75b667c564e207ea3cf02d475b3245640c3c79`;
@@ -158,6 +162,18 @@ release-visible outcome to `CHANGELOG.md`; Git preserves prior queue states.
   `sha256:26d3daabc4953bb168715e1d727c273ce07487281d2a1fd6b0f03f12eff5e6ee`
   and parity identity
   `sha256:abb50e5f62745c7c590773e1b518f73e524e06e0bc3601e5f5d3c5c9c9fecaa9`.
+  The ADF/DME slice has Component lock
+  `sha256:fa177de4924d455d393237f750d05ea9ebc4993bc1912fe0e4f13930abed6865`;
+  seven TypeScript and seven Python avionics conformance tests pass, all 61 G1000
+  Python compatibility tests pass, and retained source readmission passed with
+  baseline identity
+  `sha256:ef3451131134d83d1ead44c8bbfefe47868db6e65355c8f3d80ce5c11ce5bc60`
+  and parity identity
+  `sha256:5436a2ed6cb02e12eee0ddbbd8c1750fca184980aa459bbdf31b0f04d732b08a`.
+  The current authenticated retained receipt is
+  `sha256:3d154b2054804ff0875eabd3884fe911ceb40b9c5a7ea959aacb06f5fb7729f6`
+  (candidate `sha256:6bbe28b0821ada02a95ee5df05770845c8a1f6e990431eba5acd742f1e5a5324`,
+  321 tests).
   - [ ] Each promoted Component has a current lock, independent acceptance evidence,
     and exact-main CI evidence.
   - [ ] An architecture inventory proves every application imports common capabilities

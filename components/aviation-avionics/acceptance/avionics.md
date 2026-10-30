@@ -1,8 +1,9 @@
 # Aviation avionics acceptance contract
 
-An independent oracle loads `vectors.json` and evaluates protocol, rendering, and
-AHRS/ADC/GPS device cases against the common packages. Acceptance does not open a
-network connection, browser, simulator process, or physical avionics device.
+An independent oracle loads `vectors.json` and evaluates protocol, rendering,
+AHRS/ADC/GPS device cases, and ADF/DME receiver cases against the common packages.
+Acceptance does not open a network connection, browser, simulator process, or physical
+avionics device.
 
 ## Requirement: Telemetry and commands validate
 
@@ -52,6 +53,28 @@ network connection, browser, simulator process, or physical avionics device.
 - **WHEN** a coordinate is out of range, a numeric input is non-finite, or an
   altimeter setting is non-positive
 - **THEN** both realizations reject it instead of manufacturing telemetry
+
+## Requirement: Radio receiver models agree across languages
+
+### Scenario: A tuned station is inside its service volume
+
+- **WHEN** TypeScript and Python ADF/DME realizations evaluate the same receiver and
+  station records
+- **THEN** station selection, bearing, great-circle distance, slant range,
+  station-relative ground speed, and bounded signal strength match the shared vectors
+
+### Scenario: No usable station matches
+
+- **WHEN** the tuned frequency does not match a station or the receiver is outside its
+  declared service volume
+- **THEN** both realizations return an unavailable solution with empty station identity
+  and zero signal instead of fabricated navigation data
+
+### Scenario: Invalid radio geometry is supplied
+
+- **WHEN** receiver coordinates, station coordinates, frequency, elevation, or service
+  volume is non-finite or structurally invalid
+- **THEN** both realizations reject it
 
 ## Requirement: Common SDK CI runs
 
