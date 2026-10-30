@@ -1,13 +1,27 @@
 from __future__ import annotations
 
 import json
+from dataclasses import asdict
 from pathlib import Path
 
 import pytest
 
 from aviation_flight_dynamics.aircraft import C172_CONFIG, validate_aircraft_config
 from aviation_flight_dynamics.aircraft.models import C182_CONFIG, SR22_CONFIG
-from aviation_flight_dynamics.autopilot import PIDController, PIDGains
+from aviation_flight_dynamics.autopilot import (
+    AltitudeHoldController,
+    AutopilotModeController,
+    AutotrimController,
+    EnvelopeLimits,
+    EnvelopeProtection,
+    HeadingHoldController,
+    LateralMode,
+    PIDController,
+    PIDGains,
+    PitchController,
+    RollController,
+    VerticalMode,
+)
 from aviation_flight_dynamics.compat import (
     apply_turbulence_effect,
     apply_wind_effect,
@@ -89,6 +103,105 @@ def test_bounded_pid_vector_clamps_integral_and_output() -> None:
     assert controller.integral == pytest.approx(-1.0)
 
 
+def test_axis_controller_vectors() -> None:
+    controller_types = {
+        "pitch": PitchController,
+        "roll": RollController,
+        "altitude": AltitudeHoldController,
+        "heading": HeadingHoldController,
+    }
+    for case in VECTORS["axis_controllers"]:
+        controller = controller_types[case["axis"]](PIDGains(**case["gains"]))
+        outputs = [controller.update(error, dt) for error, dt in case["samples"]]
+        assert outputs == pytest.approx(case["expected_outputs"])
+
+        controller.reset()
+        reset_outputs = [
+            controller.update(error, dt) for error, dt in case["samples"]
+        ]
+        assert reset_outputs == pytest.approx(case["expected_outputs"])
+
+
+def _mode_state(controller: AutopilotModeController) -> dict[str, object]:
+    state = controller.state
+    return {
+        "master_on": state.master_on,
+        "lateral_mode": state.lateral_mode.value,
+        "vertical_mode": state.vertical_mode.value,
+        "approach_armed": state.approach_armed,
+    }
+
+
+def test_autopilot_mode_transition_vector() -> None:
+    case = VECTORS["autopilot_modes"]
+    controller = AutopilotModeController()
+    assert _mode_state(controller) == case["initial"]
+
+    for transition in case["transitions"]:
+        action = transition["action"]
+        if action == "engage":
+            controller.engage()
+            accepted = True
+        elif action == "disengage":
+            controller.disengage()
+            accepted = True
+        elif action == "set_lateral":
+            accepted = controller.set_lateral_mode(LateralMode(transition["mode"]))
+        elif action == "set_vertical":
+            accepted = controller.set_vertical_mode(VerticalMode(transition["mode"]))
+        else:  # pragma: no cover - vector schema guard
+            raise AssertionError(f"Unsupported mode action: {action}")
+        assert accepted is transition["accepted"]
+        assert _mode_state(controller) == transition["expected"]
+
+
+def test_autopilot_state_snapshots_are_immutable_copies() -> None:
+    controller = AutopilotModeController()
+    controller.engage()
+    before = controller.state
+    controller.set_lateral_mode(LateralMode.HDG)
+    assert before.lateral_mode == LateralMode.ROL
+    assert controller.state.lateral_mode == LateralMode.HDG
+
+
+def test_autotrim_vector() -> None:
+    case = VECTORS["autotrim"]
+    controller = AutotrimController(
+        trim_rate=case["trim_rate"], deadband=case["deadband"]
+    )
+    for sample in case["samples"]:
+        assert asdict(controller.update(*sample["inputs"])) == pytest.approx(
+            sample["expected"]
+        )
+
+    controller.reset()
+    assert asdict(controller.trim_state) == {
+        "elevator_trim": 0.0,
+        "aileron_trim": 0.0,
+        "rudder_trim": 0.0,
+    }
+
+
+def test_envelope_protection_vectors() -> None:
+    case = VECTORS["envelope"]
+    protection = EnvelopeProtection(EnvelopeLimits(**case["limits"]))
+    for sample in case["samples"]:
+        status = protection.check(*sample["state"])
+        assert asdict(status) == sample["expected"]
+        assert status.any_exceeded is any(sample["expected"].values())
+
+
+def test_invalid_autopilot_configuration_fails_closed() -> None:
+    with pytest.raises(ValueError, match="max_bank_deg"):
+        EnvelopeLimits(max_bank_deg=0.0)
+    with pytest.raises(ValueError, match="max_speed_kt"):
+        EnvelopeLimits(min_speed_kt=100.0, max_speed_kt=100.0)
+    with pytest.raises(ValueError, match="trim_rate"):
+        AutotrimController(trim_rate=-0.1)
+    with pytest.raises(ValueError, match="deadband"):
+        AutotrimController(deadband=-0.1)
+
+
 def test_bundled_aircraft_models_validate() -> None:
     models = [C172_CONFIG, C182_CONFIG, SR22_CONFIG]
     actual = []
@@ -150,6 +263,10 @@ def test_invalid_controls_and_time_step_fail_closed() -> None:
 
     with pytest.raises(ValueError, match="throttle"):
         ControlInputs(1.1, 1.0, 1.0, 0.0, 0.0, 0.0)
+
+    controller = PIDController(PIDGains(1.0, 0.0, 0.0))
+    with pytest.raises(ValueError, match="dt"):
+        controller.update(1.0, 0.0)
 
     state = AircraftState(
         rigid_body=RigidBodyState(

@@ -23,6 +23,17 @@ weather provider, or external service.
 - **WHEN** declared integral and output bounds are exceeded
 - **THEN** both controller state and actuator output clamp to those bounds
 
+### Scenario: Axis controllers and flight-director modes are evaluated
+
+- **WHEN** pitch, roll, altitude, and heading errors are applied and a declared mode
+  transition sequence is requested
+- **THEN** controller commands and accepted mode state match the declared vectors
+
+### Scenario: Autotrim and envelope protection are evaluated
+
+- **WHEN** sustained control inputs and declared aircraft states are applied
+- **THEN** trim remains bounded and every envelope violation flag matches the vectors
+
 ## Requirement: Performance and models agree
 
 ### Scenario: Bundled aircraft are validated and a C172 is evaluated

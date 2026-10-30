@@ -10,6 +10,13 @@ from aviation_flight_dynamics.compat import (
     calculate_lift,
     calculate_thrust,
 )
+from aviation_flight_dynamics.autopilot import (
+    AltitudeHoldController,
+    HeadingHoldController,
+    PIDGains,
+    PitchController,
+    RollController,
+)
 
 
 @dataclass
@@ -22,17 +29,23 @@ class AircraftState:
 
 
 from .alerts import AlertService, Alert
-from .autopilot_controller import PitchController, RollController, AltitudeHoldController, HeadingHoldController
+
+
+PITCH_GAINS = PIDGains(kp=1.2, ki=0.15, kd=0.07)
+ROLL_GAINS = PIDGains(kp=1.0, ki=0.1, kd=0.05)
+ALTITUDE_GAINS = PIDGains(kp=1.0, ki=0.1, kd=0.05)
+HEADING_GAINS = PIDGains(kp=1.0, ki=0.1, kd=0.05)
+AUTOPILOT_STEP_S = 1.0
 
 
 class FlightDynamicsService:
     def __init__(self, aircraft_state: AircraftState, alert_service: AlertService):
         self.aircraft_state = aircraft_state
         self.alert_service = alert_service
-        self.pitch_controller = PitchController()
-        self.roll_controller = RollController()
-        self.altitude_controller = AltitudeHoldController()
-        self.heading_controller = HeadingHoldController()
+        self.pitch_controller = PitchController(PITCH_GAINS)
+        self.roll_controller = RollController(ROLL_GAINS)
+        self.altitude_controller = AltitudeHoldController(ALTITUDE_GAINS)
+        self.heading_controller = HeadingHoldController(HEADING_GAINS)
 
     def update_state(
         self,
@@ -65,10 +78,18 @@ class FlightDynamicsService:
         adjusted_velocity = apply_turbulence_effect(adjusted_velocity, turbulence_intensity)
 
         # Autopilot control
-        pitch_output = self.pitch_controller.compute(target_pitch, self.aircraft_state.altitude)
-        roll_output = self.roll_controller.compute(target_roll, self.aircraft_state.heading)
-        altitude_output = self.altitude_controller.compute(target_altitude, self.aircraft_state.altitude)
-        heading_output = self.heading_controller.compute(target_heading, self.aircraft_state.heading)
+        pitch_output = self.pitch_controller.update(
+            target_pitch - self.aircraft_state.altitude, AUTOPILOT_STEP_S
+        )
+        roll_output = self.roll_controller.update(
+            target_roll - self.aircraft_state.heading, AUTOPILOT_STEP_S
+        )
+        altitude_output = self.altitude_controller.update(
+            target_altitude - self.aircraft_state.altitude, AUTOPILOT_STEP_S
+        )
+        heading_output = self.heading_controller.update(
+            target_heading - self.aircraft_state.heading, AUTOPILOT_STEP_S
+        )
 
         # Apply autopilot outputs to aircraft state
         self.aircraft_state.velocity = adjusted_velocity

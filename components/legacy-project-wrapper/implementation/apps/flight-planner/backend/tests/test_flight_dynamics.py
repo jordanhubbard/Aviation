@@ -1,4 +1,10 @@
 import unittest
+from aviation_flight_dynamics.autopilot import (
+    AltitudeHoldController,
+    HeadingHoldController,
+    PitchController,
+    RollController,
+)
 from app.services.flight_dynamics import FlightDynamicsService, AircraftState
 from app.services.alerts import AlertService
 
@@ -7,6 +13,13 @@ class TestFlightDynamicsService(unittest.TestCase):
         aircraft_state = AircraftState(position=(0, 0), velocity=100, altitude=10000, heading=90, fuel_level=100)
         alert_service = AlertService(fuel_threshold=50.0, oil_threshold=20.0, electrical_threshold=30.0)
         self.flight_dynamics_service = FlightDynamicsService(aircraft_state, alert_service)
+
+    def test_uses_common_sdk_axis_controllers(self):
+        service = self.flight_dynamics_service
+        self.assertIsInstance(service.pitch_controller, PitchController)
+        self.assertIsInstance(service.roll_controller, RollController)
+        self.assertIsInstance(service.altitude_controller, AltitudeHoldController)
+        self.assertIsInstance(service.heading_controller, HeadingHoldController)
 
     def test_update_state_with_alerts(self):
         self.flight_dynamics_service.update_state(
@@ -26,8 +39,8 @@ class TestFlightDynamicsService(unittest.TestCase):
             oil_pressure=15.0,
             electrical_status=25.0
         )
-        # Check if alerts are triggered
-        # This is a placeholder for actual alert handling logic
+        self.assertEqual(self.flight_dynamics_service.aircraft_state.altitude, 10000)
+        self.assertEqual(self.flight_dynamics_service.aircraft_state.heading, 90)
 
 if __name__ == '__main__':
     unittest.main(verbosity=2)
