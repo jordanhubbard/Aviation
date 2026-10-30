@@ -21,6 +21,8 @@ try:
 except (ModuleNotFoundError, ImportError):
     weather = None
 
+from . import nav_data
+
 from . import integrations
 
 __all__ = [
@@ -36,6 +38,7 @@ __all__ = [
     "load_airport_cache",
     # Modules
     "integrations",
+    "nav_data",
 ]
 
 if weather is not None:

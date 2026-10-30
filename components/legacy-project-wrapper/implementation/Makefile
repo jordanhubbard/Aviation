@@ -221,10 +221,10 @@ test-go:
 
 test-sdk-python:
 	@echo "🧪 Running Python shared SDK tests..."
-	@venv="$(abspath ../../../_build/python-envs/shared-sdk)"; \
-	python3 -m venv "$$venv"; \
-	"$$venv/bin/python" -m pip install -q -e packages/shared-sdk/python pytest; \
-	"$$venv/bin/python" -m pytest packages/shared-sdk/python/tests -q
+	@python_env="$(abspath _build/python-envs/shared-sdk)"; \
+	python3 -m venv "$$python_env"; \
+	"$$python_env/bin/python" -m pip install -q -e packages/shared-sdk/python pytest; \
+	"$$python_env/bin/python" -m pytest packages/shared-sdk/python/tests -q
 	@echo "✅ Python shared SDK tests PASSED"
 
 test-python:

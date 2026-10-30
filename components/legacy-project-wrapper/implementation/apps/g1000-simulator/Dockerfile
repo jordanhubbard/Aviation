@@ -24,6 +24,8 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 
 WORKDIR /app
 COPY apps/g1000-simulator/backend/requirements.txt ./requirements.txt
+COPY packages/shared-sdk/python /packages/shared-sdk/python
+COPY packages/shared-sdk/data /packages/shared-sdk/data
 
 RUN python -m venv /opt/venv \
     && /opt/venv/bin/pip install --upgrade pip \

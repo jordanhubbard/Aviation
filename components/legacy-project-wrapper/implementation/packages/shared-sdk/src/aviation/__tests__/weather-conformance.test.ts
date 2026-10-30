@@ -1,6 +1,5 @@
-import { readFileSync } from 'node:fs';
-import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
+import { loadConformanceContract } from './conformance-contract.js';
 import {
   WeatherCache,
   flightCategory,
@@ -9,11 +8,7 @@ import {
   warningsForConditions,
 } from '../weather/index.js';
 
-const vectorsPath = fileURLToPath(new URL(
-  '../../../../../../../../components/aviation-weather/acceptance/vectors.json',
-  import.meta.url,
-));
-const contract = JSON.parse(readFileSync(vectorsPath, 'utf8')) as any;
+const contract = loadConformanceContract<any>('weather');
 
 describe('aviation.weather Component conformance', () => {
   it('uses the versioned Component-owned vector schema', () => {

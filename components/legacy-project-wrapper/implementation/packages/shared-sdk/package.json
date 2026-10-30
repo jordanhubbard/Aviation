@@ -45,6 +45,16 @@
         "default": "./dist/aviation/weather/index.js"
       }
     },
+    "./aviation/nav-data": {
+      "import": {
+        "types": "./dist-esm/aviation/nav-data/index.d.ts",
+        "default": "./dist-esm/aviation/nav-data/index.js"
+      },
+      "require": {
+        "types": "./dist/aviation/nav-data/index.d.ts",
+        "default": "./dist/aviation/nav-data/index.js"
+      }
+    },
     "./aviation/airports": {
       "import": {
         "types": "./dist-esm/aviation/airports/index.d.ts",

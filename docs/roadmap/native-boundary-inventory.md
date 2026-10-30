@@ -113,6 +113,27 @@ their applications.
 | `apps/flight-planner/backend/app/services/flight_recommendations.py` | compatibility adapter | delegates classification, warning, and scoring behavior to the Python SDK |
 | `apps/flight-planner/backend/app/routers/weather.py` | application orchestration | retain airport lookup, route sampling, HTTP schemas, and response composition |
 
+### Fourth selected boundary: aviation navigation data
+
+`aviation.nav-data` owns provider-neutral navaid, procedure, and airspace records,
+normalization and ingestion validation, catalog query behavior, source provenance, and
+effective-date freshness. Airport identity remains with `aviation.airports`; geodesy
+remains with `aviation.navigation`; spatial indexes and avionics state remain private
+to their applications.
+
+| Retained path | Classification | Native owner / disposition |
+| --- | --- | --- |
+| `packages/shared-sdk/src/aviation/nav-data/` | retained TypeScript realization | `component://aviation/aviation-nav-data`; shared-vector adapter required |
+| `packages/shared-sdk/python/aviation/nav_data/` | retained Python realization | same capability; owns validated catalog ingestion and queries |
+| `apps/flight-planner/backend/app/services/nav_database.py` | compatibility adapter | combines `aviation.airports` with SDK navaids/procedures and retains Pydantic response mapping only |
+| `apps/flight-planner/backend/app/services/procedures.py` | compatibility adapter | delegates common procedure selection and retains the planner UI response shape |
+| `apps/flight-planner/backend/app/utils/data_loader.py` | application asset loader | delegates GeoJSON validation to the SDK; retains file location, logging, and cache policy |
+| `apps/flight-planner/backend/app/routers/airspace.py` | application-specific acceleration | retain GeoPandas projection, spatial indexing, radius policy, and HTTP serialization |
+| `apps/g1000-simulator/backend/app/services/nav_database.py` | compatibility adapter | combines common airports/nav-data and retains the simulator API response shape |
+| `apps/g1000-simulator/backend/app/services/procedures.py` | compatibility adapter | delegates selection/filtering and retains legacy simulator method names |
+| `packages/nav-data/src/` | retained provider-ingestion package with a duplicate catalog/search surface | retain its CIFP, OpenAIP, and OurAirports adapters for follow-up qualification; remove or redirect duplicate database/search/cache behavior before this boundary is complete |
+| retained airport/airspace caches | retained datasets | provenance, license, revision, and refresh evidence remain required before asset promotion |
+
 ## Cross-cutting authority to classify
 
 | Boundary and proposed owner | Evidence | Provisional classification and open question |

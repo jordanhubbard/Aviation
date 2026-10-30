@@ -1,0 +1,36 @@
+{
+  "schema":"aviation/nav-data-acceptance-vectors@1",
+  "bundle":{
+    "metadata":{"source":"synthetic-fixture","cycle":"TEST-01","effective_from":"2026-10-01T00:00:00Z","effective_through":"2026-10-31T23:59:59Z"},
+    "navaids":[
+      {"identifier":" sfo ","name":"San Francisco VOR","type":" vordme ","latitude":37.619,"longitude":-122.375,"frequency":115.8},
+      {"identifier":"dumba","name":"Dumba waypoint","type":"fix","latitude":37.75,"longitude":-122.1}
+    ],
+    "procedures":[
+      {"identifier":" quiet1 ","airport_icao":" ksfo ","procedure_type":" sid ","runway":" 28R ","transitions":[" dumba "],"legs":[{"fix":" dumba ","path_type":" tf "}]},
+      {"identifier":"bdega3","airport_icao":"KSFO","procedure_type":"STAR","runway":"28L","transitions":["BDEGA"],"legs":[{"fix":"BDEGA","altitude_constraint":"AT_OR_ABOVE 11000"}]},
+      {"identifier":"ILS28R","airport_icao":"KSFO","procedure_type":"approach","runway":"28R","legs":[{"fix":"MENLO"},{"fix":"RW28R"}]}
+    ],
+    "airspace":{"type":"FeatureCollection","features":[
+      {"type":"Feature","geometry":{"type":"Polygon","coordinates":[[[-122.5,37.5],[-122.0,37.5],[-122.0,38.0],[-122.5,37.5]]]},"properties":{"id":"SFO_B","name":"San Francisco Class B"}},
+      {"type":"Feature","geometry":null,"properties":{"id":"INVALID"}},
+      {"type":"not-a-feature","geometry":{"type":"Point","coordinates":[0,0]},"properties":{}}
+    ]}
+  },
+  "expected":{
+    "navaid_identifiers":["SFO","DUMBA"],
+    "navaid_types":["VORDME","FIX"],
+    "procedure_identifiers":["QUIET1","BDEGA3","ILS28R"],
+    "procedure_types":["SID","STAR","APPROACH"],
+    "airspace_feature_ids":["SFO_B"],
+    "search":{"query":"francisco","identifiers":["SFO"]},
+    "procedure_filter":{"airport_icao":"ksfo","procedure_type":"sid","runway":"28r","identifiers":["QUIET1"]},
+    "status":{"navaid_count":2,"procedure_count":3,"airspace_count":1,"source":"synthetic-fixture","cycle":"TEST-01","freshness":"current"}
+  },
+  "freshness":[
+    {"id":"current","metadata":{"source":"x","effective_from":"2026-10-01T00:00:00Z","effective_through":"2026-10-31T23:59:59Z"},"at":"2026-10-30T12:00:00Z","expected":"current"},
+    {"id":"expired","metadata":{"source":"x","effective_through":"2026-09-30T23:59:59Z"},"at":"2026-10-30T12:00:00Z","expected":"expired"},
+    {"id":"future","metadata":{"source":"x","effective_from":"2026-11-01T00:00:00Z"},"at":"2026-10-30T12:00:00Z","expected":"future"},
+    {"id":"undated","metadata":{"source":"x"},"at":"2026-10-30T12:00:00Z","expected":"undated"}
+  ]
+}

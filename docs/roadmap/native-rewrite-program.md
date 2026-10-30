@@ -51,11 +51,13 @@ carry an explicit removal checkpoint.
 2. [ ] `aviation.airports`: airport identity, normalization, lookup/search, and cache
    behavior are promoted; bundled-data provenance and the shared asset contract remain
    open before this boundary is complete.
-3. [ ] `aviation.weather`: provider-neutral observations/forecasts, METAR parsing,
-   flight categories, and provider adapters are implemented with shared vectors and
-   Flight Planner delegation; exact-main qualification remains before completion.
+3. [x] `aviation.weather`: provider-neutral observations/forecasts, METAR parsing,
+   flight categories, and provider adapters have shared vectors, Flight Planner
+   delegation, and exact-main qualification.
 4. [ ] `aviation.nav-data`: navaids, procedures, approaches, airspace, ingestion, and
-   provenance/freshness contracts.
+   provenance/freshness contracts are implemented locally with shared vectors and
+   Flight Planner/G1000 delegation; exact-main qualification and reconciliation of
+   the retained provider-ingestion package remain.
 5. [ ] `aviation.flight-dynamics`: atmosphere, aircraft performance, wind, autopilot,
    and validated aircraft models.
 6. [ ] `aviation.avionics`: G1000 protocols, telemetry schemas, rendering primitives,

@@ -1,6 +1,5 @@
-import { readFileSync } from 'node:fs';
-import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
+import { loadConformanceContract } from './conformance-contract.js';
 import {
   distanceNM,
   initialBearing,
@@ -27,11 +26,7 @@ interface NavigationVectors {
   vectors: NavigationVector[];
 }
 
-const vectorsPath = fileURLToPath(new URL(
-  '../../../../../../../../components/aviation-navigation/acceptance/vectors.json',
-  import.meta.url,
-));
-const contract = JSON.parse(readFileSync(vectorsPath, 'utf8')) as NavigationVectors;
+const contract = loadConformanceContract<NavigationVectors>('navigation');
 
 const operations: Record<string, (...args: never[]) => number> = {
   distance_nm: distanceNM,
