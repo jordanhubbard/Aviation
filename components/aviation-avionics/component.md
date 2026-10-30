@@ -32,10 +32,10 @@ source_dependencies: []
 # Aviation avionics
 
 This Component owns portable avionics telemetry and command contracts, flight-plan
-exchange formats, AHRS/ADC/GPS device models, display layout, drawing primitives, and
-deterministic PFD/MFD render pipelines. It does not own simulator stepping, network
-connection lifecycle, frontend stores, application page composition, physical-device
-I/O, or unqualified radio models.
+exchange formats, AHRS/ADC/GPS device models, ADF/DME receiver models, display layout,
+drawing primitives, and deterministic PFD/MFD render pipelines. It does not own
+simulator stepping, network connection lifecycle, frontend stores, application page
+composition, radio hardware I/O, or physical-device I/O.
 
 The public surface is defined by `interfaces/avionics.md`. TypeScript realizations must
 pass `acceptance/avionics.md` against `acceptance/vectors.json` without network access
@@ -84,3 +84,21 @@ coordinates, non-finite values, and non-positive altimeter settings SHALL fail c
 - **WHEN** either application needs pressure altitude, density altitude, temperature,
   or true airspeed
 - **THEN** it delegates to the common ADC realization rather than an app-local model
+
+### Requirement: Radio receivers resolve declared navigation stations
+
+ADF and DME calculations SHALL select the closest in-service station matching the tuned
+frequency, compute great-circle or slant-range geometry with unit-explicit fields, and
+derive bounded signal strength from the declared service volume. DME ground speed SHALL
+be the absolute radial component of aircraft ground speed relative to the selected
+station. Station catalogs SHALL remain explicit inputs so current navigation data can
+be supplied independently of the receiver model. Invalid station geometry SHALL fail
+closed, while an unmatched or out-of-range frequency SHALL produce an unavailable
+solution with no invented identity.
+
+#### Scenario: G1000 tunes a DME station
+
+- **WHEN** the simulator supplies its position, altitude, tuning, and the shared
+  navigation-data catalog
+- **THEN** it delegates station selection and slant-range calculation to the common DME
+  model rather than returning a fixed-zero app-private placeholder

@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Added cross-language ADF and DME receiver models to `aviation.avionics`, including
+  deterministic station selection, bearing/range geometry, service-volume behavior,
+  and unavailable-signal handling; G1000 now delegates to the common models and shared
+  navigation-data catalog instead of returning fixed-zero radio placeholders.
 - Added cross-language, independently tested AHRS, ADC, and GPS models to
   `aviation.avionics`; G1000 and Flight Planner now delegate to the common Python
   realization, and the former zero/`None` placeholder APIs were removed.

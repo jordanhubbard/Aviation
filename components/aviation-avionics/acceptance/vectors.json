@@ -47,6 +47,140 @@
       "expected": {"latitude_deg": 37.59999936184623, "longitude_deg": -122.39996593380053, "altitude_ft": 4996.511933664231, "ground_speed_kt": 110, "track_deg": 10, "waas_available": true, "waas_enabled": true, "raim_available": true, "raim_ok": true, "fix_valid": true, "horizontal_accuracy_m": 3, "vertical_accuracy_m": 5}
     }
   },
+  "radios": {
+    "adf": {
+      "input": {
+        "latitude_deg": 0,
+        "longitude_deg": 0,
+        "heading_deg": 90,
+        "tuned_frequency_khz": 350,
+        "stations": [
+          {
+            "station_ident": "NDB",
+            "station_name": "Synthetic NDB",
+            "frequency_khz": 350,
+            "latitude_deg": 1,
+            "longitude_deg": 0,
+            "max_range_nm": 120
+          },
+          {
+            "station_ident": "FAR",
+            "station_name": "Farther Co-channel NDB",
+            "frequency_khz": 350,
+            "latitude_deg": 2,
+            "longitude_deg": 0,
+            "max_range_nm": 240
+          },
+          {
+            "station_ident": "OFF",
+            "station_name": "Closer Off-frequency NDB",
+            "frequency_khz": 351,
+            "latitude_deg": 0.5,
+            "longitude_deg": 0,
+            "max_range_nm": 120
+          }
+        ]
+      },
+      "expected": {
+        "tuned_frequency_khz": 350,
+        "station_ident": "NDB",
+        "station_name": "Synthetic NDB",
+        "bearing_deg": 0,
+        "relative_bearing_deg": -90,
+        "distance_nm": 60.04046073261873,
+        "signal_strength": 0.7496627135426992,
+        "receiving": true
+      }
+    },
+    "dme": {
+      "input": {
+        "latitude_deg": 0,
+        "longitude_deg": 0,
+        "altitude_ft": 6000,
+        "track_deg": 60,
+        "ground_speed_kt": 120,
+        "tuned_frequency_mhz": 113.7,
+        "stations": [
+          {
+            "station_ident": "DME",
+            "station_name": "Synthetic DME",
+            "frequency_mhz": 113.7,
+            "latitude_deg": 0,
+            "longitude_deg": 1,
+            "elevation_ft": 0,
+            "max_range_nm": 130
+          }
+        ]
+      },
+      "expected": {
+        "tuned_frequency_mhz": 113.7,
+        "station_ident": "DME",
+        "station_name": "Synthetic DME",
+        "slant_range_nm": 60.04858056536497,
+        "ground_speed_kt": 103.92304845413264,
+        "signal_strength": 0.7866371581115309,
+        "receiving": true
+      }
+    },
+    "unavailable_adf": {
+      "input": {
+        "latitude_deg": 0,
+        "longitude_deg": 0,
+        "heading_deg": 90,
+        "tuned_frequency_khz": 351,
+        "stations": [
+          {
+            "station_ident": "NDB",
+            "station_name": "Synthetic NDB",
+            "frequency_khz": 350,
+            "latitude_deg": 1,
+            "longitude_deg": 0,
+            "max_range_nm": 120
+          }
+        ]
+      },
+      "expected": {
+        "tuned_frequency_khz": 351,
+        "station_ident": "",
+        "station_name": "",
+        "bearing_deg": 0,
+        "relative_bearing_deg": 0,
+        "distance_nm": 0,
+        "signal_strength": 0,
+        "receiving": false
+      }
+    },
+    "unavailable_dme": {
+      "input": {
+        "latitude_deg": 0,
+        "longitude_deg": 0,
+        "altitude_ft": 6000,
+        "track_deg": 90,
+        "ground_speed_kt": 120,
+        "tuned_frequency_mhz": 113.7,
+        "stations": [
+          {
+            "station_ident": "DME",
+            "station_name": "Out-of-range DME",
+            "frequency_mhz": 113.7,
+            "latitude_deg": 0,
+            "longitude_deg": 1,
+            "elevation_ft": 0,
+            "max_range_nm": 30
+          }
+        ]
+      },
+      "expected": {
+        "tuned_frequency_mhz": 113.7,
+        "station_ident": "",
+        "station_name": "",
+        "slant_range_nm": 0,
+        "ground_speed_kt": 0,
+        "signal_strength": 0,
+        "receiving": false
+      }
+    }
+  },
   "rendering": {
     "viewport": {"x": 0, "y": 0, "width": 1000, "height": 800},
     "pfd_layout": {

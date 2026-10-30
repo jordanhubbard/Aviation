@@ -6,7 +6,15 @@ from pathlib import Path
 
 import pytest
 
-from aviation_avionics import compute_adc, compute_ahrs, compute_gps
+from aviation_avionics import (
+    AdfStation,
+    DmeStation,
+    compute_adc,
+    compute_adf,
+    compute_ahrs,
+    compute_dme,
+    compute_gps,
+)
 
 
 PACKAGED_VECTORS = Path(__file__).parents[4] / "conformance" / "aviation-avionics.json"
@@ -48,6 +56,47 @@ def test_gps_vector() -> None:
     _assert_record(actual.to_dict(), VECTORS["devices"]["gps"]["expected"])
 
 
+def test_adf_vector() -> None:
+    vector = VECTORS["radios"]["adf"]
+    actual = compute_adf(
+        **{
+            **vector["input"],
+            "stations": [AdfStation(**value) for value in vector["input"]["stations"]],
+        }
+    )
+    _assert_record(actual.to_dict(), vector["expected"])
+
+
+def test_dme_vector() -> None:
+    vector = VECTORS["radios"]["dme"]
+    actual = compute_dme(
+        **{
+            **vector["input"],
+            "stations": [DmeStation(**value) for value in vector["input"]["stations"]],
+        }
+    )
+    _assert_record(actual.to_dict(), vector["expected"])
+
+
+def test_unavailable_radio_vector() -> None:
+    vector = VECTORS["radios"]["unavailable_adf"]
+    actual = compute_adf(
+        **{
+            **vector["input"],
+            "stations": [AdfStation(**value) for value in vector["input"]["stations"]],
+        }
+    )
+    _assert_record(actual.to_dict(), vector["expected"])
+    vector = VECTORS["radios"]["unavailable_dme"]
+    actual = compute_dme(
+        **{
+            **vector["input"],
+            "stations": [DmeStation(**value) for value in vector["input"]["stations"]],
+        }
+    )
+    _assert_record(actual.to_dict(), vector["expected"])
+
+
 def test_device_models_reject_invalid_inputs() -> None:
     with pytest.raises(ValueError):
         compute_ahrs(**{**VECTORS["devices"]["ahrs"]["input"], "pitch_deg": math.nan})
@@ -55,3 +104,41 @@ def test_device_models_reject_invalid_inputs() -> None:
         compute_adc(**{**VECTORS["devices"]["adc"]["input"], "altimeter_setting_inhg": 0})
     with pytest.raises(ValueError):
         compute_gps(**{**VECTORS["devices"]["gps"]["input"], "latitude_deg": 91})
+    with pytest.raises(ValueError):
+        vector = VECTORS["radios"]["adf"]["input"]
+        compute_adf(
+            **{
+                **vector,
+                "latitude_deg": 91,
+                "stations": [AdfStation(**value) for value in vector["stations"]],
+            }
+        )
+    with pytest.raises(ValueError):
+        vector = VECTORS["radios"]["adf"]["input"]
+        compute_adf(
+            **{
+                **vector,
+                "tuned_frequency_khz": 0,
+                "stations": [AdfStation(**value) for value in vector["stations"]],
+            }
+        )
+    with pytest.raises(ValueError):
+        vector = VECTORS["radios"]["dme"]["input"]
+        compute_dme(
+            **{
+                **vector,
+                "stations": [
+                    DmeStation(**{**value, "max_range_nm": 0})
+                    for value in vector["stations"]
+                ],
+            }
+        )
+    with pytest.raises(ValueError):
+        vector = VECTORS["radios"]["dme"]["input"]
+        compute_dme(
+            **{
+                **vector,
+                "tuned_frequency_mhz": -1,
+                "stations": [DmeStation(**value) for value in vector["stations"]],
+            }
+        )

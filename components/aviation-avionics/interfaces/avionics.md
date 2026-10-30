@@ -44,10 +44,18 @@
 - `computeAhrs(input) -> AhrsSolution`
 - `computeAdc(input) -> AdcSolution`
 - `computeGps(input) -> GpsSolution`
+- `AdfStation` and `DmeStation` carry explicit station identity, frequency, position,
+  service volume, and DME elevation inputs.
+- `AdfSolution` carries tuned frequency, resolved station identity, true and relative
+  bearing, great-circle distance, signal strength, and receiver availability.
+- `DmeSolution` carries tuned frequency, resolved station identity, slant range,
+  station-relative ground speed, signal strength, and receiver availability.
+- `computeAdf(input) -> AdfSolution`
+- `computeDme(input) -> DmeSolution`
 
 ## Compatibility boundary
 
 Applications MAY retain transport hooks, reconnection policy, stores, simulator
-orchestration, page selection, alerts, and display composition. Unqualified radio
-models and physical-device I/O are not part of this interface and cannot become
-authority without their own contracts and acceptance vectors.
+orchestration, page selection, alerts, display composition, and physical radio/device
+I/O. They SHALL supply navigation-station data explicitly rather than embedding a
+provider or operational database in the receiver model.
