@@ -38,7 +38,9 @@ Handles rendering of G1000 displays and related components.
 Manages flight dynamics calculations and simulations.
 
 ### @aviation/nav-data
-Provides navigation data services and utilities.
+Adapts OurAirports, openAIP, and FAA CIFP source formats into the common contracts
+owned by `@aviation/shared-sdk`. Catalogs, validation, search, proximity, and
+procedure selection live only in the shared SDK.
 
 ## 4. Plugin Development Guide
 

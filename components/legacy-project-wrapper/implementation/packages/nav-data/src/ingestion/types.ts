@@ -1,94 +1,27 @@
-export type AirspaceClass =
-  | "A"
-  | "B"
-  | "C"
-  | "D"
-  | "E"
-  | "G"
-  | "SPECIAL"
-  | "OTHER";
+import type { Airport } from "@aviation/shared-sdk/aviation/airports";
+import type {
+  NavDataBundle,
+  NavDataMetadata,
+} from "@aviation/shared-sdk/aviation/nav-data";
 
-export type NavaidType = "VOR" | "NDB" | "DME" | "FIX" | "TACAN" | "OTHER";
-
-export type ProcedureType = "SID" | "STAR" | "APPROACH" | "OTHER";
-
-export type ProcedureAltitudeConstraintType =
-  | "AT"
-  | "AT_OR_ABOVE"
-  | "AT_OR_BELOW";
-
-export type ProcedureSpeedConstraintType = "AT" | "AT_OR_BELOW";
-
-export interface GeoPoint {
-  latitude: number;
-  longitude: number;
+export interface NavDataIngestionInput {
+  ourAirports?: {
+    airportsCsv?: string;
+    navaidsCsv?: string;
+  };
+  openAip?: {
+    airspace?: unknown;
+  };
+  faaCifp?: {
+    records?: string | string[];
+  };
 }
 
-export interface NormalizedAirport {
-  icao: string;
-  iata?: string;
-  name: string;
-  latitude: number;
-  longitude: number;
-  elevationFt?: number;
-  type?: string;
-  country?: string;
-  source: string;
-}
+export type NavDataIngestionMetadata = Omit<NavDataMetadata, "source"> & {
+  source?: string;
+};
 
-export interface NormalizedNavaid {
-  identifier: string;
-  name?: string;
-  type: NavaidType;
-  latitude: number;
-  longitude: number;
-  frequency?: number;
-  frequencyUnit?: string;
-  source: string;
-}
-
-export interface NormalizedAirspace {
-  identifier: string;
-  name?: string;
-  class: AirspaceClass;
-  lowerLimitFt?: number;
-  upperLimitFt?: number;
-  boundary: GeoPoint[];
-  source: string;
-}
-
-export interface NormalizedProcedure {
-  identifier: string;
-  airportIcao?: string;
-  type: ProcedureType;
-  name?: string;
-  transition?: string;
-  fixes?: string[];
-  legs?: ProcedureLeg[];
-  rawRecord?: string;
-  source: string;
-}
-
-export interface ProcedureAltitudeConstraint {
-  type: ProcedureAltitudeConstraintType;
-  altitudeFt: number;
-}
-
-export interface ProcedureSpeedConstraint {
-  type: ProcedureSpeedConstraintType;
-  speedKts: number;
-}
-
-export interface ProcedureLeg {
-  fix: string;
-  pathType?: string;
-  altitudeConstraint?: ProcedureAltitudeConstraint;
-  speedConstraint?: ProcedureSpeedConstraint;
-}
-
-export interface NavDataSnapshot {
-  airports: NormalizedAirport[];
-  navaids: NormalizedNavaid[];
-  airspaces: NormalizedAirspace[];
-  procedures: NormalizedProcedure[];
+export interface NavDataIngestionResult {
+  airports: Airport[];
+  bundle: NavDataBundle;
 }

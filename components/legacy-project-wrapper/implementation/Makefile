@@ -175,12 +175,13 @@ test-node:
 	@echo "🧪 Running Node.js/TypeScript tests..."
 	$(PNPM) install --frozen-lockfile
 	$(PNPM) --filter @aviation/shared-sdk run build
+	$(PNPM) --filter @aviation/nav-data run build
 	$(PNPM) --filter @aviation/ai-explainer run build
 	$(PNPM) --filter @aviation/keystore run build
 	@# Ask pnpm to resolve each package's test binary from the workspace. This
 	@# keeps the root test command portable across fresh and retained checkouts.
 	@ran=0; skipped=0; \
-	for pkg in packages/shared-sdk packages/ai-explainer packages/ui-framework packages/keystore \
+	for pkg in packages/shared-sdk packages/nav-data packages/ai-explainer packages/ui-framework packages/keystore \
 	           apps/aviation-accident-tracker/backend apps/aviation-accident-tracker/frontend \
 	           apps/flight-planner/frontend apps/foreflight-dashboard/frontend; do \
 		if $(PNPM) --filter "./$$pkg" exec vitest --version >/dev/null 2>&1; then \

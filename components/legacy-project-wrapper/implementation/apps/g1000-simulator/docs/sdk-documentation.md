@@ -7,7 +7,8 @@ This document covers the five SDK packages that power the G1000 Simulator. Each 
 | `g1000-avionics-sdk` | `packages/g1000-avionics-sdk/` | Python | Avionics sensor simulation (AHRS, ADC, GPS, nav radios, autopilot) |
 | `g1000-rendering` | `packages/g1000-rendering/` | TypeScript | Canvas rendering pipeline for PFD and MFD |
 | `flight-dynamics` | `packages/flight-dynamics/` | Python | Aircraft physics, autopilot controllers, performance |
-| `nav-data` | `packages/nav-data/` | TypeScript | Navigation database search and procedures |
+| `shared-sdk` | `packages/shared-sdk/` | TypeScript + Python | Common airports, navigation-data records, catalogs, queries, validation, and procedures |
+| `nav-data` | `packages/nav-data/` | TypeScript | OurAirports, openAIP, and FAA CIFP provider adapters |
 | `g1000-protocols` | `packages/g1000-protocols/` | TypeScript | WebSocket and REST message types, flight plan formats |
 
 ---
@@ -617,99 +618,43 @@ print(result.fuel_flow_gph)      # ~8.5 gal/hr
 
 ## nav-data (`packages/nav-data/`)
 
-A TypeScript library for navigation database management, search, and procedure handling. Data is sourced from open aviation datasets (OurAirports, CIFP).
-
-### NavDataStore
-
-**File:** `src/storage.ts`
-
-The `NavDataStore` is the in-memory database structure holding all navigation data:
+A TypeScript provider-ingestion package. It converts OurAirports CSV, openAIP
+GeoJSON, and FAA CIFP records into the airport and navigation-data contracts owned by
+`@aviation/shared-sdk`. It intentionally has no private database, cache, search,
+distance, or procedure-selection API.
 
 ```typescript
-interface NavDataStore {
-  airportsByIcao: Record<string, NavAirport>;
-  navaidsByIdent: Record<string, NavNavaid>;
-  airspaces: NavAirspace[];
-}
-```
+import { NavDataCatalog } from '@aviation/shared-sdk/aviation/nav-data';
+import { ingestNavData } from '@aviation/nav-data';
 
-`NavAirport` fields include: `icao`, `iata`, `name`, `type`, `location` (lat/lon), `elevation_ft`, `runways`.
-
-`NavNavaid` fields include: `identifier`, `type` (`VOR`, `NDB`, `DME`, `TACAN`), `name`, `frequency_mhz` (or `_khz` for NDB), `position`, `range_nm`, `variation_deg`.
-
-### Search API
-
-**File:** `src/search.ts`
-
-Three search functions are available. All support optional proximity filtering and pagination.
-
-#### `searchAirports(store, options)`
-
-```typescript
-import { searchAirports } from '@aviation/nav-data';
-
-const result = searchAirports(store, {
-  query: 'KSNS',
-  near: { latitude: 37.46, longitude: -122.11 },
-  radiusNm: 100,
-  limit: 10,
-  offset: 0,
+const result = ingestNavData({
+  ourAirports: { airportsCsv, navaidsCsv },
+  openAip: openAipGeoJson,
+  faaCifp: cifpRecords,
 });
 
-// result.matches: Array<SearchMatch<NavAirport>>
-// result.total: total matches before pagination
+const catalog = new NavDataCatalog(result.bundle);
+const procedures = catalog.proceduresForAirport('KSJC');
 ```
 
-**Options:**
-
-| Option | Type | Description |
-|--------|------|-------------|
-| `query` | string | Search by ICAO code, IATA code, or name (case-insensitive) |
-| `types` | string[] | Filter by airport type (e.g., `large_airport`, `small_airport`) |
-| `near` | `GeoPoint` | Proximity center `{ latitude, longitude }` |
-| `radiusNm` | number | Proximity radius in nautical miles |
-| `limit` | number | Results per page |
-| `offset` | number | Pagination offset |
-
-When `near` is provided, results are sorted by distance ascending and each match includes `distanceNm`.
-
-#### `searchNavaids(store, options)`
-
-Same signature as `searchAirports`. The `types` field accepts `NavaidType[]` values: `VOR`, `NDB`, `DME`, `TACAN`.
-
-#### `searchAirspaces(store, options)`
-
-Same signature. The `classes` field accepts `AirspaceClass[]` values: `A`, `B`, `C`, `D`, `E`, `G`, `SUA`.
-
-### Procedures
-
-**File:** `src/procedures.ts`
-
-Handles SID, STAR, and instrument approach procedures sourced from the CIFP (Coded Instrument Flight Procedures) dataset.
-
-```typescript
-import { getProceduresForAirport, getApproachLegs } from '@aviation/nav-data';
-
-const procedures = getProceduresForAirport(store, 'KSJC');
-const ils30L = procedures.find(p => p.ident === 'ILS30L');
-
-const legs = getApproachLegs(store, 'KSJC', 'ILS30L', 'MOVDD');
-// Returns an array of NavLeg objects with course, distance, altitude constraints
-```
+Applications use the shared SDK directly for airport lookup, normalization, catalog
+queries, proximity calculations, airspace validation, and procedure selection.
 
 ### Data Ingestion
 
 **Directory:** `src/ingestion/`
 
-Scripts to import data from open-source datasets into a `NavDataStore`:
+Adapters for importing open-source datasets into common SDK contracts:
 
 | Ingestion Module | Source |
 |-----------------|--------|
-| `ourairports.ts` | OurAirports CSV (airports, runways, frequencies) |
-| `openaip.ts` | OpenAIP GeoJSON (airspaces, navaids) |
-| `cifp.ts` | FAA CIFP ARINC-424 (procedures) |
+| `ourairports.ts` | OurAirports CSV (airports and navaids) |
+| `openaip.ts` | openAIP GeoJSON (airspaces) |
+| `cifp.ts` | FAA CIFP procedure records |
 | `csv.ts` | Generic CSV import |
-| `merge.ts` | Merges multiple `NavDataStore` instances |
+
+The package test suite executes Component-owned synthetic provider vectors without
+network access and verifies that all emitted records pass common SDK validation.
 
 ---
 

@@ -55,9 +55,9 @@ carry an explicit removal checkpoint.
    flight categories, and provider adapters have shared vectors, Flight Planner
    delegation, and exact-main qualification.
 4. [ ] `aviation.nav-data`: navaids, procedures, approaches, airspace, ingestion, and
-   provenance/freshness contracts are implemented locally with shared vectors and
-   Flight Planner/G1000 delegation; exact-main qualification and reconciliation of
-   the retained provider-ingestion package remain.
+   provenance/freshness contracts have shared vectors, Flight Planner/G1000
+   delegation, and exact-main core qualification. The provider-ingestion package is
+   reconciled locally; refreshed Component and exact-main evidence remain.
 5. [ ] `aviation.flight-dynamics`: atmosphere, aircraft performance, wind, autopilot,
    and validated aircraft models.
 6. [ ] `aviation.avionics`: G1000 protocols, telemetry schemas, rendering primitives,

@@ -43,3 +43,15 @@ required binding. Acceptance never downloads operational navigation data.
 - **WHEN** this Component, its vectors, a binding, package metadata, or the SDK workflow
   changes
 - **THEN** the TypeScript and Python conformance adapters run independently
+
+## Requirement: Provider adapters converge on the SDK
+
+The TypeScript provider adapter suite SHALL load `provider-adapters.json` without
+network access and pass its result through the common airport and navigation-data
+normalizers and catalog.
+
+### Scenario: Provider formats are ingested together
+
+- **WHEN** the synthetic OurAirports, openAIP, and CIFP fixtures are adapted
+- **THEN** their declared records, combined provenance, and common catalog query match
+  the vector and no duplicate database/search exports exist

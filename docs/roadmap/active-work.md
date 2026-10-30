@@ -82,9 +82,8 @@ release-visible outcome to `CHANGELOG.md`; Git preserves prior queue states.
     aviation implementations after parity qualification.
   - [ ] Classify and remove or intentionally retain every remainder beneath the legacy
     wrapper.
-- **Next action:** Land and independently verify the portable nav-data core, reconcile
-  the retained `packages/nav-data` provider-ingestion adapters and duplicate catalog
-  surface, then promote flight dynamics.
+- **Next action:** Land and independently verify the reconciled nav-data provider
+  adapters, then promote flight dynamics.
 - **Evidence:** Phase 1.2 lift-and-shift identity `sha256:c5ca4361ba010f6e8d81c93398468f9f4f8b8cc352504bc8535fa74b7c6e9990`.
   Retained conversion stage is backed by current test receipt
   `sha256:60e252aceb5834018a21d3ec5a75b667c564e207ea3cf02d475b3245640c3c79`;
@@ -112,10 +111,12 @@ release-visible outcome to `CHANGELOG.md`; Git preserves prior queue states.
   41105586797, Monorepo CI/CD run 41105586686, and deployment-image run
   41105586742. The weather Component lock is
   `sha256:a176e62833839cca2fbbe897ee68de0cccdd2d2b514041f1184b6b920bb3f9fc`.
-  With the nav-data slice applied locally, 321 TypeScript and 109 Python SDK tests,
-  126 Flight Planner tests, and 14 G1000 backend tests pass. The nav-data Component
-  lock is `sha256:85e08425858e42c1257c76513fb558747262816254bccc319c706709b6c8ae52`;
-  exact-main evidence remains pending until its review lands.
+  Nav-data core landed in PR #342 at exact-main commit
+  `079af9398dcf540c8dbe4b5d9760e322493f77b5`; all seven exact-commit workflows
+  passed, including Common Aviation SDK run 41110871727 and Integration Tests run
+  41110871688. The provider reconciliation passes 3 Component-owned adapter tests and
+  all 321 TypeScript SDK tests locally; full retained acceptance, a refreshed lock,
+  and exact-main evidence remain pending until this review lands.
   - [ ] Each promoted Component has a current lock, independent acceptance evidence,
     and exact-main CI evidence.
   - [ ] An architecture inventory proves every application imports common capabilities
