@@ -3,7 +3,17 @@ import { resolve } from 'node:path'
 import { isDeepStrictEqual } from 'node:util'
 import { describe, expect, it } from 'vitest'
 
-import { computeAdc, computeAdf, computeAhrs, computeDme, computeGps } from '../index'
+import {
+  computeAdc,
+  computeAdf,
+  computeAhrs,
+  computeAudioPanelStatus,
+  computeDme,
+  computeGps,
+  computeMarkerBeacons,
+  normalizeSquawk,
+  transitionTransponder,
+} from '../index'
 
 const packagedPath = resolve('../../conformance/aviation-avionics.json')
 const authorityPath = resolve('../../../../aviation-avionics/acceptance/vectors.json')
@@ -61,6 +71,34 @@ describe('aviation.avionics device conformance', () => {
     )
   })
 
+  it('computes marker-beacon priority and audio-panel levels', () => {
+    const marker = vectors.controls.marker_beacons
+    const markerStatus = computeMarkerBeacons(
+      marker.input.latitude_deg,
+      marker.input.longitude_deg,
+      marker.input.altitude_ft,
+      marker.input.sites,
+    )
+    expectCloseRecord(markerStatus, marker.expected)
+    const audio = vectors.controls.audio_panel
+    expectCloseRecord(
+      computeAudioPanelStatus(audio.state, audio.adf_signal_strength, audio.marker_status),
+      audio.expected,
+    )
+  })
+
+  it('normalizes squawk codes and transitions IDENT deterministically', () => {
+    const vector = vectors.controls.transponder
+    const triggered = transitionTransponder(vector.initial, vector.trigger)
+    expectCloseRecord(triggered, vector.triggered_expected)
+    expectCloseRecord(
+      transitionTransponder(triggered, { elapsed_sec: vector.elapsed_sec }),
+      vector.elapsed_expected,
+    )
+    expect(normalizeSquawk('77')).toBe('0077')
+    expect(normalizeSquawk('1280')).toBeUndefined()
+  })
+
   it('rejects non-finite and out-of-range device inputs', () => {
     expect(() => computeAhrs({ ...vectors.devices.ahrs.input, pitch_deg: Number.NaN })).toThrow()
     expect(() => computeAdc({ ...vectors.devices.adc.input, altimeter_setting_inhg: 0 })).toThrow()
@@ -72,5 +110,20 @@ describe('aviation.avionics device conformance', () => {
       stations: [{ ...vectors.radios.dme.input.stations[0], max_range_nm: 0 }],
     })).toThrow()
     expect(() => computeDme({ ...vectors.radios.dme.input, tuned_frequency_mhz: -1 })).toThrow()
+    expect(() => computeMarkerBeacons(0, 0, 1000, [{
+      ...vectors.controls.marker_beacons.input.sites[0],
+      inner_radius_nm: 2,
+    }])).toThrow()
+    expect(() => computeAudioPanelStatus(
+      { ...vectors.controls.audio_panel.state, marker_volume: 1.1 },
+      0.5,
+      vectors.controls.audio_panel.marker_status,
+    )).toThrow()
+    expect(() => transitionTransponder(vectors.controls.transponder.initial, {
+      squawk_code: '1280',
+    })).toThrow()
+    expect(() => transitionTransponder(vectors.controls.transponder.initial, {
+      mode: 'ALT',
+    } as never)).toThrow()
   })
 })

@@ -90,6 +90,10 @@ release-visible outcome to `CHANGELOG.md`; Git preserves prior queue states.
     tuning, geometry, service-volume, and unavailable-signal vectors; make G1000 consume
     the common models and the common navigation-data catalog instead of fixed-zero
     app-private placeholders.
+  - [x] Qualify deterministic marker-beacon, audio-panel, and transponder state models
+    with cross-language vectors; migrate G1000 to common state transitions while
+    retaining audio playback, COM transmission, simulator orchestration, and physical
+    device I/O as application-private behavior.
   - [ ] Promote airports, weather, procedures/nav-data, flight dynamics, avionics
     protocols/rendering, shared UI, configuration, and integration infrastructure into
     explicit Components with owned tests and contracts.
@@ -97,9 +101,10 @@ release-visible outcome to `CHANGELOG.md`; Git preserves prior queue states.
     aviation implementations after parity qualification.
   - [ ] Classify and remove or intentionally retain every remainder beneath the legacy
     wrapper.
-- **Next action:** Qualify audio-panel/marker-beacon and transponder state behavior as
-  common avionics device contracts, then migrate G1000's remaining app-private device
-  state while keeping simulator orchestration and physical-device I/O app-private.
+- **Next action:** Inventory the next duplicated aviation domain across retained apps,
+  beginning with the G1000 autopilot/flight-dynamics boundary, then define the next
+  bounded common Component extraction without moving simulator orchestration or
+  physical-device I/O into the SDK.
 - **Evidence:** Phase 1.2 lift-and-shift identity `sha256:c5ca4361ba010f6e8d81c93398468f9f4f8b8cc352504bc8535fa74b7c6e9990`.
   Retained conversion stage is backed by current test receipt
   `sha256:60e252aceb5834018a21d3ec5a75b667c564e207ea3cf02d475b3245640c3c79`;
@@ -170,10 +175,22 @@ release-visible outcome to `CHANGELOG.md`; Git preserves prior queue states.
   `sha256:ef3451131134d83d1ead44c8bbfefe47868db6e65355c8f3d80ce5c11ce5bc60`
   and parity identity
   `sha256:5436a2ed6cb02e12eee0ddbbd8c1750fca184980aa459bbdf31b0f04d732b08a`.
-  The current authenticated retained receipt is
-  `sha256:3d154b2054804ff0875eabd3884fe911ceb40b9c5a7ea959aacb06f5fb7729f6`
-  (candidate `sha256:6bbe28b0821ada02a95ee5df05770845c8a1f6e990431eba5acd742f1e5a5324`,
+  The marker-beacon/audio-panel/transponder slice has Component lock
+  `sha256:e5df5a1dd6e3c3427a411738ba0a56da88050866bb96de2e88f07d0f98b727e4`;
+  nine TypeScript and nine Python avionics conformance tests pass, all 64 G1000 Python
+  compatibility tests pass, and retained source readmission passed with baseline
+  identity `sha256:3655035fb873c9c31ba28776c819ff4de1d9d7de579d9e810516a9d83cd300a6`
+  and parity identity
+  `sha256:4f5acf5f618ab336bf169ec84d4f1068f4754702371d1ff0d63c093880d5deee`.
+  The current retained receipt is
+  `sha256:7f7b3ab536d75b627dbea7a6e22b53c54d2f4715c08fee602e0438fad2d5611a`
+  (candidate `sha256:47fc00beede72723f85b6e8ce1e494f83805170bd2d09d96bc11cc311ec7f0fa`,
   321 tests).
+  The ADF/DME slice landed in PR #348 at exact-main commit
+  `f3da7e3406b6b2d04b95da03217231d1b7313a1e`; all six exact-commit workflows
+  passed: Common Aviation SDK run 41137297070, Integration Tests run 41137297059,
+  Monorepo CI/CD run 41137297055, deployment-image run 41137297063, Dependency Scan
+  run 41137297214, and Performance Regression Check run 41137297025.
   - [ ] Each promoted Component has a current lock, independent acceptance evidence,
     and exact-main CI evidence.
   - [ ] An architecture inventory proves every application imports common capabilities

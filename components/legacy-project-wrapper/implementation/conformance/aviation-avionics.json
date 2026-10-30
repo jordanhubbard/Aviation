@@ -10,7 +10,7 @@
       "dme": {"tuned_frequency_mhz": 113.7, "station_ident": "SFO", "station_name": "San Francisco", "slant_range_nm": 8.5, "ground_speed_kt": 110, "signal_strength": 0.9, "receiving": true},
       "autopilot": {"master_on": true, "lateral_mode": "HDG", "vertical_mode": "ALT", "lateral_armed": "", "vertical_armed": "", "target_vertical_speed_fpm": 0, "bank_limit_active": false, "pitch_limit_active": false, "disconnect_reason": ""},
       "audio_panel": {"com1_enabled": true, "com2_enabled": false, "nav1_enabled": true, "nav2_enabled": false, "adf_enabled": false, "marker_enabled": true, "speaker_enabled": false, "headphone_enabled": true, "com1_volume": 0.8, "com2_volume": 0.5, "nav1_volume": 0.7, "nav2_volume": 0.5, "adf_volume": 0.5, "marker_volume": 0.5, "adf_audio_level": 0, "marker_audio_level": 0, "marker_outer_active": false, "marker_middle_active": false, "marker_inner_active": false},
-      "transponder": {"mode": "ALT", "squawk_code": "1200", "ident_active": false, "ident_remaining_sec": 0},
+      "transponder": {"mode": "C", "squawk_code": "1200", "ident_active": false, "ident_remaining_sec": 0},
       "velocity": {"airspeed_kt": 105, "vertical_speed_fpm": 300, "turn_rate_dps": 1.5},
       "targets": {"heading_deg": 125, "altitude_ft": 3000, "airspeed_kt": 110},
       "timestamp": 1700000000000
@@ -179,6 +179,33 @@
         "signal_strength": 0,
         "receiving": false
       }
+    }
+  },
+  "controls": {
+    "marker_beacons": {
+      "input": {
+        "latitude_deg": 0,
+        "longitude_deg": 0,
+        "altitude_ft": 1200,
+        "sites": [
+          {"name": "APP", "latitude_deg": 0, "longitude_deg": 0.01, "outer_radius_nm": 2, "middle_radius_nm": 0.8, "inner_radius_nm": 0.2, "altitude_limit_ft": 2500},
+          {"name": "OTHER", "latitude_deg": 0, "longitude_deg": 0.025, "outer_radius_nm": 2, "middle_radius_nm": 0.8, "inner_radius_nm": 0.2, "altitude_limit_ft": 2500}
+        ]
+      },
+      "expected": {"outer_active": false, "middle_active": true, "inner_active": false}
+    },
+    "audio_panel": {
+      "state": {"com1_enabled": true, "com2_enabled": false, "nav1_enabled": false, "nav2_enabled": false, "adf_enabled": true, "marker_enabled": true, "speaker_enabled": true, "headphone_enabled": false, "com1_volume": 0.8, "com2_volume": 0.7, "nav1_volume": 0.7, "nav2_volume": 0.7, "adf_volume": 0.6, "marker_volume": 0.7},
+      "adf_signal_strength": 0.75,
+      "marker_status": {"outer_active": false, "middle_active": true, "inner_active": false},
+      "expected": {"adf_audio_level": 0.45, "marker_audio_level": 0.7, "marker_outer_active": false, "marker_middle_active": true, "marker_inner_active": false}
+    },
+    "transponder": {
+      "initial": {"mode": "C", "squawk_code": "1200", "ident_active": false, "ident_remaining_sec": 0},
+      "trigger": {"mode": "S", "squawk_code": 7500, "ident": true},
+      "triggered_expected": {"mode": "S", "squawk_code": "7500", "ident_active": true, "ident_remaining_sec": 18},
+      "elapsed_sec": 5,
+      "elapsed_expected": {"mode": "S", "squawk_code": "7500", "ident_active": true, "ident_remaining_sec": 13}
     }
   },
   "rendering": {

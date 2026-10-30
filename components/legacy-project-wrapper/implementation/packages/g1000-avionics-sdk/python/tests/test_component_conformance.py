@@ -8,12 +8,18 @@ import pytest
 
 from aviation_avionics import (
     AdfStation,
+    AudioPanelState,
     DmeStation,
+    MarkerBeaconSite,
+    MarkerBeaconStatus,
+    TransponderState,
     compute_adc,
     compute_adf,
     compute_ahrs,
     compute_dme,
     compute_gps,
+    compute_marker_beacons,
+    normalize_squawk,
 )
 
 
@@ -97,6 +103,32 @@ def test_unavailable_radio_vector() -> None:
     _assert_record(actual.to_dict(), vector["expected"])
 
 
+def test_marker_beacon_and_audio_panel_vectors() -> None:
+    marker = VECTORS["controls"]["marker_beacons"]
+    actual = compute_marker_beacons(
+        **{
+            **marker["input"],
+            "sites": [MarkerBeaconSite(**value) for value in marker["input"]["sites"]],
+        }
+    )
+    _assert_record(actual.to_dict(), marker["expected"])
+    audio = VECTORS["controls"]["audio_panel"]
+    state = AudioPanelState(**audio["state"])
+    status = MarkerBeaconStatus(**audio["marker_status"])
+    _assert_record(state.to_status(audio["adf_signal_strength"], status), audio["expected"])
+
+
+def test_transponder_vector() -> None:
+    vector = VECTORS["controls"]["transponder"]
+    state = TransponderState(**vector["initial"])
+    state.transition(**vector["trigger"])
+    _assert_record(state.to_dict(), vector["triggered_expected"])
+    state.update(vector["elapsed_sec"])
+    _assert_record(state.to_dict(), vector["elapsed_expected"])
+    assert normalize_squawk("77") == "0077"
+    assert normalize_squawk("1280") is None
+
+
 def test_device_models_reject_invalid_inputs() -> None:
     with pytest.raises(ValueError):
         compute_ahrs(**{**VECTORS["devices"]["ahrs"]["input"], "pitch_deg": math.nan})
@@ -132,6 +164,29 @@ def test_device_models_reject_invalid_inputs() -> None:
                     for value in vector["stations"]
                 ],
             }
+        )
+    marker = VECTORS["controls"]["marker_beacons"]["input"]
+    with pytest.raises(ValueError):
+        compute_marker_beacons(
+            marker["latitude_deg"],
+            marker["longitude_deg"],
+            marker["altitude_ft"],
+            [
+                MarkerBeaconSite(**{**marker["sites"][0], "inner_radius_nm": 2})
+            ],
+        )
+    audio = VECTORS["controls"]["audio_panel"]
+    with pytest.raises(ValueError):
+        AudioPanelState(**{**audio["state"], "marker_volume": 1.1}).to_status(
+            0.5, MarkerBeaconStatus(**audio["marker_status"])
+        )
+    with pytest.raises(ValueError):
+        TransponderState(**VECTORS["controls"]["transponder"]["initial"]).transition(
+            squawk_code="1280"
+        )
+    with pytest.raises(ValueError):
+        TransponderState(**VECTORS["controls"]["transponder"]["initial"]).transition(
+            mode="ALT"
         )
     with pytest.raises(ValueError):
         vector = VECTORS["radios"]["dme"]["input"]

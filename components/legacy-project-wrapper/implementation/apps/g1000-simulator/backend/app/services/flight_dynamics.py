@@ -285,16 +285,17 @@ class FlightDynamicsSimulator:
         squawk_code: str | int | None = None,
         ident: bool | None = None,
     ) -> None:
-        if mode and mode in TRANSPONDER_MODES:
-            self.transponder.mode = mode
+        accepted_mode = mode if mode in TRANSPONDER_MODES else None
+        accepted_squawk = None
         if squawk_code is not None:
             normalized = normalize_squawk(squawk_code)
             if normalized is not None:
-                self.transponder.squawk_code = normalized
-        if ident is True:
-            self.transponder.trigger_ident()
-        elif ident is False:
-            self.transponder.clear_ident()
+                accepted_squawk = normalized
+        self.transponder.transition(
+            mode=accepted_mode,
+            squawk_code=accepted_squawk,
+            ident=ident,
+        )
 
     def set_adf_frequency(self, frequency_khz: float | None) -> None:
         if frequency_khz is None:

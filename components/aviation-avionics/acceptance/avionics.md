@@ -76,6 +76,27 @@ avionics device.
   volume is non-finite or structurally invalid
 - **THEN** both realizations reject it
 
+## Requirement: Portable control models agree across languages
+
+### Scenario: Marker and audio-panel state is evaluated
+
+- **WHEN** TypeScript and Python realizations receive the same aircraft position,
+  explicit marker-site catalog, source selection, volume, and signal inputs
+- **THEN** marker priority, active lamps, and derived audio levels match the shared
+  vectors
+
+### Scenario: Transponder state advances
+
+- **WHEN** both realizations normalize a squawk, apply a mode, trigger IDENT, and
+  advance elapsed time
+- **THEN** mode, code, IDENT state, and remaining duration match the shared vectors
+
+### Scenario: Invalid control input is supplied
+
+- **WHEN** marker radii are unordered, an audio level is outside zero through one, a
+  squawk contains a non-octal digit, or elapsed time is invalid
+- **THEN** both realizations reject it
+
 ## Requirement: Common SDK CI runs
 
 ### Scenario: Authority or realization changes

@@ -33,7 +33,8 @@ source_dependencies: []
 
 This Component owns portable avionics telemetry and command contracts, flight-plan
 exchange formats, AHRS/ADC/GPS device models, ADF/DME receiver models, display layout,
-drawing primitives, and deterministic PFD/MFD render pipelines. It does not own
+drawing primitives, marker-beacon geometry, audio-panel state, transponder state, and
+deterministic PFD/MFD render pipelines. It does not own
 simulator stepping, network connection lifecycle, frontend stores, application page
 composition, radio hardware I/O, or physical-device I/O.
 
@@ -102,3 +103,17 @@ solution with no invented identity.
   navigation-data catalog
 - **THEN** it delegates station selection and slant-range calculation to the common DME
   model rather than returning a fixed-zero app-private placeholder
+
+### Requirement: Applications share portable avionics controls
+
+Marker-beacon geometry, audio-panel source levels, squawk normalization, transponder
+mode/state, and IDENT timing SHALL be deterministic and equivalent across TypeScript
+and Python realizations. Marker-site catalogs SHALL remain explicit application inputs.
+Invalid geometry, audio levels, squawk codes, modes, and elapsed time SHALL fail closed.
+
+#### Scenario: G1000 operates the audio panel and transponder
+
+- **WHEN** the simulator evaluates marker reception, derives audio levels, changes a
+  squawk or mode, or advances IDENT timing
+- **THEN** it delegates to the common avionics realization rather than an app-private
+  model
