@@ -1,7 +1,13 @@
 from __future__ import annotations
 
 from aviation_flight_dynamics.aircraft import C172_CONFIG as SDK_C172_CONFIG
-from aviation_flight_dynamics.autopilot import PIDGains
+from aviation_flight_dynamics.autopilot import (
+    AutopilotModeController,
+    AutopilotState,
+    LateralMode,
+    PIDGains,
+    VerticalMode,
+)
 
 from app.models.aircraft_state import C172_CONFIG
 from app.services.autopilot import (
@@ -98,3 +104,33 @@ def test_pit_mode_holds_current_pitch() -> None:
     simulator.state.pitch_deg = 2.5
     simulator.set_autopilot(vertical_mode="PIT")
     assert simulator._pitch_hold_deg == 2.5
+
+
+def test_g1000_delegates_flight_director_transitions_to_sdk() -> None:
+    simulator = FlightDynamicsSimulator()
+    assert isinstance(simulator.autopilot, AutopilotState)
+    assert isinstance(simulator._mode_controller, AutopilotModeController)
+
+    simulator.set_autopilot(lateral_mode="NAV")
+    assert simulator.autopilot.lateral_mode == LateralMode.HDG
+    assert simulator.autopilot.lateral_armed == LateralMode.NAV
+    assert simulator.autopilot.to_dict()["lateral_armed"] == "NAV"
+
+    simulator._update_lateral_capture(0.0)
+    assert simulator.autopilot.lateral_mode == LateralMode.NAV
+    assert simulator.autopilot.lateral_armed is None
+
+    simulator.set_autopilot(vertical_mode="VS", target_vertical_speed_fpm=500.0)
+    assert simulator.autopilot.vertical_mode == VerticalMode.VS
+    assert simulator.autopilot.vertical_armed == VerticalMode.ALT
+    assert simulator.autopilot.target_vertical_speed_fpm == 500.0
+
+    simulator._update_vertical_capture(0.0)
+    assert simulator.autopilot.vertical_mode == VerticalMode.ALT
+    assert simulator.autopilot.vertical_armed is None
+
+    simulator._disconnect_autopilot("limit")
+    assert simulator.autopilot.master_on is False
+    assert simulator.autopilot.disconnect_reason == "limit"
+    assert simulator.autopilot.lateral_mode == LateralMode.ROL
+    assert simulator.autopilot.vertical_mode == VerticalMode.PIT

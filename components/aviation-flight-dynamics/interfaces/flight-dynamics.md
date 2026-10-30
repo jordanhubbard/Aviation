@@ -24,11 +24,16 @@
 - `validate_aircraft(config) -> errors, warnings`
 - `pid_update(gains, error, dt_s, integral_bounds?, output_bounds?) -> output`
 - `axis_control(axis, gains, error, dt_s) -> command`
-- `autopilot_mode_transition(state, action) -> accepted, state`
+- `autopilot_mode_transition(state, action) -> accepted, state`, including master
+  engagement, active and armed lateral/vertical modes, explicit capture, selected
+  vertical speed, and disconnect reason
 - `autotrim_update(state, control_inputs, dt_s, rate, deadband) -> trim_state`
 - `envelope_check(limits, bank_deg, pitch_deg, airspeed_kt) -> protection_status`
 - compatibility scalar lift, drag, thrust, fuel-consumption, wind, and turbulence
   operations for retained applications.
+
+Capture thresholds, simulator stepping, controller-reset timing, and display
+annunciation policy are application concerns and are not part of this capability.
 
 ## Compatibility
 

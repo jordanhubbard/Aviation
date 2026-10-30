@@ -4,8 +4,11 @@ from dataclasses import dataclass
 from typing import Dict
 
 from aviation_flight_dynamics.autopilot import (
+    AutopilotState,
+    LateralMode,
     PIDController as SharedPIDController,
     PIDGains,
+    VerticalMode,
 )
 
 
@@ -95,29 +98,24 @@ def get_autopilot_tuning(
     return AutopilotTuning(roll_pid=roll_pid, pitch_pid=pitch_pid)
 
 
-LATERAL_MODES = ("ROL", "HDG", "NAV", "APR", "BC")
-VERTICAL_MODES = ("PIT", "VS", "ALT", "ALTS", "GS", "GP")
+LATERAL_MODES = tuple(mode.value for mode in LateralMode)
+VERTICAL_MODES = tuple(mode.value for mode in VerticalMode)
 
 
 @dataclass
-class AutopilotStatus:
-    master_on: bool
-    lateral_mode: str
-    vertical_mode: str
-    lateral_armed: str
-    vertical_armed: str
-    target_vertical_speed_fpm: float
-    bank_limit_active: bool
-    pitch_limit_active: bool
-    disconnect_reason: str
+class AutopilotStatus(AutopilotState):
+    """G1000 annunciation fields layered on the common flight-director state."""
+
+    bank_limit_active: bool = False
+    pitch_limit_active: bool = False
 
     def to_dict(self) -> Dict[str, float | str | bool]:
         return {
             "master_on": self.master_on,
-            "lateral_mode": self.lateral_mode,
-            "vertical_mode": self.vertical_mode,
-            "lateral_armed": self.lateral_armed,
-            "vertical_armed": self.vertical_armed,
+            "lateral_mode": self.lateral_mode.value,
+            "vertical_mode": self.vertical_mode.value,
+            "lateral_armed": self.lateral_armed.value if self.lateral_armed else "",
+            "vertical_armed": self.vertical_armed.value if self.vertical_armed else "",
             "target_vertical_speed_fpm": self.target_vertical_speed_fpm,
             "bank_limit_active": self.bank_limit_active,
             "pitch_limit_active": self.pitch_limit_active,

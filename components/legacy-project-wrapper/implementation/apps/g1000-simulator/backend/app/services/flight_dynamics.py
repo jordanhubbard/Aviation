@@ -5,6 +5,12 @@ import math
 import time
 from typing import Dict
 
+from aviation_flight_dynamics.autopilot import (
+    AutopilotModeController,
+    LateralMode,
+    VerticalMode,
+)
+
 from app.models.aircraft_state import default_c172_state
 from app.services.ahrs import compute_ahrs
 from app.services.adc import compute_adc
@@ -95,6 +101,7 @@ class FlightDynamicsSimulator:
     roll_pid: PidController = field(init=False)
     pitch_pid: PidController = field(init=False)
     autopilot: AutopilotStatus = field(init=False)
+    _mode_controller: AutopilotModeController = field(init=False)
     audio_panel: AudioPanelState = field(init=False)
     transponder: TransponderState = field(init=False)
     _roll_hold_deg: float = field(init=False, default=0.0)
@@ -137,15 +144,16 @@ class FlightDynamicsSimulator:
         self.pitch_pid = PidController(self.config.pitch_pid)
         self.autopilot = AutopilotStatus(
             master_on=True,
-            lateral_mode="HDG",
-            vertical_mode="ALTS",
-            lateral_armed="",
-            vertical_armed="ALT",
+            lateral_mode=LateralMode.HDG,
+            vertical_mode=VerticalMode.ALTS,
+            lateral_armed=None,
+            vertical_armed=VerticalMode.ALT,
             target_vertical_speed_fpm=0.0,
             bank_limit_active=False,
             pitch_limit_active=False,
             disconnect_reason="",
         )
+        self._mode_controller = AutopilotModeController(self.autopilot)
         self.audio_panel = AudioPanelState(
             com1_enabled=True,
             com2_enabled=False,
@@ -196,42 +204,42 @@ class FlightDynamicsSimulator:
         target_vertical_speed_fpm: float | None = None,
     ) -> None:
         if master_on is not None:
-            self.autopilot.master_on = master_on
             if master_on:
-                self.autopilot.disconnect_reason = ""
+                self._mode_controller.engage()
             else:
-                self.autopilot.disconnect_reason = "Manual Override by User"
-                self.autopilot.lateral_mode = "ROL"
-                self.autopilot.vertical_mode = "PIT"
-                self.autopilot.lateral_armed = ""
-                self.autopilot.vertical_armed = ""
+                self._mode_controller.disengage("Manual Override by User")
             self._limit_timer = 0.0
         if lateral_mode and lateral_mode in LATERAL_MODES:
+            mode = LateralMode(lateral_mode)
             if lateral_mode == "NAV":
-                self.autopilot.lateral_armed = "NAV"
-                if self.autopilot.lateral_mode == "ROL":
-                    self.autopilot.lateral_mode = "HDG"
+                if self.autopilot.lateral_mode == LateralMode.ROL:
+                    self._mode_controller.set_lateral_mode(LateralMode.HDG)
+                self._mode_controller.arm_lateral_mode(mode)
             else:
-                self.autopilot.lateral_mode = lateral_mode
-                self.autopilot.lateral_armed = ""
+                self._mode_controller.set_lateral_mode(mode)
                 if lateral_mode == "ROL":
                     self._roll_hold_deg = self.state.roll_deg
             self.roll_pid.reset()
         if vertical_mode and vertical_mode in VERTICAL_MODES:
-            self.autopilot.vertical_mode = vertical_mode
+            mode = VerticalMode(vertical_mode)
+            if mode in {VerticalMode.GS, VerticalMode.GP}:
+                self._mode_controller.arm_approach()
+            self._mode_controller.set_vertical_mode(mode)
             if vertical_mode in {"ALTS", "VS"}:
-                self.autopilot.vertical_armed = "ALT"
-            else:
-                self.autopilot.vertical_armed = ""
+                self._mode_controller.arm_vertical_mode(VerticalMode.ALT)
             if vertical_mode == "PIT":
                 self._pitch_hold_deg = self.state.pitch_deg
             elif vertical_mode == "VS":
-                self.autopilot.target_vertical_speed_fpm = self.state.vertical_speed_fpm
+                self._mode_controller.set_target_vertical_speed(
+                    self.state.vertical_speed_fpm
+                )
             self.pitch_pid.reset()
         if target_vertical_speed_fpm is not None:
-            self.autopilot.target_vertical_speed_fpm = target_vertical_speed_fpm
+            self._mode_controller.set_target_vertical_speed(target_vertical_speed_fpm)
         elif vertical_mode == "VS":
-            self.autopilot.target_vertical_speed_fpm = self.state.vertical_speed_fpm
+            self._mode_controller.set_target_vertical_speed(
+                self.state.vertical_speed_fpm
+            )
 
     def set_audio_panel(
         self,
@@ -481,17 +489,15 @@ class FlightDynamicsSimulator:
         if self.autopilot.vertical_mode not in {"ALTS", "VS"}:
             return
         if abs(altitude_error) <= self.config.altitude_capture_ft:
-            self.autopilot.vertical_mode = "ALT"
-            self.autopilot.vertical_armed = ""
-            self.pitch_pid.reset()
+            if self._mode_controller.capture_vertical_mode(VerticalMode.ALT):
+                self.pitch_pid.reset()
 
     def _update_lateral_capture(self, heading_error: float) -> None:
         if self.autopilot.lateral_armed != "NAV":
             return
         if abs(heading_error) <= self.config.heading_capture_deg:
-            self.autopilot.lateral_mode = "NAV"
-            self.autopilot.lateral_armed = ""
-            self.roll_pid.reset()
+            if self._mode_controller.capture_lateral_mode(LateralMode.NAV):
+                self.roll_pid.reset()
 
     def _update_autopilot_limits(self, delta: float) -> None:
         if not self.autopilot.master_on:
@@ -505,12 +511,7 @@ class FlightDynamicsSimulator:
             self._disconnect_autopilot("limit")
 
     def _disconnect_autopilot(self, reason: str) -> None:
-        self.autopilot.master_on = False
-        self.autopilot.disconnect_reason = reason
-        self.autopilot.lateral_mode = "ROL"
-        self.autopilot.vertical_mode = "PIT"
-        self.autopilot.lateral_armed = ""
-        self.autopilot.vertical_armed = ""
+        self._mode_controller.disengage(reason)
         self.autopilot.bank_limit_active = False
         self.autopilot.pitch_limit_active = False
         self._limit_timer = 0.0

@@ -26,8 +26,14 @@ weather provider, or external service.
 ### Scenario: Axis controllers and flight-director modes are evaluated
 
 - **WHEN** pitch, roll, altitude, and heading errors are applied and a declared mode
-  transition sequence is requested
-- **THEN** controller commands and accepted mode state match the declared vectors
+  transition, arm, capture, target, and disconnect sequence is requested
+- **THEN** controller commands and active/armed flight-director state match the
+  declared vectors
+
+### Scenario: Application state is adapted without duplicating transitions
+
+- **WHEN** an application-owned status record is supplied to the mode controller
+- **THEN** SDK transitions update that record while read snapshots remain independent
 
 ### Scenario: Autotrim and envelope protection are evaluated
 
