@@ -22,7 +22,7 @@
 - `cruise_performance(config, power_setting, fuel_gal?) -> performance`
 - `takeoff_climb_performance(config, atmosphere, weight_lbs?) -> performance`
 - `validate_aircraft(config) -> errors, warnings`
-- `pid_update(gains, error, dt_s) -> output`
+- `pid_update(gains, error, dt_s, integral_bounds?, output_bounds?) -> output`
 - compatibility scalar lift, drag, thrust, fuel-consumption, wind, and turbulence
   operations for retained applications.
 

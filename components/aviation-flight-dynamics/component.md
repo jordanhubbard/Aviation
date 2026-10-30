@@ -53,6 +53,12 @@ presentation, but SHALL NOT maintain independent copies of common formulas.
 - **WHEN** the compatibility service calculates forces, wind effects, or PID output
 - **THEN** those calculations execute through `aviation.flight-dynamics`
 
+#### Scenario: G1000 updates its simulator and avionics state
+
+- **WHEN** the simulator loads its C172 performance or updates a bounded PID loop
+- **THEN** the model data and controller calculation execute through
+  `aviation.flight-dynamics` while avionics modes and presentation remain private
+
 ### Requirement: Calculations are deterministic and unit-explicit
 
 Public records and operations SHALL identify their units. Given the same model,

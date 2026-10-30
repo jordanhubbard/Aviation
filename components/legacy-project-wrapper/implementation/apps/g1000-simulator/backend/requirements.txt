@@ -4,3 +4,4 @@ uvicorn
 pydantic
 pydantic-settings
 -e ../../../packages/shared-sdk/python
+-e ../../../packages/flight-dynamics

@@ -26,6 +26,7 @@ WORKDIR /app
 COPY apps/g1000-simulator/backend/requirements.txt ./requirements.txt
 COPY packages/shared-sdk/python /packages/shared-sdk/python
 COPY packages/shared-sdk/data /packages/shared-sdk/data
+COPY packages/flight-dynamics /packages/flight-dynamics
 
 RUN python -m venv /opt/venv \
     && /opt/venv/bin/pip install --upgrade pip \
@@ -46,18 +47,12 @@ CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
 # tests/backend); the Makefile previously ran only the first.
 FROM runtime AS testing
 
-COPY packages/flight-dynamics/requirements.txt /tmp/flight-dynamics-requirements.txt
-RUN /opt/venv/bin/pip install --no-cache-dir pytest pytest-asyncio httpx \
-    && /opt/venv/bin/pip install --no-cache-dir -r /tmp/flight-dynamics-requirements.txt
+RUN /opt/venv/bin/pip install --no-cache-dir pytest pytest-asyncio httpx
 
 WORKDIR /app
 COPY apps/g1000-simulator/tests /app/tests
 
-# tests/backend/test_autopilot_package.py exercises the shared flight-dynamics
-# package, which is not part of the runtime image.
-COPY packages/flight-dynamics /app/packages/flight-dynamics
-
-ENV PYTHONPATH=/app/backend:/app/packages/flight-dynamics
+ENV PYTHONPATH=/app/backend
 # importlib import mode: tests/backend/ has an __init__.py, so the default
 # prepend mode infers the package name "backend" and collides with the real one.
 CMD ["pytest", "backend/tests", "tests/backend", "-ra", "--import-mode=importlib"]

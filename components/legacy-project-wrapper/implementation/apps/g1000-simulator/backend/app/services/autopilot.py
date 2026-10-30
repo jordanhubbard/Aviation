@@ -3,20 +3,14 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Dict
 
+from aviation_flight_dynamics.autopilot import (
+    PIDController as SharedPIDController,
+    PIDGains,
+)
 
-def clamp(value: float, minimum: float, maximum: float) -> float:
-    return max(minimum, min(maximum, value))
 
-
-@dataclass(frozen=True)
-class PidConfig:
-    kp: float
-    ki: float
-    kd: float
-    integrator_min: float
-    integrator_max: float
-    output_min: float
-    output_max: float
+# Retain the G1000-facing name while using the common SDK contract and validation.
+PidConfig = PIDGains
 
 
 @dataclass
@@ -26,35 +20,24 @@ class PidState:
 
 
 class PidController:
+    """G1000 compatibility adapter over the common bounded PID primitive."""
+
     def __init__(self, config: PidConfig) -> None:
         self.config = config
-        self.state = PidState()
+        self._controller = SharedPIDController(config)
+
+    @property
+    def state(self) -> PidState:
+        return PidState(
+            integrator=self._controller.integral,
+            previous_error=self._controller.previous_error,
+        )
 
     def reset(self) -> None:
-        self.state = PidState()
+        self._controller.reset()
 
     def update(self, error: float, delta: float) -> float:
-        if delta <= 0:
-            return 0.0
-        integrator = clamp(
-            self.state.integrator + error * delta,
-            self.config.integrator_min,
-            self.config.integrator_max,
-        )
-        derivative = (
-            0.0
-            if self.state.previous_error is None
-            else (error - self.state.previous_error) / delta
-        )
-        output = (
-            self.config.kp * error
-            + self.config.ki * integrator
-            + self.config.kd * derivative
-        )
-        output = clamp(output, self.config.output_min, self.config.output_max)
-        self.state.integrator = integrator
-        self.state.previous_error = error
-        return output
+        return self._controller.update(error, delta)
 
 
 @dataclass(frozen=True)
@@ -94,13 +77,7 @@ AUTOPILOT_TUNING = {
 
 
 def _pid_config_is_valid(config: PidConfig) -> bool:
-    if config.kp < 0 or config.ki < 0 or config.kd < 0:
-        return False
-    if config.integrator_min >= config.integrator_max:
-        return False
-    if config.output_min >= config.output_max:
-        return False
-    return True
+    return config.is_valid()
 
 
 def _normalize_pid_config(config: PidConfig, fallback: PidConfig) -> PidConfig:

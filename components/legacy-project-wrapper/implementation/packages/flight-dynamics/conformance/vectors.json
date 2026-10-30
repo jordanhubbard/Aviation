@@ -21,6 +21,19 @@
     "samples": [[5.0, 1.0], [3.0, 1.0]],
     "expected_outputs": [5.5, 3.4]
   },
+  "pid_bounded": {
+    "config": {
+      "kp": 1.0,
+      "ki": 1.0,
+      "kd": 0.0,
+      "integrator_min": -1.0,
+      "integrator_max": 1.0,
+      "output_min": -2.0,
+      "output_max": 2.0
+    },
+    "samples": [[10.0, 1.0], [-10.0, 1.0]],
+    "expected_outputs": [2.0, -2.0]
+  },
   "models": [
     {"identifier": "cessna-172", "errors": 0, "warnings": 0},
     {"identifier": "cessna-182", "errors": 0, "warnings": 0},

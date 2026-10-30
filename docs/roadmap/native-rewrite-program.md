@@ -59,9 +59,9 @@ carry an explicit removal checkpoint.
    delegation, exact-main core qualification, and an exact-main provider-ingestion
    package with no duplicate catalog/search implementation.
 5. [ ] `aviation.flight-dynamics`: atmosphere, aircraft performance, wind, autopilot,
-   and validated aircraft models have Component-owned vectors locally; Flight Planner
-   delegates scalar physics and PID state, while exact-main qualification and G1000
-   reconciliation remain.
+   and validated aircraft models have Component-owned vectors and exact-main Flight
+   Planner qualification. G1000 locally delegates bounded PID behavior and common C172
+   model data; its exact-main qualification remains.
 6. [ ] `aviation.avionics`: G1000 protocols, telemetry schemas, rendering primitives,
    and avionics device models.
 7. [ ] `aviation.ui`, `aviation.config`, and integration infrastructure: reusable UI,

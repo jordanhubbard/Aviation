@@ -77,7 +77,8 @@ release-visible outcome to `CHANGELOG.md`; Git preserves prior queue states.
     state.
   - [x] Define `aviation.flight-dynamics`, add deterministic atmosphere/wind/PID/
     performance/model vectors, and replace Flight Planner's duplicate scalar physics
-    and PID implementation with SDK compatibility adapters.
+    and PID implementation with SDK compatibility adapters. Reconcile G1000's bounded
+    PID implementation and duplicated C172 model fields onto the same capability.
   - [ ] Promote airports, weather, procedures/nav-data, flight dynamics, avionics
     protocols/rendering, shared UI, configuration, and integration infrastructure into
     explicit Components with owned tests and contracts.
@@ -85,8 +86,9 @@ release-visible outcome to `CHANGELOG.md`; Git preserves prior queue states.
     aviation implementations after parity qualification.
   - [ ] Classify and remove or intentionally retain every remainder beneath the legacy
     wrapper.
-- **Next action:** Land and independently verify the flight-dynamics Component and
-  Flight Planner delegation, then reconcile G1000 dynamics/autopilot primitives.
+- **Next action:** Land and independently verify G1000 flight-dynamics delegation,
+  then define the avionics protocols/rendering boundary without moving app-private
+  simulator orchestration into the SDK.
 - **Evidence:** Phase 1.2 lift-and-shift identity `sha256:c5ca4361ba010f6e8d81c93398468f9f4f8b8cc352504bc8535fa74b7c6e9990`.
   Retained conversion stage is backed by current test receipt
   `sha256:60e252aceb5834018a21d3ec5a75b667c564e207ea3cf02d475b3245640c3c79`;
@@ -121,10 +123,13 @@ release-visible outcome to `CHANGELOG.md`; Git preserves prior queue states.
   `1a9d42c8b02ada926f173474f66eb7a4ea3d6efd`; all six direct exact-main workflows
   passed, including Common Aviation SDK run 41115026210, Integration Tests run
   41115026166, Monorepo CI/CD run 41115026320, and deployment-image run 41115026360.
-  The flight-dynamics slice currently passes 13 Component/package tests and all 126
-  Flight Planner backend tests locally. Its Component lock is
-  `sha256:745b6615b4fd999a83573455b36928d39e8ba62091ea570c689e86d9cb02588e`;
-  full retained acceptance and exact-main evidence remain pending until its review lands.
+  Flight dynamics and Flight Planner delegation landed in PR #344 at exact-main commit
+  `55088f0b33ab4fbda8df82a17744632ef1fc5f6f`; all seven exact-main workflows passed,
+  including Common Aviation SDK run 41119233841, Integration Tests run 41119234024,
+  Monorepo CI/CD run 41119234068, deployment-image run 41119233837, and dependency
+  graph run 41119239572. The G1000 reconciliation passes 14 Component/package tests
+  and all 101 G1000 backend tests locally; its retained and exact-main evidence remain
+  pending until review lands.
   - [ ] Each promoted Component has a current lock, independent acceptance evidence,
     and exact-main CI evidence.
   - [ ] An architecture inventory proves every application imports common capabilities

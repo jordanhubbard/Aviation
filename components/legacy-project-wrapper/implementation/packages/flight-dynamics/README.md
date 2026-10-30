@@ -12,8 +12,8 @@ The Flight Dynamics package is the Python realization of the
   and turbulence
 - **Aircraft Models**: Validated C172, C182, and SR22 configurations and variants
 - **Performance**: Cruise, takeoff, climb, and reference-envelope validation
-- **Autopilot Primitives**: PID, axis controllers, mode transitions, autotrim, and
-  envelope protection
+- **Autopilot Primitives**: Bounded or unbounded PID, axis controllers, mode
+  transitions, autotrim, and envelope protection
 - **FastAPI Service**: RESTful API for flight state updates and queries
 - **State Serialization**: Efficient state representation for client applications
 - **Deterministic Updates**: Consistent physics calculations with fixed time steps
