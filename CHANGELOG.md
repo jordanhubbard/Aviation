@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Promoted airport identity, normalization, lookup, search, proximity, and field
+  elevation into an `aviation.airports` Component with shared TypeScript/Python
+  acceptance vectors; Flight Track Analyzer now consumes SDK-normalized airport data.
 - Began the common Aviation SDK migration with a native `aviation.navigation`
   Component, shared TypeScript/Python conformance vectors, independently runnable
   SDK tests, and a dedicated common-SDK CI workflow.

@@ -45,11 +45,12 @@ carry an explicit removal checkpoint.
 
 ## Promotion sequence
 
-1. [ ] `aviation.navigation`: pure geodesy, bearings, coordinates, wind, fuel,
+1. [x] `aviation.navigation`: pure geodesy, bearings, coordinates, wind, fuel,
    time/speed/distance, and performance-altitude contracts; shared TypeScript/Python
    vectors; required SDK CI.
-2. [ ] `aviation.airports`: airport identity, lookup/search, bundled-data provenance,
-   cache behavior, and a single shared asset contract.
+2. [ ] `aviation.airports`: airport identity, normalization, lookup/search, and cache
+   behavior are promoted; bundled-data provenance and the shared asset contract remain
+   open before this boundary is complete.
 3. [ ] `aviation.weather`: provider-neutral observations/forecasts, METAR parsing,
    flight categories, and provider adapters.
 4. [ ] `aviation.nav-data`: navaids, procedures, approaches, airspace, ingestion, and

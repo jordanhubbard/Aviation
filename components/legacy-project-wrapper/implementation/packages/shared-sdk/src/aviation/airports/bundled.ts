@@ -65,6 +65,40 @@ function toNumber(value: unknown): number | null {
   return Number.isFinite(n) ? n : null;
 }
 
+/** Normalize one provider record into the shared airport contract. */
+export function normalizeAirportRecord(entry: Record<string, unknown>): Airport | undefined {
+  const latitude = toNumber(entry.latitude ?? entry.lat);
+  const longitude = toNumber(entry.longitude ?? entry.lon);
+  const icao = String(entry.icao ?? entry.icaoCode ?? '').trim().toUpperCase();
+  if (
+    latitude === null || longitude === null || !icao ||
+    latitude < -90 || latitude > 90 || longitude < -180 || longitude > 180
+  ) {
+    return undefined;
+  }
+
+  return {
+    icao,
+    iata: String(entry.iata ?? entry.iataCode ?? '').trim().toUpperCase() || undefined,
+    name: String(entry.name ?? ''),
+    city: String(entry.city ?? '') || undefined,
+    country: String(entry.country ?? ''),
+    region: String(entry.region ?? '') || undefined,
+    latitude,
+    longitude,
+    elevation: toNumber(entry.elevation) ?? undefined,
+    type: String(entry.type ?? '') || undefined,
+  };
+}
+
+/** Normalize provider records, omitting invalid identities and coordinates. */
+export function normalizeAirportRecords(entries: Array<Record<string, unknown>>): Airport[] {
+  return entries.flatMap((entry) => {
+    const airport = normalizeAirportRecord(entry);
+    return airport ? [airport] : [];
+  });
+}
+
 /**
  * Read and normalize the packaged airport dataset.
  *
@@ -73,30 +107,10 @@ function toNumber(value: unknown): number | null {
  */
 export function readBundledAirports(dataPath: string = resolveBundledAirportsPath()): Airport[] {
   const raw = JSON.parse(fs.readFileSync(dataPath, 'utf8')) as Array<Record<string, unknown>>;
-  const airports: Airport[] = [];
-
-  for (const entry of raw) {
-    const latitude = toNumber(entry.latitude ?? entry.lat);
-    const longitude = toNumber(entry.longitude ?? entry.lon);
-    const icao = String(entry.icao ?? entry.icaoCode ?? '').toUpperCase();
-    if (latitude === null || longitude === null || !icao) {
-      continue;
-    }
-
-    airports.push({
-      icao,
-      iata: String(entry.iata ?? entry.iataCode ?? '').toUpperCase() || undefined,
-      name: String(entry.name ?? ''),
-      city: String(entry.city ?? '') || undefined,
-      country: String(entry.country ?? ''),
-      latitude,
-      longitude,
-      elevation: toNumber(entry.elevation) ?? undefined,
-      type: String(entry.type ?? '') || undefined,
-    });
+  if (!Array.isArray(raw)) {
+    throw new TypeError('Airport dataset must contain an array');
   }
-
-  return airports;
+  return normalizeAirportRecords(raw);
 }
 
 /**

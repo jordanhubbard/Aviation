@@ -4,6 +4,7 @@ from types import SimpleNamespace
 import numpy as np
 import pytest
 
+from flightlab import airports as airport_module
 from flightlab.airports import AirportIndex, default_airports
 from flightlab.events import detect
 from flightlab.geo import M_TO_FT, from_enu
@@ -80,3 +81,14 @@ def test_aviation_bundled_airport_data_exposes_msl_elevation():
     assert index is not None and len(index.airports) > 50_000
     sfo = index.nearest(37.619806, -122.374821)
     assert sfo["icao"] == "KSFO" and sfo["elevation_ft"] == pytest.approx(13)
+
+
+def test_default_airports_consumes_shared_sdk_records(monkeypatch):
+    records = [_airport("SDK1", 0, 300)]
+    default_airports.cache_clear()
+    monkeypatch.setattr(airport_module, "load_airport_cache", lambda: records)
+    try:
+        index = default_airports()
+        assert index.airports[0]["icao"] == "SDK1"
+    finally:
+        default_airports.cache_clear()

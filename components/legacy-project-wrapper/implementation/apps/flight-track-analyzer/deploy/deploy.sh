@@ -9,7 +9,7 @@ APP=components/legacy-project-wrapper/implementation/apps/flight-track-analyzer
 AIRPORTS=components/legacy-project-wrapper/implementation/packages/shared-sdk/data/airports_cache.json
 SDK=components/legacy-project-wrapper/implementation/packages/shared-sdk/python
 cd "$REPO"
-[ -z "$(git status --porcelain --untracked-files=all -- "$APP/app" "$APP/deploy" "$AIRPORTS")" ] || {
+[ -z "$(git status --porcelain --untracked-files=all -- "$APP/app" "$APP/deploy" "$AIRPORTS" "$SDK")" ] || {
   echo "uncommitted changes in flight-track-analyzer or airport data: commit first" >&2; exit 1;
 }
 git archive HEAD "$APP/app" "$APP/deploy" "$AIRPORTS" "$SDK" | ssh "$HOST" 'set -eu
