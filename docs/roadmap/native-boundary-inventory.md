@@ -14,9 +14,11 @@ The pre-adoption revision `f68efb8273508c74fbc3cd710e8f0ae1bc4a8d39` had
 the same Git blob identity. The ten changed retained files are the workspace
 Makefile, README, four application dependency manifests, meta-app README and
 launcher, pnpm lockfile, and pnpm workspace manifest. The full retained test
-receipt and current `litai verify` establish the wrapper baseline, not native
-regeneration. This pass maps 11 application directories and 10 shared package
-directories.
+receipt and its exact-main verification establish the wrapper baseline, not native
+regeneration. Current local verification is separately blocked by Literate AI
+[issue #212](https://github.com/jordanhubbard/literate-ai/issues/212), which mistakes
+third-party dependency manifests for legacy Component authoring. This pass maps 11
+application directories and 10 shared package directories.
 
 ## Application boundaries
 
@@ -56,6 +58,26 @@ current human description.
 | Navigation Data — `packages/nav-data` | `packages/nav-data/package.json`; `packages/nav-data/src/` | none located |
 | Shared SDK — `packages/shared-sdk` | `packages/shared-sdk/package.json`; `packages/shared-sdk/README.md`; Python package under `packages/shared-sdk/python/`; Go package under `packages/shared-sdk/` | `packages/shared-sdk/tests/`; Python tests; Go tests |
 | UI Framework — `packages/ui-framework` | `packages/ui-framework/package.json`; `packages/ui-framework/README.md` | `packages/ui-framework/src/` tests |
+
+### First selected boundary: aviation navigation
+
+`aviation.navigation` is the first native boundary because its calculations are pure,
+already have TypeScript and Python realizations, and are consumed by multiple
+applications. Its classification is:
+
+| Retained path | Classification | Native owner / disposition |
+| --- | --- | --- |
+| `packages/shared-sdk/src/aviation/navigation/` | retained TypeScript realization | `component://aviation/aviation-navigation`; keep until regenerative qualification |
+| `packages/shared-sdk/python/aviation/navigation.py` | retained Python realization | same capability; keep until shared-vector parity and replacement qualification |
+| `packages/shared-sdk/src/aviation/__tests__/navigation.test.ts` | retained implementation tests | preserve; supplement with Component-owned cross-language vectors |
+| `packages/shared-sdk/python/tests/test_navigation_conformance.py` | retained realization adapter | evaluates the Component-owned vectors; removable with the retained realization |
+| `components/aviation-navigation/` | Component intent, interface, and acceptance | native authority for observable navigation behavior |
+| `.github/workflows/sdk-ci.yml` | repository acceptance workflow | required-style CI gate for common SDK realizations |
+| app-local distance, bearing, wind, fuel, procedure, and performance code | candidate duplication | classify against the interface, migrate consumers, then remove only after parity |
+
+Target language, package manager, compiler, and operating-system details remain Flavor
+or workflow authority. Airport datasets, magnetic models, and procedure databases are
+separate assets/components and are not folded into the navigation arithmetic boundary.
 
 ## Cross-cutting authority to classify
 

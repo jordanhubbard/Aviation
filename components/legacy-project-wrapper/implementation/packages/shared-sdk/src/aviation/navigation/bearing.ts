@@ -4,7 +4,7 @@
  * Provides bearing calculations for navigation between waypoints.
  */
 
-import { toRadians, toDegrees } from './distance.js';
+import { assertValidCoordinate, toRadians, toDegrees } from './distance.js';
 
 /**
  * Calculate initial bearing (forward azimuth) from point 1 to point 2
@@ -28,6 +28,8 @@ export function initialBearing(
   lat2: number,
   lon2: number
 ): number {
+  assertValidCoordinate(lat1, lon1);
+  assertValidCoordinate(lat2, lon2);
   const phi1 = toRadians(lat1);
   const phi2 = toRadians(lat2);
   const deltaLambda = toRadians(lon2 - lon1);

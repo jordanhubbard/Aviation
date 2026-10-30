@@ -48,14 +48,51 @@ release-visible outcome to `CHANGELOG.md`; Git preserves prior queue states.
 - **Direction:** Execute
   [ADR 0002](../decisions/0002-native-literate-ai-rewrite.md) through the
   [native rewrite program](native-rewrite-program.md), preserving retained source
-  authority until each boundary independently qualifies.
-- **Next action:** Complete the public contract and file-by-file classification
-  of the initial map in `docs/roadmap/native-boundary-inventory.md` before
-  selecting the first native boundary.
+  authority until each boundary independently qualifies. The target architecture is a
+  rich common Aviation SDK made from independently specified and tested Literate AI
+  Components; applications consume those capabilities and retain only behavior unique
+  to the application.
+- **Conclusion:** The retained workspace has useful shared packages, but package
+  placement alone does not establish Component authority, cross-language behavioral
+  equivalence, required SDK CI, or removal of duplicated app-local aviation logic.
+  Promote one independently testable domain at a time, beginning with navigation, and
+  do not transfer release authority until its retained realizations satisfy the same
+  independent acceptance contract.
+- **Depends on:** none; E2E-001 consumes the common SDK lifecycle after its contracts
+  exist.
+- **Implementation:**
+  - [x] Define `aviation.navigation` as a native Component with a public interface,
+    independent acceptance contract, and shared TypeScript/Python conformance vectors.
+  - [ ] Make common SDK tests a dedicated CI workflow rather than an optional side
+    effect of application builds.
+  - [ ] Promote airports, weather, procedures/nav-data, flight dynamics, avionics
+    protocols/rendering, shared UI, configuration, and integration infrastructure into
+    explicit Components with owned tests and contracts.
+  - [ ] Migrate each application to those capabilities and remove app-local common
+    aviation implementations after parity qualification.
+  - [ ] Classify and remove or intentionally retain every remainder beneath the legacy
+    wrapper.
+- **Next action:** Land and independently verify the `aviation.navigation` Component,
+  conformance vectors, and common-SDK CI slice; then use the same pattern for airports.
 - **Evidence:** Phase 1.2 lift-and-shift identity `sha256:c5ca4361ba010f6e8d81c93398468f9f4f8b8cc352504bc8535fa74b7c6e9990`.
   Retained conversion stage is backed by current test receipt
   `sha256:60e252aceb5834018a21d3ec5a75b667c564e207ea3cf02d475b3245640c3c79`;
   original source remains release authority.
+  The first native boundary has Component lock
+  `sha256:b156aad3a60d74a7eba30b6f4e7ba5d8cc01c8ecc2d7c41a069348db6ed75a9b`;
+  its shared acceptance vectors pass 292 TypeScript and 94 Python SDK tests, and
+  the full retained `make test` gate passes locally. Literate AI issue
+  [#212](https://github.com/jordanhubbard/literate-ai/issues/212) tracks the
+  verifier false positive caused by third-party `component.json` files under the
+  retained implementation's `node_modules`; Component planning and locking pass,
+  while dependency-populated `litai project validate` and `litai verify` remain
+  blocked by that upstream defect.
+  - [ ] Each promoted Component has a current lock, independent acceptance evidence,
+    and exact-main CI evidence.
+  - [ ] An architecture inventory proves every application imports common capabilities
+    and contains no duplicated common aviation implementation.
+  - [ ] Full retained parity, deployment E2E, and a current authenticated Literate AI
+    receipt prove the wrapper can be retired.
 
 ### [x] ADOPT-003 — Preserve Aviation interfaces and integrate flight analyzer
 

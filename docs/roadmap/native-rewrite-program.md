@@ -11,6 +11,20 @@ The initial application, package, asset, and harness map is in the
 [native boundary inventory](native-boundary-inventory.md). It is a partial source-evidence pass;
 public contracts and file-by-file authority classification remain open.
 
+## Target architecture
+
+`aviation-sdk` is the distribution and compatibility surface, not one monolithic
+Component. Domain Components own airports, navigation, weather, procedures/navigation
+data, flight dynamics, avionics protocols/rendering, reusable UI, configuration, and
+integration infrastructure. Each Component owns one public capability and an independent
+acceptance contract. TypeScript, Python, Go, and future bindings are realizations of the
+same capability and must pass shared behavioral vectors where their surfaces overlap.
+
+Applications may own presentation, persistence, orchestration, and genuinely unique
+workflows. They must not privately reimplement a common aviation capability. Temporary
+compatibility wrappers are allowed only while they delegate to a promoted Component and
+carry an explicit removal checkpoint.
+
 ## Ordered work
 
 1. [ ] Produce a boundary inventory: deployables, public interfaces, data schemas,
@@ -28,3 +42,23 @@ public contracts and file-by-file authority classification remain open.
    workflow, record evidence, then repeat from step 3.
 7. [ ] Prove no unclassified retained file remains; archive this program only after
    full parity and current project verification.
+
+## Promotion sequence
+
+1. [ ] `aviation.navigation`: pure geodesy, bearings, coordinates, wind, fuel,
+   time/speed/distance, and performance-altitude contracts; shared TypeScript/Python
+   vectors; required SDK CI.
+2. [ ] `aviation.airports`: airport identity, lookup/search, bundled-data provenance,
+   cache behavior, and a single shared asset contract.
+3. [ ] `aviation.weather`: provider-neutral observations/forecasts, METAR parsing,
+   flight categories, and provider adapters.
+4. [ ] `aviation.nav-data`: navaids, procedures, approaches, airspace, ingestion, and
+   provenance/freshness contracts.
+5. [ ] `aviation.flight-dynamics`: atmosphere, aircraft performance, wind, autopilot,
+   and validated aircraft models.
+6. [ ] `aviation.avionics`: G1000 protocols, telemetry schemas, rendering primitives,
+   and avionics device models.
+7. [ ] `aviation.ui`, `aviation.config`, and integration infrastructure: reusable UI,
+   configuration, secrets, explanation, E2E isolation, and external-service adapters.
+8. [ ] Migrate all eleven applications, delete superseded local implementations, and
+   prove dependency and behavior parity before retiring the legacy wrapper.

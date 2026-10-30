@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Began the common Aviation SDK migration with a native `aviation.navigation`
+  Component, shared TypeScript/Python conformance vectors, independently runnable
+  SDK tests, and a dedicated common-SDK CI workflow.
 - Flight Planner no longer crashes when procedure data is unavailable or malformed; mission planning keeps the procedure selector usable and shows a nonfatal unavailable state.
 - Accident Tracker now shows source citations and last successful sync, classifies NTSB operations, offers readable filters, and turns plain-language searches into supported filters without an external token.
 - Aviation Missions now stores written feedback on individual completed missions and shows comments under each completion.

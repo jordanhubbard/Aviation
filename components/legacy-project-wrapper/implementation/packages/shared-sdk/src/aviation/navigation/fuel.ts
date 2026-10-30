@@ -36,6 +36,10 @@ export function fuelConsumption(
  * @returns Flight time in hours
  */
 export function flightTime(distanceNM: number, groundSpeedKts: number): number {
+  if (!Number.isFinite(distanceNM) || distanceNM < 0
+      || !Number.isFinite(groundSpeedKts) || groundSpeedKts <= 0) {
+    throw new RangeError('Distance must be non-negative and ground speed must be positive');
+  }
   return distanceNM / groundSpeedKts;
 }
 

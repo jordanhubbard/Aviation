@@ -26,6 +26,12 @@ FUEL_DENSITY = {
 }
 
 
+def _validate_coordinate(lat: float, lon: float) -> None:
+    if (not math.isfinite(lat) or not math.isfinite(lon)
+            or not -90 <= lat <= 90 or not -180 <= lon <= 180):
+        raise ValueError(f"Invalid WGS-84 coordinate: {lat}, {lon}")
+
+
 # ============================================================================
 # Distance Calculations
 # ============================================================================
@@ -60,6 +66,8 @@ def haversine_distance(
     Returns:
         Distance in specified unit
     """
+    _validate_coordinate(lat1, lon1)
+    _validate_coordinate(lat2, lon2)
     radius_map = {
         'NM': EARTH_RADIUS_NM,
         'KM': EARTH_RADIUS_KM,
@@ -103,6 +111,8 @@ def midpoint(lat1: float, lon1: float, lat2: float, lon2: float) -> Tuple[float,
     Returns:
         Tuple of (latitude, longitude)
     """
+    _validate_coordinate(lat1, lon1)
+    _validate_coordinate(lat2, lon2)
     phi1 = to_radians(lat1)
     lambda1 = to_radians(lon1)
     phi2 = to_radians(lat2)
@@ -141,6 +151,9 @@ def destination(
     Returns:
         Tuple of (latitude, longitude)
     """
+    _validate_coordinate(lat, lon)
+    if not math.isfinite(distance) or distance < 0 or not math.isfinite(bearing):
+        raise ValueError("Distance must be non-negative and bearing must be finite")
     radius_map = {
         'NM': EARTH_RADIUS_NM,
         'KM': EARTH_RADIUS_KM,
@@ -179,6 +192,8 @@ def initial_bearing(lat1: float, lon1: float, lat2: float, lon2: float) -> float
     Returns:
         Initial bearing in degrees (0-360)
     """
+    _validate_coordinate(lat1, lon1)
+    _validate_coordinate(lat2, lon2)
     phi1 = to_radians(lat1)
     phi2 = to_radians(lat2)
     delta_lambda = to_radians(lon2 - lon1)
@@ -330,6 +345,9 @@ def fuel_consumption(fuel_burn_gph: float, time_hours: float) -> float:
 
 def flight_time(distance_nm: float, ground_speed_kts: float) -> float:
     """Calculate flight time in hours."""
+    if (not math.isfinite(distance_nm) or distance_nm < 0
+            or not math.isfinite(ground_speed_kts) or ground_speed_kts <= 0):
+        raise ValueError("Distance must be non-negative and ground speed must be positive")
     return distance_nm / ground_speed_kts
 
 
