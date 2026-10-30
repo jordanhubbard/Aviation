@@ -51,9 +51,9 @@ current human description.
 | AI Explainer — `packages/ai-explainer` | `packages/ai-explainer/package.json`; `packages/ai-explainer/README.md` | `packages/ai-explainer/tests/` |
 | Aviation Config — `packages/aviation-config` | `packages/aviation-config/package.json`; `packages/aviation-config/src/` | none located |
 | Flight Dynamics — `packages/flight-dynamics` | `packages/flight-dynamics/package.json`; `packages/flight-dynamics/README.md`; `packages/flight-dynamics/requirements.txt` | Component-owned conformance vectors, package physics/model tests, and retained API tests |
-| G1000 Avionics SDK — `packages/g1000-avionics-sdk` | `packages/g1000-avionics-sdk/package.json`; `packages/g1000-avionics-sdk/README.md` | none located |
-| G1000 Protocols — `packages/g1000-protocols` | `packages/g1000-protocols/package.json`; `packages/g1000-protocols/README.md`; Go package under `packages/g1000-protocols/` | Go test target in root `go.mod`; no owned fixture located |
-| G1000 Rendering — `packages/g1000-rendering` | `packages/g1000-rendering/package.json`; `packages/g1000-rendering/README.md` | no owned test file located |
+| G1000 Avionics SDK — `packages/g1000-avionics-sdk` | `packages/g1000-avionics-sdk/package.json`; `packages/g1000-avionics-sdk/README.md` | none located; retained zero-return device stubs are explicitly outside Component authority |
+| G1000 Protocols — `packages/g1000-protocols` | `packages/g1000-protocols/package.json`; `packages/g1000-protocols/README.md`; Go package under `packages/g1000-protocols/` | Component-owned telemetry/command/flight-plan conformance vectors and TypeScript package tests; Go remains provisional |
+| G1000 Rendering — `packages/g1000-rendering` | `packages/g1000-rendering/package.json`; `packages/g1000-rendering/README.md` | Component-owned layout/pipeline/primitive conformance vectors and TypeScript package tests |
 | Keystore — `packages/keystore` | `packages/keystore/package.json`; `packages/keystore/README.md`; Python package under `packages/keystore/python/` | `packages/keystore/src/keystore.test.ts`; `packages/keystore/src/cli.test.ts` |
 | Navigation Data providers — `packages/nav-data` | `packages/nav-data/package.json`; `packages/nav-data/src/ingestion/` | Component-owned synthetic provider vectors and package tests |
 | Shared SDK — `packages/shared-sdk` | `packages/shared-sdk/package.json`; `packages/shared-sdk/README.md`; Python package under `packages/shared-sdk/python/`; Go package under `packages/shared-sdk/` | `packages/shared-sdk/tests/`; Python tests; Go tests |
@@ -152,6 +152,25 @@ recorded-flight analytics, and application simulation orchestration remain priva
 | `apps/g1000-simulator/backend/app/models/aircraft_state.py` | compatibility adapter plus app-private telemetry state | maps common C172 performance, limits, fuel, mass, and wing data; retains live engine/position/attitude telemetry and display-only dimensions |
 | `apps/g1000-simulator/backend/app/services/flight_dynamics.py` | application simulator orchestration | retains mode capture, sensor/radio/audio/transponder state, geographic stepping, and telemetry snapshots; consumes common PID/model primitives |
 | `apps/flight-track-analyzer/app/flightlab/` | recorded-flight analytics | retain signal processing, measurement calibration, POH comparison, and observed-flight inference; consume common primitives only where semantics match |
+
+### Sixth selected boundary: aviation avionics protocols and rendering
+
+`aviation.avionics` owns runtime-validated telemetry and command records, flight-plan
+exchange formats, deterministic display layout, functional canvas primitives, and
+PFD/MFD pipeline contracts. Simulator stepping, WebSocket reconnection, frontend
+stores, page composition, alerts, and physical device I/O remain application-private.
+Fixed zero-return sensor/radio classes are placeholders, not qualified device models.
+
+| Retained path | Classification | Native owner / disposition |
+| --- | --- | --- |
+| `packages/g1000-protocols/src/` | retained TypeScript realization | `component://aviation/aviation-avionics`; Component-vector adapter required |
+| `packages/g1000-rendering/src/` | retained TypeScript realization | same capability; layout, pipeline ordering, and drawing operations are independently tested |
+| `packages/g1000-protocols/src/__tests__/` | independent realization adapter | evaluates protocol and flight-plan vectors without an application or network |
+| `packages/g1000-rendering/src/__tests__/` | independent realization adapter | evaluates layout, one-shot rendering, layer ordering, and canvas-operation traces without a browser |
+| `apps/g1000-simulator/frontend/src/types/telemetry.ts` | compatibility re-export | contains no private schema; re-exports the common protocol types |
+| `apps/g1000-simulator/frontend/src/stores/flightStore.ts` | application state adapter | delegates full-snapshot classification; retains merge policy and Zustand state |
+| `apps/g1000-simulator/frontend/src/hooks/useTelemetrySocket.ts` | application transport adapter | delegates snapshot/delta validation; retains URL, reconnect, ping, and invalid-session policy |
+| `packages/g1000-avionics-sdk/` | unqualified placeholder candidates | do not promote until real AHRS/ADC/GPS/radio behavior has unit-explicit contracts and deterministic vectors |
 
 ## Cross-cutting authority to classify
 

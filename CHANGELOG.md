@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Promoted telemetry/command schemas, flight-plan exchange, display layout, render
+  pipelines, and functional canvas primitives into an `aviation.avionics` Component
+  with independent protocol/rendering tests; G1000 now consumes the shared telemetry
+  types and runtime guards instead of maintaining its own full-snapshot schema.
 - Promoted atmosphere, deterministic wind, aircraft performance/model validation,
   rigid-body integration, scalar physics, and autopilot PID primitives into an
   `aviation.flight-dynamics` Component with independently runnable acceptance

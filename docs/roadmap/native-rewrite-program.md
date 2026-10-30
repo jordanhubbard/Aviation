@@ -58,12 +58,12 @@ carry an explicit removal checkpoint.
    provenance/freshness contracts have shared vectors, Flight Planner/G1000
    delegation, exact-main core qualification, and an exact-main provider-ingestion
    package with no duplicate catalog/search implementation.
-5. [ ] `aviation.flight-dynamics`: atmosphere, aircraft performance, wind, autopilot,
-   and validated aircraft models have Component-owned vectors and exact-main Flight
-   Planner qualification. G1000 locally delegates bounded PID behavior and common C172
-   model data; its exact-main qualification remains.
-6. [ ] `aviation.avionics`: G1000 protocols, telemetry schemas, rendering primitives,
-   and avionics device models.
+5. [x] `aviation.flight-dynamics`: atmosphere, aircraft performance, wind, autopilot,
+   and validated aircraft models have Component-owned vectors plus exact-main Flight
+   Planner and G1000 qualification.
+6. [ ] `aviation.avionics`: first qualify G1000 protocols, telemetry schemas, and
+   rendering primitives; qualify real avionics device models separately rather than
+   treating the retained zero-return stubs as SDK authority.
 7. [ ] `aviation.ui`, `aviation.config`, and integration infrastructure: reusable UI,
    configuration, secrets, explanation, E2E isolation, and external-service adapters.
 8. [ ] Migrate all eleven applications, delete superseded local implementations, and

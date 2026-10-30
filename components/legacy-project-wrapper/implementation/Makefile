@@ -9,7 +9,7 @@ PNPM := $(shell command -v pnpm >/dev/null 2>&1 && echo pnpm || (command -v core
 .PHONY: help all build clean test test-docker release
 .PHONY: build-node build-python build-clojure
 .PHONY: clean-node clean-python clean-clojure
-.PHONY: test-node test-go test-sdk-python test-flight-dynamics test-g1000-python test-python test-clojure test-flight-track-analyzer
+.PHONY: test-node test-go test-sdk-python test-flight-dynamics test-avionics test-g1000-python test-python test-clojure test-flight-track-analyzer
 .PHONY: test-docker-node test-docker-python test-docker-clojure
 .PHONY: run-aviation-missions run-flight-planner run-flight-school
 .PHONY: run-foreflight-dashboard run-flight-tracker run-weather-briefing
@@ -163,7 +163,7 @@ clean-clojure:
 # TEST TARGETS
 #
 
-test: test-node test-go test-sdk-python test-flight-dynamics test-g1000-python test-flight-track-analyzer
+test: test-node test-go test-sdk-python test-flight-dynamics test-avionics test-g1000-python test-flight-track-analyzer
 	@echo ""
 	@echo "✅ Core application tests complete!"
 
@@ -194,7 +194,7 @@ test-node:
 			skipped=$$((skipped + 1)); \
 		fi \
 	done; \
-	for pkg in packages/g1000-avionics-sdk packages/g1000-protocols packages/g1000-rendering \
+	for pkg in packages/g1000-avionics-sdk \
 	           apps/flight-tracker apps/g1000-simulator; do \
 		if $(PNPM) --filter "./$$pkg" exec jest --version >/dev/null 2>&1; then \
 			echo "  Testing $$pkg..."; \
@@ -235,6 +235,19 @@ test-flight-dynamics:
 	"$$python_env/bin/python" -m pip install -q -e packages/flight-dynamics pytest httpx; \
 	"$$python_env/bin/python" -m pytest packages/flight-dynamics/tests packages/flight-dynamics/test_api.py -q
 	@echo "✅ Flight-dynamics Component tests PASSED"
+
+test-avionics:
+	@echo "🧪 Running avionics Component tests..."
+	$(PNPM) install --frozen-lockfile
+	$(PNPM) --filter @aviation/keystore run build
+	$(PNPM) --filter @aviation/aviation-config run build
+	$(PNPM) --filter @aviation/shared-sdk run build
+	$(PNPM) --filter @aviation/g1000-protocols run build
+	$(PNPM) --filter @aviation/g1000-protocols run test
+	$(PNPM) --filter @aviation/g1000-rendering run build
+	$(PNPM) --filter @aviation/g1000-rendering run test
+	$(PNPM) --filter g1000-simulator-frontend run build
+	@echo "✅ Avionics Component tests PASSED"
 
 test-g1000-python:
 	@echo "🧪 Running G1000 Python compatibility tests..."

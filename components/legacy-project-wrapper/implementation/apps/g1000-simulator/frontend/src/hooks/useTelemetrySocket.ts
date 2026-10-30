@@ -1,6 +1,7 @@
 import { useEffect } from 'react'
+import { isTelemetrySnapshot, isTelemetryUpdate } from '@aviation/g1000-protocols'
 
-import type { TelemetrySnapshot, TelemetryUpdate } from '../types/telemetry'
+import type { TelemetrySnapshot } from '../types/telemetry'
 import { useFlightStore } from '../stores/flightStore'
 import { useWebSocketClient } from './useWebSocketClient'
 
@@ -27,13 +28,14 @@ export const useTelemetrySocket = () => {
       try {
         const message = JSON.parse(data) as {
           type?: string
-          payload?: TelemetrySnapshot | TelemetryUpdate
+          payload?: unknown
         }
-        if (message?.type === 'telemetry' && message.payload) {
+        if (message?.type === 'telemetry' && isTelemetrySnapshot(message.payload)) {
           applyTelemetryUpdate(message.payload)
-        }
-        if (message?.type === 'telemetry_delta' && message.payload) {
+        } else if (message?.type === 'telemetry_delta' && isTelemetryUpdate(message.payload)) {
           applyTelemetryUpdate(message.payload)
+        } else if (message?.type === 'telemetry' || message?.type === 'telemetry_delta') {
+          applyTelemetryUpdate(null)
         }
       } catch (error) {
         applyTelemetryUpdate(null)

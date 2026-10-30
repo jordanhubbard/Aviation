@@ -1,12 +1,10 @@
 // Primitives module: Viewport, tapes, attitude, compass, arcs, text, and helpers
 
-import { drawAttitudeSphere as drawAttitudeInner } from './attitude';
-import { drawCompassRose as drawCompassInner } from './compass';
 import { TapeRenderer } from './tape';
 
 export type { Viewport } from './viewport';
 export { drawText, type TextOptions } from './text';
-export { drawArcIndicator } from './arcs';
+export { drawArcIndicator, type ArcIndicatorOptions } from './arcs';
 export { TapeRenderer, type TapeConfig } from './tape';
 
 // TapeStyle and DEFAULT_* for PFD/MFD layout
@@ -60,25 +58,59 @@ export function drawAttitudeSphere(
   viewport: { x: number; y: number; width: number; height: number },
   options: { pitchDeg?: number; rollDeg?: number }
 ): void {
+  const centerX = viewport.x + viewport.width / 2;
+  const centerY = viewport.y + viewport.height / 2;
+  const pitchOffset = (options.pitchDeg ?? 0) * (viewport.height / 90);
   ctx.save();
   ctx.beginPath();
   ctx.rect(viewport.x, viewport.y, viewport.width, viewport.height);
   ctx.clip();
-  drawAttitudeInner(ctx, options.pitchDeg ?? 0, options.rollDeg ?? 0);
+  ctx.translate(centerX, centerY);
+  ctx.rotate(((options.rollDeg ?? 0) * Math.PI) / 180);
+  ctx.fillStyle = '#0066cc';
+  ctx.fillRect(-viewport.width, -viewport.height * 2 + pitchOffset, viewport.width * 2, viewport.height * 2);
+  ctx.fillStyle = '#8b4513';
+  ctx.fillRect(-viewport.width, pitchOffset, viewport.width * 2, viewport.height * 2);
+  ctx.strokeStyle = '#ffffff';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(-viewport.width / 2, pitchOffset);
+  ctx.lineTo(viewport.width / 2, pitchOffset);
+  ctx.stroke();
   ctx.restore();
 }
 
 export function drawCompassRose(
   ctx: CanvasRenderingContext2D,
-  _viewport: { x: number; y: number; width: number; height: number },
+  viewport: { x: number; y: number; width: number; height: number },
   options: { headingDeg?: number; radiusPx?: number; color?: string }
 ): void {
-  drawCompassInner(ctx, options.headingDeg ?? 0);
+  const centerX = viewport.x + viewport.width / 2;
+  const centerY = viewport.y + viewport.height / 2;
+  const radius = options.radiusPx ?? Math.min(viewport.width, viewport.height) / 2;
+  const color = options.color ?? '#e2e8f0';
+  ctx.save();
+  ctx.translate(centerX, centerY);
+  ctx.rotate((-(options.headingDeg ?? 0) * Math.PI) / 180);
+  ctx.strokeStyle = color;
+  ctx.fillStyle = color;
+  ctx.beginPath();
+  ctx.arc(0, 0, radius, 0, Math.PI * 2);
+  ctx.stroke();
+  for (let heading = 0; heading < 360; heading += 30) {
+    const radians = (heading * Math.PI) / 180;
+    const inner = radius - (heading % 90 === 0 ? 12 : 7);
+    ctx.beginPath();
+    ctx.moveTo(Math.sin(radians) * inner, -Math.cos(radians) * inner);
+    ctx.lineTo(Math.sin(radians) * radius, -Math.cos(radians) * radius);
+    ctx.stroke();
+  }
+  ctx.restore();
 }
 
 export function drawMarker(
   ctx: CanvasRenderingContext2D,
-  _options: {
+  options: {
     x: number;
     y: number;
     size?: number;
@@ -89,7 +121,31 @@ export function drawMarker(
     direction?: string;
   }
 ): void {
-  // Stub: draw a small triangle or circle
+  const size = options.size ?? 8;
+  const color = options.color ?? '#f5d142';
+  ctx.save();
+  ctx.fillStyle = color;
+  ctx.strokeStyle = options.strokeColor ?? color;
+  ctx.lineWidth = options.strokeWidth ?? 1;
+  ctx.beginPath();
+  if (options.shape === 'circle') {
+    ctx.arc(options.x, options.y, size / 2, 0, Math.PI * 2);
+  } else {
+    const direction = options.direction ?? 'up';
+    if (direction === 'down') {
+      ctx.moveTo(options.x, options.y + size / 2);
+      ctx.lineTo(options.x - size / 2, options.y - size / 2);
+      ctx.lineTo(options.x + size / 2, options.y - size / 2);
+    } else {
+      ctx.moveTo(options.x, options.y - size / 2);
+      ctx.lineTo(options.x - size / 2, options.y + size / 2);
+      ctx.lineTo(options.x + size / 2, options.y + size / 2);
+    }
+    ctx.closePath();
+  }
+  ctx.fill();
+  if (options.strokeColor) ctx.stroke();
+  ctx.restore();
 }
 
 export function drawTape(
