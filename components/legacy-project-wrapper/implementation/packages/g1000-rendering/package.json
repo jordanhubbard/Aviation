@@ -7,21 +7,19 @@
   "scripts": {
     "build": "tsc",
     "dev": "tsc --watch",
-    "test": "jest --passWithNoTests",
-    "test:watch": "jest --watch",
+    "test": "vitest run",
+    "test:watch": "vitest",
     "lint": "echo 'No lint config — skipping' && exit 0"
   },
   "dependencies": {
     "@aviation/shared-sdk": "workspace:*"
   },
   "devDependencies": {
-    "@types/jest": "^30.0.0",
     "@types/node": "^25.5.0",
     "@typescript-eslint/eslint-plugin": "^8.57.2",
     "@typescript-eslint/parser": "^8.0.0",
     "eslint": "^10.1.0",
-    "jest": "^30.3.0",
-    "ts-jest": "^29.1.0",
+    "vitest": "^4.1.1",
     "typescript": "^5.9.3"
   },
   "keywords": [

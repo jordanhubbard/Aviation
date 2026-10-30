@@ -1,0 +1,46 @@
+{
+  "schema": "aviation/avionics-vectors@1",
+  "telemetry": {
+    "snapshot": {
+      "position": {"latitude_deg": 37.6188, "longitude_deg": -122.3754, "altitude_ft": 2500},
+      "attitude": {"heading_deg": 123, "pitch_deg": 4, "roll_deg": -8},
+      "adc": {"ias_kt": 105, "cas_kt": 107, "tas_kt": 112, "pressure_altitude_ft": 2500, "density_altitude_ft": 2800, "vertical_speed_fpm": 300, "oat_c": 12},
+      "gps": {"latitude_deg": 37.6188, "longitude_deg": -122.3754, "altitude_ft": 2520, "ground_speed_kt": 110, "track_deg": 125, "waas_available": true, "waas_enabled": true, "raim_available": true, "raim_ok": true, "fix_valid": true, "horizontal_accuracy_m": 1.5, "vertical_accuracy_m": 3},
+      "adf": {"tuned_frequency_khz": 350, "station_ident": "ADF", "station_name": "Test NDB", "bearing_deg": 90, "relative_bearing_deg": -33, "distance_nm": 15, "signal_strength": 0.8, "receiving": true},
+      "dme": {"tuned_frequency_mhz": 113.7, "station_ident": "SFO", "station_name": "San Francisco", "slant_range_nm": 8.5, "ground_speed_kt": 110, "signal_strength": 0.9, "receiving": true},
+      "autopilot": {"master_on": true, "lateral_mode": "HDG", "vertical_mode": "ALT", "lateral_armed": "", "vertical_armed": "", "target_vertical_speed_fpm": 0, "bank_limit_active": false, "pitch_limit_active": false, "disconnect_reason": ""},
+      "audio_panel": {"com1_enabled": true, "com2_enabled": false, "nav1_enabled": true, "nav2_enabled": false, "adf_enabled": false, "marker_enabled": true, "speaker_enabled": false, "headphone_enabled": true, "com1_volume": 0.8, "com2_volume": 0.5, "nav1_volume": 0.7, "nav2_volume": 0.5, "adf_volume": 0.5, "marker_volume": 0.5, "adf_audio_level": 0, "marker_audio_level": 0, "marker_outer_active": false, "marker_middle_active": false, "marker_inner_active": false},
+      "transponder": {"mode": "ALT", "squawk_code": "1200", "ident_active": false, "ident_remaining_sec": 0},
+      "velocity": {"airspeed_kt": 105, "vertical_speed_fpm": 300, "turn_rate_dps": 1.5},
+      "targets": {"heading_deg": 125, "altitude_ft": 3000, "airspeed_kt": 110},
+      "timestamp": 1700000000000
+    },
+    "update": {"attitude": {"heading_deg": 124}, "timestamp": 1700000000050},
+    "invalid_update": {"attitude": {"heading_deg": "east"}}
+  },
+  "commands": {
+    "valid": [
+      {"command": "reset"},
+      {"command": "set_targets", "targets": {"heading_deg": 270, "altitude_ft": 6000}},
+      {"type": "set_transponder", "mode": "C", "squawk_code": "1200", "ident": false}
+    ],
+    "invalid": [
+      {"command": "set_targets", "targets": {"heading_deg": "west"}},
+      {"command": "unsupported"}
+    ]
+  },
+  "flight_plan": {
+    "gpx": {"name": "Bay route", "points": [{"name": "A", "lat": 37.6188, "lon": -122.3754, "ele_m": 100}, {"name": "B", "lat": 37.7213, "lon": -122.2207, "ele_m": 200}]},
+    "expected": {"ids": ["A", "B"], "first_altitude_ft": 328.084, "distance_nm": 9.587816423809517, "bearing_deg": 50.021241709173296}
+  },
+  "rendering": {
+    "viewport": {"x": 0, "y": 0, "width": 1000, "height": 800},
+    "pfd_layout": {
+      "airspeed": {"x": 30, "y": 64, "width": 140, "height": 400},
+      "attitude": {"x": 200, "y": 64, "width": 600, "height": 400},
+      "altitude": {"x": 830, "y": 64, "width": 140, "height": 400},
+      "hsi": {"x": 388, "y": 496, "width": 224, "height": 224}
+    },
+    "layer_order": ["background", "attitude", "tapes", "hsi", "text"]
+  }
+}

@@ -1,6 +1,8 @@
 # G1000 Protocols SDK
 
-This package defines the communication protocols and data formats for simulator services.
+This package is the retained TypeScript realization of the protocol portion of
+`aviation.avionics`. It defines runtime-validated communication records and exchange
+formats for avionics applications, not only the G1000 simulator.
 
 ## Modules
 
@@ -10,7 +12,8 @@ This package defines the communication protocols and data formats for simulator 
 
 ## Getting Started
 
-This package is intended to be used as part of the G1000 simulator suite. It provides the necessary protocols and data formats to ensure seamless communication between different components of the simulator.
+Run `pnpm test` to evaluate telemetry, command, and flight-plan behavior against the
+Component-owned vectors in `components/aviation-avionics/acceptance/vectors.json`.
 
 ## Directory Structure
 
@@ -20,4 +23,6 @@ This package is intended to be used as part of the G1000 simulator suite. It pro
 
 ## Usage
 
-To use this package, import the necessary modules into your simulator application and follow the provided documentation for each module to integrate the protocols and data formats into your system.
+Import public records and guards from `@aviation/g1000-protocols`. Applications should
+validate unknown wire values with `isTelemetrySnapshot`, `isTelemetryUpdate`, and
+`isCommandPayload` before updating application state.

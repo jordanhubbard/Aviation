@@ -34,15 +34,27 @@ jobs:
           node-version: '24'
       - uses: pnpm/action-setup@v4
       - name: Install common SDK dependencies
-        run: pnpm install --frozen-lockfile --filter @aviation/nav-data...
+        run: >-
+          pnpm install --frozen-lockfile
+          --filter @aviation/nav-data...
+          --filter @aviation/g1000-protocols...
+          --filter @aviation/g1000-rendering...
+          --filter g1000-simulator-frontend...
       - name: Build common SDK packages
         run: |
+          pnpm --filter @aviation/keystore run build
+          pnpm --filter @aviation/aviation-config run build
           pnpm --filter @aviation/shared-sdk run build
           pnpm --filter @aviation/nav-data run build
+          pnpm --filter @aviation/g1000-protocols run build
+          pnpm --filter @aviation/g1000-rendering run build
+          pnpm --filter g1000-simulator-frontend run build
       - name: Test common SDK and Component conformance
         run: |
           pnpm --filter @aviation/shared-sdk run test
           pnpm --filter @aviation/nav-data run test
+          pnpm --filter @aviation/g1000-protocols run test
+          pnpm --filter @aviation/g1000-rendering run test
 
   python:
     name: Python shared SDK

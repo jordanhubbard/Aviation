@@ -79,6 +79,11 @@ release-visible outcome to `CHANGELOG.md`; Git preserves prior queue states.
     performance/model vectors, and replace Flight Planner's duplicate scalar physics
     and PID implementation with SDK compatibility adapters. Reconcile G1000's bounded
     PID implementation and duplicated C172 model fields onto the same capability.
+  - [x] Define `aviation.avionics` protocol and rendering contracts, add deterministic
+    telemetry/command/flight-plan/layout/pipeline vectors, and replace G1000's duplicate
+    frontend telemetry schema with the shared protocol surface. Keep simulator stores,
+    transport hooks, display composition, and placeholder device models outside this
+    authority until separately qualified.
   - [ ] Promote airports, weather, procedures/nav-data, flight dynamics, avionics
     protocols/rendering, shared UI, configuration, and integration infrastructure into
     explicit Components with owned tests and contracts.
@@ -86,9 +91,9 @@ release-visible outcome to `CHANGELOG.md`; Git preserves prior queue states.
     aviation implementations after parity qualification.
   - [ ] Classify and remove or intentionally retain every remainder beneath the legacy
     wrapper.
-- **Next action:** Land and independently verify G1000 flight-dynamics delegation,
-  then define the avionics protocols/rendering boundary without moving app-private
-  simulator orchestration into the SDK.
+- **Next action:** Land and independently verify the avionics protocol/rendering
+  boundary, then define real avionics device-model contracts without moving
+  app-private simulator orchestration into the SDK.
 - **Evidence:** Phase 1.2 lift-and-shift identity `sha256:c5ca4361ba010f6e8d81c93398468f9f4f8b8cc352504bc8535fa74b7c6e9990`.
   Retained conversion stage is backed by current test receipt
   `sha256:60e252aceb5834018a21d3ec5a75b667c564e207ea3cf02d475b3245640c3c79`;
@@ -127,9 +132,18 @@ release-visible outcome to `CHANGELOG.md`; Git preserves prior queue states.
   `55088f0b33ab4fbda8df82a17744632ef1fc5f6f`; all seven exact-main workflows passed,
   including Common Aviation SDK run 41119233841, Integration Tests run 41119234024,
   Monorepo CI/CD run 41119234068, deployment-image run 41119233837, and dependency
-  graph run 41119239572. The G1000 reconciliation passes 14 Component/package tests
-  and all 101 G1000 backend tests locally; its retained and exact-main evidence remain
-  pending until review lands.
+  graph run 41119239572. G1000 flight-dynamics reconciliation landed in PR #345 at
+  exact-main commit `7c36bd734185fdb83e2e4219bc5d5e6d9de2108b`; all seven exact-main workflows
+  passed, including Common Aviation SDK run 41122926192, Integration Tests run
+  41122926152, Monorepo CI/CD run 41122926122, deployment-image run 41122926237,
+  Dependency Scan run 41122926302, Performance Regression Check run 41122926123,
+  and dependency graph run 41122936981. The avionics protocol/rendering slice has
+  Component lock
+  `sha256:d0adc77ef53c41396e29dc8e583bbbca075c56a72a76097c6eab93a25c702892`;
+  3 protocol and 3 rendering conformance tests, the production G1000 frontend build,
+  all 68 retained G1000 TypeScript tests, all 101 G1000 Python tests, and the full
+  retained `CI=true make test` lifecycle pass locally. Review and exact-main evidence
+  remain pending.
   - [ ] Each promoted Component has a current lock, independent acceptance evidence,
     and exact-main CI evidence.
   - [ ] An architecture inventory proves every application imports common capabilities

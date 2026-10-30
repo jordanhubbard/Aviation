@@ -255,14 +255,10 @@ export const createPfdPipeline = (options: PfdPipelineOptions): PfdPipeline => {
     timerId = setTimeout(() => renderLoop(nowMs()), intervalMs);
   };
 
-  const renderLoop = (timestampMs: number) => {
-    if (!running) return;
+  const renderFrame = (timestampMs: number, force = false): boolean => {
     const currentMs = Number.isFinite(timestampMs) ? timestampMs : nowMs();
     const deltaMs = lastFrameMs === 0 ? intervalMs : currentMs - lastFrameMs;
-    if (deltaMs < intervalMs) {
-      scheduleNext();
-      return;
-    }
+    if (!force && deltaMs < intervalMs) return false;
     if (deltaMs > loopConfig.maxFrameSkipMs) {
       lastFrameMs = currentMs - intervalMs;
     } else {
@@ -290,6 +286,12 @@ export const createPfdPipeline = (options: PfdPipelineOptions): PfdPipeline => {
       targetIntervalMs: intervalMs,
       frameOverrunMs: Math.max(0, cadenceMs - intervalMs),
     });
+    return true;
+  };
+
+  const renderLoop = (timestampMs: number) => {
+    if (!running) return;
+    renderFrame(timestampMs);
     scheduleNext();
   };
 
@@ -314,7 +316,7 @@ export const createPfdPipeline = (options: PfdPipelineOptions): PfdPipeline => {
       }
     },
     renderOnce: (timestampMs?: number) => {
-      renderLoop(timestampMs ?? nowMs());
+      renderFrame(timestampMs ?? nowMs(), true);
     },
     setTelemetry: (nextTelemetry) => {
       telemetry = nextTelemetry;

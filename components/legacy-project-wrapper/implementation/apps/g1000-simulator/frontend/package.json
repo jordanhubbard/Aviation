@@ -4,6 +4,8 @@
   "private": true,
   "dependencies": {
     "@aviation/aviation-config": "workspace:*",
+    "@aviation/g1000-protocols": "workspace:*",
+    "@aviation/g1000-rendering": "workspace:*",
     "@aviation/shared-sdk": "workspace:*",
     "react": "^19.2.4",
     "react-dom": "^19.0.0",
