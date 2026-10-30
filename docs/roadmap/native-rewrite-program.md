@@ -52,7 +52,8 @@ carry an explicit removal checkpoint.
    behavior are promoted; bundled-data provenance and the shared asset contract remain
    open before this boundary is complete.
 3. [ ] `aviation.weather`: provider-neutral observations/forecasts, METAR parsing,
-   flight categories, and provider adapters.
+   flight categories, and provider adapters are implemented with shared vectors and
+   Flight Planner delegation; exact-main qualification remains before completion.
 4. [ ] `aviation.nav-data`: navaids, procedures, approaches, airspace, ingestion, and
    provenance/freshness contracts.
 5. [ ] `aviation.flight-dynamics`: atmosphere, aircraft performance, wind, autopilot,
