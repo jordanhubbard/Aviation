@@ -46,8 +46,9 @@ network access.
 Applications SHALL delegate common force, atmosphere, wind, performance, aircraft
 model, integration, PID, axis-control, generic mode-transition, autotrim, and envelope
 behavior to `aviation.flight-dynamics`. Application code MAY retain simulation
-orchestration, avionics annunciation and capture policy, alert routing, persistence,
-and presentation, but SHALL NOT maintain independent copies of common formulas.
+orchestration, avionics annunciation, capture thresholds, controller-reset timing,
+alert routing, persistence, and presentation, but SHALL NOT maintain independent
+copies of common formulas or flight-director transitions.
 
 #### Scenario: Flight Planner updates its legacy state
 
@@ -55,11 +56,13 @@ and presentation, but SHALL NOT maintain independent copies of common formulas.
   controller output
 - **THEN** those calculations execute through `aviation.flight-dynamics`
 
-#### Scenario: G1000 updates its simulator and avionics state
+#### Scenario: G1000 updates its simulator and flight-director state
 
-- **WHEN** the simulator loads its C172 performance or updates a bounded PID loop
-- **THEN** the model data and controller calculation execute through
-  `aviation.flight-dynamics` while avionics modes and presentation remain private
+- **WHEN** the simulator loads its C172 performance, updates a bounded PID loop, or
+  arms and captures a flight-director mode
+- **THEN** model data, controller calculation, and generic state transition execute
+  through `aviation.flight-dynamics` while capture thresholds, limit annunciation,
+  stepping, and presentation remain private
 
 ### Requirement: Calculations are deterministic and unit-explicit
 

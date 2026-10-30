@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Extended `aviation.flight-dynamics` with independently tested active/armed mode,
+  capture, target-vertical-speed, and disconnect transitions; G1000 now delegates its
+  flight-director state machine to the SDK while retaining simulator-specific capture
+  thresholds, PID reset timing, limit annunciation, and stepping.
 - Moved axis-controller, mode-transition, autotrim, and envelope-protection
   qualification into the independently tested `aviation.flight-dynamics` Component;
   Flight Planner now instantiates those common controllers directly instead of

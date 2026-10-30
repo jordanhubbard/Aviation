@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import json
-from dataclasses import asdict
+from dataclasses import asdict, dataclass
 from pathlib import Path
 
 import pytest
@@ -11,6 +11,7 @@ from aviation_flight_dynamics.aircraft.models import C182_CONFIG, SR22_CONFIG
 from aviation_flight_dynamics.autopilot import (
     AltitudeHoldController,
     AutopilotModeController,
+    AutopilotState,
     AutotrimController,
     EnvelopeLimits,
     EnvelopeProtection,
@@ -162,6 +163,74 @@ def test_autopilot_state_snapshots_are_immutable_copies() -> None:
     controller.set_lateral_mode(LateralMode.HDG)
     assert before.lateral_mode == LateralMode.ROL
     assert controller.state.lateral_mode == LateralMode.HDG
+
+
+def _flight_director_state(controller: AutopilotModeController) -> dict[str, object]:
+    state = controller.state
+    return {
+        "master_on": state.master_on,
+        "lateral_mode": state.lateral_mode.value,
+        "vertical_mode": state.vertical_mode.value,
+        "approach_armed": state.approach_armed,
+        "lateral_armed": state.lateral_armed.value if state.lateral_armed else None,
+        "vertical_armed": state.vertical_armed.value if state.vertical_armed else None,
+        "target_vertical_speed_fpm": state.target_vertical_speed_fpm,
+        "disconnect_reason": state.disconnect_reason,
+    }
+
+
+def test_flight_director_transition_vector() -> None:
+    case = VECTORS["flight_director"]
+    controller = AutopilotModeController()
+    assert _flight_director_state(controller) == case["initial"]
+
+    for transition in case["transitions"]:
+        action = transition["action"]
+        if action == "engage":
+            controller.engage()
+            accepted = True
+        elif action == "disengage":
+            controller.disengage(transition.get("reason", ""))
+            accepted = True
+        elif action == "set_lateral":
+            accepted = controller.set_lateral_mode(LateralMode(transition["mode"]))
+        elif action == "arm_lateral":
+            accepted = controller.arm_lateral_mode(LateralMode(transition["mode"]))
+        elif action == "capture_lateral":
+            accepted = controller.capture_lateral_mode(LateralMode(transition["mode"]))
+        elif action == "set_vertical":
+            accepted = controller.set_vertical_mode(VerticalMode(transition["mode"]))
+        elif action == "arm_vertical":
+            accepted = controller.arm_vertical_mode(VerticalMode(transition["mode"]))
+        elif action == "capture_vertical":
+            accepted = controller.capture_vertical_mode(VerticalMode(transition["mode"]))
+        elif action == "set_target_vertical_speed":
+            controller.set_target_vertical_speed(transition["target_fpm"])
+            accepted = True
+        else:  # pragma: no cover - vector schema guard
+            raise AssertionError(f"Unsupported flight-director action: {action}")
+        assert accepted is transition["accepted"]
+        assert _flight_director_state(controller) == transition["expected"]
+
+    assert _flight_director_state(controller) == case["expected"]
+
+
+def test_flight_director_adapts_application_owned_state() -> None:
+    @dataclass
+    class ApplicationStatus(AutopilotState):
+        annunciation: str = "AP"
+
+    status = ApplicationStatus()
+    controller = AutopilotModeController(status)
+    controller.engage()
+    controller.set_lateral_mode(LateralMode.HDG)
+
+    snapshot = controller.state
+    assert status.master_on is True
+    assert status.lateral_mode == LateralMode.HDG
+    assert snapshot == status
+    assert snapshot is not status
+    assert snapshot.annunciation == "AP"
 
 
 def test_autotrim_vector() -> None:

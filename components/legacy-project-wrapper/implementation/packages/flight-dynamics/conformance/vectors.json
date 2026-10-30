@@ -104,6 +104,194 @@
       }
     ]
   },
+  "flight_director": {
+    "initial": {
+      "master_on": false,
+      "lateral_mode": "ROL",
+      "vertical_mode": "PIT",
+      "approach_armed": false,
+      "lateral_armed": null,
+      "vertical_armed": null,
+      "target_vertical_speed_fpm": 0.0,
+      "disconnect_reason": ""
+    },
+    "transitions": [
+      {
+        "action": "arm_lateral",
+        "mode": "NAV",
+        "accepted": false,
+        "expected": {
+          "master_on": false,
+          "lateral_mode": "ROL",
+          "vertical_mode": "PIT",
+          "approach_armed": false,
+          "lateral_armed": null,
+          "vertical_armed": null,
+          "target_vertical_speed_fpm": 0.0,
+          "disconnect_reason": ""
+        }
+      },
+      {
+        "action": "engage",
+        "accepted": true,
+        "expected": {
+          "master_on": true,
+          "lateral_mode": "ROL",
+          "vertical_mode": "PIT",
+          "approach_armed": false,
+          "lateral_armed": null,
+          "vertical_armed": null,
+          "target_vertical_speed_fpm": 0.0,
+          "disconnect_reason": ""
+        }
+      },
+      {
+        "action": "set_lateral",
+        "mode": "HDG",
+        "accepted": true,
+        "expected": {
+          "master_on": true,
+          "lateral_mode": "HDG",
+          "vertical_mode": "PIT",
+          "approach_armed": false,
+          "lateral_armed": null,
+          "vertical_armed": null,
+          "target_vertical_speed_fpm": 0.0,
+          "disconnect_reason": ""
+        }
+      },
+      {
+        "action": "arm_lateral",
+        "mode": "NAV",
+        "accepted": true,
+        "expected": {
+          "master_on": true,
+          "lateral_mode": "HDG",
+          "vertical_mode": "PIT",
+          "approach_armed": false,
+          "lateral_armed": "NAV",
+          "vertical_armed": null,
+          "target_vertical_speed_fpm": 0.0,
+          "disconnect_reason": ""
+        }
+      },
+      {
+        "action": "capture_lateral",
+        "mode": "APR",
+        "accepted": false,
+        "expected": {
+          "master_on": true,
+          "lateral_mode": "HDG",
+          "vertical_mode": "PIT",
+          "approach_armed": false,
+          "lateral_armed": "NAV",
+          "vertical_armed": null,
+          "target_vertical_speed_fpm": 0.0,
+          "disconnect_reason": ""
+        }
+      },
+      {
+        "action": "capture_lateral",
+        "mode": "NAV",
+        "accepted": true,
+        "expected": {
+          "master_on": true,
+          "lateral_mode": "NAV",
+          "vertical_mode": "PIT",
+          "approach_armed": false,
+          "lateral_armed": null,
+          "vertical_armed": null,
+          "target_vertical_speed_fpm": 0.0,
+          "disconnect_reason": ""
+        }
+      },
+      {
+        "action": "set_vertical",
+        "mode": "VS",
+        "accepted": true,
+        "expected": {
+          "master_on": true,
+          "lateral_mode": "NAV",
+          "vertical_mode": "VS",
+          "approach_armed": false,
+          "lateral_armed": null,
+          "vertical_armed": null,
+          "target_vertical_speed_fpm": 0.0,
+          "disconnect_reason": ""
+        }
+      },
+      {
+        "action": "arm_vertical",
+        "mode": "ALT",
+        "accepted": true,
+        "expected": {
+          "master_on": true,
+          "lateral_mode": "NAV",
+          "vertical_mode": "VS",
+          "approach_armed": false,
+          "lateral_armed": null,
+          "vertical_armed": "ALT",
+          "target_vertical_speed_fpm": 0.0,
+          "disconnect_reason": ""
+        }
+      },
+      {
+        "action": "set_target_vertical_speed",
+        "target_fpm": 700.0,
+        "accepted": true,
+        "expected": {
+          "master_on": true,
+          "lateral_mode": "NAV",
+          "vertical_mode": "VS",
+          "approach_armed": false,
+          "lateral_armed": null,
+          "vertical_armed": "ALT",
+          "target_vertical_speed_fpm": 700.0,
+          "disconnect_reason": ""
+        }
+      },
+      {
+        "action": "capture_vertical",
+        "mode": "ALT",
+        "accepted": true,
+        "expected": {
+          "master_on": true,
+          "lateral_mode": "NAV",
+          "vertical_mode": "ALT",
+          "approach_armed": false,
+          "lateral_armed": null,
+          "vertical_armed": null,
+          "target_vertical_speed_fpm": 700.0,
+          "disconnect_reason": ""
+        }
+      },
+      {
+        "action": "disengage",
+        "reason": "limit",
+        "accepted": true,
+        "expected": {
+          "master_on": false,
+          "lateral_mode": "ROL",
+          "vertical_mode": "PIT",
+          "approach_armed": false,
+          "lateral_armed": null,
+          "vertical_armed": null,
+          "target_vertical_speed_fpm": 700.0,
+          "disconnect_reason": "limit"
+        }
+      }
+    ],
+    "expected": {
+      "master_on": false,
+      "lateral_mode": "ROL",
+      "vertical_mode": "PIT",
+      "approach_armed": false,
+      "lateral_armed": null,
+      "vertical_armed": null,
+      "target_vertical_speed_fpm": 700.0,
+      "disconnect_reason": "limit"
+    }
+  },
   "autotrim": {
     "trim_rate": 0.1,
     "deadband": 0.05,
