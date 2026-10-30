@@ -9,7 +9,7 @@ PNPM := $(shell command -v pnpm >/dev/null 2>&1 && echo pnpm || (command -v core
 .PHONY: help all build clean test test-docker release
 .PHONY: build-node build-python build-clojure
 .PHONY: clean-node clean-python clean-clojure
-.PHONY: test-node test-go test-python test-clojure test-flight-track-analyzer
+.PHONY: test-node test-go test-sdk-python test-python test-clojure test-flight-track-analyzer
 .PHONY: test-docker-node test-docker-python test-docker-clojure
 .PHONY: run-aviation-missions run-flight-planner run-flight-school
 .PHONY: run-foreflight-dashboard run-flight-tracker run-weather-briefing
@@ -27,7 +27,7 @@ help:
 	@echo "Build & Test:"
 	@echo "  make build         - Build all applications and packages"
 	@echo "  make clean         - Clean all build artifacts and dependencies"
-	@echo "  make test          - Run installed Node, Go, and Flight Track Analyzer suites"
+	@echo "  make test          - Run Node, Go, shared Python SDK, and Flight Track Analyzer suites"
 	@echo "  make test-python   - Run other Python suites when their environments are available"
 	@echo "  make test-clojure  - Run the Clojure suite when Leiningen is available"
 	@echo "  make test-docker   - Run all tests in Docker containers (recommended)"
@@ -163,7 +163,7 @@ clean-clojure:
 # TEST TARGETS
 #
 
-test: test-node test-go test-flight-track-analyzer
+test: test-node test-go test-sdk-python test-flight-track-analyzer
 	@echo ""
 	@echo "✅ Core application tests complete!"
 
@@ -218,6 +218,14 @@ test-go:
 	else \
 		echo "   ⚠️  SKIPPED (go not installed)"; \
 	fi
+
+test-sdk-python:
+	@echo "🧪 Running Python shared SDK tests..."
+	@venv="$(abspath ../../../_build/python-envs/shared-sdk)"; \
+	python3 -m venv "$$venv"; \
+	"$$venv/bin/python" -m pip install -q -e packages/shared-sdk/python pytest; \
+	"$$venv/bin/python" -m pytest packages/shared-sdk/python/tests -q
+	@echo "✅ Python shared SDK tests PASSED"
 
 test-python:
 	@echo "🧪 Running Python tests..."

@@ -1,0 +1,71 @@
+name: Common Aviation SDK
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'components/aviation-*/**'
+      - 'components/legacy-project-wrapper/implementation/packages/**'
+      - 'components/legacy-project-wrapper/implementation/pnpm-lock.yaml'
+      - 'components/legacy-project-wrapper/implementation/go.mod'
+      - 'components/legacy-project-wrapper/implementation/go.sum'
+      - '.github/workflows/sdk-ci.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'components/aviation-*/**'
+      - 'components/legacy-project-wrapper/implementation/packages/**'
+      - 'components/legacy-project-wrapper/implementation/pnpm-lock.yaml'
+      - 'components/legacy-project-wrapper/implementation/go.mod'
+      - 'components/legacy-project-wrapper/implementation/go.sum'
+      - '.github/workflows/sdk-ci.yml'
+
+jobs:
+  typescript:
+    name: TypeScript shared packages
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: components/legacy-project-wrapper/implementation
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+      - uses: pnpm/action-setup@v4
+      - name: Install shared SDK dependencies
+        run: pnpm install --frozen-lockfile --filter @aviation/shared-sdk...
+      - name: Build shared SDK
+        run: pnpm --filter @aviation/shared-sdk run build
+      - name: Test shared SDK and navigation conformance
+        run: pnpm --filter @aviation/shared-sdk run test
+
+  python:
+    name: Python shared SDK
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: components/legacy-project-wrapper/implementation
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.11'
+      - name: Install shared SDK and test runner
+        run: python -m pip install -e packages/shared-sdk/python pytest
+      - name: Test shared SDK and navigation conformance
+        run: python -m pytest packages/shared-sdk/python/tests
+
+  go:
+    name: Go shared packages
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: components/legacy-project-wrapper/implementation
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-go@v6
+        with:
+          go-version-file: components/legacy-project-wrapper/implementation/go.mod
+      - name: Test Go shared packages
+        run: go test ./...

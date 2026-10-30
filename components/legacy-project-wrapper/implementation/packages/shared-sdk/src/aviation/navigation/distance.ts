@@ -15,6 +15,13 @@ export const EARTH_RADIUS = {
   METERS: 6371000.0, // Meters
 } as const;
 
+export function assertValidCoordinate(lat: number, lon: number): void {
+  if (!Number.isFinite(lat) || !Number.isFinite(lon)
+      || lat < -90 || lat > 90 || lon < -180 || lon > 180) {
+    throw new RangeError(`Invalid WGS-84 coordinate: ${lat}, ${lon}`);
+  }
+}
+
 /**
  * Convert degrees to radians
  */
@@ -53,6 +60,8 @@ export function haversineDistance(
   lon2: number,
   unit: keyof typeof EARTH_RADIUS = 'NM'
 ): number {
+  assertValidCoordinate(lat1, lon1);
+  assertValidCoordinate(lat2, lon2);
   const R = EARTH_RADIUS[unit];
   
   const phi1 = toRadians(lat1);
@@ -121,6 +130,8 @@ export function midpoint(
   lat2: number,
   lon2: number
 ): [number, number] {
+  assertValidCoordinate(lat1, lon1);
+  assertValidCoordinate(lat2, lon2);
   const phi1 = toRadians(lat1);
   const lambda1 = toRadians(lon1);
   const phi2 = toRadians(lat2);
@@ -162,6 +173,10 @@ export function destination(
   bearing: number,
   unit: keyof typeof EARTH_RADIUS = 'NM'
 ): [number, number] {
+  assertValidCoordinate(lat, lon);
+  if (!Number.isFinite(distance) || distance < 0 || !Number.isFinite(bearing)) {
+    throw new RangeError('Distance must be non-negative and bearing must be finite');
+  }
   const R = EARTH_RADIUS[unit];
   const delta = distance / R; // Angular distance
   const theta = toRadians(bearing);

@@ -1,0 +1,55 @@
+"""Conformance adapter for the Component-owned aviation.navigation vectors."""
+
+from __future__ import annotations
+
+import json
+import math
+from pathlib import Path
+
+from aviation import navigation
+
+
+VECTORS_PATH = (
+    Path(__file__).resolve().parents[7]
+    / "components"
+    / "aviation-navigation"
+    / "acceptance"
+    / "vectors.json"
+)
+CONTRACT = json.loads(VECTORS_PATH.read_text(encoding="utf-8"))
+
+OPERATIONS = {
+    "distance_nm": navigation.distance_nm,
+    "initial_bearing": navigation.initial_bearing,
+    "normalize_bearing": navigation.normalize_bearing,
+    "normalize_longitude": navigation.normalize_longitude,
+    "dms_to_decimal": navigation.dms_to_decimal,
+    "flight_time": navigation.flight_time,
+    "vfr_fuel_reserve": navigation.vfr_fuel_reserve,
+    "ifr_fuel_reserve": navigation.ifr_fuel_reserve,
+    "tsd_distance": navigation.tsd_distance,
+}
+
+
+def test_component_vector_schema() -> None:
+    assert CONTRACT["schema"] == "aviation/navigation-acceptance-vectors@1"
+    assert CONTRACT["vectors"]
+
+
+def test_component_vectors() -> None:
+    for vector in CONTRACT["vectors"]:
+        operation = OPERATIONS.get(vector["operation"])
+        assert operation is not None, f"unsupported operation: {vector['operation']}"
+        if vector.get("expected_error"):
+            try:
+                operation(*vector["args"])
+            except (TypeError, ValueError, ZeroDivisionError):
+                continue
+            raise AssertionError(f"{vector['id']} did not reject invalid input")
+        actual = operation(*vector["args"])
+        assert math.isfinite(actual), vector["id"]
+        assert abs(actual - vector["expected"]) <= vector["absolute_tolerance"], (
+            vector["id"],
+            actual,
+            vector["expected"],
+        )
