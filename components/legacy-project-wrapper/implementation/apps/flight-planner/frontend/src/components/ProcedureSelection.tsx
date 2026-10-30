@@ -1,9 +1,33 @@
 import { useState, useEffect } from 'react';
-import { Autocomplete, TextField, Typography, Grid, ToggleButton, ToggleButtonGroup, Card, CardContent, List, ListItem, ListItemText } from '@mui/material';
+import { Alert, Autocomplete, TextField, Typography, Grid, ToggleButton, ToggleButtonGroup, Card, CardContent, List, ListItem, ListItemText } from '@mui/material';
 
-type Procedure = {
+export type Procedure = {
   name: string
   legs: Array<{ fix: string; altitude: number; course: number }>
+}
+
+type ProcedureType = 'SID' | 'STAR' | 'Approach'
+
+const isProcedure = (value: unknown): value is Procedure => {
+  if (!value || typeof value !== 'object') return false
+  const candidate = value as Partial<Procedure>
+  return typeof candidate.name === 'string' && Array.isArray(candidate.legs)
+}
+
+export const loadProcedures = async (
+  airportCode: string,
+  procedureType: ProcedureType,
+  request: typeof fetch = fetch,
+): Promise<Procedure[]> => {
+  const params = new URLSearchParams({ airport: airportCode, type: procedureType })
+  const response = await request(`/api/procedures?${params}`)
+  if (!response.ok) throw new Error(`Procedures unavailable (HTTP ${response.status})`)
+
+  const data: unknown = await response.json()
+  if (!Array.isArray(data) || !data.every(isProcedure)) {
+    throw new Error('Procedures response is not a valid list')
+  }
+  return data
 }
 
 type Props = {
@@ -11,29 +35,41 @@ type Props = {
 }
 
 const ProcedureSelection = ({ airportCode }: Props) => {
-  const [procedureType, setProcedureType] = useState('SID');
+  const [procedureType, setProcedureType] = useState<ProcedureType>('SID');
   const [procedures, setProcedures] = useState<Procedure[]>([]);
   const [selectedProcedure, setSelectedProcedure] = useState<Procedure | null>(null);
+  const [proceduresUnavailable, setProceduresUnavailable] = useState(false);
 
   useEffect(() => {
-    if (airportCode) {
-      fetch(`/api/procedures?airport=${airportCode}`)
-        .then(response => response.json())
-        .then((data: Procedure[]) => setProcedures(data));
+    let active = true
+    setSelectedProcedure(null)
+
+    if (!airportCode) {
+      setProcedures([])
+      setProceduresUnavailable(false)
+      return () => { active = false }
     }
-  }, [airportCode]);
+
+    setProceduresUnavailable(false)
+    void loadProcedures(airportCode, procedureType)
+      .then((data) => {
+        if (active) setProcedures(data)
+      })
+      .catch(() => {
+        if (!active) return
+        setProcedures([])
+        setProceduresUnavailable(true)
+      })
+
+    return () => { active = false }
+  }, [airportCode, procedureType]);
 
   const handleProcedureChange = (_event: React.SyntheticEvent, value: Procedure | null) => {
     setSelectedProcedure(value);
   };
 
-  const handleProcedureTypeChange = (_event: React.MouseEvent, newType: string) => {
-    setProcedureType(newType);
-    if (airportCode) {
-      fetch(`/api/procedures?airport=${airportCode}&type=${newType}`)
-        .then(response => response.json())
-        .then((data: Procedure[]) => setProcedures(data));
-    }
+  const handleProcedureTypeChange = (_event: React.MouseEvent, newType: ProcedureType | null) => {
+    if (newType) setProcedureType(newType);
   };
 
   return (
@@ -64,6 +100,11 @@ const ProcedureSelection = ({ airportCode }: Props) => {
           onChange={handleProcedureChange}
           renderInput={(params) => <TextField {...params} label="Procedure" variant="outlined" />}
         />
+        {proceduresUnavailable ? (
+          <Alert severity="info" sx={{ mt: 1 }}>
+            Procedures are unavailable for this airport.
+          </Alert>
+        ) : null}
       </Grid>
       {selectedProcedure && (
         <Grid item xs={12}>
