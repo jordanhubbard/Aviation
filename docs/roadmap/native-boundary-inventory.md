@@ -50,7 +50,7 @@ current human description.
 | --- | --- | --- |
 | AI Explainer — `packages/ai-explainer` | `packages/ai-explainer/package.json`; `packages/ai-explainer/README.md` | `packages/ai-explainer/tests/` |
 | Aviation Config — `packages/aviation-config` | `packages/aviation-config/package.json`; `packages/aviation-config/src/` | none located |
-| Flight Dynamics — `packages/flight-dynamics` | `packages/flight-dynamics/package.json`; `packages/flight-dynamics/README.md`; `packages/flight-dynamics/requirements.txt` | `packages/flight-dynamics/test_api.py` |
+| Flight Dynamics — `packages/flight-dynamics` | `packages/flight-dynamics/package.json`; `packages/flight-dynamics/README.md`; `packages/flight-dynamics/requirements.txt` | Component-owned conformance vectors, package physics/model tests, and retained API tests |
 | G1000 Avionics SDK — `packages/g1000-avionics-sdk` | `packages/g1000-avionics-sdk/package.json`; `packages/g1000-avionics-sdk/README.md` | none located |
 | G1000 Protocols — `packages/g1000-protocols` | `packages/g1000-protocols/package.json`; `packages/g1000-protocols/README.md`; Go package under `packages/g1000-protocols/` | Go test target in root `go.mod`; no owned fixture located |
 | G1000 Rendering — `packages/g1000-rendering` | `packages/g1000-rendering/package.json`; `packages/g1000-rendering/README.md` | no owned test file located |
@@ -133,6 +133,23 @@ to their applications.
 | `apps/g1000-simulator/backend/app/services/procedures.py` | compatibility adapter | delegates selection/filtering and retains legacy simulator method names |
 | `packages/nav-data/src/` | retained provider-ingestion package | CIFP, openAIP, and OurAirports adapters emit common SDK contracts; duplicate database, cache, search, proximity, and procedure-selection surfaces are removed and Component-owned adapter vectors run in package CI |
 | retained airport/airspace caches | retained datasets | provenance, license, revision, and refresh evidence remain required before asset promotion |
+
+### Fifth selected boundary: aviation flight dynamics
+
+`aviation.flight-dynamics` owns deterministic atmosphere and wind models, common
+force and integration primitives, aircraft performance/model validation, and
+autopilot-control primitives. Avionics display state, HTTP schemas, alert routing,
+recorded-flight analytics, and application simulation orchestration remain private.
+
+| Retained path | Classification | Native owner / disposition |
+| --- | --- | --- |
+| `packages/flight-dynamics/aviation_flight_dynamics/` | retained Python realization | `component://aviation/aviation-flight-dynamics`; Component-vector adapter required |
+| `packages/flight-dynamics/aviation_flight_dynamics/aircraft/models/` | validated model assets | retain C172, C182, and SR22 configurations with explicit validation counts |
+| `packages/flight-dynamics/tests/` | independent realization adapter | evaluates Component-owned vectors without application or network dependencies |
+| `apps/flight-planner/backend/app/services/flight_dynamics.py` | compatibility adapter | delegates scalar physics and environmental calculations; retains planner state and alert orchestration |
+| `apps/flight-planner/backend/app/services/autopilot_controller.py` | compatibility adapter | delegates PID state/update behavior; retains legacy controller names and fixed-step API |
+| `apps/g1000-simulator/backend/app/services/flight_dynamics.py` | application simulator orchestration | reconcile common PID, model, and environment primitives while retaining avionics modes, sensors, and display state |
+| `apps/flight-track-analyzer/app/flightlab/` | recorded-flight analytics | retain signal processing, measurement calibration, POH comparison, and observed-flight inference; consume common primitives only where semantics match |
 
 ## Cross-cutting authority to classify
 

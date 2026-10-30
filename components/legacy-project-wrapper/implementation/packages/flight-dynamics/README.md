@@ -4,9 +4,16 @@ A physics-based flight simulation library for aviation applications.
 
 ## Overview
 
-The Flight Dynamics package provides a core flight physics engine that simulates aircraft behavior based on control inputs. It includes:
+The Flight Dynamics package is the Python realization of the
+`aviation.flight-dynamics` Component. It includes:
 
-- **6-DOF Equations of Motion**: Accurate aircraft dynamics simulation
+- **6-DOF Equations of Motion**: Euler and RK4 rigid-body integration
+- **Atmosphere and Wind**: ISA density/pressure/temperature plus deterministic gusts
+  and turbulence
+- **Aircraft Models**: Validated C172, C182, and SR22 configurations and variants
+- **Performance**: Cruise, takeoff, climb, and reference-envelope validation
+- **Autopilot Primitives**: PID, axis controllers, mode transitions, autotrim, and
+  envelope protection
 - **FastAPI Service**: RESTful API for flight state updates and queries
 - **State Serialization**: Efficient state representation for client applications
 - **Deterministic Updates**: Consistent physics calculations with fixed time steps
@@ -95,14 +102,10 @@ Install development dependencies:
 pip install -e ".[dev]"
 ```
 
-## Future Enhancements
-
-- [ ] Aerodynamic modeling (lift, drag, thrust)
-- [ ] Engine performance simulation
-- [ ] Fuel consumption calculations
-- [ ] Environmental effects (wind, turbulence)
-- [ ] Landing gear dynamics
-- [ ] Autopilot integration
+The package suite loads `conformance/vectors.json`, checks it against Component
+authority in a full repository checkout, and runs without network access. Use the
+repository's `make test-flight-dynamics` target for the independently provisioned
+acceptance environment.
 
 ## License
 

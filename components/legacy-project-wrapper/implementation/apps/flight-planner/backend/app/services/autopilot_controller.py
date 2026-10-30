@@ -1,32 +1,33 @@
-# Autopilot Controller Module
+# Autopilot compatibility controllers backed by the common flight-dynamics SDK.
+
+from aviation_flight_dynamics.autopilot import (
+    PIDController as SharedPIDController,
+    PIDGains,
+)
+
 
 class PIDController:
     def __init__(self, kp, ki, kd):
         self.kp = kp
         self.ki = ki
         self.kd = kd
-        self.prev_error = 0
-        self.integral = 0
-        self._has_prev_error = False
+        self._controller = SharedPIDController(PIDGains(kp=kp, ki=ki, kd=kd))
 
     def compute(self, setpoint, measured_value):
         error = setpoint - measured_value
-        self.integral += error
-
-        # On the first sample there is no previous error to difference against.
-        # Treating prev_error as 0 produces a derivative kick proportional to the
-        # full error, i.e. a control-surface spike the moment a mode engages.
-        derivative = (error - self.prev_error) if self._has_prev_error else 0
-        output = self.kp * error + self.ki * self.integral + self.kd * derivative
-        self.prev_error = error
-        self._has_prev_error = True
-        return output
+        return self._controller.update(error, 1.0)
 
     def reset(self):
         """Clear accumulated state so the controller re-engages cleanly."""
-        self.prev_error = 0
-        self.integral = 0
-        self._has_prev_error = False
+        self._controller.reset()
+
+    @property
+    def prev_error(self):
+        return self._controller.prev_error
+
+    @property
+    def integral(self):
+        return self._controller.integral
 
 class PitchController(PIDController):
     def __init__(self):

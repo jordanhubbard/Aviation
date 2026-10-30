@@ -75,6 +75,9 @@ release-visible outcome to `CHANGELOG.md`; Git preserves prior queue states.
     freshness vectors, and replace Flight Planner and G1000 navaid/procedure catalogs
     with SDK compatibility surfaces while retaining app-specific schemas and avionics
     state.
+  - [x] Define `aviation.flight-dynamics`, add deterministic atmosphere/wind/PID/
+    performance/model vectors, and replace Flight Planner's duplicate scalar physics
+    and PID implementation with SDK compatibility adapters.
   - [ ] Promote airports, weather, procedures/nav-data, flight dynamics, avionics
     protocols/rendering, shared UI, configuration, and integration infrastructure into
     explicit Components with owned tests and contracts.
@@ -82,8 +85,8 @@ release-visible outcome to `CHANGELOG.md`; Git preserves prior queue states.
     aviation implementations after parity qualification.
   - [ ] Classify and remove or intentionally retain every remainder beneath the legacy
     wrapper.
-- **Next action:** Land and independently verify the reconciled nav-data provider
-  adapters, then promote flight dynamics.
+- **Next action:** Land and independently verify the flight-dynamics Component and
+  Flight Planner delegation, then reconcile G1000 dynamics/autopilot primitives.
 - **Evidence:** Phase 1.2 lift-and-shift identity `sha256:c5ca4361ba010f6e8d81c93398468f9f4f8b8cc352504bc8535fa74b7c6e9990`.
   Retained conversion stage is backed by current test receipt
   `sha256:60e252aceb5834018a21d3ec5a75b667c564e207ea3cf02d475b3245640c3c79`;
@@ -114,9 +117,14 @@ release-visible outcome to `CHANGELOG.md`; Git preserves prior queue states.
   Nav-data core landed in PR #342 at exact-main commit
   `079af9398dcf540c8dbe4b5d9760e322493f77b5`; all seven exact-commit workflows
   passed, including Common Aviation SDK run 41110871727 and Integration Tests run
-  41110871688. The provider reconciliation passes 3 Component-owned adapter tests and
-  all 321 TypeScript SDK tests locally; full retained acceptance, a refreshed lock,
-  and exact-main evidence remain pending until this review lands.
+  41110871688. Provider reconciliation landed in PR #343 at exact-main commit
+  `1a9d42c8b02ada926f173474f66eb7a4ea3d6efd`; all six direct exact-main workflows
+  passed, including Common Aviation SDK run 41115026210, Integration Tests run
+  41115026166, Monorepo CI/CD run 41115026320, and deployment-image run 41115026360.
+  The flight-dynamics slice currently passes 13 Component/package tests and all 126
+  Flight Planner backend tests locally. Its Component lock is
+  `sha256:745b6615b4fd999a83573455b36928d39e8ba62091ea570c689e86d9cb02588e`;
+  full retained acceptance and exact-main evidence remain pending until its review lands.
   - [ ] Each promoted Component has a current lock, independent acceptance evidence,
     and exact-main CI evidence.
   - [ ] An architecture inventory proves every application imports common capabilities

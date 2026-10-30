@@ -1,0 +1,66 @@
+{
+  "schema": "aviation/flight-dynamics-vectors@1",
+  "tolerance": 1e-6,
+  "atmosphere": {
+    "altitude_m": 0.0,
+    "expected": {
+      "density_kg_m3": 1.2250122659906946,
+      "pressure_pa": 101325.0,
+      "temperature_c": 15.0
+    }
+  },
+  "wind": {
+    "steady_mps": [10.0, 0.0, 0.0],
+    "gust_amplitude_mps": 2.0,
+    "gust_frequency_hz": 0.25,
+    "time_s": 1.0,
+    "expected_total_mps": [12.0, 0.0, 0.0]
+  },
+  "pid": {
+    "gains": [1.0, 0.1, 0.2],
+    "samples": [[5.0, 1.0], [3.0, 1.0]],
+    "expected_outputs": [5.5, 3.4]
+  },
+  "models": [
+    {"identifier": "cessna-172", "errors": 0, "warnings": 0},
+    {"identifier": "cessna-182", "errors": 0, "warnings": 0},
+    {"identifier": "cirrus-sr22", "errors": 0, "warnings": 1}
+  ],
+  "c172_performance": {
+    "power_setting": 0.75,
+    "expected_cruise": {
+      "true_airspeed_kt": 91.5,
+      "fuel_flow_gph": 7.5,
+      "endurance_hr": 6.666666666666667,
+      "range_nm": 610.0
+    },
+    "expected_takeoff_climb": {
+      "takeoff_distance_ft": 1629.9836788860102,
+      "climb_rate_fpm": 720.0072093986123
+    }
+  },
+  "compatibility": {
+    "input": {
+      "speed": 50.0,
+      "wing_area": 16.0,
+      "lift_coefficient": 1.1,
+      "drag_coefficient": 0.04,
+      "air_density": 1.225,
+      "power": 1000.0,
+      "efficiency": 0.8,
+      "engine_factor": 0.9,
+      "fuel_efficiency": 100.0,
+      "wind_speed": 10.0,
+      "wind_angle_rad": 0.0,
+      "turbulence_intensity": 0.1
+    },
+    "expected": {
+      "lift": 26950.0,
+      "drag": 980.0,
+      "thrust": 720.0,
+      "fuel_consumption": 7.2,
+      "wind_adjusted_velocity": 60.0,
+      "turbulence_adjusted_velocity": 45.0
+    }
+  }
+}

@@ -54,12 +54,14 @@ carry an explicit removal checkpoint.
 3. [x] `aviation.weather`: provider-neutral observations/forecasts, METAR parsing,
    flight categories, and provider adapters have shared vectors, Flight Planner
    delegation, and exact-main qualification.
-4. [ ] `aviation.nav-data`: navaids, procedures, approaches, airspace, ingestion, and
+4. [x] `aviation.nav-data`: navaids, procedures, approaches, airspace, ingestion, and
    provenance/freshness contracts have shared vectors, Flight Planner/G1000
-   delegation, and exact-main core qualification. The provider-ingestion package is
-   reconciled locally; refreshed Component and exact-main evidence remain.
+   delegation, exact-main core qualification, and an exact-main provider-ingestion
+   package with no duplicate catalog/search implementation.
 5. [ ] `aviation.flight-dynamics`: atmosphere, aircraft performance, wind, autopilot,
-   and validated aircraft models.
+   and validated aircraft models have Component-owned vectors locally; Flight Planner
+   delegates scalar physics and PID state, while exact-main qualification and G1000
+   reconciliation remain.
 6. [ ] `aviation.avionics`: G1000 protocols, telemetry schemas, rendering primitives,
    and avionics device models.
 7. [ ] `aviation.ui`, `aviation.config`, and integration infrastructure: reusable UI,
