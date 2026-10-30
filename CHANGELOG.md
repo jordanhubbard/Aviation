@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Flight Planner no longer crashes when procedure data is unavailable or malformed; mission planning keeps the procedure selector usable and shows a nonfatal unavailable state.
 - Accident Tracker now shows source citations and last successful sync, classifies NTSB operations, offers readable filters, and turns plain-language searches into supported filters without an external token.
 - Aviation Missions now stores written feedback on individual completed missions and shows comments under each completion.
 - Every Aviation application now has a feedback button that files a contextual issue in the Aviation repository; the button is included in deployed browser checks.

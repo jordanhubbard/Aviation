@@ -490,10 +490,14 @@ if (appId === 'flightschool') {
       await page.route(`${origin}/api/**`, async route => {
         const path = new URL(route.request().url()).pathname;
         let body;
+        let status = 200;
         if (path === '/api/meta') body = run.tag({ repo_url: null, revision: 'e2e' });
         else if (path === '/api/airports/search') body = [airport];
         else if (path === '/api/airports/KOAK') body = run.tag(airport);
-        else if (path === '/api/procedures') body = [];
+        else if (path === '/api/procedures') {
+          status = 404;
+          body = { detail: 'Not Found' };
+        }
         else if (path === '/api/plan' && route.request().method() === 'POST') {
           const request = route.request().postDataJSON();
           if (request.mode !== 'local' || request.airport !== 'KOAK') throw new Error('Unexpected planner request');
@@ -510,17 +514,25 @@ if (appId === 'flightschool') {
         }
         else if (path === '/api/airspace/nearby') body = run.tag({ type: 'FeatureCollection', features: [] });
         else throw new Error(`Unexpected planner API request: ${route.request().method()} ${path}`);
-        await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(body) });
+        await route.fulfill({ status, contentType: 'application/json', body: JSON.stringify(body) });
       });
       const errors = [];
       page.on('pageerror', error => errors.push(error.message));
       await runDeclaredScreens(['planner', 'saved-plan', 'local-results', 'weather', 'airports'], [
         {
           id: 'planner', dataMode: 'sdk-mock',
-          visit: () => page.goto(baseUrl, { waitUntil: 'domcontentloaded' }),
+          visit: async () => {
+            await page.goto(baseUrl, { waitUntil: 'domcontentloaded' });
+            await page.getByRole('combobox', { name: 'Origin' }).fill('KOAK');
+            await page.getByText('Procedures are unavailable for this airport.').waitFor();
+            await page.getByRole('combobox', { name: 'Procedure' }).click();
+          },
           verify: async () => {
             await page.getByText('Select a planning mode and enter details to generate a plan').waitFor();
             if (await page.getByText(/^Joystick:/).count()) throw new Error('Simulator controls leaked into planner');
+            if (await page.getByText('Something went wrong').count()) {
+              throw new Error('Unavailable procedures crossed into the planner error boundary');
+            }
           },
         },
         {
