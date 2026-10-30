@@ -1,20 +1,17 @@
 # G1000 Avionics SDK
 
-This package currently contains placeholder candidates for a future avionics device
-simulation library. Its methods return fixed zero values or no result and it is not a
-qualified realization of `aviation.avionics`.
+This package realizes the deterministic, portable device-model portion of
+`aviation.avionics` in TypeScript and Python. AHRS, ADC, and GPS models share one
+acceptance-vector set and reject invalid inputs. G1000 and Flight Planner consume the
+Python realization through thin compatibility exports.
 
 ## Modules
 
-- `ahrs/` — Attitude/heading computation and coordinate transforms
-- `adc/` — Air data (IAS/CAS/TAS), altitude, atmosphere
-- `gps/` — Position, WAAS/RAIM, accuracy modeling
-- `nav-radios/` — VOR/ILS/ADF/DME simulation
-- `autopilot/` — PID controllers, mode logic, envelope protection
+- `src/devices.ts` and `python/aviation_avionics/` — qualified AHRS, ADC, and GPS models
 
 ## Qualification boundary
 
-Do not use these classes as authoritative AHRS, ADC, GPS, radio, or autopilot models.
-Each device family needs unit-explicit behavior, deterministic acceptance vectors,
-invalid-input policy, and application-consumer parity before it can join the common
-SDK contract.
+The pure `computeAhrs`/`computeAdc`/`computeGps` functions and equivalent Python
+functions are authoritative for their declared contracts. Radio and physical-device
+models, autopilot policy, and simulator orchestration remain outside this package until
+qualified by their own contracts and acceptance vectors.

@@ -33,6 +33,20 @@
     "gpx": {"name": "Bay route", "points": [{"name": "A", "lat": 37.6188, "lon": -122.3754, "ele_m": 100}, {"name": "B", "lat": 37.7213, "lon": -122.2207, "ele_m": 200}]},
     "expected": {"ids": ["A", "B"], "first_altitude_ft": 328.084, "distance_nm": 9.587816423809517, "bearing_deg": 50.021241709173296}
   },
+  "devices": {
+    "ahrs": {
+      "input": {"heading_deg": 370, "pitch_deg": 4, "roll_deg": 20, "turn_rate_dps": 3, "airspeed_kt": 100, "latitude_deg": 37.6, "longitude_deg": -122.4},
+      "expected": {"heading_deg": 22.24, "pitch_deg": 4, "roll_deg": 20, "yaw_deg": 10, "true_heading_deg": 10, "magnetic_heading_deg": 22.24, "magnetic_variation_deg": -12.24, "slip_skid_deg": -0.9753106282255204}
+    },
+    "adc": {
+      "input": {"altitude_ft": 5000, "airspeed_kt": 100, "vertical_speed_fpm": 500, "altimeter_setting_inhg": 30.12, "temperature_offset_c": 10},
+      "expected": {"ias_kt": 100, "cas_kt": 100, "tas_kt": 107.40288427079805, "pressure_altitude_ft": 4800, "density_altitude_ft": 6000, "vertical_speed_fpm": 500, "oat_c": 15.49024}
+    },
+    "gps": {
+      "input": {"latitude_deg": 37.6, "longitude_deg": -122.4, "altitude_ft": 5000, "ground_speed_kt": 110, "track_deg": 370, "timestamp": 1700000020},
+      "expected": {"latitude_deg": 37.59999936184623, "longitude_deg": -122.39996593380053, "altitude_ft": 4996.511933664231, "ground_speed_kt": 110, "track_deg": 10, "waas_available": true, "waas_enabled": true, "raim_available": true, "raim_ok": true, "fix_valid": true, "horizontal_accuracy_m": 3, "vertical_accuracy_m": 5}
+    }
+  },
   "rendering": {
     "viewport": {"x": 0, "y": 0, "width": 1000, "height": 800},
     "pfd_layout": {

@@ -5,3 +5,4 @@ pydantic
 pydantic-settings
 -e ../../../packages/shared-sdk/python
 -e ../../../packages/flight-dynamics
+-e ../../../packages/g1000-avionics-sdk/python

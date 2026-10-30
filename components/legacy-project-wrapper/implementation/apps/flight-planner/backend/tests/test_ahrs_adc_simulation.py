@@ -1,66 +1,32 @@
-import unittest
+import pytest
 
-from app.services.ahrs_adc_simulation import AHRS, ADC
-
-class TestAHRSSimulation(unittest.TestCase):
-    def setUp(self):
-        self.ahrs = AHRS()
-
-    def test_compute_attitude(self):
-        attitude = self.ahrs.compute_attitude(10, 20, 30)
-        self.assertEqual(attitude.pitch, 10.0)
-        self.assertEqual(attitude.roll, 20.0)
-        self.assertEqual(attitude.yaw, 30.0)
-
-    def test_compute_attitude_normalizes(self):
-        attitude = self.ahrs.compute_attitude(190, -190, 370)
-        self.assertEqual(attitude.pitch, -170.0)
-        self.assertEqual(attitude.roll, 170.0)
-        self.assertEqual(attitude.yaw, 10.0)
-
-    def test_magnetic_heading(self):
-        heading = self.ahrs.magnetic_heading(100, 5)
-        self.assertIsNone(heading)
-        pass
-
-    def test_slip_skid_indicator(self):
-        indicator = self.ahrs.slip_skid_indicator()
-        self.assertIsNone(indicator)
-        pass
-
-    def test_coordinate_transform(self):
-        transform = self.ahrs.coordinate_transform('NED')
-        self.assertIsNone(transform)
-        pass
+from app.services.ahrs_adc_simulation import compute_adc, compute_ahrs
 
 
-class TestADCSimulation(unittest.TestCase):
-    def setUp(self):
-        self.adc = ADC()
-
-    def test_calculate_airspeed(self):
-        airspeed = self.adc.calculate_airspeed(100)
-        self.assertIsNone(airspeed)
-        pass
-
-    def test_calculate_altitude(self):
-        altitude = self.adc.calculate_altitude(1013.25)
-        self.assertIsNone(altitude)
-        pass
-
-    def test_vertical_speed(self):
-        vertical_speed = self.adc.vertical_speed()
-        self.assertIsNone(vertical_speed)
-        pass
-
-    def test_outside_air_temperature(self):
-        oat = self.adc.outside_air_temperature()
-        self.assertIsNone(oat)
-        pass
-
-    def test_standard_atmosphere_model(self):
-        model = self.adc.standard_atmosphere_model()
-        self.assertIsNone(model)
-        pass
+def test_flight_planner_uses_common_ahrs_model():
+    solution = compute_ahrs(
+        heading_deg=370,
+        pitch_deg=190,
+        roll_deg=-190,
+        turn_rate_dps=0,
+        airspeed_kt=100,
+        latitude_deg=37.6,
+        longitude_deg=-122.4,
+    )
+    assert solution.pitch_deg == -170
+    assert solution.roll_deg == 170
+    assert solution.true_heading_deg == 10
+    assert solution.magnetic_heading_deg == pytest.approx(22.24)
 
 
+def test_flight_planner_uses_common_adc_model():
+    solution = compute_adc(
+        altitude_ft=5000,
+        airspeed_kt=100,
+        vertical_speed_fpm=500,
+        altimeter_setting_inhg=30.12,
+        temperature_offset_c=10,
+    )
+    assert solution.pressure_altitude_ft == pytest.approx(4800)
+    assert solution.density_altitude_ft == pytest.approx(6000)
+    assert solution.tas_kt > solution.ias_kt

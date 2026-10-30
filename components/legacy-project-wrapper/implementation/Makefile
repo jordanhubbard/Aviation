@@ -194,8 +194,7 @@ test-node:
 			skipped=$$((skipped + 1)); \
 		fi \
 	done; \
-	for pkg in packages/g1000-avionics-sdk \
-	           apps/flight-tracker apps/g1000-simulator; do \
+	for pkg in apps/flight-tracker apps/g1000-simulator; do \
 		if $(PNPM) --filter "./$$pkg" exec jest --version >/dev/null 2>&1; then \
 			echo "  Testing $$pkg..."; \
 			$(PNPM) --filter "./$$pkg" exec jest --passWithNoTests || exit 1; \
@@ -244,8 +243,14 @@ test-avionics:
 	$(PNPM) --filter @aviation/shared-sdk run build
 	$(PNPM) --filter @aviation/g1000-protocols run build
 	$(PNPM) --filter @aviation/g1000-protocols run test
+	$(PNPM) --filter @aviation/g1000-avionics-sdk run build
+	$(PNPM) --filter @aviation/g1000-avionics-sdk run test
 	$(PNPM) --filter @aviation/g1000-rendering run build
 	$(PNPM) --filter @aviation/g1000-rendering run test
+	@python_env="$(abspath _build/python-envs/avionics)"; \
+	python3 -m venv "$$python_env"; \
+	"$$python_env/bin/python" -m pip install -q -e packages/g1000-avionics-sdk/python pytest; \
+	"$$python_env/bin/python" -m pytest packages/g1000-avionics-sdk/python/tests -q
 	$(PNPM) --filter g1000-simulator-frontend run build
 	@echo "✅ Avionics Component tests PASSED"
 

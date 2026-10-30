@@ -49,7 +49,8 @@ JavaScript/TypeScript — 13 suites, 0 skipped:
 | `apps/foreflight-dashboard` — frontend | passes with no tests |
 | `apps/flight-tracker` | 47 |
 | `apps/g1000-simulator` | 68 |
-| `packages/g1000-avionics-sdk`, `g1000-protocols`, `g1000-rendering` | pass with no tests (`--passWithNoTests`) |
+| `packages/g1000-avionics-sdk` | 4 TypeScript + 4 Python conformance tests |
+| `packages/g1000-protocols`, `g1000-rendering` | 3 conformance tests each |
 
 Python — 4 suites, 0 skipped, 400 tests:
 
@@ -96,7 +97,11 @@ Map components are mocked to return simple `<div>` elements with `data-testid` a
 
 - **`apps/g1000-simulator`**: Uses **Jest** (ts-jest config) with a dedicated `jest.config.js` at the app root; e2e and performance tests are excluded from the default run.
 - **`packages/flight-dynamics`**: Python tests run inside a virtualenv created automatically: `python3 -m venv .venv && .venv/bin/pip install ...`.
-- **`packages/g1000-avionics-sdk`, `g1000-protocols`, `g1000-rendering`**: Jest configured with `--passWithNoTests` so CI does not fail when no test files exist yet.
+- **`packages/g1000-avionics-sdk`**: Vitest and pytest evaluate the same AHRS, ADC,
+  and GPS Component vectors; G1000 and Flight Planner compatibility tests exercise
+  the installed Python package.
+- **`packages/g1000-protocols`, `g1000-rendering`**: Vitest conformance suites are
+  required by the common SDK gate.
 
 ## End-to-End Testing
 - **Objective**: Validate complete user workflows from start to finish.

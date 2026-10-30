@@ -13,6 +13,7 @@ slowapi
 
 # Environment
 python-dotenv
+PyYAML
 
 # Template engine (for any server-rendered pages)
 jinja2
@@ -28,6 +29,7 @@ shapely
 # Shared SDK (local package)
 -e ../../packages/shared-sdk/python
 -e ../../packages/flight-dynamics
+-e ../../packages/g1000-avionics-sdk/python
 
 # Testing
 pytest

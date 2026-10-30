@@ -84,6 +84,8 @@ release-visible outcome to `CHANGELOG.md`; Git preserves prior queue states.
     frontend telemetry schema with the shared protocol surface. Keep simulator stores,
     transport hooks, display composition, and placeholder device models outside this
     authority until separately qualified.
+  - [x] Qualify shared AHRS, ADC, and GPS device models with cross-language vectors and
+    migrate G1000 and Flight Planner away from app-private implementations and stubs.
   - [ ] Promote airports, weather, procedures/nav-data, flight dynamics, avionics
     protocols/rendering, shared UI, configuration, and integration infrastructure into
     explicit Components with owned tests and contracts.
@@ -91,9 +93,9 @@ release-visible outcome to `CHANGELOG.md`; Git preserves prior queue states.
     aviation implementations after parity qualification.
   - [ ] Classify and remove or intentionally retain every remainder beneath the legacy
     wrapper.
-- **Next action:** Land and independently verify the avionics protocol/rendering
-  boundary, then define real avionics device-model contracts without moving
-  app-private simulator orchestration into the SDK.
+- **Next action:** Define real radio-model contracts and acceptance vectors before
+  deciding whether G1000's ADF/DME behavior belongs in the common SDK; keep simulator
+  orchestration and physical-device I/O app-private.
 - **Evidence:** Phase 1.2 lift-and-shift identity `sha256:c5ca4361ba010f6e8d81c93398468f9f4f8b8cc352504bc8535fa74b7c6e9990`.
   Retained conversion stage is backed by current test receipt
   `sha256:60e252aceb5834018a21d3ec5a75b667c564e207ea3cf02d475b3245640c3c79`;
@@ -142,8 +144,20 @@ release-visible outcome to `CHANGELOG.md`; Git preserves prior queue states.
   `sha256:d0adc77ef53c41396e29dc8e583bbbca075c56a72a76097c6eab93a25c702892`;
   3 protocol and 3 rendering conformance tests, the production G1000 frontend build,
   all 68 retained G1000 TypeScript tests, all 101 G1000 Python tests, and the full
-  retained `CI=true make test` lifecycle pass locally. Review and exact-main evidence
-  remain pending.
+  retained `CI=true make test` lifecycle pass locally. The slice landed in PR #346 at
+  exact-main commit `217f985f70fb599c47bdad3016cc85248ae9d5db`; all six triggered
+  exact-main workflows passed, including Common Aviation SDK run 41127278668,
+  Integration Tests run 41127278697, Monorepo CI/CD run 41127278760, deployment-image
+  run 41127278767, Dependency Scan run 41127278888, and Performance Regression Check
+  run 41127279392. The AHRS/ADC/GPS slice has Component lock
+  `sha256:510968d491836d091a50a5cd3962ea0a75ab9b56f31fda82a4d7e2f269eef4f8`;
+  four TypeScript and four Python device conformance tests pass from shared vectors,
+  all 77 G1000 Python compatibility tests pass, all 173 Flight Planner backend tests
+  pass, and the retained `CI=true make test` lifecycle passes locally. Retained source
+  readmission passed with baseline identity
+  `sha256:26d3daabc4953bb168715e1d727c273ce07487281d2a1fd6b0f03f12eff5e6ee`
+  and parity identity
+  `sha256:abb50e5f62745c7c590773e1b518f73e524e06e0bc3601e5f5d3c5c9c9fecaa9`.
   - [ ] Each promoted Component has a current lock, independent acceptance evidence,
     and exact-main CI evidence.
   - [ ] An architecture inventory proves every application imports common capabilities

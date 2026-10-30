@@ -61,9 +61,9 @@ carry an explicit removal checkpoint.
 5. [x] `aviation.flight-dynamics`: atmosphere, aircraft performance, wind, autopilot,
    and validated aircraft models have Component-owned vectors plus exact-main Flight
    Planner and G1000 qualification.
-6. [ ] `aviation.avionics`: first qualify G1000 protocols, telemetry schemas, and
-   rendering primitives; qualify real avionics device models separately rather than
-   treating the retained zero-return stubs as SDK authority.
+6. [ ] `aviation.avionics`: protocols, telemetry schemas, rendering primitives, and
+   AHRS/ADC/GPS models have shared contracts; qualify radio models and remaining
+   application consumers before closing this boundary.
 7. [ ] `aviation.ui`, `aviation.config`, and integration infrastructure: reusable UI,
    configuration, secrets, explanation, E2E isolation, and external-service adapters.
 8. [ ] Migrate all eleven applications, delete superseded local implementations, and

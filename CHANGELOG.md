@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Added cross-language, independently tested AHRS, ADC, and GPS models to
+  `aviation.avionics`; G1000 and Flight Planner now delegate to the common Python
+  realization, and the former zero/`None` placeholder APIs were removed.
 - Promoted telemetry/command schemas, flight-plan exchange, display layout, render
   pipelines, and functional canvas primitives into an `aviation.avionics` Component
   with independent protocol/rendering tests; G1000 now consumes the shared telemetry
