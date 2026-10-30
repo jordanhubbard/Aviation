@@ -1,8 +1,4 @@
-"""
-METAR Fetching and Parsing
-
-Fetches METAR data from aviationweather.gov and provides basic parsing.
-"""
+"""METAR acquisition and provider-neutral parsing."""
 
 from __future__ import annotations
 
@@ -13,249 +9,169 @@ from typing import Any, Dict, Optional, Sequence
 
 import httpx
 
+from .cache import weather_cache
+
+_WIND_RE = re.compile(
+    r"\b(?P<dir>\d{3}|VRB)(?P<speed>\d{2,3})(?:G(?P<gust>\d{2,3}))?KT\b"
+)
+_VIS_RE = re.compile(r"\b(?P<vis>(?:P?\d+)(?:\s+\d+/\d+)?|\d+/\d+)SM\b")
+_TEMP_RE = re.compile(r"\b(?P<t>M?\d{2})/(?P<d>M?\d{2})\b")
+_CLOUD_RE = re.compile(r"\b(?P<kind>FEW|SCT|BKN|OVC|VV)(?P<hundreds>\d{3})\b")
+_WEATHER_RE = re.compile(
+    r"^[+-]?(?:VC)?(?:MI|PR|BC|DR|BL|SH|TS|FZ)?"
+    r"(?:DZ|RA|SN|SG|IC|PL|GR|GS|UP|BR|FG|FU|VA|DU|SA|HZ|PO|SQ|FC|SS|DS)$"
+)
+
+
+def _normalized_stations(stations: Sequence[str]) -> list[str]:
+    result: list[str] = []
+    seen: set[str] = set()
+    for station in stations:
+        normalized = str(station).strip().upper()
+        if normalized and normalized not in seen:
+            seen.add(normalized)
+            result.append(normalized)
+    return result
+
 
 def fetch_metar_raws(stations: Sequence[str]) -> Dict[str, Optional[str]]:
-    """
-    Fetch raw METARs for multiple stations.
-    
-    Args:
-        stations: List of ICAO station identifiers
-        
-    Returns:
-        Dict mapping station to raw METAR string (None if unavailable)
-        
-    Example:
-        >>> metars = fetch_metar_raws(['KSFO', 'KJFK'])
-        >>> print(metars['KSFO'])
-        'KSFO 141356Z 28015KT 10SM FEW020 SCT250 15/09 A3012 RMK AO2'
-    """
+    """Fetch raw METARs with normalized identifiers and stale cache fallback."""
+    stations_u = _normalized_stations(stations)
     if os.environ.get("DISABLE_METAR_FETCH") == "1":
-        return {str(s).strip().upper(): None for s in stations if str(s).strip()}
+        return {station: None for station in stations_u}
 
-    # Normalize and de-duplicate while preserving order
-    stations_u: list[str] = []
-    seen: set[str] = set()
-    for s in stations:
-        su = str(s).strip().upper()
-        if not su or su in seen:
-            continue
-        seen.add(su)
-        stations_u.append(su)
+    result: Dict[str, Optional[str]] = {station: None for station in stations_u}
+    missing: list[str] = []
+    stale: Dict[str, Optional[str]] = {}
+    for station in stations_u:
+        key = f"metar:{station}"
+        cached = weather_cache.get(key)
+        if cached is not None:
+            result[station] = cached
+        else:
+            missing.append(station)
+            stale[key] = weather_cache.get_stale(key)
 
-    out: Dict[str, Optional[str]] = {s: None for s in stations_u}
-
-    if not stations_u:
-        return out
+    if not missing:
+        return result
 
     try:
-        resp = httpx.get(
+        response = httpx.get(
             "https://aviationweather.gov/api/data/metar",
-            params={"ids": ",".join(stations_u), "format": "raw"},
-            headers={"User-Agent": "aviation-sdk"},
+            params={"ids": ",".join(missing), "format": "raw"},
+            headers={"User-Agent": "aviation-shared-sdk"},
             timeout=20,
         )
-
-        if resp.status_code == 204:
-            return out
-
-        resp.raise_for_status()
-        lines = [ln.strip() for ln in resp.text.splitlines() if ln.strip()]
-
+        if response.status_code == 204:
+            return result
+        response.raise_for_status()
         found: Dict[str, str] = {}
-        for ln in lines:
-            # Expected format: "KSFO 201356Z ..." (station code first)
-            code = ln.split(maxsplit=1)[0].strip().upper() if ln else ""
-            if code and code in out:
-                found[code] = ln
-
-        for s in stations_u:
-            raw = found.get(s)
+        for line in response.text.splitlines():
+            raw = line.strip()
+            code = raw.split(maxsplit=1)[0].upper() if raw else ""
+            if code in result:
+                found[code] = raw
+        for station in missing:
+            raw = found.get(station)
             if raw:
-                out[s] = raw
-
-        return out
-        
-    except Exception as e:
-        # Best-effort: return what we have (all None values)
-        return out
+                result[station] = raw
+                weather_cache.set(f"metar:{station}", raw, ttl_s=300)
+        return result
+    except Exception:
+        for station in missing:
+            cached = stale[f"metar:{station}"]
+            if cached is not None:
+                result[station] = cached
+        return result
 
 
 def fetch_metar_raw(station: str) -> Optional[str]:
-    """
-    Fetch raw METAR for a single station.
-    
-    Args:
-        station: ICAO station identifier
-        
-    Returns:
-        Raw METAR string or None if unavailable
-        
-    Example:
-        >>> metar = fetch_metar_raw('KSFO')
-        >>> print(metar)
-        'KSFO 141356Z 28015KT 10SM FEW020 SCT250 15/09 A3012 RMK AO2'
-    """
-    if os.environ.get("DISABLE_METAR_FETCH") == "1":
+    """Fetch the first raw METAR for one station."""
+    normalized = str(station).strip().upper()
+    if not normalized:
         return None
+    return fetch_metar_raws([normalized]).get(normalized)
 
-    result = fetch_metar_raws([station])
-    return result.get(station.upper())
+
+def _signed(token: str) -> int:
+    return -int(token[1:]) if token.startswith("M") else int(token)
+
+
+def _visibility(token: str) -> Optional[float]:
+    token = token.strip()
+    if token.startswith("P"):
+        token = token[1:]
+    try:
+        if " " in token:
+            whole, fraction = token.split(maxsplit=1)
+            return float(whole) + float(Fraction(fraction))
+        if "/" in token:
+            return float(Fraction(token))
+        return float(token)
+    except (ValueError, ZeroDivisionError):
+        return None
 
 
 def parse_metar(raw: str) -> Dict[str, Any]:
-    """
-    Parse a METAR string into structured data.
-    
-    This is a basic parser that extracts common elements. For more advanced
-    parsing, consider using a specialized METAR parsing library like metar-python.
-    
-    Args:
-        raw: Raw METAR string
-        
-    Returns:
-        Dict with parsed elements:
-            - station: Station identifier
-            - time: Observation time (DDHHMMZ format)
-            - wind_dir: Wind direction in degrees (None if variable)
-            - wind_speed_kt: Wind speed in knots
-            - wind_gust_kt: Wind gust in knots (if present)
-            - visibility_sm: Visibility in statute miles
-            - temperature_c: Temperature in Celsius
-            - dewpoint_c: Dewpoint in Celsius
-            - altimeter_inhg: Altimeter setting in inHg
-            - ceiling_ft: Ceiling in feet AGL (if present)
-            - clouds: List of cloud layers
-            - weather: List of weather phenomena
-            - raw: Original METAR string
-            
-    Example:
-        >>> metar = parse_metar('KSFO 141356Z 28015KT 10SM FEW020 SCT250 15/09 A3012 RMK AO2')
-        >>> print(metar['visibility_sm'])
-        10.0
-        >>> print(metar['temperature_c'])
-        15
-    """
-    if not raw:
-        return {"raw": raw}
-
+    """Parse common METAR fields into the cross-language Aviation shape."""
     result: Dict[str, Any] = {
         "raw": raw,
         "station": None,
         "time": None,
         "wind_dir": None,
+        "wind_direction": None,
         "wind_speed_kt": None,
         "wind_gust_kt": None,
         "visibility_sm": None,
         "temperature_c": None,
+        "temperature_f": None,
         "dewpoint_c": None,
         "altimeter_inhg": None,
         "ceiling_ft": None,
         "clouds": [],
         "weather": [],
     }
-
-    tokens = raw.split()
-    if not tokens:
+    if not raw:
         return result
 
-    idx = 0
+    tokens = raw.split()
+    if tokens and re.fullmatch(r"[A-Z]{4}", tokens[0]):
+        result["station"] = tokens[0]
+    if len(tokens) > 1 and re.fullmatch(r"\d{6}Z", tokens[1]):
+        result["time"] = tokens[1]
 
-    # Station (e.g., "KSFO")
-    if idx < len(tokens) and re.match(r'^[A-Z]{4}$', tokens[idx]):
-        result["station"] = tokens[idx]
-        idx += 1
+    wind = _WIND_RE.search(raw)
+    if wind:
+        direction = None if wind.group("dir") == "VRB" else int(wind.group("dir"))
+        result["wind_dir"] = direction
+        result["wind_direction"] = direction
+        result["wind_speed_kt"] = int(wind.group("speed"))
+        if wind.group("gust"):
+            result["wind_gust_kt"] = int(wind.group("gust"))
 
-    # Time (e.g., "141356Z")
-    if idx < len(tokens) and re.match(r'^\d{6}Z$', tokens[idx]):
-        result["time"] = tokens[idx]
-        idx += 1
+    visibility = _VIS_RE.search(raw)
+    if visibility:
+        result["visibility_sm"] = _visibility(visibility.group("vis"))
 
-    # Wind (e.g., "28015KT", "28015G25KT", "VRB05KT")
-    if idx < len(tokens):
-        wind_match = re.match(r'^(\d{3}|VRB)(\d{2,3})(?:G(\d{2,3}))?KT$', tokens[idx])
-        if wind_match:
-            wind_dir_str = wind_match.group(1)
-            result["wind_dir"] = int(wind_dir_str) if wind_dir_str != "VRB" else None
-            result["wind_speed_kt"] = int(wind_match.group(2))
-            if wind_match.group(3):
-                result["wind_gust_kt"] = int(wind_match.group(3))
-            idx += 1
+    temperatures = _TEMP_RE.search(raw)
+    if temperatures:
+        temperature_c = _signed(temperatures.group("t"))
+        result["temperature_c"] = temperature_c
+        result["temperature_f"] = round((temperature_c * 9 / 5) + 32)
+        result["dewpoint_c"] = _signed(temperatures.group("d"))
 
-    # Visibility (e.g., "10SM", "1/2SM", "1 1/2SM")
-    if idx < len(tokens):
-        vis_str = tokens[idx]
-        
-        # Handle fractional visibility (e.g., "1/2SM")
-        if "SM" in vis_str:
-            vis_str = vis_str.replace("SM", "")
-            
-            # Check if next token is also part of visibility (e.g., "1" "1/2SM")
-            if idx + 1 < len(tokens) and "/" in tokens[idx + 1] and "SM" in tokens[idx + 1]:
-                vis_str = vis_str + " " + tokens[idx + 1].replace("SM", "")
-                idx += 1
-            
-            try:
-                # Handle fractions and whole numbers
-                if "/" in vis_str:
-                    parts = vis_str.split()
-                    if len(parts) == 2:  # e.g., "1 1/2"
-                        result["visibility_sm"] = float(parts[0]) + float(Fraction(parts[1]))
-                    else:  # e.g., "1/2"
-                        result["visibility_sm"] = float(Fraction(vis_str))
-                else:
-                    result["visibility_sm"] = float(vis_str)
-            except Exception:
-                pass
-            idx += 1
+    ceilings: list[int] = []
+    for cloud in _CLOUD_RE.finditer(raw):
+        altitude_ft = int(cloud.group("hundreds")) * 100
+        kind = cloud.group("kind")
+        result["clouds"].append({"coverage": kind, "altitude_ft": altitude_ft})
+        if kind in {"BKN", "OVC", "VV"}:
+            ceilings.append(altitude_ft)
+    if ceilings:
+        result["ceiling_ft"] = min(ceilings)
 
-    # Weather phenomena (e.g., "-RA", "BR", "FG")
-    while idx < len(tokens):
-        tok = tokens[idx]
-        if re.match(r'^[\+\-]?(VC)?(MI|PR|BC|DR|BL|SH|TS|FZ)?(DZ|RA|SN|SG|IC|PL|GR|GS|UP|BR|FG|FU|VA|DU|SA|HZ|PO|SQ|FC|SS|DS)$', tok):
-            result["weather"].append(tok)
-            idx += 1
-        else:
-            break
-
-    # Clouds (e.g., "FEW020", "SCT250", "BKN010", "OVC005")
-    while idx < len(tokens):
-        tok = tokens[idx]
-        cloud_match = re.match(r'^(FEW|SCT|BKN|OVC)(\d{3})$', tok)
-        if cloud_match:
-            coverage = cloud_match.group(1)
-            altitude_hundreds = int(cloud_match.group(2))
-            altitude_ft = altitude_hundreds * 100
-            
-            result["clouds"].append({
-                "coverage": coverage,
-                "altitude_ft": altitude_ft,
-            })
-            
-            # Determine ceiling (BKN or OVC)
-            if coverage in ["BKN", "OVC"]:
-                if result["ceiling_ft"] is None or altitude_ft < result["ceiling_ft"]:
-                    result["ceiling_ft"] = altitude_ft
-            
-            idx += 1
-        else:
-            break
-
-    # Temperature/Dewpoint (e.g., "15/09", "M05/M10")
-    if idx < len(tokens):
-        temp_match = re.match(r'^(M?\d{2})/(M?\d{2})$', tokens[idx])
-        if temp_match:
-            temp_str = temp_match.group(1)
-            dewpoint_str = temp_match.group(2)
-            
-            result["temperature_c"] = -int(temp_str[1:]) if temp_str.startswith("M") else int(temp_str)
-            result["dewpoint_c"] = -int(dewpoint_str[1:]) if dewpoint_str.startswith("M") else int(dewpoint_str)
-            idx += 1
-
-    # Altimeter (e.g., "A3012")
-    if idx < len(tokens):
-        alt_match = re.match(r'^A(\d{4})$', tokens[idx])
-        if alt_match:
-            result["altimeter_inhg"] = int(alt_match.group(1)) / 100.0
-            idx += 1
-
+    result["weather"] = [token for token in tokens if _WEATHER_RE.fullmatch(token)]
+    altimeter = re.search(r"\bA(?P<value>\d{4})\b", raw)
+    if altimeter:
+        result["altimeter_inhg"] = int(altimeter.group("value")) / 100
     return result

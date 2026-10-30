@@ -11,20 +11,23 @@ from typing import Any, Dict, List, Tuple
 
 import httpx
 
+from .cache import weather_cache
+
 
 class OpenMeteoError(RuntimeError):
     """Exception raised when Open-Meteo API requests fail."""
+
     pass
 
 
-def get_current_weather(*, lat: float, lon: float) -> Dict[str, Any]:
+def _get_current_weather_uncached(*, lat: float, lon: float) -> Dict[str, Any]:
     """
     Fetch current weather from Open-Meteo.
-    
+
     Args:
         lat: Latitude
         lon: Longitude
-        
+
     Returns:
         Dict containing current weather data:
             - time: ISO timestamp
@@ -32,10 +35,10 @@ def get_current_weather(*, lat: float, lon: float) -> Dict[str, Any]:
             - windspeed: Wind speed in knots
             - winddirection: Wind direction in degrees
             - weathercode: WMO weather code
-            
+
     Raises:
         OpenMeteoError: If request fails
-        
+
     Example:
         >>> weather = get_current_weather(lat=37.7749, lon=-122.4194)
         >>> print(weather['temperature'])
@@ -52,17 +55,15 @@ def get_current_weather(*, lat: float, lon: float) -> Dict[str, Any]:
 
     try:
         resp = httpx.get(
-            "https://api.open-meteo.com/v1/forecast",
-            params=params,
-            timeout=20
+            "https://api.open-meteo.com/v1/forecast", params=params, timeout=20
         )
         resp.raise_for_status()
         payload = resp.json()
-        
+
         current_weather = payload.get("current_weather")
         if not isinstance(current_weather, dict):
             raise OpenMeteoError("Unexpected Open-Meteo current_weather schema")
-        
+
         return current_weather
     except httpx.HTTPStatusError as e:
         raise OpenMeteoError(f"Open-Meteo API error: {e.response.status_code}") from e
@@ -70,15 +71,28 @@ def get_current_weather(*, lat: float, lon: float) -> Dict[str, Any]:
         raise OpenMeteoError(f"Failed to fetch current weather: {e}") from e
 
 
-def get_daily_forecast(*, lat: float, lon: float, days: int = 7) -> List[Dict[str, Any]]:
+def get_current_weather(*, lat: float, lon: float) -> Dict[str, Any]:
+    """Fetch current weather with a ten-minute stale-on-error cache."""
+    cache_key = f"om:current:{round(lat, 3)}:{round(lon, 3)}"
+    return weather_cache.get_or_set(
+        cache_key,
+        ttl_s=600,
+        fn=lambda: _get_current_weather_uncached(lat=lat, lon=lon),
+        allow_stale_on_error=True,
+    )
+
+
+def _get_daily_forecast_uncached(
+    *, lat: float, lon: float, days: int = 7
+) -> List[Dict[str, Any]]:
     """
     Fetch daily forecast from Open-Meteo.
-    
+
     Args:
         lat: Latitude
         lon: Longitude
         days: Number of days to forecast (1-16)
-        
+
     Returns:
         List of daily forecast dicts, each containing:
             - date: ISO date (YYYY-MM-DD)
@@ -86,10 +100,10 @@ def get_daily_forecast(*, lat: float, lon: float, days: int = 7) -> List[Dict[st
             - temp_min_f: Minimum temperature in Fahrenheit
             - precipitation_mm: Precipitation sum in millimeters
             - wind_speed_max_kt: Maximum wind speed in knots
-            
+
     Raises:
         OpenMeteoError: If request fails or days is out of range
-        
+
     Example:
         >>> forecast = get_daily_forecast(lat=37.7749, lon=-122.4194, days=3)
         >>> print(forecast[0])
@@ -116,13 +130,11 @@ def get_daily_forecast(*, lat: float, lon: float, days: int = 7) -> List[Dict[st
 
     try:
         resp = httpx.get(
-            "https://api.open-meteo.com/v1/forecast",
-            params=params,
-            timeout=20
+            "https://api.open-meteo.com/v1/forecast", params=params, timeout=20
         )
         resp.raise_for_status()
         payload = resp.json()
-        
+
         daily = payload.get("daily")
         if not isinstance(daily, dict):
             raise OpenMeteoError("Unexpected Open-Meteo response")
@@ -133,18 +145,30 @@ def get_daily_forecast(*, lat: float, lon: float, days: int = 7) -> List[Dict[st
         precip = daily.get("precipitation_sum")
         wind = daily.get("windspeed_10m_max")
 
-        if not (isinstance(times, list) and isinstance(tmax, list) and isinstance(tmin, list)):
+        if not (
+            isinstance(times, list)
+            and isinstance(tmax, list)
+            and isinstance(tmin, list)
+        ):
             raise OpenMeteoError("Unexpected Open-Meteo daily schema")
 
         result: List[Dict[str, Any]] = []
         for i, date in enumerate(times):
-            result.append({
-                "date": date,
-                "temp_max_f": tmax[i] if i < len(tmax) else None,
-                "temp_min_f": tmin[i] if i < len(tmin) else None,
-                "precipitation_mm": precip[i] if isinstance(precip, list) and i < len(precip) else None,
-                "wind_speed_max_kt": wind[i] if isinstance(wind, list) and i < len(wind) else None,
-            })
+            result.append(
+                {
+                    "date": date,
+                    "temp_max_f": tmax[i] if i < len(tmax) else None,
+                    "temp_min_f": tmin[i] if i < len(tmin) else None,
+                    "precipitation_mm": (
+                        precip[i]
+                        if isinstance(precip, list) and i < len(precip)
+                        else None
+                    ),
+                    "wind_speed_max_kt": (
+                        wind[i] if isinstance(wind, list) and i < len(wind) else None
+                    ),
+                }
+            )
 
         return result
     except httpx.HTTPStatusError as e:
@@ -155,15 +179,32 @@ def get_daily_forecast(*, lat: float, lon: float, days: int = 7) -> List[Dict[st
         raise OpenMeteoError(f"Failed to fetch daily forecast: {e}") from e
 
 
-def get_hourly_forecast(*, lat: float, lon: float, hours: int = 24) -> List[Dict[str, Any]]:
+def get_daily_forecast(
+    *, lat: float, lon: float, days: int = 7
+) -> List[Dict[str, Any]]:
+    """Fetch a daily forecast with a thirty-minute stale-on-error cache."""
+    if days < 1 or days > 16:
+        raise OpenMeteoError("days must be between 1 and 16")
+    cache_key = f"om:daily:{round(lat, 3)}:{round(lon, 3)}:{days}"
+    return weather_cache.get_or_set(
+        cache_key,
+        ttl_s=1800,
+        fn=lambda: _get_daily_forecast_uncached(lat=lat, lon=lon, days=days),
+        allow_stale_on_error=True,
+    )
+
+
+def _get_hourly_forecast_uncached(
+    *, lat: float, lon: float, hours: int = 24
+) -> List[Dict[str, Any]]:
     """
     Fetch hourly forecast from Open-Meteo.
-    
+
     Args:
         lat: Latitude
         lon: Longitude
         hours: Number of hours to forecast (1-168, i.e., up to 7 days)
-        
+
     Returns:
         List of hourly forecast dicts, each containing:
             - time: ISO timestamp
@@ -171,10 +212,10 @@ def get_hourly_forecast(*, lat: float, lon: float, hours: int = 24) -> List[Dict
             - cloudcover_pct: Cloud cover percentage (0-100)
             - precipitation_mm: Precipitation in millimeters
             - wind_speed_kt: Wind speed in knots
-            
+
     Raises:
         OpenMeteoError: If request fails or hours is out of range
-        
+
     Example:
         >>> forecast = get_hourly_forecast(lat=37.7749, lon=-122.4194, hours=12)
         >>> print(forecast[0])
@@ -193,20 +234,20 @@ def get_hourly_forecast(*, lat: float, lon: float, hours: int = 24) -> List[Dict
         "latitude": lat,
         "longitude": lon,
         "hourly": "visibility,cloudcover,precipitation,windspeed_10m",
-        "forecast_days": min(7, (hours // 24) + 2),  # Ensure enough days for requested hours
+        "forecast_days": min(
+            7, (hours // 24) + 2
+        ),  # Ensure enough days for requested hours
         "timezone": "UTC",
         "windspeed_unit": "kn",
     }
 
     try:
         resp = httpx.get(
-            "https://api.open-meteo.com/v1/forecast",
-            params=params,
-            timeout=20
+            "https://api.open-meteo.com/v1/forecast", params=params, timeout=20
         )
         resp.raise_for_status()
         payload = resp.json()
-        
+
         hourly = payload.get("hourly")
         if not isinstance(hourly, dict):
             raise OpenMeteoError("Unexpected Open-Meteo hourly schema")
@@ -222,13 +263,27 @@ def get_hourly_forecast(*, lat: float, lon: float, hours: int = 24) -> List[Dict
 
         result: List[Dict[str, Any]] = []
         for i, t in enumerate(times[:hours]):
-            result.append({
-                "time": t,
-                "visibility_m": vis[i] if isinstance(vis, list) and i < len(vis) else None,
-                "cloudcover_pct": clouds[i] if isinstance(clouds, list) and i < len(clouds) else None,
-                "precipitation_mm": precip[i] if isinstance(precip, list) and i < len(precip) else None,
-                "wind_speed_kt": wind[i] if isinstance(wind, list) and i < len(wind) else None,
-            })
+            result.append(
+                {
+                    "time": t,
+                    "visibility_m": (
+                        vis[i] if isinstance(vis, list) and i < len(vis) else None
+                    ),
+                    "cloudcover_pct": (
+                        clouds[i]
+                        if isinstance(clouds, list) and i < len(clouds)
+                        else None
+                    ),
+                    "precipitation_mm": (
+                        precip[i]
+                        if isinstance(precip, list) and i < len(precip)
+                        else None
+                    ),
+                    "wind_speed_kt": (
+                        wind[i] if isinstance(wind, list) and i < len(wind) else None
+                    ),
+                }
+            )
 
         return result
     except httpx.HTTPStatusError as e:
@@ -239,23 +294,37 @@ def get_hourly_forecast(*, lat: float, lon: float, hours: int = 24) -> List[Dict
         raise OpenMeteoError(f"Failed to fetch hourly forecast: {e}") from e
 
 
+def get_hourly_forecast(
+    *, lat: float, lon: float, hours: int = 24
+) -> List[Dict[str, Any]]:
+    """Fetch an hourly forecast with a thirty-minute stale-on-error cache."""
+    if hours < 1 or hours > 168:
+        raise OpenMeteoError("hours must be between 1 and 168")
+    cache_key = f"om:hourly:{round(lat, 3)}:{round(lon, 3)}:{hours}"
+    return weather_cache.get_or_set(
+        cache_key,
+        ttl_s=1800,
+        fn=lambda: _get_hourly_forecast_uncached(lat=lat, lon=lon, hours=hours),
+        allow_stale_on_error=True,
+    )
+
+
 def sample_points_along_route(
-    points: List[Tuple[float, float]],
-    interval: int = 5
+    points: List[Tuple[float, float]], interval: int = 5
 ) -> List[Tuple[float, float]]:
     """
     Sample points along a route at regular intervals.
-    
+
     Useful for reducing the number of weather API calls while still
     getting representative coverage along a flight path.
-    
+
     Args:
         points: List of (lat, lon) coordinate tuples
         interval: Sample every Nth point (default: 5)
-        
+
     Returns:
         Sampled list of (lat, lon) tuples
-        
+
     Example:
         >>> route = [(37.77, -122.41), (37.78, -122.42), (37.79, -122.43), ...]
         >>> sampled = sample_points_along_route(route, interval=5)

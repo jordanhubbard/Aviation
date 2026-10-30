@@ -68,6 +68,9 @@ release-visible outcome to `CHANGELOG.md`; Git preserves prior queue states.
   - [x] Define `aviation.airports`, add synthetic cross-language normalization/query
     vectors, and migrate Flight Track Analyzer's duplicate dataset ingestion to the
     SDK while retaining only its application-specific vectorized spatial index.
+  - [x] Define `aviation.weather`, add synthetic cross-language METAR/category/provider
+    vectors, and replace Flight Planner's duplicated weather algorithms and provider
+    clients with SDK compatibility surfaces.
   - [ ] Promote airports, weather, procedures/nav-data, flight dynamics, avionics
     protocols/rendering, shared UI, configuration, and integration infrastructure into
     explicit Components with owned tests and contracts.
@@ -75,8 +78,8 @@ release-visible outcome to `CHANGELOG.md`; Git preserves prior queue states.
     aviation implementations after parity qualification.
   - [ ] Classify and remove or intentionally retain every remainder beneath the legacy
     wrapper.
-- **Next action:** Land and independently verify the `aviation.airports` slice, then
-  inventory and promote the weather boundary without combining it with nav-data.
+- **Next action:** Land and independently verify the weather slice, then promote
+  nav-data.
 - **Evidence:** Phase 1.2 lift-and-shift identity `sha256:c5ca4361ba010f6e8d81c93398468f9f4f8b8cc352504bc8535fa74b7c6e9990`.
   Retained conversion stage is backed by current test receipt
   `sha256:60e252aceb5834018a21d3ec5a75b667c564e207ea3cf02d475b3245640c3c79`;
@@ -92,9 +95,17 @@ release-visible outcome to `CHANGELOG.md`; Git preserves prior queue states.
   blocked by that upstream defect.
   Navigation and the dedicated SDK workflow landed in PR #339 at exact-main commit
   `9c55e4ac70dbc87def6d5ce6e6abc47aed214304`; all seven exact-commit workflows
-  passed. With the airport slice applied locally, 299 TypeScript and 96 Python SDK
-  tests pass. The airport graph has local lock
+  passed. Airports landed in PR #340 at exact-main commit
+  `67d505a9ab47e3584b094c41f6d5abdcbdc99d2d`; all six exact-commit workflows
+  passed, including Common Aviation SDK run 41103415439, Integration Tests run
+  41103415429, Monorepo CI/CD run 41103415361, and deployment-image run
+  41103415358. The airport graph lock is
   `sha256:82d0bbe3f36eaf3c1640681036821db992629db80a6a0eee0b823b09dace083d`.
+  With the weather slice applied locally, 312 TypeScript and 104 Python SDK tests,
+  125 Flight Planner tests, and the Weather Briefing build pass. The weather
+  Component lock is
+  `sha256:a176e62833839cca2fbbe897ee68de0cccdd2d2b514041f1184b6b920bb3f9fc`;
+  exact-main evidence remains pending until its review lands.
   - [ ] Each promoted Component has a current lock, independent acceptance evidence,
     and exact-main CI evidence.
   - [ ] An architecture inventory proves every application imports common capabilities

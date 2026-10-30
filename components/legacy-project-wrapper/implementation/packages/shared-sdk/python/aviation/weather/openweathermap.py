@@ -12,35 +12,46 @@ from typing import Any, Dict, Optional
 
 import httpx
 
+from .cache import weather_cache
+
 
 class OpenWeatherMapError(RuntimeError):
     """Exception raised when OpenWeatherMap API requests fail."""
+
     pass
 
 
-def get_current_weather(*, lat: float, lon: float, api_key: Optional[str] = None) -> Dict[str, Any]:
+def _get_current_weather_uncached(
+    *, lat: float, lon: float, api_key: Optional[str] = None
+) -> Dict[str, Any]:
     """
     Fetch current weather from OpenWeatherMap.
-    
+
     Args:
         lat: Latitude
         lon: Longitude
         api_key: OpenWeatherMap API key (defaults to OPENWEATHERMAP_API_KEY env var)
-        
+
     Returns:
         Dict containing current weather data from OpenWeatherMap API
-        
+
     Raises:
         OpenWeatherMapError: If API key is missing or request fails
-        
+
     Example:
         >>> weather = get_current_weather(lat=37.7749, lon=-122.4194)
         >>> print(weather['main']['temp'])  # Temperature in Fahrenheit
         65.5
     """
-    key = api_key or os.environ.get("OPENWEATHERMAP_API_KEY") or os.environ.get("OPENWEATHER_API_KEY")
+    key = (
+        api_key
+        or os.environ.get("OPENWEATHERMAP_API_KEY")
+        or os.environ.get("OPENWEATHER_API_KEY")
+    )
     if not key:
-        raise OpenWeatherMapError("Missing OPENWEATHERMAP_API_KEY for OpenWeatherMap requests")
+        raise OpenWeatherMapError(
+            "Missing OPENWEATHERMAP_API_KEY for OpenWeatherMap requests"
+        )
 
     params = {
         "lat": lat,
@@ -51,26 +62,39 @@ def get_current_weather(*, lat: float, lon: float, api_key: Optional[str] = None
 
     try:
         resp = httpx.get(
-            "https://api.openweathermap.org/data/2.5/weather",
-            params=params,
-            timeout=20
+            "https://api.openweathermap.org/data/2.5/weather", params=params, timeout=20
         )
         resp.raise_for_status()
         return resp.json()
     except httpx.HTTPStatusError as e:
-        raise OpenWeatherMapError(f"OpenWeatherMap API error: {e.response.status_code}") from e
+        raise OpenWeatherMapError(
+            f"OpenWeatherMap API error: {e.response.status_code}"
+        ) from e
     except Exception as e:
         raise OpenWeatherMapError(f"Failed to fetch weather data: {e}") from e
+
+
+def get_current_weather(
+    *, lat: float, lon: float, api_key: Optional[str] = None
+) -> Dict[str, Any]:
+    """Fetch current weather with a five-minute stale-on-error cache."""
+    cache_key = f"owm:current:{round(lat, 3)}:{round(lon, 3)}"
+    return weather_cache.get_or_set(
+        cache_key,
+        ttl_s=300,
+        fn=lambda: _get_current_weather_uncached(lat=lat, lon=lon, api_key=api_key),
+        allow_stale_on_error=True,
+    )
 
 
 def to_weather_data(airport_code: str, payload: Dict[str, Any]) -> Dict[str, Any]:
     """
     Convert OpenWeatherMap API response to standardized weather data format.
-    
+
     Args:
         airport_code: Airport identifier for the location
         payload: Raw response from OpenWeatherMap API
-        
+
     Returns:
         Dict with standardized weather data:
             - airport: Airport code
@@ -81,7 +105,7 @@ def to_weather_data(airport_code: str, payload: Dict[str, Any]) -> Dict[str, Any
             - visibility: Visibility in statute miles
             - ceiling: Estimated ceiling in feet AGL
             - metar: Empty string (not provided by OpenWeatherMap)
-            
+
     Example:
         >>> raw = get_current_weather(lat=37.7749, lon=-122.4194)
         >>> weather = to_weather_data('KSFO', raw)
@@ -106,16 +130,16 @@ def to_weather_data(airport_code: str, payload: Dict[str, Any]) -> Dict[str, Any
 
     # Temperature (already in Fahrenheit)
     temp_f = float(main.get("temp") or 0.0)
-    
+
     # Wind (convert mph to knots)
     wind_speed_mph = wind.get("speed")
     wind_speed_kt = _mph_to_knots(wind_speed_mph)
     wind_dir = int(wind.get("deg") or 0)
-    
+
     # Visibility (convert meters to statute miles)
     vis_m = payload.get("visibility")
     vis_sm = _meters_to_sm(vis_m)
-    
+
     # Ceiling (estimate from cloud cover percentage)
     cloud_pct = clouds.get("all")
     ceiling_ft = _estimate_ceiling_ft(cloud_pct)
@@ -152,12 +176,12 @@ def _meters_to_sm(meters: Optional[float]) -> float:
 def _estimate_ceiling_ft(cloud_pct: Optional[float]) -> float:
     """
     Estimate ceiling from cloud cover percentage.
-    
+
     This is a rough heuristic when actual ceiling data is unavailable.
     """
     if cloud_pct is None:
         return 10000.0
-    
+
     pct = float(cloud_pct)
     if pct >= 75:
         return 1500.0  # Overcast

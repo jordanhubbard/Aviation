@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Promoted METAR parsing, flight categories, provider normalization, forecast access,
+  and departure-window scoring into an `aviation.weather` Component with shared
+  TypeScript/Python acceptance vectors; Flight Planner now delegates its common
+  weather services to the SDK.
 - Promoted airport identity, normalization, lookup, search, proximity, and field
   elevation into an `aviation.airports` Component with shared TypeScript/Python
   acceptance vectors; Flight Track Analyzer now consumes SDK-normalized airport data.

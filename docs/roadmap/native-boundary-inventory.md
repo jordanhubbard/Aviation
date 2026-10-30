@@ -95,6 +95,24 @@ large retained cache remains data pending provenance and license qualification.
 | `packages/nav-data/src/` airport model/search | nav-data capability | reconcile when `aviation.nav-data` is promoted; remove its private geodesy in favor of `aviation.navigation` |
 | G1000 simulator sample nav database | simulated avionics fixture | retain as explicit simulator test/runtime data, not as the common airport database |
 
+### Third selected boundary: aviation weather
+
+`aviation.weather` owns provider-neutral observations and forecasts, METAR parsing,
+flight-category classification, warnings, provider normalization, caching policy, and
+departure-window scoring. Route sampling and pilot-facing presentation remain with
+their applications.
+
+| Retained path | Classification | Native owner / disposition |
+| --- | --- | --- |
+| `packages/shared-sdk/src/aviation/weather/` | retained TypeScript realization | `component://aviation/aviation-weather`; shared-vector adapter required |
+| `packages/shared-sdk/python/aviation/weather/` | retained Python realization | same capability; common cache and provider adapters live here |
+| `apps/weather-briefing/src/service.ts` | application composition | already consumes the TypeScript SDK; retain briefing/NOTAM presentation orchestration |
+| `apps/flight-planner/backend/app/services/metar.py` | compatibility adapter | delegates to the Python SDK; remove when direct SDK imports fit app packaging |
+| `apps/flight-planner/backend/app/services/open_meteo.py` | compatibility adapter | delegates to the Python SDK; no private provider implementation remains |
+| `apps/flight-planner/backend/app/services/openweathermap.py` | compatibility adapter | delegates to the Python SDK; no private provider implementation remains |
+| `apps/flight-planner/backend/app/services/flight_recommendations.py` | compatibility adapter | delegates classification, warning, and scoring behavior to the Python SDK |
+| `apps/flight-planner/backend/app/routers/weather.py` | application orchestration | retain airport lookup, route sampling, HTTP schemas, and response composition |
+
 ## Cross-cutting authority to classify
 
 | Boundary and proposed owner | Evidence | Provisional classification and open question |
