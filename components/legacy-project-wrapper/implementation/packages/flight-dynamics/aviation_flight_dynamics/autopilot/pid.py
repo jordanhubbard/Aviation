@@ -57,7 +57,7 @@ class PIDController:
             Controller output.
         """
         if dt <= 0.0:
-            return 0.0
+            raise ValueError("dt must be positive")
 
         self.integral = max(
             self.gains.integrator_min,

@@ -79,6 +79,10 @@ release-visible outcome to `CHANGELOG.md`; Git preserves prior queue states.
     performance/model vectors, and replace Flight Planner's duplicate scalar physics
     and PID implementation with SDK compatibility adapters. Reconcile G1000's bounded
     PID implementation and duplicated C172 model fields onto the same capability.
+  - [x] Qualify the remaining common flight-dynamics autopilot primitives with
+    Component-owned axis-controller, mode-transition, autotrim, and envelope vectors;
+    move their tests out of the G1000 application and remove Flight Planner's
+    redundant app-local controller implementation.
   - [x] Define `aviation.avionics` protocol and rendering contracts, add deterministic
     telemetry/command/flight-plan/layout/pipeline vectors, and replace G1000's duplicate
     frontend telemetry schema with the shared protocol surface. Keep simulator stores,
@@ -101,10 +105,9 @@ release-visible outcome to `CHANGELOG.md`; Git preserves prior queue states.
     aviation implementations after parity qualification.
   - [ ] Classify and remove or intentionally retain every remainder beneath the legacy
     wrapper.
-- **Next action:** Inventory the next duplicated aviation domain across retained apps,
-  beginning with the G1000 autopilot/flight-dynamics boundary, then define the next
-  bounded common Component extraction without moving simulator orchestration or
-  physical-device I/O into the SDK.
+- **Next action:** Inventory the next duplicated aviation domain, including common
+  flight-director state that can be separated from G1000 annunciation and capture
+  policy, without moving simulator orchestration or physical-device I/O into the SDK.
 - **Evidence:** Phase 1.2 lift-and-shift identity `sha256:c5ca4361ba010f6e8d81c93398468f9f4f8b8cc352504bc8535fa74b7c6e9990`.
   Retained conversion stage is backed by current test receipt
   `sha256:60e252aceb5834018a21d3ec5a75b667c564e207ea3cf02d475b3245640c3c79`;
@@ -115,9 +118,11 @@ release-visible outcome to `CHANGELOG.md`; Git preserves prior queue states.
   the full retained `make test` gate passes locally. Literate AI issue
   [#212](https://github.com/jordanhubbard/literate-ai/issues/212) tracks the
   verifier false positive caused by third-party `component.json` files under the
-  retained implementation's `node_modules`; Component planning and locking pass,
-  while dependency-populated `litai project validate` and `litai verify` remain
-  blocked by that upstream defect.
+  retained implementation's `node_modules`; generated dependency trees remain
+  outside authority, and current Component locks and `litai verify` pass.
+  Autopilot-primitives qualification passes 20 independent flight-dynamics tests,
+  25 G1000 compatibility tests, and the 321-test retained receipt; Flight Planner's
+  redundant controller module and G1000-owned common-package test file are removed.
   Navigation and the dedicated SDK workflow landed in PR #339 at exact-main commit
   `9c55e4ac70dbc87def6d5ce6e6abc47aed214304`; all seven exact-commit workflows
   passed. Airports landed in PR #340 at exact-main commit

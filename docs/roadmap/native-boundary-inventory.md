@@ -146,11 +146,10 @@ recorded-flight analytics, and application simulation orchestration remain priva
 | `packages/flight-dynamics/aviation_flight_dynamics/` | retained Python realization | `component://aviation/aviation-flight-dynamics`; Component-vector adapter required |
 | `packages/flight-dynamics/aviation_flight_dynamics/aircraft/models/` | validated model assets | retain C172, C182, and SR22 configurations with explicit validation counts |
 | `packages/flight-dynamics/tests/` | independent realization adapter | evaluates Component-owned vectors without application or network dependencies |
-| `apps/flight-planner/backend/app/services/flight_dynamics.py` | compatibility adapter | delegates scalar physics and environmental calculations; retains planner state and alert orchestration |
-| `apps/flight-planner/backend/app/services/autopilot_controller.py` | compatibility adapter | delegates PID state/update behavior; retains legacy controller names and fixed-step API |
+| `apps/flight-planner/backend/app/services/flight_dynamics.py` | compatibility adapter plus application orchestration | delegates scalar physics and environmental calculations, instantiates common axis controllers directly with planner-specific gains and fixed-step policy, and retains planner state and alert orchestration |
 | `apps/g1000-simulator/backend/app/services/autopilot.py` | compatibility adapter plus app-private avionics state | delegates bounded PID state/update behavior; retains tuning selection, lateral/vertical modes, annunciation, and disconnect state |
 | `apps/g1000-simulator/backend/app/models/aircraft_state.py` | compatibility adapter plus app-private telemetry state | maps common C172 performance, limits, fuel, mass, and wing data; retains live engine/position/attitude telemetry and display-only dimensions |
-| `apps/g1000-simulator/backend/app/services/flight_dynamics.py` | application simulator orchestration | retains mode capture, sensor/radio/audio/transponder state, geographic stepping, and telemetry snapshots; consumes common PID/model primitives |
+| `apps/g1000-simulator/backend/app/services/flight_dynamics.py` | application simulator orchestration | retains avionics annunciation and mode-capture policy, sensor/radio/audio/transponder state, geographic stepping, and telemetry snapshots; consumes common PID/model primitives |
 | `apps/flight-track-analyzer/app/flightlab/` | recorded-flight analytics | retain signal processing, measurement calibration, POH comparison, and observed-flight inference; consume common primitives only where semantics match |
 
 ### Sixth selected boundary: aviation avionics protocols and rendering

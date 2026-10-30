@@ -23,6 +23,10 @@
 - `takeoff_climb_performance(config, atmosphere, weight_lbs?) -> performance`
 - `validate_aircraft(config) -> errors, warnings`
 - `pid_update(gains, error, dt_s, integral_bounds?, output_bounds?) -> output`
+- `axis_control(axis, gains, error, dt_s) -> command`
+- `autopilot_mode_transition(state, action) -> accepted, state`
+- `autotrim_update(state, control_inputs, dt_s, rate, deadband) -> trim_state`
+- `envelope_check(limits, bank_deg, pitch_deg, airspeed_kt) -> protection_status`
 - compatibility scalar lift, drag, thrust, fuel-consumption, wind, and turbulence
   operations for retained applications.
 

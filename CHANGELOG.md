@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Moved axis-controller, mode-transition, autotrim, and envelope-protection
+  qualification into the independently tested `aviation.flight-dynamics` Component;
+  Flight Planner now instantiates those common controllers directly instead of
+  maintaining an app-local compatibility implementation.
 - Added cross-language marker-beacon, audio-panel, and transponder models to
   `aviation.avionics`, including explicit site catalogs, bounded levels, octal squawk
   normalization, and deterministic IDENT timing; G1000 now delegates those models to

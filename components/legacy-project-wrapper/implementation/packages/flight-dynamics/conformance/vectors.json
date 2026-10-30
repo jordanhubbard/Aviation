@@ -34,6 +34,107 @@
     "samples": [[10.0, 1.0], [-10.0, 1.0]],
     "expected_outputs": [2.0, -2.0]
   },
+  "axis_controllers": [
+    {
+      "axis": "pitch",
+      "gains": {"kp": 2.0, "ki": 0.0, "kd": 0.0},
+      "samples": [[3.0, 0.1]],
+      "expected_outputs": [6.0]
+    },
+    {
+      "axis": "roll",
+      "gains": {"kp": 1.5, "ki": 0.0, "kd": 0.0},
+      "samples": [[10.0, 0.1]],
+      "expected_outputs": [15.0]
+    },
+    {
+      "axis": "altitude",
+      "gains": {"kp": 0.01, "ki": 0.0, "kd": 0.0},
+      "samples": [[500.0, 0.1]],
+      "expected_outputs": [5.0]
+    },
+    {
+      "axis": "heading",
+      "gains": {"kp": 1.0, "ki": 0.0, "kd": 0.0},
+      "samples": [[-10.0, 0.1]],
+      "expected_outputs": [-10.0]
+    }
+  ],
+  "autopilot_modes": {
+    "initial": {
+      "master_on": false,
+      "lateral_mode": "ROL",
+      "vertical_mode": "PIT",
+      "approach_armed": false
+    },
+    "transitions": [
+      {
+        "action": "set_lateral",
+        "mode": "HDG",
+        "accepted": false,
+        "expected": {"master_on": false, "lateral_mode": "ROL", "vertical_mode": "PIT", "approach_armed": false}
+      },
+      {
+        "action": "engage",
+        "accepted": true,
+        "expected": {"master_on": true, "lateral_mode": "ROL", "vertical_mode": "PIT", "approach_armed": false}
+      },
+      {
+        "action": "set_vertical",
+        "mode": "GS",
+        "accepted": false,
+        "expected": {"master_on": true, "lateral_mode": "ROL", "vertical_mode": "PIT", "approach_armed": false}
+      },
+      {
+        "action": "set_lateral",
+        "mode": "APR",
+        "accepted": true,
+        "expected": {"master_on": true, "lateral_mode": "APR", "vertical_mode": "PIT", "approach_armed": true}
+      },
+      {
+        "action": "set_vertical",
+        "mode": "GS",
+        "accepted": true,
+        "expected": {"master_on": true, "lateral_mode": "APR", "vertical_mode": "GS", "approach_armed": true}
+      },
+      {
+        "action": "disengage",
+        "accepted": true,
+        "expected": {"master_on": false, "lateral_mode": "ROL", "vertical_mode": "PIT", "approach_armed": false}
+      }
+    ]
+  },
+  "autotrim": {
+    "trim_rate": 0.1,
+    "deadband": 0.05,
+    "samples": [
+      {
+        "inputs": [0.5, -0.25, 0.01, 2.0],
+        "expected": {"elevator_trim": 0.1, "aileron_trim": -0.05, "rudder_trim": 0.0}
+      },
+      {
+        "inputs": [1.0, -1.0, 1.0, 20.0],
+        "expected": {"elevator_trim": 1.0, "aileron_trim": -1.0, "rudder_trim": 1.0}
+      }
+    ]
+  },
+  "envelope": {
+    "limits": {"max_bank_deg": 30.0, "max_pitch_deg": 20.0, "min_speed_kt": 50.0, "max_speed_kt": 200.0},
+    "samples": [
+      {
+        "state": [20.0, 10.0, 120.0],
+        "expected": {"bank_exceeded": false, "pitch_exceeded": false, "overspeed": false, "underspeed": false}
+      },
+      {
+        "state": [-31.0, 21.0, 201.0],
+        "expected": {"bank_exceeded": true, "pitch_exceeded": true, "overspeed": true, "underspeed": false}
+      },
+      {
+        "state": [0.0, 0.0, 49.0],
+        "expected": {"bank_exceeded": false, "pitch_exceeded": false, "overspeed": false, "underspeed": true}
+      }
+    ]
+  },
   "models": [
     {"identifier": "cessna-172", "errors": 0, "warnings": 0},
     {"identifier": "cessna-182", "errors": 0, "warnings": 0},

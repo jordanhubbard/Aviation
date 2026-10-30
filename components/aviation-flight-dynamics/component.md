@@ -44,13 +44,15 @@ network access.
 ### Requirement: Applications share physics primitives
 
 Applications SHALL delegate common force, atmosphere, wind, performance, aircraft
-model, integration, and PID behavior to `aviation.flight-dynamics`. Application code
-MAY retain simulation orchestration, avionics modes, alert routing, persistence, and
-presentation, but SHALL NOT maintain independent copies of common formulas.
+model, integration, PID, axis-control, generic mode-transition, autotrim, and envelope
+behavior to `aviation.flight-dynamics`. Application code MAY retain simulation
+orchestration, avionics annunciation and capture policy, alert routing, persistence,
+and presentation, but SHALL NOT maintain independent copies of common formulas.
 
 #### Scenario: Flight Planner updates its legacy state
 
-- **WHEN** the compatibility service calculates forces, wind effects, or PID output
+- **WHEN** the compatibility service calculates forces, wind effects, or autopilot
+  controller output
 - **THEN** those calculations execute through `aviation.flight-dynamics`
 
 #### Scenario: G1000 updates its simulator and avionics state
