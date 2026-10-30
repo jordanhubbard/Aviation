@@ -11,7 +11,7 @@ changing units or conventions.
 | Headings | normalize, reciprocal, true/magnetic conversion, shortest difference |
 | Wind | correction angle, corrected heading, ground speed, head/crosswind components |
 | Time/speed/distance | solve any missing value from the other two; format duration |
-| Fuel | consumption, flight fuel, range/endurance, VFR/IFR reserve, mass/volume |
+| Fuel | consumption, flight fuel, range/endurance, configurable and VFR/IFR reserve, mass/volume |
 | Performance altitude | pressure altitude, ISA temperature, density altitude |
 
 ## Value contract
@@ -23,6 +23,10 @@ changing units or conventions.
   selected course; crosswind sign must be documented consistently by each binding.
 - Fuel reserve operations calculate quantity only. Aircraft-specific legal dispatch
   decisions and unusable fuel are outside this capability.
+- A configurable reserve accepts fuel flow in gallons per hour and reserve duration in
+  minutes and returns gallons; both inputs must be finite and non-negative.
+- Fuel-range inputs must be finite and non-negative, burn and speed must be positive,
+  and reserve fuel must not exceed total fuel.
 - Results are finite numbers. Failure is explicit and distinguishable from a numeric
   result; a successful `NaN`, infinity, or implicit clamping is forbidden.
 

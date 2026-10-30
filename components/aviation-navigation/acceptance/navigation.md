@@ -12,6 +12,11 @@ tolerance.
 - **WHEN** a vector declares zero tolerance
 - **THEN** the realization returns exactly the declared scalar or tuple
 
+### Scenario: Configurable route reserve
+
+- **WHEN** a route planner supplies fuel flow and an arbitrary reserve duration
+- **THEN** every realization returns the same reserve gallons
+
 ### Scenario: Floating-point geodesy
 
 - **WHEN** a vector declares a positive absolute tolerance

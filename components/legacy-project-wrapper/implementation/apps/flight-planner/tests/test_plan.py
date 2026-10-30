@@ -226,6 +226,24 @@ def test_plan_route_mode_astar_multi_leg(monkeypatch) -> None:
 def test_plan_route_mode_astar_multi_leg_from_fuel_on_board(monkeypatch) -> None:
     import app.routers.route as route_router
 
+    reserve_calls = 0
+    range_calls = 0
+    original_fuel_reserve = route_router.fuel_reserve
+    original_fuel_range = route_router.fuel_range
+
+    def track_fuel_reserve(*args, **kwargs):
+        nonlocal reserve_calls
+        reserve_calls += 1
+        return original_fuel_reserve(*args, **kwargs)
+
+    def track_fuel_range(*args, **kwargs):
+        nonlocal range_calls
+        range_calls += 1
+        return original_fuel_range(*args, **kwargs)
+
+    monkeypatch.setattr(route_router, "fuel_reserve", track_fuel_reserve)
+    monkeypatch.setattr(route_router, "fuel_range", track_fuel_range)
+
     monkeypatch.setattr(
         route_router,
         "load_airport_cache",
@@ -271,10 +289,38 @@ def test_plan_route_mode_astar_multi_leg_from_fuel_on_board(monkeypatch) -> None
     body = resp.json()
     assert body["route"] == ["AAA", "BBB", "CCC"]
     assert body["fuel_stops"] == ["BBB"]
+    assert reserve_calls > 0
+    assert range_calls > 0
 
 
 def test_plan_route_mode_fuel_calculation(monkeypatch) -> None:
     import app.routers.route as route_router
+
+    flight_time_calls = 0
+    consumption_calls = 0
+    reserve_calls = 0
+    original_flight_time = route_router.flight_time
+    original_fuel_consumption = route_router.fuel_consumption
+    original_fuel_reserve = route_router.fuel_reserve
+
+    def track_flight_time(*args, **kwargs):
+        nonlocal flight_time_calls
+        flight_time_calls += 1
+        return original_flight_time(*args, **kwargs)
+
+    def track_fuel_consumption(*args, **kwargs):
+        nonlocal consumption_calls
+        consumption_calls += 1
+        return original_fuel_consumption(*args, **kwargs)
+
+    def track_fuel_reserve(*args, **kwargs):
+        nonlocal reserve_calls
+        reserve_calls += 1
+        return original_fuel_reserve(*args, **kwargs)
+
+    monkeypatch.setattr(route_router, "flight_time", track_flight_time)
+    monkeypatch.setattr(route_router, "fuel_consumption", track_fuel_consumption)
+    monkeypatch.setattr(route_router, "fuel_reserve", track_fuel_reserve)
 
     monkeypatch.setattr(
         route_router,
@@ -319,6 +365,9 @@ def test_plan_route_mode_fuel_calculation(monkeypatch) -> None:
     assert body["fuel_required_gal"] is not None
     assert body["fuel_required_with_reserve_gal"] is not None
     assert body["fuel_required_with_reserve_gal"] >= body["fuel_required_gal"]
+    assert flight_time_calls > 0
+    assert consumption_calls > 0
+    assert reserve_calls > 0
 
 
 def test_plan_route_mode_apply_wind_adjusts_groundspeed(monkeypatch) -> None:

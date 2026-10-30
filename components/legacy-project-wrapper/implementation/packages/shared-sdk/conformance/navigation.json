@@ -7,11 +7,18 @@
     {"id":"anti-meridian-normalization","operation":"normalize_longitude","args":[190],"expected":-170,"absolute_tolerance":0},
     {"id":"north-dms","operation":"dms_to_decimal","args":[37,37,18,"N"],"expected":37.6216666667,"absolute_tolerance":0.0000001},
     {"id":"one-hour-flight-time","operation":"flight_time","args":[120,120],"expected":1,"absolute_tolerance":0},
+    {"id":"fuel-consumption","operation":"fuel_consumption","args":[10,1.5],"expected":15,"absolute_tolerance":0},
+    {"id":"configurable-fuel-reserve","operation":"fuel_reserve","args":[10,60],"expected":10,"absolute_tolerance":0},
+    {"id":"fuel-range-with-reserve","operation":"fuel_range","args":[40,10,120,5],"expected":420,"absolute_tolerance":0},
     {"id":"day-vfr-reserve","operation":"vfr_fuel_reserve","args":[10,true],"expected":5,"absolute_tolerance":0},
     {"id":"night-vfr-reserve","operation":"vfr_fuel_reserve","args":[10,false],"expected":7.5,"absolute_tolerance":0},
     {"id":"ifr-reserve","operation":"ifr_fuel_reserve","args":[12],"expected":9,"absolute_tolerance":0},
     {"id":"time-speed-distance","operation":"tsd_distance","args":[125,2.4],"expected":300,"absolute_tolerance":0.0000001},
     {"id":"invalid-latitude-fails","operation":"distance_nm","args":[91,0,0,0],"expected_error":"invalid_input"},
-    {"id":"zero-ground-speed-fails","operation":"flight_time","args":[120,0],"expected_error":"invalid_input"}
+    {"id":"zero-ground-speed-fails","operation":"flight_time","args":[120,0],"expected_error":"invalid_input"},
+    {"id":"negative-reserve-duration-fails","operation":"fuel_reserve","args":[10,-1],"expected_error":"invalid_input"},
+    {"id":"zero-fuel-burn-range-fails","operation":"fuel_range","args":[40,0,120,5],"expected_error":"invalid_input"},
+    {"id":"reserve-exceeds-fuel-range-fails","operation":"fuel_range","args":[5,10,120,6],"expected_error":"invalid_input"},
+    {"id":"negative-fuel-consumption-fails","operation":"fuel_consumption","args":[-1,1],"expected_error":"invalid_input"}
   ]
 }

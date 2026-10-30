@@ -340,6 +340,13 @@ def format_dms(decimal: float, is_latitude: bool) -> str:
 
 def fuel_consumption(fuel_burn_gph: float, time_hours: float) -> float:
     """Calculate fuel consumption in gallons."""
+    if (
+        not math.isfinite(fuel_burn_gph)
+        or fuel_burn_gph < 0
+        or not math.isfinite(time_hours)
+        or time_hours < 0
+    ):
+        raise ValueError("Fuel burn and time must be finite and non-negative")
     return fuel_burn_gph * time_hours
 
 
@@ -377,9 +384,36 @@ def fuel_range(
     reserve_gallons: float = 0
 ) -> float:
     """Calculate range with given fuel in nautical miles."""
+    if (
+        not math.isfinite(fuel_gallons)
+        or fuel_gallons < 0
+        or not math.isfinite(reserve_gallons)
+        or reserve_gallons < 0
+        or reserve_gallons > fuel_gallons
+        or not math.isfinite(fuel_burn_gph)
+        or fuel_burn_gph <= 0
+        or not math.isfinite(ground_speed_kts)
+        or ground_speed_kts <= 0
+    ):
+        raise ValueError(
+            "Fuel and reserve must be non-negative, reserve must not exceed fuel, "
+            "and burn and speed must be positive"
+        )
     usable_fuel = fuel_gallons - reserve_gallons
     endurance = usable_fuel / fuel_burn_gph
     return endurance * ground_speed_kts
+
+
+def fuel_reserve(fuel_burn_gph: float, reserve_minutes: float) -> float:
+    """Calculate reserve fuel for an arbitrary duration in minutes."""
+    if (
+        not math.isfinite(fuel_burn_gph)
+        or fuel_burn_gph < 0
+        or not math.isfinite(reserve_minutes)
+        or reserve_minutes < 0
+    ):
+        raise ValueError("Fuel burn and reserve minutes must be finite and non-negative")
+    return fuel_consumption(fuel_burn_gph, reserve_minutes / 60)
 
 
 def vfr_fuel_reserve(fuel_burn_gph: float, is_day_vfr: bool = True) -> float:
@@ -388,12 +422,12 @@ def vfr_fuel_reserve(fuel_burn_gph: float, is_day_vfr: bool = True) -> float:
     30 minutes day VFR, 45 minutes night VFR.
     """
     reserve_minutes = 30 if is_day_vfr else 45
-    return fuel_burn_gph * (reserve_minutes / 60)
+    return fuel_reserve(fuel_burn_gph, reserve_minutes)
 
 
 def ifr_fuel_reserve(fuel_burn_gph: float) -> float:
     """Calculate IFR fuel reserve (45 minutes)."""
-    return fuel_burn_gph * 0.75
+    return fuel_reserve(fuel_burn_gph, 45)
 
 
 # ============================================================================

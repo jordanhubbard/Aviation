@@ -14,6 +14,12 @@ import math
 import time
 from typing import Any, List, Literal, Optional
 
+from aviation.navigation import (
+    flight_time,
+    fuel_consumption,
+    fuel_range,
+    fuel_reserve,
+)
 from fastapi import APIRouter, HTTPException
 
 from app.schemas.route import RouteLeg, RouteRequest, RouteResponse, Segment
@@ -38,7 +44,6 @@ from app.services.xctry_route_planner import (
     haversine_nm,
     plan_route,
 )
-
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
@@ -176,7 +181,7 @@ def calculate_route_internal(
                 )
 
             gph = float(req.fuel_burn_gph)
-            reserve_fuel = gph * (float(req.reserve_minutes) / 60.0)
+            reserve_fuel = fuel_reserve(gph, float(req.reserve_minutes))
             usable = float(req.fuel_on_board_gal) - reserve_fuel
             if usable <= 0:
                 raise HTTPException(
@@ -187,7 +192,7 @@ def calculate_route_internal(
                 )
 
             # Still-air max distance for a leg.
-            max_leg = usable * (speed_kt / gph)
+            max_leg = fuel_range(float(req.fuel_on_board_gal), gph, speed_kt, reserve_fuel)
 
         if max_leg is None or max_leg <= 0:
             raise HTTPException(status_code=400, detail="max leg distance must be > 0")
@@ -300,7 +305,7 @@ def calculate_route_internal(
                         points[j][0], points[j][1], points[j + 1][0], points[j + 1][1]
                     )
 
-                time_hr = round(dist_nm / speed_kt, 2) if speed_kt else 0.0
+                time_hr = round(flight_time(dist_nm, speed_kt), 2) if speed_kt else 0.0
                 partial = RouteResponse(
                     planned_at_utc=planned_at_utc,
                     departure_time_utc=departure_time_utc,
@@ -333,7 +338,7 @@ def calculate_route_internal(
         total_dist += haversine_nm(points[i][0], points[i][1], points[i + 1][0], points[i + 1][1])
 
     segments = _build_segments(planned_segments)
-    time_hr = round(total_dist / speed_kt, 2) if speed_kt else 0.0
+    time_hr = round(flight_time(total_dist, speed_kt), 2) if speed_kt else 0.0
     ctx.emit_partial_plan(
         phase="route_geometry",
         plan=RouteResponse(
@@ -519,7 +524,7 @@ def calculate_route_internal(
                     percent=0.9,
                 )
 
-    total_time = total_dist / effective_speed_kt if effective_speed_kt else 0.0
+    total_time = flight_time(total_dist, effective_speed_kt) if effective_speed_kt else 0.0
     arrival_time_utc = departure_time_utc + timedelta(hours=float(total_time))
 
     if planned_legs:
@@ -555,7 +560,7 @@ def calculate_route_internal(
                     )
                     gs = max(30.0, float(speed_kt) - head)
 
-                ete_min = (dist_nm / gs) * 60.0 if gs > 0 else 0.0
+                ete_min = flight_time(dist_nm, gs) * 60.0 if gs > 0 else 0.0
                 elapsed += ete_min
 
                 arrive_leg_time_utc = departure_time_utc + timedelta(minutes=float(elapsed))
@@ -591,7 +596,7 @@ def calculate_route_internal(
                     )
                     gs = max(30.0, float(speed_kt) - head)
 
-                ete_min = (dist_nm / gs) * 60.0 if gs > 0 else 0.0
+                ete_min = flight_time(dist_nm, gs) * 60.0 if gs > 0 else 0.0
                 elapsed += ete_min
 
                 arrive_leg_time_utc = departure_time_utc + timedelta(minutes=float(elapsed))
@@ -632,8 +637,8 @@ def calculate_route_internal(
     if req.plan_fuel_stops or req.fuel_burn_gph is not None:
         fuel_burn = float(req.fuel_burn_gph) if req.fuel_burn_gph is not None else 10.0
         reserve_minutes = int(req.reserve_minutes)
-        fuel_required = total_time * fuel_burn
-        fuel_required_with_reserve = fuel_required + fuel_burn * (reserve_minutes / 60.0)
+        fuel_required = fuel_consumption(fuel_burn, total_time)
+        fuel_required_with_reserve = fuel_required + fuel_reserve(fuel_burn, reserve_minutes)
 
     timings["total"] = round(time.perf_counter() - t_total, 4)
     logger.info(

@@ -25,6 +25,14 @@ export function fuelConsumption(
   fuelBurnGPH: number,
   timeHours: number
 ): number {
+  if (
+    !Number.isFinite(fuelBurnGPH) ||
+    fuelBurnGPH < 0 ||
+    !Number.isFinite(timeHours) ||
+    timeHours < 0
+  ) {
+    throw new RangeError('Fuel burn and time must be finite and non-negative');
+  }
   return fuelBurnGPH * timeHours;
 }
 
@@ -83,9 +91,38 @@ export function fuelRange(
   groundSpeedKts: number,
   reserveGallons: number = 0
 ): number {
+  if (
+    !Number.isFinite(fuelGallons) ||
+    fuelGallons < 0 ||
+    !Number.isFinite(reserveGallons) ||
+    reserveGallons < 0 ||
+    reserveGallons > fuelGallons ||
+    !Number.isFinite(fuelBurnGPH) ||
+    fuelBurnGPH <= 0 ||
+    !Number.isFinite(groundSpeedKts) ||
+    groundSpeedKts <= 0
+  ) {
+    throw new RangeError(
+      'Fuel and reserve must be non-negative, reserve must not exceed fuel, ' +
+      'and burn and speed must be positive'
+    );
+  }
   const usableFuel = fuelGallons - reserveGallons;
   const endurance = usableFuel / fuelBurnGPH;
   return endurance * groundSpeedKts;
+}
+
+/** Calculate reserve fuel for an arbitrary duration in minutes. */
+export function fuelReserve(fuelBurnGPH: number, reserveMinutes: number): number {
+  if (
+    !Number.isFinite(fuelBurnGPH) ||
+    fuelBurnGPH < 0 ||
+    !Number.isFinite(reserveMinutes) ||
+    reserveMinutes < 0
+  ) {
+    throw new RangeError('Fuel burn and reserve minutes must be finite and non-negative');
+  }
+  return fuelConsumption(fuelBurnGPH, reserveMinutes / 60);
 }
 
 /**
@@ -147,7 +184,7 @@ export function vfrFuelReserve(
   isDayVFR: boolean = true
 ): number {
   const reserveMinutes = isDayVFR ? 30 : 45;
-  return fuelBurnGPH * (reserveMinutes / 60);
+  return fuelReserve(fuelBurnGPH, reserveMinutes);
 }
 
 /**
@@ -159,7 +196,7 @@ export function vfrFuelReserve(
  * Note: FAR 91.167 requires 45 minutes IFR reserve
  */
 export function ifrFuelReserve(fuelBurnGPH: number): number {
-  return fuelBurnGPH * 0.75; // 45 minutes
+  return fuelReserve(fuelBurnGPH, 45);
 }
 
 /**

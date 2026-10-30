@@ -79,6 +79,7 @@ export {
   fuelEndurance,
   fuelWeight,
   fuelVolume,
+  fuelReserve,
   vfrFuelReserve,
   ifrFuelReserve,
   alternateFuelRequired,
