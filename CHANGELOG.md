@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Added cross-language marker-beacon, audio-panel, and transponder models to
+  `aviation.avionics`, including explicit site catalogs, bounded levels, octal squawk
+  normalization, and deterministic IDENT timing; G1000 now delegates those models to
+  the common SDK while retaining its simulator-specific catalog and orchestration.
 - Added cross-language ADF and DME receiver models to `aviation.avionics`, including
   deterministic station selection, bearing/range geometry, service-volume behavior,
   and unavailable-signal handling; G1000 now delegates to the common models and shared

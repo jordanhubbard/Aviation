@@ -53,9 +53,22 @@
 - `computeAdf(input) -> AdfSolution`
 - `computeDme(input) -> DmeSolution`
 
+## Control-model records and operations
+
+- `MarkerBeaconSite` is an explicit site, service-volume, and altitude-limit input.
+- `computeMarkerBeacons(...) -> MarkerBeaconStatus` resolves mutually exclusive outer,
+  middle, and inner indications.
+- `AudioPanelState` carries source selection, output routing, and bounded source
+  volumes; `computeAudioPanelStatus(...)` derives ADF and marker levels and lamps.
+- `TransponderState` carries mode, four-digit octal squawk, and IDENT timing.
+- `normalizeSquawk(value) -> four-digit code | unavailable`
+- `transitionTransponder(current, transition) -> TransponderState`
+
 ## Compatibility boundary
 
 Applications MAY retain transport hooks, reconnection policy, stores, simulator
 orchestration, page selection, alerts, display composition, and physical radio/device
 I/O. They SHALL supply navigation-station data explicitly rather than embedding a
-provider or operational database in the receiver model.
+provider or operational database in the receiver model. Marker-site catalogs, audio
+playback, COM transmission, simulator stepping, and physical transponder I/O likewise
+remain application inputs or host responsibilities.
