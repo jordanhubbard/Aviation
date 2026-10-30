@@ -64,7 +64,11 @@ def _resolve_airport_data_path(data_path: Optional[str]) -> Path:
     if data_path:
         return Path(data_path)
 
-    env_path = os.environ.get("AVIATION_AIRPORTS_DATA_PATH") or os.environ.get("AIRPORTS_DATA_PATH")
+    env_path = (
+        os.environ.get("AVIATION_AIRPORTS_DATA")
+        or os.environ.get("AVIATION_AIRPORTS_DATA_PATH")
+        or os.environ.get("AIRPORTS_DATA_PATH")
+    )
     if env_path:
         env_candidate = Path(env_path)
         if env_candidate.exists():
@@ -108,7 +112,15 @@ class AirportDatabase:
         
         try:
             with open(self.data_path, 'r', encoding='utf-8') as f:
-                self.airports = json.load(f)
+                raw = json.load(f)
+            if not isinstance(raw, list):
+                raise ValueError("Airport dataset must contain a list")
+            self.airports = [
+                airport
+                for entry in raw
+                if isinstance(entry, dict)
+                and (airport := self.normalize_airport_record(entry)) is not None
+            ]
             self.loaded = True
         except Exception as e:
             print(f"Failed to load airport data: {e}")
@@ -167,9 +179,19 @@ class AirportDatabase:
                 return AirportDatabase._to_float(lat), AirportDatabase._to_float(lon)
         
         # Try direct latitude/longitude fields
+        lat_value = (
+            airport.get("lat")
+            if airport.get("lat") is not None
+            else airport.get("latitude")
+        )
+        lon_value = (
+            airport.get("lon")
+            if airport.get("lon") is not None
+            else airport.get("longitude")
+        )
         return (
-            AirportDatabase._to_float(airport.get("lat") or airport.get("latitude")),
-            AirportDatabase._to_float(airport.get("lon") or airport.get("longitude"))
+            AirportDatabase._to_float(lat_value),
+            AirportDatabase._to_float(lon_value),
         )
     
     @staticmethod
@@ -181,18 +203,47 @@ class AirportDatabase:
             return float(v)
         except Exception:
             return None
+
+    @staticmethod
+    def normalize_airport_record(airport: Dict[str, Any]) -> Optional[Airport]:
+        """Normalize one provider record, omitting invalid identity/coordinates."""
+        lat, lon = AirportDatabase._extract_lat_lon(airport)
+        icao = str(airport.get("icao") or airport.get("icaoCode") or "").strip().upper()
+        if (
+            not icao
+            or lat is None
+            or lon is None
+            or not math.isfinite(lat)
+            or not math.isfinite(lon)
+            or not -90 <= lat <= 90
+            or not -180 <= lon <= 180
+        ):
+            return None
+
+        elevation = AirportDatabase._to_float(airport.get("elevation"))
+        if elevation is not None and not math.isfinite(elevation):
+            elevation = None
+        return Airport(
+            {
+                "icao": icao,
+                "iata": str(
+                    airport.get("iata") or airport.get("iataCode") or ""
+                ).strip().upper(),
+                "name": str(airport.get("name") or ""),
+                "city": str(airport.get("city") or ""),
+                "country": str(airport.get("country") or ""),
+                "region": str(airport.get("region") or ""),
+                "latitude": float(lat),
+                "longitude": float(lon),
+                "elevation": elevation,
+                "type": str(airport.get("type") or ""),
+            }
+        )
     
     @staticmethod
     def _haversine_nm(lat1: float, lon1: float, lat2: float, lon2: float) -> float:
         """Calculate haversine distance in nautical miles."""
-        R_NM = 3440.065  # Earth radius in nautical miles
-        phi1 = math.radians(lat1)
-        phi2 = math.radians(lat2)
-        dphi = math.radians(lat2 - lat1)
-        dlambda = math.radians(lon2 - lon1)
-        a = math.sin(dphi / 2) ** 2 + math.cos(phi1) * math.cos(phi2) * math.sin(dlambda / 2) ** 2
-        c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
-        return R_NM * c
+        return float(_haversine_distance(lat1, lon1, lat2, lon2, "NM"))
     
     def get_airport_coordinates(self, code: str) -> Optional[Airport]:
         """
@@ -459,7 +510,7 @@ def get_airport(code: str) -> Optional[Airport]:
 
 
 def load_airport_cache() -> List[Dict[str, Any]]:
-    """Load the raw airport cache data for consumers needing full records."""
+    """Load normalized airport records from the configured shared dataset."""
     database = get_airport_database()
     database._load_airports()
     return list(database.airports)

@@ -10,9 +10,7 @@
 
 import { Airport } from './types.js';
 import { getAirportDatabase, candidateCodes } from './service.js';
-
-/** Earth radius in nautical miles. */
-const EARTH_RADIUS_NM = 3440.065;
+import { haversineDistance } from '../navigation/distance.js';
 
 /** Fuzzy matches scoring below this ratio are discarded. */
 const MIN_FUZZY_RATIO = 0.6;
@@ -28,17 +26,6 @@ export interface AirportSearchAdvancedOptions {
   radiusNm?: number;
   /** Maximum number of results (default 20) */
   limit?: number;
-}
-
-function haversineNm(lat1: number, lon1: number, lat2: number, lon2: number): number {
-  const phi1 = (lat1 * Math.PI) / 180;
-  const phi2 = (lat2 * Math.PI) / 180;
-  const dPhi = ((lat2 - lat1) * Math.PI) / 180;
-  const dLambda = ((lon2 - lon1) * Math.PI) / 180;
-
-  const a =
-    Math.sin(dPhi / 2) ** 2 + Math.cos(phi1) * Math.cos(phi2) * Math.sin(dLambda / 2) ** 2;
-  return EARTH_RADIUS_NM * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 }
 
 /**
@@ -122,7 +109,13 @@ export function searchAirportsAdvanced(options: AirportSearchAdvancedOptions): A
 
     let distance = Infinity;
     if (hasGeo) {
-      distance = haversineNm(options.lat!, options.lon!, airport.latitude, airport.longitude);
+      distance = haversineDistance(
+        options.lat!,
+        options.lon!,
+        airport.latitude,
+        airport.longitude,
+        'NM'
+      );
       if (options.radiusNm !== undefined && distance > options.radiusNm) {
         continue;
       }

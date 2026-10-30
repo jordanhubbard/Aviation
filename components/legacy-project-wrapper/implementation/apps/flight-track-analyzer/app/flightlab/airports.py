@@ -1,13 +1,12 @@
 """Read Aviation's bundled airport elevations for nearby field references."""
 from __future__ import annotations
 
-import json
-import os
 from functools import lru_cache
-from pathlib import Path
 
 import numpy as np
 from scipy.spatial import cKDTree
+
+from aviation import load_airport_cache
 
 EARTH_KM = 6371.0088
 MAX_DISTANCE_KM = 5.0
@@ -53,27 +52,9 @@ class AirportIndex:
         return ({**self.airports[i], "distance_km": float(distance)} if i >= 0 else None)
 
 
-def _default_path():
-    override = os.environ.get("AVIATION_AIRPORTS_DATA") or os.environ.get("AVIATION_AIRPORTS_DATA_PATH")
-    if override:
-        return Path(override)
-    return Path(__file__).parents[3] / "flight-planner/backend/data/airports_cache.json"
-
-
-@lru_cache(maxsize=2)
-def _read_index(path, size, mtime_ns):
-    del size, mtime_ns
-    with Path(path).open(encoding="utf-8") as stream:
-        data = json.load(stream)
-    if not isinstance(data, list):
-        raise ValueError("airport dataset must contain a list")
-    return AirportIndex(data)
-
-
+@lru_cache(maxsize=1)
 def default_airports():
-    path = _default_path()
     try:
-        state = path.stat()
-        return _read_index(str(path), state.st_size, state.st_mtime_ns)
-    except (OSError, ValueError, TypeError, json.JSONDecodeError):
+        return AirportIndex(load_airport_cache())
+    except (OSError, ValueError, TypeError):
         return None

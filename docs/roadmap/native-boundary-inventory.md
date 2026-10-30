@@ -79,6 +79,22 @@ Target language, package manager, compiler, and operating-system details remain 
 or workflow authority. Airport datasets, magnetic models, and procedure databases are
 separate assets/components and are not folded into the navigation arithmetic boundary.
 
+### Second selected boundary: aviation airports
+
+`aviation.airports` owns the normalized airport record and query behavior while the
+large retained cache remains data pending provenance and license qualification.
+
+| Retained path | Classification | Native owner / disposition |
+| --- | --- | --- |
+| `packages/shared-sdk/src/aviation/airports/` | retained TypeScript realization | `component://aviation/aviation-airports`; shared-vector adapter required |
+| `packages/shared-sdk/python/aviation/airports.py` | retained Python realization | same capability; normalization is the common ingestion boundary |
+| `packages/shared-sdk/data/airports_cache.json` | retained dataset | do not promote as an asset until source, license, revision, and refresh evidence are explicit |
+| `apps/flight-planner/backend/app/models/airport.py` | compatibility adapter | already delegates to the Python SDK; remove after app import packaging no longer needs it |
+| `apps/aviation-accident-tracker/backend/src/geo/airportLookup.ts` | application adapter | already delegates to the TypeScript SDK; retain only unit conversion/orchestration |
+| `apps/flight-track-analyzer/app/flightlab/airports.py` | application-specific acceleration | consume SDK-normalized records; retain KD-tree batch lookup and touchdown radius policy |
+| `packages/nav-data/src/` airport model/search | nav-data capability | reconcile when `aviation.nav-data` is promoted; remove its private geodesy in favor of `aviation.navigation` |
+| G1000 simulator sample nav database | simulated avionics fixture | retain as explicit simulator test/runtime data, not as the common airport database |
+
 ## Cross-cutting authority to classify
 
 | Boundary and proposed owner | Evidence | Provisional classification and open question |
