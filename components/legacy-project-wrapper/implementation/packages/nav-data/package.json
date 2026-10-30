@@ -7,7 +7,8 @@
   "scripts": {
     "build": "tsc",
     "dev": "tsc --watch",
-    "clean": "rm -rf dist"
+    "clean": "rm -rf dist",
+    "test": "vitest run"
   },
   "keywords": [
     "aviation",
@@ -16,8 +17,12 @@
   ],
   "author": "Jordan Hubbard",
   "license": "MIT",
+  "dependencies": {
+    "@aviation/shared-sdk": "workspace:*"
+  },
   "devDependencies": {
     "@types/node": "^25.5.0",
-    "typescript": "^5.9.3"
+    "typescript": "^5.9.3",
+    "vitest": "^4.1.1"
   }
 }

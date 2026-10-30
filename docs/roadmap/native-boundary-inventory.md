@@ -55,7 +55,7 @@ current human description.
 | G1000 Protocols — `packages/g1000-protocols` | `packages/g1000-protocols/package.json`; `packages/g1000-protocols/README.md`; Go package under `packages/g1000-protocols/` | Go test target in root `go.mod`; no owned fixture located |
 | G1000 Rendering — `packages/g1000-rendering` | `packages/g1000-rendering/package.json`; `packages/g1000-rendering/README.md` | no owned test file located |
 | Keystore — `packages/keystore` | `packages/keystore/package.json`; `packages/keystore/README.md`; Python package under `packages/keystore/python/` | `packages/keystore/src/keystore.test.ts`; `packages/keystore/src/cli.test.ts` |
-| Navigation Data — `packages/nav-data` | `packages/nav-data/package.json`; `packages/nav-data/src/` | none located |
+| Navigation Data providers — `packages/nav-data` | `packages/nav-data/package.json`; `packages/nav-data/src/ingestion/` | Component-owned synthetic provider vectors and package tests |
 | Shared SDK — `packages/shared-sdk` | `packages/shared-sdk/package.json`; `packages/shared-sdk/README.md`; Python package under `packages/shared-sdk/python/`; Go package under `packages/shared-sdk/` | `packages/shared-sdk/tests/`; Python tests; Go tests |
 | UI Framework — `packages/ui-framework` | `packages/ui-framework/package.json`; `packages/ui-framework/README.md` | `packages/ui-framework/src/` tests |
 
@@ -92,7 +92,7 @@ large retained cache remains data pending provenance and license qualification.
 | `apps/flight-planner/backend/app/models/airport.py` | compatibility adapter | already delegates to the Python SDK; remove after app import packaging no longer needs it |
 | `apps/aviation-accident-tracker/backend/src/geo/airportLookup.ts` | application adapter | already delegates to the TypeScript SDK; retain only unit conversion/orchestration |
 | `apps/flight-track-analyzer/app/flightlab/airports.py` | application-specific acceleration | consume SDK-normalized records; retain KD-tree batch lookup and touchdown radius policy |
-| `packages/nav-data/src/` airport model/search | nav-data capability | reconcile when `aviation.nav-data` is promoted; remove its private geodesy in favor of `aviation.navigation` |
+| `packages/nav-data/src/ingestion/ourairports.ts` | provider compatibility adapter | emits `aviation.airports` records and delegates normalization to the common SDK |
 | G1000 simulator sample nav database | simulated avionics fixture | retain as explicit simulator test/runtime data, not as the common airport database |
 
 ### Third selected boundary: aviation weather
@@ -131,7 +131,7 @@ to their applications.
 | `apps/flight-planner/backend/app/routers/airspace.py` | application-specific acceleration | retain GeoPandas projection, spatial indexing, radius policy, and HTTP serialization |
 | `apps/g1000-simulator/backend/app/services/nav_database.py` | compatibility adapter | combines common airports/nav-data and retains the simulator API response shape |
 | `apps/g1000-simulator/backend/app/services/procedures.py` | compatibility adapter | delegates selection/filtering and retains legacy simulator method names |
-| `packages/nav-data/src/` | retained provider-ingestion package with a duplicate catalog/search surface | retain its CIFP, OpenAIP, and OurAirports adapters for follow-up qualification; remove or redirect duplicate database/search/cache behavior before this boundary is complete |
+| `packages/nav-data/src/` | retained provider-ingestion package | CIFP, openAIP, and OurAirports adapters emit common SDK contracts; duplicate database, cache, search, proximity, and procedure-selection surfaces are removed and Component-owned adapter vectors run in package CI |
 | retained airport/airspace caches | retained datasets | provenance, license, revision, and refresh evidence remain required before asset promotion |
 
 ## Cross-cutting authority to classify

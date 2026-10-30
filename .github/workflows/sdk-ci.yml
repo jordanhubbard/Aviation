@@ -33,12 +33,16 @@ jobs:
         with:
           node-version: '24'
       - uses: pnpm/action-setup@v4
-      - name: Install shared SDK dependencies
-        run: pnpm install --frozen-lockfile --filter @aviation/shared-sdk...
-      - name: Build shared SDK
-        run: pnpm --filter @aviation/shared-sdk run build
-      - name: Test shared SDK and navigation conformance
-        run: pnpm --filter @aviation/shared-sdk run test
+      - name: Install common SDK dependencies
+        run: pnpm install --frozen-lockfile --filter @aviation/nav-data...
+      - name: Build common SDK packages
+        run: |
+          pnpm --filter @aviation/shared-sdk run build
+          pnpm --filter @aviation/nav-data run build
+      - name: Test common SDK and Component conformance
+        run: |
+          pnpm --filter @aviation/shared-sdk run test
+          pnpm --filter @aviation/nav-data run test
 
   python:
     name: Python shared SDK

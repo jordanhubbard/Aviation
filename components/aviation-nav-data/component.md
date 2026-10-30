@@ -37,6 +37,11 @@ effective-date freshness classification. It does not own airport identity, geode
 calculations, route selection, avionics state, geospatial indexing, application
 presentation, or pilot-in-command decisions.
 
+Provider-specific adapters MAY translate OurAirports, openAIP, FAA CIFP, or other
+external formats into this Component and the `aviation.airports` contract. They SHALL
+not expose a second catalog, cache, search engine, proximity calculation, or procedure
+selection implementation.
+
 The public surface is defined by `interfaces/nav-data.md`. Every language binding must
 pass `acceptance/nav-data.md` against `acceptance/vectors.json`.
 
@@ -84,3 +89,15 @@ vectors without network access or provider credentials.
 
 - **WHEN** either binding returns a different search or filtering result
 - **THEN** common SDK CI fails independently of application tests
+
+### Requirement: Provider adapters terminate at common contracts
+
+Provider adapters SHALL emit `aviation.nav-data` bundles and, where applicable,
+`aviation.airports` records. Adapter packages SHALL delegate validation and all query
+behavior to those common SDK capabilities.
+
+#### Scenario: Three provider formats are combined
+
+- **WHEN** synthetic OurAirports CSV, openAIP GeoJSON, and FAA CIFP records are ingested
+- **THEN** the resulting airports and navigation bundle pass the Component-owned adapter
+  vectors without introducing a parallel database or search surface

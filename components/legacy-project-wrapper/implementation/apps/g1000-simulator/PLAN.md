@@ -738,6 +738,11 @@ packages/flight-dynamics/
 
 ### 4. @aviation/nav-data (TypeScript + Data)
 
+> Current architecture: this retained plan originally assigned the navigation
+> database to `@aviation/nav-data`. The package now owns provider ingestion only;
+> normalized records, catalogs, queries, and procedure selection are owned and tested
+> by `@aviation/shared-sdk` under the `aviation.nav-data` Component.
+
 **Purpose**: Navigation database for avionics
 
 **Contents:**

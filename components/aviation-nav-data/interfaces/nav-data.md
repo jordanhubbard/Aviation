@@ -11,6 +11,7 @@ use idiomatic names while preserving these operations.
 | Normalize airspace | Retain valid GeoJSON Features and reject malformed collections |
 | Report status | Return record counts, source, cycle, effective dates, and freshness |
 | Classify freshness | Return current/expired/future/undated at an explicit instant |
+| Adapt provider data | Translate provider formats into this interface and `aviation.airports`; do not add provider-owned query behavior |
 
 ## Record conventions
 
@@ -26,3 +27,7 @@ use idiomatic names while preserving these operations.
 Adding optional record fields is backward compatible. Changing units, normalization,
 freshness boundaries, query ordering, procedure filtering, or required provenance is a
 breaking interface change.
+
+Provider adapter additions are backward compatible when they return these existing
+records. A provider package that exports its own catalog, cache, search, distance, or
+procedure-selection semantics is outside this interface.

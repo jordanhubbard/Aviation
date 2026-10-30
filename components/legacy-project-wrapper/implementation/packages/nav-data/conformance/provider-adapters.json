@@ -1,0 +1,20 @@
+{
+  "schema":"aviation/nav-data-provider-adapter-vectors@1",
+  "input":{
+    "ourAirports":{
+      "airportsCsv":"ident,iata_code,name,iso_country,latitude_deg,longitude_deg,elevation_ft,type\nksfo,sfo,San Francisco International,US,37.6188056,-122.3754167,13,large_airport",
+      "navaidsCsv":"ident,name,type,latitude_deg,longitude_deg,frequency_mhz\nsfo,San Francisco VOR,VOR-DME,37.619,-122.375,115.8"
+    },
+    "openAip":{"airspace":{"type":"FeatureCollection","features":[{"type":"Feature","geometry":{"type":"Polygon","coordinates":[[[-122.5,37.5],[-122.0,37.5],[-122.0,38.0],[-122.5,37.5]]]},"properties":{"id":"SFO_B","name":"San Francisco Class B","class":"b","lowerLimit":0,"upperLimit":10000}}]}},
+    "faaCifp":{"records":"QUIET1 KSFO SID DUMBA TF A5000"}
+  },
+  "metadata":{"cycle":"TEST-02","effective_from":"2026-10-01T00:00:00Z","effective_through":"2026-10-31T23:59:59Z"},
+  "expected":{
+    "source":"ourairports+openaip+faa-cifp",
+    "airport_codes":["KSFO"],
+    "navaid":{"identifier":"SFO","type":"VOR","frequency":115.8},
+    "procedure":{"identifier":"QUIET1","airport_icao":"KSFO","procedure_type":"SID","legs":[{"fix":"DUMBA","path_type":"TF","altitude_constraint":"AT 5000","altitude_ft":5000}]},
+    "airspace":{"id":"SFO_B","class":"B","lower_limit_ft":0,"upper_limit_ft":10000},
+    "search_identifiers":["SFO"]
+  }
+}
