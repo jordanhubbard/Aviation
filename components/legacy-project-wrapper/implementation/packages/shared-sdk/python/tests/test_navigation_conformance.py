@@ -2,21 +2,13 @@
 
 from __future__ import annotations
 
-import json
 import math
-from pathlib import Path
 
 from aviation import navigation
+from _conformance_contract import load_conformance_contract
 
 
-VECTORS_PATH = (
-    Path(__file__).resolve().parents[7]
-    / "components"
-    / "aviation-navigation"
-    / "acceptance"
-    / "vectors.json"
-)
-CONTRACT = json.loads(VECTORS_PATH.read_text(encoding="utf-8"))
+CONTRACT = load_conformance_contract("navigation")
 
 OPERATIONS = {
     "distance_nm": navigation.distance_nm,

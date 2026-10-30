@@ -71,6 +71,10 @@ release-visible outcome to `CHANGELOG.md`; Git preserves prior queue states.
   - [x] Define `aviation.weather`, add synthetic cross-language METAR/category/provider
     vectors, and replace Flight Planner's duplicated weather algorithms and provider
     clients with SDK compatibility surfaces.
+  - [x] Define `aviation.nav-data`, add synthetic cross-language normalization/query/
+    freshness vectors, and replace Flight Planner and G1000 navaid/procedure catalogs
+    with SDK compatibility surfaces while retaining app-specific schemas and avionics
+    state.
   - [ ] Promote airports, weather, procedures/nav-data, flight dynamics, avionics
     protocols/rendering, shared UI, configuration, and integration infrastructure into
     explicit Components with owned tests and contracts.
@@ -78,8 +82,9 @@ release-visible outcome to `CHANGELOG.md`; Git preserves prior queue states.
     aviation implementations after parity qualification.
   - [ ] Classify and remove or intentionally retain every remainder beneath the legacy
     wrapper.
-- **Next action:** Land and independently verify the weather slice, then promote
-  nav-data.
+- **Next action:** Land and independently verify the portable nav-data core, reconcile
+  the retained `packages/nav-data` provider-ingestion adapters and duplicate catalog
+  surface, then promote flight dynamics.
 - **Evidence:** Phase 1.2 lift-and-shift identity `sha256:c5ca4361ba010f6e8d81c93398468f9f4f8b8cc352504bc8535fa74b7c6e9990`.
   Retained conversion stage is backed by current test receipt
   `sha256:60e252aceb5834018a21d3ec5a75b667c564e207ea3cf02d475b3245640c3c79`;
@@ -101,10 +106,15 @@ release-visible outcome to `CHANGELOG.md`; Git preserves prior queue states.
   41103415429, Monorepo CI/CD run 41103415361, and deployment-image run
   41103415358. The airport graph lock is
   `sha256:82d0bbe3f36eaf3c1640681036821db992629db80a6a0eee0b823b09dace083d`.
-  With the weather slice applied locally, 312 TypeScript and 104 Python SDK tests,
-  125 Flight Planner tests, and the Weather Briefing build pass. The weather
-  Component lock is
-  `sha256:a176e62833839cca2fbbe897ee68de0cccdd2d2b514041f1184b6b920bb3f9fc`;
+  Weather landed in PR #341 at exact-main commit
+  `5ccbe7d889ec7e92fa94d7bf2591b43748ac5ece`; all six exact-commit workflows
+  passed, including Common Aviation SDK run 41105586694, Integration Tests run
+  41105586797, Monorepo CI/CD run 41105586686, and deployment-image run
+  41105586742. The weather Component lock is
+  `sha256:a176e62833839cca2fbbe897ee68de0cccdd2d2b514041f1184b6b920bb3f9fc`.
+  With the nav-data slice applied locally, 321 TypeScript and 109 Python SDK tests,
+  126 Flight Planner tests, and 14 G1000 backend tests pass. The nav-data Component
+  lock is `sha256:85e08425858e42c1257c76513fb558747262816254bccc319c706709b6c8ae52`;
   exact-main evidence remains pending until its review lands.
   - [ ] Each promoted Component has a current lock, independent acceptance evidence,
     and exact-main CI evidence.

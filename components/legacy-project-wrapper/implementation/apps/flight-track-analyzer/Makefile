@@ -1,6 +1,6 @@
 # Flight track analyzer: install, build, run (GNU Make 3.81 compatible).
 PYTHON ?= python3
-VENV   ?= $(abspath ../../../../../_build/venv/flight-track-analyzer)
+VENV   ?= $(abspath ../../_build/venv/flight-track-analyzer)
 PY     := $(VENV)/bin/python
 PORT   ?= 8000
 DEPLOY_HOST ?= do-host1

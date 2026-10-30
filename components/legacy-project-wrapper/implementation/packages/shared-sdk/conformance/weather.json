@@ -1,0 +1,21 @@
+{
+  "schema":"aviation/weather-acceptance-vectors@1",
+  "metars":[
+    {"id":"gust-fraction-temperature-lowest-ceiling","raw":"KAAA 171856Z 27015G25KT 1 1/2SM -RA BKN020 OVC040 14/09 A2992","expected":{"wind_direction":270,"wind_speed_kt":15,"wind_gust_kt":25,"visibility_sm":1.5,"temperature_f":57,"ceiling_ft":2000}},
+    {"id":"variable-wind","raw":"KBBB 171856Z VRB05KT P6SM FEW020 M02/M08 A3010","expected":{"wind_direction":null,"wind_speed_kt":5,"wind_gust_kt":null,"visibility_sm":6,"temperature_f":28,"ceiling_ft":null}}
+  ],
+  "categories":[
+    {"id":"vfr","visibility_sm":5,"ceiling_ft":3000,"expected":"VFR"},
+    {"id":"mvfr","visibility_sm":4,"ceiling_ft":2000,"expected":"MVFR"},
+    {"id":"ifr","visibility_sm":2,"ceiling_ft":800,"expected":"IFR"},
+    {"id":"lifr","visibility_sm":0.5,"ceiling_ft":400,"expected":"LIFR"},
+    {"id":"missing","visibility_sm":null,"ceiling_ft":5000,"expected":"UNKNOWN"}
+  ],
+  "warnings":[
+    {"id":"all-warning-thresholds","visibility_sm":3,"ceiling_ft":2000,"wind_speed_kt":25,"expected":["Reduced visibility (3.0 SM).","Low ceiling (2000 ft).","High winds (25 kt)."]},
+    {"id":"good-conditions","visibility_sm":10,"ceiling_ft":5000,"wind_speed_kt":10,"expected":[]}
+  ],
+  "openweathermap":[
+    {"id":"provider-normalization","airport":"kaaa","payload":{"weather":[{"main":"Clear","description":"clear sky","id":800,"icon":"01d"}],"main":{"temp":65.4,"feels_like":65,"temp_min":60,"temp_max":70,"pressure":1013,"humidity":40},"wind":{"speed":10,"deg":280},"clouds":{"all":10},"visibility":10000,"dt":0,"name":"Alpha"},"expected":{"airport":"KAAA","conditions":"clear sky","temperature":65,"wind_speed":9,"wind_direction":280,"visibility":6.2,"ceiling":10000,"metar":""}}
+  ]
+}

@@ -2,20 +2,11 @@
 
 from __future__ import annotations
 
-import json
-from pathlib import Path
-
 from aviation.airports import AirportDatabase
+from _conformance_contract import load_conformance_contract
 
 
-VECTORS_PATH = (
-    Path(__file__).resolve().parents[7]
-    / "components"
-    / "aviation-airports"
-    / "acceptance"
-    / "vectors.json"
-)
-CONTRACT = json.loads(VECTORS_PATH.read_text(encoding="utf-8"))
+CONTRACT = load_conformance_contract("airports")
 NORMALIZED = [
     airport
     for record in CONTRACT["dataset"]

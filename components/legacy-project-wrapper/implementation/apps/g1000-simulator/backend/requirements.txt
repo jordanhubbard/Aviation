@@ -3,3 +3,4 @@ uvicorn
 # Imported by app/config.py but previously undeclared, so the image could not start.
 pydantic
 pydantic-settings
+-e ../../../packages/shared-sdk/python

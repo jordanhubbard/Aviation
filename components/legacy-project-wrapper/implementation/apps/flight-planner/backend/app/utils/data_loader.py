@@ -7,6 +7,7 @@ from functools import lru_cache
 from pathlib import Path
 from typing import Any, Dict, Iterable, List, Mapping, Optional
 
+from aviation.nav_data import normalize_airspace
 
 logger = logging.getLogger(__name__)
 
@@ -63,7 +64,9 @@ def load_airports(path: Optional[Path] = None) -> List[Dict[str, Any]]:
         return []
 
 
-def build_airport_index(airports: Iterable[Mapping[str, Any]]) -> Dict[str, Dict[str, Any]]:
+def build_airport_index(
+    airports: Iterable[Mapping[str, Any]],
+) -> Dict[str, Dict[str, Any]]:
     index: Dict[str, Dict[str, Any]] = {}
     for airport in airports:
         icao = str(airport.get("icao") or airport.get("icaoCode") or "").strip().upper()
@@ -90,8 +93,10 @@ def load_airspace(path: Optional[Path] = None) -> Dict[str, Any]:
     try:
         data = load_json_cached(airspace_path)
         if isinstance(data, dict):
-            return data
-        logger.error("Airspace cache at %s did not contain a JSON object", airspace_path)
+            return normalize_airspace(data)
+        logger.error(
+            "Airspace cache at %s did not contain a JSON object", airspace_path
+        )
         return {}
     except Exception as e:
         logger.error("Failed to load airspace cache from %s: %s", airspace_path, e)

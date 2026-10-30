@@ -2,24 +2,15 @@
 
 from __future__ import annotations
 
-import json
-from pathlib import Path
-
 from aviation.weather import (
     flight_category,
     parse_metar,
     to_weather_data,
     warnings_for_conditions,
 )
+from _conformance_contract import load_conformance_contract
 
-VECTORS_PATH = (
-    Path(__file__).resolve().parents[7]
-    / "components"
-    / "aviation-weather"
-    / "acceptance"
-    / "vectors.json"
-)
-CONTRACT = json.loads(VECTORS_PATH.read_text(encoding="utf-8"))
+CONTRACT = load_conformance_contract("weather")
 
 
 def test_component_vector_schema() -> None:

@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Promoted navaids, procedures, airspace ingestion, provenance, and freshness into an
+  `aviation.nav-data` Component with shared TypeScript/Python acceptance vectors;
+  Flight Planner and G1000 now delegate their common navigation-data catalogs to the
+  SDK.
 - Promoted METAR parsing, flight categories, provider normalization, forecast access,
   and departure-window scoring into an `aviation.weather` Component with shared
   TypeScript/Python acceptance vectors; Flight Planner now delegates its common

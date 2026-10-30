@@ -1,0 +1,18 @@
+{
+  "schema":"aviation/airports-acceptance-vectors@1",
+  "dataset":[
+    {"icao":"kaaa","iata":"alp","name":"Alpha Airport","city":"Alpha","country":"US","latitude":0,"longitude":0,"elevation":100,"type":"small_airport"},
+    {"icao":"KBBB","iata":"BRV","name":"Bravo International","city":"Bravo","country":"US","latitude":0,"longitude":1,"elevation":null,"type":"large_airport"},
+    {"icao":"KCCC","name":"Charlie Heliport","country":"US","latitude":2,"longitude":0,"elevation":50,"type":"heliport"},
+    {"icao":"KINV","name":"Invalid Latitude","country":"US","latitude":91,"longitude":0},
+    {"icao":"","name":"Missing Identity","country":"US","latitude":0,"longitude":0}
+  ],
+  "vectors":[
+    {"id":"invalid-records-omitted","operation":"normalized_count","expected":3},
+    {"id":"iata-lookup","operation":"lookup","args":["alp"],"expected":{"icao":"KAAA","elevation":100}},
+    {"id":"missing-elevation","operation":"lookup","args":["KBBB"],"expected":{"icao":"KBBB","elevation":null}},
+    {"id":"unknown-code","operation":"lookup","args":["ZZZZ"],"expected":null},
+    {"id":"exact-search-ranking","operation":"search_codes","args":["KBBB",2],"expected":["KBBB"]},
+    {"id":"nearby-order-and-units","operation":"nearby","args":[0,0,65,3],"expected":[{"icao":"KAAA","distance_nm":0,"absolute_tolerance":0},{"icao":"KBBB","distance_nm":60.04,"absolute_tolerance":0.01}]}
+  ]
+}
