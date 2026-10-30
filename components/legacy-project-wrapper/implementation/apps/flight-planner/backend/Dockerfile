@@ -23,6 +23,7 @@ RUN apt-get update \
 WORKDIR /build
 COPY apps/flight-planner/requirements.txt ./requirements.txt
 COPY packages/shared-sdk/python /packages/shared-sdk/python
+COPY packages/flight-dynamics /packages/flight-dynamics
 
 RUN python -m venv /opt/venv \
     && /opt/venv/bin/pip install --upgrade pip \
@@ -57,6 +58,7 @@ COPY --from=builder /opt/venv /opt/venv
 
 WORKDIR /app
 COPY packages/shared-sdk/python /packages/shared-sdk/python
+COPY packages/flight-dynamics /packages/flight-dynamics
 
 WORKDIR /app/backend
 COPY apps/flight-planner/backend/ ./

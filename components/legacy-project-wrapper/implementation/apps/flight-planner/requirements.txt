@@ -27,6 +27,7 @@ shapely
 
 # Shared SDK (local package)
 -e ../../packages/shared-sdk/python
+-e ../../packages/flight-dynamics
 
 # Testing
 pytest

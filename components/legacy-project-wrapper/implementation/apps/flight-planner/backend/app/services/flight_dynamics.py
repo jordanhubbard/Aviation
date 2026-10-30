@@ -1,37 +1,15 @@
 from __future__ import annotations
 
-import math
 from dataclasses import dataclass
 
-
-def calculate_lift(speed: float, wing_area: float, lift_coefficient: float, air_density: float) -> float:
-    """Calculate lift force."""
-    return 0.5 * lift_coefficient * air_density * wing_area * speed ** 2
-
-
-def calculate_drag(speed: float, wing_area: float, drag_coefficient: float, air_density: float) -> float:
-    """Calculate drag force."""
-    return 0.5 * drag_coefficient * air_density * wing_area * speed ** 2
-
-
-def calculate_thrust(power: float, efficiency: float, engine_factor: float = 1.0) -> float:
-    """Calculate thrust force."""
-    return power * efficiency * engine_factor
-
-
-def calculate_fuel_consumption(thrust: float, fuel_efficiency: float) -> float:
-    """Calculate fuel consumption rate."""
-    return thrust / fuel_efficiency
-
-
-def apply_wind_effect(velocity: float, wind_speed: float, wind_angle: float) -> float:
-    """Apply wind effect on velocity."""
-    return velocity + wind_speed * math.cos(wind_angle)
-
-
-def apply_turbulence_effect(velocity: float, turbulence_intensity: float) -> float:
-    """Apply turbulence effect on velocity."""
-    return velocity * (1 - turbulence_intensity)
+from aviation_flight_dynamics.compat import (
+    apply_turbulence_effect,
+    apply_wind_effect,
+    calculate_drag,
+    calculate_fuel_consumption,
+    calculate_lift,
+    calculate_thrust,
+)
 
 
 @dataclass

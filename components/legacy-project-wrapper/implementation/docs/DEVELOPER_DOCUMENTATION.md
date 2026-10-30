@@ -35,7 +35,9 @@ Provides interfaces and base classes for avionics-related functionalities.
 Handles rendering of G1000 displays and related components.
 
 ### @aviation/flight-dynamics
-Manages flight dynamics calculations and simulations.
+Owns the common ISA atmosphere, wind, force/integration, aircraft model/performance,
+and autopilot-control primitives. Applications retain only their simulation
+orchestration, avionics state, alerts, and presentation adapters.
 
 ### @aviation/nav-data
 Adapts OurAirports, openAIP, and FAA CIFP source formats into the common contracts
