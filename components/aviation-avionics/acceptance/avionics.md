@@ -1,8 +1,8 @@
 # Aviation avionics acceptance contract
 
-An independent oracle loads `vectors.json` and evaluates protocol and rendering cases
-against the common packages. Acceptance does not open a network connection, browser,
-simulator process, or physical avionics device.
+An independent oracle loads `vectors.json` and evaluates protocol, rendering, and
+AHRS/ADC/GPS device cases against the common packages. Acceptance does not open a
+network connection, browser, simulator process, or physical avionics device.
 
 ## Requirement: Telemetry and commands validate
 
@@ -38,6 +38,20 @@ simulator process, or physical avionics device.
 - **WHEN** attitude, compass, arc, marker, tape, and text primitives run
 - **THEN** the expected canvas operation families are present and context state is
   balanced
+
+## Requirement: Sensor models agree across languages
+
+### Scenario: AHRS, ADC, and GPS vectors are evaluated
+
+- **WHEN** TypeScript and Python realizations evaluate the declared device inputs
+- **THEN** their unit-explicit solutions match the same expected records within the
+  declared floating-point tolerance
+
+### Scenario: Invalid sensor input is supplied
+
+- **WHEN** a coordinate is out of range, a numeric input is non-finite, or an
+  altimeter setting is non-positive
+- **THEN** both realizations reject it instead of manufacturing telemetry
 
 ## Requirement: Common SDK CI runs
 

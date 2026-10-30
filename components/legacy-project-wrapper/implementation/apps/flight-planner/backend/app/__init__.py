@@ -12,7 +12,6 @@ from .services.websocket_protocol import WebSocketProtocol, MessageType
 from .services.flight_recording_service import router as flight_recording_router
 from .services.hardware_integration import HardwareIntegrationService
 from .services.envelope_protection import EnvelopeProtection
-from .services.ahrs_adc_simulation import AHRS, ADC
 from .services.gps_simulation import GPSSimulationService, GPSState
 from .services.telemetry_recording import TelemetryRecordingService, TelemetrySnapshot
 from .services.telemetry_streaming_hub import TelemetryStreamingHub

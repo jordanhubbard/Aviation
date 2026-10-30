@@ -51,7 +51,7 @@ current human description.
 | AI Explainer — `packages/ai-explainer` | `packages/ai-explainer/package.json`; `packages/ai-explainer/README.md` | `packages/ai-explainer/tests/` |
 | Aviation Config — `packages/aviation-config` | `packages/aviation-config/package.json`; `packages/aviation-config/src/` | none located |
 | Flight Dynamics — `packages/flight-dynamics` | `packages/flight-dynamics/package.json`; `packages/flight-dynamics/README.md`; `packages/flight-dynamics/requirements.txt` | Component-owned conformance vectors, package physics/model tests, and retained API tests |
-| G1000 Avionics SDK — `packages/g1000-avionics-sdk` | `packages/g1000-avionics-sdk/package.json`; `packages/g1000-avionics-sdk/README.md` | none located; retained zero-return device stubs are explicitly outside Component authority |
+| G1000 Avionics SDK — `packages/g1000-avionics-sdk` | `packages/g1000-avionics-sdk/package.json`; `packages/g1000-avionics-sdk/README.md`; Python package under `packages/g1000-avionics-sdk/python/` | Component-owned cross-language AHRS/ADC/GPS vectors and invalid-input tests |
 | G1000 Protocols — `packages/g1000-protocols` | `packages/g1000-protocols/package.json`; `packages/g1000-protocols/README.md`; Go package under `packages/g1000-protocols/` | Component-owned telemetry/command/flight-plan conformance vectors and TypeScript package tests; Go remains provisional |
 | G1000 Rendering — `packages/g1000-rendering` | `packages/g1000-rendering/package.json`; `packages/g1000-rendering/README.md` | Component-owned layout/pipeline/primitive conformance vectors and TypeScript package tests |
 | Keystore — `packages/keystore` | `packages/keystore/package.json`; `packages/keystore/README.md`; Python package under `packages/keystore/python/` | `packages/keystore/src/keystore.test.ts`; `packages/keystore/src/cli.test.ts` |
@@ -159,7 +159,7 @@ recorded-flight analytics, and application simulation orchestration remain priva
 exchange formats, deterministic display layout, functional canvas primitives, and
 PFD/MFD pipeline contracts. Simulator stepping, WebSocket reconnection, frontend
 stores, page composition, alerts, and physical device I/O remain application-private.
-Fixed zero-return sensor/radio classes are placeholders, not qualified device models.
+Unqualified radio behavior remains outside this boundary.
 
 | Retained path | Classification | Native owner / disposition |
 | --- | --- | --- |
@@ -170,7 +170,21 @@ Fixed zero-return sensor/radio classes are placeholders, not qualified device mo
 | `apps/g1000-simulator/frontend/src/types/telemetry.ts` | compatibility re-export | contains no private schema; re-exports the common protocol types |
 | `apps/g1000-simulator/frontend/src/stores/flightStore.ts` | application state adapter | delegates full-snapshot classification; retains merge policy and Zustand state |
 | `apps/g1000-simulator/frontend/src/hooks/useTelemetrySocket.ts` | application transport adapter | delegates snapshot/delta validation; retains URL, reconnect, ping, and invalid-session policy |
-| `packages/g1000-avionics-sdk/` | unqualified placeholder candidates | do not promote until real AHRS/ADC/GPS/radio behavior has unit-explicit contracts and deterministic vectors |
+| `packages/g1000-avionics-sdk/` | retained cross-language realization | AHRS/ADC/GPS are qualified by Component vectors; radio models remain absent pending a separate contract |
+
+### Seventh selected boundary: aviation avionics sensor models
+
+The device-model extension of `aviation.avionics` owns pure AHRS, ADC, and GPS
+solutions with unit-explicit inputs and fail-closed validation. It deliberately does
+not own application stepping, stores, transport, physical I/O, or unqualified radio
+station state.
+
+| Retained path | Classification | Native owner / disposition |
+| --- | --- | --- |
+| `packages/g1000-avionics-sdk/src/devices.ts` | retained TypeScript realization | evaluates Component-owned AHRS/ADC/GPS vectors |
+| `packages/g1000-avionics-sdk/python/aviation_avionics/` | retained Python realization | same vector and invalid-input contract |
+| `apps/g1000-simulator/backend/app/services/{ahrs,adc,gps}.py` | compatibility exports | contain no private sensor algorithms |
+| `apps/flight-planner/backend/app/services/ahrs_adc_simulation.py` | compatibility exports | replaces the former `None`-return stubs with common SDK delegation |
 
 ## Cross-cutting authority to classify
 

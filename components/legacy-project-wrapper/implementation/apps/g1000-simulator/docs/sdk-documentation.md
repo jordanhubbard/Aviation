@@ -4,7 +4,7 @@ This document covers the five SDK packages that power the G1000 Simulator. Each 
 
 | Package | Location | Language | Purpose |
 |---------|----------|----------|---------|
-| `g1000-avionics-sdk` | `packages/g1000-avionics-sdk/` | Python | Avionics sensor simulation (AHRS, ADC, GPS, nav radios, autopilot) |
+| `g1000-avionics-sdk` | `packages/g1000-avionics-sdk/` | TypeScript + Python | Qualified AHRS, ADC, and GPS sensor models |
 | `g1000-rendering` | `packages/g1000-rendering/` | TypeScript | Canvas rendering pipeline for PFD and MFD |
 | `flight-dynamics` | `packages/flight-dynamics/` | Python | Aircraft physics, autopilot controllers, performance |
 | `shared-sdk` | `packages/shared-sdk/` | TypeScript + Python | Common airports, navigation-data records, catalogs, queries, validation, and procedures |
@@ -15,132 +15,22 @@ This document covers the five SDK packages that power the G1000 Simulator. Each 
 
 ## avionics-sdk (`packages/g1000-avionics-sdk/`)
 
-The avionics SDK provides Python classes that model the individual avionics sensors of the G1000 integrated avionics system. Each class corresponds to a line-replaceable unit (LRU) in the real avionics suite.
-
-### GPS
-
-**File:** `gps.py`
-
-Models a WAAS-capable GPS receiver with RAIM integrity monitoring.
+The avionics SDK provides deterministic AHRS, ADC, and GPS functions in TypeScript
+and Python. Both implementations consume the same `aviation.avionics` acceptance
+vectors and reject invalid numeric or coordinate inputs.
 
 ```python
-from gps import GPS
-
-gps = GPS()
-position = gps.get_position()
-gps.waas_raim_modeling()
+from aviation_avionics import compute_adc, compute_ahrs, compute_gps
 ```
 
-#### `GPS.get_position()`
-
-Returns the current position fix from the simulated GPS receiver.
-
-**Returns:** dict with keys `latitude_deg`, `longitude_deg`, `altitude_ft`, `ground_speed_kt`, `track_deg`, `fix_valid`
-
-#### `GPS.waas_raim_modeling()`
-
-Runs the WAAS differential correction and RAIM integrity check simulation. Updates internal state flags `waas_available`, `raim_ok`, `horizontal_accuracy_m`, and `vertical_accuracy_m`. Call this once per simulation tick before reading position data.
-
-**RAIM thresholds:**
-- Horizontal alert limit (HAL): 0.3 nm for LNAV, 40 m for LPV
-- Vertical alert limit (VAL): 50 m for LPV approaches
-- RAIM fails when the computed protection level exceeds the alert limit
-
----
-
-### AHRS
-
-**File:** `ahrs.py`
-
-Models the Attitude and Heading Reference System. Computes pitch, roll, and magnetic heading from integrated sensor data.
-
-```python
-from ahrs import AHRS
-
-ahrs = AHRS()
-ahrs.compute_attitude()
-ahrs.transform_coordinates()
+```typescript
+import { computeAdc, computeAhrs, computeGps } from '@aviation/g1000-avionics-sdk'
 ```
 
-#### `AHRS.compute_attitude()`
-
-Integrates angular rate data to compute current pitch (degrees), roll (degrees), and yaw (degrees). Also applies magnetic variation to produce magnetic heading. Updates internal state.
-
-**Outputs:** `pitch_deg`, `roll_deg`, `heading_deg`, `true_heading_deg`, `slip_skid_deg`
-
-#### `AHRS.transform_coordinates()`
-
-Converts body-axis angular rates to Euler-angle rates using the standard aerospace rotation matrices. Used internally by `compute_attitude()`.
-
----
-
-### ADC
-
-**File:** `adc.py`
-
-Models the Air Data Computer. Derives airspeed and altitude from simulated pitot-static inputs.
-
-```python
-from adc import ADC
-
-adc = ADC()
-adc.compute_air_data()
-adc.calculate_altitude()
-```
-
-#### `ADC.compute_air_data()`
-
-Computes indicated airspeed (IAS), calibrated airspeed (CAS), true airspeed (TAS), and outside air temperature (OAT) from the current flight state. Uses ISA atmosphere model from the `flight-dynamics` package.
-
-**Outputs:** `ias_kt`, `cas_kt`, `tas_kt`, `oat_c`, `vertical_speed_fpm`
-
-#### `ADC.calculate_altitude()`
-
-Computes pressure altitude and density altitude from static pressure and temperature. Applies baro correction to compute indicated altitude.
-
-**Outputs:** `pressure_altitude_ft`, `density_altitude_ft`, `indicated_altitude_ft`
-
----
-
-### NavRadios
-
-**File:** `nav_radios.py`
-
-Models the NAV1, NAV2 (VOR/ILS), ADF, and DME receivers.
-
-```python
-from nav_radios import NavRadios
-
-radios = NavRadios()
-radios.simulate_vor()
-radios.simulate_ils()
-radios.simulate_adf()
-radios.simulate_dme()
-```
-
-#### `NavRadios.simulate_vor()`
-
-Simulates VOR reception for the tuned NAV1/NAV2 frequency. Computes radial bearing, course deviation, and to/from indication. Signal strength degrades with distance and terrain masking.
-
-**Outputs:** `bearing_deg`, `cdi_dots` (±2.5 full scale), `to_from`, `receiving`
-
-#### `NavRadios.simulate_ils()`
-
-Simulates ILS localizer and glideslope reception. Localizer deviation is scaled to ±2.5 dots full scale at ±2.5° from centerline. Glideslope deviation is scaled to ±2.5 dots at ±0.7° from centerline.
-
-**Outputs:** `localizer_deviation_dots`, `glideslope_deviation_dots`, `marker_beacon` (`outer`/`middle`/`inner`/`none`)
-
-#### `NavRadios.simulate_adf()`
-
-Simulates NDB/ADF reception. Computes relative bearing to the tuned NDB station.
-
-**Outputs:** `bearing_deg`, `relative_bearing_deg`, `signal_strength`, `receiving`
-
-#### `NavRadios.simulate_dme()`
-
-Simulates DME ranging. Computes slant range distance and groundspeed from successive range measurements.
-
-**Outputs:** `slant_range_nm`, `ground_speed_kt`, `receiving`
+The models return unit-explicit immutable solution records. G1000 and Flight Planner
+retain only compatibility exports; simulator stepping and transport remain application
+responsibilities. Radio models are not yet qualified and are intentionally absent from
+the package.
 
 ---
 

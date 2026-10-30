@@ -13,9 +13,9 @@ This document outlines the unit test coverage matrix for core modules in the Avi
 | `packages/ui-framework` | Vitest | 36 |
 | `packages/ai-explainer` | Vitest | 11 |
 | `packages/flight-dynamics` | pytest (virtualenv) | 5 |
-| `packages/g1000-avionics-sdk` | Jest | pass with no tests |
-| `packages/g1000-protocols` | Jest | pass with no tests |
-| `packages/g1000-rendering` | Jest | pass with no tests |
+| `packages/g1000-avionics-sdk` | Vitest + pytest | 4 TypeScript + 4 Python conformance tests |
+| `packages/g1000-protocols` | Vitest | 3 conformance tests |
+| `packages/g1000-rendering` | Vitest | 3 conformance tests |
 | Python apps (flightschool, foreflight-dashboard) | pytest | 64 pass, 25 skipped |
 | Clojure (aviation-missions-app) | clojure.test via `lein test` | CI only |
 

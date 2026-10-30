@@ -27,6 +27,7 @@ COPY apps/g1000-simulator/backend/requirements.txt ./requirements.txt
 COPY packages/shared-sdk/python /packages/shared-sdk/python
 COPY packages/shared-sdk/data /packages/shared-sdk/data
 COPY packages/flight-dynamics /packages/flight-dynamics
+COPY packages/g1000-avionics-sdk/python /packages/g1000-avionics-sdk/python
 
 RUN python -m venv /opt/venv \
     && /opt/venv/bin/pip install --upgrade pip \

@@ -33,9 +33,21 @@
 - `drawAttitudeSphere`, `drawCompassRose`, `drawArcIndicator`, `drawMarker`,
   `drawTape`, and `drawText` render through a supplied canvas context.
 
+## Device-model records and operations
+
+- `AhrsSolution` carries normalized pitch, roll, yaw, true and magnetic heading,
+  magnetic variation, and slip/skid, with angular units encoded in field names.
+- `AdcSolution` carries IAS, CAS, TAS, pressure and density altitude, vertical speed,
+  and outside-air temperature with explicit units.
+- `GpsSolution` carries the deterministic position fix, ground track/speed,
+  WAAS/RAIM state, fix validity, and horizontal/vertical accuracy.
+- `computeAhrs(input) -> AhrsSolution`
+- `computeAdc(input) -> AdcSolution`
+- `computeGps(input) -> GpsSolution`
+
 ## Compatibility boundary
 
 Applications MAY retain transport hooks, reconnection policy, stores, simulator
-orchestration, page selection, alerts, and display composition. Placeholder device
-models that return fixed zero values are not part of this interface and cannot become
-authority without their own physical contracts and acceptance vectors.
+orchestration, page selection, alerts, and display composition. Unqualified radio
+models and physical-device I/O are not part of this interface and cannot become
+authority without their own contracts and acceptance vectors.

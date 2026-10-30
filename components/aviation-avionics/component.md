@@ -32,10 +32,10 @@ source_dependencies: []
 # Aviation avionics
 
 This Component owns portable avionics telemetry and command contracts, flight-plan
-exchange formats, display layout, drawing primitives, and deterministic PFD/MFD render
-pipelines. It does not own simulator stepping, network connection lifecycle, frontend
-stores, application page composition, physical-device I/O, or unimplemented sensor and
-radio models.
+exchange formats, AHRS/ADC/GPS device models, display layout, drawing primitives, and
+deterministic PFD/MFD render pipelines. It does not own simulator stepping, network
+connection lifecycle, frontend stores, application page composition, physical-device
+I/O, or unqualified radio models.
 
 The public surface is defined by `interfaces/avionics.md`. TypeScript realizations must
 pass `acceptance/avionics.md` against `acceptance/vectors.json` without network access
@@ -72,3 +72,15 @@ unknown commands, and malformed flight plans rather than casting them into autho
 
 - **WHEN** a snapshot contains a non-finite numeric field
 - **THEN** the common snapshot guard rejects it
+
+### Requirement: Applications share deterministic sensor models
+
+AHRS, ADC, and GPS calculations SHALL be pure, unit-explicit, deterministic for the
+same inputs, and equivalent across TypeScript and Python realizations. Invalid
+coordinates, non-finite values, and non-positive altimeter settings SHALL fail closed.
+
+#### Scenario: G1000 and Flight Planner compute air data
+
+- **WHEN** either application needs pressure altitude, density altitude, temperature,
+  or true airspeed
+- **THEN** it delegates to the common ADC realization rather than an app-local model
