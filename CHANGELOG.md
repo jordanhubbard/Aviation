@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Added configurable fuel-reserve vectors to `aviation.navigation`; Flight Planner now
+  delegates route time, fuel consumption, reserve, and range arithmetic to the common
+  SDK while retaining route selection, refueling stops, and response construction.
 - Extended `aviation.flight-dynamics` with independently tested active/armed mode,
   capture, target-vertical-speed, and disconnect transitions; G1000 now delegates its
   flight-director state machine to the SDK while retaining simulator-specific capture

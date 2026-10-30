@@ -44,6 +44,27 @@
       "absolute_tolerance": 0
     },
     {
+      "id": "fuel-consumption",
+      "operation": "fuel_consumption",
+      "args": [10, 1.5],
+      "expected": 15,
+      "absolute_tolerance": 0
+    },
+    {
+      "id": "configurable-fuel-reserve",
+      "operation": "fuel_reserve",
+      "args": [10, 60],
+      "expected": 10,
+      "absolute_tolerance": 0
+    },
+    {
+      "id": "fuel-range-with-reserve",
+      "operation": "fuel_range",
+      "args": [40, 10, 120, 5],
+      "expected": 420,
+      "absolute_tolerance": 0
+    },
+    {
       "id": "day-vfr-reserve",
       "operation": "vfr_fuel_reserve",
       "args": [10, true],
@@ -81,6 +102,30 @@
       "id": "zero-ground-speed-fails",
       "operation": "flight_time",
       "args": [120, 0],
+      "expected_error": "invalid_input"
+    },
+    {
+      "id": "negative-reserve-duration-fails",
+      "operation": "fuel_reserve",
+      "args": [10, -1],
+      "expected_error": "invalid_input"
+    },
+    {
+      "id": "zero-fuel-burn-range-fails",
+      "operation": "fuel_range",
+      "args": [40, 0, 120, 5],
+      "expected_error": "invalid_input"
+    },
+    {
+      "id": "reserve-exceeds-fuel-range-fails",
+      "operation": "fuel_range",
+      "args": [5, 10, 120, 6],
+      "expected_error": "invalid_input"
+    },
+    {
+      "id": "negative-fuel-consumption-fails",
+      "operation": "fuel_consumption",
+      "args": [-1, 1],
       "expected_error": "invalid_input"
     }
   ]
