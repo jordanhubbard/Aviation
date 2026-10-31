@@ -1,5 +1,5 @@
 {
-  "schema": "aviation/navigation-acceptance-vectors@1",
+  "schema": "aviation/navigation-acceptance-vectors@2",
   "vectors": [
     {
       "id": "equatorial-degree-distance",
@@ -27,6 +27,34 @@
       "operation": "crosswind_component",
       "args": [90, 10, 0],
       "expected": 10,
+      "absolute_tolerance": 0.0000001
+    },
+    {
+      "id": "vector-headwind-from-north",
+      "operation": "headwind_component_from_vector",
+      "args": [0, -10, 0],
+      "expected": 10,
+      "absolute_tolerance": 0
+    },
+    {
+      "id": "vector-crosswind-from-right",
+      "operation": "crosswind_component_from_vector",
+      "args": [-10, 0, 0],
+      "expected": 10,
+      "absolute_tolerance": 0
+    },
+    {
+      "id": "vector-tailwind-on-eastbound-course",
+      "operation": "headwind_component_from_vector",
+      "args": [5, -8, 90],
+      "expected": -5,
+      "absolute_tolerance": 0.0000001
+    },
+    {
+      "id": "vector-crosswind-from-left-on-eastbound-course",
+      "operation": "crosswind_component_from_vector",
+      "args": [5, -8, 90],
+      "expected": -8,
       "absolute_tolerance": 0.0000001
     },
     {
@@ -229,6 +257,12 @@
       "id": "negative-wind-speed-fails",
       "operation": "headwind_component",
       "args": [0, -1, 0],
+      "expected_error": "invalid_input"
+    },
+    {
+      "id": "non-numeric-wind-vector-fails",
+      "operation": "headwind_component_from_vector",
+      "args": ["invalid", 0, 0],
       "expected_error": "invalid_input"
     },
     {

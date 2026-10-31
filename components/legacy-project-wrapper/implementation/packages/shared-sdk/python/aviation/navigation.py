@@ -258,6 +258,28 @@ def wind_components(
     return wind_speed * math.cos(relative), wind_speed * math.sin(relative)
 
 
+def wind_components_from_vector(
+    wind_east: float, wind_north: float, course: float
+) -> Tuple[float, float]:
+    """Project east/north wind velocity into headwind and crosswind components.
+
+    The vector describes where the air mass is moving. Headwind is positive when
+    the wind opposes the course; crosswind is positive when it comes from the right.
+    Input and output speeds use the same unit.
+    """
+    if not all(math.isfinite(value) for value in (wind_east, wind_north, course)):
+        raise ValueError("Wind-vector components and course must be finite")
+    course_radians = to_radians(course)
+    course_east = math.sin(course_radians)
+    course_north = math.cos(course_radians)
+    right_east = math.cos(course_radians)
+    right_north = -math.sin(course_radians)
+    return (
+        -(wind_east * course_east + wind_north * course_north),
+        -(wind_east * right_east + wind_north * right_north),
+    )
+
+
 def _wind_triangle(
     true_airspeed: float, true_course: float, wind_direction: float, wind_speed: float
 ) -> Tuple[float, float, float]:
@@ -603,9 +625,7 @@ def tas_to_mach(true_airspeed_kts: float, altitude_ft: float) -> float:
     standard_temp_kelvin = isa_temperature(altitude_ft) + KELVIN_OFFSET
     if standard_temp_kelvin <= 0:
         raise ValueError("Pressure altitude is outside the ISA temperature domain")
-    speed_of_sound_kts = SPEED_OF_SOUND_FACTOR_KTS * math.sqrt(
-        standard_temp_kelvin
-    )
+    speed_of_sound_kts = SPEED_OF_SOUND_FACTOR_KTS * math.sqrt(standard_temp_kelvin)
     return true_airspeed_kts / speed_of_sound_kts
 
 
@@ -616,9 +636,7 @@ def mach_to_tas(mach_number: float, altitude_ft: float) -> float:
     standard_temp_kelvin = isa_temperature(altitude_ft) + KELVIN_OFFSET
     if standard_temp_kelvin <= 0:
         raise ValueError("Pressure altitude is outside the ISA temperature domain")
-    speed_of_sound_kts = SPEED_OF_SOUND_FACTOR_KTS * math.sqrt(
-        standard_temp_kelvin
-    )
+    speed_of_sound_kts = SPEED_OF_SOUND_FACTOR_KTS * math.sqrt(standard_temp_kelvin)
     return mach_number * speed_of_sound_kts
 
 

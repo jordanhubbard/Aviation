@@ -9,7 +9,7 @@ changing units or conventions.
 | Coordinates | validate latitude/longitude, normalize longitude, DMS conversion |
 | Geodesy | great-circle distance, initial/final bearing, midpoint, destination |
 | Headings | normalize, reciprocal, true/magnetic conversion, shortest difference |
-| Wind | correction angle, corrected heading, ground speed, head/crosswind components |
+| Wind | correction angle, corrected heading, ground speed, head/crosswind components from wind-from direction/speed or east/north wind velocity |
 | Time/speed/distance | solve any missing value from the other two; format duration; planning IAS/TAS and ISA Mach conversion |
 | Fuel | consumption, flight fuel, range/endurance, configurable and VFR/IFR reserve, mass/volume |
 | Performance altitude | pressure altitude, ISA temperature, density altitude |
@@ -21,6 +21,8 @@ changing units or conventions.
 - A bearing or heading result is in `[0, 360)` degrees clockwise from true north.
 - Wind direction is the direction the wind comes from. A positive headwind opposes the
   selected course; a positive crosswind comes from the right of the selected course.
+  East/north wind-vector inputs describe the direction toward which the air mass moves,
+  using the same speed unit as the returned components.
   True airspeed must be positive and wind speed non-negative. A wind triangle fails
   when the requested course cannot be maintained or positive along-course progress is
   impossible.

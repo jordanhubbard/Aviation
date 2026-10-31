@@ -12,7 +12,12 @@ import math
 import re
 
 import numpy as np
-from aviation.navigation import density_altitude, isa_temperature, pressure_altitude
+from aviation.navigation import (
+    density_altitude,
+    isa_temperature,
+    pressure_altitude,
+    wind_components,
+)
 from scipy.interpolate import LinearNDInterpolator, RegularGridInterpolator
 
 TAIL = re.compile(r"\bN\d{1,5}[A-Z]{0,2}\b", re.I)
@@ -46,12 +51,10 @@ def conditions(field_elev_ft, meta):
 def _wind(e, a, meta):
     """(headwind_kt, crosswind_kt, source) for an event."""
     if meta.get("wind_kt") is not None and meta.get("wind_from_deg") is not None:
-        rel = math.radians(meta["wind_from_deg"] - e["heading"])
-        return (
-            meta["wind_kt"] * math.cos(rel),
-            meta["wind_kt"] * math.sin(rel),
-            "reported",
+        headwind, crosswind = wind_components(
+            meta["wind_from_deg"], meta["wind_kt"], e["heading"]
         )
+        return headwind, crosswind, "reported"
     if e.get("headwind_kt") is not None:
         return (
             e["headwind_kt"],

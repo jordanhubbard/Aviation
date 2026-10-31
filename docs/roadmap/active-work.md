@@ -105,6 +105,10 @@ release-visible outcome to `CHANGELOG.md`; Git preserves prior queue states.
     TypeScript/Python navigation vectors and migrate Flight Track Analyzer to the
     Python realization. Retain its entered-POH interpolation, no-extrapolation rule,
     wind normalization, and measured-track comparison as analyzer-specific policy.
+  - [x] Qualify east/north wind-vector decomposition with shared TypeScript/Python
+    navigation vectors; migrate Flight Track Analyzer's fitted-wind, reported-wind,
+    and final airport-distance arithmetic to the common realization while retaining
+    its KD-tree candidate search and measured-track policy.
   - [x] Remove G1000 and Flight Planner's unused private geodesy service scaffolds;
     their methods were never called and returned only `None` or constant zero, while
     realized route distance and bearing already delegate to `aviation.navigation`.
@@ -133,6 +137,9 @@ release-visible outcome to `CHANGELOG.md`; Git preserves prior queue states.
   - [x] Link the C172S flight-dynamics model directly to `aviation.aircraft` and remove
     its duplicate serialized identity, gross weight, fuel capacity, airspeed limits,
     wingspan, and reference performance while retaining physics-specific model data.
+  - [x] Qualify C182T and SR22 Perspective 3600 operating profiles across both SDK
+    bindings and link their flight-dynamics models to that authority while retaining
+    only physics-specific coefficients and variant policy in the model package.
   - [x] Define `aviation.avionics` protocol and rendering contracts, add deterministic
     telemetry/command/flight-plan/layout/pipeline vectors, and replace G1000's duplicate
     frontend telemetry schema with the shared protocol surface. Keep simulator stores,
@@ -155,9 +162,10 @@ release-visible outcome to `CHANGELOG.md`; Git preserves prior queue states.
     aviation implementations after parity qualification.
   - [ ] Classify and remove or intentionally retain every remainder beneath the legacy
     wrapper.
-- **Next action:** Audit the remaining C182 and SR22 flight-dynamics assets against the
-  aircraft-profile boundary, then either qualify corresponding `aviation.aircraft`
-  profiles or explicitly retain their model-local data until aircraft authority exists.
+- **Next action:** Audit Flight Track Analyzer's remaining geographic and performance
+  arithmetic plus G1000's presentation projections against the navigation and
+  flight-dynamics boundaries; qualify reusable behavior and explicitly retain only
+  measured-track or display policy.
 - **Evidence:** Phase 1.2 lift-and-shift identity `sha256:c5ca4361ba010f6e8d81c93398468f9f4f8b8cc352504bc8535fa74b7c6e9990`.
   Retained conversion stage is backed by current test receipt
   `sha256:60e252aceb5834018a21d3ec5a75b667c564e207ea3cf02d475b3245640c3c79`;
@@ -198,6 +206,11 @@ release-visible outcome to `CHANGELOG.md`; Git preserves prior queue states.
   four new shared vectors plus invalid-setting rejection; all 66 Flight Track Analyzer
   tests pass, including a source boundary proving its atmospheric conditions call the
   common Python realization.
+  Flight Track Analyzer navigation consolidation adds five shared valid/invalid wind-
+  vector vectors, routes fitted and reported wind components plus final airport
+  distance through `aviation.navigation`, and retains only candidate indexing and
+  measured-track analysis in the application. The shared suites pass 397 TypeScript
+  and 154 Python tests, and all 70 Flight Track Analyzer tests pass.
   The G1000 and Flight Planner private geodesy service placeholders were classified as
   non-realized scaffolding and removed with application boundary tests preventing their
   reintroduction; all 30 G1000 backend tests and 178 non-integration Flight Planner

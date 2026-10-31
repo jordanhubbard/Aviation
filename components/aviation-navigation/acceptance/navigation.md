@@ -41,6 +41,12 @@ tolerance.
 - **THEN** headwind is positive when wind comes from ahead, crosswind is positive from
   the right, and ground speed is the positive along-course solution
 
+### Scenario: Wind velocity vectors preserve component signs
+
+- **WHEN** east/north wind velocity is projected onto a selected course
+- **THEN** wind moving toward the aircraft is a positive headwind and wind moving from
+  its right is a positive crosswind
+
 ## Requirement: Invalid values fail closed
 
 ### Scenario: Performance altitudes agree across bindings
