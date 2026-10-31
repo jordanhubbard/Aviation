@@ -26,6 +26,10 @@ import { FormSection } from './shared'
 import ModeSelector, { type PlanMode } from './ModeSelector'
 import ProcedureSelection from './ProcedureSelection'
 import { loadSavedFlightPlans } from '../services/savedFlightPlans'
+import {
+  DEFAULT_AIRCRAFT_CRUISE_SPEED_KT,
+  DEFAULT_AIRCRAFT_USABLE_FUEL_GAL,
+} from '../aircraftDefaults'
 
 type Props = {
   isLoading: boolean
@@ -50,7 +54,7 @@ const FlightPlanningForm: React.FC<Props> = ({ isLoading, onSubmit }) => {
   const handleLoad = (plan: FlightPlan) => {
     setOrigin(plan.origin ?? '');
     setDestination(plan.destination ?? '');
-    setSpeed(plan.speed ?? 110);
+    setSpeed(plan.speed ?? DEFAULT_AIRCRAFT_CRUISE_SPEED_KT);
     setAltitude(plan.altitude ?? 5500);
     setOpen(false);
   };
@@ -63,7 +67,7 @@ const FlightPlanningForm: React.FC<Props> = ({ isLoading, onSubmit }) => {
   const [destination, setDestination] = useState('')
   const [airport, setAirport] = useState('')
 
-  const [speed, setSpeed] = useState<number>(110)
+  const [speed, setSpeed] = useState<number>(DEFAULT_AIRCRAFT_CRUISE_SPEED_KT)
   const [altitude, setAltitude] = useState<number>(5500)
   const [radiusNm, setRadiusNm] = useState<number>(25)
 
@@ -73,7 +77,9 @@ const FlightPlanningForm: React.FC<Props> = ({ isLoading, onSubmit }) => {
 
   const [planFuelStops, setPlanFuelStops] = useState(false)
   const [fuelBurnGph, setFuelBurnGph] = useState<number>(8.5)
-  const [fuelOnBoardGal, setFuelOnBoardGal] = useState<number>(40)
+  const [fuelOnBoardGal, setFuelOnBoardGal] = useState<number>(
+    DEFAULT_AIRCRAFT_USABLE_FUEL_GAL,
+  )
   const [reserveMinutes, setReserveMinutes] = useState<number>(45)
 
   const [forecastDays, setForecastDays] = useState<number>(3)

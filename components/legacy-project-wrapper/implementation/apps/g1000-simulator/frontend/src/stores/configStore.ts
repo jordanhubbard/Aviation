@@ -1,5 +1,6 @@
 // configStore.ts
 import { create } from 'zustand'
+import { C172S_OPERATING_PROFILE } from '../integrations/sharedSdk'
 
 export interface SimulatorConfig {
   // Display settings
@@ -58,7 +59,7 @@ const DEFAULT_CONFIG: SimulatorConfig = {
   windSpeed: 0,
   windDirection: 0,
   turbulenceLevel: 0,
-  aircraftType: 'C172',
+  aircraftType: C172S_OPERATING_PROFILE.icaoTypeDesignator,
   weight: 2450,
   fuelQuantity: 40,
   baroSetting: 29.92,

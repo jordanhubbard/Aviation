@@ -1,6 +1,6 @@
 ---
 namespace: aviation
-version: 0.1.0
+version: 0.2.0
 display_name: Aviation aircraft profiles
 profiles:
   - library
@@ -8,7 +8,7 @@ profiles:
 sample: false
 provides:
   - name: aviation.aircraft
-    version: 0.1.0
+    version: 0.2.0
     interface:
       uri: interfaces/aircraft.md
       pin: null
@@ -31,10 +31,11 @@ source_dependencies: []
 ---
 # Aviation aircraft profiles
 
-This Component owns portable aircraft identity and operating-limit profiles used by
-planning, simulation, and avionics applications. It does not own aircraft state,
-physics integration, pilot operating decisions, presentation, persistence, or a
-substitute for an aircraft's approved operating handbook.
+This Component owns portable aircraft identity, operating limits, dimensions, and
+manufacturer-published reference profiles used by planning, simulation, and avionics
+applications. It does not own aircraft state, physics integration, aircraft-specific
+loading records, pilot operating decisions, presentation, persistence, or a substitute
+for an aircraft's approved operating handbook.
 
 The public surface is defined by `interfaces/aircraft.md`. Every realization must pass
 `acceptance/aircraft.md` against `acceptance/vectors.json` without network access.
@@ -64,3 +65,33 @@ never-exceed speed.
 - **WHEN** a required speed is non-positive, non-finite, or violates the declared
   ordering
 - **THEN** construction fails before the profile reaches an application
+
+### Requirement: Applications share aircraft identity and reference data
+
+Bundled profiles SHALL carry one stable profile identifier and ICAO type designator,
+unit-explicit fuel and weight limits, dimensions, and reference performance. Applications
+SHALL resolve bundled selectors through the Component instead of maintaining private
+copies of the same aircraft record.
+
+#### Scenario: Flight Planner exports or initializes a C172S plan
+
+- **WHEN** the application needs its bundled type designator, cruise reference, or usable
+  fuel default
+- **THEN** it derives those values from the C172S profile while retaining the user's
+  selected speed, fuel burn, loading, and route policy as private application state
+
+### Requirement: Published figures retain provenance
+
+The C172S fuel limitations come from the Cessna 172S Pilot's Operating Handbook. Its
+dimensions and reference performance figures come from Textron Aviation's published
+Skyhawk specifications. Reference performance describes published comparison conditions,
+not a dispatch calculation or guarantee for a particular aircraft.
+
+#### Scenario: A bundled reference value is reviewed
+
+- **WHEN** a fuel limit, dimension, weight limit, or reference-performance value changes
+- **THEN** the acceptance vector remains traceable to the cited manufacturer or approved
+  flight-manual source
+
+- C172S POH: https://www.camarilloairport.com/downloads/N577ND_AFM-POH.pdf
+- Skyhawk specifications: https://cessna.txtav.com/en/piston/cessna-skyhawk

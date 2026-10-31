@@ -121,6 +121,11 @@ release-visible outcome to `CHANGELOG.md`; Git preserves prior queue states.
     TypeScript/Python valid and fail-closed vectors; add the missing Vfe limit to the
     common C172S model and make G1000 Airspeed Tape derive its arcs and Vne marker from
     that authority while retaining only scale, trend, styling, and presentation code.
+  - [x] Expand `aviation.aircraft` with a real Python SDK realization, stable ICAO
+    lookup, fuel and weight limits, dimensions, and cited reference performance.
+    Remove Flight Planner's unused contradictory C172 YAML profile; make its plan
+    defaults and FPL export plus G1000's selector and backend compatibility record
+    consume the common profile while retaining user loading and planning policy.
   - [x] Define `aviation.avionics` protocol and rendering contracts, add deterministic
     telemetry/command/flight-plan/layout/pipeline vectors, and replace G1000's duplicate
     frontend telemetry schema with the shared protocol surface. Keep simulator stores,
@@ -143,9 +148,10 @@ release-visible outcome to `CHANGELOG.md`; Git preserves prior queue states.
     aviation implementations after parity qualification.
   - [ ] Classify and remove or intentionally retain every remainder beneath the legacy
     wrapper.
-- **Next action:** Inventory application-local aircraft configuration selectors and
-  performance profiles, then qualify the next duplicated aircraft-domain boundary
-  against `aviation.aircraft` without moving application-specific UI state or policy.
+- **Next action:** Reconcile G1000 Trip Planning's C172N sample loading profile with its
+  C172S simulator identity by qualifying a C172S loading profile in
+  `aviation.weight-balance`, linking it explicitly to `aviation.aircraft`, and
+  retaining entered station weights and fuel as application state.
 - **Evidence:** Phase 1.2 lift-and-shift identity `sha256:c5ca4361ba010f6e8d81c93398468f9f4f8b8cc352504bc8535fa74b7c6e9990`.
   Retained conversion stage is backed by current test receipt
   `sha256:60e252aceb5834018a21d3ec5a75b667c564e207ea3cf02d475b3245640c3c79`;
@@ -208,6 +214,15 @@ release-visible outcome to `CHANGELOG.md`; Git preserves prior queue states.
   The airspeed tape now imports the common C172S profile and contains no private V-speed
   constants; Python model validation also rejects non-finite speeds and invalid limit
   ordering.
+  Aircraft-reference qualification advances the Component lock to
+  `sha256:4d5ce77ed3ee64c3e4d7332077deadf99916e239b50d918f4fd3259edf8de61b`
+  with 14 fail-closed mutations and four ID/designator lookup vectors. The independent
+  suites pass 374 TypeScript and 128 Python shared-SDK tests plus 25 flight-dynamics
+  tests. Flight Planner passes 182 non-integration Python tests, 12 frontend tests, and
+  a production build; G1000 passes 73 TypeScript and 30 Python tests plus its production
+  frontend build. Its former private aircraft YAML is removed, and cited C172S values
+  correct total/usable fuel to 56/53 gallons and the common maximum-cruise, climb, and
+  landing reference figures.
   Navigation and the dedicated SDK workflow landed in PR #339 at exact-main commit
   `9c55e4ac70dbc87def6d5ce6e6abc47aed214304`; all seven exact-commit workflows
   passed. Airports landed in PR #340 at exact-main commit

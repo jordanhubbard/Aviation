@@ -9,6 +9,10 @@
 
 ## Unreleased
 
+- Expanded `aviation.aircraft` into a cross-language identity and reference-profile
+  authority with ICAO lookup, fuel/weight limits, dimensions, and cited C172S
+  performance data. Flight Planner's contradictory private YAML profile was removed;
+  Flight Planner and G1000 now derive bundled C172 selectors and defaults from the SDK.
 - Added an independently tested `aviation.aircraft` Component with a portable C172S
   operating profile shared by TypeScript and Python; G1000's airspeed tape now derives
   its color arcs and never-exceed marker from the SDK instead of private V-speed data.

@@ -24,6 +24,17 @@ except (ModuleNotFoundError, ImportError):
 from . import nav_data
 
 from . import integrations
+from .aircraft import (
+    AircraftDimensions,
+    AircraftFuelLimits,
+    AircraftOperatingProfile,
+    AircraftReferencePerformance,
+    AircraftWeightLimits,
+    AirspeedOperatingLimits,
+    C172S_OPERATING_PROFILE,
+    aircraft_operating_profile_from_mapping,
+    find_aircraft_operating_profile,
+)
 
 __all__ = [
     # Airports
@@ -36,6 +47,16 @@ __all__ = [
     "find_nearby_airports",
     "haversine_distance",
     "load_airport_cache",
+    # Aircraft profiles
+    "AircraftDimensions",
+    "AircraftFuelLimits",
+    "AircraftOperatingProfile",
+    "AircraftReferencePerformance",
+    "AircraftWeightLimits",
+    "AirspeedOperatingLimits",
+    "C172S_OPERATING_PROFILE",
+    "aircraft_operating_profile_from_mapping",
+    "find_aircraft_operating_profile",
     # Modules
     "integrations",
     "nav_data",
