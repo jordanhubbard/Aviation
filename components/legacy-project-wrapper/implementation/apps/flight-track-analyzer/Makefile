@@ -15,11 +15,12 @@ help:
 	@echo "make deploy     ship the committed tree to $(DEPLOY_HOST) (override DEPLOY_HOST=)"
 	@echo "make clean     remove the venv and caches"
 
-$(PY): app/requirements.txt ../../packages/shared-sdk/python/setup.py
+$(PY): app/requirements.txt ../../packages/shared-sdk/python/setup.py ../../packages/flight-dynamics/setup.py
 	$(PYTHON) -m venv $(VENV)
 	$(PY) -m pip install -q --upgrade pip
 	$(PY) -m pip install -q -r app/requirements.txt
 	$(PY) -m pip install -q -e ../../packages/shared-sdk/python
+	$(PY) -m pip install -q -e ../../packages/flight-dynamics
 	@touch $(PY)
 
 install: $(PY)

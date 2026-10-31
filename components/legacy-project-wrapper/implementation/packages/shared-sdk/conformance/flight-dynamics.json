@@ -1,0 +1,389 @@
+{
+  "schema": "aviation/flight-dynamics-vectors@2",
+  "tolerance": 1e-6,
+  "atmosphere": {
+    "altitude_m": 0.0,
+    "expected": {
+      "density_kg_m3": 1.2250122659906946,
+      "pressure_pa": 101325.0,
+      "temperature_c": 15.0
+    }
+  },
+  "wind": {
+    "steady_mps": [10.0, 0.0, 0.0],
+    "gust_amplitude_mps": 2.0,
+    "gust_frequency_hz": 0.25,
+    "time_s": 1.0,
+    "expected_total_mps": [12.0, 0.0, 0.0]
+  },
+  "coordinated_turn": {
+    "speed_mps": 50.0,
+    "turn_rate_dps": 3.0,
+    "expected_bank_deg": 14.947164770426596
+  },
+  "piston_engine_projection": {
+    "airspeed_kt": 100.0,
+    "cylinder_count": 6,
+    "expected": {
+      "rpm": 2500,
+      "oil_temp_f": 210,
+      "oil_pressure_psi": 62,
+      "fuel_flow_gph": 10.0,
+      "bus_volts": 28.4,
+      "alternator_load_amps": 28,
+      "manifold_pressure_inhg": 20.0,
+      "battery_temp_f": 90,
+      "egt_f": [1415, 1419, 1426, 1440, 1460, 1478],
+      "cht_f": [358, 361, 369, 379, 389, 394]
+    }
+  },
+  "pid": {
+    "gains": [1.0, 0.1, 0.2],
+    "samples": [[5.0, 1.0], [3.0, 1.0]],
+    "expected_outputs": [5.5, 3.4]
+  },
+  "pid_bounded": {
+    "config": {
+      "kp": 1.0,
+      "ki": 1.0,
+      "kd": 0.0,
+      "integrator_min": -1.0,
+      "integrator_max": 1.0,
+      "output_min": -2.0,
+      "output_max": 2.0
+    },
+    "samples": [[10.0, 1.0], [-10.0, 1.0]],
+    "expected_outputs": [2.0, -2.0]
+  },
+  "axis_controllers": [
+    {
+      "axis": "pitch",
+      "gains": {"kp": 2.0, "ki": 0.0, "kd": 0.0},
+      "samples": [[3.0, 0.1]],
+      "expected_outputs": [6.0]
+    },
+    {
+      "axis": "roll",
+      "gains": {"kp": 1.5, "ki": 0.0, "kd": 0.0},
+      "samples": [[10.0, 0.1]],
+      "expected_outputs": [15.0]
+    },
+    {
+      "axis": "altitude",
+      "gains": {"kp": 0.01, "ki": 0.0, "kd": 0.0},
+      "samples": [[500.0, 0.1]],
+      "expected_outputs": [5.0]
+    },
+    {
+      "axis": "heading",
+      "gains": {"kp": 1.0, "ki": 0.0, "kd": 0.0},
+      "samples": [[-10.0, 0.1]],
+      "expected_outputs": [-10.0]
+    }
+  ],
+  "autopilot_modes": {
+    "initial": {
+      "master_on": false,
+      "lateral_mode": "ROL",
+      "vertical_mode": "PIT",
+      "approach_armed": false
+    },
+    "transitions": [
+      {
+        "action": "set_lateral",
+        "mode": "HDG",
+        "accepted": false,
+        "expected": {"master_on": false, "lateral_mode": "ROL", "vertical_mode": "PIT", "approach_armed": false}
+      },
+      {
+        "action": "engage",
+        "accepted": true,
+        "expected": {"master_on": true, "lateral_mode": "ROL", "vertical_mode": "PIT", "approach_armed": false}
+      },
+      {
+        "action": "set_vertical",
+        "mode": "GS",
+        "accepted": false,
+        "expected": {"master_on": true, "lateral_mode": "ROL", "vertical_mode": "PIT", "approach_armed": false}
+      },
+      {
+        "action": "set_lateral",
+        "mode": "APR",
+        "accepted": true,
+        "expected": {"master_on": true, "lateral_mode": "APR", "vertical_mode": "PIT", "approach_armed": true}
+      },
+      {
+        "action": "set_vertical",
+        "mode": "GS",
+        "accepted": true,
+        "expected": {"master_on": true, "lateral_mode": "APR", "vertical_mode": "GS", "approach_armed": true}
+      },
+      {
+        "action": "disengage",
+        "accepted": true,
+        "expected": {"master_on": false, "lateral_mode": "ROL", "vertical_mode": "PIT", "approach_armed": false}
+      }
+    ]
+  },
+  "flight_director": {
+    "initial": {
+      "master_on": false,
+      "lateral_mode": "ROL",
+      "vertical_mode": "PIT",
+      "approach_armed": false,
+      "lateral_armed": null,
+      "vertical_armed": null,
+      "target_vertical_speed_fpm": 0.0,
+      "disconnect_reason": ""
+    },
+    "transitions": [
+      {
+        "action": "arm_lateral",
+        "mode": "NAV",
+        "accepted": false,
+        "expected": {
+          "master_on": false,
+          "lateral_mode": "ROL",
+          "vertical_mode": "PIT",
+          "approach_armed": false,
+          "lateral_armed": null,
+          "vertical_armed": null,
+          "target_vertical_speed_fpm": 0.0,
+          "disconnect_reason": ""
+        }
+      },
+      {
+        "action": "engage",
+        "accepted": true,
+        "expected": {
+          "master_on": true,
+          "lateral_mode": "ROL",
+          "vertical_mode": "PIT",
+          "approach_armed": false,
+          "lateral_armed": null,
+          "vertical_armed": null,
+          "target_vertical_speed_fpm": 0.0,
+          "disconnect_reason": ""
+        }
+      },
+      {
+        "action": "set_lateral",
+        "mode": "HDG",
+        "accepted": true,
+        "expected": {
+          "master_on": true,
+          "lateral_mode": "HDG",
+          "vertical_mode": "PIT",
+          "approach_armed": false,
+          "lateral_armed": null,
+          "vertical_armed": null,
+          "target_vertical_speed_fpm": 0.0,
+          "disconnect_reason": ""
+        }
+      },
+      {
+        "action": "arm_lateral",
+        "mode": "NAV",
+        "accepted": true,
+        "expected": {
+          "master_on": true,
+          "lateral_mode": "HDG",
+          "vertical_mode": "PIT",
+          "approach_armed": false,
+          "lateral_armed": "NAV",
+          "vertical_armed": null,
+          "target_vertical_speed_fpm": 0.0,
+          "disconnect_reason": ""
+        }
+      },
+      {
+        "action": "capture_lateral",
+        "mode": "APR",
+        "accepted": false,
+        "expected": {
+          "master_on": true,
+          "lateral_mode": "HDG",
+          "vertical_mode": "PIT",
+          "approach_armed": false,
+          "lateral_armed": "NAV",
+          "vertical_armed": null,
+          "target_vertical_speed_fpm": 0.0,
+          "disconnect_reason": ""
+        }
+      },
+      {
+        "action": "capture_lateral",
+        "mode": "NAV",
+        "accepted": true,
+        "expected": {
+          "master_on": true,
+          "lateral_mode": "NAV",
+          "vertical_mode": "PIT",
+          "approach_armed": false,
+          "lateral_armed": null,
+          "vertical_armed": null,
+          "target_vertical_speed_fpm": 0.0,
+          "disconnect_reason": ""
+        }
+      },
+      {
+        "action": "set_vertical",
+        "mode": "VS",
+        "accepted": true,
+        "expected": {
+          "master_on": true,
+          "lateral_mode": "NAV",
+          "vertical_mode": "VS",
+          "approach_armed": false,
+          "lateral_armed": null,
+          "vertical_armed": null,
+          "target_vertical_speed_fpm": 0.0,
+          "disconnect_reason": ""
+        }
+      },
+      {
+        "action": "arm_vertical",
+        "mode": "ALT",
+        "accepted": true,
+        "expected": {
+          "master_on": true,
+          "lateral_mode": "NAV",
+          "vertical_mode": "VS",
+          "approach_armed": false,
+          "lateral_armed": null,
+          "vertical_armed": "ALT",
+          "target_vertical_speed_fpm": 0.0,
+          "disconnect_reason": ""
+        }
+      },
+      {
+        "action": "set_target_vertical_speed",
+        "target_fpm": 700.0,
+        "accepted": true,
+        "expected": {
+          "master_on": true,
+          "lateral_mode": "NAV",
+          "vertical_mode": "VS",
+          "approach_armed": false,
+          "lateral_armed": null,
+          "vertical_armed": "ALT",
+          "target_vertical_speed_fpm": 700.0,
+          "disconnect_reason": ""
+        }
+      },
+      {
+        "action": "capture_vertical",
+        "mode": "ALT",
+        "accepted": true,
+        "expected": {
+          "master_on": true,
+          "lateral_mode": "NAV",
+          "vertical_mode": "ALT",
+          "approach_armed": false,
+          "lateral_armed": null,
+          "vertical_armed": null,
+          "target_vertical_speed_fpm": 700.0,
+          "disconnect_reason": ""
+        }
+      },
+      {
+        "action": "disengage",
+        "reason": "limit",
+        "accepted": true,
+        "expected": {
+          "master_on": false,
+          "lateral_mode": "ROL",
+          "vertical_mode": "PIT",
+          "approach_armed": false,
+          "lateral_armed": null,
+          "vertical_armed": null,
+          "target_vertical_speed_fpm": 700.0,
+          "disconnect_reason": "limit"
+        }
+      }
+    ],
+    "expected": {
+      "master_on": false,
+      "lateral_mode": "ROL",
+      "vertical_mode": "PIT",
+      "approach_armed": false,
+      "lateral_armed": null,
+      "vertical_armed": null,
+      "target_vertical_speed_fpm": 700.0,
+      "disconnect_reason": "limit"
+    }
+  },
+  "autotrim": {
+    "trim_rate": 0.1,
+    "deadband": 0.05,
+    "samples": [
+      {
+        "inputs": [0.5, -0.25, 0.01, 2.0],
+        "expected": {"elevator_trim": 0.1, "aileron_trim": -0.05, "rudder_trim": 0.0}
+      },
+      {
+        "inputs": [1.0, -1.0, 1.0, 20.0],
+        "expected": {"elevator_trim": 1.0, "aileron_trim": -1.0, "rudder_trim": 1.0}
+      }
+    ]
+  },
+  "envelope": {
+    "limits": {"max_bank_deg": 30.0, "max_pitch_deg": 20.0, "min_speed_kt": 50.0, "max_speed_kt": 200.0},
+    "samples": [
+      {
+        "state": [20.0, 10.0, 120.0],
+        "expected": {"bank_exceeded": false, "pitch_exceeded": false, "overspeed": false, "underspeed": false}
+      },
+      {
+        "state": [-31.0, 21.0, 201.0],
+        "expected": {"bank_exceeded": true, "pitch_exceeded": true, "overspeed": true, "underspeed": false}
+      },
+      {
+        "state": [0.0, 0.0, 49.0],
+        "expected": {"bank_exceeded": false, "pitch_exceeded": false, "overspeed": false, "underspeed": true}
+      }
+    ]
+  },
+  "models": [
+    {"identifier": "cessna-172", "errors": 0, "warnings": 0},
+    {"identifier": "cessna-182", "errors": 0, "warnings": 0},
+    {"identifier": "cirrus-sr22", "errors": 0, "warnings": 0}
+  ],
+  "c172_performance": {
+    "power_setting": 0.75,
+    "expected_cruise": {
+      "true_airspeed_kt": 93.0,
+      "fuel_flow_gph": 7.5,
+      "endurance_hr": 7.066666666666666,
+      "range_nm": 657.1999999999999
+    },
+    "expected_takeoff_climb": {
+      "takeoff_distance_ft": 1629.9836788860102,
+      "climb_rate_fpm": 730.0073095291486
+    }
+  },
+  "compatibility": {
+    "input": {
+      "speed": 50.0,
+      "wing_area": 16.0,
+      "lift_coefficient": 1.1,
+      "drag_coefficient": 0.04,
+      "air_density": 1.225,
+      "power": 1000.0,
+      "efficiency": 0.8,
+      "engine_factor": 0.9,
+      "fuel_efficiency": 100.0,
+      "wind_speed": 10.0,
+      "wind_angle_rad": 0.0,
+      "turbulence_intensity": 0.1
+    },
+    "expected": {
+      "lift": 26950.0,
+      "drag": 980.0,
+      "thrust": 720.0,
+      "fuel_consumption": 7.2,
+      "wind_adjusted_velocity": 60.0,
+      "turbulence_adjusted_velocity": 45.0
+    }
+  }
+}

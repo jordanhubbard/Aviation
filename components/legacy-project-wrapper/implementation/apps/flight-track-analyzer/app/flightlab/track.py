@@ -1,13 +1,15 @@
 """Condition a RawTrack into a uniformly sampled, smoothed Track."""
+
 from __future__ import annotations
 
 from dataclasses import dataclass, field
 
 import numpy as np
+from aviation_flight_dynamics import coordinated_turn_bank_deg
 from scipy.ndimage import median_filter
 from scipy.signal import savgol_filter
 
-from .geo import G, MPS_TO_KT, to_enu, wrap180
+from .geo import MPS_TO_KT, to_enu, wrap180
 from .kml import RawTrack
 
 DT = 1.0
@@ -26,15 +28,15 @@ class Track:
     lon0: float
     x: np.ndarray
     y: np.ndarray
-    alt: np.ndarray          # smoothed, metres
+    alt: np.ndarray  # smoothed, metres
     alt_raw: np.ndarray
     vx: np.ndarray
     vy: np.ndarray
-    gs: np.ndarray           # m/s
-    course: np.ndarray       # deg 0..360
-    turn: np.ndarray         # deg/s, + = right
-    vs: np.ndarray           # m/s
-    acc: np.ndarray          # m/s^2 along track
+    gs: np.ndarray  # m/s
+    course: np.ndarray  # deg 0..360
+    turn: np.ndarray  # deg/s, + = right
+    vs: np.ndarray  # m/s
+    acc: np.ndarray  # m/s^2 along track
     valid: np.ndarray
     quality: dict = field(default_factory=dict)
     warnings: list = field(default_factory=list)
@@ -62,7 +64,12 @@ def _win(w, n):
 def build_track(raw: RawTrack) -> Track:
     warnings = list(raw.warnings)
     n_in = len(raw.t)
-    ok = np.isfinite(raw.t) & np.isfinite(raw.lat) & np.isfinite(raw.lon) & np.isfinite(raw.alt_m)
+    ok = (
+        np.isfinite(raw.t)
+        & np.isfinite(raw.lat)
+        & np.isfinite(raw.lon)
+        & np.isfinite(raw.alt_m)
+    )
     ok &= (np.abs(raw.lat) <= 90) & (np.abs(raw.lon) <= 180)
     order = np.argsort(raw.t, kind="stable")
     order = order[ok[order]]
@@ -103,7 +110,9 @@ def build_track(raw: RawTrack) -> Track:
     if n_gaps:
         warnings.append(f"{n_gaps} data gaps longer than {GAP_S:.0f}s")
     if native_dt > 5:
-        warnings.append(f"sparse log (median interval {native_dt:.1f}s); derived rates are coarse")
+        warnings.append(
+            f"sparse log (median interval {native_dt:.1f}s); derived rates are coarse"
+        )
 
     wp = _win(9 if native_dt <= 2 else 9 + 2 * native_dt, len(tr))
     wa = _win(11 if native_dt <= 2 else 11 + 2 * native_dt, len(tr))
@@ -123,13 +132,39 @@ def build_track(raw: RawTrack) -> Track:
 
     recorded = _calibrate_recorded(extras, ts, tr, gs, vs, course, warnings)
     quality = {
-        "input_samples": int(n_in), "usable_samples": int(len(t)), "rejected_samples": n_rejected,
-        "native_interval_s": round(native_dt, 2), "gaps": n_gaps,
-        "duration_s": float(tr[-1]), "recorded_fields": sorted(recorded.keys()),
+        "input_samples": int(n_in),
+        "usable_samples": int(len(t)),
+        "rejected_samples": n_rejected,
+        "native_interval_s": round(native_dt, 2),
+        "gaps": n_gaps,
+        "duration_s": float(tr[-1]),
+        "recorded_fields": sorted(recorded.keys()),
     }
-    return Track(name=raw.name, source=raw.source, t0=t0, t=tr, lat=lat_r, lon=lon_r, lat0=lat0, lon0=lon0,
-                 x=xs, y=ys, alt=alt_s, alt_raw=ar, vx=vx, vy=vy, gs=gs, course=course, turn=turn, vs=vs,
-                 acc=acc, valid=valid, quality=quality, warnings=warnings, recorded=recorded)
+    return Track(
+        name=raw.name,
+        source=raw.source,
+        t0=t0,
+        t=tr,
+        lat=lat_r,
+        lon=lon_r,
+        lat0=lat0,
+        lon0=lon0,
+        x=xs,
+        y=ys,
+        alt=alt_s,
+        alt_raw=ar,
+        vx=vx,
+        vy=vy,
+        gs=gs,
+        course=course,
+        turn=turn,
+        vs=vs,
+        acc=acc,
+        valid=valid,
+        quality=quality,
+        warnings=warnings,
+        recorded=recorded,
+    )
 
 
 _SPEED_UNITS = {"mps": 1.0, "kt": 0.514444, "mph": 0.44704, "kph": 0.277778}
@@ -154,10 +189,14 @@ def _calibrate_recorded(extras, ts, tr, gs, vs, course, warnings):
             ratio = float(np.median(gs[m] / rs[m]))
             unit, k = _best_scale(ratio, _SPEED_UNITS, None)
             if hint and hint != unit:
-                warnings.append(f"recorded speed labelled {hint} but matches {unit}; using {unit}")
+                warnings.append(
+                    f"recorded speed labelled {hint} but matches {unit}; using {unit}"
+                )
             out["speed"] = rs * k
             out["speed_unit"] = unit
-            out["speed_rmse_kt"] = float(np.sqrt(np.mean((out["speed"][m] - gs[m]) ** 2)) * MPS_TO_KT)
+            out["speed_rmse_kt"] = float(
+                np.sqrt(np.mean((out["speed"][m] - gs[m]) ** 2)) * MPS_TO_KT
+            )
     if "vs" in extras:
         vals, hint = extras["vs"]
         rv = np.interp(tr, ts, np.nan_to_num(vals))
@@ -168,7 +207,9 @@ def _calibrate_recorded(extras, ts, tr, gs, vs, course, warnings):
             out["vs"] = rv * k
             out["vs_unit"] = unit
     for key, label in (("acc_h", "horiz"), ("acc_v", "vert")):
-        if key in extras:       # reported GPS accuracy (metres); median and 95th percentile over the log
+        if (
+            key in extras
+        ):  # reported GPS accuracy (metres); median and 95th percentile over the log
             v = extras[key][0]
             v = v[np.isfinite(v)]
             if v.size:
@@ -179,10 +220,22 @@ def _calibrate_recorded(extras, ts, tr, gs, vs, course, warnings):
         rc = np.interp(tr, ts, np.nan_to_num(vals)) % 360.0
         m = gs > 10
         if m.sum() > 20:
-            out["course_rmse_deg"] = float(np.sqrt(np.mean(wrap180(rc[m] - course[m]) ** 2)))
+            out["course_rmse_deg"] = float(
+                np.sqrt(np.mean(wrap180(rc[m] - course[m]) ** 2))
+            )
     return out
 
 
 def bank_angle_deg(gs, turn_dps):
-    """Coordinated-turn bank implied by ground speed and turn rate."""
-    return np.degrees(np.arctan(gs * np.radians(np.abs(turn_dps)) / G))
+    """Vectorized adapter for the SDK coordinated-turn bank operation."""
+    speeds, turns = np.broadcast_arrays(
+        np.asarray(gs, float), np.asarray(turn_dps, float)
+    )
+    return np.fromiter(
+        (
+            coordinated_turn_bank_deg(float(speed), float(turn))
+            for speed, turn in zip(speeds.flat, turns.flat)
+        ),
+        dtype=float,
+        count=speeds.size,
+    ).reshape(speeds.shape)

@@ -7,6 +7,11 @@ from pathlib import Path
 
 import pytest
 
+from aviation_flight_dynamics import (
+    coordinated_turn_bank_deg,
+    project_piston_engine_instruments,
+)
+
 from aviation.aircraft import (
     C172S_OPERATING_PROFILE,
     C182T_OPERATING_PROFILE,
@@ -193,6 +198,37 @@ def test_deterministic_wind_vector() -> None:
     )
     actual = model.wind_velocity_mps(case["time_s"])
     assert [actual.x, actual.y, actual.z] == pytest.approx(case["expected_total_mps"])
+
+
+def test_portable_turn_and_engine_projection_vectors() -> None:
+    turn = VECTORS["coordinated_turn"]
+    assert coordinated_turn_bank_deg(
+        turn["speed_mps"], turn["turn_rate_dps"]
+    ) == pytest.approx(turn["expected_bank_deg"])
+
+    engine = VECTORS["piston_engine_projection"]
+    actual = project_piston_engine_instruments(
+        engine["airspeed_kt"], engine["cylinder_count"]
+    ).to_dict()
+    expected = engine["expected"]
+    assert actual.pop("egt_f") == expected["egt_f"]
+    assert actual.pop("cht_f") == expected["cht_f"]
+    assert actual == pytest.approx(
+        {key: value for key, value in expected.items() if key not in {"egt_f", "cht_f"}}
+    )
+
+
+def test_portable_projections_fail_closed() -> None:
+    with pytest.raises(ValueError):
+        coordinated_turn_bank_deg(-1.0, 3.0)
+    with pytest.raises(ValueError):
+        coordinated_turn_bank_deg(math.nan, 3.0)
+    with pytest.raises(ValueError):
+        project_piston_engine_instruments(-1.0)
+    with pytest.raises(ValueError):
+        project_piston_engine_instruments(100.0, 0)
+    with pytest.raises(ValueError):
+        project_piston_engine_instruments(100.0, 2.5)  # type: ignore[arg-type]
 
 
 def test_pid_vector_has_no_first_sample_derivative_kick() -> None:

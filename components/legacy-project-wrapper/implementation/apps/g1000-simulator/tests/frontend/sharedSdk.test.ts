@@ -6,8 +6,12 @@ import {
   C172S_LOADING_PROFILE,
   calculateC172Loading,
   calculateDensityAltitude,
+  calculateDistanceNm,
   calculateHeadingDelta,
   calculateTripFuel,
+  coordinateOffsetNm,
+  offsetCoordinateNm,
+  projectEngineInstruments,
 } from "../../frontend/src/integrations/sharedSdk";
 
 describe("G1000 shared SDK boundary", () => {
@@ -30,6 +34,70 @@ describe("G1000 shared SDK boundary", () => {
     expect(display).toContain("cdiDeviation * 22");
     expect(display).not.toContain("computeDelta");
     expect(display).not.toContain("% 360");
+  });
+
+  it("uses common local geometry while retaining map pixel policy", () => {
+    const origin = { latitude: 37.618805, longitude: -122.375416 };
+    const offset = offsetCoordinateNm(
+      origin.latitude,
+      origin.longitude,
+      5,
+      -2,
+    );
+    const roundTrip = coordinateOffsetNm(
+      offset.lat,
+      offset.lon,
+      origin.latitude,
+      origin.longitude,
+    );
+    expect(roundTrip.eastNm).toBeCloseTo(5, 9);
+    expect(roundTrip.northNm).toBeCloseTo(-2, 9);
+    expect(calculateDistanceNm(origin, {
+      latitude: offset.lat,
+      longitude: offset.lon,
+    })).toBeCloseTo(Math.hypot(5, 2), 2);
+
+    for (const file of ["MapDisplay.tsx", "FlightPlanDisplay.tsx"]) {
+      const display = fs.readFileSync(
+        path.join(__dirname, `../../frontend/src/displays/MFD/${file}`),
+        "utf8",
+      );
+      expect(display).toContain("offsetCoordinateNm");
+      expect(display).not.toContain("offsetCoordinates");
+      expect(display).not.toContain("NM_PER_DEG_LAT");
+    }
+    const map = fs.readFileSync(
+      path.join(__dirname, "../../frontend/src/displays/MFD/MapDisplay.tsx"),
+      "utf8",
+    );
+    expect(map).toContain("coordinateOffsetNm");
+    expect(map).toContain("(offset.eastNm / rangeNm) * 50");
+  });
+
+  it("uses common synthetic engine state while retaining display policy", () => {
+    expect(projectEngineInstruments(100)).toEqual({
+      rpm: 2500,
+      oilTempF: 210,
+      oilPressurePsi: 62,
+      fuelFlowGph: 10,
+      busVolts: 28.4,
+      alternatorLoadAmps: 28,
+      manifoldPressureInHg: 20,
+      batteryTempF: 90,
+      egtF: [1415, 1419, 1426, 1440, 1460, 1478],
+      chtF: [358, 361, 369, 379, 389, 394],
+    });
+    const display = fs.readFileSync(
+      path.join(__dirname, "../../frontend/src/displays/MFD/EngineDisplay.tsx"),
+      "utf8",
+    );
+    expect(display).toContain("projectEngineInstruments");
+    expect(display).toContain("fuelStartRef");
+    expect(display).toContain("oilAlert");
+    expect(display).toContain("rpm / 2700");
+    expect(display).not.toContain("1900 + airspeed * 6");
+    expect(display).not.toContain("1280 + airspeed * 1.6");
+    expect(display).not.toContain("const clamp");
   });
 
   it("uses the shared C172 profile and loading calculation", () => {

@@ -7,8 +7,11 @@ import {
   flightTime,
   fuelConsumption,
   fuelReserve,
+  fromLocalTangentPlane,
   initialBearing,
   headingDifference,
+  projectPistonEngineInstruments,
+  toLocalTangentPlane,
 } from "@aviation/shared-sdk";
 
 export { C172S_OPERATING_PROFILE };
@@ -69,6 +72,54 @@ export const calculateHeadingDelta = (
   fromHeading: number,
   toHeading: number,
 ): number => headingDifference(fromHeading, toHeading);
+
+const METERS_PER_NAUTICAL_MILE = 1852;
+
+export const offsetCoordinateNm = (
+  latitude: number,
+  longitude: number,
+  eastNm: number,
+  northNm: number,
+) => {
+  const [lat, lon] = fromLocalTangentPlane(
+    eastNm * METERS_PER_NAUTICAL_MILE,
+    northNm * METERS_PER_NAUTICAL_MILE,
+    latitude,
+    longitude,
+  );
+  return { lat, lon };
+};
+
+export const coordinateOffsetNm = (
+  latitude: number,
+  longitude: number,
+  originLatitude: number,
+  originLongitude: number,
+) => {
+  const projected = toLocalTangentPlane(
+    latitude,
+    longitude,
+    originLatitude,
+    originLongitude,
+  );
+  return {
+    eastNm: projected.eastMeters / METERS_PER_NAUTICAL_MILE,
+    northNm: projected.northMeters / METERS_PER_NAUTICAL_MILE,
+  };
+};
+
+export const calculateDistanceNm = (
+  start: { latitude: number; longitude: number },
+  end: { latitude: number; longitude: number },
+): number => distanceNM(
+  start.latitude,
+  start.longitude,
+  end.latitude,
+  end.longitude,
+);
+
+export const projectEngineInstruments = (airspeedKt: number) =>
+  projectPistonEngineInstruments(airspeedKt, 6);
 
 export const calculateC172Loading = (
   stationWeights: number[],

@@ -4,6 +4,7 @@ import { TelemetrySnapshot } from '../../hooks/useTelemetrySocket'
 import type { FlightPlanWaypointType } from '../../stores/flightPlanStore'
 import { useFlightPlanStore } from '../../stores/flightPlanStore'
 import { useSoftkeyStore } from '../../stores/softkeyStore'
+import { calculateDistanceNm, offsetCoordinateNm } from '../../integrations/sharedSdk'
 import { formatNumber } from '../PFD/formatters'
 
 type FlightPlanDisplayProps = {
@@ -16,7 +17,6 @@ type RoutePoint = {
   lon: number
 }
 
-const NM_PER_DEG_LAT = 60
 const DEFAULT_LAT = 37.618805
 const DEFAULT_LON = -122.375416
 
@@ -34,18 +34,6 @@ const sanitizeIdentifier = (value: string) => value.toUpperCase().replace(/[^A-Z
 const parseOptionalNumber = (value: string) => {
   const parsed = Number(value)
   return Number.isFinite(parsed) ? parsed : undefined
-}
-
-const offsetCoordinates = (lat: number, lon: number, eastNm: number, northNm: number) => {
-  const latOffset = northNm / NM_PER_DEG_LAT
-  const lonOffset = eastNm / (NM_PER_DEG_LAT * (Math.cos((lat * Math.PI) / 180) || 1))
-  return { lat: lat + latOffset, lon: lon + lonOffset }
-}
-
-const calcDistanceNm = (lat1: number, lon1: number, lat2: number, lon2: number) => {
-  const latNm = (lat2 - lat1) * NM_PER_DEG_LAT
-  const lonNm = (lon2 - lon1) * NM_PER_DEG_LAT * Math.cos((lat1 * Math.PI) / 180)
-  return Math.sqrt(latNm ** 2 + lonNm ** 2)
 }
 
 export const FlightPlanDisplay = ({ telemetry }: FlightPlanDisplayProps) => {
@@ -152,7 +140,7 @@ export const FlightPlanDisplay = ({ telemetry }: FlightPlanDisplayProps) => {
         eastNm: (index - midpoint) * 8,
         northNm: (index - midpoint) * 5,
       }
-      const derived = offsetCoordinates(baseLat, baseLon, offset.eastNm, offset.northNm)
+      const derived = offsetCoordinateNm(baseLat, baseLon, offset.eastNm, offset.northNm)
       return {
         id: point.id,
         lat: point.latitude_deg ?? derived.lat,
@@ -164,7 +152,10 @@ export const FlightPlanDisplay = ({ telemetry }: FlightPlanDisplayProps) => {
   const legs = useMemo(() => {
     return routePoints.slice(0, -1).map((point, index) => {
       const next = routePoints[index + 1]
-      const distance = calcDistanceNm(point.lat, point.lon, next.lat, next.lon)
+      const distance = calculateDistanceNm(
+        { latitude: point.lat, longitude: point.lon },
+        { latitude: next.lat, longitude: next.lon },
+      )
       return {
         from: point.id,
         to: next.id,

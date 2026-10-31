@@ -1,6 +1,6 @@
 ---
 namespace: aviation
-version: 0.3.0
+version: 0.4.0
 display_name: Aviation flight dynamics
 profiles:
   - library
@@ -8,7 +8,7 @@ profiles:
 sample: false
 provides:
   - name: aviation.flight-dynamics
-    version: 0.3.0
+    version: 0.4.0
     interface:
       uri: interfaces/flight-dynamics.md
       pin: null
@@ -39,7 +39,9 @@ source_dependencies: []
 
 This Component owns deterministic atmosphere, environmental wind, scalar force,
 rigid-body integration, aircraft performance, aircraft-model validation, and
-autopilot-control primitives. It does not own avionics display state, HTTP schemas,
+autopilot-control primitives. It also owns unit-explicit coordinated-turn physics and
+deterministic synthetic engine-instrument state used by portable simulators. It does
+not own avionics display state, HTTP schemas,
 alert presentation, route planning, recorded-flight analytics, or operational pilot
 decisions. Bundled physics models link to `aviation.aircraft` for operating identity,
 limits, dimensions, and manufacturer-published reference figures.
@@ -62,6 +64,14 @@ copies of common formulas or flight-director transitions.
 - **WHEN** the compatibility service calculates forces, wind effects, or autopilot
   controller output
 - **THEN** those calculations execute through `aviation.flight-dynamics`
+
+#### Scenario: Applications derive turn and synthetic engine state
+
+- **WHEN** a recorded-track application derives coordinated-turn bank or a simulator
+  projects deterministic piston-engine instrument values
+- **THEN** the common physical or synthetic-state calculation executes through
+  `aviation.flight-dynamics`, while track segmentation, regression, alerts, session
+  fuel state, and gauge presentation remain private application policy
 
 #### Scenario: G1000 updates its simulator and flight-director state
 

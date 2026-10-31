@@ -54,6 +54,13 @@ weather provider, or external service.
   `aviation.aircraft`, while its serialized model asset contains no duplicate aircraft
   authority fields
 
+### Scenario: Portable turn and engine projections are evaluated
+
+- **WHEN** the declared speed and turn-rate case plus the synthetic piston-engine case
+  are evaluated in Python and TypeScript
+- **THEN** coordinated-turn bank and every engine-instrument field match the shared
+  vectors within tolerance
+
 ## Requirement: Compatibility formulas agree
 
 ### Scenario: A retained application requests scalar physics
@@ -67,6 +74,12 @@ weather provider, or external service.
 
 - **WHEN** a bounded control exceeds its range or a non-positive step is supplied
 - **THEN** the common SDK raises an explicit validation error
+
+### Scenario: Projection inputs are invalid
+
+- **WHEN** speed is negative or non-finite, or cylinder count is outside its declared
+  integer range
+- **THEN** both realizations reject the request instead of emitting synthetic state
 
 ## Requirement: Common SDK CI runs
 

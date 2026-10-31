@@ -9,6 +9,11 @@
 
 ## Unreleased
 
+- Qualified coordinated-turn bank and deterministic synthetic piston-engine
+  instrumentation across Python and TypeScript `aviation.flight-dynamics` bindings.
+  Flight Track Analyzer now delegates common turn physics while retaining measured
+  inference, and G1000 delegates engine state plus MFD geodesy while retaining session,
+  alert, gauge, and pixel policy.
 - Qualified shortest heading differences, circular heading means, runway designators,
   and reversible local tangent-plane projection across both `aviation.navigation`
   bindings. Flight Track Analyzer now retains only vectorized track adaptation, and
