@@ -6,6 +6,7 @@ import {
   SR22_PERSPECTIVE_3600_OPERATING_PROFILE,
   createAircraftOperatingProfile,
   findAircraftOperatingProfile,
+  matchAircraftOperatingProfile,
   type AircraftOperatingProfile,
 } from '../aircraft.js';
 
@@ -14,6 +15,11 @@ interface AircraftVectors {
   profiles: Record<string, AircraftOperatingProfile>;
   lookups: Array<{
     query: string;
+    expectedProfileId: string | null;
+  }>;
+  identityMatches: Array<{
+    manufacturer: string;
+    model: string;
     expectedProfileId: string | null;
   }>;
   invalidMutations: Array<{
@@ -41,7 +47,7 @@ const mutateProfile = (
 
 describe('aviation.aircraft Component conformance', () => {
   it('exports every Component-owned operating profile', () => {
-    expect(contract.schema).toBe('aviation/aircraft-acceptance-vectors@3');
+    expect(contract.schema).toBe('aviation/aircraft-acceptance-vectors@4');
     const profiles = [
       C172S_OPERATING_PROFILE,
       C182T_OPERATING_PROFILE,
@@ -62,6 +68,13 @@ describe('aviation.aircraft Component conformance', () => {
     it(`resolves bundled profile lookup ${lookup.query}`, () => {
       expect(findAircraftOperatingProfile(lookup.query)?.profileId ?? null)
         .toBe(lookup.expectedProfileId);
+    });
+  }
+
+  for (const identity of contract.identityMatches) {
+    it(`matches bundled profile identity ${identity.manufacturer}/${identity.model}`, () => {
+      expect(matchAircraftOperatingProfile(identity.manufacturer, identity.model)?.profileId ?? null)
+        .toBe(identity.expectedProfileId);
     });
   }
 

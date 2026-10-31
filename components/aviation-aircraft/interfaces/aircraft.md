@@ -20,6 +20,10 @@
   returns an immutable portable profile.
 - `findAircraftOperatingProfile(identifier) -> AircraftOperatingProfile | none`
   resolves a bundled profile by stable profile ID or case-insensitive ICAO designator.
+- `matchAircraftOperatingProfile(manufacturer, model) -> AircraftOperatingProfile |
+  none` resolves an exact manufacturer/model pair after case and repeated-whitespace
+  normalization. Both fields are required; partial, model-only, and unknown matches
+  return no profile.
 - `C172S_OPERATING_PROFILE` is the bundled Cessna 172S profile declared by the
   Component acceptance vectors.
 - `C182T_OPERATING_PROFILE` is the bundled Cessna 182T NAV III profile.

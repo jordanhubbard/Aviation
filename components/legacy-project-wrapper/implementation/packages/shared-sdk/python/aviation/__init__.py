@@ -36,6 +36,7 @@ from .aircraft import (
     SR22_PERSPECTIVE_3600_OPERATING_PROFILE,
     aircraft_operating_profile_from_mapping,
     find_aircraft_operating_profile,
+    match_aircraft_operating_profile,
 )
 from .weight_balance import (
     C172S_LOADING_PROFILE,
@@ -76,6 +77,7 @@ __all__ = [
     "SR22_PERSPECTIVE_3600_OPERATING_PROFILE",
     "aircraft_operating_profile_from_mapping",
     "find_aircraft_operating_profile",
+    "match_aircraft_operating_profile",
     # Weight and balance
     "C172S_LOADING_PROFILE",
     "EnvelopePoint",

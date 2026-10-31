@@ -9,6 +9,11 @@
 
 ## Unreleased
 
+- Added fail-closed manufacturer/model matching to both `aviation.aircraft`
+  bindings and migrated Flight School's fleet page to qualified SDK reference
+  identity, weight, fuel, and performance data. Fleet registration, rates,
+  equipment, availability, bookings, and maintenance scheduling remain application
+  policy; two unused invalid maintenance helpers were removed.
 - Migrated Flight Planner's retained ADF bearing, DME ground range, VOR/HSI angle,
   and GPS track normalization to the independently tested `aviation.avionics`
   realization. Random GPS error injection, approach orchestration, CDI sensitivity,

@@ -9,6 +9,12 @@ import logging
 import filetype
 import base64
 
+from app.utils.paths import add_package_path
+
+add_package_path("shared-sdk/python")
+
+from aviation.aircraft import match_aircraft_operating_profile
+
 STATIC_IMAGE_DIR = os.path.join(os.path.dirname(__file__), 'static', 'images', 'aircraft')
 STATIC_IMAGE_WEB_PATH = 'images/aircraft/'
 
@@ -435,18 +441,9 @@ class Aircraft(db.Model):
         return f"{self.registration} ({self.make} {self.model})"
 
     @property
-    def time_to_maintenance(self):
-        """Return hours until next maintenance is due."""
-        if not self.hobbs_time or not self.last_maintenance:
-            return None
-        return self.hobbs_time - self.last_maintenance
-
-    @property
-    def days_to_maintenance(self):
-        """Return days until next maintenance is due."""
-        if not self.last_maintenance:
-            return None
-        return (datetime.now(timezone.utc) - self.last_maintenance).days
+    def operating_profile(self):
+        """Return qualified common reference data for an exact fleet identity."""
+        return match_aircraft_operating_profile(self.make, self.model)
 
     @property
     def is_available(self):

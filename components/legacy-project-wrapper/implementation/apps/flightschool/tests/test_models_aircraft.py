@@ -18,23 +18,6 @@ def test_is_available():
     ac.status = "maintenance"
     assert ac.is_available is False
 
-def test_time_to_maintenance_none():
-    ac = DummyAircraft(hobbs_time=None, last_maintenance=None)
-    assert ac.time_to_maintenance is None
-
-def test_time_to_maintenance_value():
-    ac = DummyAircraft(hobbs_time=100.0, last_maintenance=80.0)
-    assert ac.time_to_maintenance == 20.0
-
-def test_days_to_maintenance_none():
-    ac = DummyAircraft(last_maintenance=None)
-    assert ac.days_to_maintenance is None
-
-def test_days_to_maintenance_value():
-    last_maint = datetime.now(timezone.utc) - timedelta(days=10)
-    ac = DummyAircraft(last_maintenance=last_maint)
-    assert ac.days_to_maintenance == 10
-
 # image_url property is more complex due to Flask context and ensure_aircraft_image
 # We'll test the logic up to the ensure_aircraft_image call using monkeypatching
 from flask import Flask
