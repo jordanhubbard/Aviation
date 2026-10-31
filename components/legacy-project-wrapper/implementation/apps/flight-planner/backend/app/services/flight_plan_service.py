@@ -17,6 +17,8 @@ from pathlib import Path
 import xml.etree.ElementTree as ET
 from io import StringIO
 
+from aviation.aircraft import C172S_OPERATING_PROFILE
+
 router = APIRouter()
 
 class WaypointStatus(str, Enum):
@@ -140,7 +142,9 @@ def export_to_gpx(flight_plan: Dict[str, Any]) -> str:
 def export_to_fpl(flight_plan: Dict[str, Any]) -> str:
     lines = []
     lines.append(f"(FPL-{flight_plan.get('name', 'PLAN')}-IS")
-    lines.append(f"-{flight_plan.get('aircraft_type', 'C172')}/L")
+    lines.append(
+        f"-{flight_plan.get('aircraft_type', C172S_OPERATING_PROFILE.icao_type_designator)}/L"
+    )
     lines.append(f"-{flight_plan.get('origin', 'XXXX')}{flight_plan.get('destination', 'XXXX')}")
     
     waypoints_str = ' '.join([wp.get('name', f"WP{i}") for i, wp in enumerate(flight_plan.get('waypoints', []))])

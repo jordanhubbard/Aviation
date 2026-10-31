@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from aviation.aircraft import C172S_OPERATING_PROFILE
 from aviation_flight_dynamics.aircraft import C172_CONFIG as SDK_C172_CONFIG
 from aviation_flight_dynamics.autopilot import (
     AutopilotModeController,
@@ -38,19 +39,31 @@ def test_pid_controller_clamps_output() -> None:
 
 def test_g1000_c172_compatibility_model_uses_sdk_authority() -> None:
     assert C172_CONFIG.id == SDK_C172_CONFIG.aircraft_id
+    assert C172_CONFIG.profile_id == C172S_OPERATING_PROFILE.profile_id
     assert (
         C172_CONFIG.performance.cruise_speed_kt
-        == SDK_C172_CONFIG.performance.cruise_speed_kt
+        == C172S_OPERATING_PROFILE.reference_performance.maximum_cruise_speed_ktas
     )
     assert (
         C172_CONFIG.performance.max_speed_kt
-        == SDK_C172_CONFIG.limits.never_exceed_speed_kt
+        == C172S_OPERATING_PROFILE.airspeed_limits.vne_kias
     )
     assert (
         C172_CONFIG.weights.max_gross_lbs
-        == SDK_C172_CONFIG.mass_properties.max_gross_weight_lbs
+        == C172S_OPERATING_PROFILE.weight_limits.maximum_takeoff_weight_lb
     )
-    assert C172_CONFIG.fuel.capacity_gal == SDK_C172_CONFIG.fuel.capacity_gal
+    assert (
+        C172_CONFIG.fuel.capacity_gal
+        == C172S_OPERATING_PROFILE.fuel_limits.total_capacity_gal
+    )
+    assert (
+        C172_CONFIG.dimensions.length_ft
+        == C172S_OPERATING_PROFILE.dimensions.length_ft
+    )
+    assert (
+        C172_CONFIG.dimensions.height_ft
+        == C172S_OPERATING_PROFILE.dimensions.height_ft
+    )
 
 
 def test_autopilot_tuning_fallback_and_override() -> None:

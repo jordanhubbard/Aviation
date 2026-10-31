@@ -89,26 +89,40 @@ def test_packaged_aircraft_vectors_match_component_authority() -> None:
         )
 
 
-def _c172s_operating_profile() -> dict[str, object]:
+def test_c172s_flight_model_matches_aircraft_component() -> None:
+    profile = AIRCRAFT_VECTORS["profiles"]["cessna-172s"]
+    airspeeds = profile["airspeedLimits"]
+    fuel = profile["fuelLimits"]
+    weight = profile["weightLimits"]
+    dimensions = profile["dimensions"]
+    reference = profile["referencePerformance"]
     limits = C172_CONFIG.limits
-    return {
-        "profileId": "cessna-172s",
-        "manufacturer": C172_CONFIG.manufacturer,
-        "model": "172S",
-        "displayName": "Cessna 172S Skyhawk",
-        "airspeedLimits": {
-            "vsoKias": limits.stall_speed_landing_kt,
-            "vsKias": limits.stall_speed_clean_kt,
-            "vfeKias": limits.max_flap_extended_speed_kt,
-            "vaKias": limits.maneuvering_speed_kt,
-            "vnoKias": limits.max_operating_speed_kt,
-            "vneKias": limits.never_exceed_speed_kt,
-        },
-    }
-
-
-def test_c172s_operating_profile_matches_aircraft_component() -> None:
-    assert _c172s_operating_profile() == AIRCRAFT_VECTORS["profiles"]["cessna-172s"]
+    assert C172_CONFIG.manufacturer == profile["manufacturer"]
+    assert limits.stall_speed_landing_kt == airspeeds["vsoKias"]
+    assert limits.stall_speed_clean_kt == airspeeds["vsKias"]
+    assert limits.max_flap_extended_speed_kt == airspeeds["vfeKias"]
+    assert limits.maneuvering_speed_kt == airspeeds["vaKias"]
+    assert limits.max_operating_speed_kt == airspeeds["vnoKias"]
+    assert limits.never_exceed_speed_kt == airspeeds["vneKias"]
+    assert C172_CONFIG.fuel.capacity_gal == fuel["totalCapacityGal"]
+    assert (
+        C172_CONFIG.fuel.capacity_gal - C172_CONFIG.fuel.unusable_gal
+        == fuel["usableCapacityGal"]
+    )
+    assert (
+        C172_CONFIG.mass_properties.max_gross_weight_lbs
+        == weight["maximumTakeoffWeightLb"]
+    )
+    assert (
+        C172_CONFIG.aerodynamics.geometry.wing_span_ft
+        == pytest.approx(dimensions["wingspanFt"])
+    )
+    performance = C172_CONFIG.performance
+    assert performance.cruise_speed_kt == reference["maximumCruiseSpeedKtas"]
+    assert performance.climb_rate_fpm == reference["maximumClimbRateFpm"]
+    assert performance.service_ceiling_ft == reference["serviceCeilingFt"]
+    assert performance.takeoff_distance_ft == reference["takeoffDistanceFt"]
+    assert performance.landing_distance_ft == reference["landingDistanceFt"]
 
 
 def test_invalid_aircraft_operating_profiles_fail_closed() -> None:
@@ -121,11 +135,14 @@ def test_invalid_aircraft_operating_profiles_fail_closed() -> None:
         "vneKias": "never_exceed_speed_kt",
     }
     for mutation in AIRCRAFT_VECTORS["invalidMutations"]:
+        if mutation["path"][0] != "airspeedLimits":
+            continue
+        field = mutation["path"][1]
         value = mutation["value"]
         if value == "non-finite":
             value = math.nan
         with pytest.raises(ValueError):
-            replace(C172_CONFIG.limits, **{field_names[mutation["field"]]: value})
+            replace(C172_CONFIG.limits, **{field_names[field]: value})
 
 
 def test_isa_atmosphere_vector() -> None:

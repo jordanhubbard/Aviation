@@ -8,6 +8,7 @@ from datetime import datetime
 from typing import Dict, List, Optional
 from uuid import uuid4
 
+from aviation.aircraft import C172S_OPERATING_PROFILE
 from fastapi import APIRouter, HTTPException
 from app.e2e import assert_store_isolated, data_dir, stored_record
 
@@ -97,7 +98,7 @@ def _export_gpx(plan: SavedFlightPlan) -> str:
 def _export_fpl(plan: SavedFlightPlan) -> str:
     lines = [
         f"(FPL-{plan.metadata.name}-IS",
-        f"-{plan.metadata.aircraft_type or 'C172'}/L",
+        f"-{plan.metadata.aircraft_type or C172S_OPERATING_PROFILE.icao_type_designator}/L",
         f"-{plan.metadata.origin or 'XXXX'}{plan.metadata.destination or 'XXXX'}",
     ]
     if plan.waypoints:

@@ -21,7 +21,7 @@
   "aerodynamics": {
     "geometry": {
       "wing_area_sqft": 174.0,
-      "wing_span_ft": 36.1,
+      "wing_span_ft": 36.0833333333,
       "mean_aerodynamic_chord_ft": 4.9
     },
     "coefficients": {
@@ -55,7 +55,7 @@
     "specific_fuel_consumption_lb_hp_hr": 0.42
   },
   "fuel": {
-    "capacity_gal": 53.0,
+    "capacity_gal": 56.0,
     "unusable_gal": 3.0,
     "fuel_density_lbs_per_gal": 6.0
   },
@@ -70,11 +70,11 @@
     "max_pitch_angle_deg": 30.0
   },
   "performance": {
-    "cruise_speed_kt": 122.0,
-    "climb_rate_fpm": 720.0,
+    "cruise_speed_kt": 124.0,
+    "climb_rate_fpm": 730.0,
     "service_ceiling_ft": 14000.0,
     "takeoff_distance_ft": 1630.0,
-    "landing_distance_ft": 1350.0
+    "landing_distance_ft": 1335.0
   },
   "variants": {}
 }

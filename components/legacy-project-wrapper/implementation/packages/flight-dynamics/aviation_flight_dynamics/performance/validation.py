@@ -17,8 +17,8 @@ class PerformanceReference:
 
 C172_PERFORMANCE_REFERENCE = PerformanceReference(
     takeoff_distance_ft=1630.0,
-    climb_rate_fpm=720.0,
-    cruise_speed_kt=122.0,
+    climb_rate_fpm=730.0,
+    cruise_speed_kt=124.0,
     fuel_flow_gph=10.0,
 )
 

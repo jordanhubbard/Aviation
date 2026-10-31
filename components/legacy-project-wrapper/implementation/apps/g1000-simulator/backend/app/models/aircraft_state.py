@@ -4,6 +4,7 @@ from dataclasses import dataclass
 import time
 from typing import Dict
 
+from aviation.aircraft import C172S_OPERATING_PROFILE
 from aviation_flight_dynamics.aircraft import C172_CONFIG as SDK_C172_CONFIG
 from aviation_flight_dynamics.performance import compute_cruise_performance
 
@@ -42,6 +43,7 @@ class Dimensions:
 @dataclass(frozen=True)
 class AircraftConfig:
     id: str
+    profile_id: str
     name: str
     performance: AircraftPerformance
     fuel: FuelConfig
@@ -51,31 +53,44 @@ class AircraftConfig:
 
 C172_CONFIG = AircraftConfig(
     id=SDK_C172_CONFIG.aircraft_id,
-    name=SDK_C172_CONFIG.name,
+    profile_id=C172S_OPERATING_PROFILE.profile_id,
+    name=C172S_OPERATING_PROFILE.display_name,
     performance=AircraftPerformance(
-        cruise_speed_kt=SDK_C172_CONFIG.performance.cruise_speed_kt,
-        stall_speed_clean_kt=SDK_C172_CONFIG.limits.stall_speed_clean_kt,
-        stall_speed_landing_kt=SDK_C172_CONFIG.limits.stall_speed_landing_kt,
-        max_speed_kt=SDK_C172_CONFIG.limits.never_exceed_speed_kt,
-        climb_rate_fpm=SDK_C172_CONFIG.performance.climb_rate_fpm,
-        service_ceiling_ft=SDK_C172_CONFIG.performance.service_ceiling_ft,
+        cruise_speed_kt=(
+            C172S_OPERATING_PROFILE.reference_performance.maximum_cruise_speed_ktas
+        ),
+        stall_speed_clean_kt=C172S_OPERATING_PROFILE.airspeed_limits.vs_kias,
+        stall_speed_landing_kt=C172S_OPERATING_PROFILE.airspeed_limits.vso_kias,
+        max_speed_kt=C172S_OPERATING_PROFILE.airspeed_limits.vne_kias,
+        climb_rate_fpm=(
+            C172S_OPERATING_PROFILE.reference_performance.maximum_climb_rate_fpm
+        ),
+        service_ceiling_ft=(
+            C172S_OPERATING_PROFILE.reference_performance.service_ceiling_ft
+        ),
     ),
     fuel=FuelConfig(
-        capacity_gal=SDK_C172_CONFIG.fuel.capacity_gal,
-        unusable_gal=SDK_C172_CONFIG.fuel.unusable_gal,
+        capacity_gal=C172S_OPERATING_PROFILE.fuel_limits.total_capacity_gal,
+        unusable_gal=(
+            C172S_OPERATING_PROFILE.fuel_limits.total_capacity_gal
+            - C172S_OPERATING_PROFILE.fuel_limits.usable_capacity_gal
+        ),
         burn_rate_gph=compute_cruise_performance(
             SDK_C172_CONFIG, power_setting=0.9
         ).fuel_flow_gph,
     ),
     weights=WeightConfig(
         empty_lbs=SDK_C172_CONFIG.mass_properties.empty_weight_lbs,
-        max_gross_lbs=SDK_C172_CONFIG.mass_properties.max_gross_weight_lbs,
-        useful_load_lbs=SDK_C172_CONFIG.mass_properties.max_payload_lbs,
+        max_gross_lbs=C172S_OPERATING_PROFILE.weight_limits.maximum_takeoff_weight_lb,
+        useful_load_lbs=(
+            C172S_OPERATING_PROFILE.weight_limits.maximum_takeoff_weight_lb
+            - SDK_C172_CONFIG.mass_properties.empty_weight_lbs
+        ),
     ),
     dimensions=Dimensions(
-        wingspan_ft=SDK_C172_CONFIG.aerodynamics.geometry.wing_span_ft,
-        length_ft=27.0,
-        height_ft=9.0,
+        wingspan_ft=C172S_OPERATING_PROFILE.dimensions.wingspan_ft,
+        length_ft=C172S_OPERATING_PROFILE.dimensions.length_ft,
+        height_ft=C172S_OPERATING_PROFILE.dimensions.height_ft,
     ),
 )
 

@@ -47,6 +47,22 @@ describe('G1000 shared SDK boundary', () => {
     expect(display).not.toMatch(/\b(?:40|48|85|105|129|163)\b/)
   })
 
+  it('uses the shared C172S identity and reference profile for configuration', () => {
+    expect(C172S_OPERATING_PROFILE.icaoTypeDesignator).toBe('C172')
+    expect(C172S_OPERATING_PROFILE.fuelLimits).toEqual({
+      totalCapacityGal: 56,
+      usableCapacityGal: 53,
+    })
+    expect(C172S_OPERATING_PROFILE.referencePerformance.maximumCruiseSpeedKtas).toBe(124)
+
+    const configStore = fs.readFileSync(
+      path.join(__dirname, '../../frontend/src/stores/configStore.ts'),
+      'utf8',
+    )
+    expect(configStore).toContain('C172S_OPERATING_PROFILE.icaoTypeDesignator')
+    expect(configStore).not.toContain("aircraftType: 'C172'")
+  })
+
   it('keeps private trip-planning formulas out of the display', () => {
     const display = fs.readFileSync(
       path.join(__dirname, '../../frontend/src/displays/MFD/TripPlanningDisplay.tsx'),

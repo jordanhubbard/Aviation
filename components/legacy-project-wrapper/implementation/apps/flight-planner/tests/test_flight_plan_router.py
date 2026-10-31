@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import pytest
 from fastapi.testclient import TestClient
+from aviation.aircraft import C172S_OPERATING_PROFILE
 
 from main import app
 
@@ -458,6 +459,17 @@ def test_export_fpl_uses_aircraft_type(client):
     resp = client.post(f"/flight-plans/{plan_id}/export?fmt=fpl")
     assert resp.status_code == 200
     assert "PA28" in resp.json()["content"]
+
+
+def test_export_fpl_default_aircraft_type_uses_sdk_profile(client):
+    created = _create_plan(client, name="Default Aircraft")
+    plan_id = created["metadata"]["id"]
+    resp = client.post(f"/flight-plans/{plan_id}/export?fmt=fpl")
+    assert resp.status_code == 200
+    assert (
+        f"-{C172S_OPERATING_PROFILE.icao_type_designator}/L"
+        in resp.json()["content"]
+    )
 
 
 def test_export_fpl_filename_uses_plan_name(client):

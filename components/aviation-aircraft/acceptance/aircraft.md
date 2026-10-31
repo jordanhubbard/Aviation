@@ -8,12 +8,13 @@ external service.
 
 ### Scenario: The C172S profile is loaded
 
-- **WHEN** the bundled profile is requested
-- **THEN** its stable identity and all six unit-explicit airspeed limits match
+- **WHEN** the bundled profile is requested by stable ID or ICAO designator
+- **THEN** its identity, operating limits, fuel and weight limits, dimensions, and
+  published reference performance match
 
 ## Requirement: Invalid profiles fail closed
 
-### Scenario: A speed is invalid or limits are misordered
+### Scenario: A profile field is invalid or limits are inconsistent
 
 - **WHEN** each declared invalid mutation is applied to the valid profile
 - **THEN** construction raises an explicit validation error

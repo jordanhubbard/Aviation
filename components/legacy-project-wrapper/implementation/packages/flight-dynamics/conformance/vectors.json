@@ -331,14 +331,14 @@
   "c172_performance": {
     "power_setting": 0.75,
     "expected_cruise": {
-      "true_airspeed_kt": 91.5,
+      "true_airspeed_kt": 93.0,
       "fuel_flow_gph": 7.5,
-      "endurance_hr": 6.666666666666667,
-      "range_nm": 610.0
+      "endurance_hr": 7.066666666666666,
+      "range_nm": 657.1999999999999
     },
     "expected_takeoff_climb": {
       "takeoff_distance_ft": 1629.9836788860102,
-      "climb_rate_fpm": 720.0072093986123
+      "climb_rate_fpm": 730.0073095291486
     }
   },
   "compatibility": {

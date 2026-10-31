@@ -3,6 +3,7 @@ from __future__ import annotations
 from pathlib import Path
 from typing import List, Optional
 
+import yaml
 from pydantic import AliasChoices, Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
@@ -80,18 +81,7 @@ class Settings(BaseSettings):
         
         return v
 
-
-
-import yaml
-
 settings = Settings()
-
-# Load aircraft profiles configuration (stored as module-level variables, not on the Settings object)
-try:
-    with open(REPO_ROOT / 'backend' / 'config' / 'aircraft_profiles.yaml', 'r') as file:
-        aircraft_profiles = yaml.safe_load(file)
-except FileNotFoundError:
-    aircraft_profiles = {}
 
 # Load G1000 configuration
 try:

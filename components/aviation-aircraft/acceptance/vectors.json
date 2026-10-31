@@ -1,8 +1,9 @@
 {
-  "schema": "aviation/aircraft-acceptance-vectors@1",
+  "schema": "aviation/aircraft-acceptance-vectors@2",
   "profiles": {
     "cessna-172s": {
       "profileId": "cessna-172s",
+      "icaoTypeDesignator": "C172",
       "manufacturer": "Cessna",
       "model": "172S",
       "displayName": "Cessna 172S Skyhawk",
@@ -13,17 +14,48 @@
         "vaKias": 105,
         "vnoKias": 129,
         "vneKias": 163
+      },
+      "fuelLimits": {
+        "totalCapacityGal": 56,
+        "usableCapacityGal": 53
+      },
+      "weightLimits": {
+        "maximumTakeoffWeightLb": 2550
+      },
+      "dimensions": {
+        "lengthFt": 27.1666666667,
+        "heightFt": 8.9166666667,
+        "wingspanFt": 36.0833333333
+      },
+      "referencePerformance": {
+        "maximumCruiseSpeedKtas": 124,
+        "maximumClimbRateFpm": 730,
+        "serviceCeilingFt": 14000,
+        "takeoffDistanceFt": 1630,
+        "landingDistanceFt": 1335
       }
     }
   },
+  "lookups": [
+    {"query": "cessna-172s", "expectedProfileId": "cessna-172s"},
+    {"query": "C172", "expectedProfileId": "cessna-172s"},
+    {"query": "c172", "expectedProfileId": "cessna-172s"},
+    {"query": "unknown", "expectedProfileId": null}
+  ],
   "invalidMutations": [
-    {"id": "non-positive-vso", "field": "vsoKias", "value": 0},
-    {"id": "non-finite-vs", "field": "vsKias", "value": "non-finite"},
-    {"id": "landing-stall-above-clean-stall", "field": "vsoKias", "value": 49},
-    {"id": "maneuvering-at-clean-stall", "field": "vaKias", "value": 48},
-    {"id": "maneuvering-above-structural-cruise", "field": "vaKias", "value": 130},
-    {"id": "structural-cruise-at-never-exceed", "field": "vnoKias", "value": 163},
-    {"id": "flap-limit-at-landing-stall", "field": "vfeKias", "value": 40},
-    {"id": "flap-limit-at-never-exceed", "field": "vfeKias", "value": 163}
+    {"id": "non-positive-vso", "path": ["airspeedLimits", "vsoKias"], "value": 0},
+    {"id": "non-finite-vs", "path": ["airspeedLimits", "vsKias"], "value": "non-finite"},
+    {"id": "landing-stall-above-clean-stall", "path": ["airspeedLimits", "vsoKias"], "value": 49},
+    {"id": "maneuvering-at-clean-stall", "path": ["airspeedLimits", "vaKias"], "value": 48},
+    {"id": "maneuvering-above-structural-cruise", "path": ["airspeedLimits", "vaKias"], "value": 130},
+    {"id": "structural-cruise-at-never-exceed", "path": ["airspeedLimits", "vnoKias"], "value": 163},
+    {"id": "flap-limit-at-landing-stall", "path": ["airspeedLimits", "vfeKias"], "value": 40},
+    {"id": "flap-limit-at-never-exceed", "path": ["airspeedLimits", "vfeKias"], "value": 163},
+    {"id": "blank-icao-designator", "path": ["icaoTypeDesignator"], "value": ""},
+    {"id": "non-positive-total-fuel", "path": ["fuelLimits", "totalCapacityGal"], "value": 0},
+    {"id": "usable-fuel-above-total", "path": ["fuelLimits", "usableCapacityGal"], "value": 57},
+    {"id": "non-positive-maximum-takeoff-weight", "path": ["weightLimits", "maximumTakeoffWeightLb"], "value": 0},
+    {"id": "non-positive-length", "path": ["dimensions", "lengthFt"], "value": 0},
+    {"id": "non-positive-cruise-speed", "path": ["referencePerformance", "maximumCruiseSpeedKtas"], "value": 0}
   ]
 }
