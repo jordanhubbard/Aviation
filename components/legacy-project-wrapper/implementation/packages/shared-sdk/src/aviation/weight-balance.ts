@@ -51,6 +51,134 @@ export interface WeightBalanceResult {
   stations: Station[];
 }
 
+export interface EnvelopePoint {
+  weight: number;
+  forward: number;
+  aft: number;
+}
+
+export interface LoadingProfile {
+  emptyWeight: number;
+  emptyArm: number;
+  maxGross: number;
+  fuelArm: number;
+  fuelDensity: number;
+  stations: Array<{ name: string; arm: number }>;
+  envelope: EnvelopePoint[];
+}
+
+export interface LoadingInput {
+  stationWeights: number[];
+  fuelGallons: number;
+  fuelBurnGallons: number;
+}
+
+export interface LoadingCondition {
+  weight: number;
+  cg: number;
+  limits: { forward: number; aft: number } | null;
+  problems: string[];
+  withinLimits: boolean;
+}
+
+export interface LoadingResult {
+  takeoff: LoadingCondition;
+  landing: LoadingCondition;
+}
+
+/** Interpolate forward and aft CG limits for a weight inside an envelope. */
+export function interpolateEnvelope(
+  envelope: EnvelopePoint[],
+  weight: number
+): { forward: number; aft: number } | null {
+  if (!Number.isFinite(weight)) {
+    throw new RangeError('Weight must be finite');
+  }
+  const rows = [...envelope].sort((a, b) => a.weight - b.weight);
+  if (
+    rows.length < 2 ||
+    rows.some(
+      row =>
+        !Number.isFinite(row.weight) ||
+        !Number.isFinite(row.forward) ||
+        !Number.isFinite(row.aft) ||
+        row.forward > row.aft
+    ) ||
+    rows.some((row, index) => index > 0 && row.weight <= rows[index - 1].weight)
+  ) {
+    throw new RangeError('Envelope must contain at least two valid rows with distinct weights');
+  }
+  if (weight < rows[0].weight || weight > rows[rows.length - 1].weight) {
+    return null;
+  }
+  for (let index = 0; index < rows.length - 1; index += 1) {
+    const low = rows[index];
+    const high = rows[index + 1];
+    if (weight < low.weight || weight > high.weight) continue;
+    const ratio = (weight - low.weight) / (high.weight - low.weight);
+    return {
+      forward: low.forward + ratio * (high.forward - low.forward),
+      aft: low.aft + ratio * (high.aft - low.aft),
+    };
+  }
+  return null;
+}
+
+/** Calculate takeoff and after-burn landing weight, moment-derived CG, and limits. */
+export function calculateLoad(profile: LoadingProfile, loading: LoadingInput): LoadingResult {
+  const values = [
+    profile.emptyWeight,
+    profile.emptyArm,
+    profile.maxGross,
+    profile.fuelArm,
+    profile.fuelDensity,
+    loading.fuelGallons,
+    loading.fuelBurnGallons,
+    ...profile.stations.map(station => station.arm),
+    ...loading.stationWeights,
+  ];
+  if (
+    values.some(value => !Number.isFinite(value)) ||
+    profile.emptyWeight <= 0 ||
+    profile.maxGross <= 0 ||
+    profile.fuelDensity <= 0 ||
+    loading.fuelGallons < 0 ||
+    loading.fuelBurnGallons < 0 ||
+    loading.fuelBurnGallons > loading.fuelGallons ||
+    loading.stationWeights.some(weight => weight < 0) ||
+    profile.stations.length !== loading.stationWeights.length
+  ) {
+    throw new RangeError(
+      'Enter valid aircraft, station, and fuel values. Fuel burn cannot exceed fuel loaded.'
+    );
+  }
+
+  const baseWeight =
+    profile.emptyWeight + loading.stationWeights.reduce((sum, weight) => sum + weight, 0);
+  const baseMoment =
+    profile.emptyWeight * profile.emptyArm +
+    loading.stationWeights.reduce(
+      (sum, weight, index) => sum + weight * profile.stations[index].arm,
+      0
+    );
+  const condition = (gallons: number): LoadingCondition => {
+    const weight = baseWeight + gallons * profile.fuelDensity;
+    const cg = (baseMoment + gallons * profile.fuelDensity * profile.fuelArm) / weight;
+    const limits = interpolateEnvelope(profile.envelope, weight);
+    const problems: string[] = [];
+    if (weight > profile.maxGross) problems.push('Above maximum gross weight');
+    if (!limits) problems.push('Weight outside entered CG envelope range');
+    else if (cg < limits.forward || cg > limits.aft) {
+      problems.push('CG outside entered limits');
+    }
+    return { weight, cg, limits, problems, withinLimits: problems.length === 0 };
+  };
+  return {
+    takeoff: condition(loading.fuelGallons),
+    landing: condition(loading.fuelGallons - loading.fuelBurnGallons),
+  };
+}
+
 /**
  * Calculate total weight and moment
  */

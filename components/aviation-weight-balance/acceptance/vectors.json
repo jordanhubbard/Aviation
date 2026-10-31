@@ -1,0 +1,59 @@
+{
+  "schema": "aviation/weight-balance-acceptance-vectors@1",
+  "profile": {
+    "emptyWeight": 1500,
+    "emptyArm": 39,
+    "maxGross": 2300,
+    "fuelArm": 48,
+    "fuelDensity": 6,
+    "stations": [
+      {"name": "Front seats", "arm": 37},
+      {"name": "Baggage", "arm": 95}
+    ],
+    "envelope": [
+      {"weight": 1500, "forward": 35, "aft": 47},
+      {"weight": 2300, "forward": 41, "aft": 47}
+    ]
+  },
+  "vectors": [
+    {
+      "id": "interpolated-envelope",
+      "operation": "interpolate_envelope",
+      "args": [1900],
+      "expected": {"forward": 38, "aft": 47}
+    },
+    {
+      "id": "weight-below-envelope",
+      "operation": "interpolate_envelope",
+      "args": [1000],
+      "expected": null
+    },
+    {
+      "id": "malformed-envelope",
+      "operation": "interpolate_envelope",
+      "args": [1900, [{"weight": 1500, "forward": 48, "aft": 47}, {"weight": 2300, "forward": 41, "aft": 47}]],
+      "expected_error": "invalid_input"
+    },
+    {
+      "id": "takeoff-and-landing",
+      "operation": "calculate_load",
+      "args": [{"stationWeights": [170, 40], "fuelGallons": 40, "fuelBurnGallons": 20}],
+      "expected": {
+        "takeoff": {"weight": 1950, "cg": 41.08205128205128, "limits": {"forward": 38.375, "aft": 47}, "problems": [], "withinLimits": true},
+        "landing": {"weight": 1830, "cg": 40.62841530054645, "limits": {"forward": 37.475, "aft": 47}, "problems": [], "withinLimits": true}
+      }
+    },
+    {
+      "id": "overweight-and-outside-envelope",
+      "operation": "calculate_load",
+      "args": [{"stationWeights": [700, 0], "fuelGallons": 40, "fuelBurnGallons": 10}],
+      "expected_problems": ["Above maximum gross weight", "Weight outside entered CG envelope range"]
+    },
+    {
+      "id": "burn-exceeds-loaded-fuel",
+      "operation": "calculate_load",
+      "args": [{"stationWeights": [170, 0], "fuelGallons": 10, "fuelBurnGallons": 11}],
+      "expected_error": "invalid_input"
+    }
+  ]
+}
