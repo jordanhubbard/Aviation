@@ -193,6 +193,13 @@ release-visible outcome to `CHANGELOG.md`; Git preserves prior queue states.
     Retain provider CSV parsing and repair, registration and route-text heuristics,
     certificate-distance advice, accounts, persistence, and presentation as application
     policy. Delivered under MAC task `task_e88691d482dcce9afa9ffc90fbb4e266`.
+  - [x] Promote the live public `aviation.notam` SDK surface into an explicit
+    Component with shared TypeScript/Python acceptance vectors for canonical FAA-item
+    normalization, severity/category classification, effective-time and route
+    filtering, stable ordering, and text formatting. Keep FAA HTTP/authentication,
+    credential-free development fallback, and Weather Briefing presentation outside
+    the portable authority. Delivered under MAC task
+    `task_99cff8e5931391b6b32170b7867594c8`.
   - [ ] Promote airports, weather, procedures/nav-data, flight dynamics, avionics
     protocols/rendering, shared UI, configuration, and integration infrastructure into
     explicit Components with owned tests and contracts.
@@ -200,9 +207,9 @@ release-visible outcome to `CHANGELOG.md`; Git preserves prior queue states.
     aviation implementations after parity qualification.
   - [ ] Classify and remove or intentionally retain every remainder beneath the legacy
     wrapper.
-- **Next action:** Promote the next qualified portable domain from the legacy wrapper,
-  prioritizing airports, procedures/nav-data, or shared application infrastructure;
-  keep provider adaptation and presentation in their owning applications.
+- **Next action:** Inventory the remaining public shared-SDK surfaces beginning with
+  `aviation.hazards`, promote the next reusable aviation domain into Component-owned
+  cross-language acceptance, and keep provider/application-only behavior outside it.
 - **Evidence:** Phase 1.2 lift-and-shift identity `sha256:c5ca4361ba010f6e8d81c93398468f9f4f8b8cc352504bc8535fa74b7c6e9990`.
   Retained conversion established original-source release authority; each migration
   refreshes the verifier-owned receipt in `verification/current.json`.
@@ -212,6 +219,14 @@ release-visible outcome to `CHANGELOG.md`; Git preserves prior queue states.
   ForeFlight adapter passes all 192 application tests while a structural boundary test
   proves the former private common arithmetic is absent. The retained harness passes
   all 460 admitted SDK tests.
+  NOTAM qualification adds Component revision
+  `sha256:191c48acbb7f8b2661748dbace9cdc00b778df8b57609a90b166b78e0aaa14aa`;
+  its shared acceptance vectors pass 482 TypeScript and 217 Python SDK tests, Weather
+  Briefing compiles against the common package, and the complete retained `make test`
+  gate passes. Retained source membership now admits the four NOTAM realization and
+  conformance files, and verifier-owned receipt candidate
+  `sha256:90e4bcc15150666a44a51068f886cad49515c5f119e0f6dda9c86cdc68e13d6c`
+  records all 482 admitted SDK tests.
   The first native boundary has Component lock
   `sha256:b156aad3a60d74a7eba30b6f4e7ba5d8cc01c8ecc2d7c41a069348db6ed75a9b`;
   its shared acceptance vectors pass 292 TypeScript and 94 Python SDK tests, and

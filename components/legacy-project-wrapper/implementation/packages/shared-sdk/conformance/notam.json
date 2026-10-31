@@ -1,0 +1,205 @@
+{
+  "schema": "aviation/notam-acceptance-vectors@1",
+  "referenceTime": "2026-10-31T12:00:00Z",
+  "normalizationCases": [
+    {
+      "id": "canonical-runway-closure",
+      "input": {
+        "id": " 6/1234 ",
+        "type": " notam ",
+        "location": " ksfo ",
+        "facilityType": " ad ",
+        "effectiveStart": "2026-10-31T10:00:00Z",
+        "effectiveEnd": "2026-10-31T14:00:00Z",
+        "classification": " Class I ",
+        "text": "  RWY 10L CLSD FOR MAINTENANCE  "
+      },
+      "expected": {
+        "id": "6/1234",
+        "type": "NOTAM",
+        "location": "KSFO",
+        "facilityType": "AD",
+        "effectiveStart": "2026-10-31T10:00:00.000Z",
+        "effectiveEnd": "2026-10-31T14:00:00.000Z",
+        "classification": "Class I",
+        "text": "RWY 10L CLSD FOR MAINTENANCE",
+        "severity": "critical",
+        "category": "Runway"
+      }
+    },
+    {
+      "id": "navigation-lighting",
+      "input": {
+        "id": "nav-2",
+        "type": "fdc",
+        "location": "ksea",
+        "facilityType": "nav",
+        "effectiveStart": "2026-10-31T12:00:00Z",
+        "effectiveEnd": "2026-11-01T00:00:00Z",
+        "classification": "Class II",
+        "text": "VOR LIGHTING LGT REDUCED"
+      },
+      "expected": {
+        "id": "NAV-2",
+        "type": "FDC",
+        "location": "KSEA",
+        "facilityType": "NAV",
+        "effectiveStart": "2026-10-31T12:00:00.000Z",
+        "effectiveEnd": "2026-11-01T00:00:00.000Z",
+        "classification": "Class II",
+        "text": "VOR LIGHTING LGT REDUCED",
+        "severity": "medium",
+        "category": "Lighting"
+      }
+    }
+  ],
+  "invalidNormalizationCases": [
+    {
+      "id": "missing-identity",
+      "input": {
+        "id": "",
+        "type": "NOTAM",
+        "location": "KSFO",
+        "facilityType": "AD",
+        "effectiveStart": "2026-10-31T10:00:00Z",
+        "effectiveEnd": "2026-10-31T14:00:00Z",
+        "text": "RWY CLSD"
+      },
+      "expectedErrorCode": "notam-id-required"
+    },
+    {
+      "id": "invalid-start",
+      "input": {
+        "id": "N2",
+        "type": "NOTAM",
+        "location": "KSFO",
+        "facilityType": "AD",
+        "effectiveStart": "not-a-date",
+        "effectiveEnd": "2026-10-31T14:00:00Z",
+        "text": "RWY CLSD"
+      },
+      "expectedErrorCode": "notam-effective-start-invalid"
+    },
+    {
+      "id": "start-without-timezone",
+      "input": {
+        "id": "N2B",
+        "type": "NOTAM",
+        "location": "KSFO",
+        "facilityType": "AD",
+        "effectiveStart": "2026-10-31T10:00:00",
+        "effectiveEnd": "2026-10-31T14:00:00Z",
+        "text": "RWY CLSD"
+      },
+      "expectedErrorCode": "notam-effective-start-invalid"
+    },
+    {
+      "id": "inverted-window",
+      "input": {
+        "id": "N3",
+        "type": "NOTAM",
+        "location": "KSFO",
+        "facilityType": "AD",
+        "effectiveStart": "2026-10-31T15:00:00Z",
+        "effectiveEnd": "2026-10-31T14:00:00Z",
+        "text": "RWY CLSD"
+      },
+      "expectedErrorCode": "notam-effective-window-invalid"
+    },
+    {
+      "id": "missing-text",
+      "input": {
+        "id": "N4",
+        "type": "NOTAM",
+        "location": "KSFO",
+        "facilityType": "AD",
+        "effectiveStart": "2026-10-31T10:00:00Z",
+        "effectiveEnd": "2026-10-31T14:00:00Z",
+        "text": "  "
+      },
+      "expectedErrorCode": "notam-text-required"
+    }
+  ],
+  "classificationCases": [
+    { "id": "critical-closure", "text": "RWY 28 CLSD", "severity": "critical", "category": "Runway" },
+    { "id": "critical-unavailable", "text": "ILS NOTAVBL", "severity": "critical", "category": "Navigation" },
+    { "id": "high-obstacle", "text": "OBST CRANE 500FT AGL", "severity": "high", "category": "Obstacle" },
+    { "id": "medium-lighting", "text": "TWY B LGT REDUCED", "severity": "medium", "category": "Taxiway" },
+    { "id": "low-communications", "text": "ATIS FREQ CHANGED", "severity": "low", "category": "Communications" },
+    { "id": "general", "text": "BIRD ACTIVITY REPORTED", "severity": "low", "category": "General" }
+  ],
+  "formatCases": [
+    {
+      "id": "collapse-and-expand",
+      "input": "  RWY  10L   CLSD; TWY A LGT U/S AND NOTAVBL ",
+      "expected": "Runway 10L CLOSED; Taxiway A Lighting Out of Service AND Not Available"
+    },
+    {
+      "id": "leave-unknown-text",
+      "input": "BIRD ACTIVITY REPORTED",
+      "expected": "BIRD ACTIVITY REPORTED"
+    }
+  ],
+  "records": [
+    {
+      "id": "route-critical",
+      "type": "NOTAM",
+      "location": "KSFO",
+      "facilityType": "AD",
+      "effectiveStart": "2026-10-31T12:00:00Z",
+      "effectiveEnd": "2026-10-31T14:00:00Z",
+      "classification": "Class I",
+      "text": "RWY 10 CLSD"
+    },
+    {
+      "id": "route-low",
+      "type": "NOTAM",
+      "location": "KSEA",
+      "facilityType": "AD",
+      "effectiveStart": "2026-10-31T10:00:00Z",
+      "effectiveEnd": "2026-10-31T12:00:00Z",
+      "classification": "Class II",
+      "text": "ATIS FREQ CHANGED"
+    },
+    {
+      "id": "enroute-high",
+      "type": "NOTAM",
+      "location": "KZOA",
+      "facilityType": "EN",
+      "effectiveStart": "2026-10-31T09:00:00Z",
+      "effectiveEnd": "2026-10-31T18:00:00Z",
+      "classification": "Class I",
+      "text": "OBST TOWER CONSTRUCTION"
+    },
+    {
+      "id": "expired-medium",
+      "type": "NOTAM",
+      "location": "KSFO",
+      "facilityType": "AD",
+      "effectiveStart": "2026-10-30T09:00:00Z",
+      "effectiveEnd": "2026-10-30T18:00:00Z",
+      "classification": "Class II",
+      "text": "PAPI LGT REDUCED"
+    }
+  ],
+  "effectiveCases": [
+    { "id": "inclusive-start", "recordId": "route-critical", "instant": "2026-10-31T12:00:00Z", "expected": true },
+    { "id": "inclusive-end", "recordId": "route-low", "instant": "2026-10-31T12:00:00Z", "expected": true },
+    { "id": "after-end", "recordId": "route-low", "instant": "2026-10-31T12:00:00.001Z", "expected": false }
+  ],
+  "filterCases": [
+    {
+      "id": "route-only",
+      "routeIcaos": ["ksfo", "klax"],
+      "includeEnroute": false,
+      "expectedIds": ["ROUTE-CRITICAL"]
+    },
+    {
+      "id": "route-and-enroute",
+      "routeIcaos": ["ksfo", "klax"],
+      "includeEnroute": true,
+      "expectedIds": ["ROUTE-CRITICAL", "ENROUTE-HIGH"]
+    }
+  ],
+  "expectedSeverityOrder": ["ROUTE-CRITICAL", "ENROUTE-HIGH", "EXPIRED-MEDIUM", "ROUTE-LOW"]
+}

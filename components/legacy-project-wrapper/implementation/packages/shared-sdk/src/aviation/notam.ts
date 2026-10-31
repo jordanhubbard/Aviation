@@ -32,6 +32,95 @@ export interface NotamSearchParams {
   endDate?: Date;
 }
 
+export type NotamRecordInput = {
+  id: unknown;
+  type?: unknown;
+  location: unknown;
+  facilityType?: unknown;
+  effectiveStart: unknown;
+  effectiveEnd: unknown;
+  classification?: unknown;
+  text: unknown;
+};
+
+/** Stable fail-closed error emitted by portable NOTAM normalization. */
+export class NotamValidationError extends Error {
+  constructor(public readonly code: string, message: string) {
+    super(message);
+    this.name = 'NotamValidationError';
+  }
+}
+
+const requiredText = (value: unknown, code: string, field: string): string => {
+  const normalized = String(value ?? '').trim();
+  if (!normalized) throw new NotamValidationError(code, `${field} is required`);
+  return normalized;
+};
+
+const requiredCanonical = (value: unknown, code: string, field: string): string =>
+  requiredText(value, code, field).toUpperCase();
+
+const requiredInstant = (value: unknown, code: string, field: string): Date => {
+  if (
+    typeof value === 'string'
+    && !/(?:Z|[+-]\d{2}:\d{2})$/i.test(value.trim())
+  ) {
+    throw new NotamValidationError(code, `${field} must include a timezone`);
+  }
+  const result = value instanceof Date ? new Date(value.getTime()) : new Date(String(value ?? ''));
+  if (!Number.isFinite(result.getTime())) {
+    throw new NotamValidationError(code, `${field} must be a valid instant`);
+  }
+  return result;
+};
+
+/**
+ * Validate and canonicalize one provider-neutral NOTAM record.
+ *
+ * Provider adapters own response-envelope extraction; this operation owns the common
+ * record semantics used after extraction.
+ */
+export function normalizeNotamRecord(input: NotamRecordInput): NOTAM {
+  const id = requiredCanonical(input.id, 'notam-id-required', 'id');
+  const location = requiredCanonical(
+    input.location,
+    'notam-location-required',
+    'location'
+  );
+  const text = requiredText(input.text, 'notam-text-required', 'text');
+  const effectiveStart = requiredInstant(
+    input.effectiveStart,
+    'notam-effective-start-invalid',
+    'effectiveStart'
+  );
+  const effectiveEnd = requiredInstant(
+    input.effectiveEnd,
+    'notam-effective-end-invalid',
+    'effectiveEnd'
+  );
+  if (effectiveEnd < effectiveStart) {
+    throw new NotamValidationError(
+      'notam-effective-window-invalid',
+      'effectiveEnd must not precede effectiveStart'
+    );
+  }
+
+  const result: NOTAM = {
+    id,
+    type: String(input.type ?? 'NOTAM').trim().toUpperCase() || 'NOTAM',
+    location,
+    facilityType: String(input.facilityType ?? 'AD').trim().toUpperCase() || 'AD',
+    effectiveStart,
+    effectiveEnd,
+    classification: String(input.classification ?? 'Unknown').trim() || 'Unknown',
+    text,
+    severity: 'low',
+    category: categorizeNotam(text),
+  };
+  result.severity = categorizeNotamSeverity(result);
+  return result;
+}
+
 /** Shape of a single item returned by api.faa.gov/notams */
 export interface FaaNotamApiItem {
   properties?: {
@@ -166,6 +255,25 @@ export function parseNotamItem(item: FaaNotamApiItem): NOTAM {
   const effectiveEnd = n.EffectiveEnd ? new Date(n.EffectiveEnd) : new Date(Date.now() + 7 * 86400000);
   const notamId = n.id ?? n.notamNumber ?? `${location}-${Date.now()}`;
 
+  if (
+    location.trim() && rawText.trim()
+    && Number.isFinite(effectiveStart.getTime())
+    && Number.isFinite(effectiveEnd.getTime())
+  ) {
+    return normalizeNotamRecord({
+      id: notamId,
+      type: n.type ?? 'NOTAM',
+      location,
+      facilityType,
+      effectiveStart,
+      effectiveEnd,
+      classification: n.classification ?? 'Unknown',
+      text: rawText,
+    });
+  }
+
+  // Preserve the adapter's historical empty-item compatibility shape. Portable
+  // callers should use normalizeNotamRecord, which rejects incomplete records.
   const notam: NOTAM = {
     id: notamId,
     type: n.type ?? 'NOTAM',
@@ -272,18 +380,22 @@ export function isNotamEffective(notam: NOTAM, checkDate: Date = new Date()): bo
 export function filterRelevantNotams(
   notams: NOTAM[],
   routeIcaos: string[],
-  includeEnroute: boolean = false
+  includeEnroute: boolean = false,
+  checkDate: Date = new Date()
 ): NOTAM[] {
-  const now = new Date();
+  const canonicalRouteIcaos = routeIcaos
+    .map((icao) => icao.trim().toUpperCase())
+    .filter(Boolean);
 
   return notams.filter((notam) => {
     // Must be currently effective
-    if (!isNotamEffective(notam, now)) {
+    if (!isNotamEffective(notam, checkDate)) {
       return false;
     }
 
     // Check if NOTAM is for a location on the route
-    if (routeIcaos.some((icao) => notam.location.startsWith(icao))) {
+    const location = notam.location.trim().toUpperCase();
+    if (canonicalRouteIcaos.some((icao) => location.startsWith(icao))) {
       return true;
     }
 

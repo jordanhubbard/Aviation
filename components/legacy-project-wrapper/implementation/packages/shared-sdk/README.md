@@ -153,6 +153,52 @@ condition, instrument, student, solo, and night-landing consistency. Provider pa
 certificate eligibility, route inference, persistence, and presentation remain consumer
 policy.
 
+#### NOTAM record semantics (`aviation/notam`)
+
+Provider-neutral normalization, classification, effective-window filtering, stable
+severity sorting, and conservative text formatting. TypeScript and Python consume
+the same Component acceptance vectors.
+
+```typescript
+import {
+  filterRelevantNotams,
+  normalizeNotamRecord,
+} from '@aviation/shared-sdk/aviation/notam';
+
+const notam = normalizeNotamRecord({
+  id: '6/1234',
+  location: 'KSFO',
+  effectiveStart: '2026-10-31T10:00:00Z',
+  effectiveEnd: '2026-10-31T14:00:00Z',
+  text: 'RWY 10L CLSD',
+});
+const relevant = filterRelevantNotams(
+  [notam],
+  ['KSFO'],
+  false,
+  new Date('2026-10-31T12:00:00Z'),
+);
+```
+
+```python
+from datetime import datetime, timezone
+from aviation.notam import filter_relevant_notams, normalize_notam_record
+
+notam = normalize_notam_record({
+    "id": "6/1234",
+    "location": "KSFO",
+    "effectiveStart": "2026-10-31T10:00:00Z",
+    "effectiveEnd": "2026-10-31T14:00:00Z",
+    "text": "RWY 10L CLSD",
+})
+relevant = filter_relevant_notams(
+    [notam], ["KSFO"], False, datetime(2026, 10, 31, 12, tzinfo=timezone.utc)
+)
+```
+
+FAA response extraction, HTTP/authentication, persistence, mock fallback, and app
+presentation remain adapter or consumer responsibilities.
+
 ### OpenClaw in-app chat (server-side)
 
 The SDK provides an OpenClaw client for the aviation-chat proxy or app backends. **Do not use from the browser** (API key must stay server-side).
