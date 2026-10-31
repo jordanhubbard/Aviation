@@ -9,6 +9,10 @@
 
 ## Unreleased
 
+- Removed Accident Tracker's fabricated feed fallbacks, dead fixture files,
+  ineffective in-memory seed command, and obsolete private airport sample. ASN and
+  AVHerald failures now yield no records, parser behavior remains covered by synthetic
+  unit inputs, and airport enrichment continues through the common Aviation SDK.
 - Classified persistence and credential acquisition across all 12 applications in a
   machine-checked retained-runtime inventory. Application databases, JSON files,
   browser state, caches, and provider credentials remain adapter-owned rather than
