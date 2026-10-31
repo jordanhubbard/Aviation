@@ -1,28 +1,6 @@
 import { RawEvent } from '../types.js';
-import fs from 'fs';
-import path from 'path';
-import { fileURLToPath } from 'url';
 
 const AVH_FEED = 'https://avherald.com/rss.php?keyword=&title=.';
-const adapterDir = path.dirname(fileURLToPath(import.meta.url));
-const fixtureCandidates = [
-  path.resolve(adapterDir, '../../data/avherald-feed.xml'),
-  path.resolve(adapterDir, '../../../data/avherald-feed.xml'),
-  path.resolve(process.cwd(), 'backend/data/avherald-feed.xml'),
-  path.resolve(process.cwd(), 'data/avherald-feed.xml'),
-];
-
-const allowFixture = process.env.AVHERALD_ALLOW_FIXTURE === 'true' || process.env.NODE_ENV !== 'production';
-const allowFallback = process.env.NODE_ENV !== 'production';
-
-function resolveFixturePath(): string | null {
-  for (const candidate of fixtureCandidates) {
-    if (fs.existsSync(candidate)) {
-      return candidate;
-    }
-  }
-  return null;
-}
 
 export function parseAvHeraldRss(xml: string): RawEvent[] {
   const items = xml.split('<item>').slice(1);
@@ -74,51 +52,17 @@ function extractOperator(text: string): string | undefined {
   return undefined;
 }
 
-const fallbackNow = new Date().toISOString();
-const FALLBACK: RawEvent[] = Array.from({ length: 10 }).map((_, i) => ({
-  source: 'avherald',
-  id: `avherald-fallback-${i + 1}`,
-  url: `https://avherald.com/sample/${i + 1}`,
-  fetchedAt: fallbackNow,
-  dateZ: fallbackNow,
-  registration: i % 2 === 0 ? 'JA-TEST' : 'G-TEST',
-  aircraftType: i % 2 === 0 ? 'B789' : 'A320',
-  operator: i % 2 === 0 ? 'Asia Air' : 'Example Airways',
-  country: i % 2 === 0 ? 'JP' : 'GB',
-  summary: `Fallback AVHerald record ${i + 1}`,
-  narrative: 'Fallback ingestion; replace with real parsed data when online.',
-  status: 'preliminary',
-}));
-
 export async function fetchRecentAvHerald(): Promise<RawEvent[]> {
   try {
     const resp = await fetch(AVH_FEED, { cache: 'no-store' });
     if (!resp.ok) {
-      if (resp.status === 404 && !allowFixture) {
-        return [];
-      }
       throw new Error(`AVHerald feed HTTP ${resp.status}`);
     }
     const xml = await resp.text();
     const parsed = parseAvHeraldRss(xml);
     if (parsed.length >= 1) return parsed.slice(0, 40);
-    // fall through to fixture
   } catch (err) {
-    if (allowFixture) {
-      console.warn('[avherald] falling back to fixtures', err);
-    }
+    console.warn('[avherald] live feed failed', err);
   }
-  if (allowFixture) {
-    const fixturePath = resolveFixturePath();
-    if (fixturePath) {
-      try {
-        const xml = fs.readFileSync(fixturePath, 'utf-8');
-        const parsed = parseAvHeraldRss(xml);
-        if (parsed.length >= 1) return parsed;
-      } catch (err) {
-        console.warn('[avherald] fixture read failed', err);
-      }
-    }
-  }
-  return allowFallback ? FALLBACK : [];
+  return [];
 }

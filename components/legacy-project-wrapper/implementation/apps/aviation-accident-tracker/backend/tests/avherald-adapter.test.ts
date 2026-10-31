@@ -98,22 +98,18 @@ describe('fetchRecentAvHerald', () => {
     expect((await fetchRecentAvHerald()).length).toBeLessThanOrEqual(40);
   });
 
-  // Outside production the adapter degrades to canned records rather than
-  // failing the whole ingest run, so the pipeline stays exercisable offline.
-  it('degrades to fallback records when the feed errors', async () => {
+  it('does not fabricate records when the feed errors', async () => {
     vi.mocked(fetch).mockImplementation(async () => new Response('Not Found', { status: 404 }));
-    const events = await fetchRecentAvHerald();
-    expect(events.length).toBeGreaterThan(0);
-    expect(events.every((e) => e.source === 'avherald')).toBe(true);
+    await expect(fetchRecentAvHerald()).resolves.toEqual([]);
   });
 
-  it('degrades to fallback records when the request throws', async () => {
+  it('does not fabricate records when the request throws', async () => {
     vi.mocked(fetch).mockImplementation(async () => { throw new Error('Network failure'); });
-    expect((await fetchRecentAvHerald()).length).toBeGreaterThan(0);
+    await expect(fetchRecentAvHerald()).resolves.toEqual([]);
   });
 
-  it('degrades to fallback records when the feed has no items', async () => {
+  it('does not fabricate records when the feed has no items', async () => {
     vi.mocked(fetch).mockImplementation(async () => new Response(rss(), { status: 200 }));
-    expect((await fetchRecentAvHerald()).length).toBeGreaterThan(0);
+    await expect(fetchRecentAvHerald()).resolves.toEqual([]);
   });
 });

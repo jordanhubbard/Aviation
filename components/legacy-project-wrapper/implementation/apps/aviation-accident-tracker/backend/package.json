@@ -12,7 +12,6 @@
     "clean": "rm -rf dist",
     "test": "vitest run --reporter=verbose && python3 -m unittest discover -s tests -p 'test_*.py'",
     "test:watch": "vitest watch",
-    "seed": "tsx scripts/seed-data.ts",
     "lint": "echo \"(placeholder lint)\"",
     "openapi": "node scripts/openapi.js",
     "ingest:cron": "node dist/scheduler.js"

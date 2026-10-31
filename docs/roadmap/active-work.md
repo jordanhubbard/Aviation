@@ -310,11 +310,15 @@ release-visible outcome to `CHANGELOG.md`; Git preserves prior queue states.
     explicitly selected Python keystore path through to the CLI. Known development
     credential defaults and missing migration/restore contracts remain named gaps;
     this classification does not certify them for production.
+  - [x] Separate Accident Tracker runtime ingestion from test and demo data. Remove
+    the dead ASN fixture, automatic AVHerald fabricated fallback, ineffective
+    in-memory seed command, and obsolete private airport list. Adapter tests now prove
+    that unavailable or empty external feeds return no records, while airport lookup
+    remains supplied by the common Aviation SDK catalog.
   - [ ] Classify and remove or intentionally retain every remainder beneath the legacy
     wrapper.
-- **Next action:** Distinguish Accident Tracker feed fixtures and seed data from
-  runtime-ingested records, then continue classifying every remaining retained-wrapper
-  path as Component intent,
+- **Next action:** Classify the workspace build and package graph, then continue
+  classifying every remaining retained-wrapper path as Component intent,
   Flavor requirement, conversion skill, immutable asset, repository harness, or
   intentionally retained application source. Do not invent a new
   Component for unique app behavior or generic helpers without shared semantics.

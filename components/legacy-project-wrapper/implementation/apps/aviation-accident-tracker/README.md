@@ -394,12 +394,12 @@ json
 
 1. **ASN (Aviation Safety Network)** — `source_name: 'asn'`
    - Recent occurrences page
-   - HTML scraping with fallback to JSON if available
+   - HTML scraping; an unavailable or unparseable source yields no ASN records
    - Updates: daily
 
 2. **AVHerald** — `source_name: 'avherald'`
    - Recent incidents feed
-   - RSS/Atom or HTML parsing
+   - RSS parsing; an unavailable or empty source yields no AVHerald records
    - Updates: daily
 
 3. **NTSB** — `source_name: 'ntsb'`
@@ -407,6 +407,9 @@ json
    - US accident and incident records, including case number, aircraft, injuries, and coordinates when available
    - Requires `mdb-export` from `mdbtools-utils` and Python 3 in the runtime image
    - The NTSB feed covers US investigations; ASN and AVHerald availability controls broader coverage
+
+Feed failures never create sample accidents. Parser examples live only in unit tests;
+the service persists records obtained from the named live sources.
 
 ### Deduplication Strategy
 

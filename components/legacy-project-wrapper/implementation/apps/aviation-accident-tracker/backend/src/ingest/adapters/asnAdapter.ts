@@ -1,14 +1,9 @@
 import { RawEvent } from '../types.js';
-import fs from 'fs';
-import path from 'path';
 import { config } from '../../config.js';
 
 const ASN_BASE = 'https://aviation-safety.net';
 const USER_AGENT = 'AviationAccidentTracker/1.0 (+https://github.com/jordanhubbard/Aviation)';
 const MAX_PAGES_PER_YEAR = 10;
-const fixturePath = path.resolve(path.dirname(new URL(import.meta.url).pathname), '../../data/asn-feed.xml');
-
-const allowFixtures = config.env !== 'production';
 
 const entityMap: Record<string, string> = {
   '&amp;': '&',
@@ -69,56 +64,6 @@ function extractAirportCodes(location: string): { airportIata?: string; airportI
   }
 
   return { airportIata, airportIcao };
-}
-
-export function parseAsnRss(xml: string): RawEvent[] {
-  const items = xml.split('<item>').slice(1);
-  const events: RawEvent[] = [];
-  for (const chunk of items) {
-    const title = matchTag(chunk, 'title');
-    const link = matchTag(chunk, 'link');
-    const pubDate = matchTag(chunk, 'pubDate') || new Date().toISOString();
-    if (!title || !link) continue;
-    const reg = extractRegistration(title);
-    const type = extractAircraftType(title);
-    events.push({
-      source: 'asn',
-      id: link,
-      url: link,
-      fetchedAt: new Date().toISOString(),
-      dateZ: new Date(pubDate).toISOString(),
-      registration: reg || 'UNKNOWN',
-      aircraftType: type || undefined,
-      operator: extractOperator(title) || undefined,
-      country: undefined,
-      summary: title,
-      narrative: title,
-      status: 'preliminary',
-    });
-  }
-  return events;
-}
-
-function matchTag(xml: string, tag: string): string | undefined {
-  const re = new RegExp(`<${tag}>([\\s\\S]*?)</${tag}>`, 'i');
-  const m = xml.match(re);
-  return m ? m[1].trim() : undefined;
-}
-
-function extractRegistration(text: string): string | undefined {
-  const m = text.match(/\b([A-Z0-9]{4,7}|N[0-9]{1,5}[A-Z]{0,2})\b/);
-  return m ? m[1] : undefined;
-}
-
-function extractAircraftType(text: string): string | undefined {
-  const m = text.match(/\b(A[0-9]{3}|B[0-9]{3}|[A-Z]{2,4}-?[0-9]{1,3})\b/);
-  return m ? m[0] : undefined;
-}
-
-function extractOperator(text: string): string | undefined {
-  const atIdx = text.toLowerCase().indexOf(' at ');
-  if (atIdx > 0) return text.slice(0, atIdx).trim();
-  return undefined;
 }
 
 export function parseAsnListPage(html: string, fetchedAt: string): RawEvent[] {
@@ -227,18 +172,6 @@ export async function fetchRecentAsn(): Promise<RawEvent[]> {
     }
   } catch (err) {
     console.warn('[asn] live scrape failed', err);
-  }
-
-  if (!allowFixtures) {
-    return [];
-  }
-
-  try {
-    const xml = fs.readFileSync(fixturePath, 'utf-8');
-    const parsed = parseAsnRss(xml);
-    if (parsed.length >= 1) return parsed;
-  } catch (err) {
-    console.warn('[asn] fixture read failed', err);
   }
 
   return [];
