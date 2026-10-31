@@ -35,6 +35,21 @@ from .aircraft import (
     aircraft_operating_profile_from_mapping,
     find_aircraft_operating_profile,
 )
+from .weight_balance import (
+    C172S_LOADING_PROFILE,
+    EnvelopePoint,
+    LoadingCondition,
+    LoadingInput,
+    LoadingProfile,
+    LoadingResult,
+    LoadingStationDefinition,
+    LoadingStationGroupLimit,
+    calculate_load,
+    find_loading_profile,
+    interpolate_envelope,
+    loading_profile_from_mapping,
+    validate_loading_profile,
+)
 
 __all__ = [
     # Airports
@@ -57,6 +72,20 @@ __all__ = [
     "C172S_OPERATING_PROFILE",
     "aircraft_operating_profile_from_mapping",
     "find_aircraft_operating_profile",
+    # Weight and balance
+    "C172S_LOADING_PROFILE",
+    "EnvelopePoint",
+    "LoadingCondition",
+    "LoadingInput",
+    "LoadingProfile",
+    "LoadingResult",
+    "LoadingStationDefinition",
+    "LoadingStationGroupLimit",
+    "calculate_load",
+    "find_loading_profile",
+    "interpolate_envelope",
+    "loading_profile_from_mapping",
+    "validate_loading_profile",
     # Modules
     "integrations",
     "nav_data",

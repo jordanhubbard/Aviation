@@ -1,34 +1,108 @@
 {
-  "schema": "aviation/weight-balance-acceptance-vectors@1",
-  "profile": {
-    "emptyWeight": 1500,
-    "emptyArm": 39,
-    "maxGross": 2300,
-    "fuelArm": 48,
-    "fuelDensity": 6,
-    "stations": [
-      {"name": "Front seats", "arm": 37},
-      {"name": "Baggage", "arm": 95}
-    ],
-    "envelope": [
-      {"weight": 1500, "forward": 35, "aft": 47},
-      {"weight": 2300, "forward": 41, "aft": 47}
-    ]
+  "schema": "aviation/weight-balance-acceptance-vectors@2",
+  "profiles": {
+    "cessna-172s-sample-loading": {
+      "profileId": "cessna-172s-sample-loading",
+      "aircraftProfileId": "cessna-172s",
+      "displayName": "Cessna 172S Skyhawk sample loading",
+      "emptyWeight": 1642,
+      "emptyMoment": 62600,
+      "maxGross": 2550,
+      "usableFuelCapacity": 53,
+      "fuelArm": 48,
+      "fuelDensity": 6,
+      "stations": [
+        {"stationId": "pilot", "name": "Pilot", "arm": 37},
+        {"stationId": "copilot", "name": "Copilot", "arm": 37},
+        {"stationId": "rear-passengers", "name": "Rear passengers", "arm": 73},
+        {"stationId": "baggage-a", "name": "Baggage area A", "arm": 95, "maximumWeight": 120},
+        {"stationId": "baggage-b", "name": "Baggage area B", "arm": 123, "maximumWeight": 50}
+      ],
+      "stationGroupLimits": [
+        {
+          "name": "Baggage areas A and B",
+          "stationIds": ["baggage-a", "baggage-b"],
+          "maximumWeight": 120
+        }
+      ],
+      "envelope": [
+        {"weight": 1500, "forward": 35, "aft": 47.3},
+        {"weight": 1950, "forward": 35, "aft": 47.3},
+        {"weight": 2550, "forward": 41, "aft": 47.3}
+      ]
+    }
   },
+  "lookups": [
+    {"query": "cessna-172s-sample-loading", "expectedProfileId": "cessna-172s-sample-loading"},
+    {"query": "cessna-172s", "expectedProfileId": "cessna-172s-sample-loading"},
+    {"query": "unknown", "expectedProfileId": null}
+  ],
   "vectors": [
-    {"id": "interpolated-envelope", "operation": "interpolate_envelope", "args": [1900], "expected": {"forward": 38, "aft": 47}},
-    {"id": "weight-below-envelope", "operation": "interpolate_envelope", "args": [1000], "expected": null},
-    {"id": "malformed-envelope", "operation": "interpolate_envelope", "args": [1900, [{"weight": 1500, "forward": 48, "aft": 47}, {"weight": 2300, "forward": 41, "aft": 47}]], "expected_error": "invalid_input"},
+    {
+      "id": "interpolated-envelope",
+      "operation": "interpolate_envelope",
+      "args": [2250],
+      "expected": {"forward": 38, "aft": 47.3}
+    },
+    {
+      "id": "weight-below-envelope",
+      "operation": "interpolate_envelope",
+      "args": [1400],
+      "expected": null
+    },
+    {
+      "id": "malformed-envelope",
+      "operation": "interpolate_envelope",
+      "args": [2250, [{"weight": 1950, "forward": 48, "aft": 47.3}, {"weight": 2550, "forward": 41, "aft": 47.3}]],
+      "expected_error": "invalid_input"
+    },
     {
       "id": "takeoff-and-landing",
       "operation": "calculate_load",
-      "args": [{"stationWeights": [170, 40], "fuelGallons": 40, "fuelBurnGallons": 20}],
+      "args": [{"stationWeights": [180, 150, 120, 40, 0], "fuelGallons": 53, "fuelBurnGallons": 20}],
       "expected": {
-        "takeoff": {"weight": 1950, "cg": 41.08205128205128, "limits": {"forward": 38.375, "aft": 47}, "problems": [], "withinLimits": true},
-        "landing": {"weight": 1830, "cg": 40.62841530054645, "limits": {"forward": 37.475, "aft": 47}, "problems": [], "withinLimits": true}
+        "takeoff": {"weight": 2450, "cg": 41.89142857142857, "limits": {"forward": 40, "aft": 47.3}, "problems": [], "withinLimits": true},
+        "landing": {"weight": 2330, "cg": 41.57682403433476, "limits": {"forward": 38.8, "aft": 47.3}, "problems": [], "withinLimits": true}
       }
     },
-    {"id": "overweight-and-outside-envelope", "operation": "calculate_load", "args": [{"stationWeights": [700, 0], "fuelGallons": 40, "fuelBurnGallons": 10}], "expected_problems": ["Above maximum gross weight", "Weight outside entered CG envelope range"]},
-    {"id": "burn-exceeds-loaded-fuel", "operation": "calculate_load", "args": [{"stationWeights": [170, 0], "fuelGallons": 10, "fuelBurnGallons": 11}], "expected_error": "invalid_input"}
+    {
+      "id": "overweight-and-outside-envelope",
+      "operation": "calculate_load",
+      "args": [{"stationWeights": [700, 0, 0, 0, 0], "fuelGallons": 53, "fuelBurnGallons": 10}],
+      "expected_problems": ["Above maximum gross weight", "Weight outside entered CG envelope range"]
+    },
+    {
+      "id": "station-and-group-limits",
+      "operation": "calculate_load",
+      "args": [{"stationWeights": [0, 0, 0, 121, 0], "fuelGallons": 0, "fuelBurnGallons": 0}],
+      "expected_problems": ["Baggage area A exceeds station limit", "Baggage areas A and B exceeds combined limit"]
+    },
+    {
+      "id": "combined-baggage-limit",
+      "operation": "calculate_load",
+      "args": [{"stationWeights": [0, 0, 0, 80, 41], "fuelGallons": 0, "fuelBurnGallons": 0}],
+      "expected_problems": ["Baggage areas A and B exceeds combined limit"]
+    },
+    {
+      "id": "fuel-capacity-limit",
+      "operation": "calculate_load",
+      "args": [{"stationWeights": [0, 0, 0, 0, 0], "fuelGallons": 54, "fuelBurnGallons": 0}],
+      "expected_problems": ["Fuel exceeds usable capacity"]
+    },
+    {
+      "id": "burn-exceeds-loaded-fuel",
+      "operation": "calculate_load",
+      "args": [{"stationWeights": [170, 0, 0, 0, 0], "fuelGallons": 10, "fuelBurnGallons": 11}],
+      "expected_error": "invalid_input"
+    }
+  ],
+  "invalidProfileMutations": [
+    {"id": "wrong-aircraft-link", "path": ["aircraftProfileId"], "value": "cessna-172n"},
+    {"id": "aircraft-weight-mismatch", "path": ["maxGross"], "value": 2300},
+    {"id": "aircraft-fuel-mismatch", "path": ["usableFuelCapacity"], "value": 43},
+    {"id": "duplicate-station-id", "path": ["stations", 1, "stationId"], "value": "pilot"},
+    {"id": "unknown-group-station", "path": ["stationGroupLimits", 0, "stationIds", 1], "value": "unknown"},
+    {"id": "empty-weight-outside-envelope", "path": ["emptyWeight"], "value": 1400},
+    {"id": "non-finite-fuel-density", "path": ["fuelDensity"], "value": "non-finite"}
   ]
 }

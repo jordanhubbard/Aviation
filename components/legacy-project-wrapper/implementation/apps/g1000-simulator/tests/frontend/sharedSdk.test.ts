@@ -3,8 +3,7 @@ import path from 'node:path'
 
 import {
   C172S_OPERATING_PROFILE,
-  C172_FUEL_CAPACITY_GALLONS,
-  C172_LOADING_PROFILE,
+  C172S_LOADING_PROFILE,
   calculateC172Loading,
   calculateDensityAltitude,
   calculateTripFuel,
@@ -20,12 +19,14 @@ describe('G1000 shared SDK boundary', () => {
   })
 
   it('uses the shared C172 profile and loading calculation', () => {
-    const result = calculateC172Loading([180, 150, 120, 40], 20)
+    const result = calculateC172Loading([180, 150, 120, 40, 0], 53)
 
-    expect(C172_LOADING_PROFILE.emptyWeight).toBe(1500)
-    expect(C172_FUEL_CAPACITY_GALLONS).toBe(43)
-    expect(result.weight).toBe(2110)
-    expect(result.cg).toBeCloseTo(45.0379, 4)
+    expect(C172S_LOADING_PROFILE.aircraftProfileId).toBe(C172S_OPERATING_PROFILE.profileId)
+    expect(C172S_LOADING_PROFILE.emptyWeight).toBe(1642)
+    expect(C172S_LOADING_PROFILE.usableFuelCapacity).toBe(53)
+    expect(C172S_LOADING_PROFILE.maxGross).toBe(2550)
+    expect(result.weight).toBe(2450)
+    expect(result.cg).toBeCloseTo(41.8914, 4)
   })
 
   it('uses the shared C172S operating limits for the airspeed tape', () => {
@@ -75,5 +76,8 @@ describe('G1000 shared SDK boundary', () => {
     expect(display).toContain('calculateTripFuel')
     expect(display).toContain('calculateC172Loading')
     expect(display).toContain('calculateDensityAltitude')
+    expect(display).toContain('DEFAULT_STATION_WEIGHTS_LB')
+    expect(display).toContain('setStations')
+    expect(display).not.toContain("['180', '150', '120', '40']")
   })
 })

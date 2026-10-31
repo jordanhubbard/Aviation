@@ -126,6 +126,10 @@ release-visible outcome to `CHANGELOG.md`; Git preserves prior queue states.
     Remove Flight Planner's unused contradictory C172 YAML profile; make its plan
     defaults and FPL export plus G1000's selector and backend compatibility record
     consume the common profile while retaining user loading and planning policy.
+  - [x] Qualify a cross-language C172S sample loading profile in
+    `aviation.weight-balance`, link its 2550-pound and 53-gallon limits explicitly to
+    `aviation.aircraft`, and migrate G1000 Trip Planning away from the mismatched C172N
+    record while retaining entered station weights and fuel as application state.
   - [x] Define `aviation.avionics` protocol and rendering contracts, add deterministic
     telemetry/command/flight-plan/layout/pipeline vectors, and replace G1000's duplicate
     frontend telemetry schema with the shared protocol surface. Keep simulator stores,
@@ -148,10 +152,10 @@ release-visible outcome to `CHANGELOG.md`; Git preserves prior queue states.
     aviation implementations after parity qualification.
   - [ ] Classify and remove or intentionally retain every remainder beneath the legacy
     wrapper.
-- **Next action:** Reconcile G1000 Trip Planning's C172N sample loading profile with its
-  C172S simulator identity by qualifying a C172S loading profile in
-  `aviation.weight-balance`, linking it explicitly to `aviation.aircraft`, and
-  retaining entered station weights and fuel as application state.
+- **Next action:** Link `aviation.flight-dynamics`' bundled C172S physics model
+  explicitly to `aviation.aircraft`, then remove repeated operating-limit and reference
+  fields where the aircraft profile is authoritative while retaining mass properties,
+  aerodynamic coefficients, control response, and computed performance as physics data.
 - **Evidence:** Phase 1.2 lift-and-shift identity `sha256:c5ca4361ba010f6e8d81c93398468f9f4f8b8cc352504bc8535fa74b7c6e9990`.
   Retained conversion stage is backed by current test receipt
   `sha256:60e252aceb5834018a21d3ec5a75b667c564e207ea3cf02d475b3245640c3c79`;
@@ -223,6 +227,17 @@ release-visible outcome to `CHANGELOG.md`; Git preserves prior queue states.
   frontend build. Its former private aircraft YAML is removed, and cited C172S values
   correct total/usable fuel to 56/53 gallons and the common maximum-cruise, climb, and
   landing reference figures.
+  C172S loading qualification advances the Component graph lock to
+  `sha256:acdaa9b39c2d9de4f4aaa467fa82a8bed09cf05312aa9c85608dbab0d3a89937`
+  and replaces the former 43-gallon/2300-pound C172N record with Component-owned sample
+  empty weight/moment, five station arms, baggage limits,
+  6-pound-per-gallon fuel at FS 48, and the normal-category CG envelope cited from the
+  manufacturer handbook. Its 21 TypeScript and 20 Python conformance tests pass within the
+  full 388-test TypeScript and 148-test Python SDK suites; G1000 passes 73 frontend tests
+  and its production build, and Preflight Check's three browser-SDK wiring/compatibility
+  tests remain
+  green. The app's default/editable occupant, baggage, and fuel values remain React
+  state rather than SDK profile data.
   Navigation and the dedicated SDK workflow landed in PR #339 at exact-main commit
   `9c55e4ac70dbc87def6d5ce6e6abc47aed214304`; all seven exact-commit workflows
   passed. Airports landed in PR #340 at exact-main commit
