@@ -166,6 +166,7 @@ jobs:
         working-directory: apps/foreflight-dashboard
         run: |
           pip install -r requirements.txt
+          pip install -e ../../packages/shared-sdk/python
           pip install pytest pytest-cov
 
       - name: Run Python tests
