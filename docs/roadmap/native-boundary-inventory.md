@@ -13,9 +13,9 @@ native Component or prove its acceptance contract is complete.
 The pre-adoption revision `f68efb8273508c74fbc3cd710e8f0ae1bc4a8d39` had
 1,409 tracked files. The original first pass preserved those paths and established
 the wrapper baseline. The current audit baseline is bound to main revision
-`23e7a90c50c4d2f810650c907726745a536ccafe`, 19 committed Component locks, and
+`ce9f99311b8186f73ea351ba7c563979b79fd20f`, 19 committed Component locks, and
 retained receipt
-`sha256:09a16233ae6587ca89020d656671f50aa77b9bce2498037ce0c3c376c0e54eb3`
+`sha256:0ff585a751f37e419550eebc1b284bfb240f98e2da5e4ee86750078c2effac3f`
 with 591 admitted tests. It maps all 12 application directories and 10 shared
 package directories. That receipt proves retained lifecycle parity; it does not by
 itself prove native regeneration or authorize retiring the wrapper.
@@ -57,7 +57,7 @@ current human description.
 | Boundary and owner | Source and contract evidence | Existing test evidence |
 | --- | --- | --- |
 | AI Explainer — `packages/ai-explainer` | `packages/ai-explainer/package.json`; `packages/ai-explainer/README.md` | `packages/ai-explainer/tests/` |
-| Aviation Config — `packages/aviation-config` | `packages/aviation-config/package.json`; `packages/aviation-config/src/` | none located |
+| Aviation Config — `packages/aviation-config` | `packages/aviation-config/package.json`; `packages/aviation-config/src/` | 14 package-owned conformance tests under `packages/aviation-config/tests/`; now required by Common Aviation SDK CI |
 | Flight Dynamics — `packages/flight-dynamics` | `packages/flight-dynamics/package.json`; `packages/flight-dynamics/README.md`; `packages/flight-dynamics/requirements.txt` | Component-owned conformance vectors, package physics/model tests, and retained API tests |
 | G1000 Avionics SDK — `packages/g1000-avionics-sdk` | `packages/g1000-avionics-sdk/package.json`; `packages/g1000-avionics-sdk/README.md`; Python package under `packages/g1000-avionics-sdk/python/` | Component-owned cross-language AHRS/ADC/GPS vectors and invalid-input tests |
 | G1000 Protocols — `packages/g1000-protocols` | `packages/g1000-protocols/package.json`; `packages/g1000-protocols/README.md`; Go package under `packages/g1000-protocols/` | Component-owned telemetry/command/flight-plan conformance vectors and TypeScript package tests; Go remains provisional |
@@ -66,6 +66,31 @@ current human description.
 | Navigation Data providers — `packages/nav-data` | `packages/nav-data/package.json`; `packages/nav-data/src/ingestion/` | Component-owned synthetic provider vectors and package tests |
 | Shared SDK — `packages/shared-sdk` | `packages/shared-sdk/package.json`; `packages/shared-sdk/README.md`; Python package under `packages/shared-sdk/python/`; Go package under `packages/shared-sdk/` | `packages/shared-sdk/tests/`; Python tests; Go tests |
 | UI Framework — `packages/ui-framework` | `packages/ui-framework/package.json`; `packages/ui-framework/README.md` | `packages/ui-framework/src/` tests |
+
+## Workspace package and build graph
+
+The machine-checked [workspace package graph](workspace-package-graph.json) covers all
+10 shared package manifests, all 12 application package manifests, and build authority
+for all 12 application directories. Its checker rejects an unclassified workspace
+member, package-name or script drift, stale `workspace:` dependency edges, missing
+build authorities, and application packages assigned to the wrong owner.
+
+The graph deliberately separates package placement from Component authority:
+
+| Classification | Retained packages | Disposition |
+| --- | --- | --- |
+| Native Component realization | shared SDK, Aviation Config, Flight Dynamics, G1000 avionics/protocol/rendering | Common behavior is owned by the named qualified Components and independently gated in Common Aviation SDK CI. |
+| Shared Component adapter | Navigation Data and UI Framework | Provider ingestion and UI bindings consume qualified contracts but retain adapter and rendering policy. |
+| Repository infrastructure | Keystore | Credential acquisition is shared infrastructure, not aviation-domain behavior; both language bindings remain independently tested. |
+| Shared application service | AI Explainer | Reusable provider orchestration without a portable aviation contract; retain as a tested library without manufacturing a Component. |
+| Application package | all manifests beneath `apps/` | Composition, transports, persistence, provider policy, and presentation remain with the owning application. |
+
+The pnpm graph covers JavaScript and TypeScript only. Python, Go, and Clojure build
+edges remain explicit in Make, Docker, and CI; the inventory names their application
+build authorities rather than pretending they are pnpm dependencies. Common SDK CI
+now validates this graph and runs the previously omitted Aviation Config package tests.
+Known application-package test omissions remain recorded as gaps, not hidden behind a
+successful workspace build.
 
 ### First selected boundary: aviation navigation
 

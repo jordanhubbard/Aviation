@@ -1,0 +1,155 @@
+{
+  "$schema": "aviation/workspace-package-graph@1",
+  "revision": 1,
+  "authority": "retained-build-inventory",
+  "boundary": "Workspace membership and build orchestration are repository infrastructure. A package is Component authority only when its classification names a qualified native Component; application packages remain private adapters and composition.",
+  "workspace": {
+    "root": "components/legacy-project-wrapper/implementation",
+    "packageManager": "pnpm@10.34.5",
+    "manifest": "pnpm-workspace.yaml",
+    "globs": ["packages/*", "apps/*", "apps/*/frontend", "apps/*/backend"],
+    "rootWorkspaceDependencies": ["@aviation/shared-sdk"]
+  },
+  "sharedPackages": [
+    {
+      "path": "packages/ai-explainer",
+      "name": "@aviation/ai-explainer",
+      "classification": "shared-application-service",
+      "componentOwners": [],
+      "workspaceDependencies": [],
+      "buildScript": "tsc",
+      "testScript": "vitest run",
+      "testGate": "monorepo-ci"
+    },
+    {
+      "path": "packages/aviation-config",
+      "name": "@aviation/aviation-config",
+      "classification": "native-component-realization",
+      "componentOwners": ["aviation.configuration"],
+      "workspaceDependencies": ["@aviation/keystore"],
+      "buildScript": "tsc",
+      "testScript": "vitest run",
+      "testGate": "common-sdk-ci"
+    },
+    {
+      "path": "packages/flight-dynamics",
+      "name": "@aviation/flight-dynamics",
+      "classification": "native-component-realization",
+      "componentOwners": ["aviation.flight-dynamics", "aviation.aircraft"],
+      "workspaceDependencies": [],
+      "buildScript": null,
+      "testScript": "python3 -m venv .venv && .venv/bin/pip install -r requirements.txt pytest httpx -q && .venv/bin/pytest",
+      "testGate": "common-sdk-python"
+    },
+    {
+      "path": "packages/g1000-avionics-sdk",
+      "name": "@aviation/g1000-avionics-sdk",
+      "classification": "native-component-realization",
+      "componentOwners": ["aviation.avionics"],
+      "workspaceDependencies": [],
+      "buildScript": "tsc",
+      "testScript": "vitest run src",
+      "testGate": "common-sdk-ci-typescript-python"
+    },
+    {
+      "path": "packages/g1000-protocols",
+      "name": "@aviation/g1000-protocols",
+      "classification": "native-component-realization",
+      "componentOwners": ["aviation.avionics"],
+      "workspaceDependencies": [],
+      "buildScript": "tsc",
+      "testScript": "vitest run",
+      "testGate": "common-sdk-ci-and-go"
+    },
+    {
+      "path": "packages/g1000-rendering",
+      "name": "@aviation/g1000-rendering",
+      "classification": "native-component-realization",
+      "componentOwners": ["aviation.avionics"],
+      "workspaceDependencies": ["@aviation/shared-sdk"],
+      "buildScript": "tsc",
+      "testScript": "vitest run",
+      "testGate": "common-sdk-ci"
+    },
+    {
+      "path": "packages/keystore",
+      "name": "@aviation/keystore",
+      "classification": "repository-infrastructure",
+      "componentOwners": [],
+      "workspaceDependencies": ["@aviation/shared-sdk"],
+      "buildScript": "tsc",
+      "testScript": "vitest run src",
+      "testGate": "common-sdk-ci-typescript-python"
+    },
+    {
+      "path": "packages/nav-data",
+      "name": "@aviation/nav-data",
+      "classification": "shared-component-adapter",
+      "componentOwners": ["aviation.airports", "aviation.nav-data"],
+      "workspaceDependencies": ["@aviation/shared-sdk"],
+      "buildScript": "tsc",
+      "testScript": "vitest run",
+      "testGate": "common-sdk-ci"
+    },
+    {
+      "path": "packages/shared-sdk",
+      "name": "@aviation/shared-sdk",
+      "classification": "native-component-realization",
+      "componentOwners": [
+        "aviation.aircraft", "aviation.airports", "aviation.alerts", "aviation.avionics",
+        "aviation.configuration", "aviation.flight-dynamics", "aviation.hazards",
+        "aviation.logbook", "aviation.navigation", "aviation.nav-data", "aviation.notam",
+        "aviation.service.health", "aviation.testing.e2e", "aviation.ui.panes",
+        "aviation.weather", "aviation.weight-balance"
+      ],
+      "workspaceDependencies": [],
+      "buildScript": "tsc && tsc -p tsconfig.esm.json && node scripts/write-esm-marker.mjs",
+      "testScript": "vitest run",
+      "testGate": "common-sdk-ci-typescript-python-go"
+    },
+    {
+      "path": "packages/ui-framework",
+      "name": "@aviation/ui-framework",
+      "classification": "shared-component-adapter",
+      "componentOwners": ["aviation.alerts", "aviation.ui.panes"],
+      "workspaceDependencies": ["@aviation/shared-sdk"],
+      "buildScript": "tsc",
+      "testScript": "vitest run",
+      "testGate": "common-sdk-ci"
+    }
+  ],
+  "applicationPackages": [
+    {"path":"apps/aviation-accident-tracker/backend","name":"@aviation/accident-tracker-backend","application":"aviation-accident-tracker","workspaceDependencies":["@aviation/ai-explainer","@aviation/keystore","@aviation/shared-sdk"],"buildScript":"tsc","testScript":"vitest run --reporter=verbose && python3 -m unittest discover -s tests -p 'test_*.py'"},
+    {"path":"apps/aviation-accident-tracker/frontend","name":"@aviation/accident-tracker-frontend","application":"aviation-accident-tracker","workspaceDependencies":["@aviation/shared-sdk","@aviation/ui-framework"],"buildScript":"tsc && vite build","testScript":"vitest run"},
+    {"path":"apps/aviation-chat","name":"@aviation/aviation-chat","application":"aviation-chat","workspaceDependencies":["@aviation/ai-explainer","@aviation/keystore","@aviation/shared-sdk"],"buildScript":"tsc","testScript":null},
+    {"path":"apps/aviation-missions-app/frontend","name":"aviation-missions-frontend","application":"aviation-missions-app","workspaceDependencies":[],"buildScript":"echo 'Using pure JavaScript - no build needed' && exit 0","testScript":"echo 'No tests configured for pure JavaScript implementation'"},
+    {"path":"apps/flight-planner/frontend","name":"flight-planner-frontend","application":"flight-planner","workspaceDependencies":["@aviation/shared-sdk"],"buildScript":"tsc && vite build","testScript":"vitest run"},
+    {"path":"apps/flight-tracker","name":"@aviation/flight-tracker","application":"flight-tracker","workspaceDependencies":["@aviation/keystore","@aviation/shared-sdk","@aviation/ui-framework"],"buildScript":"tsc","testScript":"NO_PROXY='*' HTTP_PROXY='' HTTPS_PROXY='' jest"},
+    {"path":"apps/foreflight-dashboard/frontend","name":"foreflight-dashboard-frontend","application":"foreflight-dashboard","workspaceDependencies":[],"buildScript":"tsc && vite build","testScript":"vitest --passWithNoTests"},
+    {"path":"apps/g1000-simulator","name":"@aviation/g1000-simulator","application":"g1000-simulator","workspaceDependencies":["@aviation/shared-sdk"],"buildScript":"tsc","testScript":"jest"},
+    {"path":"apps/g1000-simulator/backend","name":"@aviation/g1000-simulator-backend","application":"g1000-simulator","workspaceDependencies":["@aviation/ai-explainer","@aviation/keystore","@aviation/shared-sdk","@aviation/ui-framework"],"buildScript":"tsc","testScript":"npm run build"},
+    {"path":"apps/g1000-simulator/frontend","name":"g1000-simulator-frontend","application":"g1000-simulator","workspaceDependencies":["@aviation/aviation-config","@aviation/g1000-protocols","@aviation/g1000-rendering","@aviation/shared-sdk"],"buildScript":"vite build","testScript":null},
+    {"path":"apps/meta-app","name":"@aviation/meta-app","application":"meta-app","workspaceDependencies":["@aviation/aviation-config","@aviation/ui-framework"],"buildScript":"tsc && vite build","testScript":"node --test server.test.mjs"},
+    {"path":"apps/weather-briefing","name":"@aviation/weather-briefing","application":"weather-briefing","workspaceDependencies":["@aviation/keystore","@aviation/shared-sdk","@aviation/ui-framework"],"buildScript":"tsc","testScript":"npm run build"}
+  ],
+  "applications": [
+    {"id":"aviation-accident-tracker","buildAuthorities":["apps/aviation-accident-tracker/Dockerfile","apps/aviation-accident-tracker/Makefile"],"nodePackages":["apps/aviation-accident-tracker/backend","apps/aviation-accident-tracker/frontend"]},
+    {"id":"aviation-chat","buildAuthorities":["apps/aviation-chat/Dockerfile","apps/aviation-chat/Makefile"],"nodePackages":["apps/aviation-chat"]},
+    {"id":"aviation-missions-app","buildAuthorities":["apps/aviation-missions-app/Dockerfile","apps/aviation-missions-app/Makefile","apps/aviation-missions-app/backend/project.clj"],"nodePackages":["apps/aviation-missions-app/frontend"]},
+    {"id":"flight-planner","buildAuthorities":["apps/flight-planner/Dockerfile","apps/flight-planner/Makefile","apps/flight-planner/pyproject.toml"],"nodePackages":["apps/flight-planner/frontend"]},
+    {"id":"flight-track-analyzer","buildAuthorities":["apps/flight-track-analyzer/Dockerfile","apps/flight-track-analyzer/Makefile","apps/flight-track-analyzer/app/requirements.txt"],"nodePackages":[]},
+    {"id":"flight-tracker","buildAuthorities":["apps/flight-tracker/Dockerfile","apps/flight-tracker/Makefile"],"nodePackages":["apps/flight-tracker"]},
+    {"id":"flightschool","buildAuthorities":["apps/flightschool/Dockerfile","apps/flightschool/Makefile","apps/flightschool/requirements.txt"],"nodePackages":[]},
+    {"id":"foreflight-dashboard","buildAuthorities":["apps/foreflight-dashboard/Dockerfile","apps/foreflight-dashboard/Makefile","apps/foreflight-dashboard/pyproject.toml"],"nodePackages":["apps/foreflight-dashboard/frontend"]},
+    {"id":"g1000-simulator","buildAuthorities":["apps/g1000-simulator/Dockerfile","apps/g1000-simulator/Makefile","apps/g1000-simulator/backend/pyproject.toml"],"nodePackages":["apps/g1000-simulator","apps/g1000-simulator/backend","apps/g1000-simulator/frontend"]},
+    {"id":"meta-app","buildAuthorities":["apps/meta-app/Dockerfile","apps/meta-app/Makefile"],"nodePackages":["apps/meta-app"]},
+    {"id":"preflight-check","buildAuthorities":["apps/preflight-check/Dockerfile"],"nodePackages":[]},
+    {"id":"weather-briefing","buildAuthorities":["apps/weather-briefing/Dockerfile","apps/weather-briefing/Makefile"],"nodePackages":["apps/weather-briefing"]}
+  ],
+  "knownGaps": [
+    "Aviation Chat and the G1000 frontend have production builds but no package-owned test command.",
+    "The Missions frontend test command is an explicit no-op and ForeFlight frontend permits an empty Vitest suite.",
+    "The retained root npm scripts use npm workspace traversal even though pnpm is the pinned package manager; Make and CI are the current build authorities.",
+    "Python, Go, and Clojure dependencies are outside pnpm's graph and remain explicitly orchestrated by Make, Docker, and CI."
+  ]
+}

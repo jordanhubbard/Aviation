@@ -9,6 +9,9 @@
 
 ## Unreleased
 
+- Added a machine-checked workspace package/build graph covering every shared and
+  application package plus all twelve application build authorities. Common SDK CI
+  now validates the graph and independently runs the Aviation Config test suite.
 - Removed Accident Tracker's fabricated feed fallbacks, dead fixture files,
   ineffective in-memory seed command, and obsolete private airport sample. ASN and
   AVHerald failures now yield no records, parser behavior remains covered by synthetic

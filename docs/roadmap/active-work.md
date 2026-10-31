@@ -315,9 +315,16 @@ release-visible outcome to `CHANGELOG.md`; Git preserves prior queue states.
     in-memory seed command, and obsolete private airport list. Adapter tests now prove
     that unavailable or empty external feeds return no records, while airport lookup
     remains supplied by the common Aviation SDK catalog.
+  - [x] Classify the retained workspace package and build graph. A machine-checked
+    inventory now covers all 10 shared package manifests, all 12 application package
+    manifests, and build authority for every application directory; it distinguishes
+    native Component realizations and adapters from repository infrastructure,
+    reusable application services, and application-private composition. Common SDK CI
+    validates the graph and now runs the previously omitted Aviation Config tests.
   - [ ] Classify and remove or intentionally retain every remainder beneath the legacy
     wrapper.
-- **Next action:** Classify the workspace build and package graph, then continue
+- **Next action:** Classify repository-level orchestration and deployment paths
+  (`deploy`, `k8s`, `monitoring`, `scripts`, `tests`, and `root`), then continue
   classifying every remaining retained-wrapper path as Component intent,
   Flavor requirement, conversion skill, immutable asset, repository harness, or
   intentionally retained application source. Do not invent a new
