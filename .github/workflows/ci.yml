@@ -33,6 +33,10 @@ jobs:
         working-directory: .
         run: python scripts/check_application_state_contracts.py
 
+      - name: Validate workspace package and build graph
+        working-directory: .
+        run: python scripts/check_workspace_package_graph.py
+
   # Check accessibility and color contrast
   accessibility:
     name: Accessibility & Color Contrast
