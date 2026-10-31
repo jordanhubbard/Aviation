@@ -176,6 +176,12 @@ release-visible outcome to `CHANGELOG.md`; Git preserves prior queue states.
     GPS track normalization through the qualified `aviation.avionics` realization.
     Retain random GPS error injection, approach orchestration, CDI sensitivity,
     TO/FROM selection, and instrument presentation as application policy.
+  - [x] Qualify exact, fail-closed manufacturer/model matching in both
+    `aviation.aircraft` bindings and migrate Flight School's fleet presentation to
+    common identity, weight, fuel, and reference-performance data. Retain tail
+    registration, rates, equipment, availability, bookings, and explicit 100-hour/
+    annual maintenance scheduling as application policy; remove two unused invalid
+    legacy maintenance helpers.
   - [ ] Promote airports, weather, procedures/nav-data, flight dynamics, avionics
     protocols/rendering, shared UI, configuration, and integration infrastructure into
     explicit Components with owned tests and contracts.
@@ -183,10 +189,10 @@ release-visible outcome to `CHANGELOG.md`; Git preserves prior queue states.
     aviation implementations after parity qualification.
   - [ ] Classify and remove or intentionally retain every remainder beneath the legacy
     wrapper.
-- **Next action:** Audit Flight School's retained aircraft identity, configuration,
-  and maintenance calculations against `aviation.aircraft`; reuse qualified profile
-  data while retaining bookings, fleet availability, equipment state, rates, and
-  maintenance scheduling as application policy.
+- **Next action:** Audit ForeFlight Dashboard's retained airport, weather, and route
+  calculation boundaries against the qualified common SDK; migrate common aviation
+  behavior while retaining user accounts, dashboard composition, and provider-facing
+  presentation as application policy.
 - **Evidence:** Phase 1.2 lift-and-shift identity `sha256:c5ca4361ba010f6e8d81c93398468f9f4f8b8cc352504bc8535fa74b7c6e9990`.
   Retained conversion stage is backed by current test receipt
   `sha256:60e252aceb5834018a21d3ec5a75b667c564e207ea3cf02d475b3245640c3c79`;
@@ -259,6 +265,14 @@ release-visible outcome to `CHANGELOG.md`; Git preserves prior queue states.
   all 188 non-integration Flight Planner tests plus eight subtests pass; random GPS
   error injection, approach orchestration, CDI sensitivity, TO/FROM selection, and
   display-relative bearing remain application policy.
+  Flight School aircraft-profile adoption advances `aviation.aircraft` to 0.4.0 with
+  Component lock
+  `sha256:de1c1f68d0a2f433a544462ab710737859728b62437a8da3303dc04b65bd81e3`.
+  Thirty TypeScript and 32 Python aircraft conformance tests cover exact normalized
+  identity and fail-closed unknown/partial matches within full 424-test TypeScript and
+  161-test Python SDK suites. Flight School passes 64 tests with 25 documented skips;
+  its fleet page renders matched SDK reference data, Piper PA-28-181 remains unmatched,
+  and application-owned scheduling fields and policies remain intact.
   The G1000 and Flight Planner private geodesy service placeholders were classified as
   non-realized scaffolding and removed with application boundary tests preventing their
   reintroduction; all 30 G1000 backend tests and 178 non-integration Flight Planner
@@ -372,10 +386,11 @@ release-visible outcome to `CHANGELOG.md`; Git preserves prior queue states.
   identity `sha256:3655035fb873c9c31ba28776c819ff4de1d9d7de579d9e810516a9d83cd300a6`
   and parity identity
   `sha256:4f5acf5f618ab336bf169ec84d4f1068f4754702371d1ff0d63c093880d5deee`.
-  The current retained receipt is
+  Before the Flight School adoption slice, the retained receipt was
   `sha256:342a2f0bfb42a2661da7a4753a7d47146f6c005aaa70dca3643f92cc59377dd9`
   (candidate `sha256:8aaf590c4b20959cdd289af5439fc3c4899230424e7e0d1af8f8e362858277f0`,
-  417 tests).
+  417 tests). The current exact receipt is recorded in `verification/current.json`;
+  the expanded retained harness passes 424 tests.
   The ADF/DME slice landed in PR #348 at exact-main commit
   `f3da7e3406b6b2d04b95da03217231d1b7313a1e`; all six exact-commit workflows
   passed: Common Aviation SDK run 41137297070, Integration Tests run 41137297059,

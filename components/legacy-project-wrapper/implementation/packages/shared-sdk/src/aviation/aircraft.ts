@@ -265,6 +265,9 @@ const OPERATING_PROFILES = Object.freeze([
   SR22_PERSPECTIVE_3600_OPERATING_PROFILE,
 ]);
 
+const normalizeIdentityPart = (value: string): string =>
+  value.trim().replace(/\s+/g, ' ').toLocaleLowerCase('en-US');
+
 /**
  * Resolve a bundled profile by stable profile ID or ICAO aircraft type
  * designator. ICAO lookup is case-insensitive.
@@ -277,5 +280,24 @@ export function findAircraftOperatingProfile(
   return OPERATING_PROFILES.find(
     (profile) =>
       profile.profileId === query || profile.icaoTypeDesignator === designator,
+  );
+}
+
+/**
+ * Match a bundled profile to an application's manufacturer/model identity.
+ * Both fields must match after case and whitespace normalization; partial or
+ * model-only matches deliberately fail closed.
+ */
+export function matchAircraftOperatingProfile(
+  manufacturer: string,
+  model: string
+): Readonly<AircraftOperatingProfile> | undefined {
+  const normalizedManufacturer = normalizeIdentityPart(manufacturer);
+  const normalizedModel = normalizeIdentityPart(model);
+  if (!normalizedManufacturer || !normalizedModel) return undefined;
+  return OPERATING_PROFILES.find(
+    (profile) =>
+      normalizeIdentityPart(profile.manufacturer) === normalizedManufacturer
+      && normalizeIdentityPart(profile.model) === normalizedModel,
   );
 }

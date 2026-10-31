@@ -1,5 +1,5 @@
 {
-  "schema": "aviation/aircraft-acceptance-vectors@3",
+  "schema": "aviation/aircraft-acceptance-vectors@4",
   "profiles": {
     "cessna-172s": {
       "profileId": "cessna-172s",
@@ -119,6 +119,15 @@
     {"query": "cirrus-sr22-perspective-3600", "expectedProfileId": "cirrus-sr22-perspective-3600"},
     {"query": "sr22", "expectedProfileId": "cirrus-sr22-perspective-3600"},
     {"query": "unknown", "expectedProfileId": null}
+  ],
+  "identityMatches": [
+    {"manufacturer": "Cessna", "model": "172S", "expectedProfileId": "cessna-172s"},
+    {"manufacturer": "  cessna  ", "model": "  172s  ", "expectedProfileId": "cessna-172s"},
+    {"manufacturer": "Cirrus   Aircraft", "model": "SR22   Perspective 3600 lb", "expectedProfileId": "cirrus-sr22-perspective-3600"},
+    {"manufacturer": "Piper", "model": "PA-28-181", "expectedProfileId": null},
+    {"manufacturer": "Cessna", "model": "172", "expectedProfileId": null},
+    {"manufacturer": "", "model": "172S", "expectedProfileId": null},
+    {"manufacturer": "Cessna", "model": "", "expectedProfileId": null}
   ],
   "invalidMutations": [
     {"id": "non-positive-vso", "path": ["airspeedLimits", "vsoKias"], "value": 0},

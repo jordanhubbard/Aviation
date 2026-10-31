@@ -13,6 +13,7 @@
 
     <div class="row">
         {% for aircraft in aircraft %}
+        {% set profile = aircraft.operating_profile %}
         <div class="col-md-4 mb-4">
             <div class="card h-100">
                 {% if aircraft.image_url %}
@@ -29,6 +30,18 @@
                     </p>
                     {% if aircraft.description %}
                     <p class="card-text">{{ aircraft.description }}</p>
+                    {% endif %}
+                    {% if profile %}
+                    <div class="border-top pt-2 mt-2" data-aircraft-profile="{{ profile.profile_id }}">
+                        <h6>Qualified SDK reference profile</h6>
+                        <p class="card-text small mb-2">
+                            <strong>{{ profile.display_name }}</strong><br>
+                            ICAO type: {{ profile.icao_type_designator }}<br>
+                            Maximum takeoff weight: {{ "%.0f"|format(profile.weight_limits.maximum_takeoff_weight_lb) }} lb<br>
+                            Usable fuel: {{ "%.1f"|format(profile.fuel_limits.usable_capacity_gal) }} gal<br>
+                            Maximum cruise: {{ "%.0f"|format(profile.reference_performance.maximum_cruise_speed_ktas) }} KTAS
+                        </p>
+                    </div>
                     {% endif %}
                     <div class="mt-2">
                         {% if aircraft.ifr_equipped %}
@@ -54,4 +67,4 @@
         {% endfor %}
     </div>
 </div>
-{% endblock %} 
+{% endblock %}

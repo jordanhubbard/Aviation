@@ -13,6 +13,7 @@ from aviation.aircraft import (
     SR22_PERSPECTIVE_3600_OPERATING_PROFILE,
     aircraft_operating_profile_from_mapping,
     find_aircraft_operating_profile,
+    match_aircraft_operating_profile,
 )
 from _conformance_contract import load_conformance_contract
 
@@ -73,7 +74,7 @@ def _portable_profile(profile) -> dict[str, object]:
     ids=lambda profile: profile.profile_id,
 )
 def test_component_profile_matches_portable_vector(profile) -> None:
-    assert CONTRACT["schema"] == "aviation/aircraft-acceptance-vectors@3"
+    assert CONTRACT["schema"] == "aviation/aircraft-acceptance-vectors@4"
     assert _portable_profile(profile) == CONTRACT["profiles"][profile.profile_id]
 
 
@@ -82,6 +83,20 @@ def test_component_profile_lookup(lookup: dict[str, object]) -> None:
     profile = find_aircraft_operating_profile(str(lookup["query"]))
     actual = profile.profile_id if profile else None
     assert actual == lookup["expectedProfileId"]
+
+
+@pytest.mark.parametrize(
+    "identity",
+    CONTRACT["identityMatches"],
+    ids=lambda item: f'{item["manufacturer"]}/{item["model"]}',
+)
+def test_component_profile_identity_match(identity: dict[str, object]) -> None:
+    profile = match_aircraft_operating_profile(
+        str(identity["manufacturer"]),
+        str(identity["model"]),
+    )
+    actual = profile.profile_id if profile else None
+    assert actual == identity["expectedProfileId"]
 
 
 @pytest.mark.parametrize(

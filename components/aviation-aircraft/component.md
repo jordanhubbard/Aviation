@@ -1,6 +1,6 @@
 ---
 namespace: aviation
-version: 0.3.0
+version: 0.4.0
 display_name: Aviation aircraft profiles
 profiles:
   - library
@@ -8,7 +8,7 @@ profiles:
 sample: false
 provides:
   - name: aviation.aircraft
-    version: 0.3.0
+    version: 0.4.0
     interface:
       uri: interfaces/aircraft.md
       pin: null
@@ -79,6 +79,15 @@ copies of the same aircraft record.
   fuel default
 - **THEN** it derives those values from the C172S profile while retaining the user's
   selected speed, fuel burn, loading, and route policy as private application state
+
+#### Scenario: Flight School presents an aircraft from its fleet
+
+- **WHEN** the application-owned manufacturer and model exactly identify a bundled
+  profile after case and whitespace normalization
+- **THEN** the application derives reference identity, weight, fuel, and performance
+  from that profile
+- **AND** unmatched aircraft receive no guessed profile while registration, booking,
+  rates, equipment state, availability, and maintenance policy remain private
 
 ### Requirement: Published figures retain provenance
 

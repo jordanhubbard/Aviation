@@ -274,6 +274,10 @@ _OPERATING_PROFILES = (
 )
 
 
+def _normalize_identity_part(value: str) -> str:
+    return " ".join(value.split()).casefold()
+
+
 def find_aircraft_operating_profile(
     identifier: str,
 ) -> AircraftOperatingProfile | None:
@@ -291,6 +295,31 @@ def find_aircraft_operating_profile(
     )
 
 
+def match_aircraft_operating_profile(
+    manufacturer: str,
+    model: str,
+) -> AircraftOperatingProfile | None:
+    """Match an exact manufacturer/model identity after case/space normalization.
+
+    Both fields are required. Partial and model-only matches fail closed so an
+    application cannot silently attach reference limits to the wrong aircraft.
+    """
+
+    normalized_manufacturer = _normalize_identity_part(manufacturer)
+    normalized_model = _normalize_identity_part(model)
+    if not normalized_manufacturer or not normalized_model:
+        return None
+    return next(
+        (
+            profile
+            for profile in _OPERATING_PROFILES
+            if _normalize_identity_part(profile.manufacturer) == normalized_manufacturer
+            and _normalize_identity_part(profile.model) == normalized_model
+        ),
+        None,
+    )
+
+
 __all__ = [
     "AircraftDimensions",
     "AircraftFuelLimits",
@@ -303,4 +332,5 @@ __all__ = [
     "SR22_PERSPECTIVE_3600_OPERATING_PROFILE",
     "aircraft_operating_profile_from_mapping",
     "find_aircraft_operating_profile",
+    "match_aircraft_operating_profile",
 ]
