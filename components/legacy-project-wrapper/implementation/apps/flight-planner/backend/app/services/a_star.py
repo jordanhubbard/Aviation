@@ -5,6 +5,8 @@ import math
 from dataclasses import dataclass
 from typing import Dict, Iterable, List, Sequence, Tuple
 
+from aviation.navigation import distance_nm
+
 
 class AStarError(RuntimeError):
     pass
@@ -12,14 +14,7 @@ class AStarError(RuntimeError):
 
 def haversine_nm(a: Tuple[float, float], b: Tuple[float, float]) -> float:
     (lat1, lon1), (lat2, lon2) = a, b
-    r_nm = 3440.065
-    phi1 = math.radians(lat1)
-    phi2 = math.radians(lat2)
-    dphi = math.radians(lat2 - lat1)
-    dlambda = math.radians(lon2 - lon1)
-    aa = math.sin(dphi / 2) ** 2 + math.cos(phi1) * math.cos(phi2) * math.sin(dlambda / 2) ** 2
-    c = 2 * math.atan2(math.sqrt(aa), math.sqrt(1 - aa))
-    return r_nm * c
+    return distance_nm(lat1, lon1, lat2, lon2)
 
 
 @dataclass(frozen=True)

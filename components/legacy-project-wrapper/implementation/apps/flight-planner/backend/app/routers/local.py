@@ -3,14 +3,13 @@ from __future__ import annotations
 from app.models.airport import (
     get_airport_coordinates,
     search_airports_advanced,
-    haversine_distance,
     load_airport_cache,
 )
 
 from datetime import datetime, timezone
-import math
 from typing import Any, Dict, List, Optional, Tuple
 
+from aviation.navigation import distance_nm
 from fastapi import APIRouter, HTTPException
 
 from app.schemas.local import LocalPlanRequest, LocalPlanResponse
@@ -37,18 +36,6 @@ def _extract_lat_lon(airport: Dict[str, Any]) -> Tuple[Optional[float], Optional
     lat = airport.get("lat") or airport.get("latitude")
     lon = airport.get("lon") or airport.get("longitude")
     return _to_float(lat), _to_float(lon)
-
-
-def _haversine_nm(lat1: float, lon1: float, lat2: float, lon2: float) -> float:
-    r_nm = 3440.065
-    phi1 = math.radians(lat1)
-    phi2 = math.radians(lat2)
-    dphi = math.radians(lat2 - lat1)
-    dlambda = math.radians(lon2 - lon1)
-
-    a = math.sin(dphi / 2) ** 2 + math.cos(phi1) * math.cos(phi2) * math.sin(dlambda / 2) ** 2
-    c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
-    return r_nm * c
 
 
 @router.post(
@@ -97,8 +84,10 @@ def local_plan(req: LocalPlanRequest) -> LocalPlanResponse:
         if lat is None or lon is None:
             continue
 
-        distance_nm = _haversine_nm(float(center_lat), float(center_lon), float(lat), float(lon))
-        if distance_nm > radius_nm:
+        airport_distance_nm = distance_nm(
+            float(center_lat), float(center_lon), float(lat), float(lon)
+        )
+        if airport_distance_nm > radius_nm:
             continue
 
         nearby.append(
@@ -112,7 +101,7 @@ def local_plan(req: LocalPlanRequest) -> LocalPlanResponse:
                 "longitude": float(lon),
                 "elevation": airport.get("elevation"),
                 "type": str(airport.get("type") or ""),
-                "distance_nm": round(distance_nm, 2),
+                "distance_nm": round(airport_distance_nm, 2),
             }
         )
 

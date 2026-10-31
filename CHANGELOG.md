@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Removed five independent Flight Planner haversine implementations; route sampling,
+  A* routing, local-airport planning, approach waypoints, and navigation helpers now
+  delegate great-circle distance to the Python `aviation.navigation` realization.
 - Promoted weight-and-balance loading and envelope interpolation into a tested
   `aviation.weight-balance` Component; Preflight Check now loads the built browser SDK
   realization instead of maintaining its own calculation module.
