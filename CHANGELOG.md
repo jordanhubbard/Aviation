@@ -9,6 +9,11 @@
 
 ## Unreleased
 
+- Added an independently specified and tested `aviation.service.health` Component
+  with shared TypeScript/Python status normalization and report-construction vectors.
+  Aviation Chat, Flight Tracker, Weather Briefing, G1000, and Flight Planner health
+  endpoints now delegate their common payload semantics to the SDK while retaining
+  HTTP routing and application-specific operational detail policy.
 - Added an independently specified and tested `aviation.ui.panes` Component for
   deterministic pane ordering, default selection, navigation, reordering, closeability,
   and close-state transitions. Meta App now delegates initial selection to the common

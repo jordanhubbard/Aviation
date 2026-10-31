@@ -1,6 +1,7 @@
 import http from "http";
 import {
   MacTaskCreator,
+  createHealthReport,
   installNodeProcessErrorReporting,
 } from "@aviation/shared-sdk";
 import { WeatherBriefingService } from "./service";
@@ -66,7 +67,7 @@ async function main() {
 
     if (requestUrl.pathname === "/health") {
       res.writeHead(200, { "Content-Type": "application/json" });
-      res.end(JSON.stringify({ status: "ok" }));
+      res.end(JSON.stringify(createHealthReport()));
       return;
     }
 

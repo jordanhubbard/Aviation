@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from fastapi import APIRouter, Request
+from aviation.health import create_health_report
 
 router = APIRouter()
 
@@ -13,4 +14,4 @@ def health(request: Request) -> dict:
     """
 
     issues = getattr(request.app.state, "startup_config_issues", [])
-    return {"status": "ok", "startup_issues": issues}
+    return create_health_report(details={"startup_issues": issues})

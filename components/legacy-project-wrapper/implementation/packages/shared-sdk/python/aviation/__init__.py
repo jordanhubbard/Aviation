@@ -88,6 +88,11 @@ from .alerts import (
     order_alerts,
     reconcile_acknowledgements,
 )
+from .health import (
+    HealthReportError,
+    create_health_report,
+    normalize_health_status,
+)
 from .weight_balance import (
     C172S_LOADING_PROFILE,
     EnvelopePoint,
@@ -174,6 +179,10 @@ __all__ = [
     "normalize_alert_level",
     "order_alerts",
     "reconcile_acknowledgements",
+    # Service health
+    "HealthReportError",
+    "create_health_report",
+    "normalize_health_status",
     # Weight and balance
     "C172S_LOADING_PROFILE",
     "EnvelopePoint",

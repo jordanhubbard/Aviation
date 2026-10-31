@@ -1,0 +1,26 @@
+{
+  "schema": "aviation/service-health-acceptance-vectors@1",
+  "normalizationCases": [
+    {"input": "ok", "expected": "ok"},
+    {"input": " healthy ", "expected": "ok"},
+    {"input": "UP", "expected": "ok"},
+    {"input": "degraded", "expected": "degraded"},
+    {"input": "Warning", "expected": "degraded"},
+    {"input": "unavailable", "expected": "unavailable"},
+    {"input": "unhealthy", "expected": "unavailable"},
+    {"input": "DOWN", "expected": "unavailable"}
+  ],
+  "invalidStatusCases": ["", "unknown", "starting"],
+  "reportCases": [
+    {"id": "minimal-default", "input": {}, "expected": {"status": "ok"}},
+    {"id": "normalized-service-and-status", "input": {"status": "healthy", "service": " aviation-chat "}, "expected": {"status": "ok", "service": "aviation-chat"}},
+    {"id": "adapter-details-preserved", "input": {"status": "warning", "service": "flight-planner", "details": {"startup_issues": ["weather key missing"], "retryable": true}}, "expected": {"status": "degraded", "service": "flight-planner", "startup_issues": ["weather key missing"], "retryable": true}},
+    {"id": "unavailable-with-reason", "input": {"status": "unhealthy", "details": {"reason": "database"}}, "expected": {"status": "unavailable", "reason": "database"}}
+  ],
+  "invalidReportCases": [
+    {"id": "empty-service", "input": {"service": "  "}, "code": "health-service-invalid"},
+    {"id": "reserved-status", "input": {"details": {"status": "healthy"}}, "code": "health-details-invalid"},
+    {"id": "reserved-service", "input": {"details": {"service": "other"}}, "code": "health-details-invalid"},
+    {"id": "invalid-status", "input": {"status": "starting"}, "code": "health-status-invalid"}
+  ]
+}
