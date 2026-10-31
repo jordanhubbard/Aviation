@@ -200,6 +200,13 @@ release-visible outcome to `CHANGELOG.md`; Git preserves prior queue states.
     credential-free development fallback, and Weather Briefing presentation outside
     the portable authority. Delivered under MAC task
     `task_99cff8e5931391b6b32170b7867594c8`.
+  - [x] Promote the public `aviation.hazards` surface into an explicit Component
+    with shared TypeScript/Python vectors for validated hazard records, severity,
+    active windows, altitude overlap, and exact polygon/route-segment intersection.
+    Keep AWC/FAA GeoJSON parsing and HTTP orchestration in provider adapters; no
+    application currently consumes this surface, so do not invent application behavior
+    merely to create a consumer. Delivered under MAC task
+    `task_d203ebc32768084c7b822733f605f1a7`.
   - [ ] Promote airports, weather, procedures/nav-data, flight dynamics, avionics
     protocols/rendering, shared UI, configuration, and integration infrastructure into
     explicit Components with owned tests and contracts.
@@ -207,9 +214,9 @@ release-visible outcome to `CHANGELOG.md`; Git preserves prior queue states.
     aviation implementations after parity qualification.
   - [ ] Classify and remove or intentionally retain every remainder beneath the legacy
     wrapper.
-- **Next action:** Inventory the remaining public shared-SDK surfaces beginning with
-  `aviation.hazards`, promote the next reusable aviation domain into Component-owned
-  cross-language acceptance, and keep provider/application-only behavior outside it.
+- **Next action:** Inventory shared UI, configuration, and integration infrastructure,
+  then promote the next reusable domain into Component-owned acceptance while keeping
+  provider/application-only behavior outside it.
 - **Evidence:** Phase 1.2 lift-and-shift identity `sha256:c5ca4361ba010f6e8d81c93398468f9f4f8b8cc352504bc8535fa74b7c6e9990`.
   Retained conversion established original-source release authority; each migration
   refreshes the verifier-owned receipt in `verification/current.json`.
@@ -227,6 +234,15 @@ release-visible outcome to `CHANGELOG.md`; Git preserves prior queue states.
   conformance files, and verifier-owned receipt candidate
   `sha256:90e4bcc15150666a44a51068f886cad49515c5f119e0f6dda9c86cdc68e13d6c`
   records all 482 admitted SDK tests.
+  Hazard qualification adds Component revision
+  `sha256:0097a1787fc37a84e265f89d01b56a091a3b2da3832805665f712d700db4489f`;
+  shared normalization and exact geometry vectors pass 510 TypeScript and 241 Python
+  SDK tests, including the former endpoint/midpoint blind spot. The complete retained
+  `make test` gate passes, retained source membership admits all four hazard
+  realization/conformance files, and verifier-owned candidate
+  `sha256:57ff7868b7f12f942278bf87401c75c94b47bfefd5214a89adb092d99cb79346`
+  records all 510 admitted SDK tests. No application currently consumes this surface,
+  so provider adapters remain separate and no synthetic consumer was introduced.
   The first native boundary has Component lock
   `sha256:b156aad3a60d74a7eba30b6f4e7ba5d8cc01c8ecc2d7c41a069348db6ed75a9b`;
   its shared acceptance vectors pass 292 TypeScript and 94 Python SDK tests, and

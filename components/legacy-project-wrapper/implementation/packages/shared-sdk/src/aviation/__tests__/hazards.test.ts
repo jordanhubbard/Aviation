@@ -78,6 +78,11 @@ describe('awcCoordsToLatLon', () => {
     expect(awcCoordsToLatLon(null)).toEqual([]);
     expect(awcCoordsToLatLon('bad')).toEqual([]);
   });
+
+  it('rejects an entire ring containing malformed or out-of-bounds coordinates', () => {
+    expect(awcCoordsToLatLon([[-122, 37], ['bad', 37]])).toEqual([]);
+    expect(awcCoordsToLatLon([[-122, 37], [-122, 91]])).toEqual([]);
+  });
 });
 
 // ---------------------------------------------------------------------------
@@ -271,6 +276,10 @@ describe('altitudeOverlaps', () => {
     expect(altitudeOverlaps(h, 0, 500)).toBe(true);
     expect(altitudeOverlaps(h, 55000, 60000)).toBe(true);
   });
+
+  it('rejects an inverted route band', () => {
+    expect(altitudeOverlaps(makeHazard(null, null), 10000, 5000)).toBe(false);
+  });
 });
 
 // ---------------------------------------------------------------------------
@@ -352,6 +361,13 @@ describe('hazardIntersectsLeg', () => {
     const start: LatLon = { lat: -5, lon: 5 };
     const end: LatLon = { lat: 15, lon: 5 };
     // mid = {lat:5, lon:5} which is inside
+    expect(hazardIntersectsLeg(h, start, end, 9000, 11000, REF_NOW)).toBe(true);
+  });
+
+  it('detects an edge crossing even when endpoints and midpoint are outside', () => {
+    const h = makeActiveHazard(box, 5000, 15000);
+    const start: LatLon = { lat: 5, lon: -5 };
+    const end: LatLon = { lat: 5, lon: 1 };
     expect(hazardIntersectsLeg(h, start, end, 9000, 11000, REF_NOW)).toBe(true);
   });
 

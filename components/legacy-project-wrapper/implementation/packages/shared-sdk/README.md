@@ -199,6 +199,36 @@ relevant = filter_relevant_notams(
 FAA response extraction, HTTP/authentication, persistence, mock fallback, and app
 presentation remain adapter or consumer responsibilities.
 
+#### Hazard semantics (`aviation/hazards`)
+
+Provider-neutral SIGMET, AIRMET, and TFR normalization plus inclusive time/altitude
+evaluation and exact planar route-leg intersection. TypeScript and Python consume the
+same Component acceptance vectors. The explicit-band route API keeps altitude policy
+visible, while the existing cruise-altitude API remains as a plus-or-minus-500-foot
+compatibility wrapper.
+
+```typescript
+import {
+  findRouteHazardsInBand,
+  normalizeHazardRecord,
+} from '@aviation/shared-sdk/aviation/hazards';
+
+const hazard = normalizeHazardRecord(providerNeutralRecord);
+const hits = findRouteHazardsInBand(
+  route, 11000, 13000, [hazard], new Date('2026-10-31T12:00:00Z')
+);
+```
+
+```python
+from aviation.hazards import find_route_hazards_in_band, normalize_hazard_record
+
+hazard = normalize_hazard_record(provider_neutral_record)
+hits = find_route_hazards_in_band(route, 11000, 13000, [hazard], reference_time)
+```
+
+AWC/FAA response parsing, HTTP behavior, geodesic route construction, operational
+decisions, and application presentation remain adapter or consumer responsibilities.
+
 ### OpenClaw in-app chat (server-side)
 
 The SDK provides an OpenClaw client for the aviation-chat proxy or app backends. **Do not use from the browser** (API key must stay server-side).
