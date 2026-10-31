@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Replaced G1000 Trip Planning's private flight-time, reserve-fuel, density-altitude,
+  station-moment, and CG formulas with the TypeScript Aviation SDK and its shared C172
+  profile; the application now retains only interactive state and presentation.
 - Replaced G1000's private route-distance and initial-course formulas with the Python
   `aviation.navigation` realization while preserving route presentation and rounding.
 - Removed five independent Flight Planner haversine implementations; route sampling,
