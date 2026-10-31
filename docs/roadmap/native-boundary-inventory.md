@@ -185,6 +185,21 @@ station state.
 | `apps/g1000-simulator/backend/app/services/{ahrs,adc,gps}.py` | compatibility exports | contain no private sensor algorithms |
 | `apps/flight-planner/backend/app/services/ahrs_adc_simulation.py` | compatibility exports | replaces the former `None`-return stubs with common SDK delegation |
 
+### Airspeed and aircraft-configuration inventory conclusion
+
+Planning IAS/TAS and ISA Mach conversion belongs to `aviation.navigation`; its public
+TypeScript and Python surfaces now run the same Component-owned valid and invalid
+vectors. Calibrated sensor air data remains with `aviation.avionics`: Flight Planner's
+`ahrs_adc_simulation.py` and G1000's `adc.py` are compatibility exports with no private
+formula, and G1000 telemetry supplies the common ADC result directly to the PFD.
+
+G1000's backend `aircraft_state.py` is also already a compatibility projection over
+the `aviation.flight-dynamics` C172 model. Its live position, attitude, engine, and
+telemetry records plus display-only length/height remain application state. The one
+material configuration remainder is the frontend Airspeed Tape's hard-coded C172
+V-speeds; those operating limits require a portable aircraft-profile contract before
+the app constants can be removed.
+
 ## Cross-cutting authority to classify
 
 | Boundary and proposed owner | Evidence | Provisional classification and open question |

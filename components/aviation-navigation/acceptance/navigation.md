@@ -49,6 +49,12 @@ tolerance.
 - **THEN** every realization applies the same standard datum, lapse rate, units, and
   temperature-deviation approximation
 
+### Scenario: Planning airspeed conversions agree across bindings
+
+- **WHEN** IAS is converted to TAS or TAS is converted to or from Mach
+- **THEN** every realization applies the same ISA temperature, units, approximation,
+  and fail-closed numeric domain
+
 ### Scenario: Non-positive speed is used as a divisor
 
 - **WHEN** flight-time or fuel-required receives zero or negative ground speed
@@ -69,6 +75,11 @@ tolerance.
 
 - **WHEN** crosswind exceeds true airspeed or the along-course solution is not positive
 - **THEN** the binding reports failure rather than returning `NaN` or a misleading speed
+
+### Scenario: Airspeed or Mach is negative
+
+- **WHEN** an IAS, TAS, or Mach conversion receives a negative speed or Mach value
+- **THEN** the binding reports failure rather than returning a negative or non-finite result
 
 ## Requirement: Every binding is independently exercised
 

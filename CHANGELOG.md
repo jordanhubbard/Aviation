@@ -1,5 +1,7 @@
 # Changelog
 
+- Qualified planning IAS/TAS and ISA Mach conversions across the TypeScript and Python
+  SDK bindings, with shared valid and fail-closed Component vectors.
 - Qualified shared wind components and wind-triangle calculations across TypeScript
   and Python, and migrated Flight Planner's private wind arithmetic to the SDK.
 - Removed unused G1000 and Flight Planner private geodesy service scaffolds now that

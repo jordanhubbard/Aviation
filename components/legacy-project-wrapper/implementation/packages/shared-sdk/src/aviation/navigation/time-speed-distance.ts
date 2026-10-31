@@ -5,6 +5,28 @@
  * Provides calculations for time, speed, and distance relationships.
  */
 
+import { isaTemperature } from './performance.js';
+
+const KELVIN_OFFSET = 273.15;
+const SPEED_OF_SOUND_FACTOR_KTS = 38.967854;
+
+function requireNonNegativeFinite(name: string, value: number): void {
+  if (!Number.isFinite(value) || value < 0) {
+    throw new RangeError(`${name} must be finite and non-negative`);
+  }
+}
+
+function standardTemperatureKelvin(altitudeFt: number): number {
+  if (!Number.isFinite(altitudeFt)) {
+    throw new RangeError('Pressure altitude must be finite');
+  }
+  const temperatureKelvin = isaTemperature(altitudeFt) + KELVIN_OFFSET;
+  if (temperatureKelvin <= 0) {
+    throw new RangeError('Pressure altitude is outside the ISA temperature domain');
+  }
+  return temperatureKelvin;
+}
+
 /**
  * Calculate distance from speed and time
  * 
@@ -158,16 +180,16 @@ export function iasToTas(
   altitudeFt: number,
   temperatureC: number
 ): number {
-  // Standard temperature at altitude
-  const standardTempC = 15 - (0.00198 * altitudeFt);
-  
-  // Temperature correction
-  const tempRatio = (temperatureC + 273.15) / (standardTempC + 273.15);
-  
-  // Altitude correction (rule of thumb: add 2% per 1000 ft)
+  requireNonNegativeFinite('Indicated airspeed', indicatedAirspeedKts);
+  if (!Number.isFinite(temperatureC) || temperatureC <= -KELVIN_OFFSET) {
+    throw new RangeError('Outside-air temperature must be finite and above absolute zero');
+  }
+  const standardTempKelvin = standardTemperatureKelvin(altitudeFt);
+  const tempRatio = (temperatureC + KELVIN_OFFSET) / standardTempKelvin;
   const altitudeCorrection = 1 + (altitudeFt / 1000) * 0.02;
-  
-  // Apply corrections
+  if (altitudeCorrection <= 0) {
+    throw new RangeError('Pressure altitude is outside the IAS/TAS approximation domain');
+  }
   return indicatedAirspeedKts * altitudeCorrection * Math.sqrt(tempRatio);
 }
 
@@ -179,14 +201,10 @@ export function iasToTas(
  * @returns Mach number
  */
 export function tasToMach(trueAirspeedKts: number, altitudeFt: number): number {
-  // Speed of sound varies with temperature
-  // Standard temperature lapse rate: -1.98°C per 1000 ft
-  const tempC = 15 - (0.00198 * altitudeFt);
-  const tempK = tempC + 273.15;
-  
-  // Speed of sound in knots
-  const speedOfSoundKts = 38.967854 * Math.sqrt(tempK);
-  
+  requireNonNegativeFinite('True airspeed', trueAirspeedKts);
+  const speedOfSoundKts = SPEED_OF_SOUND_FACTOR_KTS * Math.sqrt(
+    standardTemperatureKelvin(altitudeFt)
+  );
   return trueAirspeedKts / speedOfSoundKts;
 }
 
@@ -198,9 +216,9 @@ export function tasToMach(trueAirspeedKts: number, altitudeFt: number): number {
  * @returns True airspeed in knots
  */
 export function machToTas(machNumber: number, altitudeFt: number): number {
-  const tempC = 15 - (0.00198 * altitudeFt);
-  const tempK = tempC + 273.15;
-  const speedOfSoundKts = 38.967854 * Math.sqrt(tempK);
-  
+  requireNonNegativeFinite('Mach number', machNumber);
+  const speedOfSoundKts = SPEED_OF_SOUND_FACTOR_KTS * Math.sqrt(
+    standardTemperatureKelvin(altitudeFt)
+  );
   return machNumber * speedOfSoundKts;
 }

@@ -39,6 +39,9 @@ OPERATIONS = {
     "density_altitude": navigation.density_altitude,
     "density_altitude_from_indicated": navigation.density_altitude_from_indicated,
     "tsd_distance": navigation.tsd_distance,
+    "ias_to_tas": navigation.ias_to_tas,
+    "tas_to_mach": navigation.tas_to_mach,
+    "mach_to_tas": navigation.mach_to_tas,
 }
 
 

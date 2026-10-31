@@ -112,6 +112,11 @@ release-visible outcome to `CHANGELOG.md`; Git preserves prior queue states.
     heading, and along-course ground speed with shared TypeScript/Python vectors;
     migrate Flight Planner's bearing, wind-component, and wind-triangle arithmetic to
     the Python realization while retaining its 30-knot planning floor as app policy.
+  - [x] Inventory common airspeed and aircraft-configuration behavior; qualify the
+    shared SDK's public planning IAS/TAS and ISA Mach conversions with cross-language
+    valid/invalid vectors. Confirm Flight Planner and G1000 already delegate sensor
+    air data to `aviation.avionics`, while G1000's backend C172 compatibility record
+    derives from `aviation.flight-dynamics` and retains only telemetry/display shape.
   - [x] Define `aviation.avionics` protocol and rendering contracts, add deterministic
     telemetry/command/flight-plan/layout/pipeline vectors, and replace G1000's duplicate
     frontend telemetry schema with the shared protocol surface. Keep simulator stores,
@@ -134,8 +139,8 @@ release-visible outcome to `CHANGELOG.md`; Git preserves prior queue states.
     aviation implementations after parity qualification.
   - [ ] Classify and remove or intentionally retain every remainder beneath the legacy
     wrapper.
-- **Next action:** Continue the application inventory for common airspeed and
-  aircraft-configuration logic.
+- **Next action:** Qualify a portable aircraft operating-profile surface and replace
+  G1000 Airspeed Tape's hard-coded C172 V-speeds with that SDK authority.
 - **Evidence:** Phase 1.2 lift-and-shift identity `sha256:c5ca4361ba010f6e8d81c93398468f9f4f8b8cc352504bc8535fa74b7c6e9990`.
   Retained conversion stage is backed by current test receipt
   `sha256:60e252aceb5834018a21d3ec5a75b667c564e207ea3cf02d475b3245640c3c79`;
@@ -185,6 +190,13 @@ release-visible outcome to `CHANGELOG.md`; Git preserves prior queue states.
   TypeScript SDK tests, 109 Python SDK tests, and all 179 non-integration Flight Planner
   tests plus eight subtests. The navigation lock is
   `sha256:0c87dbea0947d441af3e99ff548a6e0b3a3914d2296b9fdc82a395507c83915e`.
+  Airspeed/configuration inventory confirms both application ADC adapters are pure
+  `aviation.avionics` delegations and the G1000 backend C172 record maps the common
+  flight-dynamics model. Eight new navigation vectors qualify standard-day and
+  hot/high IAS-to-TAS, TAS/Mach conversion, and negative/domain rejection; all 355
+  TypeScript SDK tests, 109 Python SDK tests, two Flight Planner ADC tests, and six
+  G1000 aircraft/autopilot compatibility tests pass. G1000's frontend V-speed constants
+  remain the next unqualified aircraft-profile boundary.
   Navigation and the dedicated SDK workflow landed in PR #339 at exact-main commit
   `9c55e4ac70dbc87def6d5ce6e6abc47aed214304`; all seven exact-commit workflows
   passed. Airports landed in PR #340 at exact-main commit

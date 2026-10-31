@@ -156,6 +156,34 @@
       "absolute_tolerance": 0.0000001
     },
     {
+      "id": "ias-to-tas-standard-day",
+      "operation": "ias_to_tas",
+      "args": [110, 0, 15],
+      "expected": 110,
+      "absolute_tolerance": 0
+    },
+    {
+      "id": "ias-to-tas-hot-high",
+      "operation": "ias_to_tas",
+      "args": [100, 5000, 25],
+      "expected": 113.8668189111,
+      "absolute_tolerance": 0.0000001
+    },
+    {
+      "id": "tas-to-mach",
+      "operation": "tas_to_mach",
+      "args": [120, 5000],
+      "expected": 0.1846128184,
+      "absolute_tolerance": 0.0000001
+    },
+    {
+      "id": "mach-to-tas",
+      "operation": "mach_to_tas",
+      "args": [0.5, 10000],
+      "expected": 319.1667071493,
+      "absolute_tolerance": 0.0000001
+    },
+    {
       "id": "invalid-latitude-fails",
       "operation": "distance_nm",
       "args": [91, 0, 0, 0],
@@ -207,6 +235,30 @@
       "id": "unmaintainable-crosswind-fails",
       "operation": "ground_speed",
       "args": [10, 0, 90, 20],
+      "expected_error": "invalid_input"
+    },
+    {
+      "id": "negative-ias-fails",
+      "operation": "ias_to_tas",
+      "args": [-1, 5000, 15],
+      "expected_error": "invalid_input"
+    },
+    {
+      "id": "absolute-zero-oat-fails",
+      "operation": "ias_to_tas",
+      "args": [100, 5000, -273.15],
+      "expected_error": "invalid_input"
+    },
+    {
+      "id": "negative-tas-fails",
+      "operation": "tas_to_mach",
+      "args": [-1, 5000],
+      "expected_error": "invalid_input"
+    },
+    {
+      "id": "negative-mach-fails",
+      "operation": "mach_to_tas",
+      "args": [-0.1, 5000],
       "expected_error": "invalid_input"
     }
   ]

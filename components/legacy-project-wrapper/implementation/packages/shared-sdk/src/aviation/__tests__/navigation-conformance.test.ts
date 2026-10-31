@@ -21,6 +21,9 @@ import {
   densityAltitude,
   densityAltitudeFromIndicated,
   distance,
+  iasToTas,
+  tasToMach,
+  machToTas,
 } from '../navigation/index.js';
 
 interface NavigationVector {
@@ -63,6 +66,9 @@ const operations: Record<string, (...args: never[]) => number> = {
   density_altitude: densityAltitude,
   density_altitude_from_indicated: densityAltitudeFromIndicated,
   tsd_distance: distance,
+  ias_to_tas: iasToTas,
+  tas_to_mach: tasToMach,
+  mach_to_tas: machToTas,
 };
 
 describe('aviation.navigation Component conformance', () => {
