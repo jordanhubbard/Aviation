@@ -7,7 +7,8 @@
     "dev": "vite",
     "build": "tsc && vite build",
     "preview": "vite preview",
-    "clean": "rm -rf dist"
+    "clean": "rm -rf dist",
+    "test": "node --test server.test.mjs"
   },
   "dependencies": {
     "@aviation/aviation-config": "workspace:*",

@@ -1,6 +1,19 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { allowedOrigin, validateFeedback, createIssue } from './server.mjs';
+
+const appSource = fs.readFileSync(
+  path.join(path.dirname(fileURLToPath(import.meta.url)), 'src/App.tsx'),
+  'utf8',
+);
+
+test('pane default selection delegates to the common Aviation UI capability', () => {
+  assert.match(appSource, /getDefaultActiveId\(aviationPanes\)/);
+  assert.doesNotMatch(appSource, /useState<string>\(resolvedApps\[0\]/);
+});
 
 test('feedback is tied to the actual Aviation app origin', () => {
   assert.equal(allowedOrigin('https://kmlab.jordanhubbard.net'), true);

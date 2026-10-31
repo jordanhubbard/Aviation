@@ -9,6 +9,11 @@
 
 ## Unreleased
 
+- Added an independently specified and tested `aviation.ui.panes` Component for
+  deterministic pane ordering, default selection, navigation, reordering, closeability,
+  and close-state transitions. Meta App now delegates initial selection to the common
+  UI capability while G1000 continues to publish the shared pane contract; rendering,
+  URLs, icons, styling, persistence, and layout remain application policy.
 - Added an independently specified and tested `aviation.alerts` Component with
   shared TypeScript, Python, and Go severity normalization, stable ordering,
   acknowledgement reconciliation, and highest-active-severity vectors. G1000's alert

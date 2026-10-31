@@ -221,6 +221,18 @@ release-visible outcome to `CHANGELOG.md`; Git preserves prior queue states.
     persistence, events, timestamps, sounds, visibility limits, and rendering as
     adapter policy. Delivered under MAC task
     `task_48f2da691fac81450e75a5827306017b`.
+  - [x] Promote provider-neutral pane ordering, default selection, relative
+    navigation, reordering, and close-state transitions from `@aviation/ui-framework`
+    into an explicit `aviation.ui.panes` Component with deterministic acceptance
+    vectors. Make Meta App consume the qualified default-selection operation and keep
+    React renderers, application URLs, icons, styling, and layout as adapter policy;
+    preserve G1000's shared `PaneConfig` consumption as a second application boundary.
+    Component revision
+    `sha256:5d5e07a47217e1d7be6018a6a230e2382ea0ab760b7fa7f39d4cfc721e4717d3`;
+    52 independent UI-framework tests, three Meta App tests, both consumer production
+    builds, and retained receipt
+    `sha256:768f72bba249dd13bfe5aef669e60e6ff3862924152aa89aa400ca0f899ea783`
+    pass with all 16 Component locks current.
   - [ ] Promote airports, weather, procedures/nav-data, flight dynamics, avionics
     protocols/rendering, shared UI, and integration infrastructure into
     explicit Components with owned tests and contracts.
@@ -228,9 +240,8 @@ release-visible outcome to `CHANGELOG.md`; Git preserves prior queue states.
     aviation implementations after parity qualification.
   - [ ] Classify and remove or intentionally retain every remainder beneath the legacy
     wrapper.
-- **Next action:** Inventory the next shared UI or integration-infrastructure domain,
-  promote its reusable semantics into Component-owned acceptance, and continue
-  replacing app-local common aviation logic with qualified SDK consumption.
+- **Next action:** Land the `aviation.ui.panes` slice through review and exact-main CI,
+  then inventory the next integration-infrastructure domain for Component ownership.
 - **Evidence:** Phase 1.2 lift-and-shift identity `sha256:c5ca4361ba010f6e8d81c93398468f9f4f8b8cc352504bc8535fa74b7c6e9990`.
   Retained conversion established original-source release authority; each migration
   refreshes the verifier-owned receipt in `verification/current.json`.

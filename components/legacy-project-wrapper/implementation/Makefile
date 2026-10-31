@@ -204,6 +204,9 @@ test-node:
 			skipped=$$((skipped + 1)); \
 		fi \
 	done; \
+	echo "  Testing apps/meta-app..."; \
+	$(PNPM) --filter @aviation/meta-app run test || exit 1; \
+	ran=$$((ran + 1)); \
 	if [ $$ran -eq 0 ]; then \
 		echo "⚠️  Node.js/TypeScript tests SKIPPED ($$skipped suites unavailable)"; \
 	else \
