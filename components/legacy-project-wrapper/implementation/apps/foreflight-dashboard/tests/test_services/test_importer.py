@@ -64,6 +64,7 @@ def test_importer_dual_received_role_for_certificated_pilot():
         flights = importer.get_flight_entries()
         assert len(flights) == 1
         assert flights[0].pilot_role == 'DUAL'
+        assert flights[0].is_student_pilot is False
     finally:
         os.unlink(path)
 
@@ -77,6 +78,7 @@ def test_importer_dual_received_role_for_student_pilot():
         flights = importer.get_flight_entries()
         assert len(flights) == 1
         assert flights[0].pilot_role == 'STUDENT'
+        assert flights[0].is_student_pilot is True
     finally:
         os.unlink(path)
 

@@ -1,6 +1,7 @@
 """Tests for the core models."""
 
 from datetime import datetime, time
+import inspect
 import pytest
 from src.core.models import LogbookEntry, Aircraft, Airport, FlightConditions
 
@@ -233,6 +234,23 @@ def test_student_solo_still_accounts_for_flight_time():
     entry.solo_time = 0.2
     entry.validate_entry()
     assert entry.error_explanation is None
+
+def test_explicit_student_status_uses_common_logbook_validation():
+    """Student certification status is independent of a provider role label."""
+    entry = create_valid_entry()
+    entry.pilot_role = "PIC"
+    entry.is_student_pilot = True
+    entry.validate_entry()
+    assert "Student pilot cannot log PIC time" in entry.error_explanation
+
+def test_logbook_entry_delegates_common_accounting_to_sdk():
+    """The application retains policy but not a second duration implementation."""
+    source = inspect.getsource(LogbookEntry.validate_entry)
+    assert "validate_logbook_time" in source
+    assert "LogbookTimeInput" in source
+    assert "solo_outside_pic" not in source
+    assert "total_accounted_time" not in source
+    assert "pic_equals_total" not in source
 
 def test_future_date():
     """Test validation of future dates."""

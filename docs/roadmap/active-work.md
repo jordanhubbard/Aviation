@@ -187,6 +187,12 @@ release-visible outcome to `CHANGELOG.md`; Git preserves prior queue states.
     parsing, logbook validation policy, compatibility response shapes, accounts, and
     dashboard presentation as application code; explicitly bound the SDK snapshot as
     non-authoritative versus current ICAO Doc 8643.
+  - [x] Promote ForeFlight Dashboard's qualified common PIC/dual/solo accounting,
+    student restrictions, flight-condition totals, role normalization, and landing
+    consistency into cross-language `aviation.logbook` acceptance data and APIs.
+    Retain provider CSV parsing and repair, registration and route-text heuristics,
+    certificate-distance advice, accounts, persistence, and presentation as application
+    policy. Delivered under MAC task `task_e88691d482dcce9afa9ffc90fbb4e266`.
   - [ ] Promote airports, weather, procedures/nav-data, flight dynamics, avionics
     protocols/rendering, shared UI, configuration, and integration infrastructure into
     explicit Components with owned tests and contracts.
@@ -194,14 +200,18 @@ release-visible outcome to `CHANGELOG.md`; Git preserves prior queue states.
     aviation implementations after parity qualification.
   - [ ] Classify and remove or intentionally retain every remainder beneath the legacy
     wrapper.
-- **Next action:** Audit ForeFlight Dashboard's retained logbook time-accounting and
-  validation rules for a portable `aviation.logbook` Component; migrate only qualified
-  common behavior while retaining ForeFlight CSV adaptation, user accounts, dashboard
-  composition, and provider-facing presentation as application policy.
+- **Next action:** Promote the next qualified portable domain from the legacy wrapper,
+  prioritizing airports, procedures/nav-data, or shared application infrastructure;
+  keep provider adaptation and presentation in their owning applications.
 - **Evidence:** Phase 1.2 lift-and-shift identity `sha256:c5ca4361ba010f6e8d81c93398468f9f4f8b8cc352504bc8535fa74b7c6e9990`.
-  Retained conversion stage is backed by current test receipt
-  `sha256:60e252aceb5834018a21d3ec5a75b667c564e207ea3cf02d475b3245640c3c79`;
-  original source remains release authority.
+  Retained conversion established original-source release authority; each migration
+  refreshes the verifier-owned receipt in `verification/current.json`.
+  Logbook qualification adds Component revision
+  `sha256:6eee7074a496b58a257dbd893b57d8d6a4fbb13dc629ddd1a031b4f826179b9c`;
+  its shared acceptance vectors pass 460 TypeScript and 196 Python SDK tests, and the
+  ForeFlight adapter passes all 192 application tests while a structural boundary test
+  proves the former private common arithmetic is absent. The retained harness passes
+  all 460 admitted SDK tests.
   The first native boundary has Component lock
   `sha256:b156aad3a60d74a7eba30b6f4e7ba5d8cc01c8ecc2d7c41a069348db6ed75a9b`;
   its shared acceptance vectors pass 292 TypeScript and 94 Python SDK tests, and

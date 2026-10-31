@@ -14,6 +14,25 @@ Full OAuth2 and Calendar API integration matching the TypeScript implementation.
 
 Weather data services (coming from TypeScript port).
 
+### Logbook validation
+
+`aviation.logbook` provides the Python realization of the Component-owned common
+logbook duration contract, including PIC/dual/solo overlap and structured consistency
+issues. It shares acceptance vectors with the TypeScript SDK.
+
+```python
+from aviation.logbook import LogbookTimeInput, validate_logbook_time
+
+result = validate_logbook_time(LogbookTimeInput(
+    total_time=0.8,
+    pic_time=0.8,
+    solo_time=0.8,
+    day_time=0.8,
+    pilot_role="PIC",
+))
+assert result.valid
+```
+
 ### MAC task reporting
 
 `aviation.mac_tasks.MacTaskCreator` creates idempotent runtime error tasks in

@@ -316,6 +316,7 @@ class ForeFlightImporter:
                 destination=destination,
                 conditions=conditions,
                 pilot_role=pilot_role,
+                is_student_pilot=is_student_pilot,
                 landings_day=self._clean_numeric(row.get('DayLandingsFullStop', 0)),
                 landings_night=self._clean_numeric(row.get('NightLandingsFullStop', 0)),
                 remarks=f"Distance: {self._clean_float(row.get('Distance', 0.0))}nm\n{remarks_text}",

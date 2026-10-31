@@ -9,6 +9,12 @@
 
 ## Unreleased
 
+- Added an independently specified and tested `aviation.logbook` Component with
+  cross-language validation for common flight-time accounting, student restrictions,
+  role normalization, flight-condition totals, and landing consistency. ForeFlight
+  Dashboard now delegates that portable policy to the SDK while retaining provider
+  CSV repair, registration and route heuristics, certificate advice, persistence,
+  accounts, and presentation as application behavior.
 - Promoted ForeFlight Dashboard's private 170-code aircraft type-designator support
   snapshot into cross-language `aviation.aircraft` APIs with Component-owned vectors,
   deterministic lookup/suggestions, and independent SDK tests. ForeFlight now keeps

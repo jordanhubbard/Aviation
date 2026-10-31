@@ -29,6 +29,9 @@ export * from './aviation/weight-balance.js';
 // Aircraft operating profiles and limitations
 export * from './aviation/aircraft.js';
 
+// Portable pilot-logbook duration validation
+export * from './aviation/logbook.js';
+
 // Portable flight-dynamics projections
 export * from './aviation/flight-dynamics.js';
 

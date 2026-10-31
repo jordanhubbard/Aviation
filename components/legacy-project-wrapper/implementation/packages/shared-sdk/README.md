@@ -119,6 +119,40 @@ gs = ground_speed(450, 90, 270, 25)
 - High precision (< 0.1% error for distances > 10 NM)
 - Validated against known aviation values
 
+#### Logbook validation (`aviation/logbook`)
+
+Portable, provider-neutral validation for common pilot-logbook duration fields.
+TypeScript and Python consume the same Component acceptance vectors.
+
+```typescript
+import { validateLogbookTime } from '@aviation/shared-sdk/aviation/logbook';
+
+const result = validateLogbookTime({
+  totalTime: 2,
+  picTime: 2,
+  dualReceivedTime: 2,
+  dayTime: 2,
+  pilotRole: 'DUAL',
+});
+```
+
+```python
+from aviation.logbook import LogbookTimeInput, validate_logbook_time
+
+result = validate_logbook_time(LogbookTimeInput(
+    total_time=2.0,
+    pic_time=2.0,
+    dual_received_time=2.0,
+    day_time=2.0,
+    pilot_role="DUAL",
+))
+```
+
+The validator returns normalized PIC time and structured issues for role, duration,
+condition, instrument, student, solo, and night-landing consistency. Provider parsing,
+certificate eligibility, route inference, persistence, and presentation remain consumer
+policy.
+
 ### OpenClaw in-app chat (server-side)
 
 The SDK provides an OpenClaw client for the aviation-chat proxy or app backends. **Do not use from the browser** (API key must stay server-side).
