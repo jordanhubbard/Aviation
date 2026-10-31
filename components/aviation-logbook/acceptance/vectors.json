@@ -1,0 +1,97 @@
+{
+  "schema": "aviation/logbook-acceptance-vectors@1",
+  "defaultTolerance": 0.1,
+  "cases": [
+    {
+      "id": "pic-explicit",
+      "input": {"totalTime": 1.5, "picTime": 1.5, "dayTime": 1.5, "pilotRole": "PIC"},
+      "expected": {"valid": true, "normalizedPilotRole": "PIC", "normalizedPicTime": 1.5, "accountedTime": 1.5, "issueCodes": []}
+    },
+    {
+      "id": "pic-default-and-solo-overlap",
+      "input": {"totalTime": 0.2, "soloTime": 0.2, "dayTime": 0.2, "pilotRole": " pic "},
+      "expected": {"valid": true, "normalizedPilotRole": "PIC", "normalizedPicTime": 0.2, "accountedTime": 0.2, "issueCodes": []}
+    },
+    {
+      "id": "certificated-pic-and-dual-overlap",
+      "input": {"totalTime": 2.0, "picTime": 2.0, "dualReceivedTime": 2.0, "dayTime": 2.0, "pilotRole": "DUAL"},
+      "expected": {"valid": true, "normalizedPilotRole": "DUAL", "normalizedPicTime": 2.0, "accountedTime": 2.0, "issueCodes": []}
+    },
+    {
+      "id": "certificated-mixed-accounting-mismatch",
+      "input": {"totalTime": 2.0, "picTime": 0.5, "dualReceivedTime": 0.5, "dayTime": 2.0, "pilotRole": "DUAL"},
+      "expected": {"valid": false, "normalizedPilotRole": "DUAL", "normalizedPicTime": 0.5, "accountedTime": 1.0, "issueCodes": ["time-accounting-mismatch"]}
+    },
+    {
+      "id": "student-dual",
+      "input": {"totalTime": 1.8, "dualReceivedTime": 1.8, "dayTime": 1.8, "pilotRole": "STUDENT"},
+      "expected": {"valid": true, "normalizedPilotRole": "STUDENT", "normalizedPicTime": 0.0, "accountedTime": 1.8, "issueCodes": []}
+    },
+    {
+      "id": "student-solo",
+      "input": {"totalTime": 0.4, "soloTime": 0.4, "dayTime": 0.4, "pilotRole": "STUDENT"},
+      "expected": {"valid": true, "normalizedPilotRole": "STUDENT", "normalizedPicTime": 0.0, "accountedTime": 0.4, "issueCodes": []}
+    },
+    {
+      "id": "explicit-student-status",
+      "input": {"totalTime": 1.0, "picTime": 1.0, "dayTime": 1.0, "pilotRole": "PIC", "studentPilot": true},
+      "expected": {"valid": false, "normalizedPilotRole": "PIC", "normalizedPicTime": 1.0, "accountedTime": 1.0, "issueCodes": ["student-pic-conflict", "student-time-missing"]}
+    },
+    {
+      "id": "student-missing-dual-or-solo",
+      "input": {"totalTime": 1.0, "dayTime": 1.0, "pilotRole": "STUDENT"},
+      "expected": {"valid": false, "normalizedPilotRole": "STUDENT", "normalizedPicTime": 0.0, "accountedTime": 0.0, "issueCodes": ["time-accounting-mismatch", "student-time-missing"]}
+    },
+    {
+      "id": "rounding-tolerance",
+      "input": {"totalTime": 1.5, "dualReceivedTime": 1.45, "dayTime": 1.5, "pilotRole": "STUDENT"},
+      "expected": {"valid": true, "normalizedPilotRole": "STUDENT", "normalizedPicTime": 0.0, "accountedTime": 1.45, "issueCodes": []}
+    },
+    {
+      "id": "day-night-mismatch",
+      "input": {"totalTime": 2.0, "picTime": 2.0, "dayTime": 1.0, "nightTime": 0.5, "pilotRole": "PIC"},
+      "expected": {"valid": false, "normalizedPilotRole": "PIC", "normalizedPicTime": 2.0, "accountedTime": 2.0, "issueCodes": ["day-night-total-mismatch"]}
+    },
+    {
+      "id": "instrument-exceeds-total",
+      "input": {"totalTime": 1.0, "picTime": 1.0, "dayTime": 1.0, "actualInstrumentTime": 0.8, "simulatedInstrumentTime": 0.3, "pilotRole": "PIC"},
+      "expected": {"valid": false, "normalizedPilotRole": "PIC", "normalizedPicTime": 1.0, "accountedTime": 1.0, "issueCodes": ["instrument-time-exceeds-total"]}
+    },
+    {
+      "id": "night-landings-without-night-time",
+      "input": {"totalTime": 1.0, "picTime": 1.0, "dayTime": 1.0, "nightLandings": 2, "pilotRole": "PIC"},
+      "expected": {"valid": false, "normalizedPilotRole": "PIC", "normalizedPicTime": 1.0, "accountedTime": 1.0, "issueCodes": ["night-landings-without-night-time"]}
+    },
+    {
+      "id": "solo-with-dual",
+      "input": {"totalTime": 1.0, "picTime": 1.0, "dualReceivedTime": 1.0, "soloTime": 1.0, "dayTime": 1.0, "pilotRole": "PIC"},
+      "expected": {"valid": false, "normalizedPilotRole": "PIC", "normalizedPicTime": 1.0, "accountedTime": 1.0, "issueCodes": ["solo-dual-conflict"]}
+    },
+    {
+      "id": "solo-invalid-role",
+      "input": {"totalTime": 1.0, "soloTime": 1.0, "dayTime": 1.0, "pilotRole": "SIC"},
+      "expected": {"valid": false, "normalizedPilotRole": "SIC", "normalizedPicTime": 0.0, "accountedTime": null, "issueCodes": ["solo-role-conflict"]}
+    },
+    {
+      "id": "unsupported-role",
+      "input": {"totalTime": 0.0, "pilotRole": "passenger"},
+      "expected": {"valid": false, "normalizedPilotRole": "PASSENGER", "normalizedPicTime": 0.0, "accountedTime": null, "issueCodes": ["invalid-pilot-role"]}
+    },
+    {
+      "id": "negative-condition-time",
+      "input": {"totalTime": 1.0, "picTime": 1.0, "dayTime": -0.1, "pilotRole": "PIC"},
+      "expected": {"valid": false, "normalizedPilotRole": "PIC", "normalizedPicTime": 1.0, "accountedTime": null, "issueCodes": ["invalid-duration"]}
+    },
+    {
+      "id": "ground-only-zero-flight-time",
+      "input": {"totalTime": 0.0, "pilotRole": "STUDENT"},
+      "expected": {"valid": true, "normalizedPilotRole": "STUDENT", "normalizedPicTime": 0.0, "accountedTime": 0.0, "issueCodes": []}
+    }
+  ],
+  "invalidRuntimeCases": [
+    {"id": "non-finite-total", "field": "totalTime", "runtimeValue": "positive-infinity", "expectedIssueCode": "invalid-duration"},
+    {"id": "fractional-landings", "field": "nightLandings", "runtimeValue": 1.5, "expectedIssueCode": "invalid-landing-count"},
+    {"id": "negative-tolerance", "field": "tolerance", "runtimeValue": -0.1, "expectedIssueCode": "invalid-tolerance"},
+    {"id": "non-finite-tolerance", "field": "tolerance", "runtimeValue": "not-a-number", "expectedIssueCode": "invalid-tolerance"}
+  ]
+}

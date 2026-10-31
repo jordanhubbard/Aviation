@@ -1,6 +1,6 @@
 """Aviation SDK - Python wrapper for shared aviation utilities."""
 
-__version__ = "0.6.0"
+__version__ = "0.7.0"
 
 # Airport services
 from .airports import (
@@ -47,6 +47,13 @@ from .aircraft import (
     match_aircraft_operating_profile,
     is_supported_aircraft_type_designator,
     suggest_aircraft_type_designators,
+)
+from .logbook import (
+    LOGBOOK_PILOT_ROLES,
+    LogbookTimeInput,
+    LogbookTimeValidationResult,
+    LogbookValidationIssue,
+    validate_logbook_time,
 )
 from .weight_balance import (
     C172S_LOADING_PROFILE,
@@ -98,6 +105,12 @@ __all__ = [
     "match_aircraft_operating_profile",
     "is_supported_aircraft_type_designator",
     "suggest_aircraft_type_designators",
+    # Logbook validation
+    "LOGBOOK_PILOT_ROLES",
+    "LogbookTimeInput",
+    "LogbookTimeValidationResult",
+    "LogbookValidationIssue",
+    "validate_logbook_time",
     # Weight and balance
     "C172S_LOADING_PROFILE",
     "EnvelopePoint",

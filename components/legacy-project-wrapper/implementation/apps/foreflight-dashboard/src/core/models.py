@@ -4,6 +4,7 @@ from datetime import datetime, time, timezone, timedelta
 from typing import Optional, List, Dict
 from pydantic import BaseModel, Field, validator
 from dataclasses import dataclass
+from aviation.logbook import LogbookTimeInput, validate_logbook_time
 from .icao_validator import is_valid_icao_code, get_icao_info, suggest_similar_codes, get_validation_error_message
 
 class Airport(BaseModel):
@@ -109,6 +110,7 @@ class LogbookEntry(BaseModel):
     # Additional fields
     remarks: Optional[str] = None
     pilot_role: str = "PIC"
+    is_student_pilot: bool = Field(default=False, exclude=True)
     dual_received: float = Field(ge=0.0, description="Dual received time must be non-negative")
     pic_time: float = Field(ge=0.0, description="PIC time must be non-negative")
     solo_time: float = Field(ge=0.0, description="Solo time must be non-negative")
@@ -243,6 +245,7 @@ class LogbookEntry(BaseModel):
     def validate_entry(self) -> None:
         """Validate the entry and set error explanation if issues are found."""
         issues = []
+        warnings = []
 
         if self.error_explanation:
             issues.extend([
@@ -274,80 +277,35 @@ class LogbookEntry(BaseModel):
             if not is_valid_icao_code(self.aircraft.icao_type_code):
                 issues.append(get_validation_error_message(self.aircraft.icao_type_code))
             
-        # Validate pilot role
-        valid_roles = ["PIC", "SIC", "STUDENT", "INSTRUCTOR", "SPLIT", "DUAL", "SOLO"]
-        if self.pilot_role not in valid_roles:
-            issues.append(f"Invalid pilot role (must be one of: {', '.join(valid_roles)})")
-            
-        # Note: Removed overly restrictive "implausibly short flight time" check
-        # Short flights (even 10-15 minutes) are valid for nearby airports, pattern work, etc.
-            
-        # Check flight conditions consistency only if conditions are provided and both day and night are non-zero
-        total_condition_time = (
-            self.conditions.day +
-            self.conditions.night
+        # Common duration accounting and consistency belong to aviation.logbook.
+        common_validation = validate_logbook_time(
+            LogbookTimeInput(
+                total_time=self.total_time,
+                pic_time=self.pic_time,
+                dual_received_time=self.dual_received,
+                solo_time=self.solo_time,
+                day_time=self.conditions.day,
+                night_time=self.conditions.night,
+                actual_instrument_time=self.conditions.actual_instrument,
+                simulated_instrument_time=self.conditions.simulated_instrument,
+                cross_country_time=self.conditions.cross_country,
+                night_landings=self.landings_night or 0,
+                pilot_role=self.pilot_role,
+                student_pilot=self.is_student_pilot,
+            )
         )
-        if total_condition_time > 0 and self.conditions.day > 0 and self.conditions.night > 0:
-            if abs(total_condition_time - self.total_time) > 0.1:
-                issues.append(f"Day ({self.conditions.day}) + night ({self.conditions.night}) time ({total_condition_time}) does not match total time ({self.total_time})")
-            
-        # Check instrument time consistency
-        total_instrument = (
-            self.conditions.actual_instrument +
-            self.conditions.simulated_instrument
+        self.pilot_role = common_validation.normalized_pilot_role
+        self.pic_time = common_validation.normalized_pic_time
+        issues.extend(
+            issue.message
+            for issue in common_validation.issues
+            if issue.severity == "error"
         )
-        if total_instrument > self.total_time:
-            issues.append(f"Total instrument time ({total_instrument}) exceeds flight time ({self.total_time})")
-
-        # Check dual received time consistency
-        if self.dual_received > self.total_time:
-            issues.append(f"Dual received time ({self.dual_received}) exceeds flight time ({self.total_time})")
-            
-        # Check time accountability based on pilot role
-        if self.total_time > 0:
-            # If role is PIC and no PIC time is set, use total time
-            if self.pilot_role == "PIC" and self.pic_time == 0 and self.dual_received == 0:
-                self.pic_time = self.total_time
-            
-            # For certificated pilots logging both PIC and dual:
-            # If both PIC and dual equal total time, it's valid (flight review, IPC, checkout)
-            # Otherwise, account for the time without counting solo twice.
-            if self.pic_time > 0 and self.dual_received > 0 and self.pilot_role != "STUDENT":
-                pic_equals_total = abs(self.pic_time - self.total_time) <= 0.1
-                dual_equals_total = abs(self.dual_received - self.total_time) <= 0.1
-                
-                # Valid scenario: Both equal total time (certificated pilot receiving dual)
-                if pic_equals_total and dual_equals_total:
-                    # This is valid - no error
-                    pass
-                else:
-                    # Otherwise, account for mixed logging without counting solo twice.
-                    # Solo is a subset of PIC for a certificated pilot, not
-                    # another block of flight time to add to PIC.
-                    solo_outside_pic = max(0.0, self.solo_time - self.pic_time)
-                    total_accounted_time = self.dual_received + self.pic_time + solo_outside_pic
-                    if abs(total_accounted_time - self.total_time) > 0.1:
-                        issues.append(f"Total time ({self.total_time:.1f}) does not match PIC ({self.pic_time:.1f}), dual received ({self.dual_received:.1f}), and solo ({self.solo_time:.1f}) time (solo can overlap PIC)")
-            # For student pilots or single-type logging, account for solo overlap.
-            elif self.pilot_role == "STUDENT" or (self.pic_time > 0 and self.dual_received == 0) or (self.pic_time == 0 and self.dual_received > 0):
-                solo_outside_pic = self.solo_time if self.pilot_role == "STUDENT" else max(0.0, self.solo_time - self.pic_time)
-                total_accounted_time = self.dual_received + self.pic_time + solo_outside_pic
-                if abs(total_accounted_time - self.total_time) > 0.1:  # Allow 0.1 hour difference for rounding
-                    issues.append(f"Total time ({self.total_time:.1f}) does not match PIC ({self.pic_time:.1f}), dual received ({self.dual_received:.1f}), and solo ({self.solo_time:.1f}) time (solo can overlap PIC)")
-
-        # Check pilot role vs time logging conflicts
-        if self.pilot_role == "STUDENT" and self.pic_time > 0:
-            issues.append("Student pilot cannot log PIC time")
-        
-        # For certificated pilots (role=PIC or DUAL), logging both PIC and dual received is LEGAL
-        # under FAR 61.51 when:
-        # - Sole manipulator of controls (rated in aircraft)
-        # - Receiving instruction (flight review, IPC, checkout, advanced training)
-        # This should NOT be flagged as an error for certificated pilots
-        # Only student pilots cannot log PIC time while receiving dual
-            
-        if self.pilot_role == "STUDENT" and self.dual_received == 0 and self.solo_time == 0 and self.total_time > 0:
-            issues.append("Student pilot flights should typically log dual received time")
+        warnings.extend(
+            issue.message
+            for issue in common_validation.issues
+            if issue.severity == "warning"
+        )
 
         # Check cross-country time validity
         if self.conditions.cross_country > 0:
@@ -394,20 +352,6 @@ class LogbookEntry(BaseModel):
                 # Only flag as error if no route information suggests intermediate stops
                 if not has_route_info:
                     issues.append("Cross-country time logged for flight with same departure and destination airport and no intermediate stops indicated")
-        
-        # Check night time vs night landings consistency
-        if (self.landings_night or 0) > 0 and (self.conditions.night or 0) == 0:
-            issues.append("Night landings logged without night flight time")
-        
-        # Check solo time conflicts
-        if self.solo_time > 0:
-            if self.dual_received > 0:
-                issues.append("Solo time cannot be logged with dual received time")
-            if self.pilot_role not in ["PIC", "STUDENT"]:
-                issues.append("Solo time can only be logged by PIC or student pilots")
-
-        # Check for warnings (less severe issues)
-        warnings = []
         
         # Check distance requirement for certificate requirements (>50nm for private/instrument/commercial)
         if self.conditions.cross_country > 0 and 'Distance:' in (self.remarks or ''):

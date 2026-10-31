@@ -1,6 +1,6 @@
 {
   "name": "@aviation/shared-sdk",
-  "version": "0.7.0",
+  "version": "0.8.0",
   "description": "Shared SDK for aviation applications with weather services, AI methodology, and common utilities",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -113,6 +113,16 @@
       "require": {
         "types": "./dist/aviation/aircraft.d.ts",
         "default": "./dist/aviation/aircraft.js"
+      }
+    },
+    "./aviation/logbook": {
+      "import": {
+        "types": "./dist-esm/aviation/logbook.d.ts",
+        "default": "./dist-esm/aviation/logbook.js"
+      },
+      "require": {
+        "types": "./dist/aviation/logbook.d.ts",
+        "default": "./dist/aviation/logbook.js"
       }
     },
     "./aviation/flight-dynamics": {
