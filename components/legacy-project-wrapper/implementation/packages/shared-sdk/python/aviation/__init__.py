@@ -80,6 +80,14 @@ from .hazards import (
     normalize_hazard_record,
     point_in_polygon,
 )
+from .alerts import (
+    AlertLifecycleError,
+    alert_priority,
+    highest_alert_level,
+    normalize_alert_level,
+    order_alerts,
+    reconcile_acknowledgements,
+)
 from .weight_balance import (
     C172S_LOADING_PROFILE,
     EnvelopePoint,
@@ -159,6 +167,13 @@ __all__ = [
     "is_hazard_active",
     "normalize_hazard_record",
     "point_in_polygon",
+    # Alert lifecycle
+    "AlertLifecycleError",
+    "alert_priority",
+    "highest_alert_level",
+    "normalize_alert_level",
+    "order_alerts",
+    "reconcile_acknowledgements",
     # Weight and balance
     "C172S_LOADING_PROFILE",
     "EnvelopePoint",

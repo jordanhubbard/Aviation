@@ -9,6 +9,8 @@ export * from './map/index.js';
 export * from './multi-tab/index.js';
 // OpenClaw in-app chat
 export * from './chat/index.js';
+// Alert lifecycle UI adapter
+export * from './alerts/index.js';
 
 /**
  * UI Modality Types

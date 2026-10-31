@@ -213,6 +213,13 @@ release-visible outcome to `CHANGELOG.md`; Git preserves prior queue states.
     required-field configuration status. Keep environment and keystore access, HTTP
     settings endpoints, and React presentation in adapters. Delivered under MAC task
     `task_edf80313e775308581dd3dcdfe2e7ad9`.
+  - [x] Promote provider-neutral alert lifecycle semantics into an explicit
+    `aviation.alerts` Component with shared TypeScript/Python/Go vectors for severity
+    normalization, priority, stable ordering, acknowledgement reconciliation, and
+    highest-active-severity. Migrate G1000 and the UI framework to the common core
+    while retaining telemetry thresholds, messages, persistence, events, timestamps,
+    sounds, and rendering as adapter policy. Delivered under MAC task
+    `task_48f2da691fac81450e75a5827306017b`.
   - [ ] Promote airports, weather, procedures/nav-data, flight dynamics, avionics
     protocols/rendering, shared UI, and integration infrastructure into
     explicit Components with owned tests and contracts.
@@ -220,9 +227,9 @@ release-visible outcome to `CHANGELOG.md`; Git preserves prior queue states.
     aviation implementations after parity qualification.
   - [ ] Classify and remove or intentionally retain every remainder beneath the legacy
     wrapper.
-- **Next action:** Inventory shared UI and integration infrastructure, promote the next
-  reusable domain into Component-owned acceptance, and continue replacing app-local
-  common aviation logic with qualified SDK consumption.
+- **Next action:** Inventory the next shared UI or integration-infrastructure domain,
+  promote its reusable semantics into Component-owned acceptance, and continue
+  replacing app-local common aviation logic with qualified SDK consumption.
 - **Evidence:** Phase 1.2 lift-and-shift identity `sha256:c5ca4361ba010f6e8d81c93398468f9f4f8b8cc352504bc8535fa74b7c6e9990`.
   Retained conversion established original-source release authority; each migration
   refreshes the verifier-owned receipt in `verification/current.json`.
@@ -258,6 +265,18 @@ release-visible outcome to `CHANGELOG.md`; Git preserves prior queue states.
   `sha256:a3e1637b7c18cf2d96f6fa34751119027c01251efc8687883d06605f369ab8ba`
   records all 510 admitted SDK tests in current receipt
   `sha256:5c94f7c783a30a944042a7e3029545c7af2cbf60246a3c7aa24fd5042e392d1c`.
+  Alert-lifecycle qualification adds Component revision
+  `sha256:239c9fb3ba338d4d79675520d04863c19d55193c83b838bb49e5f67d3bcaf984`
+  and lock
+  `sha256:e0a21f6a2f7af18311c7de67fa0315f6a1513c798319879abaaacad07e9ea41a`.
+  The shared vectors pass 527 TypeScript SDK tests, 257 Python SDK tests, and Go
+  conformance; the UI framework passes 38 tests and builds, G1000 passes 77 tests,
+  and its production frontend builds while telemetry thresholds remain private.
+  Retained source membership admits all eight new realization/conformance files, the
+  complete retained `make test` gate passes, and verifier-owned candidate
+  `sha256:e79bd02fd770d86310e0698043a7d5540416fb2362d6712d9ec7b794c0c1a2a2`
+  records all 527 admitted SDK tests in current receipt
+  `sha256:a381487023f5fe8f8f568431c03eed4927217f8d64a883704b50a90c1023b5bf`.
   The first native boundary has Component lock
   `sha256:b156aad3a60d74a7eba30b6f4e7ba5d8cc01c8ecc2d7c41a069348db6ed75a9b`;
   its shared acceptance vectors pass 292 TypeScript and 94 Python SDK tests, and

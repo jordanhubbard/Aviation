@@ -1,0 +1,78 @@
+{
+  "schema": "aviation/alerts-acceptance-vectors@1",
+  "normalizationCases": [
+    {"input": "normal", "expected": "normal", "priority": 0},
+    {"input": " advisory ", "expected": "advisory", "priority": 1},
+    {"input": "CAUTION", "expected": "caution", "priority": 2},
+    {"input": "warning", "expected": "warning", "priority": 3},
+    {"input": "ok", "expected": "normal", "priority": 0},
+    {"input": "Info", "expected": "advisory", "priority": 1}
+  ],
+  "invalidLevelCases": ["", "emergency", "critical"],
+  "orderingCases": [
+    {
+      "id": "acknowledgement-before-severity",
+      "input": [
+        {"id": "ack-warning", "level": "warning", "acknowledged": true},
+        {"id": "active-info", "level": "info", "acknowledged": false},
+        {"id": "active-warning-a", "level": "warning", "acknowledged": false},
+        {"id": "active-warning-b", "level": "WARNING", "acknowledged": false},
+        {"id": "ack-caution", "level": "caution", "acknowledged": true}
+      ],
+      "expectedIds": ["active-warning-a", "active-warning-b", "active-info", "ack-warning", "ack-caution"]
+    },
+    {
+      "id": "canonical-and-alias-priority",
+      "input": [
+        {"id": "normal", "level": "normal", "acknowledged": false},
+        {"id": "advisory", "level": "advisory", "acknowledged": false},
+        {"id": "ok", "level": "ok", "acknowledged": false},
+        {"id": "info", "level": "info", "acknowledged": false}
+      ],
+      "expectedIds": ["advisory", "info", "normal", "ok"]
+    }
+  ],
+  "reconciliationCases": [
+    {
+      "id": "prunes-stale-and-duplicates",
+      "activeIds": ["data", "overspeed", "altitude"],
+      "acknowledgedIds": ["stale", "overspeed", "overspeed", "data"],
+      "expected": ["overspeed", "data"]
+    },
+    {
+      "id": "empty-active-set",
+      "activeIds": [],
+      "acknowledgedIds": ["stale"],
+      "expected": []
+    }
+  ],
+  "highestCases": [
+    {
+      "id": "excludes-acknowledged-by-default",
+      "alerts": [
+        {"id": "warning", "level": "warning", "acknowledged": true},
+        {"id": "caution", "level": "caution", "acknowledged": false},
+        {"id": "info", "level": "info", "acknowledged": false}
+      ],
+      "includeAcknowledged": false,
+      "expected": "caution"
+    },
+    {
+      "id": "includes-acknowledged-when-requested",
+      "alerts": [
+        {"id": "warning", "level": "warning", "acknowledged": true},
+        {"id": "caution", "level": "caution", "acknowledged": false}
+      ],
+      "includeAcknowledged": true,
+      "expected": "warning"
+    },
+    {
+      "id": "empty-scope-is-normal",
+      "alerts": [
+        {"id": "warning", "level": "warning", "acknowledged": true}
+      ],
+      "includeAcknowledged": false,
+      "expected": "normal"
+    }
+  ]
+}

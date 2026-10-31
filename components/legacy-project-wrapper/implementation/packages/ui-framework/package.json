@@ -17,6 +17,10 @@
     "./chat": {
       "types": "./dist/chat/index.d.ts",
       "default": "./dist/chat/index.js"
+    },
+    "./alerts": {
+      "types": "./dist/alerts/index.d.ts",
+      "default": "./dist/alerts/index.js"
     }
   },
   "scripts": {

@@ -2,6 +2,8 @@
  * Alert types for the aviation alert message stack
  */
 
+import { alertPriority } from '@aviation/shared-sdk';
+
 /**
  * Alert severity levels following aviation standards
  * - warning: Immediate action required (red)
@@ -152,9 +154,9 @@ export type AlertEventCallback = (event: AlertEvent) => void;
  * Priority weights for alert levels (higher = more important)
  */
 export const ALERT_PRIORITY: Record<AlertLevel, number> = {
-  warning: 3,
-  caution: 2,
-  advisory: 1,
+  warning: alertPriority('warning'),
+  caution: alertPriority('caution'),
+  advisory: alertPriority('advisory'),
 };
 
 /**

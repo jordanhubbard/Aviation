@@ -22,6 +22,8 @@ export * from './aviation/nav-data/index.js';
 export * from './aviation/notam.js';
 // Aviation hazard services (SIGMETs / AIRMETs / TFRs)
 export * from './aviation/hazards.js';
+// Provider-neutral alert lifecycle semantics
+export * from './aviation/alerts.js';
 
 // Aviation weight & balance (CG envelope calculations)
 export * from './aviation/weight-balance.js';
