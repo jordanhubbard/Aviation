@@ -1,10 +1,14 @@
 from __future__ import annotations
 
 from dataclasses import asdict, dataclass, field
-import math
 import time
 from typing import Dict
 
+from aviation.navigation import (
+    destination,
+    heading_difference,
+    normalize_bearing as normalize_heading,
+)
 from aviation_flight_dynamics.autopilot import (
     AutopilotModeController,
     LateralMode,
@@ -32,20 +36,15 @@ from app.services.nav_radios import (
     compute_adf,
     compute_dme,
 )
-from app.services.transponder import TRANSPONDER_MODES, TransponderState, normalize_squawk
+from app.services.transponder import (
+    TRANSPONDER_MODES,
+    TransponderState,
+    normalize_squawk,
+)
 
 
 def clamp(value: float, minimum: float, maximum: float) -> float:
     return max(minimum, min(maximum, value))
-
-
-def normalize_heading(heading: float) -> float:
-    return heading % 360
-
-
-def heading_difference(target: float, current: float) -> float:
-    diff = (target - current + 180) % 360 - 180
-    return diff
 
 
 @dataclass
@@ -85,8 +84,12 @@ class FlightDynamicsConfig:
     altitude_capture_ft: float = 80.0
     autopilot_disconnect_seconds: float = 4.0
     heading_capture_deg: float = 3.0
-    roll_pid: PidConfig = field(default_factory=lambda: PidConfig(**asdict(DEFAULT_ROLL_PID)))
-    pitch_pid: PidConfig = field(default_factory=lambda: PidConfig(**asdict(DEFAULT_PITCH_PID)))
+    roll_pid: PidConfig = field(
+        default_factory=lambda: PidConfig(**asdict(DEFAULT_ROLL_PID))
+    )
+    pitch_pid: PidConfig = field(
+        default_factory=lambda: PidConfig(**asdict(DEFAULT_PITCH_PID))
+    )
     roll_pid_override: PidConfig | None = None
     pitch_pid_override: PidConfig | None = None
 
@@ -412,10 +415,16 @@ class FlightDynamicsSimulator:
             roll_command = self._roll_hold_deg
             heading_error = 0.0
         else:
-            heading_error = heading_difference(self.targets.heading_deg, self.state.heading_deg)
+            heading_error = heading_difference(
+                self.state.heading_deg, self.targets.heading_deg
+            )
             self._update_lateral_capture(heading_error)
             roll_command = self.roll_pid.update(heading_error, delta)
-        max_roll = max(abs(self.config.roll_pid.output_min), abs(self.config.roll_pid.output_max), 1e-6)
+        max_roll = max(
+            abs(self.config.roll_pid.output_min),
+            abs(self.config.roll_pid.output_max),
+            1e-6,
+        )
         roll_command = clamp(roll_command, -max_roll, max_roll)
         desired_turn_rate = clamp(
             (roll_command / max_roll) * self.config.max_turn_rate_dps,
@@ -451,7 +460,11 @@ class FlightDynamicsSimulator:
             )
         else:
             pitch_command = self.pitch_pid.update(altitude_error, delta)
-        max_pitch = max(abs(self.config.pitch_pid.output_min), abs(self.config.pitch_pid.output_max), 1e-6)
+        max_pitch = max(
+            abs(self.config.pitch_pid.output_min),
+            abs(self.config.pitch_pid.output_max),
+            1e-6,
+        )
         pitch_command = clamp(pitch_command, -max_pitch, max_pitch)
         desired_vs = clamp(
             (pitch_command / max_pitch) * self.config.max_climb_rate_fpm,
@@ -478,12 +491,15 @@ class FlightDynamicsSimulator:
         distance_nm = self.state.airspeed_kt * delta / 3600.0
         if distance_nm == 0:
             return
-        heading_rad = math.radians(self.state.heading_deg)
-        lat_rad = math.radians(self.state.latitude_deg)
-        delta_lat = (distance_nm * math.cos(heading_rad)) / 60.0
-        delta_lon = (distance_nm * math.sin(heading_rad)) / max(1e-6, 60.0 * math.cos(lat_rad))
-        self.state.latitude_deg += delta_lat
-        self.state.longitude_deg += delta_lon
+        (
+            self.state.latitude_deg,
+            self.state.longitude_deg,
+        ) = destination(
+            self.state.latitude_deg,
+            self.state.longitude_deg,
+            distance_nm,
+            self.state.heading_deg,
+        )
 
     def _update_vertical_capture(self, altitude_error: float) -> None:
         if self.autopilot.vertical_mode not in {"ALTS", "VS"}:
