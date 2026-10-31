@@ -93,6 +93,10 @@ from .health import (
     create_health_report,
     normalize_health_status,
 )
+from .service_lifecycle import (
+    ServiceLifecycleError,
+    transition_service_lifecycle,
+)
 from .weight_balance import (
     C172S_LOADING_PROFILE,
     EnvelopePoint,
@@ -183,6 +187,9 @@ __all__ = [
     "HealthReportError",
     "create_health_report",
     "normalize_health_status",
+    # Service lifecycle
+    "ServiceLifecycleError",
+    "transition_service_lifecycle",
     # Weight and balance
     "C172S_LOADING_PROFILE",
     "EnvelopePoint",

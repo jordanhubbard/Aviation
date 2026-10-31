@@ -246,6 +246,18 @@ release-visible outcome to `CHANGELOG.md`; Git preserves prior queue states.
     both Python adapter checks, and retained receipt
     `sha256:98f090f35fa2c4606e35a340de77504e0845b83eb7db663dded12b0eb6f58730`
     pass with all 17 Component locks current.
+  - [x] Promote provider-neutral background-service lifecycle transitions into an
+    explicit `aviation.service.lifecycle` Component with shared TypeScript/Python
+    acceptance vectors and independent SDK tests. Refactor the shared TypeScript
+    `BackgroundService` to consume the transition authority and migrate Weather
+    Briefing away from its private start/stop implementation while retaining hooks,
+    errors, configuration, clocks, cache cleanup, and process orchestration in
+    adapters. Component revision
+    `sha256:8baf2e1a36f0cbc682d438cbc3632d7b176915c255246eaadc74a8e307776be6`;
+    564 TypeScript SDK tests, 287 Python SDK tests, 47 Flight Tracker tests, Weather
+    Briefing and G1000 backend builds, and retained receipt
+    `sha256:755bab72e38320de5fbcdf22c20ffed18957500cbe4154fa2ff8c096cc541a4f`
+    pass with all 18 Component locks current.
   - [ ] Promote airports, weather, procedures/nav-data, flight dynamics, avionics
     protocols/rendering, shared UI, and integration infrastructure into
     explicit Components with owned tests and contracts.
@@ -253,7 +265,7 @@ release-visible outcome to `CHANGELOG.md`; Git preserves prior queue states.
     aviation implementations after parity qualification.
   - [ ] Classify and remove or intentionally retain every remainder beneath the legacy
     wrapper.
-- **Next action:** Land the `aviation.service.health` slice through review and
+- **Next action:** Land the `aviation.service.lifecycle` slice through review and
   exact-main CI, then inventory the next duplicated integration-infrastructure domain.
 - **Evidence:** Phase 1.2 lift-and-shift identity `sha256:c5ca4361ba010f6e8d81c93398468f9f4f8b8cc352504bc8535fa74b7c6e9990`.
   Retained conversion established original-source release authority; each migration

@@ -10,6 +10,7 @@ import {
   formatNotamText,
   type NOTAM,
   type NotamClientOptions,
+  BackgroundService,
 } from '@aviation/shared-sdk';
 
 interface AirportConditions {
@@ -29,21 +30,24 @@ export interface WeatherBriefingServiceConfig {
   notamClientOptions?: NotamClientOptions;
 }
 
-export class WeatherBriefingService {
+export class WeatherBriefingService extends BackgroundService {
   private airportCache: Map<string, AirportConditions> = new Map();
-  private _config: WeatherBriefingServiceConfig;
   private notamClient: NotamClient;
 
   constructor(config: WeatherBriefingServiceConfig = {}) {
-    this._config = config;
+    super({
+      name: config.name ?? 'weather-briefing',
+      enabled: config.enabled ?? true,
+      autoStart: config.autoStart,
+    });
     this.notamClient = new NotamClient(config.notamClientOptions ?? {});
   }
 
-  public async start(): Promise<void> {
+  protected async onStart(): Promise<void> {
     // No-op for compatibility; service is ready when constructed
   }
 
-  public async stop(): Promise<void> {
+  protected async onStop(): Promise<void> {
     this.airportCache.clear();
   }
 

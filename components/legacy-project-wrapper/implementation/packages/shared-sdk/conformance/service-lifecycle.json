@@ -1,0 +1,38 @@
+{
+  "schema": "aviation/service-lifecycle-acceptance-vectors@1",
+  "sequenceCases": [
+    {
+      "id": "successful-start",
+      "initial": "stopped",
+      "events": ["start_requested", "start_succeeded"],
+      "expectedStates": ["starting", "running"]
+    },
+    {
+      "id": "successful-start-and-stop",
+      "initial": "stopped",
+      "events": ["start_requested", "start_succeeded", "stop_requested", "stop_succeeded"],
+      "expectedStates": ["starting", "running", "stopping", "stopped"]
+    },
+    {
+      "id": "failed-start-and-reset",
+      "initial": "stopped",
+      "events": ["start_requested", "start_failed", "reset"],
+      "expectedStates": ["starting", "failed", "stopped"]
+    },
+    {
+      "id": "failed-stop-and-reset",
+      "initial": "running",
+      "events": ["stop_requested", "stop_failed", "reset"],
+      "expectedStates": ["stopping", "failed", "stopped"]
+    }
+  ],
+  "invalidTransitionCases": [
+    {"id": "double-start", "state": "running", "event": "start_requested"},
+    {"id": "concurrent-start", "state": "starting", "event": "start_requested"},
+    {"id": "stop-before-start", "state": "stopped", "event": "stop_requested"},
+    {"id": "concurrent-stop", "state": "stopping", "event": "stop_requested"},
+    {"id": "success-without-request", "state": "stopped", "event": "start_succeeded"},
+    {"id": "start-while-failed", "state": "failed", "event": "start_requested"},
+    {"id": "reset-while-running", "state": "running", "event": "reset"}
+  ]
+}
