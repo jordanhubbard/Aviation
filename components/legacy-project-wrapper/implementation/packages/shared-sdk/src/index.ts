@@ -24,6 +24,8 @@ export * from './aviation/notam.js';
 export * from './aviation/hazards.js';
 // Provider-neutral alert lifecycle semantics
 export * from './aviation/alerts.js';
+// Provider-neutral service-health report semantics
+export * from './aviation/health.js';
 
 // Aviation weight & balance (CG envelope calculations)
 export * from './aviation/weight-balance.js';

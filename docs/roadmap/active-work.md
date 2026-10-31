@@ -233,6 +233,19 @@ release-visible outcome to `CHANGELOG.md`; Git preserves prior queue states.
     builds, and retained receipt
     `sha256:768f72bba249dd13bfe5aef669e60e6ff3862924152aa89aa400ca0f899ea783`
     pass with all 16 Component locks current.
+  - [x] Promote the repeated service-health response semantics into an explicit
+    `aviation.service.health` Component with shared TypeScript/Python acceptance
+    vectors for status normalization, stable report construction, and fail-closed
+    reserved fields. Migrate live TypeScript and Python application endpoints while
+    retaining HTTP routing, timestamps, dependency probes, scheduler state, and
+    deployment readiness policy in application adapters. Aviation Chat, Flight
+    Tracker, Weather Briefing, G1000, and Flight Planner now consume the common
+    contract. Component revision
+    `sha256:4fc7ada231d43eb7e0e8c22b6a7fa2689a99c323156d3f4b9d2f0d664f77ceee`;
+    547 TypeScript SDK tests, 276 Python SDK tests, three TypeScript consumer builds,
+    both Python adapter checks, and retained receipt
+    `sha256:98f090f35fa2c4606e35a340de77504e0845b83eb7db663dded12b0eb6f58730`
+    pass with all 17 Component locks current.
   - [ ] Promote airports, weather, procedures/nav-data, flight dynamics, avionics
     protocols/rendering, shared UI, and integration infrastructure into
     explicit Components with owned tests and contracts.
@@ -240,8 +253,8 @@ release-visible outcome to `CHANGELOG.md`; Git preserves prior queue states.
     aviation implementations after parity qualification.
   - [ ] Classify and remove or intentionally retain every remainder beneath the legacy
     wrapper.
-- **Next action:** Land the `aviation.ui.panes` slice through review and exact-main CI,
-  then inventory the next integration-infrastructure domain for Component ownership.
+- **Next action:** Land the `aviation.service.health` slice through review and
+  exact-main CI, then inventory the next duplicated integration-infrastructure domain.
 - **Evidence:** Phase 1.2 lift-and-shift identity `sha256:c5ca4361ba010f6e8d81c93398468f9f4f8b8cc352504bc8535fa74b7c6e9990`.
   Retained conversion established original-source release authority; each migration
   refreshes the verifier-owned receipt in `verification/current.json`.

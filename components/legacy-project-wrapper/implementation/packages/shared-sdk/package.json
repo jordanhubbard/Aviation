@@ -105,6 +105,16 @@
         "default": "./dist/aviation/alerts.js"
       }
     },
+    "./aviation/health": {
+      "import": {
+        "types": "./dist-esm/aviation/health.d.ts",
+        "default": "./dist-esm/aviation/health.js"
+      },
+      "require": {
+        "types": "./dist/aviation/health.d.ts",
+        "default": "./dist/aviation/health.js"
+      }
+    },
     "./aviation/weight-balance": {
       "import": {
         "types": "./dist-esm/aviation/weight-balance.d.ts",

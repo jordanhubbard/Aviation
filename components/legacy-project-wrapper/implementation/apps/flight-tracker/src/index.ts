@@ -1,6 +1,7 @@
 import http from "http";
 import {
   MacTaskCreator,
+  createHealthReport,
   installNodeProcessErrorReporting,
 } from "@aviation/shared-sdk";
 import { FlightTrackerService } from "./service";
@@ -48,7 +49,7 @@ async function main() {
     };
 
     if (requestUrl.pathname === "/health") {
-      sendJson(200, { status: "ok" });
+      sendJson(200, createHealthReport());
       return;
     }
 

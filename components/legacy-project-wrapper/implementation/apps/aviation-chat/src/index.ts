@@ -1,7 +1,7 @@
 import express from 'express';
 import cors from 'cors';
 import { createSecretLoader } from '@aviation/keystore';
-import { createOpenClawClient } from '@aviation/shared-sdk';
+import { createHealthReport, createOpenClawClient } from '@aviation/shared-sdk';
 import { loadAppContext } from './context';
 import { getHistory, appendTurn } from './memory';
 import { ExplainerClient, explainerRoute } from '@aviation/ai-explainer';
@@ -127,7 +127,7 @@ const explainer = new ExplainerClient({
 app.use(/* @ts-ignore Express 5 Router type issue */ explainerRoute(explainer) as any);
 
 app.get('/health', (_req, res) => {
-  res.json({ status: 'ok', service: 'aviation-chat' });
+  res.json(createHealthReport({ service: 'aviation-chat' }));
 });
 
 const port = Number(process.env.PORT ?? 31416);
