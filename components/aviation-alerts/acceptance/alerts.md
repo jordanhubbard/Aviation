@@ -6,7 +6,8 @@ requires no application runtime.
 
 ## Requirement: Severity agrees
 
-- Canonical values and the `ok` and `info` aliases normalize identically.
+- Canonical values and the `ok`, `debug`, `info`, and `critical` aliases normalize
+  identically across all realizations.
 - Empty and unknown values fail with `alert-level-invalid`.
 - Priority values increase exactly from `normal` through `warning`.
 

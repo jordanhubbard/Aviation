@@ -28,9 +28,10 @@
 - Added an independently specified and tested `aviation.alerts` Component with
   shared TypeScript, Python, and Go severity normalization, stable ordering,
   acknowledgement reconciliation, and highest-active-severity vectors. G1000's alert
-  service and live Zustand store plus the UI framework now consume the portable core
-  while retaining telemetry thresholds, messages, timestamps, persistence, events,
-  sounds, visibility limits, and rendering policy.
+  service and live Zustand store, the UI framework, and Flight Planner's live alert
+  manager now consume the portable core. Flight Planner retains its extended
+  critical-before-warning tie-break, while applications retain thresholds, messages,
+  timestamps, persistence, events, sounds, visibility limits, and rendering policy.
 - Added an independently specified and tested `aviation.notam` Component with
   shared TypeScript/Python normalization, classification, effective-window and route
   filtering, stable severity ordering, and text-formatting vectors. Weather Briefing

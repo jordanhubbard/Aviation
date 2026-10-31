@@ -46,15 +46,21 @@ The public surface is defined by `interfaces/alerts.md`. Every realization must 
 ### Requirement: Severity is portable and fail closed
 
 Canonical severity values SHALL be `normal`, `advisory`, `caution`, and `warning`, in
-ascending priority. The existing application aliases `ok` and `info` SHALL normalize
-to `normal` and `advisory`. Unknown or empty values SHALL be rejected rather than
-silently downgraded.
+ascending priority. The application aliases `ok` and `debug` SHALL normalize to
+`normal`, `info` SHALL normalize to `advisory`, and `critical` SHALL normalize to
+`warning`. Unknown or empty values SHALL be rejected rather than silently downgraded.
 
 #### Scenario: An application supplies its legacy informational level
 
 - **WHEN** the input severity is `info`
 - **THEN** normalization returns `advisory`
 - **AND** the original application record is not mutated
+
+#### Scenario: Flight Planner supplies an extended endpoint severity
+
+- **WHEN** its adapter supplies `critical` or `debug`
+- **THEN** normalization returns `warning` or `normal`, respectively
+- **AND** Flight Planner may retain its private critical-before-warning tie-break
 
 ### Requirement: Lifecycle results are deterministic
 

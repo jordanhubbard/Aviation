@@ -7,6 +7,7 @@ import uuid
 import json
 from pathlib import Path
 
+from aviation.alerts import alert_priority
 from app.models.alert import Alert, AlertSeverity
 
 
@@ -24,6 +25,16 @@ class AlertManager:
         self.persistence_path = persistence_path
         if persistence_path:
             self._load_alerts()
+
+    @staticmethod
+    def _active_sort_key(alert: Alert) -> tuple[int, int, float]:
+        """Order through the common tiers, retaining app-specific tie-breaks."""
+
+        return (
+            -alert_priority(alert.severity.value),
+            -int(alert.severity == AlertSeverity.CRITICAL),
+            -alert.timestamp.timestamp(),
+        )
     
     def add_alert(
         self,
@@ -118,17 +129,7 @@ class AlertManager:
         if severity_filter:
             alerts = [a for a in alerts if a.severity == severity_filter]
         
-        # Sort by severity (critical > warning > info > debug) then by timestamp (newest first)
-        severity_order = {
-            AlertSeverity.CRITICAL: 0,
-            AlertSeverity.WARNING: 1,
-            AlertSeverity.INFO: 2,
-            AlertSeverity.DEBUG: 3
-        }
-        
-        alerts.sort(
-            key=lambda a: (severity_order[a.severity], -a.timestamp.timestamp())
-        )
+        alerts.sort(key=self._active_sort_key)
         return alerts
     
     def get_unacknowledged_alerts(self, severity_filter: Optional[AlertSeverity] = None) -> List[Alert]:
@@ -145,17 +146,7 @@ class AlertManager:
         if severity_filter:
             alerts = [a for a in alerts if a.severity == severity_filter]
         
-        # Sort by severity (critical > warning > info > debug) then by timestamp (newest first)
-        severity_order = {
-            AlertSeverity.CRITICAL: 0,
-            AlertSeverity.WARNING: 1,
-            AlertSeverity.INFO: 2,
-            AlertSeverity.DEBUG: 3
-        }
-        
-        alerts.sort(
-            key=lambda a: (severity_order[a.severity], -a.timestamp.timestamp())
-        )
+        alerts.sort(key=self._active_sort_key)
         return alerts
     
     def get_cleared_alerts(self, limit: Optional[int] = None) -> List[Alert]:

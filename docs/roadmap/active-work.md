@@ -258,6 +258,18 @@ release-visible outcome to `CHANGELOG.md`; Git preserves prior queue states.
     Briefing and G1000 backend builds, and retained receipt
     `sha256:755bab72e38320de5fbcdf22c20ffed18957500cbe4154fa2ff8c096cc541a4f`
     pass with all 18 Component locks current.
+  - [x] Extend the existing `aviation.alerts` provider-alias contract for Flight
+    Planner's live alert severities and replace its duplicated severity-order table
+    with the common SDK priority function. Retain alert creation, timestamps,
+    persistence, filtering, acknowledgement, and aircraft-specific detection policy
+    in the application adapter. Component revision
+    `sha256:8b4e429c10721cbe58342bfc25d7c5147b39bfa91a9a4bd76780d5033f58fa5f`
+    and lock
+    `sha256:8849808b6a8e353f9141d32cf1de66dabeb546aa6665886c9626e60bd34ea43c`;
+    565 TypeScript SDK tests, 288 Python SDK tests, Go conformance, all 189 Flight
+    Planner tests, and retained receipt
+    `sha256:c51a532d810846103e77f5476af3bdf2596720e4f1ee508e3a1c35c71b6d7d19`
+    pass with all 18 Component locks current.
   - [ ] Promote airports, weather, procedures/nav-data, flight dynamics, avionics
     protocols/rendering, shared UI, and integration infrastructure into
     explicit Components with owned tests and contracts.
@@ -265,8 +277,10 @@ release-visible outcome to `CHANGELOG.md`; Git preserves prior queue states.
     aviation implementations after parity qualification.
   - [ ] Classify and remove or intentionally retain every remainder beneath the legacy
     wrapper.
-- **Next action:** Land the `aviation.service.lifecycle` slice through review and
-  exact-main CI, then inventory the next duplicated integration-infrastructure domain.
+- **Next action:** Land the Flight Planner `aviation.alerts` adoption slice through
+  review and exact-main CI, then inventory the next duplicated integration-
+  infrastructure domain. Do not promote retry/backoff or cache policy without a
+  second live consumer sharing the same semantics.
 - **Evidence:** Phase 1.2 lift-and-shift identity `sha256:c5ca4361ba010f6e8d81c93398468f9f4f8b8cc352504bc8535fa74b7c6e9990`.
   Retained conversion established original-source release authority; each migration
   refreshes the verifier-owned receipt in `verification/current.json`.

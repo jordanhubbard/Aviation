@@ -32,9 +32,9 @@ type AlertLifecycleError struct {
 func (err *AlertLifecycleError) Error() string { return err.Message }
 
 var alertLevelAliases = map[string]CanonicalAlertLevel{
-	"normal": AlertLevelNormal, "ok": AlertLevelNormal,
+	"normal": AlertLevelNormal, "ok": AlertLevelNormal, "debug": AlertLevelNormal,
 	"advisory": AlertLevelAdvisory, "info": AlertLevelAdvisory,
-	"caution": AlertLevelCaution, "warning": AlertLevelWarning,
+	"caution": AlertLevelCaution, "warning": AlertLevelWarning, "critical": AlertLevelWarning,
 }
 
 var canonicalAlertPriority = map[CanonicalAlertLevel]int{
