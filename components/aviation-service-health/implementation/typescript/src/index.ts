@@ -15,8 +15,11 @@ export type HealthReport = Record<string, unknown> & {
 
 /** Stable fail-closed error emitted by portable health operations. */
 export class HealthReportError extends Error {
-  constructor(public readonly code: string, message: string) {
+  public readonly code: string;
+
+  constructor(code: string, message: string) {
     super(message);
+    this.code = code;
     this.name = 'HealthReportError';
   }
 }

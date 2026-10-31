@@ -1,0 +1,7 @@
+{
+  "schema": "urn:literate-ai:schema:v2:toolchain-constraint",
+  "toolchain": "nvcc",
+  "command": ["nvcc"],
+  "remediation": "Install a CUDA Toolkit compatible with the selected NVIDIA driver and GPU, then expose nvcc on PATH.",
+  "remediation_uri": "https://docs.nvidia.com/cuda/cuda-installation-guide-linux/"
+}

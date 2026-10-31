@@ -1,0 +1,6 @@
+{
+  "schema": "urn:literate-ai:schema:v2:toolchain-constraint",
+  "toolchain": "zig-cc",
+  "command": ["zig", "cc"],
+  "minimum_version": [0, 13]
+}

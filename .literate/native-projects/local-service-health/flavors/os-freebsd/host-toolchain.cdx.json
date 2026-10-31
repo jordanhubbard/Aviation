@@ -1,0 +1,59 @@
+{
+  "$schema": "http://cyclonedx.org/schema/bom-1.7.schema.json",
+  "bomFormat": "CycloneDX",
+  "specVersion": "1.7",
+  "serialNumber": "urn:uuid:66b655da-ce1a-4c9f-aebd-575bdcd3e610",
+  "version": 1,
+  "metadata": {
+    "component": {
+      "type": "application",
+      "bom-ref": "urn:literate-ai:toolchain:os-freebsd",
+      "name": "os-freebsd",
+      "version": "1.0.0"
+    },
+    "properties": [
+      {
+        "name": "literate-ai:base-toolchain:role",
+        "value": "mixin"
+      }
+    ]
+  },
+  "components": [
+    {
+      "type": "application",
+      "bom-ref": "urn:literate-ai:capability:python-sqlite3",
+      "name": "Python SQLite support",
+      "version": ">=3.12,<4",
+      "properties": [
+        {
+          "name": "literate-ai:base-toolchain:capability",
+          "value": "python-sqlite3"
+        },
+        {
+          "name": "literate-ai:base-toolchain:probe-kind",
+          "value": "python-module"
+        },
+        {
+          "name": "literate-ai:base-toolchain:probe-arguments",
+          "value": "[\"-m\",\"sqlite3\",\":memory:\",\"select 1\"]"
+        },
+        {
+          "name": "literate-ai:base-toolchain:reason",
+          "value": "FreeBSD splits the SQLite Python extension from python312; source indexing requires a usable SQLite connection."
+        }
+      ]
+    }
+  ],
+  "dependencies": [
+    {
+      "ref": "urn:literate-ai:toolchain:os-freebsd",
+      "dependsOn": [
+        "urn:literate-ai:capability:python-sqlite3"
+      ]
+    },
+    {
+      "ref": "urn:literate-ai:capability:python-sqlite3",
+      "dependsOn": []
+    }
+  ]
+}

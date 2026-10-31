@@ -1,0 +1,10 @@
+{
+  "schema": "urn:literate-ai:schema:v2:toolchain-constraint",
+  "toolchain": "elixir",
+  "minimum_version": [
+    1,
+    18
+  ],
+  "remediation": "Install Elixir 1.18+ with Erlang/OTP 27+ and expose elixir on PATH; verify elixir --version.",
+  "remediation_uri": "https://elixir-lang.org/install.html"
+}

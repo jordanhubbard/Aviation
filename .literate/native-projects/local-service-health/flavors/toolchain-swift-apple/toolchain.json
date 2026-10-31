@@ -1,0 +1,7 @@
+{
+  "schema": "urn:literate-ai:schema:v2:toolchain-constraint",
+  "toolchain": "swift",
+  "command": ["xcrun", "swiftc"],
+  "remediation": "Install or repair Apple Command Line Tools or Xcode, then verify xcrun swiftc --version.",
+  "remediation_uri": "https://www.swift.org/install/macos/"
+}

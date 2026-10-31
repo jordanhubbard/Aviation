@@ -1,0 +1,27 @@
+# Literate AI local derivation caches are disposable and must not be committed.
+# The project-relative source-cache target is the deliberate exception: a repository
+# may check generated source in there for efficiency. A committed entry can never go
+# stale, because a cache hit requires an exact generation-key match and that key binds
+# the ordered specification set.
+generated/*
+!generated/committed-source-cache/
+.litai-cache-locks/
+.component*.write.lock
+
+# Per-user or session worker assignments. Keep the checked-in example synthetic.
+/literate.test.json
+/literate.workers.json
+/literate.worker-observations.json
+
+# Common Python development output.
+.venv/
+__pycache__/
+*.py[cod]
+*.egg-info/
+_build/
+dist/
+
+# pytest-testmon maps are local skip evidence, never Git authority.
+.testmondata
+.testmondata-journal
+.testmondata.identity.json

@@ -1,0 +1,25 @@
+{
+  "$schema": "http://cyclonedx.org/schema/bom-1.7.schema.json",
+  "bomFormat": "CycloneDX",
+  "specVersion": "1.7",
+  "serialNumber": "urn:uuid:54d04f73-48af-49b3-8326-26661fb875a3",
+  "version": 1,
+  "metadata": {
+    "component": {"type": "application", "bom-ref": "urn:literate-ai:toolchain:lang-rust", "name": "lang-rust", "version": "1.0.0"},
+    "properties": [{"name": "literate-ai:base-toolchain:role", "value": "mixin"}]
+  },
+  "components": [{
+    "type": "application", "bom-ref": "urn:literate-ai:capability:rustc", "name": "Rust compiler", "version": ">=1.75,<2",
+    "properties": [
+      {"name": "literate-ai:base-toolchain:capability", "value": "rustc"},
+      {"name": "literate-ai:base-toolchain:probe-kind", "value": "command"},
+      {"name": "literate-ai:base-toolchain:probe-candidates", "value": "[\"rustc\",\"rustc.exe\"]"},
+      {"name": "literate-ai:base-toolchain:probe-arguments", "value": "[\"--version\"]"},
+      {"name": "literate-ai:base-toolchain:reason", "value": "The selected Rust language Flavor compiles its generated Rust source."}
+    ]
+  }],
+  "dependencies": [
+    {"ref": "urn:literate-ai:toolchain:lang-rust", "dependsOn": ["urn:literate-ai:capability:rustc"]},
+    {"ref": "urn:literate-ai:capability:rustc", "dependsOn": []}
+  ]
+}

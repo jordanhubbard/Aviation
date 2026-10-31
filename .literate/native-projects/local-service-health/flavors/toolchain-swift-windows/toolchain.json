@@ -1,0 +1,7 @@
+{
+  "schema": "urn:literate-ai:schema:v2:toolchain-constraint",
+  "toolchain": "swift",
+  "command": ["swiftc.exe"],
+  "remediation": "Install the documented Visual Studio C++ and Windows SDK prerequisites plus Swift, then expose swiftc.exe on PATH.",
+  "remediation_uri": "https://www.swift.org/install/windows/"
+}

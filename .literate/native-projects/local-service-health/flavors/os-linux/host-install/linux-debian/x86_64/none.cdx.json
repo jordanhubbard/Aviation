@@ -1,0 +1,625 @@
+{
+  "$schema": "http://cyclonedx.org/schema/bom-1.7.schema.json",
+  "bomFormat": "CycloneDX",
+  "specVersion": "1.7",
+  "version": 1,
+  "metadata": {
+    "timestamp": "2026-09-03T00:00:00Z",
+    "component": {
+      "type": "application",
+      "bom-ref": "urn:literate-ai:host-install:linux-debian:x86_64:none",
+      "name": "literate-ai-host-install-linux-debian-x86-64",
+      "version": "1.0.0"
+    },
+    "properties": [
+      {
+        "name": "literate-ai:host-install:operating-system",
+        "value": "linux-debian"
+      },
+      {
+        "name": "literate-ai:host-install:architecture",
+        "value": "x86_64"
+      },
+      {
+        "name": "literate-ai:host-install:accelerator",
+        "value": "none"
+      },
+      {
+        "name": "literate-ai:host-install:package-manager",
+        "value": "apt"
+      },
+      {
+        "name": "literate-ai:host-install:manager-executable",
+        "value": "apt-get"
+      },
+      {
+        "name": "literate-ai:host-install:query-executable",
+        "value": "dpkg-query"
+      },
+      {
+        "name": "literate-ai:host-install:query-arguments",
+        "value": "[\"--show\",\"--showformat=${Version} ${binary:Package}\",\"{package}\"]"
+      },
+      {
+        "name": "literate-ai:host-install:install-executable",
+        "value": "apt-get"
+      },
+      {
+        "name": "literate-ai:host-install:install-arguments",
+        "value": "[\"install\",\"-y\",\"--no-install-recommends\",\"{packages}\"]"
+      },
+      {
+        "name": "literate-ai:host-install:preinstall-executable",
+        "value": "apt-get"
+      },
+      {
+        "name": "literate-ai:host-install:preinstall-arguments",
+        "value": "[\"update\"]"
+      },
+      {
+        "name": "literate-ai:host-install:elevation-executable",
+        "value": "sudo"
+      },
+      {
+        "name": "literate-ai:host-install:install-mode",
+        "value": "batch"
+      }
+    ]
+  },
+  "components": [
+    {
+      "type": "application",
+      "bom-ref": "pkg:generic/apt-python3",
+      "name": "APT Python 3",
+      "version": ">=3.11,<4",
+      "properties": [
+        {
+          "name": "literate-ai:host-install:realization-kind",
+          "value": "native-package"
+        },
+        {
+          "name": "literate-ai:host-install:manager-package",
+          "value": "python3"
+        },
+        {
+          "name": "literate-ai:host-install:base-capabilities",
+          "value": "[\"python\"]"
+        }
+      ]
+    },
+    {
+      "type": "application",
+      "bom-ref": "pkg:generic/apt-python3-venv",
+      "name": "APT Python venv support",
+      "version": ">=3.11,<4",
+      "properties": [
+        {
+          "name": "literate-ai:host-install:realization-kind",
+          "value": "native-package"
+        },
+        {
+          "name": "literate-ai:host-install:manager-package",
+          "value": "python3-venv"
+        },
+        {
+          "name": "literate-ai:host-install:base-capabilities",
+          "value": "[\"python-venv\"]"
+        }
+      ]
+    },
+    {
+      "type": "application",
+      "bom-ref": "pkg:generic/apt-git",
+      "name": "APT Git",
+      "version": ">=2.30,<3",
+      "properties": [
+        {
+          "name": "literate-ai:host-install:realization-kind",
+          "value": "native-package"
+        },
+        {
+          "name": "literate-ai:host-install:manager-package",
+          "value": "git"
+        },
+        {
+          "name": "literate-ai:host-install:base-capabilities",
+          "value": "[\"git\"]"
+        }
+      ]
+    },
+    {
+      "type": "application",
+      "bom-ref": "pkg:generic/apt-git-lfs",
+      "name": "APT Git LFS",
+      "version": ">=3,<4",
+      "properties": [
+        {
+          "name": "literate-ai:host-install:realization-kind",
+          "value": "native-package"
+        },
+        {
+          "name": "literate-ai:host-install:manager-package",
+          "value": "git-lfs"
+        },
+        {
+          "name": "literate-ai:host-install:base-capabilities",
+          "value": "[\"git-lfs\"]"
+        }
+      ]
+    },
+    {
+      "type": "application",
+      "bom-ref": "pkg:generic/node-24.19.0-linux-x64",
+      "name": "Node.js 24 for Linux x86-64",
+      "version": "24.19.0",
+      "properties": [
+        {
+          "name": "literate-ai:host-install:realization-kind",
+          "value": "managed-archive"
+        },
+        {
+          "name": "literate-ai:host-install:base-capabilities",
+          "value": "[\"node\",\"npm\"]"
+        },
+        {
+          "name": "literate-ai:host-install:artifact-url",
+          "value": "https://nodejs.org/dist/v24.19.0/node-v24.19.0-linux-x64.tar.xz"
+        },
+        {
+          "name": "literate-ai:host-install:artifact-digest",
+          "value": "14b342e71204f811bde6153be8e04b62aef63c236fef92b55f9c83154b409647"
+        },
+        {
+          "name": "literate-ai:host-install:archive-format",
+          "value": "tar.xz"
+        },
+        {
+          "name": "literate-ai:host-install:strip-prefix",
+          "value": "node-v24.19.0-linux-x64"
+        },
+        {
+          "name": "literate-ai:host-install:path-entries",
+          "value": "[\"bin\"]"
+        },
+        {
+          "name": "literate-ai:host-install:artifact-digest-algorithm",
+          "value": "sha256"
+        },
+        {
+          "name": "literate-ai:host-install:executable-path",
+          "value": "bin/node"
+        },
+        {
+          "name": "literate-ai:host-install:executable-name",
+          "value": "node"
+        }
+      ]
+    },
+    {
+      "type": "application",
+      "bom-ref": "pkg:generic/cursor-agent-linux-x64",
+      "name": "Cursor Agent for Linux x86-64",
+      "version": "2026.09.02-c22c1a3",
+      "properties": [
+        {
+          "name": "literate-ai:host-install:realization-kind",
+          "value": "managed-archive"
+        },
+        {
+          "name": "literate-ai:host-install:base-capabilities",
+          "value": "[\"cursor-agent\"]"
+        },
+        {
+          "name": "literate-ai:host-install:artifact-url",
+          "value": "https://downloads.cursor.com/lab/2026.09.02-c22c1a3/linux/x64/agent-cli-package.tar.gz"
+        },
+        {
+          "name": "literate-ai:host-install:artifact-digest",
+          "value": "b73b59854762535c0fc20d7ccc51c3b5a356a851491088d60a362be48750f53c"
+        },
+        {
+          "name": "literate-ai:host-install:archive-format",
+          "value": "tar.gz"
+        },
+        {
+          "name": "literate-ai:host-install:strip-prefix",
+          "value": "dist-package"
+        },
+        {
+          "name": "literate-ai:host-install:path-entries",
+          "value": "[\".\"]"
+        },
+        {
+          "name": "literate-ai:host-install:artifact-digest-algorithm",
+          "value": "sha256"
+        },
+        {
+          "name": "literate-ai:host-install:executable-path",
+          "value": "cursor-agent"
+        },
+        {
+          "name": "literate-ai:host-install:executable-name",
+          "value": "cursor-agent"
+        }
+      ]
+    },
+    {
+      "type": "application",
+      "bom-ref": "pkg:generic/codex-linux-x86_64",
+      "name": "Codex for Linux x86_64",
+      "version": "0.153.0",
+      "properties": [
+        {
+          "name": "literate-ai:host-install:realization-kind",
+          "value": "managed-archive"
+        },
+        {
+          "name": "literate-ai:host-install:base-capabilities",
+          "value": "[\"codex\"]"
+        },
+        {
+          "name": "literate-ai:host-install:artifact-url",
+          "value": "https://github.com/openai/codex/releases/download/rust-v0.153.0/codex-package-x86_64-unknown-linux-musl.tar.gz"
+        },
+        {
+          "name": "literate-ai:host-install:artifact-digest-algorithm",
+          "value": "sha256"
+        },
+        {
+          "name": "literate-ai:host-install:artifact-digest",
+          "value": "27b0d7a753ac190c343918541a42067be307cc88a32b1a9feaf6f93648a0e9ea"
+        },
+        {
+          "name": "literate-ai:host-install:archive-format",
+          "value": "tar.gz"
+        },
+        {
+          "name": "literate-ai:host-install:strip-prefix",
+          "value": "."
+        },
+        {
+          "name": "literate-ai:host-install:path-entries",
+          "value": "[\"bin\"]"
+        },
+        {
+          "name": "literate-ai:host-install:executable-path",
+          "value": "bin/codex"
+        },
+        {
+          "name": "literate-ai:host-install:executable-name",
+          "value": "codex"
+        },
+        {
+          "name": "literate-ai:host-install:required-runtime-paths",
+          "value": "[\"bin/codex-code-mode-host\",\"codex-package.json\",\"codex-path/rg\",\"codex-resources/bwrap\",\"codex-resources/zsh/bin/zsh\"]"
+        }
+      ]
+    },
+    {
+      "type": "application",
+      "bom-ref": "pkg:generic/claude-code-linux-x64",
+      "name": "Claude Code for Linux x64",
+      "version": "2.1.259",
+      "properties": [
+        {
+          "name": "literate-ai:host-install:realization-kind",
+          "value": "managed-archive"
+        },
+        {
+          "name": "literate-ai:host-install:base-capabilities",
+          "value": "[\"claude\"]"
+        },
+        {
+          "name": "literate-ai:host-install:artifact-url",
+          "value": "https://registry.npmjs.org/@anthropic-ai/claude-code-linux-x64/-/claude-code-linux-x64-2.1.259.tgz"
+        },
+        {
+          "name": "literate-ai:host-install:artifact-digest-algorithm",
+          "value": "sha512"
+        },
+        {
+          "name": "literate-ai:host-install:artifact-digest",
+          "value": "521d8e12ee4356f9ddc28b155df8d4a5a85056336ac597823bb7a1ac6d0905dfb1a3f896cf7f0b7f0086b1b80f886348f998a8225defc1e9c3fba063a4e8bc9d"
+        },
+        {
+          "name": "literate-ai:host-install:archive-format",
+          "value": "tar.gz"
+        },
+        {
+          "name": "literate-ai:host-install:strip-prefix",
+          "value": "package"
+        },
+        {
+          "name": "literate-ai:host-install:path-entries",
+          "value": "[\".\"]"
+        },
+        {
+          "name": "literate-ai:host-install:executable-path",
+          "value": "claude"
+        },
+        {
+          "name": "literate-ai:host-install:executable-name",
+          "value": "claude"
+        }
+      ]
+    },
+    {
+      "type": "application",
+      "bom-ref": "pkg:generic/opencode-linux-x64",
+      "name": "OpenCode for Linux x64",
+      "version": "1.18.27",
+      "properties": [
+        {
+          "name": "literate-ai:host-install:realization-kind",
+          "value": "managed-archive"
+        },
+        {
+          "name": "literate-ai:host-install:base-capabilities",
+          "value": "[\"opencode\"]"
+        },
+        {
+          "name": "literate-ai:host-install:artifact-url",
+          "value": "https://github.com/anomalyco/opencode/releases/download/v1.18.27/opencode-linux-x64.tar.gz"
+        },
+        {
+          "name": "literate-ai:host-install:artifact-digest-algorithm",
+          "value": "sha256"
+        },
+        {
+          "name": "literate-ai:host-install:artifact-digest",
+          "value": "4af5494f9433f59db8c1e344198f0ee72a50c06ec009fb4a8aeab4c2d4abd702"
+        },
+        {
+          "name": "literate-ai:host-install:archive-format",
+          "value": "tar.gz"
+        },
+        {
+          "name": "literate-ai:host-install:strip-prefix",
+          "value": "."
+        },
+        {
+          "name": "literate-ai:host-install:path-entries",
+          "value": "[\".\"]"
+        },
+        {
+          "name": "literate-ai:host-install:executable-path",
+          "value": "opencode"
+        },
+        {
+          "name": "literate-ai:host-install:executable-name",
+          "value": "opencode"
+        }
+      ]
+    },
+    {
+      "type": "application",
+      "bom-ref": "pkg:generic/apt-build-essential",
+      "name": "APT compiler and Make baseline",
+      "version": ">=12,<100",
+      "properties": [
+        {
+          "name": "literate-ai:host-install:realization-kind",
+          "value": "native-package"
+        },
+        {
+          "name": "literate-ai:host-install:manager-package",
+          "value": "build-essential"
+        },
+        {
+          "name": "literate-ai:host-install:base-capabilities",
+          "value": "[\"cxx\",\"make\"]"
+        }
+      ]
+    },
+    {
+      "type": "application",
+      "bom-ref": "pkg:generic/apt-cmake",
+      "name": "APT CMake",
+      "version": ">=3.25,<5",
+      "properties": [
+        {
+          "name": "literate-ai:host-install:realization-kind",
+          "value": "native-package"
+        },
+        {
+          "name": "literate-ai:host-install:manager-package",
+          "value": "cmake"
+        },
+        {
+          "name": "literate-ai:host-install:base-capabilities",
+          "value": "[\"cmake\"]"
+        }
+      ]
+    },
+    {
+      "type": "application",
+      "bom-ref": "pkg:generic/bazelisk-linux-amd64",
+      "name": "Bazelisk for Linux amd64",
+      "version": "1.28.1",
+      "properties": [
+        {
+          "name": "literate-ai:host-install:realization-kind",
+          "value": "managed-archive"
+        },
+        {
+          "name": "literate-ai:host-install:base-capabilities",
+          "value": "[\"bazel\"]"
+        },
+        {
+          "name": "literate-ai:host-install:artifact-url",
+          "value": "https://github.com/bazelbuild/bazelisk/releases/download/v1.28.1/bazelisk-linux-amd64"
+        },
+        {
+          "name": "literate-ai:host-install:artifact-digest-algorithm",
+          "value": "sha256"
+        },
+        {
+          "name": "literate-ai:host-install:artifact-digest",
+          "value": "22e7d3a188699982f661cf4687137ee52d1f24fec1ec893d91a6c4d791a75de8"
+        },
+        {
+          "name": "literate-ai:host-install:archive-format",
+          "value": "file"
+        },
+        {
+          "name": "literate-ai:host-install:strip-prefix",
+          "value": "."
+        },
+        {
+          "name": "literate-ai:host-install:path-entries",
+          "value": "[\".\"]"
+        },
+        {
+          "name": "literate-ai:host-install:executable-path",
+          "value": "bazel"
+        },
+        {
+          "name": "literate-ai:host-install:executable-name",
+          "value": "bazel"
+        }
+      ]
+    },
+    {
+      "type": "application",
+      "bom-ref": "pkg:generic/apt-cargo",
+      "name": "APT Rust and Cargo",
+      "version": ">=1.75,<2",
+      "properties": [
+        {
+          "name": "literate-ai:host-install:realization-kind",
+          "value": "native-package"
+        },
+        {
+          "name": "literate-ai:host-install:manager-package",
+          "value": "cargo"
+        },
+        {
+          "name": "literate-ai:host-install:base-capabilities",
+          "value": "[\"rustc\",\"cargo\"]"
+        }
+      ]
+    },
+    {
+      "type": "application",
+      "bom-ref": "pkg:generic/apt-elixir",
+      "name": "Elixir runtime",
+      "version": ">=1.18",
+      "properties": [
+        {
+          "name": "literate-ai:host-install:realization-kind",
+          "value": "native-package"
+        },
+        {
+          "name": "literate-ai:host-install:manager-package",
+          "value": "elixir"
+        },
+        {
+          "name": "literate-ai:host-install:base-capabilities",
+          "value": "[\"elixir\"]"
+        }
+      ]
+    },
+    {
+      "type": "application",
+      "bom-ref": "pkg:generic/apt-erlang",
+      "name": "Erlang/OTP runtime",
+      "version": ">=27",
+      "properties": [
+        {
+          "name": "literate-ai:host-install:realization-kind",
+          "value": "native-package"
+        },
+        {
+          "name": "literate-ai:host-install:manager-package",
+          "value": "erlang-base"
+        },
+        {
+          "name": "literate-ai:host-install:base-capabilities",
+          "value": "[\"erlang\"]"
+        }
+      ]
+    }
+  ],
+  "dependencies": [
+    {
+      "ref": "urn:literate-ai:host-install:linux-debian:x86_64:none",
+      "dependsOn": [
+        "pkg:generic/apt-python3",
+        "pkg:generic/apt-python3-venv",
+        "pkg:generic/apt-git",
+        "pkg:generic/apt-git-lfs",
+        "pkg:generic/node-24.19.0-linux-x64",
+        "pkg:generic/cursor-agent-linux-x64",
+        "pkg:generic/codex-linux-x86_64",
+        "pkg:generic/claude-code-linux-x64",
+        "pkg:generic/opencode-linux-x64",
+        "pkg:generic/apt-build-essential",
+        "pkg:generic/apt-cmake",
+        "pkg:generic/bazelisk-linux-amd64",
+        "pkg:generic/apt-cargo",
+        "pkg:generic/apt-elixir",
+        "pkg:generic/apt-erlang"
+      ]
+    },
+    {
+      "ref": "pkg:generic/apt-python3",
+      "dependsOn": []
+    },
+    {
+      "ref": "pkg:generic/apt-python3-venv",
+      "dependsOn": []
+    },
+    {
+      "ref": "pkg:generic/apt-git",
+      "dependsOn": []
+    },
+    {
+      "ref": "pkg:generic/apt-git-lfs",
+      "dependsOn": []
+    },
+    {
+      "ref": "pkg:generic/node-24.19.0-linux-x64",
+      "dependsOn": []
+    },
+    {
+      "ref": "pkg:generic/cursor-agent-linux-x64",
+      "dependsOn": []
+    },
+    {
+      "ref": "pkg:generic/codex-linux-x86_64",
+      "dependsOn": []
+    },
+    {
+      "ref": "pkg:generic/claude-code-linux-x64",
+      "dependsOn": []
+    },
+    {
+      "ref": "pkg:generic/opencode-linux-x64",
+      "dependsOn": []
+    },
+    {
+      "ref": "pkg:generic/apt-build-essential",
+      "dependsOn": []
+    },
+    {
+      "ref": "pkg:generic/apt-cmake",
+      "dependsOn": []
+    },
+    {
+      "ref": "pkg:generic/bazelisk-linux-amd64",
+      "dependsOn": []
+    },
+    {
+      "ref": "pkg:generic/apt-cargo",
+      "dependsOn": []
+    },
+    {
+      "ref": "pkg:generic/apt-elixir",
+      "dependsOn": []
+    },
+    {
+      "ref": "pkg:generic/apt-erlang",
+      "dependsOn": []
+    }
+  ]
+}

@@ -1,0 +1,7 @@
+{
+  "schema": "urn:literate-ai:schema:v2:standard-make-command-profile",
+  "target": "make",
+  "toolchain": "make",
+  "makefile": "source/Makefile",
+  "build_target": "all"
+}

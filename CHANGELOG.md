@@ -9,6 +9,13 @@
 
 ## Unreleased
 
+- Qualified and registered the first source-free native Aviation SDK library,
+  `aviation.service.health`, with TypeScript declarations, two clean regeneration
+  runs, independent package acceptance, 19 parity cases, and retained evidence.
+  Application compatibility cutover and Python authority transfer remain pending.
+- Corrected release validation to run the Aviation monorepo suite and publish a
+  GitHub release instead of testing the framework starter sample.
+
 - Added an independently locked, Component-owned TypeScript qualification candidate
   for `aviation.service.health`, with a dedicated build and 20 verifier-vector tests
   in Common Aviation SDK CI. The application-facing TypeScript and Python realizations

@@ -27,6 +27,16 @@ queue item or let `docs/roadmap/` become a plan archive.
 
 ## P0
 
+### [x] SDK-001 — Qualify the first native shared Aviation library
+
+- **Release target:** 1.0.0
+- **Evidence:** Registered service-health child passed two clean regenerative
+  qualification runs, independent library acceptance, all 19 parity cases, and a
+  native build with a current test receipt. Retained archive and decision are in
+  `verification/qualifications/service-health.json` and `verification/evidence/`.
+- **Boundary:** This release establishes qualified SDK authority; ADOPT-002 remains
+  open for importer admission, application cutover, Python transfer, and other domains.
+
 ### [ ] ONBOARD-001 — Replace this starter item with the first project outcome
 
 - **Owner:** project core
@@ -343,10 +353,16 @@ release-visible outcome to `CHANGELOG.md`; Git preserves prior queue states.
     historical evidence. It removes stale duplicate workflows and obsolete
     Cursor/Loom/responsible-vibe/Claude bootstrap metadata rather than treating those
     files as authority.
-- **Next action:** Qualify the first authority-transfer slice for
-  `aviation.service.health`: independently generate and compare the Component-owned
-  TypeScript candidate, then switch the shared-SDK compatibility surface only after
-  package and application parity pass. Transfer Python separately before changing
+- **Next action:** Admit the qualified JavaScript `aviation.service.health` library
+  from `.literate/native-projects/local-service-health` into the shared-SDK
+  compatibility surface after package and application parity pass. The native child
+  passed two clean generations, builds, generated tests, independent package
+  acceptance, and all 19 parity cases; decision `d88c16b2c595c40e9b87ace48d1c6ad251c8ddfea8827b7d4916ec001533a303`
+  and its immutable archive are retained under `verification/`. Literate AI 1.4
+  supports JavaScript importable libraries but rejects TypeScript library targets;
+  the qualified package includes TypeScript declarations. The existing root
+  Component and retained implementations remain compatibility authority until
+  importer admission and application parity pass. Transfer Python separately before changing
   project release authority. Top-level classification and candidate tests do not by
   themselves authorize retiring retained source.
 - **Evidence:** Phase 1.2 lift-and-shift identity `sha256:c5ca4361ba010f6e8d81c93398468f9f4f8b8cc352504bc8535fa74b7c6e9990`.

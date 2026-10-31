@@ -1,0 +1,23 @@
+{
+  "schema": "literate-ai/global-test-matrix@3",
+  "coding_cli": "opencode",
+  "model": "provider/model-id",
+  "default_samples": ["hello-component"],
+  "workers": [
+    {
+      "worker_id": "linux-example",
+      "platform_flavor": "linux",
+      "source_mode": "git"
+    },
+    {
+      "worker_id": "macos-example",
+      "platform_flavor": "macos",
+      "source_mode": "git"
+    },
+    {
+      "worker_id": "windows-example",
+      "platform_flavor": "windows",
+      "source_mode": "git"
+    }
+  ]
+}

@@ -13,7 +13,7 @@
   },
   "allowed_transitions": ["patch", "minor", "major", "prerelease", "explicit"],
   "gate": {
-    "argv": ["litai", "test", "samples/hello-component", "--target", "host"],
+    "argv": ["make", "test"],
     "timeout_seconds": 86400
   },
   "changelog": {
@@ -25,5 +25,5 @@
     "signed": false
   },
   "remote": "origin",
-  "provider": null
+  "provider": {"kind": "github", "repository": "jordanhubbard/Aviation"}
 }

@@ -1,0 +1,10 @@
+{
+  "image": "docker.io/library/python@sha256:cd04730b8511def3fbf14204d66a0c1536f290b8e896ed5a94cd64cb15ac1356",
+  "media_type": "application/vnd.oci.image.index.v1+json",
+  "name": "python",
+  "registry": "docker.io",
+  "repository": "library/python",
+  "schema": "literate-ai/container-base@1",
+  "tag_hint": "3.11-alpine",
+  "version": "3.11.16-alpine3.24"
+}

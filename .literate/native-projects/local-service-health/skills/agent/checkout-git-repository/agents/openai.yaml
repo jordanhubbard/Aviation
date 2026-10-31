@@ -1,0 +1,4 @@
+interface:
+  display_name: "Checkout Git Repository"
+  short_description: "Clone shallowly with submodules and LFS"
+  default_prompt: "Use $checkout-git-repository to materialize an exact, shallow, content-complete Git checkout."

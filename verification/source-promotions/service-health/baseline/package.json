@@ -1,0 +1,12 @@
+{
+  "name": "aviation-service-health",
+  "version": "0.1.0",
+  "description": "Portable aviation.service.health library qualification baseline",
+  "license": "MIT",
+  "main": "src/index.js",
+  "types": "src/index.d.ts",
+  "scripts": {
+    "build": "node --check src/index.js",
+    "test": "node --test tests/service-health.test.js"
+  }
+}
