@@ -2,11 +2,15 @@
 
 **Issue:** Aviation-kmc  
 **Date:** 2026-01-14  
-**Status:** Analysis Complete - Minimal Migration Required
+**Status:** ICAO designator migration complete; logbook-policy audit remains
 
 ## Executive Summary
 
-After thorough analysis of the foreflight-dashboard codebase, **minimal migration to shared SDK is required**. The application has limited overlap with shared SDK functionality.
+The dashboard has little overlap with airport, weather, or navigation calculations.
+Its aircraft type-designator catalog, however, is common aviation domain data and has
+been promoted into the independently tested `aviation.aircraft` Component. ForeFlight
+now delegates membership, metadata, suggestions, manufacturer lookup, summaries, and
+official verification guidance to that SDK surface.
 
 ## Analysis Results
 
@@ -36,29 +40,16 @@ After thorough analysis of the foreflight-dashboard codebase, **minimal migratio
 
 ## Recommendation
 
-### Option 1: Keep As-Is (RECOMMENDED)
+### Completed: Extract ICAO designator support
 
-**Rationale:**
-- Minimal overlap with shared SDK
-- ICAO validator is highly specialized for logbook validation
-- Simple airport identifier storage doesn't need full airport database
-- Moving ICAO validator would add complexity without clear benefit
-
-**Effort:** 0 days  
-**Risk:** None  
-**Value:** Avoid unnecessary refactoring
-
-### Option 2: Extract ICAO Validator
-
-**If done in future:**
-- Move `icao_validator.py` to `packages/shared-sdk/python/aviation/`
-- Update imports in foreflight-dashboard
-- Add tests in shared SDK
-- Document aircraft type codes
-
-**Effort:** 1-2 days  
-**Risk:** Low (well-isolated module)  
-**Value:** Low (only beneficial if other apps need ICAO validation)
+- The 157 detailed records and 13 additional supported codes are Component-owned
+  acceptance data.
+- Generated TypeScript and Python catalogs prevent language drift.
+- Both SDK bindings run the same lookup, suggestion, manufacturer, and summary vectors.
+- `src/core/icao_validator.py` is now a compatibility adapter; CSV parsing and
+  logbook-specific validation remain in the application.
+- The bounded snapshot is explicitly not represented as a complete/current substitute
+  for ICAO Doc 8643.
 
 ## Dependencies Analysis
 
@@ -76,11 +67,11 @@ No aviation-specific external APIs or services used.
 
 ## Conclusion
 
-**Status:** ✅ Migration Not Required
+**Status:** Aircraft designator migration complete.
 
-The foreflight-dashboard is optimally structured for its use case. It processes ForeFlight CSV exports and doesn't need the aviation data services provided by the shared SDK.
-
-**Closing Issue:** Aviation-kmc can be closed as "Analysis Complete - No Migration Needed"
+Airport identifier storage, provider CSV parsing, accounts, and dashboard presentation
+remain correctly private. A separate follow-up should classify the app's logbook time
+accounting and validation rules rather than assuming they are application-only.
 
 ---
 

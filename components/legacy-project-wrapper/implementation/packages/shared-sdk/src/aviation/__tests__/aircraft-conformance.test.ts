@@ -8,6 +8,13 @@ import {
   findAircraftOperatingProfile,
   matchAircraftOperatingProfile,
   type AircraftOperatingProfile,
+  ADDITIONAL_SUPPORTED_TYPE_DESIGNATORS,
+  AIRCRAFT_TYPE_DESIGNATORS,
+  aircraftTypeDesignatorCatalogSummary,
+  aircraftTypeDesignatorsByManufacturer,
+  findAircraftTypeDesignator,
+  isSupportedAircraftTypeDesignator,
+  suggestAircraftTypeDesignators,
 } from '../aircraft.js';
 
 interface AircraftVectors {
@@ -27,6 +34,27 @@ interface AircraftVectors {
     path: string[];
     value: number | string;
   }>;
+  typeDesignators: Record<string, {
+    manufacturer: string;
+    model: string;
+    category: string;
+  }>;
+  additionalSupportedTypeDesignators: string[];
+  typeDesignatorLookups: Array<{
+    query: string;
+    expectedCode: string | null;
+    supported: boolean;
+  }>;
+  typeDesignatorManufacturerLookups: Array<{
+    manufacturer: string;
+    expectedCodes: string[];
+  }>;
+  typeDesignatorSuggestions: Array<{
+    query: string;
+    maximum: number;
+    expectedCodes: string[];
+  }>;
+  typeDesignatorSummary: ReturnType<typeof aircraftTypeDesignatorCatalogSummary>;
 }
 
 const contract = loadConformanceContract<AircraftVectors>('aircraft');
@@ -47,7 +75,7 @@ const mutateProfile = (
 
 describe('aviation.aircraft Component conformance', () => {
   it('exports every Component-owned operating profile', () => {
-    expect(contract.schema).toBe('aviation/aircraft-acceptance-vectors@4');
+    expect(contract.schema).toBe('aviation/aircraft-acceptance-vectors@5');
     const profiles = [
       C172S_OPERATING_PROFILE,
       C182T_OPERATING_PROFILE,
@@ -86,4 +114,45 @@ describe('aviation.aircraft Component conformance', () => {
       )).toThrow();
     });
   }
+
+  it('exports the complete Component-owned type-designator snapshot', () => {
+    expect(Object.fromEntries(
+      Object.entries(AIRCRAFT_TYPE_DESIGNATORS).map(([code, record]) => [
+        code,
+        {
+          manufacturer: record.manufacturer,
+          model: record.model,
+          category: record.category,
+        },
+      ]),
+    )).toEqual(contract.typeDesignators);
+    expect([...ADDITIONAL_SUPPORTED_TYPE_DESIGNATORS].sort())
+      .toEqual(contract.additionalSupportedTypeDesignators);
+  });
+
+  for (const lookup of contract.typeDesignatorLookups) {
+    it(`looks up type designator ${lookup.query || '<blank>'}`, () => {
+      expect(findAircraftTypeDesignator(lookup.query)?.code ?? null)
+        .toBe(lookup.expectedCode);
+      expect(isSupportedAircraftTypeDesignator(lookup.query)).toBe(lookup.supported);
+    });
+  }
+
+  for (const lookup of contract.typeDesignatorManufacturerLookups) {
+    it(`lists type designators for ${lookup.manufacturer}`, () => {
+      expect(aircraftTypeDesignatorsByManufacturer(lookup.manufacturer))
+        .toEqual(lookup.expectedCodes);
+    });
+  }
+
+  for (const suggestion of contract.typeDesignatorSuggestions) {
+    it(`suggests type designators for ${suggestion.query || '<blank>'}`, () => {
+      expect(suggestAircraftTypeDesignators(suggestion.query, suggestion.maximum))
+        .toEqual(suggestion.expectedCodes);
+    });
+  }
+
+  it('summarizes the type-designator snapshot', () => {
+    expect(aircraftTypeDesignatorCatalogSummary()).toEqual(contract.typeDesignatorSummary);
+  });
 });

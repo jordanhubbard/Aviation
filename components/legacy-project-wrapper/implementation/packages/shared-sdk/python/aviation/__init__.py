@@ -1,6 +1,6 @@
 """Aviation SDK - Python wrapper for shared aviation utilities."""
 
-__version__ = "0.5.0"
+__version__ = "0.6.0"
 
 # Airport services
 from .airports import (
@@ -25,18 +25,28 @@ from . import nav_data
 
 from . import integrations
 from .aircraft import (
+    ADDITIONAL_SUPPORTED_TYPE_DESIGNATORS,
+    AIRCRAFT_TYPE_DESIGNATORS,
+    AIRCRAFT_TYPE_DESIGNATOR_SEARCH_URL,
     AircraftDimensions,
     AircraftFuelLimits,
     AircraftOperatingProfile,
     AircraftReferencePerformance,
     AircraftWeightLimits,
+    AircraftTypeDesignatorRecord,
     AirspeedOperatingLimits,
     C172S_OPERATING_PROFILE,
     C182T_OPERATING_PROFILE,
     SR22_PERSPECTIVE_3600_OPERATING_PROFILE,
     aircraft_operating_profile_from_mapping,
+    aircraft_type_designator_catalog_summary,
+    aircraft_type_designator_validation_message,
+    aircraft_type_designators_by_manufacturer,
+    find_aircraft_type_designator,
     find_aircraft_operating_profile,
     match_aircraft_operating_profile,
+    is_supported_aircraft_type_designator,
+    suggest_aircraft_type_designators,
 )
 from .weight_balance import (
     C172S_LOADING_PROFILE,
@@ -66,18 +76,28 @@ __all__ = [
     "haversine_distance",
     "load_airport_cache",
     # Aircraft profiles
+    "ADDITIONAL_SUPPORTED_TYPE_DESIGNATORS",
+    "AIRCRAFT_TYPE_DESIGNATORS",
+    "AIRCRAFT_TYPE_DESIGNATOR_SEARCH_URL",
     "AircraftDimensions",
     "AircraftFuelLimits",
     "AircraftOperatingProfile",
     "AircraftReferencePerformance",
     "AircraftWeightLimits",
+    "AircraftTypeDesignatorRecord",
     "AirspeedOperatingLimits",
     "C172S_OPERATING_PROFILE",
     "C182T_OPERATING_PROFILE",
     "SR22_PERSPECTIVE_3600_OPERATING_PROFILE",
     "aircraft_operating_profile_from_mapping",
+    "aircraft_type_designator_catalog_summary",
+    "aircraft_type_designator_validation_message",
+    "aircraft_type_designators_by_manufacturer",
+    "find_aircraft_type_designator",
     "find_aircraft_operating_profile",
     "match_aircraft_operating_profile",
+    "is_supported_aircraft_type_designator",
+    "suggest_aircraft_type_designators",
     # Weight and balance
     "C172S_LOADING_PROFILE",
     "EnvelopePoint",

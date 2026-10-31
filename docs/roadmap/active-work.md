@@ -182,6 +182,11 @@ release-visible outcome to `CHANGELOG.md`; Git preserves prior queue states.
     registration, rates, equipment, availability, bookings, and explicit 100-hour/
     annual maintenance scheduling as application policy; remove two unused invalid
     legacy maintenance helpers.
+  - [x] Promote ForeFlight Dashboard's private aircraft type-designator catalog into
+    cross-language `aviation.aircraft` acceptance data and lookup APIs. Retain CSV
+    parsing, logbook validation policy, compatibility response shapes, accounts, and
+    dashboard presentation as application code; explicitly bound the SDK snapshot as
+    non-authoritative versus current ICAO Doc 8643.
   - [ ] Promote airports, weather, procedures/nav-data, flight dynamics, avionics
     protocols/rendering, shared UI, configuration, and integration infrastructure into
     explicit Components with owned tests and contracts.
@@ -189,10 +194,10 @@ release-visible outcome to `CHANGELOG.md`; Git preserves prior queue states.
     aviation implementations after parity qualification.
   - [ ] Classify and remove or intentionally retain every remainder beneath the legacy
     wrapper.
-- **Next action:** Audit ForeFlight Dashboard's retained airport, weather, and route
-  calculation boundaries against the qualified common SDK; migrate common aviation
-  behavior while retaining user accounts, dashboard composition, and provider-facing
-  presentation as application policy.
+- **Next action:** Audit ForeFlight Dashboard's retained logbook time-accounting and
+  validation rules for a portable `aviation.logbook` Component; migrate only qualified
+  common behavior while retaining ForeFlight CSV adaptation, user accounts, dashboard
+  composition, and provider-facing presentation as application policy.
 - **Evidence:** Phase 1.2 lift-and-shift identity `sha256:c5ca4361ba010f6e8d81c93398468f9f4f8b8cc352504bc8535fa74b7c6e9990`.
   Retained conversion stage is backed by current test receipt
   `sha256:60e252aceb5834018a21d3ec5a75b667c564e207ea3cf02d475b3245640c3c79`;
@@ -273,6 +278,13 @@ release-visible outcome to `CHANGELOG.md`; Git preserves prior queue states.
   161-test Python SDK suites. Flight School passes 64 tests with 25 documented skips;
   its fleet page renders matched SDK reference data, Piper PA-28-181 remains unmatched,
   and application-owned scheduling fields and policies remain intact.
+  ForeFlight aircraft-designator migration advances `aviation.aircraft` to 0.5.0 and
+  moves all 157 detailed records plus 13 additional supported codes into one
+  Component-owned vector set with generated TypeScript and Python realizations. The
+  SDK passes 438 TypeScript and 175 Python tests; ForeFlight's full 190-test suite
+  passes through its compatibility adapter. The bounded snapshot is explicitly not a
+  substitute for current ICAO Doc 8643, while CSV parsing, logbook validation policy,
+  accounts, and presentation remain application-owned.
   The G1000 and Flight Planner private geodesy service placeholders were classified as
   non-realized scaffolding and removed with application boundary tests preventing their
   reintroduction; all 30 G1000 backend tests and 178 non-integration Flight Planner
