@@ -442,7 +442,9 @@ console.log(info);
 
 **Airport Data:** [OurAirports](https://ourairports.com/data/)
 **Coverage:** 82,870+ airports worldwide
-**Last Updated:** January 2026
+**Snapshot freshness:** Unknown. The checked-in output identity is recorded in
+[`data/provenance.json`](data/provenance.json), but the original acquisition time and
+input digest were not retained.
 
 **Included Data:**
 - ICAO & IATA codes
@@ -529,9 +531,12 @@ When adding features to airport search:
 
 ---
 
-## License
+## License and data status
 
-MIT - Part of the Aviation Monorepo
+SDK code is MIT licensed. OurAirports releases its downloadable data to the public
+domain. The bundled dataset is separately classified in
+[`data/README.md`](data/README.md); do not describe it as current or suitable for
+primary navigation.
 
 **MAC task:** Aviation-o2d (P0 - MVP Blocker)
 **Package:** @aviation/shared-sdk v0.1.0

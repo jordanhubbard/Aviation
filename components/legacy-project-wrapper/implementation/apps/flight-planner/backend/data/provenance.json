@@ -1,0 +1,60 @@
+{
+  "schema": "aviation-data-provenance@1",
+  "authority": "intentionally-retained-third-party-data",
+  "generated_by": "apps/flight-planner/scripts/build_data_caches.py",
+  "artifacts": [
+    {
+      "path": "airports_cache.json",
+      "classification": "redistributable-derived-snapshot",
+      "sha256": "2ea6613ebf69ace3a39f31c3cf0d5ec2384220866c5514ddc2ff000f7bd854d3",
+      "record_count": 82870,
+      "source": "OurAirports airports.csv",
+      "source_url": "https://ourairports.com/data/airports.csv",
+      "terms_url": "https://ourairports.com/data/",
+      "license": "Public Domain",
+      "acquired_at": null,
+      "source_sha256": null,
+      "freshness": "unknown"
+    },
+    {
+      "path": "airspaces_us.json",
+      "classification": "intentionally-retained-third-party-snapshot",
+      "sha256": "eaf02305f58365f78c89a56a67072b899c74f42d91df623c2f25a3dd9256ff70",
+      "record_count": 23872,
+      "source": "openAIP Core API airspaces",
+      "source_url": "https://api.core.openaip.net/api/airspaces",
+      "terms_url": "https://api.core.openaip.net/api/system/specs/v1/schema.json",
+      "current_license": "CC BY-NC 4.0",
+      "license_url": "https://creativecommons.org/licenses/by-nc/4.0/",
+      "current_license_verified_at": "2026-10-31",
+      "historical_acquisition_terms": "not-recorded",
+      "acquired_at": null,
+      "source_sha256": null,
+      "freshness": "unknown",
+      "commercial_use": "not-authorized-by-recorded-evidence"
+    },
+    {
+      "path": "airspace_cache.json",
+      "classification": "intentionally-retained-mixed-provenance-snapshot",
+      "sha256": "397a2e47d724cdc3bd049dd4f1760339b3b84403698058bef6a1b1309c1fb24a",
+      "record_count": 24232,
+      "source": "derived openAIP airspaces plus 360 legacy features from an unretained input",
+      "terms_url": "https://api.core.openaip.net/api/system/specs/v1/schema.json",
+      "current_license": "CC BY-NC 4.0 for the openAIP-derived portion; unresolved for legacy additions",
+      "license_url": "https://creativecommons.org/licenses/by-nc/4.0/",
+      "current_license_verified_at": "2026-10-31",
+      "historical_acquisition_terms": "not-recorded",
+      "acquired_at": null,
+      "source_sha256": null,
+      "source_inputs": [],
+      "freshness": "unknown",
+      "commercial_use": "not-authorized-by-recorded-evidence"
+    }
+  ],
+  "constraints": [
+    "The repository MIT license does not relicense these third-party data artifacts.",
+    "Display of openAIP-derived data requires openAIP attribution and an indication that the data was adapted.",
+    "Do not promote the airspace snapshots to Component assets or use them commercially until acquisition terms and every merged input are resolved.",
+    "None of these community datasets is suitable for primary navigation."
+  ]
+}

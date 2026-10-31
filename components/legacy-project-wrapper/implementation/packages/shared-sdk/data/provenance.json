@@ -1,0 +1,32 @@
+{
+  "schema": "aviation-data-provenance@1",
+  "authority": "retained-data-asset",
+  "classification": "redistributable-derived-snapshot",
+  "dataset": "OurAirports airport catalog",
+  "artifact": {
+    "path": "airports_cache.json",
+    "sha256": "2ea6613ebf69ace3a39f31c3cf0d5ec2384220866c5514ddc2ff000f7bd854d3",
+    "record_count": 82870,
+    "schema_contract": "icao/iata/name/city/country/latitude/longitude/elevation_ft_msl/type"
+  },
+  "source": {
+    "provider": "OurAirports",
+    "dataset_url": "https://ourairports.com/data/airports.csv",
+    "terms_url": "https://ourairports.com/data/",
+    "license": "Public Domain",
+    "license_status": "verified-current-2026-10-31"
+  },
+  "snapshot": {
+    "acquired_at": null,
+    "source_sha256": null,
+    "first_repository_revision": "cd3de7879",
+    "first_repository_date": "2026-01-05",
+    "freshness": "unknown"
+  },
+  "generator": "apps/flight-planner/scripts/build_data_caches.py",
+  "constraints": [
+    "The checked-in output digest and schema are verified; its source acquisition time and source digest were not retained.",
+    "Do not describe this snapshot as current aviation data.",
+    "Airport elevation is mean sea level in feet."
+  ]
+}
