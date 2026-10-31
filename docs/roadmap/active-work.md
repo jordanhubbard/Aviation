@@ -27,6 +27,16 @@ queue item or let `docs/roadmap/` become a plan archive.
 
 ## P0
 
+### [x] SDK-001 — Qualify the first native shared Aviation library
+
+- **Release target:** 1.0.0
+- **Evidence:** Registered service-health child passed two clean regenerative
+  qualification runs, independent library acceptance, all 19 parity cases, and a
+  native build with a current test receipt. Retained archive and decision are in
+  `verification/qualifications/service-health.json` and `verification/evidence/`.
+- **Boundary:** This release establishes qualified SDK authority; ADOPT-002 remains
+  open for importer admission, application cutover, Python transfer, and other domains.
+
 ### [ ] ONBOARD-001 — Replace this starter item with the first project outcome
 
 - **Owner:** project core
