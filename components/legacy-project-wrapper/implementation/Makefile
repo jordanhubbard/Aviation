@@ -231,7 +231,7 @@ test-flight-dynamics:
 	@echo "🧪 Running flight-dynamics Component tests..."
 	@python_env="$(abspath _build/python-envs/flight-dynamics)"; \
 	python3 -m venv "$$python_env"; \
-	"$$python_env/bin/python" -m pip install -q -e packages/flight-dynamics pytest httpx; \
+	"$$python_env/bin/python" -m pip install -q -e packages/shared-sdk/python -e packages/flight-dynamics pytest httpx; \
 	"$$python_env/bin/python" -m pytest packages/flight-dynamics/tests packages/flight-dynamics/test_api.py -q
 	@echo "✅ Flight-dynamics Component tests PASSED"
 

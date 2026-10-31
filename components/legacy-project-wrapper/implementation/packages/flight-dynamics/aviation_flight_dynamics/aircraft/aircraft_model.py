@@ -214,6 +214,7 @@ class AircraftVariant:
             aircraft_id=base.aircraft_id,
             name=self.name,
             manufacturer=base.manufacturer,
+            aircraft_profile_id=base.aircraft_profile_id,
             variant_id=self.variant_id,
             mass_properties=self.mass_properties or base.mass_properties,
             aerodynamics=self.aerodynamics or base.aerodynamics,
@@ -236,6 +237,7 @@ class AircraftConfig:
     fuel: FuelSystemConfig
     limits: AircraftLimits
     performance: PerformanceConfig
+    aircraft_profile_id: str | None = None
     variant_id: str | None = None
     variants: Dict[str, AircraftVariant] = field(default_factory=dict)
 
@@ -246,6 +248,8 @@ class AircraftConfig:
             raise ValueError("name must be provided.")
         if not self.manufacturer:
             raise ValueError("manufacturer must be provided.")
+        if self.aircraft_profile_id is not None and not self.aircraft_profile_id:
+            raise ValueError("aircraft_profile_id must be provided when declared.")
         for key, variant in self.variants.items():
             if variant.variant_id != key:
                 raise ValueError(

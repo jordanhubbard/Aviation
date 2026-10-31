@@ -1,10 +1,7 @@
 {
-  "aircraft_id": "cessna-172",
-  "name": "Cessna 172 Skyhawk",
-  "manufacturer": "Cessna",
+  "model_id": "cessna-172",
   "mass_properties": {
     "empty_weight_lbs": 1691.0,
-    "max_gross_weight_lbs": 2550.0,
     "reference_cg_in": 41.0,
     "max_payload_lbs": 859.0,
     "cg_limits_in": {
@@ -21,7 +18,6 @@
   "aerodynamics": {
     "geometry": {
       "wing_area_sqft": 174.0,
-      "wing_span_ft": 36.0833333333,
       "mean_aerodynamic_chord_ft": 4.9
     },
     "coefficients": {
@@ -55,26 +51,11 @@
     "specific_fuel_consumption_lb_hp_hr": 0.42
   },
   "fuel": {
-    "capacity_gal": 56.0,
-    "unusable_gal": 3.0,
     "fuel_density_lbs_per_gal": 6.0
   },
   "limits": {
-    "never_exceed_speed_kt": 163.0,
-    "max_operating_speed_kt": 129.0,
-    "maneuvering_speed_kt": 105.0,
-    "stall_speed_clean_kt": 48.0,
-    "stall_speed_landing_kt": 40.0,
-    "max_flap_extended_speed_kt": 85.0,
     "max_bank_angle_deg": 60.0,
     "max_pitch_angle_deg": 30.0
-  },
-  "performance": {
-    "cruise_speed_kt": 124.0,
-    "climb_rate_fpm": 730.0,
-    "service_ceiling_ft": 14000.0,
-    "takeoff_distance_ft": 1630.0,
-    "landing_distance_ft": 1335.0
   },
   "variants": {}
 }

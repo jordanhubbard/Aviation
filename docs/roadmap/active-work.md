@@ -130,6 +130,9 @@ release-visible outcome to `CHANGELOG.md`; Git preserves prior queue states.
     `aviation.weight-balance`, link its 2550-pound and 53-gallon limits explicitly to
     `aviation.aircraft`, and migrate G1000 Trip Planning away from the mismatched C172N
     record while retaining entered station weights and fuel as application state.
+  - [x] Link the C172S flight-dynamics model directly to `aviation.aircraft` and remove
+    its duplicate serialized identity, gross weight, fuel capacity, airspeed limits,
+    wingspan, and reference performance while retaining physics-specific model data.
   - [x] Define `aviation.avionics` protocol and rendering contracts, add deterministic
     telemetry/command/flight-plan/layout/pipeline vectors, and replace G1000's duplicate
     frontend telemetry schema with the shared protocol surface. Keep simulator stores,
@@ -152,10 +155,9 @@ release-visible outcome to `CHANGELOG.md`; Git preserves prior queue states.
     aviation implementations after parity qualification.
   - [ ] Classify and remove or intentionally retain every remainder beneath the legacy
     wrapper.
-- **Next action:** Link `aviation.flight-dynamics`' bundled C172S physics model
-  explicitly to `aviation.aircraft`, then remove repeated operating-limit and reference
-  fields where the aircraft profile is authoritative while retaining mass properties,
-  aerodynamic coefficients, control response, and computed performance as physics data.
+- **Next action:** Audit the remaining C182 and SR22 flight-dynamics assets against the
+  aircraft-profile boundary, then either qualify corresponding `aviation.aircraft`
+  profiles or explicitly retain their model-local data until aircraft authority exists.
 - **Evidence:** Phase 1.2 lift-and-shift identity `sha256:c5ca4361ba010f6e8d81c93398468f9f4f8b8cc352504bc8535fa74b7c6e9990`.
   Retained conversion stage is backed by current test receipt
   `sha256:60e252aceb5834018a21d3ec5a75b667c564e207ea3cf02d475b3245640c3c79`;
@@ -238,6 +240,13 @@ release-visible outcome to `CHANGELOG.md`; Git preserves prior queue states.
   tests remain
   green. The app's default/editable occupant, baggage, and fuel values remain React
   state rather than SDK profile data.
+  C172S flight-dynamics authority advances the graph lock to
+  `sha256:0bf3c704b883d567057217130dba144dba833f291a5cd729b90c762e3bd2b1e6`.
+  The Python model now imports `aviation.aircraft` at runtime and its serialized asset
+  contains only model identity plus physics-specific mass/CG/inertia, wing area/chord,
+  aerodynamic/control coefficients, engine response, fuel density, and bank/pitch
+  constraints. The independent 26-test flight-dynamics suite and G1000's 30-test
+  backend suite pass with the linked profile.
   Navigation and the dedicated SDK workflow landed in PR #339 at exact-main commit
   `9c55e4ac70dbc87def6d5ce6e6abc47aed214304`; all seven exact-commit workflows
   passed. Airports landed in PR #340 at exact-main commit
