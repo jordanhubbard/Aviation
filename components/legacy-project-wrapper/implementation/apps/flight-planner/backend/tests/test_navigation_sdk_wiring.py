@@ -38,3 +38,13 @@ def test_all_compatibility_surfaces_use_sdk_distance_semantics() -> None:
 def test_app_geodesy_rejects_invalid_sdk_coordinates() -> None:
     with pytest.raises(ValueError, match="Invalid WGS-84 coordinate"):
         navmath.haversine_nm(91, 0, 0, 0)
+
+
+def test_unrealized_private_geodesy_service_stays_removed() -> None:
+    assert not (BACKEND / "app/services/geo_calculations.py").exists()
+
+    flight_plan_source = (
+        BACKEND / "app/services/flight_plan_service.py"
+    ).read_text(encoding="utf-8")
+    assert "GeoCalculations" not in flight_plan_source
+    assert "geo_calculations" not in flight_plan_source

@@ -25,3 +25,12 @@ def test_routing_does_not_reimplement_geodesy() -> None:
     assert "3440.065" not in source
     assert "math.sin" not in source
     assert "math.atan2" not in source
+
+
+def test_unrealized_private_geodesy_service_stays_removed() -> None:
+    backend = Path(__file__).resolve().parents[1]
+    assert not (backend / "app/services/geo_calculations.py").exists()
+
+    main_source = (backend / "app/main.py").read_text(encoding="utf-8")
+    assert "GeoCalculationsService" not in main_source
+    assert "geo_calculations_service" not in main_source

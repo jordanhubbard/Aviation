@@ -14,7 +14,9 @@ The Navigation Service handles flight plan management, routing, and navigation d
 - **nav_database.py**: Navigation database interface
 - **routing.py**: Route calculation and optimization
 - **procedures.py**: SID/STAR/approach handling
-- **geo_calculations.py**: Navigation math utilities
+
+Generic geodesy is provided by the common Aviation SDK; this application retains
+only route assembly, catalog access, and simulator presentation policy.
 
 #### API Endpoints
 
