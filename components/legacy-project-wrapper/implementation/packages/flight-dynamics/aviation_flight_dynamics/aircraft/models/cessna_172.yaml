@@ -65,6 +65,7 @@
     "maneuvering_speed_kt": 105.0,
     "stall_speed_clean_kt": 48.0,
     "stall_speed_landing_kt": 40.0,
+    "max_flap_extended_speed_kt": 85.0,
     "max_bank_angle_deg": 60.0,
     "max_pitch_angle_deg": 30.0
   },

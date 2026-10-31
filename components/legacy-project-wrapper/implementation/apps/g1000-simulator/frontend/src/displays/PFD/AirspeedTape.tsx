@@ -1,13 +1,5 @@
 import { formatNumber, hasValue } from './formatters'
-
-const V_SPEEDS = {
-  vso: 45,
-  vs: 50,
-  vfe: 85,
-  va: 110,
-  vno: 129,
-  vne: 163,
-}
+import { C172S_OPERATING_PROFILE } from '../../integrations/sharedSdk'
 
 const MIN_SPEED = 0
 const MAX_SPEED = 200
@@ -34,6 +26,7 @@ export function AirspeedTape({
   targetAirspeedValue,
   groundSpeed,
 }: AirspeedTapeProps) {
+  const limits = C172S_OPERATING_PROFILE.airspeedLimits
   const indicatorStyle = hasValue(indicatedAirspeed)
     ? { bottom: `${toPercent(indicatedAirspeed)}%` }
     : undefined
@@ -54,9 +47,9 @@ export function AirspeedTape({
       : undefined
 
   const arcs = [
-    { id: 'white', start: V_SPEEDS.vso, end: V_SPEEDS.vfe, className: 'pfd__tape-arc--white' },
-    { id: 'green', start: V_SPEEDS.vs, end: V_SPEEDS.vno, className: 'pfd__tape-arc--green' },
-    { id: 'yellow', start: V_SPEEDS.vno, end: V_SPEEDS.vne, className: 'pfd__tape-arc--yellow' },
+    { id: 'white', start: limits.vsoKias, end: limits.vfeKias, className: 'pfd__tape-arc--white' },
+    { id: 'green', start: limits.vsKias, end: limits.vnoKias, className: 'pfd__tape-arc--green' },
+    { id: 'yellow', start: limits.vnoKias, end: limits.vneKias, className: 'pfd__tape-arc--yellow' },
   ]
 
   return (
@@ -75,7 +68,7 @@ export function AirspeedTape({
             />
           ))}
         </div>
-        <span className="pfd__tape-vne" style={{ bottom: `${toPercent(V_SPEEDS.vne)}%` }} />
+        <span className="pfd__tape-vne" style={{ bottom: `${toPercent(limits.vneKias)}%` }} />
         {indicatorStyle ? <span className="pfd__tape-indicator" style={indicatorStyle} /> : null}
         {trendStyle ? <span className="pfd__tape-trend" style={trendStyle} /> : null}
       </div>
@@ -83,7 +76,7 @@ export function AirspeedTape({
       <span className="pfd__tape-target">Bug {targetAirspeed}</span>
       <span className="pfd__tape-meta">TAS {formatNumber(trueAirspeed, ' kt')}</span>
       <span className="pfd__tape-meta">GS {formatNumber(groundSpeed, ' kt')}</span>
-      <span className="pfd__tape-meta">MAX {V_SPEEDS.vne} kt</span>
+      <span className="pfd__tape-meta">MAX {limits.vneKias} kt</span>
     </div>
   )
 }

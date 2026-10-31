@@ -1,7 +1,8 @@
 from __future__ import annotations
 
 import json
-from dataclasses import asdict, dataclass
+import math
+from dataclasses import asdict, dataclass, replace
 from pathlib import Path
 
 import pytest
@@ -60,11 +61,71 @@ AUTHORITY_VECTOR_PATH = (
     / "vectors.json"
 )
 VECTORS = json.loads(PACKAGE_VECTOR_PATH.read_text(encoding="utf-8"))
+AIRCRAFT_PACKAGE_VECTOR_PATH = (
+    Path(__file__).resolve().parents[1] / "conformance" / "aircraft.json"
+)
+AIRCRAFT_AUTHORITY_VECTOR_PATH = (
+    Path(__file__).resolve().parents[6]
+    / "components"
+    / "aviation-aircraft"
+    / "acceptance"
+    / "vectors.json"
+)
+AIRCRAFT_VECTORS = json.loads(
+    AIRCRAFT_PACKAGE_VECTOR_PATH.read_text(encoding="utf-8")
+)
 
 
 def test_packaged_vectors_match_component_authority() -> None:
     if AUTHORITY_VECTOR_PATH.exists():
         assert json.loads(AUTHORITY_VECTOR_PATH.read_text(encoding="utf-8")) == VECTORS
+
+
+def test_packaged_aircraft_vectors_match_component_authority() -> None:
+    if AIRCRAFT_AUTHORITY_VECTOR_PATH.exists():
+        assert (
+            json.loads(AIRCRAFT_AUTHORITY_VECTOR_PATH.read_text(encoding="utf-8"))
+            == AIRCRAFT_VECTORS
+        )
+
+
+def _c172s_operating_profile() -> dict[str, object]:
+    limits = C172_CONFIG.limits
+    return {
+        "profileId": "cessna-172s",
+        "manufacturer": C172_CONFIG.manufacturer,
+        "model": "172S",
+        "displayName": "Cessna 172S Skyhawk",
+        "airspeedLimits": {
+            "vsoKias": limits.stall_speed_landing_kt,
+            "vsKias": limits.stall_speed_clean_kt,
+            "vfeKias": limits.max_flap_extended_speed_kt,
+            "vaKias": limits.maneuvering_speed_kt,
+            "vnoKias": limits.max_operating_speed_kt,
+            "vneKias": limits.never_exceed_speed_kt,
+        },
+    }
+
+
+def test_c172s_operating_profile_matches_aircraft_component() -> None:
+    assert _c172s_operating_profile() == AIRCRAFT_VECTORS["profiles"]["cessna-172s"]
+
+
+def test_invalid_aircraft_operating_profiles_fail_closed() -> None:
+    field_names = {
+        "vsoKias": "stall_speed_landing_kt",
+        "vsKias": "stall_speed_clean_kt",
+        "vfeKias": "max_flap_extended_speed_kt",
+        "vaKias": "maneuvering_speed_kt",
+        "vnoKias": "max_operating_speed_kt",
+        "vneKias": "never_exceed_speed_kt",
+    }
+    for mutation in AIRCRAFT_VECTORS["invalidMutations"]:
+        value = mutation["value"]
+        if value == "non-finite":
+            value = math.nan
+        with pytest.raises(ValueError):
+            replace(C172_CONFIG.limits, **{field_names[mutation["field"]]: value})
 
 
 def test_isa_atmosphere_vector() -> None:

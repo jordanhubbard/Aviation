@@ -105,6 +105,16 @@
         "default": "./dist/aviation/weight-balance.js"
       }
     },
+    "./aviation/aircraft": {
+      "import": {
+        "types": "./dist-esm/aviation/aircraft.d.ts",
+        "default": "./dist-esm/aviation/aircraft.js"
+      },
+      "require": {
+        "types": "./dist/aviation/aircraft.d.ts",
+        "default": "./dist/aviation/aircraft.js"
+      }
+    },
     "./datetime": {
       "import": {
         "types": "./dist-esm/datetime/index.d.ts",

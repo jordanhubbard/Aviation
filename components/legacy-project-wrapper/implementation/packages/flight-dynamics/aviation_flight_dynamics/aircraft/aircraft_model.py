@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import math
 from dataclasses import dataclass, field
 from typing import Dict, Optional
 
@@ -7,17 +8,17 @@ from .mass_properties import MassProperties
 
 
 def _require_positive(name: str, value: float) -> None:
-    if value <= 0:
-        raise ValueError(f"{name} must be positive (got {value}).")
+    if not math.isfinite(value) or value <= 0:
+        raise ValueError(f"{name} must be positive and finite (got {value}).")
 
 
 def _require_non_negative(name: str, value: float) -> None:
-    if value < 0:
-        raise ValueError(f"{name} must be non-negative (got {value}).")
+    if not math.isfinite(value) or value < 0:
+        raise ValueError(f"{name} must be non-negative and finite (got {value}).")
 
 
 def _require_range(name: str, low: float, high: float) -> None:
-    if low >= high:
+    if not math.isfinite(low) or not math.isfinite(high) or low >= high:
         raise ValueError(f"{name} range must be ascending (got {low} >= {high}).")
 
 
@@ -126,6 +127,7 @@ class AircraftLimits:
     maneuvering_speed_kt: float
     stall_speed_clean_kt: float
     stall_speed_landing_kt: float
+    max_flap_extended_speed_kt: float | None = None
     max_bank_angle_deg: float = 60.0
     max_pitch_angle_deg: float = 30.0
 
@@ -135,6 +137,10 @@ class AircraftLimits:
         _require_positive("maneuvering_speed_kt", self.maneuvering_speed_kt)
         _require_positive("stall_speed_clean_kt", self.stall_speed_clean_kt)
         _require_positive("stall_speed_landing_kt", self.stall_speed_landing_kt)
+        if self.max_flap_extended_speed_kt is not None:
+            _require_positive(
+                "max_flap_extended_speed_kt", self.max_flap_extended_speed_kt
+            )
         _require_positive("max_bank_angle_deg", self.max_bank_angle_deg)
         _require_positive("max_pitch_angle_deg", self.max_pitch_angle_deg)
         _require_range(
@@ -142,8 +148,30 @@ class AircraftLimits:
             self.stall_speed_clean_kt,
             self.max_operating_speed_kt,
         )
-        if self.max_operating_speed_kt > self.never_exceed_speed_kt:
-            raise ValueError("max_operating_speed_kt must be <= never_exceed_speed_kt.")
+        if self.max_operating_speed_kt >= self.never_exceed_speed_kt:
+            raise ValueError("max_operating_speed_kt must be < never_exceed_speed_kt.")
+        if self.stall_speed_landing_kt > self.stall_speed_clean_kt:
+            raise ValueError(
+                "stall_speed_landing_kt must be <= stall_speed_clean_kt."
+            )
+        if not (
+            self.stall_speed_clean_kt
+            < self.maneuvering_speed_kt
+            <= self.max_operating_speed_kt
+        ):
+            raise ValueError(
+                "maneuvering_speed_kt must be above stall_speed_clean_kt and "
+                "at or below max_operating_speed_kt."
+            )
+        if self.max_flap_extended_speed_kt is not None and not (
+            self.stall_speed_landing_kt
+            < self.max_flap_extended_speed_kt
+            < self.never_exceed_speed_kt
+        ):
+            raise ValueError(
+                "max_flap_extended_speed_kt must fall between "
+                "stall_speed_landing_kt and never_exceed_speed_kt."
+            )
 
 
 @dataclass(frozen=True)
