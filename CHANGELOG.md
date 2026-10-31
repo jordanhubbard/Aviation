@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Replaced G1000's private route-distance and initial-course formulas with the Python
+  `aviation.navigation` realization while preserving route presentation and rounding.
 - Removed five independent Flight Planner haversine implementations; route sampling,
   A* routing, local-airport planning, approach waypoints, and navigation helpers now
   delegate great-circle distance to the Python `aviation.navigation` realization.
