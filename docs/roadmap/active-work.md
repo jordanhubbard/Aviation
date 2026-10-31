@@ -328,14 +328,18 @@ release-visible outcome to `CHANGELOG.md`; Git preserves prior queue states.
     duplicate application validator, and the Loom marker residue; repair and extend
     the independently tested keystore operator entrypoint so documented root commands
     target real source rather than nonexistent package scripts and build output.
-  - [ ] Classify and remove or intentionally retain every remainder beneath the legacy
-    wrapper.
-- **Next action:** Classify remaining top-level configuration, conformance data,
-  examples, documentation/plans, and repository metadata, then continue classifying
-  every remaining retained-wrapper path as Component intent,
-  Flavor requirement, conversion skill, immutable asset, repository harness, or
-  intentionally retained application source. Do not invent a new
-  Component for unique app behavior or generic helpers without shared semantics.
+  - [x] Classify and remove or intentionally retain every remainder beneath the legacy
+    wrapper. The machine-checked remainder inventory assigns every top-level file and
+    directory to application source, shared-package realization, Component
+    conformance, repository harness/configuration, runtime state, documentation, or
+    historical evidence. It removes stale duplicate workflows and obsolete
+    Cursor/Loom/responsible-vibe/Claude bootstrap metadata rather than treating those
+    files as authority.
+- **Next action:** Close the authority-transfer gaps in the native rewrite program:
+  regeneratively qualify each remaining Component realization, prove package and
+  application parity from native authority, and remove only the retained sources that
+  have earned replacement. Top-level classification is complete, but it does not by
+  itself authorize retiring the retained wrapper.
 - **Evidence:** Phase 1.2 lift-and-shift identity `sha256:c5ca4361ba010f6e8d81c93398468f9f4f8b8cc352504bc8535fa74b7c6e9990`.
   Retained conversion established original-source release authority; each migration
   refreshes the verifier-owned receipt in `verification/current.json`.

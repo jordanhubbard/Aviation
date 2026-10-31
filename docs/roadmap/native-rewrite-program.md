@@ -7,9 +7,10 @@
 The retained implementation at `components/legacy-project-wrapper/implementation` remains source-authority
 until each boundary earns transfer under ADR 0002.
 
-The initial application, package, asset, and harness map is in the
-[native boundary inventory](native-boundary-inventory.md). It is a partial source-evidence pass;
-public contracts and file-by-file authority classification remain open.
+The application, package, asset, harness, and top-level ownership map is in the
+[native boundary inventory](native-boundary-inventory.md). Classification is complete;
+the retained implementation remains release authority until each public boundary is
+regeneratively qualified and transferred.
 
 ## Target architecture
 
@@ -27,10 +28,10 @@ carry an explicit removal checkpoint.
 
 ## Ordered work
 
-1. [ ] Produce a boundary inventory: deployables, public interfaces, data schemas,
+1. [x] Produce a boundary inventory: deployables, public interfaces, data schemas,
    runtime state, build targets, tests, packages, CI/release jobs, assets, and target
    variance. Every row names source/test/document evidence and an owner.
-2. [ ] Classify each row as Component intent, Flavor requirement, conversion skill,
+2. [x] Classify each row as Component intent, Flavor requirement, conversion skill,
    immutable asset, repository-only harness, or intentionally retained source.
 3. [ ] Select the smallest independently buildable/testable boundary and author its
    native authority; leave later boundaries retained.

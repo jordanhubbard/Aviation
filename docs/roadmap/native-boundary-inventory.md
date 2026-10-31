@@ -1,7 +1,7 @@
 # Native boundary inventory
 
 - **Status:** partial
-- **Current scope:** consumer audit complete; residual retained-source classification remains open
+- **Current scope:** every retained top-level boundary is classified; regenerative replacement and wrapper retirement remain open
 - **Owning queue item:** [ADOPT-002](active-work.md#adopt-002)
 - **Completion / archival evidence:** pending while ADOPT-002 remains open
 
@@ -91,6 +91,26 @@ build authorities rather than pretending they are pnpm dependencies. Common SDK 
 now validates this graph and runs the previously omitted Aviation Config package tests.
 Known application-package test omissions remain recorded as gaps, not hidden behind a
 successful workspace build.
+
+## Retained-wrapper remainder boundary
+
+The machine-checked
+[remainder inventory](retained-wrapper-remainder-inventory.json) accounts for every
+top-level directory and file beneath **R**. Application and shared-package trees are
+owned by the application-state and workspace-package inventories; deployment,
+monitoring, scripts, and integration tests are owned by the repository-harness
+inventory. Path manifests cover the retained MAC contract, Component conformance
+vectors, documentation, examples, and historical plans. Every root configuration,
+lock, legal, state-seed, and historical file has an explicit classification.
+
+The audit removes the nested `.github` copy because GitHub executes only the repository
+root workflows and the retained copies had materially drifted from them. It also
+removes obsolete Cursor npm bootstrap, Loom environment, responsible-vibe MCP/settings,
+and stale Claude-template guidance. Those files contradicted the pinned pnpm workspace,
+current AGENTS.md, MAC, and Literate AI authorities; they are conversion residue, not
+an SDK capability. The retained avionics vector remains Component conformance evidence
+consumed by four independent package test adapters. Documentation and plans remain
+provenance or operator material and explicitly do not claim current Component authority.
 
 ## Repository orchestration and deployment harness
 
