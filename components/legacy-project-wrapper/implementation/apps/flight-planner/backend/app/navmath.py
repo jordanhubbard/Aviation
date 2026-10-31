@@ -8,13 +8,15 @@ from __future__ import annotations
 
 from aviation.navigation import (
     distance_nm as haversine_nm,
+    heading_difference as sdk_heading_difference,
+    normalize_bearing,
     wind_components,
 )
 
 
 def normalize_heading(deg: float) -> float:
     """Wrap a compass heading into the half-open range [0, 360) degrees."""
-    return float(deg) % 360.0
+    return normalize_bearing(float(deg))
 
 
 def heading_difference(a: float, b: float) -> float:
@@ -25,7 +27,7 @@ def heading_difference(a: float, b: float) -> float:
     negative values a counter-clockwise (leftward) turn. Diametrically opposite
     headings yield +180.0 (the upper bound is inclusive, the lower exclusive).
     """
-    d = (float(b) - float(a) + 180.0) % 360.0 - 180.0
+    d = sdk_heading_difference(float(a), float(b))
     # Map the diametrically-opposite case onto the inclusive +180.0 bound so the
     # result stays in (-180, 180] rather than [-180, 180).
     if d == -180.0:

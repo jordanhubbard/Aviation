@@ -124,6 +124,11 @@ release-visible outcome to `CHANGELOG.md`; Git preserves prior queue states.
     `aviation.navigation`. Retain measured-segment inference, regression, percentile
     summaries, session fuel state, alerts, gauge layout, and pixel projection as
     application policy.
+  - [x] Migrate G1000 backend heading normalization, shortest-turn error, and
+    geodesic position stepping to the qualified `aviation.navigation` operations;
+    migrate Flight Planner's retained dynamics heading calculation through its SDK
+    compatibility adapter. Retain G1000 timing/capture/telemetry orchestration and
+    Flight Planner's legacy `+180` tie response, controller outputs, and alert policy.
   - [x] Qualify headwind/crosswind components, wind-correction angle, corrected
     heading, and along-course ground speed with shared TypeScript/Python vectors;
     migrate Flight Planner's bearing, wind-component, and wind-triangle arithmetic to
@@ -174,10 +179,10 @@ release-visible outcome to `CHANGELOG.md`; Git preserves prior queue states.
     aviation implementations after parity qualification.
   - [ ] Classify and remove or intentionally retain every remainder beneath the legacy
     wrapper.
-- **Next action:** Audit G1000's remaining backend heading/position stepping and Flight
-  Planner's compatibility heading semantics against navigation and flight-dynamics;
-  qualify reusable behavior while retaining simulator orchestration, capture thresholds,
-  and compatibility response policy.
+- **Next action:** Audit Flight Planner's retained nav-radio, HSI, and GPS-simulation
+  geometry against navigation and avionics; qualify reusable calculations while
+  retaining random-error injection, approach orchestration, and instrument presentation
+  policy.
 - **Evidence:** Phase 1.2 lift-and-shift identity `sha256:c5ca4361ba010f6e8d81c93398468f9f4f8b8cc352504bc8535fa74b7c6e9990`.
   Retained conversion stage is backed by current test receipt
   `sha256:60e252aceb5834018a21d3ec5a75b667c564e207ea3cf02d475b3245640c3c79`;
@@ -238,6 +243,12 @@ release-visible outcome to `CHANGELOG.md`; Git preserves prior queue states.
   Analyzer segmentation/regression and G1000 session fuel, alerts, gauges, and pixel
   projection remain explicit application policy; MFD coordinate offsets and leg
   distance now use `aviation.navigation`.
+  Simulator-stepping consolidation routes G1000 heading normalization, shortest-turn
+  error, and destination projection through the common Python navigation realization;
+  its backend passes 29 tests plus two isolated AHRS tests. Flight Planner's
+  compatibility adapter now delegates heading normalization and shortest-turn semantics
+  while retaining its documented `+180` tie mapping; all 184 non-integration backend
+  tests plus eight subtests pass.
   The G1000 and Flight Planner private geodesy service placeholders were classified as
   non-realized scaffolding and removed with application boundary tests preventing their
   reintroduction; all 30 G1000 backend tests and 178 non-integration Flight Planner

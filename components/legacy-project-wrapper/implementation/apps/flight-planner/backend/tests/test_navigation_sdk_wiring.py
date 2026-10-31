@@ -63,3 +63,25 @@ def test_wind_compatibility_surfaces_delegate_to_sdk() -> None:
     assert "initial_bearing" in service_source
     assert "wind_components" in service_source
     assert "ground_speed" in service_source
+
+
+def test_heading_compatibility_preserves_policy_over_sdk_semantics() -> None:
+    assert navmath.normalize_heading(-10) == 350.0
+    assert navmath.heading_difference(350, 10) == 20.0
+    assert navmath.heading_difference(0, 180) == 180.0
+
+    navmath_source = (BACKEND / "app/navmath.py").read_text(encoding="utf-8")
+    assert "heading_difference as sdk_heading_difference" in navmath_source
+    assert "normalize_bearing" in navmath_source
+    assert "(float(b) - float(a) + 180.0)" not in navmath_source
+    assert "return float(deg) % 360.0" not in navmath_source
+
+    dynamics_source = (BACKEND / "app/services/flight_dynamics.py").read_text(
+        encoding="utf-8"
+    )
+    assert (
+        "heading_difference(self.aircraft_state.heading, target_heading)"
+        in dynamics_source
+    )
+    assert "target_heading - self.aircraft_state.heading" not in dynamics_source
+    assert "normalize_heading(" in dynamics_source

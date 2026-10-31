@@ -9,6 +9,10 @@
 
 ## Unreleased
 
+- Migrated G1000 backend heading normalization, shortest-turn error, and geodesic
+  position stepping to `aviation.navigation`. Flight Planner now delegates its
+  retained dynamics heading semantics to the same SDK while preserving the legacy
+  `+180` compatibility response and application-owned controller/alert policy.
 - Qualified coordinated-turn bank and deterministic synthetic piston-engine
   instrumentation across Python and TypeScript `aviation.flight-dynamics` bindings.
   Flight Track Analyzer now delegates common turn physics while retaining measured

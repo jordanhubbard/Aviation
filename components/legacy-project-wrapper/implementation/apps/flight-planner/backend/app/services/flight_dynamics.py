@@ -17,6 +17,7 @@ from aviation_flight_dynamics.autopilot import (
     PitchController,
     RollController,
 )
+from app.navmath import heading_difference, normalize_heading
 
 
 @dataclass
@@ -29,7 +30,6 @@ class AircraftState:
 
 
 from .alerts import AlertService, Alert
-
 
 PITCH_GAINS = PIDGains(kp=1.2, ki=0.15, kd=0.07)
 ROLL_GAINS = PIDGains(kp=1.0, ki=0.1, kd=0.05)
@@ -68,14 +68,22 @@ class FlightDynamicsService:
     ) -> None:
         """Update aircraft state based on flight dynamics calculations."""
         # Calculate forces
-        lift = calculate_lift(self.aircraft_state.velocity, wing_area, lift_coefficient, air_density)
-        drag = calculate_drag(self.aircraft_state.velocity, wing_area, drag_coefficient, air_density)
+        lift = calculate_lift(
+            self.aircraft_state.velocity, wing_area, lift_coefficient, air_density
+        )
+        drag = calculate_drag(
+            self.aircraft_state.velocity, wing_area, drag_coefficient, air_density
+        )
         thrust = calculate_thrust(power, efficiency=0.9, engine_factor=engine_factor)
         fuel_consumption = calculate_fuel_consumption(thrust, fuel_efficiency)
 
         # Apply environmental effects
-        adjusted_velocity = apply_wind_effect(self.aircraft_state.velocity, wind_speed, wind_angle)
-        adjusted_velocity = apply_turbulence_effect(adjusted_velocity, turbulence_intensity)
+        adjusted_velocity = apply_wind_effect(
+            self.aircraft_state.velocity, wind_speed, wind_angle
+        )
+        adjusted_velocity = apply_turbulence_effect(
+            adjusted_velocity, turbulence_intensity
+        )
 
         # Autopilot control
         pitch_output = self.pitch_controller.update(
@@ -88,13 +96,16 @@ class FlightDynamicsService:
             target_altitude - self.aircraft_state.altitude, AUTOPILOT_STEP_S
         )
         heading_output = self.heading_controller.update(
-            target_heading - self.aircraft_state.heading, AUTOPILOT_STEP_S
+            heading_difference(self.aircraft_state.heading, target_heading),
+            AUTOPILOT_STEP_S,
         )
 
         # Apply autopilot outputs to aircraft state
         self.aircraft_state.velocity = adjusted_velocity
         self.aircraft_state.altitude += altitude_output
-        self.aircraft_state.heading = (self.aircraft_state.heading + heading_output) % 360
+        self.aircraft_state.heading = normalize_heading(
+            self.aircraft_state.heading + heading_output
+        )
         self.aircraft_state.fuel_level -= fuel_consumption
 
         # Check alerts
