@@ -1,6 +1,6 @@
 ---
 namespace: aviation
-version: 0.4.0
+version: 0.5.0
 display_name: Aviation aircraft profiles
 profiles:
   - library
@@ -8,7 +8,7 @@ profiles:
 sample: false
 provides:
   - name: aviation.aircraft
-    version: 0.4.0
+    version: 0.5.0
     interface:
       uri: interfaces/aircraft.md
       pin: null
@@ -31,11 +31,12 @@ source_dependencies: []
 ---
 # Aviation aircraft profiles
 
-This Component owns portable aircraft identity, operating limits, dimensions, and
-manufacturer-published reference profiles used by planning, simulation, and avionics
-applications. It does not own aircraft state, physics integration, aircraft-specific
-loading records, pilot operating decisions, presentation, persistence, or a substitute
-for an aircraft's approved operating handbook.
+This Component owns portable aircraft identity, a qualified type-designator support
+snapshot, operating limits, dimensions, and manufacturer-published reference profiles
+used by planning, simulation, avionics, and logbook applications. It does not own
+aircraft state, physics integration, aircraft-specific loading records, pilot operating
+decisions, presentation, persistence, or a substitute for ICAO Doc 8643 or an
+aircraft's approved operating handbook.
 
 The public surface is defined by `interfaces/aircraft.md`. Every realization must pass
 `acceptance/aircraft.md` against `acceptance/vectors.json` without network access.
@@ -88,6 +89,22 @@ copies of the same aircraft record.
   from that profile
 - **AND** unmatched aircraft receive no guessed profile while registration, booking,
   rates, equipment state, availability, and maintenance policy remain private
+
+### Requirement: Applications share qualified type-designator support
+
+The Component SHALL own the repository's bundled aircraft type-designator snapshot,
+including detailed manufacturer/model/category records, additional supported codes,
+case-insensitive lookup, deterministic suggestions, manufacturer filtering, and catalog
+summary behavior. The snapshot SHALL remain explicitly bounded and SHALL NOT be
+represented as a complete or current substitute for ICAO Doc 8643.
+
+#### Scenario: ForeFlight Dashboard validates an imported aircraft code
+
+- **WHEN** the dashboard checks a ForeFlight logbook aircraft type designator
+- **THEN** membership, detailed metadata, suggestions, summaries, and official lookup
+  guidance come from `aviation.aircraft`
+- **AND** CSV parsing, logbook validation policy, error presentation, and user data
+  remain application-owned
 
 ### Requirement: Published figures retain provenance
 

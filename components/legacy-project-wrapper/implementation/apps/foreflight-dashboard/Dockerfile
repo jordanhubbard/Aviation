@@ -49,6 +49,7 @@ RUN mkdir -p uploads logs
 
 # Copy requirements first for better caching
 COPY apps/foreflight-dashboard/requirements.txt .
+COPY packages/shared-sdk/python /opt/aviation-shared-sdk
 
 # Development stage with testing tools
 FROM base AS development
@@ -64,7 +65,7 @@ ENV FLASK_DEBUG=${FLASK_DEBUG} \
 RUN pip install pytest pytest-cov flake8 black isort
 
 # Install application dependencies
-RUN pip install -r requirements.txt
+RUN pip install /opt/aviation-shared-sdk && pip install -r requirements.txt
 
 # Copy the application code
 COPY apps/foreflight-dashboard/ .
@@ -105,7 +106,7 @@ ENV FLASK_ENV=${FLASK_ENV}
 
 # Install only production dependencies
 # Note: Cache mounts removed for cloud deployment compatibility
-RUN pip install -r requirements.txt
+RUN pip install /opt/aviation-shared-sdk && pip install -r requirements.txt
 
 # Copy only necessary files for production
 COPY apps/foreflight-dashboard/src/ /app/src/

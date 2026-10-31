@@ -8,12 +8,19 @@ import math
 import pytest
 
 from aviation.aircraft import (
+    ADDITIONAL_SUPPORTED_TYPE_DESIGNATORS,
+    AIRCRAFT_TYPE_DESIGNATORS,
     C172S_OPERATING_PROFILE,
     C182T_OPERATING_PROFILE,
     SR22_PERSPECTIVE_3600_OPERATING_PROFILE,
     aircraft_operating_profile_from_mapping,
+    aircraft_type_designator_catalog_summary,
+    aircraft_type_designators_by_manufacturer,
+    find_aircraft_type_designator,
     find_aircraft_operating_profile,
     match_aircraft_operating_profile,
+    is_supported_aircraft_type_designator,
+    suggest_aircraft_type_designators,
 )
 from _conformance_contract import load_conformance_contract
 
@@ -74,7 +81,7 @@ def _portable_profile(profile) -> dict[str, object]:
     ids=lambda profile: profile.profile_id,
 )
 def test_component_profile_matches_portable_vector(profile) -> None:
-    assert CONTRACT["schema"] == "aviation/aircraft-acceptance-vectors@4"
+    assert CONTRACT["schema"] == "aviation/aircraft-acceptance-vectors@5"
     assert _portable_profile(profile) == CONTRACT["profiles"][profile.profile_id]
 
 
@@ -114,3 +121,57 @@ def test_invalid_component_profiles_fail_closed(mutation: dict[str, object]) -> 
     target[path[-1]] = math.nan if value == "non-finite" else value
     with pytest.raises((TypeError, ValueError)):
         aircraft_operating_profile_from_mapping(profile)
+
+
+def test_component_type_designator_catalog_matches_portable_vectors() -> None:
+    actual = {
+        code: {
+            "manufacturer": record.manufacturer,
+            "model": record.model,
+            "category": record.category,
+        }
+        for code, record in AIRCRAFT_TYPE_DESIGNATORS.items()
+    }
+    assert actual == CONTRACT["typeDesignators"]
+    assert sorted(ADDITIONAL_SUPPORTED_TYPE_DESIGNATORS) == (
+        CONTRACT["additionalSupportedTypeDesignators"]
+    )
+
+
+@pytest.mark.parametrize(
+    "lookup",
+    CONTRACT["typeDesignatorLookups"],
+    ids=lambda item: item["query"] or "blank",
+)
+def test_component_type_designator_lookup(lookup: dict[str, object]) -> None:
+    record = find_aircraft_type_designator(str(lookup["query"]))
+    assert (record.code if record else None) == lookup["expectedCode"]
+    assert is_supported_aircraft_type_designator(str(lookup["query"])) is lookup["supported"]
+
+
+@pytest.mark.parametrize(
+    "lookup",
+    CONTRACT["typeDesignatorManufacturerLookups"],
+    ids=lambda item: item["manufacturer"],
+)
+def test_component_type_designator_manufacturer_lookup(
+    lookup: dict[str, object],
+) -> None:
+    assert aircraft_type_designators_by_manufacturer(str(lookup["manufacturer"])) == (
+        lookup["expectedCodes"]
+    )
+
+
+@pytest.mark.parametrize(
+    "suggestion",
+    CONTRACT["typeDesignatorSuggestions"],
+    ids=lambda item: item["query"] or "blank",
+)
+def test_component_type_designator_suggestions(suggestion: dict[str, object]) -> None:
+    assert suggest_aircraft_type_designators(
+        str(suggestion["query"]), int(suggestion["maximum"])
+    ) == suggestion["expectedCodes"]
+
+
+def test_component_type_designator_summary() -> None:
+    assert aircraft_type_designator_catalog_summary() == CONTRACT["typeDesignatorSummary"]

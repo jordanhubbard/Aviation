@@ -13,6 +13,8 @@
   rate in feet per minute, service ceiling, takeoff and landing ground roll, and
   takeoff and landing distance over a 50-foot obstacle in feet. These are published
   sea-level reference figures, not aircraft-specific performance calculations.
+- `AircraftTypeDesignatorRecord` carries a supported code and the bundled
+  manufacturer, model, and broad application category attached to that snapshot entry.
 
 ## Operations and bundled data
 
@@ -29,8 +31,27 @@
 - `C182T_OPERATING_PROFILE` is the bundled Cessna 182T NAV III profile.
 - `SR22_PERSPECTIVE_3600_OPERATING_PROFILE` is the bundled Cirrus SR22 Perspective
   3,600-pound profile.
+- `isSupportedAircraftTypeDesignator(code) -> boolean` tests case-insensitive
+  membership in the qualified bundled snapshot.
+- `findAircraftTypeDesignator(code) -> AircraftTypeDesignatorRecord | none` returns
+  detailed metadata when the snapshot contains it. Additional-only codes remain
+  supported but intentionally have no invented metadata.
+- `suggestAircraftTypeDesignators(code, maximum) -> code[]` returns deterministic
+  prefix-first suggestions.
+- `aircraftTypeDesignatorsByManufacturer(manufacturer) -> code[]` returns sorted exact
+  case-insensitive manufacturer matches.
+- `aircraftTypeDesignatorCatalogSummary() -> summary` reports detailed, additional,
+  category, and manufacturer counts.
+- `aircraftTypeDesignatorValidationMessage(code) -> string` points unknown codes to
+  ICAO's official Doc 8643 search.
+- Python exposes the same operations in `snake_case`.
 
-Adding an optional aircraft field or another bundled profile is backward compatible.
+The bundled snapshot is an offline application-support catalog, not an exhaustive or
+current assertion of ICAO validity. Consumers requiring authoritative current status
+must consult ICAO Doc 8643.
+
+Adding an optional aircraft field, another bundled profile, or a qualified designator
+is backward compatible.
 Removing or renaming a required field, changing its units, weakening validation, or
 changing an existing bundled value without correcting its cited authority is a breaking
 interface change.

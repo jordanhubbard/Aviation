@@ -29,6 +29,17 @@ external service.
 - **WHEN** each declared invalid mutation is applied to the valid profile
 - **THEN** construction raises an explicit validation error
 
+## Requirement: Type-designator catalogs agree
+
+### Scenario: A consumer validates or describes a bundled designator
+
+- **WHEN** each detailed and additional-only designator vector is evaluated
+- **THEN** TypeScript and Python expose the same membership and detailed records
+- **AND** case-insensitive lookup, deterministic suggestions, manufacturer filtering,
+  and catalog summaries match the shared vectors
+- **AND** unknown codes fail closed without treating this bounded snapshot as an
+  authoritative substitute for ICAO Doc 8643
+
 ## Requirement: Common SDK CI runs
 
 ### Scenario: Authority or realization changes

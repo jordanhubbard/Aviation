@@ -9,6 +9,10 @@
 
 ## Unreleased
 
+- Promoted ForeFlight Dashboard's private 170-code aircraft type-designator support
+  snapshot into cross-language `aviation.aircraft` APIs with Component-owned vectors,
+  deterministic lookup/suggestions, and independent SDK tests. ForeFlight now keeps
+  only compatibility response shapes and logbook-specific validation policy.
 - Added fail-closed manufacturer/model matching to both `aviation.aircraft`
   bindings and migrated Flight School's fleet page to qualified SDK reference
   identity, weight, fuel, and performance data. Fleet registration, rates,

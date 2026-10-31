@@ -1,4 +1,5 @@
 # Core FastAPI dependencies
+# The workspace-owned aviation-shared-sdk is installed explicitly by CI and Docker.
 fastapi==0.135.2
 uvicorn==0.42.0
 starlette==1.3.1
