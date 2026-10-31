@@ -1,4 +1,5 @@
 import {
+  C172S_OPERATING_PROFILE,
   SAMPLE_AIRCRAFT,
   calculateLoad,
   densityAltitude,
@@ -9,6 +10,8 @@ import {
   initialBearing,
   type LoadingProfile,
 } from '@aviation/shared-sdk';
+
+export { C172S_OPERATING_PROFILE };
 
 export type LegSummary = {
   distanceNm: number;

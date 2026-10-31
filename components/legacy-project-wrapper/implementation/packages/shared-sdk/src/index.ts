@@ -26,6 +26,9 @@ export * from './aviation/hazards.js';
 // Aviation weight & balance (CG envelope calculations)
 export * from './aviation/weight-balance.js';
 
+// Aircraft operating profiles and limitations
+export * from './aviation/aircraft.js';
+
 // AviationWeather.gov client (raw METAR + TAF forecasts)
 export {
   AviationWeatherClient,

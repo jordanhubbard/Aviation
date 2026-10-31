@@ -117,6 +117,10 @@ release-visible outcome to `CHANGELOG.md`; Git preserves prior queue states.
     valid/invalid vectors. Confirm Flight Planner and G1000 already delegate sensor
     air data to `aviation.avionics`, while G1000's backend C172 compatibility record
     derives from `aviation.flight-dynamics` and retains only telemetry/display shape.
+  - [x] Qualify a portable `aviation.aircraft` operating-profile surface with shared
+    TypeScript/Python valid and fail-closed vectors; add the missing Vfe limit to the
+    common C172S model and make G1000 Airspeed Tape derive its arcs and Vne marker from
+    that authority while retaining only scale, trend, styling, and presentation code.
   - [x] Define `aviation.avionics` protocol and rendering contracts, add deterministic
     telemetry/command/flight-plan/layout/pipeline vectors, and replace G1000's duplicate
     frontend telemetry schema with the shared protocol surface. Keep simulator stores,
@@ -139,8 +143,9 @@ release-visible outcome to `CHANGELOG.md`; Git preserves prior queue states.
     aviation implementations after parity qualification.
   - [ ] Classify and remove or intentionally retain every remainder beneath the legacy
     wrapper.
-- **Next action:** Qualify a portable aircraft operating-profile surface and replace
-  G1000 Airspeed Tape's hard-coded C172 V-speeds with that SDK authority.
+- **Next action:** Inventory application-local aircraft configuration selectors and
+  performance profiles, then qualify the next duplicated aircraft-domain boundary
+  against `aviation.aircraft` without moving application-specific UI state or policy.
 - **Evidence:** Phase 1.2 lift-and-shift identity `sha256:c5ca4361ba010f6e8d81c93398468f9f4f8b8cc352504bc8535fa74b7c6e9990`.
   Retained conversion stage is backed by current test receipt
   `sha256:60e252aceb5834018a21d3ec5a75b667c564e207ea3cf02d475b3245640c3c79`;
@@ -196,7 +201,13 @@ release-visible outcome to `CHANGELOG.md`; Git preserves prior queue states.
   hot/high IAS-to-TAS, TAS/Mach conversion, and negative/domain rejection; all 355
   TypeScript SDK tests, 109 Python SDK tests, two Flight Planner ADC tests, and six
   G1000 aircraft/autopilot compatibility tests pass. G1000's frontend V-speed constants
-  remain the next unqualified aircraft-profile boundary.
+  were the next unqualified aircraft-profile boundary.
+  Aircraft-profile qualification adds a dedicated `aviation.aircraft` Component and
+  eight invalid-profile vectors; 364 TypeScript SDK tests, 25 Python flight-dynamics
+  tests, four G1000 SDK-boundary tests, and the production G1000 frontend build pass.
+  The airspeed tape now imports the common C172S profile and contains no private V-speed
+  constants; Python model validation also rejects non-finite speeds and invalid limit
+  ordering.
   Navigation and the dedicated SDK workflow landed in PR #339 at exact-main commit
   `9c55e4ac70dbc87def6d5ce6e6abc47aed214304`; all seven exact-commit workflows
   passed. Airports landed in PR #340 at exact-main commit

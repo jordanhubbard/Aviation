@@ -9,6 +9,9 @@
 
 ## Unreleased
 
+- Added an independently tested `aviation.aircraft` Component with a portable C172S
+  operating profile shared by TypeScript and Python; G1000's airspeed tape now derives
+  its color arcs and never-exceed marker from the SDK instead of private V-speed data.
 - Added Component-owned pressure-altitude, ISA-temperature, and density-altitude
   vectors to both Aviation SDK language bindings; Flight Track Analyzer now delegates
   atmospheric normalization to the Python SDK while retaining entered-POH interpolation

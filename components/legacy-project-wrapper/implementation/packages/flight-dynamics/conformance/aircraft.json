@@ -1,0 +1,29 @@
+{
+  "schema": "aviation/aircraft-acceptance-vectors@1",
+  "profiles": {
+    "cessna-172s": {
+      "profileId": "cessna-172s",
+      "manufacturer": "Cessna",
+      "model": "172S",
+      "displayName": "Cessna 172S Skyhawk",
+      "airspeedLimits": {
+        "vsoKias": 40,
+        "vsKias": 48,
+        "vfeKias": 85,
+        "vaKias": 105,
+        "vnoKias": 129,
+        "vneKias": 163
+      }
+    }
+  },
+  "invalidMutations": [
+    {"id": "non-positive-vso", "field": "vsoKias", "value": 0},
+    {"id": "non-finite-vs", "field": "vsKias", "value": "non-finite"},
+    {"id": "landing-stall-above-clean-stall", "field": "vsoKias", "value": 49},
+    {"id": "maneuvering-at-clean-stall", "field": "vaKias", "value": 48},
+    {"id": "maneuvering-above-structural-cruise", "field": "vaKias", "value": 130},
+    {"id": "structural-cruise-at-never-exceed", "field": "vnoKias", "value": 163},
+    {"id": "flap-limit-at-landing-stall", "field": "vfeKias", "value": 40},
+    {"id": "flap-limit-at-never-exceed", "field": "vfeKias", "value": 163}
+  ]
+}
