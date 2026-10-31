@@ -1,8 +1,9 @@
 from __future__ import annotations
 
-import math
 import random
 from dataclasses import dataclass
+
+from aviation_avionics import normalize_heading
 
 
 def simulate_position_fix(lat: float, lon: float, alt: float) -> tuple[float, float, float]:
@@ -17,7 +18,7 @@ def simulate_groundspeed_and_track(speed: float, track: float) -> tuple[float, f
     """Simulate groundspeed and track with some random error."""
     speed_error = random.uniform(-0.5, 0.5)
     track_error = random.uniform(-1, 1)
-    return speed + speed_error, (track + track_error) % 360
+    return speed + speed_error, normalize_heading(track + track_error)
 
 
 def simulate_differential_correction(lat: float, lon: float) -> tuple[float, float]:
@@ -53,21 +54,21 @@ class GPSSimulationService:
         self.gps_state = gps_state
 
     def simulate_approach(self, approach_type: str) -> None:
-        if approach_type == 'LNAV':
+        if approach_type == "LNAV":
             self.simulate_lnav_approach()
-        elif approach_type == 'LNAV/VNAV':
+        elif approach_type == "LNAV/VNAV":
             self.simulate_lnav_vnav_approach()
-        elif approach_type == 'LPV':
+        elif approach_type == "LPV":
             self.simulate_lpv_approach()
-        elif approach_type == 'ILS':
+        elif approach_type == "ILS":
             self.simulate_ils_approach()
-        elif approach_type == 'LOC':
+        elif approach_type == "LOC":
             self.simulate_loc_approach()
-        elif approach_type == 'VTF':
+        elif approach_type == "VTF":
             self.simulate_vtf_approach()
-        elif approach_type == 'Missed':
+        elif approach_type == "Missed":
             self.simulate_missed_approach()
-        elif approach_type == 'Visual':
+        elif approach_type == "Visual":
             self.simulate_visual_approach()
 
     def simulate_lnav_approach(self):
@@ -95,9 +96,13 @@ class GPSSimulationService:
         print("Simulating Visual approach")
 
     def update_state(self, lat: float, lon: float, alt: float, speed: float, track: float) -> None:
-        self.gps_state.lat, self.gps_state.lon, self.gps_state.alt = simulate_position_fix(lat, lon, alt)
+        self.gps_state.lat, self.gps_state.lon, self.gps_state.alt = simulate_position_fix(
+            lat, lon, alt
+        )
         self.gps_state.speed, self.gps_state.track = simulate_groundspeed_and_track(speed, track)
-        self.gps_state.lat, self.gps_state.lon = simulate_differential_correction(self.gps_state.lat, self.gps_state.lon)
+        self.gps_state.lat, self.gps_state.lon = simulate_differential_correction(
+            self.gps_state.lat, self.gps_state.lon
+        )
         self.gps_state.raim = simulate_raim_integrity(self.gps_state.lat, self.gps_state.lon)
         self.gps_state.epe = simulate_epe()
 
