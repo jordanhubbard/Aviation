@@ -10,6 +10,18 @@ export const E2E_HEADERS = {
 
 export const E2E_MAX_AGE_MS = 15 * 60 * 1000;
 const RUN_PATTERN = /^e2e_[0-9a-f]{32}$/;
+const APP_PATTERN = /^[a-z0-9-]+$/;
+
+export class E2EContractError extends Error {
+  constructor(readonly code: string, message: string) {
+    super(message);
+    this.name = 'E2EContractError';
+  }
+}
+
+function fail(code: string, message: string): never {
+  throw new E2EContractError(code, message);
+}
 
 export type E2ERunId = string & { readonly __e2eRunId: unique symbol };
 export type TestTagged<T extends object> = T & {
@@ -24,8 +36,15 @@ export function createE2ERunId(): E2ERunId {
 }
 
 export function parseE2ERunId(value: unknown): E2ERunId {
-  if (typeof value !== 'string' || !RUN_PATTERN.test(value)) throw new Error('Invalid E2E run ID');
+  if (typeof value !== 'string' || !RUN_PATTERN.test(value)) {
+    fail('e2e-run-id-invalid', 'invalid E2E run ID');
+  }
   return value as E2ERunId;
+}
+
+/** Resolve a run-owned directory under the caller's dedicated test root. */
+export function isolatedRunDirectory(root: string, runId: E2ERunId): string {
+  return resolve(root, parseE2ERunId(runId));
 }
 
 /** Resolve a run-owned SQLite file under the caller's dedicated test root. */
@@ -35,7 +54,9 @@ export function isolatedSqlitePath(root: string, runId: E2ERunId): string {
 
 export function tagTestData<T extends object>(runId: E2ERunId, value: T): TestTagged<T> {
   parseE2ERunId(runId);
-  if ('is_test_data' in value || 'test_run_id' in value) throw new Error('Fixture already has data isolation fields');
+  if ('is_test_data' in value || 'test_run_id' in value) {
+    fail('e2e-record-fields-present', 'record already has test isolation fields');
+  }
   return { ...value, is_test_data: true, test_run_id: runId };
 }
 
@@ -43,13 +64,13 @@ export function assertTestDataForRun(value: unknown, runId: E2ERunId): asserts v
   parseE2ERunId(runId);
   if (!value || typeof value !== 'object' || !('is_test_data' in value)
     || value.is_test_data !== true || !('test_run_id' in value) || value.test_run_id !== runId) {
-    throw new Error('Record is not tagged for this E2E run');
+    fail('e2e-record-run-mismatch', 'record is not tagged for this E2E run');
   }
 }
 
 function signature(secret: string, appId: string, runId: E2ERunId, expiresAt: number): string {
-  if (secret.length < 32) throw new Error('E2E secret must contain at least 32 characters');
-  if (!/^[a-z0-9-]+$/.test(appId)) throw new Error('Invalid E2E application ID');
+  if (secret.length < 32) fail('e2e-secret-invalid', 'E2E secret must contain at least 32 characters');
+  if (!APP_PATTERN.test(appId)) fail('e2e-app-id-invalid', 'invalid E2E application ID');
   return createHmac('sha256', secret).update(`${appId}\n${runId}\n${expiresAt}`).digest('hex');
 }
 
@@ -57,7 +78,7 @@ export function signE2EHeaders(appId: string, runId: E2ERunId, secret: string,
   now = Date.now(), ttlMs = E2E_MAX_AGE_MS): E2EHeaders {
   parseE2ERunId(runId);
   if (!Number.isSafeInteger(now) || !Number.isSafeInteger(ttlMs) || ttlMs < 1 || ttlMs > E2E_MAX_AGE_MS) {
-    throw new Error('Invalid E2E credential lifetime');
+    fail('e2e-credential-lifetime-invalid', 'invalid E2E credential lifetime');
   }
   const expiresAt = now + ttlMs;
   return {
@@ -70,6 +91,7 @@ export function signE2EHeaders(appId: string, runId: E2ERunId, secret: string,
 function getHeader(source: HeaderSource, name: string): string | undefined {
   if (typeof source.get === 'function') return source.get(name) ?? undefined;
   const entries = Object.entries(source).filter(([key]) => key.toLowerCase() === name);
+  if (entries.length > 1) fail('e2e-header-duplicate', `duplicate E2E header: ${name}`);
   const value = entries.length === 1 ? entries[0][1] : undefined;
   return typeof value === 'string' ? value : undefined;
 }
@@ -82,21 +104,27 @@ function hasHeader(source: HeaderSource, name: string): boolean {
 /** Missing credentials mean a production request; partial/invalid credentials are always rejected. */
 export function verifyE2EHeaders(appId: string, source: HeaderSource, secret: string | undefined,
   now = Date.now()): E2ERunId | null {
+  if (!APP_PATTERN.test(appId)) fail('e2e-app-id-invalid', 'invalid E2E application ID');
   const run = getHeader(source, E2E_HEADERS.run);
   const expires = getHeader(source, E2E_HEADERS.expires);
   const supplied = getHeader(source, E2E_HEADERS.signature);
   if (!Object.values(E2E_HEADERS).some(name => hasHeader(source, name))) return null;
-  if (!secret || !run || !expires || !supplied) throw new Error('Incomplete E2E credentials');
+  if (!secret || secret.length < 32) fail('e2e-secret-invalid', 'invalid E2E secret');
+  if (!run || !expires || !supplied) fail('e2e-credentials-incomplete', 'incomplete E2E credentials');
   const runId = parseE2ERunId(run);
-  if (!/^\d{13}$/.test(expires)) throw new Error('Invalid E2E expiration');
+  if (!/^\d{13}$/.test(expires)) fail('e2e-expiration-invalid', 'invalid E2E expiration');
   const expiresAt = Number(expires);
-  if (!Number.isSafeInteger(expiresAt) || expiresAt < now || expiresAt > now + E2E_MAX_AGE_MS) {
-    throw new Error('Expired or excessive E2E credential lifetime');
+  if (!Number.isSafeInteger(now) || !Number.isSafeInteger(expiresAt)) {
+    fail('e2e-expiration-invalid', 'invalid E2E expiration');
   }
-  if (!/^[a-f0-9]{64}$/.test(supplied)) throw new Error('Invalid E2E signature');
+  if (expiresAt < now) fail('e2e-credentials-expired', 'expired E2E credentials');
+  if (expiresAt > now + E2E_MAX_AGE_MS) {
+    fail('e2e-credential-lifetime-invalid', 'excessive E2E credential lifetime');
+  }
+  if (!/^[a-f0-9]{64}$/.test(supplied)) fail('e2e-signature-invalid', 'invalid E2E signature');
   const expected = signature(secret, appId, runId, expiresAt);
   if (!timingSafeEqual(Buffer.from(supplied, 'hex'), Buffer.from(expected, 'hex'))) {
-    throw new Error('Invalid E2E signature');
+    fail('e2e-signature-invalid', 'invalid E2E signature');
   }
   return runId;
 }

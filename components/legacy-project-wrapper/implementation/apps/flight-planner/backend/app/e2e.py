@@ -5,7 +5,12 @@ import os
 import json
 from pathlib import Path
 
-from aviation.e2e import isolated_run_directory, tag_test_record
+from aviation.e2e import (
+    E2EContractError,
+    assert_test_record_for_run,
+    isolated_run_directory,
+    tag_test_record,
+)
 
 RUN_ID = os.environ.get('AVIATION_E2E_RUN_ID')
 SECRET = os.environ.get('AVIATION_E2E_SECRET')
@@ -32,6 +37,12 @@ def stored_record(value: dict) -> dict:
 
 
 def assert_store_isolated(records: list[dict]) -> None:
-    if RUN_ID and any(record.get('is_test_data') is not True or record.get('test_run_id') != RUN_ID
-                      for record in records):
-        raise RuntimeError('Flight Planner test store contains an untagged or foreign record')
+    if not RUN_ID:
+        return
+    try:
+        for record in records:
+            assert_test_record_for_run(record, RUN_ID)
+    except E2EContractError:
+        raise RuntimeError(
+            'Flight Planner test store contains an untagged or foreign record'
+        ) from None

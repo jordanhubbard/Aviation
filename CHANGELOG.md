@@ -10,6 +10,12 @@
 ## Unreleased
 
 - Added an independently specified and cross-language tested
+  `aviation.testing.e2e` Component for run and application identities, short-lived
+  HMAC credentials, isolated paths, and immutable test-record tagging. Aviation
+  Accident Tracker, Aviation Chat, Flight Planner, and Flight Track Analyzer consume
+  the qualified SDK contract while HTTP routing, database creation, fixture formats,
+  cleanup timing, browser orchestration, and deployment remain application policy.
+- Added an independently specified and cross-language tested
   `aviation.service.lifecycle` Component for deterministic start, stop, failure, and
   reset transitions. The shared TypeScript `BackgroundService` now exposes in-progress
   and failed states, rejects concurrent transitions, captures hook errors, and prevents

@@ -1,0 +1,182 @@
+{
+  "schema": "aviation/testing-e2e-acceptance-vectors@1",
+  "runIdCases": [
+    {"id": "lowercase-hex", "input": "e2e_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "expected": "e2e_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"},
+    {"id": "numeric-hex", "input": "e2e_0123456789abcdef0123456789abcdef", "expected": "e2e_0123456789abcdef0123456789abcdef"}
+  ],
+  "invalidRunIdCases": [
+    {"id": "production-name", "input": "production", "code": "e2e-run-id-invalid"},
+    {"id": "path-traversal", "input": "../production", "code": "e2e-run-id-invalid"},
+    {"id": "uppercase-hex", "input": "e2e_AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA", "code": "e2e-run-id-invalid"},
+    {"id": "short-hex", "input": "e2e_aaaa", "code": "e2e-run-id-invalid"},
+    {"id": "non-string", "input": 42, "code": "e2e-run-id-invalid"}
+  ],
+  "pathCases": [
+    {
+      "id": "direct-run-children",
+      "root": "sandbox/e2e",
+      "runId": "e2e_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "expectedDirectoryLeaf": "e2e_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "expectedSqliteLeaf": "e2e_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.db"
+    }
+  ],
+  "tagCases": [
+    {
+      "id": "adds-isolation-fields",
+      "runId": "e2e_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "input": {"name": "sample", "sequence": 3},
+      "expected": {"name": "sample", "sequence": 3, "is_test_data": true, "test_run_id": "e2e_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"}
+    }
+  ],
+  "invalidRecordCases": [
+    {
+      "id": "preexisting-test-flag",
+      "operation": "tag",
+      "runId": "e2e_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "input": {"is_test_data": false},
+      "code": "e2e-record-fields-present"
+    },
+    {
+      "id": "preexisting-run-id",
+      "operation": "tag",
+      "runId": "e2e_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "input": {"test_run_id": "e2e_bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"},
+      "code": "e2e-record-fields-present"
+    },
+    {
+      "id": "production-record",
+      "operation": "assert",
+      "runId": "e2e_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "input": {"name": "production"},
+      "code": "e2e-record-run-mismatch"
+    },
+    {
+      "id": "foreign-run-record",
+      "operation": "assert",
+      "runId": "e2e_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "input": {"is_test_data": true, "test_run_id": "e2e_bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"},
+      "code": "e2e-record-run-mismatch"
+    }
+  ],
+  "signingCases": [
+    {
+      "id": "application-bound-hmac",
+      "appId": "flight-planner",
+      "runId": "e2e_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "secret": "component-test-secret-at-least-32-bytes",
+      "nowMs": 1800000000000,
+      "ttlMs": 60000,
+      "expected": {
+        "x-aviation-test-run": "e2e_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "x-aviation-test-expires": "1800000060000",
+        "x-aviation-test-signature": "e6a7a3d5df79b8ed1ebe37d4440f541d967d07404936496418003caecd598f08"
+      }
+    }
+  ],
+  "verificationCases": [
+    {
+      "id": "valid-lowercase-headers",
+      "appId": "flight-planner",
+      "secret": "component-test-secret-at-least-32-bytes",
+      "nowMs": 1800000000000,
+      "headers": {
+        "x-aviation-test-run": "e2e_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "x-aviation-test-expires": "1800000060000",
+        "x-aviation-test-signature": "e6a7a3d5df79b8ed1ebe37d4440f541d967d07404936496418003caecd598f08"
+      },
+      "expected": "e2e_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+    },
+    {
+      "id": "valid-mixed-case-headers",
+      "appId": "flight-planner",
+      "secret": "component-test-secret-at-least-32-bytes",
+      "nowMs": 1800000000000,
+      "headers": {
+        "X-Aviation-Test-Run": "e2e_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "X-Aviation-Test-Expires": "1800000060000",
+        "X-Aviation-Test-Signature": "e6a7a3d5df79b8ed1ebe37d4440f541d967d07404936496418003caecd598f08"
+      },
+      "expected": "e2e_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+    },
+    {
+      "id": "ordinary-traffic",
+      "appId": "flight-planner",
+      "secret": "component-test-secret-at-least-32-bytes",
+      "nowMs": 1800000000000,
+      "headers": {},
+      "expected": null
+    }
+  ],
+  "invalidCredentialCases": [
+    {
+      "id": "partial-headers",
+      "appId": "flight-planner",
+      "secret": "component-test-secret-at-least-32-bytes",
+      "nowMs": 1800000000000,
+      "headers": {"x-aviation-test-run": "e2e_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"},
+      "code": "e2e-credentials-incomplete"
+    },
+    {
+      "id": "foreign-application",
+      "appId": "aviation-chat",
+      "secret": "component-test-secret-at-least-32-bytes",
+      "nowMs": 1800000000000,
+      "headers": {
+        "x-aviation-test-run": "e2e_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "x-aviation-test-expires": "1800000060000",
+        "x-aviation-test-signature": "e6a7a3d5df79b8ed1ebe37d4440f541d967d07404936496418003caecd598f08"
+      },
+      "code": "e2e-signature-invalid"
+    },
+    {
+      "id": "expired",
+      "appId": "flight-planner",
+      "secret": "component-test-secret-at-least-32-bytes",
+      "nowMs": 1800000060001,
+      "headers": {
+        "x-aviation-test-run": "e2e_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "x-aviation-test-expires": "1800000060000",
+        "x-aviation-test-signature": "e6a7a3d5df79b8ed1ebe37d4440f541d967d07404936496418003caecd598f08"
+      },
+      "code": "e2e-credentials-expired"
+    },
+    {
+      "id": "excessive-lifetime",
+      "appId": "flight-planner",
+      "secret": "component-test-secret-at-least-32-bytes",
+      "nowMs": 1799999000000,
+      "headers": {
+        "x-aviation-test-run": "e2e_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "x-aviation-test-expires": "1800000060000",
+        "x-aviation-test-signature": "e6a7a3d5df79b8ed1ebe37d4440f541d967d07404936496418003caecd598f08"
+      },
+      "code": "e2e-credential-lifetime-invalid"
+    },
+    {
+      "id": "missing-secret",
+      "appId": "flight-planner",
+      "secret": null,
+      "nowMs": 1800000000000,
+      "headers": {
+        "x-aviation-test-run": "e2e_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "x-aviation-test-expires": "1800000060000",
+        "x-aviation-test-signature": "e6a7a3d5df79b8ed1ebe37d4440f541d967d07404936496418003caecd598f08"
+      },
+      "code": "e2e-secret-invalid"
+    },
+    {
+      "id": "duplicate-case-variant",
+      "appId": "flight-planner",
+      "secret": "component-test-secret-at-least-32-bytes",
+      "nowMs": 1800000000000,
+      "headers": {
+        "x-aviation-test-run": "e2e_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "X-Aviation-Test-Run": "e2e_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "x-aviation-test-expires": "1800000060000",
+        "x-aviation-test-signature": "e6a7a3d5df79b8ed1ebe37d4440f541d967d07404936496418003caecd598f08"
+      },
+      "code": "e2e-header-duplicate"
+    }
+  ]
+}
+
