@@ -212,7 +212,8 @@ application code.
 
 | Boundary and proposed owner | Evidence | Provisional classification and open question |
 | --- | --- | --- |
-| Airport and airspace data — shared navigation asset | `apps/flight-planner/backend/data/airports_cache.json`, `airspaces_us.json`, `airspace_cache.json`; `packages/shared-sdk/data/airports_cache.json`; analyzer `apps/flight-track-analyzer/app/flightlab/airports.py` | Immutable asset or retained data cache after provenance, freshness, and license review; preserve the MSL field contract. |
+| Airport data — shared navigation asset | Byte-identical `apps/flight-planner/backend/data/airports_cache.json` and `packages/shared-sdk/data/airports_cache.json`; both are bound by tested provenance manifests to SHA-256 `2ea6613e...54d3`, 82,870 records, the OurAirports public-domain declaration, and the `elevation_ft` MSL contract. | Redistributable derived snapshot. Its acquisition time and input digest were not retained, so freshness remains unknown; retain the generated asset and do not claim it is current or navigation-authoritative. |
+| Airspace data — Flight Planner retained third-party data | Tested `apps/flight-planner/backend/data/provenance.json` binds `airspaces_us.json` (23,872 records) and `airspace_cache.json` (24,232 features) to exact digests. The generator identifies openAIP, whose live API schema declared CC BY-NC 4.0 and requested attribution on 2026-10-31; the combined cache has 360 features from an unretained legacy input. | Intentionally retained app data, not a Component asset. Historical acquisition terms, dates, input digests, freshness, and the legacy additions' provenance are unresolved. Visible attribution is present, but recorded evidence does not authorize commercial use or promotion; a refresh must retain all source evidence. |
 | Accident feed fixtures and seeds — Accident Tracker | `apps/aviation-accident-tracker/backend/data/` | Asset/fixture versus runtime-ingested data must be distinguished before promotion. |
 | Application persistence and credentials — each owning app/package | `apps/flight-track-analyzer/app/flightlab/store.py`; `packages/keystore/README.md`; app READMEs and environment configuration | Named runtime state and secret contracts, not generated source. Inventory locations, migration, and rollback per app. |
 | Workspace build and package graph — repository harness | `Makefile`, `pnpm-workspace.yaml`, `pnpm-lock.yaml`, `go.mod`, application/package manifests, and `apps/*/Makefile` | Repository-only harness plus target Flavors; each promoted boundary must keep a reproducible build and package oracle. |
@@ -227,7 +228,10 @@ public inputs and outputs, schema versions, persistent state, test oracle, runti
 target, and dependencies for each retained package and cross-cutting asset. Classify
 each retained path as Component intent, Flavor requirement, conversion skill,
 immutable asset, repository harness, or intentionally retained source. Prioritize the
-airport/airspace data provenance and licensing decision, then application persistence
-and credential contracts. The project remains at the `retained` conversion stage;
+application persistence and credential contracts next. The airport/airspace decision
+is now explicit and machine-checked: the airport snapshot is a public-domain derived
+asset of unknown freshness, while the openAIP/mixed airspace snapshots remain
+separately licensed retained app data with unresolved historical provenance. The
+project remains at the `retained` conversion stage;
 19 Component locks and the current receipt are evidence for the migrated boundaries,
 not authority to retire unclassified retained source.

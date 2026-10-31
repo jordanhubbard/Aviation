@@ -27,7 +27,7 @@ const FitToCircle: React.FC<{ center: [number, number]; radiusM: number }> = ({
     if (!map || !map.fitBounds) {
       return
     }
-    
+
     try {
       const bounds = L.circle(L.latLng(center[0], center[1]), { radius: radiusM }).getBounds()
       map.fitBounds(bounds.pad(0.15), { animate: true })
@@ -92,7 +92,9 @@ const AirportAirspaceMap: React.FC<Props> = ({ airport, radiusNm = 20, airspace 
         style={{ height: '100%', width: '100%' }}
       >
         <TileLayer
-          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+          attribution={
+            '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> | Airspace: <a href="https://www.openaip.net">openAIP</a>, adapted (<a href="https://creativecommons.org/licenses/by-nc/4.0/">CC BY-NC 4.0</a>); legacy additions unverified'
+          }
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
 

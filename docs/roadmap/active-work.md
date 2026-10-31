@@ -295,12 +295,20 @@ release-visible outcome to `CHANGELOG.md`; Git preserves prior queue states.
     surfaces directly, while Aviation Missions is explicitly classified as a mission
     catalog/workflow with no duplicate portable aviation algorithms and therefore no
     artificial SDK dependency.
+  - [x] Classify airport and airspace data with exact snapshot identities, source and
+    license evidence, freshness boundaries, machine-enforced manifests, and visible
+    openAIP attribution. Keep unresolved mixed-provenance airspace data outside native
+    Component authority and record the refresh requirements. The admitted retained
+    harness reports 591 tests; the common SDK suites pass 591 TypeScript and 316
+    Python tests, and the current receipt passes `litai verify` with all 19 locks
+    current.
   - [ ] Classify and remove or intentionally retain every remainder beneath the legacy
     wrapper.
-- **Next action:** Classify every remaining retained-wrapper path as Component intent,
+- **Next action:** Classify application persistence and credential contracts. Continue
+  classifying
+  every remaining retained-wrapper path as Component intent,
   Flavor requirement, conversion skill, immutable asset, repository harness, or
-  intentionally retained application source. Prioritize airport/airspace dataset
-  provenance and application persistence/credential contracts; do not invent a new
+  intentionally retained application source. Do not invent a new
   Component for unique app behavior or generic helpers without shared semantics.
 - **Evidence:** Phase 1.2 lift-and-shift identity `sha256:c5ca4361ba010f6e8d81c93398468f9f4f8b8cc352504bc8535fa74b7c6e9990`.
   Retained conversion established original-source release authority; each migration

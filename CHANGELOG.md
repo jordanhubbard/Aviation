@@ -9,6 +9,11 @@
 
 ## Unreleased
 
+- Classified the common SDK's bundled OurAirports catalog as a public-domain derived
+  snapshot with unknown freshness, and Flight Planner's openAIP/mixed airspace caches
+  as separately licensed retained app data with unresolved historical provenance.
+  Exact digest/count manifests, cross-language SDK tests, a fail-closed refresh path,
+  and visible openAIP attribution now enforce those boundaries.
 - Added an independently specified and cross-language tested
   `aviation.testing.e2e` Component for run and application identities, short-lived
   HMAC credentials, isolated paths, and immutable test-record tagging. Aviation
