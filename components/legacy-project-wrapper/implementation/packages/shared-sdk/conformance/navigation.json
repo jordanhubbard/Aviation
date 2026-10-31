@@ -1,44 +1,299 @@
 {
-  "schema": "aviation/navigation-acceptance-vectors@1",
+  "schema": "aviation/navigation-acceptance-vectors@2",
   "vectors": [
-    {"id":"equatorial-degree-distance","operation":"distance_nm","args":[0,0,0,1],"expected":60.0404607326,"absolute_tolerance":0.000001},
-    {"id":"due-east-bearing","operation":"initial_bearing","args":[0,0,0,1],"expected":90,"absolute_tolerance":0.000001},
-    {"id":"direct-headwind-component","operation":"headwind_component","args":[0,10,0],"expected":10,"absolute_tolerance":0.0000001},
-    {"id":"right-crosswind-component","operation":"crosswind_component","args":[90,10,0],"expected":10,"absolute_tolerance":0.0000001},
-    {"id":"wind-correction-from-left","operation":"wind_correction_angle","args":[120,90,60,20],"expected":-4.7801918472,"absolute_tolerance":0.0000001},
-    {"id":"corrected-heading-from-left","operation":"true_heading","args":[90,120,60,20],"expected":85.2198081528,"absolute_tolerance":0.0000001},
-    {"id":"wind-triangle-ground-speed","operation":"ground_speed","args":[120,90,60,20],"expected":102.2620993553,"absolute_tolerance":0.0000001},
-    {"id":"negative-bearing-normalization","operation":"normalize_bearing","args":[-10],"expected":350,"absolute_tolerance":0},
-    {"id":"anti-meridian-normalization","operation":"normalize_longitude","args":[190],"expected":-170,"absolute_tolerance":0},
-    {"id":"north-dms","operation":"dms_to_decimal","args":[37,37,18,"N"],"expected":37.6216666667,"absolute_tolerance":0.0000001},
-    {"id":"one-hour-flight-time","operation":"flight_time","args":[120,120],"expected":1,"absolute_tolerance":0},
-    {"id":"fuel-consumption","operation":"fuel_consumption","args":[10,1.5],"expected":15,"absolute_tolerance":0},
-    {"id":"configurable-fuel-reserve","operation":"fuel_reserve","args":[10,60],"expected":10,"absolute_tolerance":0},
-    {"id":"fuel-range-with-reserve","operation":"fuel_range","args":[40,10,120,5],"expected":420,"absolute_tolerance":0},
-    {"id":"day-vfr-reserve","operation":"vfr_fuel_reserve","args":[10,true],"expected":5,"absolute_tolerance":0},
-    {"id":"night-vfr-reserve","operation":"vfr_fuel_reserve","args":[10,false],"expected":7.5,"absolute_tolerance":0},
-    {"id":"ifr-reserve","operation":"ifr_fuel_reserve","args":[12],"expected":9,"absolute_tolerance":0},
-    {"id":"pressure-altitude-low-setting","operation":"pressure_altitude","args":[5000,29.42],"expected":5500,"absolute_tolerance":0.0000001},
-    {"id":"isa-temperature-at-five-thousand","operation":"isa_temperature","args":[5000],"expected":5.094,"absolute_tolerance":0.0000001},
-    {"id":"density-altitude-hot-day","operation":"density_altitude","args":[5000,25],"expected":7388.72,"absolute_tolerance":0.0000001},
-    {"id":"density-altitude-from-indicated","operation":"density_altitude_from_indicated","args":[5000,29.42,25],"expected":8007.592,"absolute_tolerance":0.0000001},
-    {"id":"time-speed-distance","operation":"tsd_distance","args":[125,2.4],"expected":300,"absolute_tolerance":0.0000001},
-    {"id":"ias-to-tas-standard-day","operation":"ias_to_tas","args":[110,0,15],"expected":110,"absolute_tolerance":0},
-    {"id":"ias-to-tas-hot-high","operation":"ias_to_tas","args":[100,5000,25],"expected":113.8668189111,"absolute_tolerance":0.0000001},
-    {"id":"tas-to-mach","operation":"tas_to_mach","args":[120,5000],"expected":0.1846128184,"absolute_tolerance":0.0000001},
-    {"id":"mach-to-tas","operation":"mach_to_tas","args":[0.5,10000],"expected":319.1667071493,"absolute_tolerance":0.0000001},
-    {"id":"invalid-latitude-fails","operation":"distance_nm","args":[91,0,0,0],"expected_error":"invalid_input"},
-    {"id":"zero-ground-speed-fails","operation":"flight_time","args":[120,0],"expected_error":"invalid_input"},
-    {"id":"negative-reserve-duration-fails","operation":"fuel_reserve","args":[10,-1],"expected_error":"invalid_input"},
-    {"id":"zero-fuel-burn-range-fails","operation":"fuel_range","args":[40,0,120,5],"expected_error":"invalid_input"},
-    {"id":"reserve-exceeds-fuel-range-fails","operation":"fuel_range","args":[5,10,120,6],"expected_error":"invalid_input"},
-    {"id":"negative-fuel-consumption-fails","operation":"fuel_consumption","args":[-1,1],"expected_error":"invalid_input"},
-    {"id":"non-positive-altimeter-setting-fails","operation":"pressure_altitude","args":[5000,0],"expected_error":"invalid_input"},
-    {"id":"negative-wind-speed-fails","operation":"headwind_component","args":[0,-1,0],"expected_error":"invalid_input"},
-    {"id":"unmaintainable-crosswind-fails","operation":"ground_speed","args":[10,0,90,20],"expected_error":"invalid_input"},
-    {"id":"negative-ias-fails","operation":"ias_to_tas","args":[-1,5000,15],"expected_error":"invalid_input"},
-    {"id":"absolute-zero-oat-fails","operation":"ias_to_tas","args":[100,5000,-273.15],"expected_error":"invalid_input"},
-    {"id":"negative-tas-fails","operation":"tas_to_mach","args":[-1,5000],"expected_error":"invalid_input"},
-    {"id":"negative-mach-fails","operation":"mach_to_tas","args":[-0.1,5000],"expected_error":"invalid_input"}
+    {
+      "id": "equatorial-degree-distance",
+      "operation": "distance_nm",
+      "args": [0, 0, 0, 1],
+      "expected": 60.0404607326,
+      "absolute_tolerance": 0.000001
+    },
+    {
+      "id": "due-east-bearing",
+      "operation": "initial_bearing",
+      "args": [0, 0, 0, 1],
+      "expected": 90,
+      "absolute_tolerance": 0.000001
+    },
+    {
+      "id": "direct-headwind-component",
+      "operation": "headwind_component",
+      "args": [0, 10, 0],
+      "expected": 10,
+      "absolute_tolerance": 0.0000001
+    },
+    {
+      "id": "right-crosswind-component",
+      "operation": "crosswind_component",
+      "args": [90, 10, 0],
+      "expected": 10,
+      "absolute_tolerance": 0.0000001
+    },
+    {
+      "id": "vector-headwind-from-north",
+      "operation": "headwind_component_from_vector",
+      "args": [0, -10, 0],
+      "expected": 10,
+      "absolute_tolerance": 0
+    },
+    {
+      "id": "vector-crosswind-from-right",
+      "operation": "crosswind_component_from_vector",
+      "args": [-10, 0, 0],
+      "expected": 10,
+      "absolute_tolerance": 0
+    },
+    {
+      "id": "vector-tailwind-on-eastbound-course",
+      "operation": "headwind_component_from_vector",
+      "args": [5, -8, 90],
+      "expected": -5,
+      "absolute_tolerance": 0.0000001
+    },
+    {
+      "id": "vector-crosswind-from-left-on-eastbound-course",
+      "operation": "crosswind_component_from_vector",
+      "args": [5, -8, 90],
+      "expected": -8,
+      "absolute_tolerance": 0.0000001
+    },
+    {
+      "id": "wind-correction-from-left",
+      "operation": "wind_correction_angle",
+      "args": [120, 90, 60, 20],
+      "expected": -4.7801918472,
+      "absolute_tolerance": 0.0000001
+    },
+    {
+      "id": "corrected-heading-from-left",
+      "operation": "true_heading",
+      "args": [90, 120, 60, 20],
+      "expected": 85.2198081528,
+      "absolute_tolerance": 0.0000001
+    },
+    {
+      "id": "wind-triangle-ground-speed",
+      "operation": "ground_speed",
+      "args": [120, 90, 60, 20],
+      "expected": 102.2620993553,
+      "absolute_tolerance": 0.0000001
+    },
+    {
+      "id": "negative-bearing-normalization",
+      "operation": "normalize_bearing",
+      "args": [-10],
+      "expected": 350,
+      "absolute_tolerance": 0
+    },
+    {
+      "id": "anti-meridian-normalization",
+      "operation": "normalize_longitude",
+      "args": [190],
+      "expected": -170,
+      "absolute_tolerance": 0
+    },
+    {
+      "id": "north-dms",
+      "operation": "dms_to_decimal",
+      "args": [37, 37, 18, "N"],
+      "expected": 37.6216666667,
+      "absolute_tolerance": 0.0000001
+    },
+    {
+      "id": "one-hour-flight-time",
+      "operation": "flight_time",
+      "args": [120, 120],
+      "expected": 1,
+      "absolute_tolerance": 0
+    },
+    {
+      "id": "fuel-consumption",
+      "operation": "fuel_consumption",
+      "args": [10, 1.5],
+      "expected": 15,
+      "absolute_tolerance": 0
+    },
+    {
+      "id": "configurable-fuel-reserve",
+      "operation": "fuel_reserve",
+      "args": [10, 60],
+      "expected": 10,
+      "absolute_tolerance": 0
+    },
+    {
+      "id": "fuel-range-with-reserve",
+      "operation": "fuel_range",
+      "args": [40, 10, 120, 5],
+      "expected": 420,
+      "absolute_tolerance": 0
+    },
+    {
+      "id": "day-vfr-reserve",
+      "operation": "vfr_fuel_reserve",
+      "args": [10, true],
+      "expected": 5,
+      "absolute_tolerance": 0
+    },
+    {
+      "id": "night-vfr-reserve",
+      "operation": "vfr_fuel_reserve",
+      "args": [10, false],
+      "expected": 7.5,
+      "absolute_tolerance": 0
+    },
+    {
+      "id": "ifr-reserve",
+      "operation": "ifr_fuel_reserve",
+      "args": [12],
+      "expected": 9,
+      "absolute_tolerance": 0
+    },
+    {
+      "id": "pressure-altitude-low-setting",
+      "operation": "pressure_altitude",
+      "args": [5000, 29.42],
+      "expected": 5500,
+      "absolute_tolerance": 0.0000001
+    },
+    {
+      "id": "isa-temperature-at-five-thousand",
+      "operation": "isa_temperature",
+      "args": [5000],
+      "expected": 5.094,
+      "absolute_tolerance": 0.0000001
+    },
+    {
+      "id": "density-altitude-hot-day",
+      "operation": "density_altitude",
+      "args": [5000, 25],
+      "expected": 7388.72,
+      "absolute_tolerance": 0.0000001
+    },
+    {
+      "id": "density-altitude-from-indicated",
+      "operation": "density_altitude_from_indicated",
+      "args": [5000, 29.42, 25],
+      "expected": 8007.592,
+      "absolute_tolerance": 0.0000001
+    },
+    {
+      "id": "time-speed-distance",
+      "operation": "tsd_distance",
+      "args": [125, 2.4],
+      "expected": 300,
+      "absolute_tolerance": 0.0000001
+    },
+    {
+      "id": "ias-to-tas-standard-day",
+      "operation": "ias_to_tas",
+      "args": [110, 0, 15],
+      "expected": 110,
+      "absolute_tolerance": 0
+    },
+    {
+      "id": "ias-to-tas-hot-high",
+      "operation": "ias_to_tas",
+      "args": [100, 5000, 25],
+      "expected": 113.8668189111,
+      "absolute_tolerance": 0.0000001
+    },
+    {
+      "id": "tas-to-mach",
+      "operation": "tas_to_mach",
+      "args": [120, 5000],
+      "expected": 0.1846128184,
+      "absolute_tolerance": 0.0000001
+    },
+    {
+      "id": "mach-to-tas",
+      "operation": "mach_to_tas",
+      "args": [0.5, 10000],
+      "expected": 319.1667071493,
+      "absolute_tolerance": 0.0000001
+    },
+    {
+      "id": "invalid-latitude-fails",
+      "operation": "distance_nm",
+      "args": [91, 0, 0, 0],
+      "expected_error": "invalid_input"
+    },
+    {
+      "id": "zero-ground-speed-fails",
+      "operation": "flight_time",
+      "args": [120, 0],
+      "expected_error": "invalid_input"
+    },
+    {
+      "id": "negative-reserve-duration-fails",
+      "operation": "fuel_reserve",
+      "args": [10, -1],
+      "expected_error": "invalid_input"
+    },
+    {
+      "id": "zero-fuel-burn-range-fails",
+      "operation": "fuel_range",
+      "args": [40, 0, 120, 5],
+      "expected_error": "invalid_input"
+    },
+    {
+      "id": "reserve-exceeds-fuel-range-fails",
+      "operation": "fuel_range",
+      "args": [5, 10, 120, 6],
+      "expected_error": "invalid_input"
+    },
+    {
+      "id": "negative-fuel-consumption-fails",
+      "operation": "fuel_consumption",
+      "args": [-1, 1],
+      "expected_error": "invalid_input"
+    },
+    {
+      "id": "non-positive-altimeter-setting-fails",
+      "operation": "pressure_altitude",
+      "args": [5000, 0],
+      "expected_error": "invalid_input"
+    },
+    {
+      "id": "negative-wind-speed-fails",
+      "operation": "headwind_component",
+      "args": [0, -1, 0],
+      "expected_error": "invalid_input"
+    },
+    {
+      "id": "non-numeric-wind-vector-fails",
+      "operation": "headwind_component_from_vector",
+      "args": ["invalid", 0, 0],
+      "expected_error": "invalid_input"
+    },
+    {
+      "id": "unmaintainable-crosswind-fails",
+      "operation": "ground_speed",
+      "args": [10, 0, 90, 20],
+      "expected_error": "invalid_input"
+    },
+    {
+      "id": "negative-ias-fails",
+      "operation": "ias_to_tas",
+      "args": [-1, 5000, 15],
+      "expected_error": "invalid_input"
+    },
+    {
+      "id": "absolute-zero-oat-fails",
+      "operation": "ias_to_tas",
+      "args": [100, 5000, -273.15],
+      "expected_error": "invalid_input"
+    },
+    {
+      "id": "negative-tas-fails",
+      "operation": "tas_to_mach",
+      "args": [-1, 5000],
+      "expected_error": "invalid_input"
+    },
+    {
+      "id": "negative-mach-fails",
+      "operation": "mach_to_tas",
+      "args": [-0.1, 5000],
+      "expected_error": "invalid_input"
+    }
   ]
 }

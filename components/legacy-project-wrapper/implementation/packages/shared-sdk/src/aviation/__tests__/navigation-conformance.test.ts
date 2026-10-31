@@ -1,9 +1,10 @@
-import { describe, expect, it } from 'vitest';
-import { loadConformanceContract } from './conformance-contract.js';
+import { describe, expect, it } from "vitest";
+import { loadConformanceContract } from "./conformance-contract.js";
 import {
   distanceNM,
   initialBearing,
   calculateWindComponents,
+  calculateWindComponentsFromVector,
   windCorrectionAngle,
   trueHeading,
   groundSpeed,
@@ -24,7 +25,7 @@ import {
   iasToTas,
   tasToMach,
   machToTas,
-} from '../navigation/index.js';
+} from "../navigation/index.js";
 
 interface NavigationVector {
   id: string;
@@ -32,7 +33,7 @@ interface NavigationVector {
   args: unknown[];
   expected?: number;
   absolute_tolerance?: number;
-  expected_error?: 'invalid_input';
+  expected_error?: "invalid_input";
 }
 
 interface NavigationVectors {
@@ -40,15 +41,39 @@ interface NavigationVectors {
   vectors: NavigationVector[];
 }
 
-const contract = loadConformanceContract<NavigationVectors>('navigation');
+const contract = loadConformanceContract<NavigationVectors>("navigation");
 
 const operations: Record<string, (...args: never[]) => number> = {
   distance_nm: distanceNM,
   initial_bearing: initialBearing,
-  headwind_component: ((windDirection: number, windSpeed: number, course: number) =>
-    calculateWindComponents(windDirection, windSpeed, course).headwind) as (...args: never[]) => number,
-  crosswind_component: ((windDirection: number, windSpeed: number, course: number) =>
-    calculateWindComponents(windDirection, windSpeed, course).crosswind) as (...args: never[]) => number,
+  headwind_component: ((
+    windDirection: number,
+    windSpeed: number,
+    course: number,
+  ) => calculateWindComponents(windDirection, windSpeed, course).headwind) as (
+    ...args: never[]
+  ) => number,
+  crosswind_component: ((
+    windDirection: number,
+    windSpeed: number,
+    course: number,
+  ) => calculateWindComponents(windDirection, windSpeed, course).crosswind) as (
+    ...args: never[]
+  ) => number,
+  headwind_component_from_vector: ((
+    windEast: number,
+    windNorth: number,
+    course: number,
+  ) =>
+    calculateWindComponentsFromVector(windEast, windNorth, course)
+      .headwind) as (...args: never[]) => number,
+  crosswind_component_from_vector: ((
+    windEast: number,
+    windNorth: number,
+    course: number,
+  ) =>
+    calculateWindComponentsFromVector(windEast, windNorth, course)
+      .crosswind) as (...args: never[]) => number,
   wind_correction_angle: windCorrectionAngle,
   true_heading: trueHeading,
   ground_speed: groundSpeed,
@@ -71,24 +96,27 @@ const operations: Record<string, (...args: never[]) => number> = {
   mach_to_tas: machToTas,
 };
 
-describe('aviation.navigation Component conformance', () => {
-  it('uses the versioned Component-owned vector schema', () => {
-    expect(contract.schema).toBe('aviation/navigation-acceptance-vectors@1');
+describe("aviation.navigation Component conformance", () => {
+  it("uses the versioned Component-owned vector schema", () => {
+    expect(contract.schema).toBe("aviation/navigation-acceptance-vectors@2");
     expect(contract.vectors.length).toBeGreaterThan(0);
   });
 
   for (const vector of contract.vectors) {
     it(vector.id, () => {
       const operation = operations[vector.operation];
-      expect(operation, `unsupported operation: ${vector.operation}`).toBeTypeOf('function');
+      expect(
+        operation,
+        `unsupported operation: ${vector.operation}`,
+      ).toBeTypeOf("function");
       if (vector.expected_error) {
-        expect(() => operation(...vector.args as never[])).toThrow();
+        expect(() => operation(...(vector.args as never[]))).toThrow();
         return;
       }
-      const actual = operation(...vector.args as never[]);
+      const actual = operation(...(vector.args as never[]));
       expect(Number.isFinite(actual)).toBe(true);
-      expect(vector.expected).toBeTypeOf('number');
-      expect(vector.absolute_tolerance).toBeTypeOf('number');
+      expect(vector.expected).toBeTypeOf("number");
+      expect(vector.absolute_tolerance).toBeTypeOf("number");
       if (vector.absolute_tolerance === 0) {
         expect(actual).toBe(vector.expected);
       } else {

@@ -22,6 +22,16 @@ OPERATIONS = {
     )[
         1
     ],
+    "headwind_component_from_vector": lambda wind_east, wind_north, course: navigation.wind_components_from_vector(
+        wind_east, wind_north, course
+    )[
+        0
+    ],
+    "crosswind_component_from_vector": lambda wind_east, wind_north, course: navigation.wind_components_from_vector(
+        wind_east, wind_north, course
+    )[
+        1
+    ],
     "wind_correction_angle": navigation.wind_correction_angle,
     "true_heading": navigation.true_heading,
     "ground_speed": navigation.ground_speed,
@@ -46,7 +56,7 @@ OPERATIONS = {
 
 
 def test_component_vector_schema() -> None:
-    assert CONTRACT["schema"] == "aviation/navigation-acceptance-vectors@1"
+    assert CONTRACT["schema"] == "aviation/navigation-acceptance-vectors@2"
     assert CONTRACT["vectors"]
 
 

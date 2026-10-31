@@ -9,6 +9,13 @@
 
 ## Unreleased
 
+- Qualified east/north wind-vector decomposition in both `aviation.navigation`
+  bindings and migrated Flight Track Analyzer's fitted-wind, reported-wind, and
+  airport-distance calculations to the common SDK while retaining its spatial index
+  and measured-track policy.
+- Added cross-language C182T and SR22 Perspective 3600 operating profiles and linked
+  their flight-dynamics models to the common aircraft authority, removing duplicated
+  limits, fuel, weight, dimensions, and reference-performance data from model files.
 - Link the common C172S flight-dynamics model directly to `aviation.aircraft` and remove
   its duplicate serialized operating limits, dimensions, fuel capacity, and reference
   performance while retaining physics-specific model data and calculations.

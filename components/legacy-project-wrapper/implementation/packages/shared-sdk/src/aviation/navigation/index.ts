@@ -1,19 +1,19 @@
 /**
  * Navigation Utilities for Aviation
- * 
+ *
  * Comprehensive navigation calculations for flight planning and aviation applications.
  * All calculations use standard aviation units: nautical miles, knots, degrees.
- * 
+ *
  * @module @aviation/shared-sdk/aviation/navigation
- * 
+ *
  * @example
  * ```typescript
  * import { distanceNM, initialBearing, fuelRequired } from '@aviation/shared-sdk';
- * 
+ *
  * // Calculate distance and bearing from KSFO to KJFK
  * const dist = distanceNM(37.6213, -122.3790, 40.6413, -73.7781);
  * const bearing = initialBearing(37.6213, -122.3790, 40.6413, -73.7781);
- * 
+ *
  * // Calculate fuel required
  * const fuel = fuelRequired(dist, 450, 12); // 450 kts GS, 12 GPH
  * console.log(`${dist.toFixed(0)} NM at ${bearing.toFixed(0)}°`);
@@ -34,7 +34,7 @@ export {
   destination,
   greatCircleRoute,
   convert,
-} from './distance.js';
+} from "./distance.js";
 
 // Bearing and heading calculations
 export {
@@ -49,7 +49,7 @@ export {
   reciprocalHeading,
   headingDifference,
   isHeadingInRange,
-} from './bearing.js';
+} from "./bearing.js";
 
 // Coordinate utilities
 export {
@@ -67,7 +67,7 @@ export {
   formatCoordinate,
   boundingBox,
   isInBoundingBox,
-} from './coordinates.js';
+} from "./coordinates.js";
 
 // Fuel calculations
 export {
@@ -85,7 +85,7 @@ export {
   alternateFuelRequired,
   specificRange,
   specificEndurance,
-} from './fuel.js';
+} from "./fuel.js";
 
 // Time-speed-distance calculations
 export {
@@ -102,7 +102,7 @@ export {
   iasToTas,
   tasToMach,
   machToTas,
-} from './time-speed-distance.js';
+} from "./time-speed-distance.js";
 
 // Shared navigation result types
 export type {
@@ -113,17 +113,18 @@ export type {
   FuelCalculation,
   DistanceUnit,
   SpeedUnit,
-} from './types.js';
+} from "./types.js";
 
 // Wind triangle, crosswind limits and runway selection
 export {
   calculateWindCorrection,
   calculateWindComponents,
+  calculateWindComponentsFromVector,
   calculateGroundSpeed,
   calculateEffectiveWind,
   isCrosswindWithinLimits,
   calculateBestRunway,
-} from './wind.js';
+} from "./wind.js";
 
 // Aircraft performance altitudes
 export {
@@ -134,4 +135,4 @@ export {
   ISA_SEA_LEVEL_PRESSURE_INHG,
   ISA_SEA_LEVEL_TEMP_C,
   ISA_LAPSE_RATE_C_PER_FT,
-} from './performance.js';
+} from "./performance.js";

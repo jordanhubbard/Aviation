@@ -1,6 +1,6 @@
 ---
 namespace: aviation
-version: 0.1.0
+version: 0.2.0
 display_name: Aviation navigation
 profiles:
   - library
@@ -8,7 +8,7 @@ profiles:
 sample: false
 provides:
   - name: aviation.navigation
-    version: 0.1.0
+    version: 0.2.0
     interface:
       uri: interfaces/navigation.md
       pin: null
@@ -93,3 +93,16 @@ waive or replace a shared vector.
 - **WHEN** its result falls outside a vector's tolerance
 - **THEN** common SDK acceptance fails before an application build can make the change
   appear green
+
+### Requirement: Estimated wind vectors use the same aviation convention
+
+East/north wind-velocity vectors SHALL be decomposed into the same positive-headwind
+and positive-from-right crosswind convention as reported wind-from direction and speed.
+Applications that estimate a wind vector from recorded tracks SHALL call this capability
+instead of carrying their own trigonometric projection.
+
+#### Scenario: A track analyzer estimates a wind vector
+
+- **WHEN** an application has eastward and northward wind-velocity components
+- **THEN** `aviation.navigation` returns headwind and crosswind components for the
+  selected true course using the Component's shared sign convention
