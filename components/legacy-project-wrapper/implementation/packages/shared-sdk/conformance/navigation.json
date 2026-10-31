@@ -3,6 +3,11 @@
   "vectors": [
     {"id":"equatorial-degree-distance","operation":"distance_nm","args":[0,0,0,1],"expected":60.0404607326,"absolute_tolerance":0.000001},
     {"id":"due-east-bearing","operation":"initial_bearing","args":[0,0,0,1],"expected":90,"absolute_tolerance":0.000001},
+    {"id":"direct-headwind-component","operation":"headwind_component","args":[0,10,0],"expected":10,"absolute_tolerance":0.0000001},
+    {"id":"right-crosswind-component","operation":"crosswind_component","args":[90,10,0],"expected":10,"absolute_tolerance":0.0000001},
+    {"id":"wind-correction-from-left","operation":"wind_correction_angle","args":[120,90,60,20],"expected":-4.7801918472,"absolute_tolerance":0.0000001},
+    {"id":"corrected-heading-from-left","operation":"true_heading","args":[90,120,60,20],"expected":85.2198081528,"absolute_tolerance":0.0000001},
+    {"id":"wind-triangle-ground-speed","operation":"ground_speed","args":[120,90,60,20],"expected":102.2620993553,"absolute_tolerance":0.0000001},
     {"id":"negative-bearing-normalization","operation":"normalize_bearing","args":[-10],"expected":350,"absolute_tolerance":0},
     {"id":"anti-meridian-normalization","operation":"normalize_longitude","args":[190],"expected":-170,"absolute_tolerance":0},
     {"id":"north-dms","operation":"dms_to_decimal","args":[37,37,18,"N"],"expected":37.6216666667,"absolute_tolerance":0.0000001},
@@ -24,6 +29,8 @@
     {"id":"zero-fuel-burn-range-fails","operation":"fuel_range","args":[40,0,120,5],"expected_error":"invalid_input"},
     {"id":"reserve-exceeds-fuel-range-fails","operation":"fuel_range","args":[5,10,120,6],"expected_error":"invalid_input"},
     {"id":"negative-fuel-consumption-fails","operation":"fuel_consumption","args":[-1,1],"expected_error":"invalid_input"},
-    {"id":"non-positive-altimeter-setting-fails","operation":"pressure_altitude","args":[5000,0],"expected_error":"invalid_input"}
+    {"id":"non-positive-altimeter-setting-fails","operation":"pressure_altitude","args":[5000,0],"expected_error":"invalid_input"},
+    {"id":"negative-wind-speed-fails","operation":"headwind_component","args":[0,-1,0],"expected_error":"invalid_input"},
+    {"id":"unmaintainable-crosswind-fails","operation":"ground_speed","args":[10,0,90,20],"expected_error":"invalid_input"}
   ]
 }

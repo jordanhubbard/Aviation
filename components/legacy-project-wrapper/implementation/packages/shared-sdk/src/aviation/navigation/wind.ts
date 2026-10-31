@@ -34,6 +34,30 @@ function normalizeAngle(angle: number): number {
   return normalized;
 }
 
+function validateWindInputs(
+  trueAirspeed: number,
+  trueCourse: number,
+  windDirection: number,
+  windSpeed: number,
+): void {
+  if (![trueAirspeed, trueCourse, windDirection, windSpeed].every(Number.isFinite)) {
+    throw new RangeError('Wind-triangle inputs must be finite');
+  }
+  if (trueAirspeed <= 0 || windSpeed < 0) {
+    throw new RangeError('True airspeed must be positive and wind speed non-negative');
+  }
+}
+
+function validateComponentInputs(
+  windDirection: number,
+  windSpeed: number,
+  course: number,
+): void {
+  if (![windDirection, windSpeed, course].every(Number.isFinite) || windSpeed < 0) {
+    throw new RangeError('Wind direction/course must be finite and wind speed non-negative');
+  }
+}
+
 /**
  * Calculate wind correction angle, ground speed, and true heading
  * 
@@ -63,25 +87,21 @@ export function calculateWindCorrection(
   windDirection: number,
   windSpeed: number
 ): WindCorrectionResult {
-  // Convert to radians
-  const tcRad = toRadians(trueCourse);
-  const wdRad = toRadians(windDirection);
-  
-  // Calculate wind components relative to the desired course
-  const headwindComponent = windSpeed * Math.cos(wdRad - tcRad);
-  const crosswindComponent = windSpeed * Math.sin(wdRad - tcRad);
-  
-  // Calculate ground speed using vector addition
-  const groundSpeed = Math.sqrt(
-    Math.pow(trueAirspeed + headwindComponent, 2) + 
-    Math.pow(crosswindComponent, 2)
-  );
-  
-  // Calculate wind correction angle
-  const windCorrectionAngle = toDegrees(Math.atan2(crosswindComponent, trueAirspeed));
-  
-  // Calculate true heading
+  validateWindInputs(trueAirspeed, trueCourse, windDirection, windSpeed);
+  const { headwind: headwindComponent, crosswind: crosswindComponent } =
+    calculateWindComponents(windDirection, windSpeed, trueCourse);
+  const crosswindRatio = crosswindComponent / trueAirspeed;
+  if (Math.abs(crosswindRatio) > 1) {
+    throw new RangeError('Crosswind exceeds true airspeed; course cannot be maintained');
+  }
+
+  const correctionRadians = Math.asin(crosswindRatio);
+  const windCorrectionAngle = toDegrees(correctionRadians);
   const trueHeading = normalizeAngle(trueCourse + windCorrectionAngle);
+  const groundSpeed = trueAirspeed * Math.cos(correctionRadians) - headwindComponent;
+  if (groundSpeed <= 0) {
+    throw new RangeError('Wind prevents positive progress along the selected course');
+  }
   
   return {
     ground_speed: groundSpeed,
@@ -115,6 +135,7 @@ export function calculateWindComponents(
   windSpeed: number,
   course: number
 ): { headwind: number; crosswind: number } {
+  validateComponentInputs(windDirection, windSpeed, course);
   const wdRad = toRadians(windDirection);
   const courseRad = toRadians(course);
   

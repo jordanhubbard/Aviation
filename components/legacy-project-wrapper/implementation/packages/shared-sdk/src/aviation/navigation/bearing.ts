@@ -5,6 +5,7 @@
  */
 
 import { assertValidCoordinate, toRadians, toDegrees } from './distance.js';
+import { calculateWindCorrection } from './wind.js';
 
 /**
  * Calculate initial bearing (forward azimuth) from point 1 to point 2
@@ -114,16 +115,9 @@ export function windCorrectionAngle(
   windDirection: number,
   windSpeed: number
 ): number {
-  const courseRad = toRadians(trueCourse);
-  const windDirRad = toRadians(windDirection);
-  
-  // Calculate crosswind component
-  const crosswind = windSpeed * Math.sin(windDirRad - courseRad);
-  
-  // Calculate WCA using trigonometry
-  const wca = Math.asin(crosswind / trueAirspeed);
-  
-  return toDegrees(wca);
+  return calculateWindCorrection(
+    trueAirspeed, trueCourse, windDirection, windSpeed,
+  ).wind_correction_angle;
 }
 
 /**
@@ -141,8 +135,9 @@ export function trueHeading(
   windDirection: number,
   windSpeed: number
 ): number {
-  const wca = windCorrectionAngle(trueAirspeed, trueCourse, windDirection, windSpeed);
-  return normalizeBearing(trueCourse + wca);
+  return calculateWindCorrection(
+    trueAirspeed, trueCourse, windDirection, windSpeed,
+  ).true_heading;
 }
 
 /**
@@ -160,19 +155,9 @@ export function groundSpeed(
   windDirection: number,
   windSpeed: number
 ): number {
-  const courseRad = toRadians(trueCourse);
-  const windDirRad = toRadians(windDirection);
-  
-  // Calculate headwind and crosswind components
-  const headwind = windSpeed * Math.cos(windDirRad - courseRad);
-  const crosswind = windSpeed * Math.sin(windDirRad - courseRad);
-  
-  // Ground speed using Pythagorean theorem
-  const gs = Math.sqrt(
-    Math.pow(trueAirspeed + headwind, 2) + Math.pow(crosswind, 2)
-  );
-  
-  return gs;
+  return calculateWindCorrection(
+    trueAirspeed, trueCourse, windDirection, windSpeed,
+  ).ground_speed;
 }
 
 /**

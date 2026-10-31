@@ -25,11 +25,9 @@ describe('navigation utilities', () => {
   it('computes wind correction and ground speed', () => {
     const { ground_speed, true_heading, wind_correction_angle } =
       calculateWindCorrection(120, 90, 60, 20);
-    expect(ground_speed).toBeGreaterThan(130);
-    expect(ground_speed).toBeLessThan(150);
-    expect(true_heading).toBeGreaterThan(80);
-    expect(true_heading).toBeLessThan(100);
-    expect(wind_correction_angle).toBeLessThan(20);
+    expect(ground_speed).toBeCloseTo(102.2620993553, 8);
+    expect(true_heading).toBeCloseTo(85.2198081528, 8);
+    expect(wind_correction_angle).toBeCloseTo(-4.7801918472, 8);
   });
 });
 

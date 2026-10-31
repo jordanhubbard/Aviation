@@ -125,7 +125,9 @@ def calculate_route_internal(
     timings: dict[str, float] = {}
 
     if ctx is None:
-        ctx = PlanningContext(deadline_s=time.perf_counter() + planning_total_timeout_s())
+        ctx = PlanningContext(
+            deadline_s=time.perf_counter() + planning_total_timeout_s()
+        )
 
     planned_at_utc = datetime.now(timezone.utc)
     departure_time_utc = planned_at_utc
@@ -148,7 +150,9 @@ def calculate_route_internal(
     dest = get_airport_coordinates(req.destination)
     _mark("airport_lookup", t0)
     if not origin or not dest:
-        raise HTTPException(status_code=400, detail="Invalid origin or destination code")
+        raise HTTPException(
+            status_code=400, detail="Invalid origin or destination code"
+        )
 
     ctx.emit_progress(phase="airport_lookup", message="Airports resolved", percent=0.05)
     ctx.check_deadline()
@@ -164,7 +168,9 @@ def calculate_route_internal(
     route_codes = [req.origin.upper(), req.destination.upper()]
     if req.plan_fuel_stops or req.aircraft_range_nm is not None:
         t0 = time.perf_counter()
-        ctx.emit_progress(phase="fuel_stops", message="Searching fuel stops", percent=0.12)
+        ctx.emit_progress(
+            phase="fuel_stops", message="Searching fuel stops", percent=0.12
+        )
         ctx.check_deadline()
         ctx.check_cancelled()
 
@@ -192,7 +198,9 @@ def calculate_route_internal(
                 )
 
             # Still-air max distance for a leg.
-            max_leg = fuel_range(float(req.fuel_on_board_gal), gph, speed_kt, reserve_fuel)
+            max_leg = fuel_range(
+                float(req.fuel_on_board_gal), gph, speed_kt, reserve_fuel
+            )
 
         if max_leg is None or max_leg <= 0:
             raise HTTPException(status_code=400, detail="max leg distance must be > 0")
@@ -210,7 +218,9 @@ def calculate_route_internal(
             lon = ap.get("longitude")
             if lat is None or lon is None:
                 continue
-            candidates.append(a_star.AirportNode(code=code, lat=float(lat), lon=float(lon)))
+            candidates.append(
+                a_star.AirportNode(code=code, lat=float(lat), lon=float(lon))
+            )
 
         try:
             per_leg_penalty = 0.0
@@ -232,7 +242,9 @@ def calculate_route_internal(
             raise HTTPException(status_code=400, detail=str(e))
 
         _mark("fuel_stop_search", t0)
-        ctx.emit_progress(phase="fuel_stops", message="Fuel stop search complete", percent=0.18)
+        ctx.emit_progress(
+            phase="fuel_stops", message="Fuel stop search complete", percent=0.18
+        )
         ctx.check_deadline()
         ctx.check_cancelled()
 
@@ -309,7 +321,8 @@ def calculate_route_internal(
                 partial = RouteResponse(
                     planned_at_utc=planned_at_utc,
                     departure_time_utc=departure_time_utc,
-                    arrival_time_utc=departure_time_utc + timedelta(hours=float(time_hr)),
+                    arrival_time_utc=departure_time_utc
+                    + timedelta(hours=float(time_hr)),
                     route=route_codes,
                     distance_nm=round(dist_nm, 1),
                     time_hr=time_hr,
@@ -319,7 +332,9 @@ def calculate_route_internal(
                     alternates=None,
                     fuel_stops=route_codes[1:-1] or None,
                 )
-                ctx.emit_partial_plan(phase="route_geometry", plan=partial.model_dump(mode="json"))
+                ctx.emit_partial_plan(
+                    phase="route_geometry", plan=partial.model_dump(mode="json")
+                )
     except FileNotFoundError as e:
         raise HTTPException(
             status_code=503,
@@ -329,13 +344,17 @@ def calculate_route_internal(
         )
 
     _mark("route_geometry", t0)
-    ctx.emit_progress(phase="route_geometry", message="Route geometry complete", percent=0.6)
+    ctx.emit_progress(
+        phase="route_geometry", message="Route geometry complete", percent=0.6
+    )
     ctx.check_deadline()
     ctx.check_cancelled()
 
     total_dist = 0.0
     for i in range(len(points) - 1):
-        total_dist += haversine_nm(points[i][0], points[i][1], points[i + 1][0], points[i + 1][1])
+        total_dist += haversine_nm(
+            points[i][0], points[i][1], points[i + 1][0], points[i + 1][1]
+        )
 
     segments = _build_segments(planned_segments)
     time_hr = round(flight_time(total_dist, speed_kt), 2) if speed_kt else 0.0
@@ -402,7 +421,9 @@ def calculate_route_internal(
                 if max_elev_ft is None or elev_ft > max_elev_ft:
                     max_elev_ft = float(elev_ft)
 
-            min_safe_alt_ft = (max_elev_ft + 1000.0) if max_elev_ft is not None else None
+            min_safe_alt_ft = (
+                (max_elev_ft + 1000.0) if max_elev_ft is not None else None
+            )
             target_alt_ft = float(req.altitude)
             if min_safe_alt_ft is not None:
                 target_alt_ft = max(target_alt_ft, float(min_safe_alt_ft))
@@ -432,7 +453,9 @@ def calculate_route_internal(
             return
         wind_speed_kt = float(w_speed)
         wind_direction_deg = int(w_dir)
-        track = wind.bearing_deg((float(o_lat), float(o_lon)), (float(d_lat), float(d_lon)))
+        track = wind.bearing_deg(
+            (float(o_lat), float(o_lon)), (float(d_lat), float(d_lon))
+        )
         head, cross = wind.wind_components_kt(
             track_deg=track,
             wind_from_deg=float(wind_direction_deg),
@@ -440,7 +463,15 @@ def calculate_route_internal(
         )
         headwind_kt = round(head, 1)
         crosswind_kt = round(cross, 1)
-        effective_speed_kt = max(30.0, speed_kt - head)
+        effective_speed_kt = max(
+            30.0,
+            wind.ground_speed_kt(
+                true_airspeed_kt=speed_kt,
+                track_deg=track,
+                wind_from_deg=float(wind_direction_deg),
+                wind_speed_kt=wind_speed_kt,
+            ),
+        )
         groundspeed_kt = round(effective_speed_kt, 1)
 
     def _alternates() -> None:
@@ -456,7 +487,9 @@ def calculate_route_internal(
 
     if req.avoid_terrain or req.apply_wind or req.include_alternates:
         ctx.emit_progress(
-            phase="enrichment", message="Computing terrain/wind/alternates", percent=0.65
+            phase="enrichment",
+            message="Computing terrain/wind/alternates",
+            percent=0.65,
         )
 
     with ThreadPoolExecutor(max_workers=planning_external_workers()) as ex:
@@ -524,7 +557,9 @@ def calculate_route_internal(
                     percent=0.9,
                 )
 
-    total_time = flight_time(total_dist, effective_speed_kt) if effective_speed_kt else 0.0
+    total_time = (
+        flight_time(total_dist, effective_speed_kt) if effective_speed_kt else 0.0
+    )
     arrival_time_utc = departure_time_utc + timedelta(hours=float(total_time))
 
     if planned_legs:
@@ -539,7 +574,9 @@ def calculate_route_internal(
             and float(wind_speed_kt) >= 0
         )
 
-        use_segment_legs = bool(req.avoid_terrain) and (len(route_codes) == 2) and bool(segments)
+        use_segment_legs = (
+            bool(req.avoid_terrain) and (len(route_codes) == 2) and bool(segments)
+        )
 
         if use_segment_legs:
             point_labels: List[str] = [route_codes[0].upper()]
@@ -548,23 +585,32 @@ def calculate_route_internal(
             point_labels.append(route_codes[-1].upper())
 
             for idx, seg in enumerate(segments):
-                dist_nm = float(haversine_nm(seg.start[0], seg.start[1], seg.end[0], seg.end[1]))
+                dist_nm = float(
+                    haversine_nm(seg.start[0], seg.start[1], seg.end[0], seg.end[1])
+                )
                 track_deg = float(wind.bearing_deg(seg.start, seg.end))
 
                 gs = float(speed_kt)
                 if has_wind:
-                    head, _cross = wind.wind_components_kt(
-                        track_deg=track_deg,
-                        wind_from_deg=float(wind_direction_deg),
-                        wind_speed_kt=float(wind_speed_kt),
+                    gs = max(
+                        30.0,
+                        wind.ground_speed_kt(
+                            true_airspeed_kt=float(speed_kt),
+                            track_deg=track_deg,
+                            wind_from_deg=float(wind_direction_deg),
+                            wind_speed_kt=float(wind_speed_kt),
+                        ),
                     )
-                    gs = max(30.0, float(speed_kt) - head)
 
                 ete_min = flight_time(dist_nm, gs) * 60.0 if gs > 0 else 0.0
                 elapsed += ete_min
 
-                arrive_leg_time_utc = departure_time_utc + timedelta(minutes=float(elapsed))
-                depart_leg_time_utc = arrive_leg_time_utc - timedelta(minutes=float(ete_min))
+                arrive_leg_time_utc = departure_time_utc + timedelta(
+                    minutes=float(elapsed)
+                )
+                depart_leg_time_utc = arrive_leg_time_utc - timedelta(
+                    minutes=float(ete_min)
+                )
 
                 legs_out.append(
                     RouteLeg(
@@ -589,18 +635,25 @@ def calculate_route_internal(
 
                 gs = float(speed_kt)
                 if has_wind:
-                    head, _cross = wind.wind_components_kt(
-                        track_deg=track_deg,
-                        wind_from_deg=float(wind_direction_deg),
-                        wind_speed_kt=float(wind_speed_kt),
+                    gs = max(
+                        30.0,
+                        wind.ground_speed_kt(
+                            true_airspeed_kt=float(speed_kt),
+                            track_deg=track_deg,
+                            wind_from_deg=float(wind_direction_deg),
+                            wind_speed_kt=float(wind_speed_kt),
+                        ),
                     )
-                    gs = max(30.0, float(speed_kt) - head)
 
                 ete_min = flight_time(dist_nm, gs) * 60.0 if gs > 0 else 0.0
                 elapsed += ete_min
 
-                arrive_leg_time_utc = departure_time_utc + timedelta(minutes=float(elapsed))
-                depart_leg_time_utc = arrive_leg_time_utc - timedelta(minutes=float(ete_min))
+                arrive_leg_time_utc = departure_time_utc + timedelta(
+                    minutes=float(elapsed)
+                )
+                depart_leg_time_utc = arrive_leg_time_utc - timedelta(
+                    minutes=float(ete_min)
+                )
 
                 fuel_stop = bool(leg.get("fuel_stop"))
                 refuel = REFUEL_MINUTES if fuel_stop else 0
@@ -638,7 +691,9 @@ def calculate_route_internal(
         fuel_burn = float(req.fuel_burn_gph) if req.fuel_burn_gph is not None else 10.0
         reserve_minutes = int(req.reserve_minutes)
         fuel_required = fuel_consumption(fuel_burn, total_time)
-        fuel_required_with_reserve = fuel_required + fuel_reserve(fuel_burn, reserve_minutes)
+        fuel_required_with_reserve = fuel_required + fuel_reserve(
+            fuel_burn, reserve_minutes
+        )
 
     timings["total"] = round(time.perf_counter() - t_total, 4)
     logger.info(
@@ -668,9 +723,13 @@ def calculate_route_internal(
         fuel_stops=route_codes[1:-1] or None,
         fuel_burn_gph=fuel_burn,
         reserve_minutes=reserve_minutes,
-        fuel_required_gal=round(fuel_required, 2) if fuel_required is not None else None,
+        fuel_required_gal=(
+            round(fuel_required, 2) if fuel_required is not None else None
+        ),
         fuel_required_with_reserve_gal=(
-            round(fuel_required_with_reserve, 2) if fuel_required_with_reserve is not None else None
+            round(fuel_required_with_reserve, 2)
+            if fuel_required_with_reserve is not None
+            else None
         ),
         wind_speed_kt=wind_speed_kt,
         wind_direction_deg=wind_direction_deg,

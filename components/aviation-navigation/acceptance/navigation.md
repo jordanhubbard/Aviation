@@ -35,6 +35,12 @@ tolerance.
 - **WHEN** distance is calculated from `(0, 0)` to `(0, 1)`
 - **THEN** the result is approximately 60.04 nautical miles
 
+### Scenario: Wind direction uses the aviation from convention
+
+- **WHEN** wind components and a corrected heading are calculated
+- **THEN** headwind is positive when wind comes from ahead, crosswind is positive from
+  the right, and ground speed is the positive along-course solution
+
 ## Requirement: Invalid values fail closed
 
 ### Scenario: Performance altitudes agree across bindings
@@ -58,6 +64,11 @@ tolerance.
 
 - **WHEN** pressure altitude receives a zero or negative altimeter setting
 - **THEN** the binding reports failure rather than returning a numeric altitude
+
+### Scenario: The requested course cannot be maintained
+
+- **WHEN** crosswind exceeds true airspeed or the along-course solution is not positive
+- **THEN** the binding reports failure rather than returning `NaN` or a misleading speed
 
 ## Requirement: Every binding is independently exercised
 

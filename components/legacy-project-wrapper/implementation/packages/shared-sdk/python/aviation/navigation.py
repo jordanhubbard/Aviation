@@ -239,6 +239,48 @@ def magnetic_to_true(magnetic_heading: float, magnetic_variation: float) -> floa
     return normalize_bearing(magnetic_heading + magnetic_variation)
 
 
+def wind_components(
+    wind_direction: float, wind_speed: float, course: float
+) -> Tuple[float, float]:
+    """Return positive-headwind and positive-from-right crosswind components."""
+    if (
+        not math.isfinite(wind_direction)
+        or not math.isfinite(wind_speed)
+        or not math.isfinite(course)
+        or wind_speed < 0
+    ):
+        raise ValueError(
+            "Wind direction/course must be finite and wind speed non-negative"
+        )
+    relative = to_radians(wind_direction - course)
+    return wind_speed * math.cos(relative), wind_speed * math.sin(relative)
+
+
+def _wind_triangle(
+    true_airspeed: float, true_course: float, wind_direction: float, wind_speed: float
+) -> Tuple[float, float, float]:
+    if (
+        not math.isfinite(true_airspeed)
+        or not math.isfinite(true_course)
+        or not math.isfinite(wind_direction)
+        or not math.isfinite(wind_speed)
+        or true_airspeed <= 0
+        or wind_speed < 0
+    ):
+        raise ValueError(
+            "True airspeed must be positive; wind inputs must be finite and non-negative"
+        )
+    headwind, crosswind = wind_components(wind_direction, wind_speed, true_course)
+    ratio = crosswind / true_airspeed
+    if abs(ratio) > 1:
+        raise ValueError("Crosswind exceeds true airspeed; course cannot be maintained")
+    correction = math.asin(ratio)
+    speed = true_airspeed * math.cos(correction) - headwind
+    if speed <= 0:
+        raise ValueError("Wind prevents positive progress along the selected course")
+    return correction, speed, headwind
+
+
 def wind_correction_angle(
     true_airspeed: float, true_course: float, wind_direction: float, wind_speed: float
 ) -> float:
@@ -248,13 +290,10 @@ def wind_correction_angle(
     Returns:
         WCA in degrees (+ right, - left)
     """
-    course_rad = to_radians(true_course)
-    wind_dir_rad = to_radians(wind_direction)
-
-    crosswind = wind_speed * math.sin(wind_dir_rad - course_rad)
-    wca = math.asin(crosswind / true_airspeed)
-
-    return to_degrees(wca)
+    correction, _, _ = _wind_triangle(
+        true_airspeed, true_course, wind_direction, wind_speed
+    )
+    return to_degrees(correction)
 
 
 def true_heading(
@@ -269,15 +308,8 @@ def ground_speed(
     true_airspeed: float, true_course: float, wind_direction: float, wind_speed: float
 ) -> float:
     """Calculate ground speed considering wind."""
-    course_rad = to_radians(true_course)
-    wind_dir_rad = to_radians(wind_direction)
-
-    headwind = wind_speed * math.cos(wind_dir_rad - course_rad)
-    crosswind = wind_speed * math.sin(wind_dir_rad - course_rad)
-
-    gs = math.sqrt((true_airspeed + headwind) ** 2 + crosswind**2)
-
-    return gs
+    _, speed, _ = _wind_triangle(true_airspeed, true_course, wind_direction, wind_speed)
+    return speed
 
 
 # ============================================================================

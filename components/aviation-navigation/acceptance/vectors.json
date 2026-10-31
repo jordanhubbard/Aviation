@@ -16,6 +16,41 @@
       "absolute_tolerance": 0.000001
     },
     {
+      "id": "direct-headwind-component",
+      "operation": "headwind_component",
+      "args": [0, 10, 0],
+      "expected": 10,
+      "absolute_tolerance": 0.0000001
+    },
+    {
+      "id": "right-crosswind-component",
+      "operation": "crosswind_component",
+      "args": [90, 10, 0],
+      "expected": 10,
+      "absolute_tolerance": 0.0000001
+    },
+    {
+      "id": "wind-correction-from-left",
+      "operation": "wind_correction_angle",
+      "args": [120, 90, 60, 20],
+      "expected": -4.7801918472,
+      "absolute_tolerance": 0.0000001
+    },
+    {
+      "id": "corrected-heading-from-left",
+      "operation": "true_heading",
+      "args": [90, 120, 60, 20],
+      "expected": 85.2198081528,
+      "absolute_tolerance": 0.0000001
+    },
+    {
+      "id": "wind-triangle-ground-speed",
+      "operation": "ground_speed",
+      "args": [120, 90, 60, 20],
+      "expected": 102.2620993553,
+      "absolute_tolerance": 0.0000001
+    },
+    {
       "id": "negative-bearing-normalization",
       "operation": "normalize_bearing",
       "args": [-10],
@@ -160,6 +195,18 @@
       "id": "non-positive-altimeter-setting-fails",
       "operation": "pressure_altitude",
       "args": [5000, 0],
+      "expected_error": "invalid_input"
+    },
+    {
+      "id": "negative-wind-speed-fails",
+      "operation": "headwind_component",
+      "args": [0, -1, 0],
+      "expected_error": "invalid_input"
+    },
+    {
+      "id": "unmaintainable-crosswind-fails",
+      "operation": "ground_speed",
+      "args": [10, 0, 90, 20],
       "expected_error": "invalid_input"
     }
   ]

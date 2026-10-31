@@ -12,6 +12,19 @@ CONTRACT = load_conformance_contract("navigation")
 OPERATIONS = {
     "distance_nm": navigation.distance_nm,
     "initial_bearing": navigation.initial_bearing,
+    "headwind_component": lambda wind_direction, wind_speed, course: navigation.wind_components(
+        wind_direction, wind_speed, course
+    )[
+        0
+    ],
+    "crosswind_component": lambda wind_direction, wind_speed, course: navigation.wind_components(
+        wind_direction, wind_speed, course
+    )[
+        1
+    ],
+    "wind_correction_angle": navigation.wind_correction_angle,
+    "true_heading": navigation.true_heading,
+    "ground_speed": navigation.ground_speed,
     "normalize_bearing": navigation.normalize_bearing,
     "normalize_longitude": navigation.normalize_longitude,
     "dms_to_decimal": navigation.dms_to_decimal,
