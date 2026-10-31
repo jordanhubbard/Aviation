@@ -1,6 +1,6 @@
 /**
  * Coordinate Utilities for Aviation
- * 
+ *
  * Provides coordinate validation, normalization, and conversion utilities.
  */
 
@@ -9,29 +9,37 @@
  */
 export type Coordinate = [number, number];
 
+export type LocalTangentCoordinate = {
+  eastMeters: number;
+  northMeters: number;
+};
+
+/** WGS-84 semi-major axis used by the local equirectangular projection. */
+export const LOCAL_TANGENT_EARTH_RADIUS_METERS = 6378137;
+
 /**
  * Validate latitude value
- * 
+ *
  * @param lat Latitude in degrees
  * @returns True if valid
  */
 export function isValidLatitude(lat: number): boolean {
-  return typeof lat === 'number' && !isNaN(lat) && lat >= -90 && lat <= 90;
+  return typeof lat === "number" && !isNaN(lat) && lat >= -90 && lat <= 90;
 }
 
 /**
  * Validate longitude value
- * 
+ *
  * @param lon Longitude in degrees
  * @returns True if valid
  */
 export function isValidLongitude(lon: number): boolean {
-  return typeof lon === 'number' && !isNaN(lon) && lon >= -180 && lon <= 180;
+  return typeof lon === "number" && !isNaN(lon) && lon >= -180 && lon <= 180;
 }
 
 /**
  * Validate coordinate pair
- * 
+ *
  * @param lat Latitude in degrees
  * @param lon Longitude in degrees
  * @returns True if valid
@@ -42,7 +50,7 @@ export function isValidCoordinate(lat: number, lon: number): boolean {
 
 /**
  * Normalize latitude to -90 to 90 range
- * 
+ *
  * @param lat Latitude in degrees
  * @returns Normalized latitude
  */
@@ -53,19 +61,19 @@ export function normalizeLatitude(lat: number): number {
 
 /**
  * Normalize longitude to -180 to 180 range
- * 
+ *
  * @param lon Longitude in degrees
  * @returns Normalized longitude
  */
 export function normalizeLongitude(lon: number): number {
-  let normalized = ((lon + 180) % 360);
+  let normalized = (lon + 180) % 360;
   if (normalized < 0) normalized += 360;
   return normalized - 180;
 }
 
 /**
  * Normalize coordinate pair
- * 
+ *
  * @param lat Latitude in degrees
  * @param lon Longitude in degrees
  * @returns Normalized [latitude, longitude]
@@ -74,9 +82,76 @@ export function normalizeCoordinate(lat: number, lon: number): Coordinate {
   return [normalizeLatitude(lat), normalizeLongitude(lon)];
 }
 
+/** Project a nearby WGS-84 coordinate into metres east/north of an origin. */
+export function toLocalTangentPlane(
+  lat: number,
+  lon: number,
+  originLat: number,
+  originLon: number,
+): LocalTangentCoordinate {
+  if (
+    !isValidCoordinate(lat, lon) ||
+    !isValidCoordinate(originLat, originLon)
+  ) {
+    throw new RangeError(
+      "Local projection requires valid finite WGS-84 coordinates",
+    );
+  }
+  const originCosine = Math.cos((originLat * Math.PI) / 180);
+  if (Math.abs(originCosine) < 1e-12) {
+    throw new RangeError("Local east/west projection is undefined at a pole");
+  }
+  const longitudeDelta = ((lon - originLon + 540) % 360) - 180;
+  return {
+    eastMeters:
+      ((longitudeDelta * Math.PI) / 180) *
+      LOCAL_TANGENT_EARTH_RADIUS_METERS *
+      originCosine,
+    northMeters:
+      (((lat - originLat) * Math.PI) / 180) * LOCAL_TANGENT_EARTH_RADIUS_METERS,
+  };
+}
+
+/** Convert metres east/north of an origin back to a WGS-84 coordinate. */
+export function fromLocalTangentPlane(
+  eastMeters: number,
+  northMeters: number,
+  originLat: number,
+  originLon: number,
+): Coordinate {
+  if (
+    !Number.isFinite(eastMeters) ||
+    !Number.isFinite(northMeters) ||
+    !isValidCoordinate(originLat, originLon)
+  ) {
+    throw new RangeError(
+      "Local inverse projection requires finite values and a valid origin",
+    );
+  }
+  const originCosine = Math.cos((originLat * Math.PI) / 180);
+  if (Math.abs(originCosine) < 1e-12) {
+    throw new RangeError("Local east/west projection is undefined at a pole");
+  }
+  const lat =
+    originLat +
+    ((northMeters / LOCAL_TANGENT_EARTH_RADIUS_METERS) * 180) / Math.PI;
+  const lon = normalizeLongitude(
+    originLon +
+      ((eastMeters / (LOCAL_TANGENT_EARTH_RADIUS_METERS * originCosine)) *
+        180) /
+        Math.PI,
+  );
+  if (!isValidCoordinate(lat, lon)) {
+    throw new RangeError(
+      "Local inverse projection falls outside the WGS-84 coordinate domain",
+    );
+  }
+  return [lat, lon];
+}
+
 /**
  * Parse decimal degrees from string
- * 
+ *
  * @param value String value (e.g., "37.6213", "-122.3790")
  * @returns Parsed number or null if invalid
  */
@@ -87,13 +162,13 @@ export function parseDecimalDegrees(value: string): number | null {
 
 /**
  * Convert DMS (Degrees Minutes Seconds) to decimal degrees
- * 
+ *
  * @param degrees Degrees
  * @param minutes Minutes
  * @param seconds Seconds
  * @param direction Direction ('N', 'S', 'E', 'W')
  * @returns Decimal degrees
- * 
+ *
  * @example
  * ```typescript
  * // Convert 37°37'18"N to decimal
@@ -104,44 +179,44 @@ export function dmsToDecimal(
   degrees: number,
   minutes: number,
   seconds: number,
-  direction: 'N' | 'S' | 'E' | 'W'
+  direction: "N" | "S" | "E" | "W",
 ): number {
   const decimal = degrees + minutes / 60 + seconds / 3600;
-  
+
   // Apply sign based on direction
-  return (direction === 'S' || direction === 'W') ? -decimal : decimal;
+  return direction === "S" || direction === "W" ? -decimal : decimal;
 }
 
 /**
  * Convert decimal degrees to DMS
- * 
+ *
  * @param decimal Decimal degrees
  * @param isLatitude True for latitude, false for longitude
  * @returns Object with degrees, minutes, seconds, and direction
  */
 export function decimalToDMS(
   decimal: number,
-  isLatitude: boolean
+  isLatitude: boolean,
 ): { degrees: number; minutes: number; seconds: number; direction: string } {
   const absolute = Math.abs(decimal);
   const degrees = Math.floor(absolute);
   const minutesDecimal = (absolute - degrees) * 60;
   const minutes = Math.floor(minutesDecimal);
   const seconds = (minutesDecimal - minutes) * 60;
-  
+
   let direction: string;
   if (isLatitude) {
-    direction = decimal >= 0 ? 'N' : 'S';
+    direction = decimal >= 0 ? "N" : "S";
   } else {
-    direction = decimal >= 0 ? 'E' : 'W';
+    direction = decimal >= 0 ? "E" : "W";
   }
-  
+
   return { degrees, minutes, seconds, direction };
 }
 
 /**
  * Format coordinate as DMS string
- * 
+ *
  * @param decimal Decimal degrees
  * @param isLatitude True for latitude, false for longitude
  * @returns Formatted string (e.g., "37°37'18\"N")
@@ -153,7 +228,7 @@ export function formatDMS(decimal: number, isLatitude: boolean): string {
 
 /**
  * Format coordinate pair as string
- * 
+ *
  * @param lat Latitude in decimal degrees
  * @param lon Longitude in decimal degrees
  * @param format Format: 'decimal' or 'dms'
@@ -162,9 +237,9 @@ export function formatDMS(decimal: number, isLatitude: boolean): string {
 export function formatCoordinate(
   lat: number,
   lon: number,
-  format: 'decimal' | 'dms' = 'decimal'
+  format: "decimal" | "dms" = "decimal",
 ): string {
-  if (format === 'dms') {
+  if (format === "dms") {
     return `${formatDMS(lat, true)}, ${formatDMS(lon, false)}`;
   } else {
     return `${lat.toFixed(6)}, ${lon.toFixed(6)}`;
@@ -173,7 +248,7 @@ export function formatCoordinate(
 
 /**
  * Calculate bounding box for a point with radius
- * 
+ *
  * @param lat Center latitude
  * @param lon Center longitude
  * @param radiusNM Radius in nautical miles
@@ -182,13 +257,13 @@ export function formatCoordinate(
 export function boundingBox(
   lat: number,
   lon: number,
-  radiusNM: number
+  radiusNM: number,
 ): [number, number, number, number] {
   // Approximate: 1 NM ≈ 1/60 degree at equator
   // More accurate calculation would use haversine, but this is simpler
   const deltaLat = radiusNM / 60;
-  const deltaLon = radiusNM / (60 * Math.cos(lat * Math.PI / 180));
-  
+  const deltaLon = radiusNM / (60 * Math.cos((lat * Math.PI) / 180));
+
   return [
     Math.max(-90, lat - deltaLat),
     Math.max(-180, lon - deltaLon),
@@ -199,7 +274,7 @@ export function boundingBox(
 
 /**
  * Check if a point is within a bounding box
- * 
+ *
  * @param lat Point latitude
  * @param lon Point longitude
  * @param bbox Bounding box [minLat, minLon, maxLat, maxLon]
@@ -208,7 +283,7 @@ export function boundingBox(
 export function isInBoundingBox(
   lat: number,
   lon: number,
-  bbox: [number, number, number, number]
+  bbox: [number, number, number, number],
 ): boolean {
   const [minLat, minLon, maxLat, maxLon] = bbox;
   return lat >= minLat && lat <= maxLat && lon >= minLon && lon <= maxLon;

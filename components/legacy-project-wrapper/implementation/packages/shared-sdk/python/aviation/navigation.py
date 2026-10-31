@@ -16,6 +16,7 @@ EARTH_RADIUS_NM = 3440.065
 EARTH_RADIUS_KM = 6371.0
 EARTH_RADIUS_MI = 3958.8
 EARTH_RADIUS_METERS = 6371000.0
+LOCAL_TANGENT_EARTH_RADIUS_METERS = 6378137.0
 
 FUEL_DENSITY = {
     "AVGAS_100LL": 6.0,
@@ -231,6 +232,50 @@ def normalize_bearing(bearing: float) -> float:
     return normalized if normalized >= 0 else normalized + 360
 
 
+def heading_difference(heading1: float, heading2: float) -> float:
+    """Return the shortest signed turn from heading1 to heading2 in [-180, 180)."""
+    if not math.isfinite(heading1) or not math.isfinite(heading2):
+        raise ValueError("Headings must be finite")
+    return (heading2 - heading1 + 540) % 360 - 180
+
+
+def circular_mean_heading(
+    headings: list[float] | tuple[float, ...],
+    weights: list[float] | tuple[float, ...] | None = None,
+) -> float:
+    """Return the weighted circular mean of a non-empty heading sample."""
+    if not headings or (weights is not None and len(weights) != len(headings)):
+        raise ValueError("Headings must be non-empty and weights must match")
+    resolved_weights = [1.0] * len(headings) if weights is None else weights
+    sin_sum = 0.0
+    cos_sum = 0.0
+    weight_sum = 0.0
+    for heading, weight in zip(headings, resolved_weights):
+        if not math.isfinite(heading) or not math.isfinite(weight) or weight < 0:
+            raise ValueError(
+                "Headings and weights must be finite; weights must be non-negative"
+            )
+        radians = to_radians(heading)
+        sin_sum += weight * math.sin(radians)
+        cos_sum += weight * math.cos(radians)
+        weight_sum += weight
+    if (
+        weight_sum <= 0
+        or math.hypot(sin_sum, cos_sum) <= math.ulp(1.0) * weight_sum * 8
+    ):
+        raise ValueError("Circular mean is undefined for this sample")
+    result = normalize_bearing(to_degrees(math.atan2(sin_sum, cos_sum)))
+    return 0.0 if abs(result - 360) < 1e-12 or abs(result) < 1e-12 else result
+
+
+def runway_designator(heading: float) -> str:
+    """Return the two-digit runway designator nearest to a true heading."""
+    if not math.isfinite(heading):
+        raise ValueError("Runway heading must be finite")
+    number = math.floor((normalize_bearing(heading) + 5) / 10) % 36
+    return f"{36 if number == 0 else number:02d}"
+
+
 def true_to_magnetic(true_heading: float, magnetic_variation: float) -> float:
     """Convert true heading to magnetic heading."""
     return normalize_bearing(true_heading - magnetic_variation)
@@ -367,6 +412,44 @@ def normalize_longitude(lon: float) -> float:
     if normalized < 0:
         normalized += 360
     return normalized - 180
+
+
+def to_local_tangent_plane(
+    lat: float, lon: float, origin_lat: float, origin_lon: float
+) -> Tuple[float, float]:
+    """Project a nearby WGS-84 coordinate into metres east/north of an origin."""
+    _validate_coordinate(lat, lon)
+    _validate_coordinate(origin_lat, origin_lon)
+    origin_cosine = math.cos(to_radians(origin_lat))
+    if abs(origin_cosine) < 1e-12:
+        raise ValueError("Local east/west projection is undefined at a pole")
+    longitude_delta = heading_difference(origin_lon, lon)
+    return (
+        to_radians(longitude_delta) * LOCAL_TANGENT_EARTH_RADIUS_METERS * origin_cosine,
+        to_radians(lat - origin_lat) * LOCAL_TANGENT_EARTH_RADIUS_METERS,
+    )
+
+
+def from_local_tangent_plane(
+    east_meters: float,
+    north_meters: float,
+    origin_lat: float,
+    origin_lon: float,
+) -> Tuple[float, float]:
+    """Convert metres east/north of an origin back to a WGS-84 coordinate."""
+    if not math.isfinite(east_meters) or not math.isfinite(north_meters):
+        raise ValueError("Local inverse projection requires finite offsets")
+    _validate_coordinate(origin_lat, origin_lon)
+    origin_cosine = math.cos(to_radians(origin_lat))
+    if abs(origin_cosine) < 1e-12:
+        raise ValueError("Local east/west projection is undefined at a pole")
+    lat = origin_lat + to_degrees(north_meters / LOCAL_TANGENT_EARTH_RADIUS_METERS)
+    lon = normalize_longitude(
+        origin_lon
+        + to_degrees(east_meters / (LOCAL_TANGENT_EARTH_RADIUS_METERS * origin_cosine))
+    )
+    _validate_coordinate(lat, lon)
+    return lat, lon
 
 
 def dms_to_decimal(

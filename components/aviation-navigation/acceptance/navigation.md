@@ -47,6 +47,18 @@ tolerance.
 - **THEN** wind moving toward the aircraft is a positive headwind and wind moving from
   its right is a positive crosswind
 
+### Scenario: Local projection is reversible
+
+- **WHEN** a coordinate near an origin is projected to east/north metres and inverted
+- **THEN** every realization uses the WGS-84 semi-major axis and recovers the original
+  coordinate within the declared tolerance
+
+### Scenario: Heading wrap and runway numbering agree
+
+- **WHEN** headings cross north or lie on a runway-number rounding tie
+- **THEN** every realization returns the same signed delta, circular mean, and
+  two-digit runway designator
+
 ## Requirement: Invalid values fail closed
 
 ### Scenario: Performance altitudes agree across bindings
@@ -86,6 +98,13 @@ tolerance.
 
 - **WHEN** an IAS, TAS, or Mach conversion receives a negative speed or Mach value
 - **THEN** the binding reports failure rather than returning a negative or non-finite result
+
+### Scenario: Local geometry has no defined answer
+
+- **WHEN** a projection origin is a pole, an inverse leaves the latitude domain, or a
+  circular sample is empty or directionally ambiguous
+- **THEN** the binding reports failure rather than returning an arbitrary direction or
+  non-finite coordinate
 
 ## Requirement: Every binding is independently exercised
 

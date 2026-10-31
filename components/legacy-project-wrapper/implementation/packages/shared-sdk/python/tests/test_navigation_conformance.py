@@ -52,11 +52,34 @@ OPERATIONS = {
     "ias_to_tas": navigation.ias_to_tas,
     "tas_to_mach": navigation.tas_to_mach,
     "mach_to_tas": navigation.mach_to_tas,
+    "heading_difference": navigation.heading_difference,
+    "circular_mean_heading": navigation.circular_mean_heading,
+    "runway_designator": navigation.runway_designator,
+    "local_east_m": lambda lat, lon, origin_lat, origin_lon: navigation.to_local_tangent_plane(
+        lat, lon, origin_lat, origin_lon
+    )[
+        0
+    ],
+    "local_north_m": lambda lat, lon, origin_lat, origin_lon: navigation.to_local_tangent_plane(
+        lat, lon, origin_lat, origin_lon
+    )[
+        1
+    ],
+    "local_latitude": lambda east, north, origin_lat, origin_lon: navigation.from_local_tangent_plane(
+        east, north, origin_lat, origin_lon
+    )[
+        0
+    ],
+    "local_longitude": lambda east, north, origin_lat, origin_lon: navigation.from_local_tangent_plane(
+        east, north, origin_lat, origin_lon
+    )[
+        1
+    ],
 }
 
 
 def test_component_vector_schema() -> None:
-    assert CONTRACT["schema"] == "aviation/navigation-acceptance-vectors@2"
+    assert CONTRACT["schema"] == "aviation/navigation-acceptance-vectors@3"
     assert CONTRACT["vectors"]
 
 
@@ -71,6 +94,9 @@ def test_component_vectors() -> None:
                 continue
             raise AssertionError(f"{vector['id']} did not reject invalid input")
         actual = operation(*vector["args"])
+        if isinstance(vector["expected"], str):
+            assert actual == vector["expected"], vector["id"]
+            continue
         assert math.isfinite(actual), vector["id"]
         assert abs(actual - vector["expected"]) <= vector["absolute_tolerance"], (
             vector["id"],
