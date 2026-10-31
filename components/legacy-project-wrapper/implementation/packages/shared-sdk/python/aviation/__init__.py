@@ -1,6 +1,6 @@
 """Aviation SDK - Python wrapper for shared aviation utilities."""
 
-__version__ = "0.7.0"
+__version__ = "0.8.0"
 
 # Airport services
 from .airports import (
@@ -54,6 +54,17 @@ from .logbook import (
     LogbookTimeValidationResult,
     LogbookValidationIssue,
     validate_logbook_time,
+)
+from .notam import (
+    Notam,
+    NotamValidationError,
+    categorize_notam,
+    categorize_notam_severity,
+    filter_relevant_notams,
+    format_notam_text,
+    is_notam_effective,
+    normalize_notam_record,
+    sort_notams_by_severity,
 )
 from .weight_balance import (
     C172S_LOADING_PROFILE,
@@ -111,6 +122,16 @@ __all__ = [
     "LogbookTimeValidationResult",
     "LogbookValidationIssue",
     "validate_logbook_time",
+    # NOTAM record semantics
+    "Notam",
+    "NotamValidationError",
+    "categorize_notam",
+    "categorize_notam_severity",
+    "filter_relevant_notams",
+    "format_notam_text",
+    "is_notam_effective",
+    "normalize_notam_record",
+    "sort_notams_by_severity",
     # Weight and balance
     "C172S_LOADING_PROFILE",
     "EnvelopePoint",

@@ -33,6 +33,30 @@ result = validate_logbook_time(LogbookTimeInput(
 assert result.valid
 ```
 
+### NOTAM record semantics
+
+`aviation.notam` provides the Python realization of the Component-owned common
+NOTAM contract. It normalizes provider records, classifies severity/category,
+checks inclusive effective windows, filters route-relevant records, sorts stably,
+and formats a conservative abbreviation set using the same acceptance vectors as
+the TypeScript SDK.
+
+```python
+from aviation.notam import normalize_notam_record
+
+notam = normalize_notam_record({
+    "id": "6/1234",
+    "location": "KSFO",
+    "effectiveStart": "2026-10-31T10:00:00Z",
+    "effectiveEnd": "2026-10-31T14:00:00Z",
+    "text": "RWY 10L CLSD",
+})
+assert notam.severity == "critical"
+```
+
+Provider transport/authentication and application presentation remain outside this
+module.
+
 ### MAC task reporting
 
 `aviation.mac_tasks.MacTaskCreator` creates idempotent runtime error tasks in

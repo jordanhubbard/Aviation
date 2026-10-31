@@ -9,6 +9,11 @@
 
 ## Unreleased
 
+- Added an independently specified and tested `aviation.notam` Component with
+  shared TypeScript/Python normalization, classification, effective-window and route
+  filtering, stable severity ordering, and text-formatting vectors. Weather Briefing
+  continues to consume the common SDK while FAA HTTP/authentication, development
+  fallback, and application presentation remain outside the portable authority.
 - Added an independently specified and tested `aviation.logbook` Component with
   cross-language validation for common flight-time accounting, student restrictions,
   role normalization, flight-condition totals, and landing consistency. ForeFlight
