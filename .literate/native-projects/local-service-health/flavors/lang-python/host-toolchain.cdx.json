@@ -1,0 +1,23 @@
+{
+  "$schema": "http://cyclonedx.org/schema/bom-1.7.schema.json",
+  "bomFormat": "CycloneDX",
+  "specVersion": "1.7",
+  "serialNumber": "urn:uuid:53fe23e0-2c84-461f-891f-0cbba9a03f59",
+  "version": 1,
+  "metadata": {
+    "component": {"type": "application", "bom-ref": "urn:literate-ai:toolchain:lang-python", "name": "lang-python", "version": "1.0.0"},
+    "properties": [{"name": "literate-ai:base-toolchain:role", "value": "mixin"}]
+  },
+  "components": [{
+    "type": "application", "bom-ref": "urn:literate-ai:capability:python", "name": "Python runtime", "version": ">=3.11,<4",
+    "properties": [
+      {"name": "literate-ai:base-toolchain:capability", "value": "python"},
+      {"name": "literate-ai:base-toolchain:probe-kind", "value": "current-python"},
+      {"name": "literate-ai:base-toolchain:reason", "value": "The selected Python language Flavor executes its generated Python application."}
+    ]
+  }],
+  "dependencies": [
+    {"ref": "urn:literate-ai:toolchain:lang-python", "dependsOn": ["urn:literate-ai:capability:python"]},
+    {"ref": "urn:literate-ai:capability:python", "dependsOn": []}
+  ]
+}

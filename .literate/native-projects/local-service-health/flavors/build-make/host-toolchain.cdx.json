@@ -1,0 +1,25 @@
+{
+  "$schema": "http://cyclonedx.org/schema/bom-1.7.schema.json",
+  "bomFormat": "CycloneDX",
+  "specVersion": "1.7",
+  "serialNumber": "urn:uuid:4839ba24-1e42-440f-bb87-e4851a70e774",
+  "version": 1,
+  "metadata": {
+    "component": {"type": "application", "bom-ref": "urn:literate-ai:toolchain:build-make", "name": "build-make", "version": "1.2.0"},
+    "properties": [{"name": "literate-ai:base-toolchain:role", "value": "mixin"}]
+  },
+  "components": [{
+    "type": "application", "bom-ref": "urn:literate-ai:capability:make", "name": "GNU Make", "version": ">=3.81,<5",
+    "properties": [
+      {"name": "literate-ai:base-toolchain:capability", "value": "make"},
+      {"name": "literate-ai:base-toolchain:probe-kind", "value": "command"},
+      {"name": "literate-ai:base-toolchain:probe-candidates", "value": "[\"make\",\"gmake\",\"make.exe\"]"},
+      {"name": "literate-ai:base-toolchain:probe-arguments", "value": "[\"--version\"]"},
+      {"name": "literate-ai:base-toolchain:reason", "value": "The selected Make build Flavor executes its generated Makefile."}
+    ]
+  }],
+  "dependencies": [
+    {"ref": "urn:literate-ai:toolchain:build-make", "dependsOn": ["urn:literate-ai:capability:make"]},
+    {"ref": "urn:literate-ai:capability:make", "dependsOn": []}
+  ]
+}

@@ -1,0 +1,6 @@
+{
+  "schema": "urn:literate-ai:schema:v2:toolchain-constraint",
+  "toolchain": "npm",
+  "minimum_version": [9],
+  "maximum_exclusive_version": [13]
+}

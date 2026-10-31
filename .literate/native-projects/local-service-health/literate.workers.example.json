@@ -1,0 +1,124 @@
+{
+  "schema": "urn:literate-ai:schema:v1:execution-worker-catalog",
+  "workers": [
+    {
+      "schema": "urn:literate-ai:schema:v1:execution-worker",
+      "worker_id": "linux-example",
+      "kind": "ssh",
+      "target_profile": "host",
+      "slots": 1,
+      "requirements": {
+        "schema": "urn:literate-ai:schema:v1:execution-requirements",
+        "os_family": "linux",
+        "os_version": null,
+        "cpu_architecture": null,
+        "minimum_cpu_cores": null,
+        "minimum_memory_mib": null,
+        "gpu": {
+          "schema": "urn:literate-ai:schema:v1:gpu-requirement",
+          "vendor": null,
+          "model": null,
+          "minimum_count": null,
+          "minimum_memory_mib": null,
+          "capabilities": null
+        }
+      },
+      "parameters": [],
+      "endpoint": "user@linux.example.invalid",
+      "workspace": "~/my-project",
+      "command": [],
+      "environment": []
+    },
+    {
+      "schema": "urn:literate-ai:schema:v1:execution-worker",
+      "worker_id": "macos-example",
+      "kind": "ssh",
+      "target_profile": "host",
+      "slots": 1,
+      "requirements": {
+        "schema": "urn:literate-ai:schema:v1:execution-requirements",
+        "os_family": "macos",
+        "os_version": null,
+        "cpu_architecture": null,
+        "minimum_cpu_cores": null,
+        "minimum_memory_mib": null,
+        "gpu": {
+          "schema": "urn:literate-ai:schema:v1:gpu-requirement",
+          "vendor": null,
+          "model": null,
+          "minimum_count": null,
+          "minimum_memory_mib": null,
+          "capabilities": null
+        }
+      },
+      "parameters": [],
+      "endpoint": "user@macos.example.invalid",
+      "workspace": "~/my-project",
+      "command": [],
+      "environment": []
+    },
+    {
+      "schema": "urn:literate-ai:schema:v1:execution-worker",
+      "worker_id": "windows-example",
+      "kind": "ssh",
+      "target_profile": "host",
+      "slots": 1,
+      "requirements": {
+        "schema": "urn:literate-ai:schema:v1:execution-requirements",
+        "os_family": "windows",
+        "os_version": null,
+        "cpu_architecture": null,
+        "minimum_cpu_cores": null,
+        "minimum_memory_mib": null,
+        "gpu": {
+          "schema": "urn:literate-ai:schema:v1:gpu-requirement",
+          "vendor": null,
+          "model": null,
+          "minimum_count": null,
+          "minimum_memory_mib": null,
+          "capabilities": null
+        }
+      },
+      "parameters": [],
+      "endpoint": "user@windows.example.invalid",
+      "workspace": "~/my-project",
+      "command": [],
+      "environment": []
+    },
+    {
+      "schema": "urn:literate-ai:schema:v1:execution-worker",
+      "worker_id": "worker-dispatcher-example",
+      "kind": "command",
+      "target_profile": "host",
+      "slots": 1,
+      "requirements": {
+        "schema": "urn:literate-ai:schema:v1:execution-requirements",
+        "os_family": null,
+        "os_version": null,
+        "cpu_architecture": null,
+        "minimum_cpu_cores": null,
+        "minimum_memory_mib": null,
+        "gpu": {
+          "schema": "urn:literate-ai:schema:v1:gpu-requirement",
+          "vendor": null,
+          "model": null,
+          "minimum_count": null,
+          "minimum_memory_mib": null,
+          "capabilities": null
+        }
+      },
+      "parameters": [],
+      "endpoint": null,
+      "workspace": null,
+      "command": ["company-dispatcher", "submit"],
+      "environment": [
+        {
+          "schema": "urn:literate-ai:schema:v1:execution-worker-environment",
+          "name": "DISPATCH_TOKEN",
+          "source_variable": "PRIVATE_DISPATCH_TOKEN",
+          "required": true
+        }
+      ]
+    }
+  ]
+}

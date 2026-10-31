@@ -1,0 +1,6 @@
+{
+  "schema": "urn:literate-ai:schema:v2:standard-mix-command-profile",
+  "target": "mix",
+  "toolchain": "hex",
+  "manifest": "source/mix-project.json"
+}

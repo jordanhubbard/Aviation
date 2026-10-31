@@ -1,0 +1,6 @@
+{
+  "schema": "urn:literate-ai:schema:v2:standard-accelerator-command-profile",
+  "target": "nvidia-cuda",
+  "toolchain": "nvcc",
+  "applies_to_languages": ["cpp"]
+}

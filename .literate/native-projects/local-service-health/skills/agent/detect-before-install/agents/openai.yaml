@@ -1,0 +1,4 @@
+interface:
+  display_name: "Detect Before Install"
+  short_description: "Bootstrap missing host tools safely"
+  default_prompt: "Use $detect-before-install to inspect this host and install only missing Literate AI prerequisites."

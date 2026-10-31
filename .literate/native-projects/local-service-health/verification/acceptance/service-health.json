@@ -1,0 +1,313 @@
+{
+  "cases": [
+    {
+      "arguments": [
+        {
+          "operation": "normalize",
+          "value": "ok"
+        }
+      ],
+      "capability": "aviation.service.health",
+      "case_id": "normalize-01",
+      "expected_result": {
+        "result": "ok"
+      }
+    },
+    {
+      "arguments": [
+        {
+          "operation": "normalize",
+          "value": " healthy "
+        }
+      ],
+      "capability": "aviation.service.health",
+      "case_id": "normalize-02",
+      "expected_result": {
+        "result": "ok"
+      }
+    },
+    {
+      "arguments": [
+        {
+          "operation": "normalize",
+          "value": "UP"
+        }
+      ],
+      "capability": "aviation.service.health",
+      "case_id": "normalize-03",
+      "expected_result": {
+        "result": "ok"
+      }
+    },
+    {
+      "arguments": [
+        {
+          "operation": "normalize",
+          "value": "degraded"
+        }
+      ],
+      "capability": "aviation.service.health",
+      "case_id": "normalize-04",
+      "expected_result": {
+        "result": "degraded"
+      }
+    },
+    {
+      "arguments": [
+        {
+          "operation": "normalize",
+          "value": "Warning"
+        }
+      ],
+      "capability": "aviation.service.health",
+      "case_id": "normalize-05",
+      "expected_result": {
+        "result": "degraded"
+      }
+    },
+    {
+      "arguments": [
+        {
+          "operation": "normalize",
+          "value": "unavailable"
+        }
+      ],
+      "capability": "aviation.service.health",
+      "case_id": "normalize-06",
+      "expected_result": {
+        "result": "unavailable"
+      }
+    },
+    {
+      "arguments": [
+        {
+          "operation": "normalize",
+          "value": "unhealthy"
+        }
+      ],
+      "capability": "aviation.service.health",
+      "case_id": "normalize-07",
+      "expected_result": {
+        "result": "unavailable"
+      }
+    },
+    {
+      "arguments": [
+        {
+          "operation": "normalize",
+          "value": "DOWN"
+        }
+      ],
+      "capability": "aviation.service.health",
+      "case_id": "normalize-08",
+      "expected_result": {
+        "result": "unavailable"
+      }
+    },
+    {
+      "arguments": [
+        {
+          "operation": "normalize",
+          "value": ""
+        }
+      ],
+      "capability": "aviation.service.health",
+      "case_id": "normalize-invalid-01",
+      "expected_result": {
+        "error": "health-status-invalid"
+      }
+    },
+    {
+      "arguments": [
+        {
+          "operation": "normalize",
+          "value": "unknown"
+        }
+      ],
+      "capability": "aviation.service.health",
+      "case_id": "normalize-invalid-02",
+      "expected_result": {
+        "error": "health-status-invalid"
+      }
+    },
+    {
+      "arguments": [
+        {
+          "operation": "normalize",
+          "value": "starting"
+        }
+      ],
+      "capability": "aviation.service.health",
+      "case_id": "normalize-invalid-03",
+      "expected_result": {
+        "error": "health-status-invalid"
+      }
+    },
+    {
+      "arguments": [
+        {
+          "operation": "report",
+          "options": {
+            "details": {
+              "retryable": true,
+              "startup_issues": [
+                "weather key missing"
+              ]
+            },
+            "service": "flight-planner",
+            "status": "warning"
+          }
+        }
+      ],
+      "capability": "aviation.service.health",
+      "case_id": "report-adapter-details-preserved",
+      "expected_result": {
+        "input_unchanged": true,
+        "result": {
+          "retryable": true,
+          "service": "flight-planner",
+          "startup_issues": [
+            "weather key missing"
+          ],
+          "status": "degraded"
+        }
+      }
+    },
+    {
+      "arguments": [
+        {
+          "operation": "report",
+          "options": {
+            "service": "  "
+          }
+        }
+      ],
+      "capability": "aviation.service.health",
+      "case_id": "report-invalid-empty-service",
+      "expected_result": {
+        "error": "health-service-invalid",
+        "input_unchanged": true
+      }
+    },
+    {
+      "arguments": [
+        {
+          "operation": "report",
+          "options": {
+            "status": "starting"
+          }
+        }
+      ],
+      "capability": "aviation.service.health",
+      "case_id": "report-invalid-invalid-status",
+      "expected_result": {
+        "error": "health-status-invalid",
+        "input_unchanged": true
+      }
+    },
+    {
+      "arguments": [
+        {
+          "operation": "report",
+          "options": {
+            "details": {
+              "service": "other"
+            }
+          }
+        }
+      ],
+      "capability": "aviation.service.health",
+      "case_id": "report-invalid-reserved-service",
+      "expected_result": {
+        "error": "health-details-invalid",
+        "input_unchanged": true
+      }
+    },
+    {
+      "arguments": [
+        {
+          "operation": "report",
+          "options": {
+            "details": {
+              "status": "healthy"
+            }
+          }
+        }
+      ],
+      "capability": "aviation.service.health",
+      "case_id": "report-invalid-reserved-status",
+      "expected_result": {
+        "error": "health-details-invalid",
+        "input_unchanged": true
+      }
+    },
+    {
+      "arguments": [
+        {
+          "operation": "report",
+          "options": {}
+        }
+      ],
+      "capability": "aviation.service.health",
+      "case_id": "report-minimal-default",
+      "expected_result": {
+        "input_unchanged": true,
+        "result": {
+          "status": "ok"
+        }
+      }
+    },
+    {
+      "arguments": [
+        {
+          "operation": "report",
+          "options": {
+            "service": " aviation-chat ",
+            "status": "healthy"
+          }
+        }
+      ],
+      "capability": "aviation.service.health",
+      "case_id": "report-normalized-service-and-status",
+      "expected_result": {
+        "input_unchanged": true,
+        "result": {
+          "service": "aviation-chat",
+          "status": "ok"
+        }
+      }
+    },
+    {
+      "arguments": [
+        {
+          "operation": "report",
+          "options": {
+            "details": {
+              "reason": "database"
+            },
+            "status": "unhealthy"
+          }
+        }
+      ],
+      "capability": "aviation.service.health",
+      "case_id": "report-unavailable-with-reason",
+      "expected_result": {
+        "input_unchanged": true,
+        "result": {
+          "reason": "database",
+          "status": "unavailable"
+        }
+      }
+    }
+  ],
+  "component": "service-health",
+  "harness": "service-health-harness.js",
+  "harness_identity": "sha256:c4b6447853196860f4a92073a5cead8c06825274fddf95326b572f423942ab82",
+  "import_surface_identity": "sha256:5b891f9f543eb84e36b39dcc7ecabd86753b145f46fd9c7b439ed5d1eead9b67",
+  "language": "javascript",
+  "public_interface_identities": [
+    "sha256:983a876f09cd8775d644735eb7e901a73c01b9bc8c880e2e96cf46f39291c3d9"
+  ],
+  "schema": "literate-ai/library-acceptance-oracle@1",
+  "specification_set_identity": "sha256:06b02bc8c600b9528745e7c453d2d981f8a1c2c1eb9de5d7dd81ba290d1a2f3e"
+}
