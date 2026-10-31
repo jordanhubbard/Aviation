@@ -18,7 +18,10 @@
     "strict": true,
     "skipLibCheck": true,
     "resolveJsonModule": true,
-    "moduleResolution": "bundler"
+    "moduleResolution": "bundler",
+    "types": [
+      "node"
+    ]
   },
   "include": [
     "src/**/*"

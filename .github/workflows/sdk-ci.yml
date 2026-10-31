@@ -40,6 +40,8 @@ jobs:
           --filter @aviation/g1000-avionics-sdk...
           --filter @aviation/g1000-protocols...
           --filter @aviation/g1000-rendering...
+          --filter @aviation/ui-framework...
+          --filter @aviation/meta-app...
           --filter g1000-simulator-frontend...
       - name: Build common SDK packages
         run: |
@@ -50,6 +52,8 @@ jobs:
           pnpm --filter @aviation/g1000-avionics-sdk run build
           pnpm --filter @aviation/g1000-protocols run build
           pnpm --filter @aviation/g1000-rendering run build
+          pnpm --filter @aviation/ui-framework run build
+          pnpm --filter @aviation/meta-app run build
           pnpm --filter g1000-simulator-frontend run build
       - name: Test common SDK and Component conformance
         run: |
@@ -58,6 +62,8 @@ jobs:
           pnpm --filter @aviation/g1000-avionics-sdk run test
           pnpm --filter @aviation/g1000-protocols run test
           pnpm --filter @aviation/g1000-rendering run test
+          pnpm --filter @aviation/ui-framework run test
+          pnpm --filter @aviation/meta-app run test
 
   python:
     name: Python shared SDK

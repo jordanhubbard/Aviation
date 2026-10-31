@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { TabNavigation, PaneContainer } from '@aviation/ui-framework';
+import { getDefaultActiveId, TabNavigation, PaneContainer } from '@aviation/ui-framework';
 import type { PaneConfig } from '@aviation/ui-framework';
 import { ConfigPanel, SERVICE_REGISTRY } from '@aviation/aviation-config';
 import './App.css';
@@ -215,7 +215,9 @@ function SettingsPane() {
 }
 
 function App() {
-  const [activeId, setActiveId] = useState<string>(resolvedApps[0]?.id ?? '');
+  const [activeId, setActiveId] = useState<string>(
+    () => getDefaultActiveId(aviationPanes) ?? '',
+  );
 
   const activePane = aviationPanes.find((p) => p.id === activeId) || null;
   const subtitle = isLauncher

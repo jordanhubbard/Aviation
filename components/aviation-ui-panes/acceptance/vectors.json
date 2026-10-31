@@ -1,0 +1,125 @@
+{
+  "schema": "aviation/ui-panes-acceptance-vectors@1",
+  "sortCases": [
+    {
+      "id": "ordered-before-unordered-and-title-tiebreak",
+      "panes": [
+        { "id": "z", "title": "Zulu" },
+        { "id": "b", "title": "Bravo", "order": 2 },
+        { "id": "a2", "title": "Alpha Two", "order": 1 },
+        { "id": "a1", "title": "Alpha One", "order": 1 }
+      ],
+      "expectedIds": ["a1", "a2", "b", "z"]
+    }
+  ],
+  "defaultCases": [
+    {
+      "id": "first-source-default-wins",
+      "panes": [
+        { "id": "b", "title": "Bravo", "order": 2, "defaultOpen": true },
+        { "id": "a", "title": "Alpha", "order": 1, "defaultOpen": true }
+      ],
+      "expectedId": "b"
+    },
+    {
+      "id": "first-source-pane-fallback",
+      "panes": [
+        { "id": "b", "title": "Bravo", "order": 2 },
+        { "id": "a", "title": "Alpha", "order": 1 }
+      ],
+      "expectedId": "b"
+    },
+    { "id": "empty", "panes": [], "expectedId": null }
+  ],
+  "closeableCases": [
+    { "id": "omitted-defaults-true", "pane": { "id": "a", "title": "Alpha" }, "expected": true },
+    { "id": "explicit-false", "pane": { "id": "a", "title": "Alpha", "closeable": false }, "expected": false }
+  ],
+  "relativeCases": [
+    {
+      "id": "wrap-forward-in-sorted-order",
+      "panes": [
+        { "id": "b", "title": "Bravo", "order": 2 },
+        { "id": "a", "title": "Alpha", "order": 1, "defaultOpen": true },
+        { "id": "c", "title": "Charlie", "order": 3 }
+      ],
+      "currentId": "c",
+      "delta": 1,
+      "expectedId": "a"
+    },
+    {
+      "id": "wrap-backward-in-sorted-order",
+      "panes": [
+        { "id": "b", "title": "Bravo", "order": 2 },
+        { "id": "a", "title": "Alpha", "order": 1, "defaultOpen": true },
+        { "id": "c", "title": "Charlie", "order": 3 }
+      ],
+      "currentId": "a",
+      "delta": -1,
+      "expectedId": "c"
+    },
+    {
+      "id": "unknown-current-uses-default",
+      "panes": [
+        { "id": "b", "title": "Bravo", "order": 2 },
+        { "id": "a", "title": "Alpha", "order": 1, "defaultOpen": true }
+      ],
+      "currentId": "missing",
+      "delta": 1,
+      "expectedId": "a"
+    }
+  ],
+  "moveCases": [
+    {
+      "id": "move-middle-left",
+      "panes": [
+        { "id": "a", "title": "Alpha" },
+        { "id": "b", "title": "Bravo" },
+        { "id": "c", "title": "Charlie" }
+      ],
+      "paneId": "b",
+      "direction": "left",
+      "expectedIds": ["b", "a", "c"],
+      "expectedOrders": [1, 2, 3]
+    },
+    {
+      "id": "boundary-does-not-wrap",
+      "panes": [
+        { "id": "a", "title": "Alpha" },
+        { "id": "b", "title": "Bravo" }
+      ],
+      "paneId": "a",
+      "direction": "left",
+      "expectedIds": ["a", "b"],
+      "expectedOrders": [null, null]
+    }
+  ],
+  "closeCases": [
+    {
+      "id": "active-middle-prefers-next",
+      "panes": [
+        { "id": "a", "title": "Alpha" },
+        { "id": "b", "title": "Bravo" },
+        { "id": "c", "title": "Charlie" }
+      ],
+      "activeId": "b",
+      "closedId": "b",
+      "expectedIds": ["a", "c"],
+      "expectedOrders": [1, 2],
+      "expectedActiveId": "c"
+    },
+    {
+      "id": "inactive-close-preserves-active",
+      "panes": [
+        { "id": "a", "title": "Alpha" },
+        { "id": "b", "title": "Bravo" },
+        { "id": "c", "title": "Charlie" }
+      ],
+      "activeId": "a",
+      "closedId": "c",
+      "expectedIds": ["a", "b"],
+      "expectedOrders": [1, 2],
+      "expectedActiveId": "a"
+    }
+  ]
+}
