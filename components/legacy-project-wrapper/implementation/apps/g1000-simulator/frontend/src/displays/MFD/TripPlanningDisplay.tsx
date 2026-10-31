@@ -1,6 +1,13 @@
 import { useMemo, useState } from 'react'
 
 import { TelemetrySnapshot } from '../../hooks/useTelemetrySocket'
+import {
+  C172_FUEL_CAPACITY_GALLONS,
+  C172_LOADING_PROFILE,
+  calculateC172Loading,
+  calculateDensityAltitude,
+  calculateTripFuel,
+} from '../../integrations/sharedSdk'
 import { formatNumber } from '../PFD/formatters'
 
 type TripPlanningDisplayProps = {
@@ -26,7 +33,7 @@ export const TripPlanningDisplay = ({ telemetry }: TripPlanningDisplayProps) => 
     telemetry?.gps.ground_speed_kt ? telemetry.gps.ground_speed_kt.toFixed(0) : '115',
   )
   const [fuelBurn, setFuelBurn] = useState('9.2')
-  const [fuelOnBoard, setFuelOnBoard] = useState('46')
+  const [fuelOnBoard, setFuelOnBoard] = useState(String(C172_FUEL_CAPACITY_GALLONS))
   const [reserveMinutes, setReserveMinutes] = useState('45')
   const [pressureAltitude, setPressureAltitude] = useState(
     telemetry?.adc.pressure_altitude_ft ? telemetry.adc.pressure_altitude_ft.toFixed(0) : '3500',
@@ -34,47 +41,33 @@ export const TripPlanningDisplay = ({ telemetry }: TripPlanningDisplayProps) => 
   const [outsideTemp, setOutsideTemp] = useState(
     telemetry?.adc.oat_c ? telemetry.adc.oat_c.toFixed(0) : '15',
   )
-  const [stations, setStations] = useState([
-    { label: 'Pilot', arm: 37, weight: '180' },
-    { label: 'Copilot', arm: 37, weight: '150' },
-    { label: 'Rear Pax', arm: 73, weight: '120' },
-    { label: 'Baggage', arm: 95, weight: '40' },
-  ])
+  const [stations, setStations] = useState(
+    C172_LOADING_PROFILE.stations.map((station, index) => ({
+      label: station.name,
+      arm: station.arm,
+      weight: ['180', '150', '120', '40'][index] ?? '0',
+    })),
+  )
 
   const distanceValue = parseNumber(distanceNm)
   const speedValue = parseNumber(groundSpeed)
   const fuelBurnValue = parseNumber(fuelBurn)
   const fuelOnBoardValue = parseNumber(fuelOnBoard)
   const reserveValue = parseNumber(reserveMinutes)
-  const timeHours = speedValue > 0 ? distanceValue / speedValue : 0
-  const reserveHours = reserveValue / 60
-  const fuelRequired = timeHours * fuelBurnValue + reserveHours * fuelBurnValue
+  const tripFuel = calculateTripFuel(distanceValue, speedValue, fuelBurnValue, reserveValue)
+  const timeHours = tripFuel.timeHours
+  const fuelRequired = tripFuel.fuelRequiredGallons
   const fuelRemaining = fuelOnBoardValue - fuelRequired
 
-  const wbTotals = useMemo(() => {
-    const emptyWeight = 1650
-    const emptyArm = 39
-    const stationTotals = stations.reduce(
-      (acc, station) => {
-        const weightValue = parseNumber(station.weight)
-        return {
-          weight: acc.weight + weightValue,
-          moment: acc.moment + weightValue * station.arm,
-        }
-      },
-      { weight: 0, moment: 0 },
-    )
-    const totalWeight = emptyWeight + stationTotals.weight
-    const totalMoment = emptyWeight * emptyArm + stationTotals.moment
-    const cg = totalWeight > 0 ? totalMoment / totalWeight : 0
-    return { totalWeight, totalMoment, cg }
-  }, [stations])
+  const loading = useMemo(
+    () => calculateC172Loading(stations.map((station) => parseNumber(station.weight)), fuelOnBoardValue),
+    [fuelOnBoardValue, stations],
+  )
 
   const densityAltitude = useMemo(() => {
     const pa = parseNumber(pressureAltitude)
     const temp = parseNumber(outsideTemp)
-    const standardTemp = 15 - 0.00198 * pa
-    return pa + 120 * (temp - standardTemp)
+    return calculateDensityAltitude(pa, temp)
   }, [outsideTemp, pressureAltitude])
 
   const updateStation = (index: number, nextValue: string) => {
@@ -138,11 +131,11 @@ export const TripPlanningDisplay = ({ telemetry }: TripPlanningDisplayProps) => 
           ))}
           <div className="mfd__trip-result">
             <span>Total Weight</span>
-            <strong>{formatNumber(wbTotals.totalWeight, ' lb')}</strong>
+            <strong>{formatNumber(loading.weight, ' lb')}</strong>
           </div>
           <div className="mfd__trip-result">
             <span>CG</span>
-            <strong>{wbTotals.cg.toFixed(1)} in</strong>
+            <strong>{loading.cg.toFixed(1)} in</strong>
           </div>
         </div>
       </div>
