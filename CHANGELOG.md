@@ -9,6 +9,11 @@
 
 ## Unreleased
 
+- Classified every remaining retained-wrapper top-level path in a machine-checked
+  ownership inventory. Removed six stale nested GitHub metadata files plus obsolete
+  Cursor, Loom, responsible-vibe, and Claude-template bootstrap artifacts; retained
+  conformance vectors, application state, build configuration, documentation, plans,
+  and historical records now have explicit non-Component boundaries.
 - Classified every retained deployment, monitoring, repository-script, and integration
   harness path in a machine-checked inventory; removed three dead conversion/validation
   residues and repaired the documented, tested root keystore operator commands.

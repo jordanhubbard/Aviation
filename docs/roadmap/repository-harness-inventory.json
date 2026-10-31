@@ -22,6 +22,7 @@
     {"path":"scripts/check-all-contrast.sh","classification":"repository-test-harness"},
     {"path":"scripts/check-contrast.js","classification":"repository-test-harness"},
     {"path":"scripts/check_application_state_contracts.py","classification":"architecture-contract-validator"},
+    {"path":"scripts/check_retained_wrapper_remainder_inventory.py","classification":"architecture-contract-validator"},
     {"path":"scripts/check_repository_harness_inventory.py","classification":"architecture-contract-validator"},
     {"path":"scripts/check_workspace_package_graph.py","classification":"architecture-contract-validator"},
     {"path":"scripts/keystore-cli.ts","classification":"repository-operator-tool"},

@@ -41,6 +41,10 @@ jobs:
         working-directory: .
         run: python scripts/check_repository_harness_inventory.py
 
+      - name: Validate retained wrapper remainder classification
+        working-directory: .
+        run: python scripts/check_retained_wrapper_remainder_inventory.py
+
   # Check accessibility and color contrast
   accessibility:
     name: Accessibility & Color Contrast

@@ -1,0 +1,71 @@
+{
+  "$schema": "aviation/retained-wrapper-remainder-inventory@1",
+  "revision": 1,
+  "authority": "retained-wrapper-remainder-inventory",
+  "boundary": "This inventory classifies the retained wrapper's top-level ownership boundaries. It does not turn repository configuration, documentation, plans, examples, deployment policy, runtime state, or application-private source into common Aviation SDK Components.",
+  "topLevelDirectories": [
+    {"path":".mac","classification":"repository-automation-contract","coverage":"path-manifest","fileCount":1,"pathsSha256":"42918d7ae37617968f5d0aba6e74ce3f336c457640d7b7f91b0aee0084aab3d4"},
+    {"path":"apps","classification":"application-private-source","coverage":"application-state-contracts-and-workspace-package-graph"},
+    {"path":"conformance","classification":"retained-component-conformance-vectors","coverage":"path-manifest","fileCount":1,"pathsSha256":"2207469767d601f17f0629f95ae7bfd1797586d37936439d00208f9974b32027"},
+    {"path":"deploy","classification":"repository-harness","coverage":"repository-harness-inventory"},
+    {"path":"docs","classification":"retained-documentation-corpus","coverage":"path-manifest","fileCount":70,"pathsSha256":"8d9409bb6e074bd5d5533066abdd46f73db9e3f164160ea3672ab3713b31e891"},
+    {"path":"examples","classification":"repository-documentation-example","coverage":"path-manifest","fileCount":1,"pathsSha256":"2d180f9c8f08015dc386d6bbade8372c30b4e0f686b262425bf74deda1fd272b"},
+    {"path":"k8s","classification":"repository-harness","coverage":"repository-harness-inventory"},
+    {"path":"monitoring","classification":"repository-harness","coverage":"repository-harness-inventory"},
+    {"path":"packages","classification":"shared-package-and-component-realization-source","coverage":"workspace-package-graph"},
+    {"path":"plans","classification":"historical-planning-records","coverage":"path-manifest","fileCount":7,"pathsSha256":"5d91e42bc3ed5721486308c8390cf3bd9bf464bd042ab467bddffad9f181b71c"},
+    {"path":"scripts","classification":"repository-harness","coverage":"repository-harness-inventory"},
+    {"path":"tests","classification":"repository-harness","coverage":"repository-harness-inventory"}
+  ],
+  "topLevelFiles": [
+    {"path":".dockerignore","classification":"container-build-configuration"},
+    {"path":".gitignore","classification":"repository-ignore-policy"},
+    {"path":".npmrc","classification":"workspace-build-configuration"},
+    {"path":".trivyignore","classification":"security-scan-policy"},
+    {"path":"AGENTS.md","classification":"repository-agent-guidance"},
+    {"path":"CHANGELOG.md","classification":"repository-documentation"},
+    {"path":"CONTRIBUTING.md","classification":"repository-documentation"},
+    {"path":"LEGAL.md","classification":"legal-policy"},
+    {"path":"LESSONS.md","classification":"historical-agent-guidance"},
+    {"path":"LICENSE","classification":"legal-policy"},
+    {"path":"Makefile","classification":"repository-build-orchestrator"},
+    {"path":"README.md","classification":"repository-documentation"},
+    {"path":"WORKTREES_MERGED.md","classification":"historical-migration-record"},
+    {"path":"docker-compose.cache.yml","classification":"optional-deployment-policy"},
+    {"path":"docker-compose.monitoring.yml","classification":"dormant-deployment-policy"},
+    {"path":"flight_recordings.json","classification":"flight-planner-runtime-state-seed"},
+    {"path":"go.mod","classification":"shared-package-build-configuration"},
+    {"path":"go.sum","classification":"shared-package-dependency-lock"},
+    {"path":"package.json","classification":"workspace-build-configuration"},
+    {"path":"pnpm-lock.yaml","classification":"workspace-dependency-lock"},
+    {"path":"pnpm-workspace.yaml","classification":"workspace-build-configuration"},
+    {"path":"requirements.txt","classification":"repository-test-dependencies"},
+    {"path":"tsconfig.json","classification":"workspace-build-configuration"}
+  ],
+  "conformanceConsumers": [
+    "packages/g1000-avionics-sdk/src/__tests__/component-conformance.test.ts",
+    "packages/g1000-avionics-sdk/python/tests/test_component_conformance.py",
+    "packages/g1000-protocols/src/__tests__/component-conformance.test.ts",
+    "packages/g1000-rendering/src/__tests__/component-conformance.test.ts"
+  ],
+  "removedResidue": [
+    ".github/dependabot.yml",
+    ".github/workflows/ci.yml",
+    ".github/workflows/dependency-scan.yml",
+    ".github/workflows/deploy.yml",
+    ".github/workflows/integration-tests.yml",
+    ".github/workflows/performance_regression.yml",
+    ".cursor/worktrees.json",
+    ".loom-env-ready",
+    ".mcp.json",
+    "CLAUDE.md",
+    "settings.json"
+  ],
+  "knownGaps": [
+    "The retained documentation corpus contains historical snapshots and duplicated status material; classification preserves provenance but does not make every document current authority.",
+    "The plans directory is historical evidence only; active Literate AI work authority lives outside the retained wrapper.",
+    "The monitoring Compose policy references Loki, Promtail, Tempo, and dashboard configuration that is not present in the retained tree and remains dormant rather than qualified deployment authority.",
+    "The keystore integration example is documentation-only and is not an independently compiled package surface.",
+    "LESSONS.md and WORKTREES_MERGED.md are retained historical records and must not override current AGENTS.md, Literate AI, or roadmap authority."
+  ]
+}
