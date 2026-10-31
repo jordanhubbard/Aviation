@@ -2,6 +2,8 @@ import { describe, expect, it } from 'vitest';
 import { loadConformanceContract } from './conformance-contract.js';
 import {
   C172S_OPERATING_PROFILE,
+  C182T_OPERATING_PROFILE,
+  SR22_PERSPECTIVE_3600_OPERATING_PROFILE,
   createAircraftOperatingProfile,
   findAircraftOperatingProfile,
   type AircraftOperatingProfile,
@@ -38,15 +40,22 @@ const mutateProfile = (
 };
 
 describe('aviation.aircraft Component conformance', () => {
-  it('exports the Component-owned C172S operating profile', () => {
-    expect(contract.schema).toBe('aviation/aircraft-acceptance-vectors@2');
-    expect(C172S_OPERATING_PROFILE).toEqual(contract.profiles['cessna-172s']);
-    expect(Object.isFrozen(C172S_OPERATING_PROFILE)).toBe(true);
-    expect(Object.isFrozen(C172S_OPERATING_PROFILE.airspeedLimits)).toBe(true);
-    expect(Object.isFrozen(C172S_OPERATING_PROFILE.fuelLimits)).toBe(true);
-    expect(Object.isFrozen(C172S_OPERATING_PROFILE.weightLimits)).toBe(true);
-    expect(Object.isFrozen(C172S_OPERATING_PROFILE.dimensions)).toBe(true);
-    expect(Object.isFrozen(C172S_OPERATING_PROFILE.referencePerformance)).toBe(true);
+  it('exports every Component-owned operating profile', () => {
+    expect(contract.schema).toBe('aviation/aircraft-acceptance-vectors@3');
+    const profiles = [
+      C172S_OPERATING_PROFILE,
+      C182T_OPERATING_PROFILE,
+      SR22_PERSPECTIVE_3600_OPERATING_PROFILE,
+    ];
+    for (const profile of profiles) {
+      expect(profile).toEqual(contract.profiles[profile.profileId]);
+      expect(Object.isFrozen(profile)).toBe(true);
+      expect(Object.isFrozen(profile.airspeedLimits)).toBe(true);
+      expect(Object.isFrozen(profile.fuelLimits)).toBe(true);
+      expect(Object.isFrozen(profile.weightLimits)).toBe(true);
+      expect(Object.isFrozen(profile.dimensions)).toBe(true);
+      expect(Object.isFrozen(profile.referencePerformance)).toBe(true);
+    }
   });
 
   for (const lookup of contract.lookups) {

@@ -1,5 +1,5 @@
 {
-  "schema": "aviation/aircraft-acceptance-vectors@2",
+  "schema": "aviation/aircraft-acceptance-vectors@3",
   "profiles": {
     "cessna-172s": {
       "profileId": "cessna-172s",
@@ -31,8 +31,82 @@
         "maximumCruiseSpeedKtas": 124,
         "maximumClimbRateFpm": 730,
         "serviceCeilingFt": 14000,
+        "takeoffGroundRollFt": 960,
         "takeoffDistanceFt": 1630,
+        "landingGroundRollFt": 575,
         "landingDistanceFt": 1335
+      }
+    },
+    "cessna-182t": {
+      "profileId": "cessna-182t",
+      "icaoTypeDesignator": "C182",
+      "manufacturer": "Cessna",
+      "model": "182T",
+      "displayName": "Cessna 182T Skylane",
+      "airspeedLimits": {
+        "vsoKias": 41,
+        "vsKias": 51,
+        "vfeKias": 100,
+        "vaKias": 110,
+        "vnoKias": 140,
+        "vneKias": 175
+      },
+      "fuelLimits": {
+        "totalCapacityGal": 92,
+        "usableCapacityGal": 87
+      },
+      "weightLimits": {
+        "maximumTakeoffWeightLb": 3100
+      },
+      "dimensions": {
+        "lengthFt": 29,
+        "heightFt": 9.3333333333,
+        "wingspanFt": 36
+      },
+      "referencePerformance": {
+        "maximumCruiseSpeedKtas": 145,
+        "maximumClimbRateFpm": 924,
+        "serviceCeilingFt": 18100,
+        "takeoffGroundRollFt": 795,
+        "takeoffDistanceFt": 1514,
+        "landingGroundRollFt": 590,
+        "landingDistanceFt": 1350
+      }
+    },
+    "cirrus-sr22-perspective-3600": {
+      "profileId": "cirrus-sr22-perspective-3600",
+      "icaoTypeDesignator": "SR22",
+      "manufacturer": "Cirrus Aircraft",
+      "model": "SR22 Perspective 3600 lb",
+      "displayName": "Cirrus SR22 Perspective",
+      "airspeedLimits": {
+        "vsoKias": 64,
+        "vsKias": 74,
+        "vfeKias": 110,
+        "vaKias": 140,
+        "vnoKias": 176,
+        "vneKias": 205
+      },
+      "fuelLimits": {
+        "totalCapacityGal": 94.5,
+        "usableCapacityGal": 92
+      },
+      "weightLimits": {
+        "maximumTakeoffWeightLb": 3600
+      },
+      "dimensions": {
+        "lengthFt": 26,
+        "heightFt": 8.9166666667,
+        "wingspanFt": 38.3333333333
+      },
+      "referencePerformance": {
+        "maximumCruiseSpeedKtas": 183,
+        "maximumClimbRateFpm": 1270,
+        "serviceCeilingFt": 17500,
+        "takeoffGroundRollFt": 1082,
+        "takeoffDistanceFt": 1868,
+        "landingGroundRollFt": 1178,
+        "landingDistanceFt": 2535
       }
     }
   },
@@ -40,6 +114,10 @@
     {"query": "cessna-172s", "expectedProfileId": "cessna-172s"},
     {"query": "C172", "expectedProfileId": "cessna-172s"},
     {"query": "c172", "expectedProfileId": "cessna-172s"},
+    {"query": "cessna-182t", "expectedProfileId": "cessna-182t"},
+    {"query": "c182", "expectedProfileId": "cessna-182t"},
+    {"query": "cirrus-sr22-perspective-3600", "expectedProfileId": "cirrus-sr22-perspective-3600"},
+    {"query": "sr22", "expectedProfileId": "cirrus-sr22-perspective-3600"},
     {"query": "unknown", "expectedProfileId": null}
   ],
   "invalidMutations": [

@@ -10,8 +10,9 @@
 - `AircraftWeightLimits` carries maximum takeoff weight in pounds.
 - `AircraftDimensions` carries length, height, and wingspan in feet.
 - `AircraftReferencePerformance` carries maximum cruise speed in KTAS, maximum climb
-  rate in feet per minute, service ceiling and takeoff/landing distance in feet. These
-  are published reference figures, not aircraft-specific performance calculations.
+  rate in feet per minute, service ceiling, takeoff and landing ground roll, and
+  takeoff and landing distance over a 50-foot obstacle in feet. These are published
+  sea-level reference figures, not aircraft-specific performance calculations.
 
 ## Operations and bundled data
 
@@ -21,6 +22,9 @@
   resolves a bundled profile by stable profile ID or case-insensitive ICAO designator.
 - `C172S_OPERATING_PROFILE` is the bundled Cessna 172S profile declared by the
   Component acceptance vectors.
+- `C182T_OPERATING_PROFILE` is the bundled Cessna 182T NAV III profile.
+- `SR22_PERSPECTIVE_3600_OPERATING_PROFILE` is the bundled Cirrus SR22 Perspective
+  3,600-pound profile.
 
 Adding an optional aircraft field or another bundled profile is backward compatible.
 Removing or renaming a required field, changing its units, weakening validation, or

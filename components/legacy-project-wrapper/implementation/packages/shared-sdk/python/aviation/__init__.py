@@ -1,6 +1,6 @@
 """Aviation SDK - Python wrapper for shared aviation utilities."""
 
-__version__ = "0.2.0"
+__version__ = "0.3.0"
 
 # Airport services
 from .airports import (
@@ -32,6 +32,8 @@ from .aircraft import (
     AircraftWeightLimits,
     AirspeedOperatingLimits,
     C172S_OPERATING_PROFILE,
+    C182T_OPERATING_PROFILE,
+    SR22_PERSPECTIVE_3600_OPERATING_PROFILE,
     aircraft_operating_profile_from_mapping,
     find_aircraft_operating_profile,
 )
@@ -70,6 +72,8 @@ __all__ = [
     "AircraftWeightLimits",
     "AirspeedOperatingLimits",
     "C172S_OPERATING_PROFILE",
+    "C182T_OPERATING_PROFILE",
+    "SR22_PERSPECTIVE_3600_OPERATING_PROFILE",
     "aircraft_operating_profile_from_mapping",
     "find_aircraft_operating_profile",
     # Weight and balance

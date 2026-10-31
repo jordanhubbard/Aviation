@@ -39,7 +39,13 @@ export interface AircraftReferencePerformance {
   maximumCruiseSpeedKtas: number;
   maximumClimbRateFpm: number;
   serviceCeilingFt: number;
+  /** Sea-level, standard-condition takeoff ground roll. */
+  takeoffGroundRollFt: number;
+  /** Sea-level, standard-condition takeoff distance over a 50-foot obstacle. */
   takeoffDistanceFt: number;
+  /** Sea-level, standard-condition landing ground roll. */
+  landingGroundRollFt: number;
+  /** Sea-level, standard-condition landing distance over a 50-foot obstacle. */
   landingDistanceFt: number;
 }
 
@@ -172,12 +178,92 @@ export const C172S_OPERATING_PROFILE = createAircraftOperatingProfile({
     maximumCruiseSpeedKtas: 124,
     maximumClimbRateFpm: 730,
     serviceCeilingFt: 14000,
+    takeoffGroundRollFt: 960,
     takeoffDistanceFt: 1630,
+    landingGroundRollFt: 575,
     landingDistanceFt: 1335,
   },
 });
 
-const OPERATING_PROFILES = Object.freeze([C172S_OPERATING_PROFILE]);
+export const C182T_OPERATING_PROFILE = createAircraftOperatingProfile({
+  profileId: 'cessna-182t',
+  icaoTypeDesignator: 'C182',
+  manufacturer: 'Cessna',
+  model: '182T',
+  displayName: 'Cessna 182T Skylane',
+  airspeedLimits: {
+    vsoKias: 41,
+    vsKias: 51,
+    vfeKias: 100,
+    vaKias: 110,
+    vnoKias: 140,
+    vneKias: 175,
+  },
+  fuelLimits: {
+    totalCapacityGal: 92,
+    usableCapacityGal: 87,
+  },
+  weightLimits: {
+    maximumTakeoffWeightLb: 3100,
+  },
+  dimensions: {
+    lengthFt: 29,
+    heightFt: 9.3333333333,
+    wingspanFt: 36,
+  },
+  referencePerformance: {
+    maximumCruiseSpeedKtas: 145,
+    maximumClimbRateFpm: 924,
+    serviceCeilingFt: 18100,
+    takeoffGroundRollFt: 795,
+    takeoffDistanceFt: 1514,
+    landingGroundRollFt: 590,
+    landingDistanceFt: 1350,
+  },
+});
+
+export const SR22_PERSPECTIVE_3600_OPERATING_PROFILE = createAircraftOperatingProfile({
+  profileId: 'cirrus-sr22-perspective-3600',
+  icaoTypeDesignator: 'SR22',
+  manufacturer: 'Cirrus Aircraft',
+  model: 'SR22 Perspective 3600 lb',
+  displayName: 'Cirrus SR22 Perspective',
+  airspeedLimits: {
+    vsoKias: 64,
+    vsKias: 74,
+    vfeKias: 110,
+    vaKias: 140,
+    vnoKias: 176,
+    vneKias: 205,
+  },
+  fuelLimits: {
+    totalCapacityGal: 94.5,
+    usableCapacityGal: 92,
+  },
+  weightLimits: {
+    maximumTakeoffWeightLb: 3600,
+  },
+  dimensions: {
+    lengthFt: 26,
+    heightFt: 8.9166666667,
+    wingspanFt: 38.3333333333,
+  },
+  referencePerformance: {
+    maximumCruiseSpeedKtas: 183,
+    maximumClimbRateFpm: 1270,
+    serviceCeilingFt: 17500,
+    takeoffGroundRollFt: 1082,
+    takeoffDistanceFt: 1868,
+    landingGroundRollFt: 1178,
+    landingDistanceFt: 2535,
+  },
+});
+
+const OPERATING_PROFILES = Object.freeze([
+  C172S_OPERATING_PROFILE,
+  C182T_OPERATING_PROFILE,
+  SR22_PERSPECTIVE_3600_OPERATING_PROFILE,
+]);
 
 /**
  * Resolve a bundled profile by stable profile ID or ICAO aircraft type

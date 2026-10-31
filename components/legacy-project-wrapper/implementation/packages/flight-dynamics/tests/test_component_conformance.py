@@ -7,14 +7,25 @@ from pathlib import Path
 
 import pytest
 
-from aviation.aircraft import C172S_OPERATING_PROFILE
+from aviation.aircraft import (
+    C172S_OPERATING_PROFILE,
+    C182T_OPERATING_PROFILE,
+    SR22_PERSPECTIVE_3600_OPERATING_PROFILE,
+)
 from aviation_flight_dynamics.aircraft import (
     C172_CONFIG,
     load_c172_config,
     validate_aircraft_config,
 )
-from aviation_flight_dynamics.aircraft.models import C182_CONFIG, SR22_CONFIG
-from aviation_flight_dynamics.aircraft.models.cessna_172 import MODEL_PATH
+from aviation_flight_dynamics.aircraft.models import (
+    C182_CONFIG,
+    SR22_CONFIG,
+    load_c182_config,
+    load_sr22_config,
+)
+from aviation_flight_dynamics.aircraft.models.cessna_172 import MODEL_PATH as C172_PATH
+from aviation_flight_dynamics.aircraft.models.cessna_182 import MODEL_PATH as C182_PATH
+from aviation_flight_dynamics.aircraft.models.cirrus_sr22 import MODEL_PATH as SR22_PATH
 from aviation_flight_dynamics.autopilot import (
     AltitudeHoldController,
     AutopilotModeController,
@@ -57,8 +68,9 @@ from aviation_flight_dynamics.physics import (
     WindModelConfig,
 )
 
-
-PACKAGE_VECTOR_PATH = Path(__file__).resolve().parents[1] / "conformance" / "vectors.json"
+PACKAGE_VECTOR_PATH = (
+    Path(__file__).resolve().parents[1] / "conformance" / "vectors.json"
+)
 AUTHORITY_VECTOR_PATH = (
     Path(__file__).resolve().parents[6]
     / "components"
@@ -67,42 +79,49 @@ AUTHORITY_VECTOR_PATH = (
     / "vectors.json"
 )
 VECTORS = json.loads(PACKAGE_VECTOR_PATH.read_text(encoding="utf-8"))
+
+
 def test_packaged_vectors_match_component_authority() -> None:
     if AUTHORITY_VECTOR_PATH.exists():
         assert json.loads(AUTHORITY_VECTOR_PATH.read_text(encoding="utf-8")) == VECTORS
 
 
-def test_c172s_flight_model_matches_aircraft_component() -> None:
-    profile = C172S_OPERATING_PROFILE
+@pytest.mark.parametrize(
+    ("config", "profile"),
+    (
+        (C172_CONFIG, C172S_OPERATING_PROFILE),
+        (C182_CONFIG, C182T_OPERATING_PROFILE),
+        (SR22_CONFIG, SR22_PERSPECTIVE_3600_OPERATING_PROFILE),
+    ),
+    ids=("c172s", "c182t", "sr22-perspective-3600"),
+)
+def test_flight_models_match_aircraft_component(config, profile) -> None:
     airspeeds = profile.airspeed_limits
     fuel = profile.fuel_limits
     weight = profile.weight_limits
     dimensions = profile.dimensions
     reference = profile.reference_performance
-    limits = C172_CONFIG.limits
-    assert C172_CONFIG.aircraft_profile_id == profile.profile_id
-    assert C172_CONFIG.name == profile.display_name
-    assert C172_CONFIG.manufacturer == profile.manufacturer
+    limits = config.limits
+    assert config.aircraft_profile_id == profile.profile_id
+    assert config.name == profile.display_name
+    assert config.manufacturer == profile.manufacturer
     assert limits.stall_speed_landing_kt == airspeeds.vso_kias
     assert limits.stall_speed_clean_kt == airspeeds.vs_kias
     assert limits.max_flap_extended_speed_kt == airspeeds.vfe_kias
     assert limits.maneuvering_speed_kt == airspeeds.va_kias
     assert limits.max_operating_speed_kt == airspeeds.vno_kias
     assert limits.never_exceed_speed_kt == airspeeds.vne_kias
-    assert C172_CONFIG.fuel.capacity_gal == fuel.total_capacity_gal
+    assert config.fuel.capacity_gal == fuel.total_capacity_gal
     assert (
-        C172_CONFIG.fuel.capacity_gal - C172_CONFIG.fuel.unusable_gal
-        == fuel.usable_capacity_gal
+        config.fuel.capacity_gal - config.fuel.unusable_gal == fuel.usable_capacity_gal
     )
     assert (
-        C172_CONFIG.mass_properties.max_gross_weight_lbs
-        == weight.maximum_takeoff_weight_lb
+        config.mass_properties.max_gross_weight_lbs == weight.maximum_takeoff_weight_lb
     )
-    assert (
-        C172_CONFIG.aerodynamics.geometry.wing_span_ft
-        == pytest.approx(dimensions.wingspan_ft)
+    assert config.aerodynamics.geometry.wing_span_ft == pytest.approx(
+        dimensions.wingspan_ft
     )
-    performance = C172_CONFIG.performance
+    performance = config.performance
     assert performance.cruise_speed_kt == reference.maximum_cruise_speed_ktas
     assert performance.climb_rate_fpm == reference.maximum_climb_rate_fpm
     assert performance.service_ceiling_ft == reference.service_ceiling_ft
@@ -110,8 +129,9 @@ def test_c172s_flight_model_matches_aircraft_component() -> None:
     assert performance.landing_distance_ft == reference.landing_distance_ft
 
 
-def test_c172s_asset_retains_only_physics_specific_fields() -> None:
-    model = json.loads(MODEL_PATH.read_text(encoding="utf-8"))
+@pytest.mark.parametrize("model_path", (C172_PATH, C182_PATH, SR22_PATH))
+def test_aircraft_assets_retain_only_physics_specific_fields(model_path) -> None:
+    model = json.loads(model_path.read_text(encoding="utf-8"))
     assert {"aircraft_id", "name", "manufacturer", "performance"}.isdisjoint(model)
     assert "max_gross_weight_lbs" not in model["mass_properties"]
     assert "wing_span_ft" not in model["aerodynamics"]["geometry"]
@@ -119,9 +139,17 @@ def test_c172s_asset_retains_only_physics_specific_fields() -> None:
     assert set(model["limits"]) == {"max_bank_angle_deg", "max_pitch_angle_deg"}
 
 
-def test_c172s_model_rejects_mismatched_aircraft_authority() -> None:
-    with pytest.raises(ValueError, match="cessna-172s"):
-        load_c172_config(replace(C172S_OPERATING_PROFILE, profile_id="other-aircraft"))
+@pytest.mark.parametrize(
+    ("loader", "profile"),
+    (
+        (load_c172_config, C172S_OPERATING_PROFILE),
+        (load_c182_config, C182T_OPERATING_PROFILE),
+        (load_sr22_config, SR22_PERSPECTIVE_3600_OPERATING_PROFILE),
+    ),
+)
+def test_aircraft_models_reject_mismatched_aircraft_authority(loader, profile) -> None:
+    with pytest.raises(ValueError, match=profile.profile_id):
+        loader(replace(profile, profile_id="other-aircraft"))
 
 
 def test_invalid_aircraft_operating_profiles_fail_closed() -> None:
@@ -195,9 +223,7 @@ def test_axis_controller_vectors() -> None:
         assert outputs == pytest.approx(case["expected_outputs"])
 
         controller.reset()
-        reset_outputs = [
-            controller.update(error, dt) for error, dt in case["samples"]
-        ]
+        reset_outputs = [controller.update(error, dt) for error, dt in case["samples"]]
         assert reset_outputs == pytest.approx(case["expected_outputs"])
 
 
@@ -281,7 +307,9 @@ def test_flight_director_transition_vector() -> None:
         elif action == "arm_vertical":
             accepted = controller.arm_vertical_mode(VerticalMode(transition["mode"]))
         elif action == "capture_vertical":
-            accepted = controller.capture_vertical_mode(VerticalMode(transition["mode"]))
+            accepted = controller.capture_vertical_mode(
+                VerticalMode(transition["mode"])
+            )
         elif action == "set_target_vertical_speed":
             controller.set_target_vertical_speed(transition["target_fpm"])
             accepted = True
@@ -391,7 +419,9 @@ def test_compatibility_formulas_match_vectors() -> None:
         value["drag_coefficient"],
         value["air_density"],
     ) == pytest.approx(expected["drag"])
-    thrust = calculate_thrust(value["power"], value["efficiency"], value["engine_factor"])
+    thrust = calculate_thrust(
+        value["power"], value["efficiency"], value["engine_factor"]
+    )
     assert thrust == pytest.approx(expected["thrust"])
     assert calculate_fuel_consumption(
         thrust, value["fuel_efficiency"]

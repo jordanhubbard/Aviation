@@ -94,12 +94,6 @@ def _validate_aircraft_config(
             field=_field_path(context, "limits.stall_speed_landing_kt"),
         )
 
-    if performance.cruise_speed_kt > limits.max_operating_speed_kt:
-        report.add_warning(
-            "cruise_speed_kt exceeds max_operating_speed_kt",
-            field=_field_path(context, "performance.cruise_speed_kt"),
-        )
-
     if mass.max_payload_lbs is None:
         report.add_warning(
             "max_payload_lbs is not defined",

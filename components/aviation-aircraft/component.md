@@ -1,6 +1,6 @@
 ---
 namespace: aviation
-version: 0.2.0
+version: 0.3.0
 display_name: Aviation aircraft profiles
 profiles:
   - library
@@ -8,7 +8,7 @@ profiles:
 sample: false
 provides:
   - name: aviation.aircraft
-    version: 0.2.0
+    version: 0.3.0
     interface:
       uri: interfaces/aircraft.md
       pin: null
@@ -82,10 +82,11 @@ copies of the same aircraft record.
 
 ### Requirement: Published figures retain provenance
 
-The C172S fuel limitations come from the Cessna 172S Pilot's Operating Handbook. Its
-dimensions and reference performance figures come from Textron Aviation's published
-Skyhawk specifications. Reference performance describes published comparison conditions,
-not a dispatch calculation or guarantee for a particular aircraft.
+The C172S and C182T limitations come from their Cessna Pilot's Operating Handbooks.
+The SR22 Perspective 3,600-pound limitations come from Cirrus POH 13772-004. Dimensions
+and reference performance use the corresponding manufacturer specifications and approved
+performance tables. Reference performance describes published sea-level comparison
+conditions, not a dispatch calculation or guarantee for a particular aircraft.
 
 #### Scenario: A bundled reference value is reviewed
 
@@ -95,3 +96,8 @@ not a dispatch calculation or guarantee for a particular aircraft.
 
 - C172S POH: https://www.camarilloairport.com/downloads/N577ND_AFM-POH.pdf
 - Skyhawk specifications: https://cessna.txtav.com/en/piston/cessna-skyhawk
+- C182T NAV III POH: https://www.camarilloairport.com/downloads/N584LQ_AFM-POH.pdf
+- Skylane specifications: https://cessna.txtav.com/en/piston/cessna-skylane
+- SR22 Perspective 3,600-pound POH (P/N 13772-004):
+  https://santamonicaflyers.com/wp-content/uploads/2021/02/SR22_POH.pdf
+- SR22 specifications: https://cirrusaircraft.com/aircraft/sr-series/

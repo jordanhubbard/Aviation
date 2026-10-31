@@ -47,9 +47,9 @@ weather provider, or external service.
 - **WHEN** the model suite, cruise case, and takeoff/climb case are evaluated
 - **THEN** model identities, validation counts, and performance values match
 
-### Scenario: The C172S physics model resolves aircraft authority
+### Scenario: Bundled physics models resolve aircraft authority
 
-- **WHEN** the C172S model is loaded in an isolated SDK environment
+- **WHEN** the C172S, C182T, and SR22 Perspective models are loaded in an isolated SDK environment
 - **THEN** its linked profile ID and every derived operating field match
   `aviation.aircraft`, while its serialized model asset contains no duplicate aircraft
   authority fields
