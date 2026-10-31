@@ -13,6 +13,8 @@ from __future__ import annotations
 
 import math
 
+from aviation.navigation import distance_nm as haversine_nm
+
 
 def normalize_heading(deg: float) -> float:
     """Wrap a compass heading into the half-open range [0, 360) degrees."""
@@ -64,26 +66,3 @@ def headwind_component(runway_heading: float, wind_dir: float, wind_speed: float
     """
     angle = float(wind_dir) - float(runway_heading)
     return float(wind_speed) * math.cos(math.radians(angle))
-
-
-def haversine_nm(lat1: float, lon1: float, lat2: float, lon2: float) -> float:
-    """Great-circle distance between two lat/lon points in nautical miles.
-
-    Inputs are in decimal degrees. Uses the haversine formula with Earth's
-    mean radius of 3440.065 NM, so the result is the shortest distance over
-    the surface of a spherical Earth between the two points.
-    """
-    earth_radius_nm = 3440.065
-
-    phi1 = math.radians(lat1)
-    phi2 = math.radians(lat2)
-    dphi = math.radians(lat2 - lat1)
-    dlambda = math.radians(lon2 - lon1)
-
-    a = (
-        math.sin(dphi / 2.0) ** 2
-        + math.cos(phi1) * math.cos(phi2) * math.sin(dlambda / 2.0) ** 2
-    )
-    c = 2.0 * math.asin(math.sqrt(a))
-
-    return earth_radius_nm * c

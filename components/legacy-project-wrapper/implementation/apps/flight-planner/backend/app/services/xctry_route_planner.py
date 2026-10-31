@@ -8,16 +8,7 @@ from functools import lru_cache
 from pathlib import Path
 from typing import List, Tuple
 
-
-def haversine_nm(lat1: float, lon1: float, lat2: float, lon2: float) -> float:
-    r_nm = 3440.065
-    phi1 = math.radians(lat1)
-    phi2 = math.radians(lat2)
-    dphi = math.radians(lat2 - lat1)
-    dlambda = math.radians(lon2 - lon1)
-    a = math.sin(dphi / 2) ** 2 + math.cos(phi1) * math.cos(phi2) * math.sin(dlambda / 2) ** 2
-    c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
-    return r_nm * c
+from aviation.navigation import distance_nm as haversine_nm
 
 
 def get_leg_sample_points(
@@ -162,17 +153,23 @@ def plan_direct_route(
 def skip_waypoint(route: List[Tuple[float, float]], waypoint: str) -> List[Tuple[float, float]]:
     try:
         index = route.index(waypoint)
-        return route[:index] + route[index+1:]
+        return route[:index] + route[index + 1 :]
     except ValueError:
         return route
 
-def insert_waypoint(route: List[Tuple[float, float]], waypoint: Tuple[float, float], position: str) -> List[Tuple[float, float]]:
+
+def insert_waypoint(
+    route: List[Tuple[float, float]], waypoint: Tuple[float, float], position: str
+) -> List[Tuple[float, float]]:
     index = int(position)
     if index < 0 or index > len(route):
         raise ValueError("Position out of range")
     return route[:index] + [waypoint] + route[index:]
 
-def parallel_offset(route: List[Tuple[float, float]], offset_distance: float) -> List[Tuple[float, float]]:
+
+def parallel_offset(
+    route: List[Tuple[float, float]], offset_distance: float
+) -> List[Tuple[float, float]]:
     offset_route = []
     for i in range(len(route) - 1):
         start = route[i]
@@ -186,15 +183,17 @@ def parallel_offset(route: List[Tuple[float, float]], offset_distance: float) ->
     offset_route.append((route[-1][0] + offset_dx, route[-1][1] + offset_dy))
     return offset_route
 
+
 def hold_pattern(route: List[Tuple[float, float]], waypoint: str) -> List[Tuple[float, float]]:
     try:
         index = route.index(waypoint)
-        hold_route = route[:index + 1]
+        hold_route = route[: index + 1]
         hold_route.extend([waypoint] * 4)  # Simulate a simple hold pattern
-        hold_route.extend(route[index + 1:])
+        hold_route.extend(route[index + 1 :])
         return hold_route
     except ValueError:
         return route
+
 
 def plan_route(
     origin: Tuple[float, float],
