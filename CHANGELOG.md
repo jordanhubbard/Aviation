@@ -9,6 +9,11 @@
 
 ## Unreleased
 
+- Added an independently specified and tested `aviation.alerts` Component with
+  shared TypeScript, Python, and Go severity normalization, stable ordering,
+  acknowledgement reconciliation, and highest-active-severity vectors. G1000 and the
+  UI framework now consume the portable core while retaining telemetry thresholds,
+  messages, timestamps, persistence, events, sounds, visibility, and rendering policy.
 - Added an independently specified and tested `aviation.notam` Component with
   shared TypeScript/Python normalization, classification, effective-window and route
   filtering, stable severity ordering, and text-formatting vectors. Weather Briefing

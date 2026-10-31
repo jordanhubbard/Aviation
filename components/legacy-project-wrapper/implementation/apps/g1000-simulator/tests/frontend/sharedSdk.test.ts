@@ -15,6 +15,21 @@ import {
 } from "../../frontend/src/integrations/sharedSdk";
 
 describe("G1000 shared SDK boundary", () => {
+  it("delegates portable alert lifecycle while retaining telemetry policy", () => {
+    const manager = fs.readFileSync(
+      path.join(__dirname, "../../frontend/src/services/alert-manager.ts"),
+      "utf8",
+    );
+    expect(manager).toContain("orderAlerts");
+    expect(manager).toContain("reconcileAcknowledgements");
+    expect(manager).toContain("highestAlertLevel");
+    expect(manager).not.toContain("LEVEL_PRIORITY");
+    expect(manager).not.toContain("alerts.sort");
+    expect(manager).toContain("airspeed >= 160");
+    expect(manager).toContain("altitudeDelta >= 250");
+    expect(manager).toContain("headingDelta >= 20");
+  });
+
   it("uses common navigation fuel and performance semantics", () => {
     expect(calculateTripFuel(120, 120, 10, 30)).toEqual({
       timeHours: 1,

@@ -95,6 +95,16 @@
         "default": "./dist/aviation/hazards.js"
       }
     },
+    "./aviation/alerts": {
+      "import": {
+        "types": "./dist-esm/aviation/alerts.d.ts",
+        "default": "./dist-esm/aviation/alerts.js"
+      },
+      "require": {
+        "types": "./dist/aviation/alerts.d.ts",
+        "default": "./dist/aviation/alerts.js"
+      }
+    },
     "./aviation/weight-balance": {
       "import": {
         "types": "./dist-esm/aviation/weight-balance.d.ts",

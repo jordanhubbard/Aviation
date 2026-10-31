@@ -1,5 +1,10 @@
 import type { SocketStatus, TelemetrySnapshot } from '../hooks/useTelemetrySocket'
 import { formatNumber } from '../displays/PFD/formatters'
+import {
+  highestAlertLevel,
+  orderAlerts,
+  reconcileAcknowledgements,
+} from '@aviation/shared-sdk'
 
 export type AlertLevel = 'ok' | 'info' | 'caution' | 'warning'
 
@@ -15,13 +20,6 @@ export type AlertItem = {
 export type AlertContext = {
   telemetry: TelemetrySnapshot | null
   socketStatus: SocketStatus
-}
-
-const LEVEL_PRIORITY: Record<AlertLevel, number> = {
-  ok: 0,
-  info: 1,
-  caution: 2,
-  warning: 3,
 }
 
 const isAcknowledgeable = (level: AlertLevel) => level === 'warning' || level === 'caution'
@@ -43,39 +41,24 @@ export class AlertManager {
 
   getAlerts(context: AlertContext): AlertItem[] {
     const rawAlerts = this.buildAlerts(context)
-    const activeIds = new Set(rawAlerts.map((alert) => alert.id))
-    for (const id of this.acknowledgements) {
-      if (!activeIds.has(id)) {
-        this.acknowledgements.delete(id)
-      }
-    }
+    this.acknowledgements = new Set(reconcileAcknowledgements(
+      rawAlerts.map((alert) => alert.id),
+      [...this.acknowledgements],
+    ))
 
-    const alerts = rawAlerts.map((alert, index) => ({
+    const alerts = rawAlerts.map((alert) => ({
       ...alert,
       acknowledged: this.acknowledgements.has(alert.id),
-      index,
     }))
 
-    alerts.sort((a, b) => {
-      if (a.acknowledged !== b.acknowledged) {
-        return a.acknowledged ? 1 : -1
-      }
-      const priorityDelta = LEVEL_PRIORITY[b.level] - LEVEL_PRIORITY[a.level]
-      if (priorityDelta !== 0) {
-        return priorityDelta
-      }
-      return a.index - b.index
-    })
-
-    return alerts.map(({ index: _index, ...alert }) => alert)
+    return orderAlerts(alerts)
   }
 
   getHighestLevel(alerts: AlertItem[], includeAcknowledged = false): AlertLevel {
-    const filtered = includeAcknowledged ? alerts : alerts.filter((alert) => !alert.acknowledged)
-    if (filtered.length === 0) return 'ok'
-    return filtered.reduce((highest, alert) => {
-      return LEVEL_PRIORITY[alert.level] > LEVEL_PRIORITY[highest] ? alert.level : highest
-    }, filtered[0].level)
+    const level = highestAlertLevel(alerts, includeAcknowledged)
+    if (level === 'normal') return 'ok'
+    if (level === 'advisory') return 'info'
+    return level
   }
 
   private buildAlerts({ telemetry, socketStatus }: AlertContext) {
