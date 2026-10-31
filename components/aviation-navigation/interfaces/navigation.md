@@ -10,7 +10,7 @@ changing units or conventions.
 | Geodesy | great-circle distance, initial/final bearing, midpoint, destination |
 | Headings | normalize, reciprocal, true/magnetic conversion, shortest difference |
 | Wind | correction angle, corrected heading, ground speed, head/crosswind components |
-| Time/speed/distance | solve any missing value from the other two; format duration |
+| Time/speed/distance | solve any missing value from the other two; format duration; planning IAS/TAS and ISA Mach conversion |
 | Fuel | consumption, flight fuel, range/endurance, configurable and VFR/IFR reserve, mass/volume |
 | Performance altitude | pressure altitude, ISA temperature, density altitude |
 
@@ -32,6 +32,10 @@ changing units or conventions.
   and reserve fuel must not exceed total fuel.
 - Performance-altitude inputs must be finite; an altimeter setting must be positive.
   Altitudes use feet, pressure uses inches of mercury, and temperature uses Celsius.
+- Planning airspeed inputs use knots and pressure altitude in feet. IAS, TAS, and Mach
+  must be finite and non-negative; outside-air temperature must be above absolute zero,
+  and the requested altitude must remain inside the formula's positive-temperature
+  domain. The IAS/TAS operation is a planning approximation, not a calibrated ADC.
 - Results are finite numbers. Failure is explicit and distinguishable from a numeric
   result; a successful `NaN`, infinity, or implicit clamping is forbidden.
 

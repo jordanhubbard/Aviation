@@ -34,7 +34,8 @@ source_dependencies: []
 This Component is the provider-neutral authority for reusable aviation navigation
 arithmetic. It owns units, coordinate conventions, geodesic calculations, bearing and
 heading semantics, wind triangles, time/speed/distance, fuel arithmetic, and standard
-atmosphere performance-altitude calculations. It does not own airport data, navaid or
+atmosphere performance-altitude and planning airspeed calculations. It does not own
+calibrated air-data-computer sensor models, airport data, navaid or
 procedure databases, weather acquisition, aircraft-specific limitations, presentation,
 or persistence.
 

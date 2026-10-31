@@ -27,6 +27,8 @@ FUEL_DENSITY = {
 ISA_SEA_LEVEL_PRESSURE_INHG = 29.92
 ISA_SEA_LEVEL_TEMP_C = 15.0
 ISA_LAPSE_RATE_C_PER_FT = 0.0019812
+KELVIN_OFFSET = 273.15
+SPEED_OF_SOUND_FACTOR_KTS = 38.967854
 
 
 def _validate_coordinate(lat: float, lon: float) -> None:
@@ -575,16 +577,49 @@ def ias_to_tas(
     Calculate true airspeed from indicated airspeed.
     Simplified calculation - use E6B for more accuracy.
     """
-    # Standard temperature at altitude
-    standard_temp_c = 15 - (0.00198 * altitude_ft)
-
-    # Temperature correction
-    temp_ratio = (temperature_c + 273.15) / (standard_temp_c + 273.15)
-
-    # Altitude correction
+    if not math.isfinite(indicated_airspeed_kts) or indicated_airspeed_kts < 0:
+        raise ValueError("Indicated airspeed must be finite and non-negative")
+    if not math.isfinite(temperature_c) or temperature_c <= -KELVIN_OFFSET:
+        raise ValueError(
+            "Outside-air temperature must be finite and above absolute zero"
+        )
+    standard_temp_kelvin = isa_temperature(altitude_ft) + KELVIN_OFFSET
+    if standard_temp_kelvin <= 0:
+        raise ValueError("Pressure altitude is outside the ISA temperature domain")
+    temp_ratio = (temperature_c + KELVIN_OFFSET) / standard_temp_kelvin
     altitude_correction = 1 + (altitude_ft / 1000) * 0.02
+    if altitude_correction <= 0:
+        raise ValueError(
+            "Pressure altitude is outside the IAS/TAS approximation domain"
+        )
 
     return indicated_airspeed_kts * altitude_correction * math.sqrt(temp_ratio)
+
+
+def tas_to_mach(true_airspeed_kts: float, altitude_ft: float) -> float:
+    """Calculate Mach number from true airspeed on an ISA standard day."""
+    if not math.isfinite(true_airspeed_kts) or true_airspeed_kts < 0:
+        raise ValueError("True airspeed must be finite and non-negative")
+    standard_temp_kelvin = isa_temperature(altitude_ft) + KELVIN_OFFSET
+    if standard_temp_kelvin <= 0:
+        raise ValueError("Pressure altitude is outside the ISA temperature domain")
+    speed_of_sound_kts = SPEED_OF_SOUND_FACTOR_KTS * math.sqrt(
+        standard_temp_kelvin
+    )
+    return true_airspeed_kts / speed_of_sound_kts
+
+
+def mach_to_tas(mach_number: float, altitude_ft: float) -> float:
+    """Calculate true airspeed from Mach number on an ISA standard day."""
+    if not math.isfinite(mach_number) or mach_number < 0:
+        raise ValueError("Mach number must be finite and non-negative")
+    standard_temp_kelvin = isa_temperature(altitude_ft) + KELVIN_OFFSET
+    if standard_temp_kelvin <= 0:
+        raise ValueError("Pressure altitude is outside the ISA temperature domain")
+    speed_of_sound_kts = SPEED_OF_SOUND_FACTOR_KTS * math.sqrt(
+        standard_temp_kelvin
+    )
+    return mach_number * speed_of_sound_kts
 
 
 # ============================================================================
