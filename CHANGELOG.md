@@ -9,6 +9,11 @@
 
 ## Unreleased
 
+- Added an independently locked, Component-owned TypeScript qualification candidate
+  for `aviation.service.health`, with a dedicated build and 20 verifier-vector tests
+  in Common Aviation SDK CI. The application-facing TypeScript and Python realizations
+  remain retained release authority until regenerative qualification and consumer
+  parity authorize their transfer.
 - Classified every remaining retained-wrapper top-level path in a machine-checked
   ownership inventory. Removed six stale nested GitHub metadata files plus obsolete
   Cursor, Loom, responsible-vibe, and Claude-template bootstrap artifacts; retained
