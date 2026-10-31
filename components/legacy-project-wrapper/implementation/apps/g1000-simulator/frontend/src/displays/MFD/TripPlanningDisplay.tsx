@@ -2,8 +2,7 @@ import { useMemo, useState } from 'react'
 
 import { TelemetrySnapshot } from '../../hooks/useTelemetrySocket'
 import {
-  C172_FUEL_CAPACITY_GALLONS,
-  C172_LOADING_PROFILE,
+  C172S_LOADING_PROFILE,
   calculateC172Loading,
   calculateDensityAltitude,
   calculateTripFuel,
@@ -12,6 +11,14 @@ import { formatNumber } from '../PFD/formatters'
 
 type TripPlanningDisplayProps = {
   telemetry: TelemetrySnapshot | null
+}
+
+const DEFAULT_STATION_WEIGHTS_LB: Readonly<Record<string, string>> = {
+  pilot: '180',
+  copilot: '150',
+  'rear-passengers': '120',
+  'baggage-a': '40',
+  'baggage-b': '0',
 }
 
 const parseNumber = (value: string, fallback = 0) => {
@@ -33,7 +40,9 @@ export const TripPlanningDisplay = ({ telemetry }: TripPlanningDisplayProps) => 
     telemetry?.gps.ground_speed_kt ? telemetry.gps.ground_speed_kt.toFixed(0) : '115',
   )
   const [fuelBurn, setFuelBurn] = useState('9.2')
-  const [fuelOnBoard, setFuelOnBoard] = useState(String(C172_FUEL_CAPACITY_GALLONS))
+  const [fuelOnBoard, setFuelOnBoard] = useState(
+    String(C172S_LOADING_PROFILE.usableFuelCapacity),
+  )
   const [reserveMinutes, setReserveMinutes] = useState('45')
   const [pressureAltitude, setPressureAltitude] = useState(
     telemetry?.adc.pressure_altitude_ft ? telemetry.adc.pressure_altitude_ft.toFixed(0) : '3500',
@@ -42,10 +51,11 @@ export const TripPlanningDisplay = ({ telemetry }: TripPlanningDisplayProps) => 
     telemetry?.adc.oat_c ? telemetry.adc.oat_c.toFixed(0) : '15',
   )
   const [stations, setStations] = useState(
-    C172_LOADING_PROFILE.stations.map((station, index) => ({
+    C172S_LOADING_PROFILE.stations.map((station) => ({
+      stationId: station.stationId,
       label: station.name,
       arm: station.arm,
-      weight: ['180', '150', '120', '40'][index] ?? '0',
+      weight: DEFAULT_STATION_WEIGHTS_LB[station.stationId] ?? '0',
     })),
   )
 
@@ -60,7 +70,11 @@ export const TripPlanningDisplay = ({ telemetry }: TripPlanningDisplayProps) => 
   const fuelRemaining = fuelOnBoardValue - fuelRequired
 
   const loading = useMemo(
-    () => calculateC172Loading(stations.map((station) => parseNumber(station.weight)), fuelOnBoardValue),
+    () =>
+      calculateC172Loading(
+        stations.map((station) => parseNumber(station.weight)),
+        fuelOnBoardValue,
+      ),
     [fuelOnBoardValue, stations],
   )
 
@@ -122,7 +136,7 @@ export const TripPlanningDisplay = ({ telemetry }: TripPlanningDisplayProps) => 
         <h4 className="mfd__trip-title">Weight & Balance</h4>
         <div className="mfd__trip-grid mfd__trip-grid--weights">
           {stations.map((station, index) => (
-            <label key={station.label} className="mfd__trip-field">
+            <label key={station.stationId} className="mfd__trip-field">
               <span>
                 {station.label} ({station.arm} in)
               </span>

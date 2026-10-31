@@ -11,4 +11,5 @@ FROM nginxinc/nginx-unprivileged:1.25-alpine
 COPY apps/preflight-check/nginx.conf /etc/nginx/conf.d/default.conf
 COPY apps/preflight-check/public /usr/share/nginx/html
 COPY --from=sdk /workspace/packages/shared-sdk/dist-esm/aviation/weight-balance.js /usr/share/nginx/html/aviation-sdk/weight-balance.js
+COPY --from=sdk /workspace/packages/shared-sdk/dist-esm/aviation/aircraft.js /usr/share/nginx/html/aviation-sdk/aircraft.js
 EXPOSE 8080

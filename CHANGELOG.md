@@ -9,6 +9,10 @@
 
 ## Unreleased
 
+- Qualified a cross-language C172S sample loading profile in
+  `aviation.weight-balance`, explicitly linked it to `aviation.aircraft`, and migrated
+  G1000 Trip Planning away from its mismatched C172N record while retaining entered
+  occupant, baggage, and fuel values as application state.
 - Expanded `aviation.aircraft` into a cross-language identity and reference-profile
   authority with ICAO lookup, fuel/weight limits, dimensions, and cited C172S
   performance data. Flight Planner's contradictory private YAML profile was removed;

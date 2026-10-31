@@ -1,6 +1,6 @@
 import {
   C172S_OPERATING_PROFILE,
-  SAMPLE_AIRCRAFT,
+  C172S_LOADING_PROFILE,
   calculateLoad,
   densityAltitude,
   distanceNM,
@@ -8,10 +8,10 @@ import {
   fuelConsumption,
   fuelReserve,
   initialBearing,
-  type LoadingProfile,
 } from '@aviation/shared-sdk';
 
 export { C172S_OPERATING_PROFILE };
+export { C172S_LOADING_PROFILE };
 
 export type LegSummary = {
   distanceNm: number;
@@ -53,31 +53,8 @@ export const calculateDensityAltitude = (
   outsideAirTemperatureC: number
 ): number => densityAltitude(pressureAltitudeFt, outsideAirTemperatureC);
 
-const c172 = SAMPLE_AIRCRAFT.C172N;
-
-export const C172_FUEL_CAPACITY_GALLONS = c172.fuelCapacity;
-
-export const C172_LOADING_PROFILE: LoadingProfile = {
-  emptyWeight: c172.emptyWeight,
-  emptyArm: c172.emptyArm,
-  maxGross: c172.maxGrossWeight,
-  fuelArm: c172.stations.fuel.arm,
-  fuelDensity: c172.fuelWeightPerGallon,
-  stations: [
-    { name: 'Pilot', arm: c172.stations.pilot.arm },
-    { name: 'Copilot', arm: c172.stations.copilot.arm },
-    { name: 'Rear Pax', arm: c172.stations.rearSeats?.arm ?? 0 },
-    { name: 'Baggage', arm: c172.stations.baggage1?.arm ?? 0 },
-  ],
-  envelope: c172.cgLimits.map(({ weight, forwardCG, aftCG }) => ({
-    weight,
-    forward: forwardCG,
-    aft: aftCG,
-  })),
-};
-
 export const calculateC172Loading = (stationWeights: number[], fuelGallons: number) =>
-  calculateLoad(C172_LOADING_PROFILE, {
+  calculateLoad(C172S_LOADING_PROFILE, {
     stationWeights,
     fuelGallons,
     fuelBurnGallons: 0,

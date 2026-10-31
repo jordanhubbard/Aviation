@@ -35,3 +35,23 @@ against the common realization.
 
 - **WHEN** planned fuel burn is greater than takeoff fuel
 - **THEN** the operation reports failure and returns no loading result
+
+## Requirement: Bundled loading profiles are qualified
+
+### Scenario: C172S loading data is requested
+
+- **WHEN** the bundled profile is requested by profile ID or linked aircraft-profile ID
+- **THEN** its identity, sample empty record, station arms, baggage limits, fuel data, and
+  normal-category envelope match the Component vector
+
+### Scenario: An aircraft link or profile structure is invalid
+
+- **WHEN** a declared invalid profile mutation is applied
+- **THEN** construction fails before the profile reaches an application
+
+## Requirement: Loading limits remain visible
+
+### Scenario: Fuel, a station, or a station group exceeds its profile limit
+
+- **WHEN** the calculator receives an otherwise valid load above that limit
+- **THEN** it returns a specific problem and marks the condition outside limits

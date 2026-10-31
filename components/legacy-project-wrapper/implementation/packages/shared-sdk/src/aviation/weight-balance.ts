@@ -1,55 +1,13 @@
 /**
- * Aircraft Weight and Balance Calculations
- *
- * Provides utilities for calculating aircraft weight, center of gravity,
- * and determining if loading is within acceptable limits.
+ * Portable aircraft loading profiles and weight-and-balance calculations.
  *
  * @module @aviation/shared-sdk/aviation/weight-balance
  */
 
-export interface Station {
-  name: string;
-  weight: number; // pounds
-  arm: number; // inches from datum
-}
-
-export interface AircraftProfile {
-  id: string;
-  name: string;
-  type: string; // e.g., "C172", "PA28", "SR22"
-  emptyWeight: number; // pounds
-  emptyMoment: number; // pound-inches
-  emptyArm: number; // inches
-  maxGrossWeight: number; // pounds
-  fuelCapacity: number; // gallons
-  fuelWeightPerGallon: number; // pounds (default 6.0 for 100LL)
-  stations: {
-    pilot: { arm: number; maxWeight?: number };
-    copilot: { arm: number; maxWeight?: number };
-    rearSeats?: { arm: number; maxWeight?: number };
-    baggage1?: { arm: number; maxWeight?: number };
-    baggage2?: { arm: number; maxWeight?: number };
-    fuel: { arm: number };
-  };
-  cgLimits: CGLimit[];
-}
-
-export interface CGLimit {
-  weight: number; // pounds
-  forwardCG: number; // inches
-  aftCG: number; // inches
-}
-
-export interface WeightBalanceResult {
-  totalWeight: number; // pounds
-  totalMoment: number; // pound-inches
-  cgPosition: number; // inches from datum
-  isWithinLimits: boolean;
-  warnings: string[];
-  forwardLimit: number; // inches
-  aftLimit: number; // inches
-  stations: Station[];
-}
+import {
+  C172S_OPERATING_PROFILE,
+  type AircraftOperatingProfile,
+} from './aircraft.js';
 
 export interface EnvelopePoint {
   weight: number;
@@ -57,18 +15,56 @@ export interface EnvelopePoint {
   aft: number;
 }
 
+export interface LoadingStationDefinition {
+  stationId?: string;
+  name: string;
+  arm: number;
+  maximumWeight?: number;
+}
+
+export interface QualifiedLoadingStationDefinition extends LoadingStationDefinition {
+  stationId: string;
+}
+
+export interface LoadingStationGroupLimit {
+  name: string;
+  stationIds: ReadonlyArray<string>;
+  maximumWeight: number;
+}
+
+/**
+ * A reusable loading profile. Basic empty weight and moment are sample values
+ * unless replaced with the current record for a particular aircraft.
+ */
 export interface LoadingProfile {
+  profileId?: string;
+  aircraftProfileId?: string;
+  displayName?: string;
   emptyWeight: number;
-  emptyArm: number;
+  emptyMoment?: number;
+  /** Compatibility input; qualified profiles use emptyMoment. */
+  emptyArm?: number;
   maxGross: number;
+  usableFuelCapacity?: number;
   fuelArm: number;
   fuelDensity: number;
-  stations: Array<{ name: string; arm: number }>;
-  envelope: EnvelopePoint[];
+  stations: ReadonlyArray<Readonly<LoadingStationDefinition>>;
+  stationGroupLimits?: ReadonlyArray<Readonly<LoadingStationGroupLimit>>;
+  envelope: ReadonlyArray<Readonly<EnvelopePoint>>;
+}
+
+export interface QualifiedLoadingProfile extends LoadingProfile {
+  profileId: string;
+  aircraftProfileId: string;
+  displayName: string;
+  emptyMoment: number;
+  usableFuelCapacity: number;
+  stations: ReadonlyArray<Readonly<QualifiedLoadingStationDefinition>>;
+  stationGroupLimits: ReadonlyArray<Readonly<LoadingStationGroupLimit>>;
 }
 
 export interface LoadingInput {
-  stationWeights: number[];
+  stationWeights: ReadonlyArray<number>;
   fuelGallons: number;
   fuelBurnGallons: number;
 }
@@ -86,9 +82,19 @@ export interface LoadingResult {
   landing: LoadingCondition;
 }
 
+const requireText = (name: string, value: string): void => {
+  if (!value.trim()) throw new TypeError(`${name} must be provided`);
+};
+
+const requirePositiveFinite = (name: string, value: number): void => {
+  if (!Number.isFinite(value) || value <= 0) {
+    throw new RangeError(`${name} must be positive and finite`);
+  }
+};
+
 /** Interpolate forward and aft CG limits for a weight inside an envelope. */
 export function interpolateEnvelope(
-  envelope: EnvelopePoint[],
+  envelope: ReadonlyArray<EnvelopePoint>,
   weight: number
 ): { forward: number; aft: number } | null {
   if (!Number.isFinite(weight)) {
@@ -102,6 +108,9 @@ export function interpolateEnvelope(
         !Number.isFinite(row.weight) ||
         !Number.isFinite(row.forward) ||
         !Number.isFinite(row.aft) ||
+        row.weight <= 0 ||
+        row.forward <= 0 ||
+        row.aft <= 0 ||
         row.forward > row.aft
     ) ||
     rows.some((row, index) => index > 0 && row.weight <= rows[index - 1].weight)
@@ -124,17 +133,93 @@ export function interpolateEnvelope(
   return null;
 }
 
+/** Validate and freeze a portable loading profile. */
+export function createLoadingProfile(
+  input: QualifiedLoadingProfile,
+  aircraft?: Readonly<AircraftOperatingProfile>
+): Readonly<QualifiedLoadingProfile> {
+  requireText('profileId', input.profileId);
+  requireText('aircraftProfileId', input.aircraftProfileId);
+  requireText('displayName', input.displayName);
+  requirePositiveFinite('emptyWeight', input.emptyWeight);
+  requirePositiveFinite('emptyMoment', input.emptyMoment);
+  requirePositiveFinite('maxGross', input.maxGross);
+  requirePositiveFinite('usableFuelCapacity', input.usableFuelCapacity);
+  requirePositiveFinite('fuelArm', input.fuelArm);
+  requirePositiveFinite('fuelDensity', input.fuelDensity);
+  if (input.emptyWeight > input.maxGross) {
+    throw new RangeError('emptyWeight must not exceed maxGross');
+  }
+
+  if (aircraft) {
+    if (input.aircraftProfileId !== aircraft.profileId) {
+      throw new RangeError('aircraftProfileId must match the linked aircraft profile');
+    }
+    if (input.maxGross !== aircraft.weightLimits.maximumTakeoffWeightLb) {
+      throw new RangeError('maxGross must match the linked aircraft profile');
+    }
+    if (input.usableFuelCapacity !== aircraft.fuelLimits.usableCapacityGal) {
+      throw new RangeError('usableFuelCapacity must match the linked aircraft profile');
+    }
+  }
+
+  if (input.stations.length === 0) {
+    throw new RangeError('stations must not be empty');
+  }
+  const stationIds = new Set<string>();
+  const stations = input.stations.map(station => {
+    requireText('stationId', station.stationId);
+    requireText('station name', station.name);
+    requirePositiveFinite(`${station.stationId}.arm`, station.arm);
+    if (station.maximumWeight !== undefined) {
+      requirePositiveFinite(`${station.stationId}.maximumWeight`, station.maximumWeight);
+    }
+    if (stationIds.has(station.stationId)) {
+      throw new RangeError(`Duplicate stationId: ${station.stationId}`);
+    }
+    stationIds.add(station.stationId);
+    return Object.freeze({ ...station });
+  });
+
+  const stationGroupLimits = input.stationGroupLimits.map(group => {
+    requireText('station group name', group.name);
+    requirePositiveFinite(`${group.name}.maximumWeight`, group.maximumWeight);
+    if (group.stationIds.length === 0 || group.stationIds.some(id => !stationIds.has(id))) {
+      throw new RangeError(`${group.name} must reference known stations`);
+    }
+    return Object.freeze({ ...group, stationIds: Object.freeze([...group.stationIds]) });
+  });
+
+  const envelope = input.envelope.map(point => Object.freeze({ ...point }));
+  if (!interpolateEnvelope(envelope, input.emptyWeight)) {
+    throw new RangeError('emptyWeight must be represented by the loading envelope');
+  }
+
+  return Object.freeze({
+    ...input,
+    stations: Object.freeze(stations),
+    stationGroupLimits: Object.freeze(stationGroupLimits),
+    envelope: Object.freeze(envelope),
+  });
+}
+
 /** Calculate takeoff and after-burn landing weight, moment-derived CG, and limits. */
-export function calculateLoad(profile: LoadingProfile, loading: LoadingInput): LoadingResult {
+export function calculateLoad(
+  profile: Readonly<LoadingProfile>,
+  loading: LoadingInput
+): LoadingResult {
+  const emptyMoment =
+    profile.emptyMoment ??
+    (profile.emptyArm === undefined ? Number.NaN : profile.emptyWeight * profile.emptyArm);
   const values = [
     profile.emptyWeight,
-    profile.emptyArm,
+    emptyMoment,
     profile.maxGross,
     profile.fuelArm,
     profile.fuelDensity,
+    ...profile.stations.map(station => station.arm),
     loading.fuelGallons,
     loading.fuelBurnGallons,
-    ...profile.stations.map(station => station.arm),
     ...loading.stationWeights,
   ];
   if (
@@ -149,14 +234,39 @@ export function calculateLoad(profile: LoadingProfile, loading: LoadingInput): L
     profile.stations.length !== loading.stationWeights.length
   ) {
     throw new RangeError(
-      'Enter valid aircraft, station, and fuel values. Fuel burn cannot exceed fuel loaded.'
+      'Enter valid station and fuel values. Fuel burn cannot exceed fuel loaded.'
     );
   }
+
+  const loadingProblems: string[] = [];
+  profile.stations.forEach((station, index) => {
+    if (
+      station.maximumWeight !== undefined &&
+      loading.stationWeights[index] > station.maximumWeight
+    ) {
+      loadingProblems.push(`${station.name} exceeds station limit`);
+    }
+  });
+  const weightByStationId = new Map(
+    profile.stations.map((station, index) => [
+      station.stationId ?? String(index),
+      loading.stationWeights[index],
+    ])
+  );
+  (profile.stationGroupLimits ?? []).forEach(group => {
+    const groupWeight = group.stationIds.reduce(
+      (sum, stationId) => sum + (weightByStationId.get(stationId) ?? 0),
+      0
+    );
+    if (groupWeight > group.maximumWeight) {
+      loadingProblems.push(`${group.name} exceeds combined limit`);
+    }
+  });
 
   const baseWeight =
     profile.emptyWeight + loading.stationWeights.reduce((sum, weight) => sum + weight, 0);
   const baseMoment =
-    profile.emptyWeight * profile.emptyArm +
+    emptyMoment +
     loading.stationWeights.reduce(
       (sum, weight, index) => sum + weight * profile.stations[index].arm,
       0
@@ -165,7 +275,13 @@ export function calculateLoad(profile: LoadingProfile, loading: LoadingInput): L
     const weight = baseWeight + gallons * profile.fuelDensity;
     const cg = (baseMoment + gallons * profile.fuelDensity * profile.fuelArm) / weight;
     const limits = interpolateEnvelope(profile.envelope, weight);
-    const problems: string[] = [];
+    const problems = [...loadingProblems];
+    if (
+      profile.usableFuelCapacity !== undefined &&
+      gallons > profile.usableFuelCapacity
+    ) {
+      problems.push('Fuel exceeds usable capacity');
+    }
     if (weight > profile.maxGross) problems.push('Above maximum gross weight');
     if (!limits) problems.push('Weight outside entered CG envelope range');
     else if (cg < limits.forward || cg > limits.aft) {
@@ -180,252 +296,51 @@ export function calculateLoad(profile: LoadingProfile, loading: LoadingInput): L
 }
 
 /**
- * Calculate total weight and moment
+ * C172S sample loading profile from the manufacturer handbook. Empty weight
+ * and moment are the handbook sample, not data for a particular airframe.
  */
-export function calculateWeightAndBalance(
-  aircraft: AircraftProfile,
-  loading: {
-    pilot: number;
-    copilot?: number;
-    rearSeats?: number;
-    baggage1?: number;
-    baggage2?: number;
-    fuelGallons: number;
-  }
-): WeightBalanceResult {
-  const stations: Station[] = [];
-  let totalWeight = aircraft.emptyWeight;
-  let totalMoment = aircraft.emptyMoment;
-  const warnings: string[] = [];
-
-  // Add empty aircraft
-  stations.push({
-    name: 'Empty Aircraft',
-    weight: aircraft.emptyWeight,
-    arm: aircraft.emptyArm,
-  });
-
-  // Add pilot
-  if (loading.pilot > 0) {
-    stations.push({
-      name: 'Pilot',
-      weight: loading.pilot,
-      arm: aircraft.stations.pilot.arm,
-    });
-    totalWeight += loading.pilot;
-    totalMoment += loading.pilot * aircraft.stations.pilot.arm;
-
-    if (aircraft.stations.pilot.maxWeight && loading.pilot > aircraft.stations.pilot.maxWeight) {
-      warnings.push(`Pilot weight (${loading.pilot} lbs) exceeds max (${aircraft.stations.pilot.maxWeight} lbs)`);
-    }
-  }
-
-  // Add copilot
-  if (loading.copilot && loading.copilot > 0) {
-    stations.push({
-      name: 'Co-pilot',
-      weight: loading.copilot,
-      arm: aircraft.stations.copilot.arm,
-    });
-    totalWeight += loading.copilot;
-    totalMoment += loading.copilot * aircraft.stations.copilot.arm;
-
-    if (aircraft.stations.copilot.maxWeight && loading.copilot > aircraft.stations.copilot.maxWeight) {
-      warnings.push(`Co-pilot weight (${loading.copilot} lbs) exceeds max (${aircraft.stations.copilot.maxWeight} lbs)`);
-    }
-  }
-
-  // Add rear seats
-  if (loading.rearSeats && loading.rearSeats > 0 && aircraft.stations.rearSeats) {
-    stations.push({
-      name: 'Rear Seats',
-      weight: loading.rearSeats,
-      arm: aircraft.stations.rearSeats.arm,
-    });
-    totalWeight += loading.rearSeats;
-    totalMoment += loading.rearSeats * aircraft.stations.rearSeats.arm;
-
-    if (aircraft.stations.rearSeats.maxWeight && loading.rearSeats > aircraft.stations.rearSeats.maxWeight) {
-      warnings.push(`Rear seats weight (${loading.rearSeats} lbs) exceeds max (${aircraft.stations.rearSeats.maxWeight} lbs)`);
-    }
-  }
-
-  // Add baggage 1
-  if (loading.baggage1 && loading.baggage1 > 0 && aircraft.stations.baggage1) {
-    stations.push({
-      name: 'Baggage 1',
-      weight: loading.baggage1,
-      arm: aircraft.stations.baggage1.arm,
-    });
-    totalWeight += loading.baggage1;
-    totalMoment += loading.baggage1 * aircraft.stations.baggage1.arm;
-
-    if (aircraft.stations.baggage1.maxWeight && loading.baggage1 > aircraft.stations.baggage1.maxWeight) {
-      warnings.push(`Baggage 1 weight (${loading.baggage1} lbs) exceeds max (${aircraft.stations.baggage1.maxWeight} lbs)`);
-    }
-  }
-
-  // Add baggage 2
-  if (loading.baggage2 && loading.baggage2 > 0 && aircraft.stations.baggage2) {
-    stations.push({
-      name: 'Baggage 2',
-      weight: loading.baggage2,
-      arm: aircraft.stations.baggage2.arm,
-    });
-    totalWeight += loading.baggage2;
-    totalMoment += loading.baggage2 * aircraft.stations.baggage2.arm;
-
-    if (aircraft.stations.baggage2.maxWeight && loading.baggage2 > aircraft.stations.baggage2.maxWeight) {
-      warnings.push(`Baggage 2 weight (${loading.baggage2} lbs) exceeds max (${aircraft.stations.baggage2.maxWeight} lbs)`);
-    }
-  }
-
-  // Add fuel
-  const fuelWeight = loading.fuelGallons * aircraft.fuelWeightPerGallon;
-  if (fuelWeight > 0) {
-    stations.push({
-      name: 'Fuel',
-      weight: fuelWeight,
-      arm: aircraft.stations.fuel.arm,
-    });
-    totalWeight += fuelWeight;
-    totalMoment += fuelWeight * aircraft.stations.fuel.arm;
-
-    if (loading.fuelGallons > aircraft.fuelCapacity) {
-      warnings.push(`Fuel (${loading.fuelGallons} gal) exceeds capacity (${aircraft.fuelCapacity} gal)`);
-    }
-  }
-
-  // Calculate CG position
-  const cgPosition = totalWeight > 0 ? totalMoment / totalWeight : 0;
-
-  // Check weight limits
-  if (totalWeight > aircraft.maxGrossWeight) {
-    warnings.push(`Total weight (${totalWeight.toFixed(1)} lbs) exceeds max gross weight (${aircraft.maxGrossWeight} lbs)`);
-  }
-
-  // Find applicable CG limits for this weight
-  const { forwardLimit, aftLimit } = getCGLimitsForWeight(aircraft.cgLimits, totalWeight);
-
-  // Check CG limits
-  const isWithinLimits = cgPosition >= forwardLimit && cgPosition <= aftLimit && totalWeight <= aircraft.maxGrossWeight;
-
-  if (cgPosition < forwardLimit) {
-    warnings.push(`CG (${cgPosition.toFixed(2)}") is forward of limit (${forwardLimit.toFixed(2)}")`);
-  } else if (cgPosition > aftLimit) {
-    warnings.push(`CG (${cgPosition.toFixed(2)}") is aft of limit (${aftLimit.toFixed(2)}")`);
-  }
-
-  return {
-    totalWeight: parseFloat(totalWeight.toFixed(1)),
-    totalMoment: parseFloat(totalMoment.toFixed(1)),
-    cgPosition: parseFloat(cgPosition.toFixed(2)),
-    isWithinLimits,
-    warnings,
-    forwardLimit: parseFloat(forwardLimit.toFixed(2)),
-    aftLimit: parseFloat(aftLimit.toFixed(2)),
-    stations,
-  };
-}
-
-/**
- * Get CG limits for a specific weight (interpolate if necessary)
- */
-export function getCGLimitsForWeight(
-  cgLimits: CGLimit[],
-  weight: number
-): { forwardLimit: number; aftLimit: number } {
-  if (cgLimits.length === 0) {
-    throw new Error('No CG limits defined');
-  }
-
-  // Sort limits by weight
-  const sorted = [...cgLimits].sort((a, b) => a.weight - b.weight);
-
-  // If weight is below or at the lowest limit
-  if (weight <= sorted[0].weight) {
-    return {
-      forwardLimit: sorted[0].forwardCG,
-      aftLimit: sorted[0].aftCG,
-    };
-  }
-
-  // If weight is above or at the highest limit
-  if (weight >= sorted[sorted.length - 1].weight) {
-    return {
-      forwardLimit: sorted[sorted.length - 1].forwardCG,
-      aftLimit: sorted[sorted.length - 1].aftCG,
-    };
-  }
-
-  // Interpolate between two limits
-  for (let i = 0; i < sorted.length - 1; i++) {
-    const lower = sorted[i];
-    const upper = sorted[i + 1];
-
-    if (weight >= lower.weight && weight <= upper.weight) {
-      const ratio = (weight - lower.weight) / (upper.weight - lower.weight);
-
-      return {
-        forwardLimit: lower.forwardCG + ratio * (upper.forwardCG - lower.forwardCG),
-        aftLimit: lower.aftCG + ratio * (upper.aftCG - lower.aftCG),
-      };
-    }
-  }
-
-  // Fallback (should never reach here)
-  return {
-    forwardLimit: sorted[0].forwardCG,
-    aftLimit: sorted[0].aftCG,
-  };
-}
-
-/**
- * Sample aircraft profiles for common types
- */
-export const SAMPLE_AIRCRAFT: Record<string, AircraftProfile> = {
-  C172N: {
-    id: 'c172n',
-    name: 'Cessna 172N Skyhawk',
-    type: 'C172',
-    emptyWeight: 1500,
-    emptyMoment: 64500,
-    emptyArm: 43.0,
-    maxGrossWeight: 2300,
-    fuelCapacity: 43,
-    fuelWeightPerGallon: 6.0,
-    stations: {
-      pilot: { arm: 37.0, maxWeight: 400 },
-      copilot: { arm: 37.0, maxWeight: 400 },
-      rearSeats: { arm: 73.0, maxWeight: 400 },
-      baggage1: { arm: 95.0, maxWeight: 120 },
-      fuel: { arm: 48.0 },
-    },
-    cgLimits: [
-      { weight: 1500, forwardCG: 35.0, aftCG: 47.3 },
-      { weight: 2300, forwardCG: 35.0, aftCG: 47.3 },
+export const C172S_LOADING_PROFILE = createLoadingProfile(
+  {
+    profileId: 'cessna-172s-sample-loading',
+    aircraftProfileId: C172S_OPERATING_PROFILE.profileId,
+    displayName: 'Cessna 172S Skyhawk sample loading',
+    emptyWeight: 1642,
+    emptyMoment: 62600,
+    maxGross: C172S_OPERATING_PROFILE.weightLimits.maximumTakeoffWeightLb,
+    usableFuelCapacity: C172S_OPERATING_PROFILE.fuelLimits.usableCapacityGal,
+    fuelArm: 48,
+    fuelDensity: 6,
+    stations: [
+      { stationId: 'pilot', name: 'Pilot', arm: 37 },
+      { stationId: 'copilot', name: 'Copilot', arm: 37 },
+      { stationId: 'rear-passengers', name: 'Rear passengers', arm: 73 },
+      { stationId: 'baggage-a', name: 'Baggage area A', arm: 95, maximumWeight: 120 },
+      { stationId: 'baggage-b', name: 'Baggage area B', arm: 123, maximumWeight: 50 },
+    ],
+    stationGroupLimits: [
+      {
+        name: 'Baggage areas A and B',
+        stationIds: ['baggage-a', 'baggage-b'],
+        maximumWeight: 120,
+      },
+    ],
+    envelope: [
+      { weight: 1500, forward: 35, aft: 47.3 },
+      { weight: 1950, forward: 35, aft: 47.3 },
+      { weight: 2550, forward: 41, aft: 47.3 },
     ],
   },
-  PA28: {
-    id: 'pa28',
-    name: 'Piper PA-28 Cherokee',
-    type: 'PA28',
-    emptyWeight: 1410,
-    emptyMoment: 128700,
-    emptyArm: 91.3,
-    maxGrossWeight: 2150,
-    fuelCapacity: 50,
-    fuelWeightPerGallon: 6.0,
-    stations: {
-      pilot: { arm: 85.5, maxWeight: 400 },
-      copilot: { arm: 85.5, maxWeight: 400 },
-      rearSeats: { arm: 118.1, maxWeight: 400 },
-      baggage1: { arm: 142.8, maxWeight: 200 },
-      fuel: { arm: 95.0 },
-    },
-    cgLimits: [
-      { weight: 1410, forwardCG: 86.5, aftCG: 96.5 },
-      { weight: 2150, forwardCG: 88.0, aftCG: 96.5 },
-    ],
-  },
-};
+  C172S_OPERATING_PROFILE
+);
+
+const LOADING_PROFILES = Object.freeze([C172S_LOADING_PROFILE]);
+
+/** Resolve a bundled loading profile by profile ID or linked aircraft profile ID. */
+export function findLoadingProfile(
+  identifier: string
+): Readonly<QualifiedLoadingProfile> | undefined {
+  const query = identifier.trim();
+  return LOADING_PROFILES.find(
+    profile => profile.profileId === query || profile.aircraftProfileId === query
+  );
+}
