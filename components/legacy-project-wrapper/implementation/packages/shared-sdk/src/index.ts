@@ -26,6 +26,8 @@ export * from './aviation/hazards.js';
 export * from './aviation/alerts.js';
 // Provider-neutral service-health report semantics
 export * from './aviation/health.js';
+// Provider-neutral background-service lifecycle transitions
+export * from './aviation/service-lifecycle.js';
 
 // Aviation weight & balance (CG envelope calculations)
 export * from './aviation/weight-balance.js';

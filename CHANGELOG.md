@@ -9,6 +9,12 @@
 
 ## Unreleased
 
+- Added an independently specified and cross-language tested
+  `aviation.service.lifecycle` Component for deterministic start, stop, failure, and
+  reset transitions. The shared TypeScript `BackgroundService` now exposes in-progress
+  and failed states, rejects concurrent transitions, captures hook errors, and prevents
+  disabled startup; Weather Briefing consumes that common base instead of maintaining
+  private lifecycle methods.
 - Added an independently specified and tested `aviation.service.health` Component
   with shared TypeScript/Python status normalization and report-construction vectors.
   Aviation Chat, Flight Tracker, Weather Briefing, G1000, and Flight Planner health

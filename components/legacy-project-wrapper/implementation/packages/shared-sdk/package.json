@@ -115,6 +115,16 @@
         "default": "./dist/aviation/health.js"
       }
     },
+    "./aviation/service-lifecycle": {
+      "import": {
+        "types": "./dist-esm/aviation/service-lifecycle.d.ts",
+        "default": "./dist-esm/aviation/service-lifecycle.js"
+      },
+      "require": {
+        "types": "./dist/aviation/service-lifecycle.d.ts",
+        "default": "./dist/aviation/service-lifecycle.js"
+      }
+    },
     "./aviation/weight-balance": {
       "import": {
         "types": "./dist-esm/aviation/weight-balance.d.ts",
