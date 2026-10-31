@@ -12,6 +12,10 @@ import {
   fuelRange,
   vfrFuelReserve,
   ifrFuelReserve,
+  pressureAltitude,
+  isaTemperature,
+  densityAltitude,
+  densityAltitudeFromIndicated,
   distance,
 } from '../navigation/index.js';
 
@@ -43,6 +47,10 @@ const operations: Record<string, (...args: never[]) => number> = {
   fuel_range: fuelRange,
   vfr_fuel_reserve: vfrFuelReserve,
   ifr_fuel_reserve: ifrFuelReserve,
+  pressure_altitude: pressureAltitude,
+  isa_temperature: isaTemperature,
+  density_altitude: densityAltitude,
+  density_altitude_from_indicated: densityAltitudeFromIndicated,
   tsd_distance: distance,
 };
 

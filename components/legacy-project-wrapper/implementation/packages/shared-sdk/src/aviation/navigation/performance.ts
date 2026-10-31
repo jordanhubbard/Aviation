@@ -17,6 +17,12 @@ export const ISA_SEA_LEVEL_TEMP_C = 15;
 /** ISA temperature lapse rate, degrees Celsius per foot. */
 export const ISA_LAPSE_RATE_C_PER_FT = 0.0019812;
 
+function requireFinite(name: string, value: number): void {
+  if (!Number.isFinite(value)) {
+    throw new RangeError(`${name} must be finite`);
+  }
+}
+
 /**
  * Pressure altitude: indicated altitude corrected to the ISA standard datum.
  *
@@ -33,6 +39,11 @@ export function pressureAltitude(
   indicatedAltitudeFt: number,
   altimeterSettingInHg: number
 ): number {
+  requireFinite('Indicated altitude', indicatedAltitudeFt);
+  requireFinite('Altimeter setting', altimeterSettingInHg);
+  if (altimeterSettingInHg <= 0) {
+    throw new RangeError('Altimeter setting must be positive');
+  }
   return indicatedAltitudeFt + (ISA_SEA_LEVEL_PRESSURE_INHG - altimeterSettingInHg) * 1000;
 }
 
@@ -43,6 +54,7 @@ export function pressureAltitude(
  * @returns Standard temperature in degrees Celsius
  */
 export function isaTemperature(pressureAltitudeFt: number): number {
+  requireFinite('Pressure altitude', pressureAltitudeFt);
   return ISA_SEA_LEVEL_TEMP_C - ISA_LAPSE_RATE_C_PER_FT * pressureAltitudeFt;
 }
 
@@ -60,6 +72,8 @@ export function isaTemperature(pressureAltitudeFt: number): number {
  * ```
  */
 export function densityAltitude(pressureAltitudeFt: number, temperatureC: number): number {
+  requireFinite('Pressure altitude', pressureAltitudeFt);
+  requireFinite('Temperature', temperatureC);
   return pressureAltitudeFt + 120 * (temperatureC - isaTemperature(pressureAltitudeFt));
 }
 

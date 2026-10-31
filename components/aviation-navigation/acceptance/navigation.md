@@ -37,6 +37,12 @@ tolerance.
 
 ## Requirement: Invalid values fail closed
 
+### Scenario: Performance altitudes agree across bindings
+
+- **WHEN** pressure altitude, ISA temperature, or density altitude is requested
+- **THEN** every realization applies the same standard datum, lapse rate, units, and
+  temperature-deviation approximation
+
 ### Scenario: Non-positive speed is used as a divisor
 
 - **WHEN** flight-time or fuel-required receives zero or negative ground speed
@@ -47,6 +53,11 @@ tolerance.
 - **WHEN** a geodesic operation receives latitude outside `[-90, 90]` or longitude
   outside `[-180, 180]`
 - **THEN** the binding reports failure rather than silently normalizing the coordinate
+
+### Scenario: Altimeter setting is not positive
+
+- **WHEN** pressure altitude receives a zero or negative altimeter setting
+- **THEN** the binding reports failure rather than returning a numeric altitude
 
 ## Requirement: Every binding is independently exercised
 

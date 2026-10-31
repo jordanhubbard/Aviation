@@ -101,6 +101,10 @@ release-visible outcome to `CHANGELOG.md`; Git preserves prior queue states.
   - [x] Replace G1000 Trip Planning's private time/fuel, density-altitude, station-
     moment, and CG formulas and its duplicate C172 loading data with the TypeScript
     navigation and weight-and-balance realizations plus the shared C172 profile.
+  - [x] Qualify pressure altitude, ISA temperature, and density altitude with shared
+    TypeScript/Python navigation vectors and migrate Flight Track Analyzer to the
+    Python realization. Retain its entered-POH interpolation, no-extrapolation rule,
+    wind normalization, and measured-track comparison as analyzer-specific policy.
   - [x] Define `aviation.avionics` protocol and rendering contracts, add deterministic
     telemetry/command/flight-plan/layout/pipeline vectors, and replace G1000's duplicate
     frontend telemetry schema with the shared protocol surface. Keep simulator stores,
@@ -123,9 +127,8 @@ release-visible outcome to `CHANGELOG.md`; Git preserves prior queue states.
     aviation implementations after parity qualification.
   - [ ] Classify and remove or intentionally retain every remainder beneath the legacy
     wrapper.
-- **Next action:** Reconcile Flight Track Analyzer's pressure/density-altitude and POH
-  interpolation formulas against the common SDK, then classify non-realized G1000
-  geodesy placeholders.
+- **Next action:** Classify non-realized G1000 geodesy placeholders, then continue the
+  application inventory for common wind, airspeed, and aircraft-configuration logic.
 - **Evidence:** Phase 1.2 lift-and-shift identity `sha256:c5ca4361ba010f6e8d81c93398468f9f4f8b8cc352504bc8535fa74b7c6e9990`.
   Retained conversion stage is backed by current test receipt
   `sha256:60e252aceb5834018a21d3ec5a75b667c564e207ea3cf02d475b3245640c3c79`;
@@ -162,6 +165,10 @@ release-visible outcome to `CHANGELOG.md`; Git preserves prior queue states.
   three SDK-boundary tests for fuel/reserve, density altitude, shared C172 loading, and
   absence of the former display formulas; all 29 backend tests and the production
   frontend build also pass.
+  Performance-altitude parity passes 340 TypeScript and 109 Python SDK tests across
+  four new shared vectors plus invalid-setting rejection; all 66 Flight Track Analyzer
+  tests pass, including a source boundary proving its atmospheric conditions call the
+  common Python realization.
   Navigation and the dedicated SDK workflow landed in PR #339 at exact-main commit
   `9c55e4ac70dbc87def6d5ce6e6abc47aed214304`; all seven exact-commit workflows
   passed. Airports landed in PR #340 at exact-main commit
@@ -227,9 +234,9 @@ release-visible outcome to `CHANGELOG.md`; Git preserves prior queue states.
   and parity identity
   `sha256:4f5acf5f618ab336bf169ec84d4f1068f4754702371d1ff0d63c093880d5deee`.
   The current retained receipt is
-  `sha256:5dc8a900a961d4fada375c0d3ed8aa39d5ee7c844cdfbe49110edf00636e6b4d`
-  (candidate `sha256:6e4fba095408e2d3f40d72b4c439f43df3a791a3cb95daf8c587a6322455a971`,
-  328 tests).
+  `sha256:c8e7f0c9ac07338d72cea1eeccf7f56ef606f0366908cce724c67cbd236e5f28`
+  (candidate `sha256:f522f2384fbc6e420897180f0603e7e5937de94b98174cfdb7f48dafadde80f6`,
+  333 tests).
   The ADF/DME slice landed in PR #348 at exact-main commit
   `f3da7e3406b6b2d04b95da03217231d1b7313a1e`; all six exact-commit workflows
   passed: Common Aviation SDK run 41137297070, Integration Tests run 41137297059,
