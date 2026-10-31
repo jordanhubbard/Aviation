@@ -216,9 +216,10 @@ release-visible outcome to `CHANGELOG.md`; Git preserves prior queue states.
   - [x] Promote provider-neutral alert lifecycle semantics into an explicit
     `aviation.alerts` Component with shared TypeScript/Python/Go vectors for severity
     normalization, priority, stable ordering, acknowledgement reconciliation, and
-    highest-active-severity. Migrate G1000 and the UI framework to the common core
-    while retaining telemetry thresholds, messages, persistence, events, timestamps,
-    sounds, and rendering as adapter policy. Delivered under MAC task
+    highest-active-severity. Migrate both live G1000 alert state paths and the UI
+    framework to the common core while retaining telemetry thresholds, messages,
+    persistence, events, timestamps, sounds, visibility limits, and rendering as
+    adapter policy. Delivered under MAC task
     `task_48f2da691fac81450e75a5827306017b`.
   - [ ] Promote airports, weather, procedures/nav-data, flight dynamics, avionics
     protocols/rendering, shared UI, and integration infrastructure into

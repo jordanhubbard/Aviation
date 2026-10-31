@@ -28,6 +28,14 @@ describe("G1000 shared SDK boundary", () => {
     expect(manager).toContain("airspeed >= 160");
     expect(manager).toContain("altitudeDelta >= 250");
     expect(manager).toContain("headingDelta >= 20");
+
+    const store = fs.readFileSync(
+      path.join(__dirname, "../../frontend/src/stores/alertStore.ts"),
+      "utf8",
+    );
+    expect(store).toContain("orderAlerts");
+    expect(store).not.toContain("PRIORITY_ORDER");
+    expect(store).not.toContain(".sort(");
   });
 
   it("uses common navigation fuel and performance semantics", () => {
