@@ -3,6 +3,10 @@ import { loadConformanceContract } from './conformance-contract.js';
 import {
   distanceNM,
   initialBearing,
+  calculateWindComponents,
+  windCorrectionAngle,
+  trueHeading,
+  groundSpeed,
   normalizeBearing,
   normalizeLongitude,
   dmsToDecimal,
@@ -38,6 +42,13 @@ const contract = loadConformanceContract<NavigationVectors>('navigation');
 const operations: Record<string, (...args: never[]) => number> = {
   distance_nm: distanceNM,
   initial_bearing: initialBearing,
+  headwind_component: ((windDirection: number, windSpeed: number, course: number) =>
+    calculateWindComponents(windDirection, windSpeed, course).headwind) as (...args: never[]) => number,
+  crosswind_component: ((windDirection: number, windSpeed: number, course: number) =>
+    calculateWindComponents(windDirection, windSpeed, course).crosswind) as (...args: never[]) => number,
+  wind_correction_angle: windCorrectionAngle,
+  true_heading: trueHeading,
+  ground_speed: groundSpeed,
   normalize_bearing: normalizeBearing,
   normalize_longitude: normalizeLongitude,
   dms_to_decimal: dmsToDecimal,

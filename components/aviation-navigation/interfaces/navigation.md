@@ -20,7 +20,10 @@ changing units or conventions.
   `[-180, 180]` before calculation.
 - A bearing or heading result is in `[0, 360)` degrees clockwise from true north.
 - Wind direction is the direction the wind comes from. A positive headwind opposes the
-  selected course; crosswind sign must be documented consistently by each binding.
+  selected course; a positive crosswind comes from the right of the selected course.
+  True airspeed must be positive and wind speed non-negative. A wind triangle fails
+  when the requested course cannot be maintained or positive along-course progress is
+  impossible.
 - Fuel reserve operations calculate quantity only. Aircraft-specific legal dispatch
   decisions and unusable fuel are outside this capability.
 - A configurable reserve accepts fuel flow in gallons per hour and reserve duration in

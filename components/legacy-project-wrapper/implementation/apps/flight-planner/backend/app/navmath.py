@@ -1,19 +1,15 @@
-"""Pure-Python navigation / aviation math helpers for the flight planner.
+"""Flight Planner compatibility names backed by the common navigation SDK.
 
-Stdlib-only (no app dependencies), so each helper is unit-testable in isolation.
-New helpers register here; this module plus tests/test_navmath.py are the
-integration points that independently authored helpers converge on.
-
-This module is the canonical pure-math layer for wind components
-(crosswind/headwind): callers should use these helpers rather than re-deriving
-the trigonometry.
+Application callers retain their established imports while common distance and wind
+semantics remain owned and independently tested by ``aviation.navigation``.
 """
 
 from __future__ import annotations
 
-import math
-
-from aviation.navigation import distance_nm as haversine_nm
+from aviation.navigation import (
+    distance_nm as haversine_nm,
+    wind_components,
+)
 
 
 def normalize_heading(deg: float) -> float:
@@ -37,7 +33,9 @@ def heading_difference(a: float, b: float) -> float:
     return d
 
 
-def crosswind_component(runway_heading: float, wind_dir: float, wind_speed: float) -> float:
+def crosswind_component(
+    runway_heading: float, wind_dir: float, wind_speed: float
+) -> float:
     """Signed crosswind component of the wind relative to a runway heading.
 
     The crosswind is the part of the wind blowing perpendicular to the runway,
@@ -48,11 +46,12 @@ def crosswind_component(runway_heading: float, wind_dir: float, wind_speed: floa
     right of the runway heading; a negative value means it comes from the left.
     A pure headwind or tailwind yields 0.
     """
-    angle = float(wind_dir) - float(runway_heading)
-    return float(wind_speed) * math.sin(math.radians(angle))
+    return wind_components(float(wind_dir), float(wind_speed), float(runway_heading))[1]
 
 
-def headwind_component(runway_heading: float, wind_dir: float, wind_speed: float) -> float:
+def headwind_component(
+    runway_heading: float, wind_dir: float, wind_speed: float
+) -> float:
     """Signed headwind component of the wind along a runway heading.
 
     The headwind is the part of the wind blowing parallel to the runway,
@@ -64,5 +63,4 @@ def headwind_component(runway_heading: float, wind_dir: float, wind_speed: float
     ahead, opposing the takeoff direction); a negative value means a tailwind
     (wind from behind). A pure crosswind yields 0.
     """
-    angle = float(wind_dir) - float(runway_heading)
-    return float(wind_speed) * math.cos(math.radians(angle))
+    return wind_components(float(wind_dir), float(wind_speed), float(runway_heading))[0]

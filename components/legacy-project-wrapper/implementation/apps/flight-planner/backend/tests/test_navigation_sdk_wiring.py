@@ -16,6 +16,11 @@ GEODESY_MODULES = (
     "app/services/approaches.py",
 )
 
+WIND_MODULES = (
+    "app/navmath.py",
+    "app/services/wind.py",
+)
+
 
 def test_geodesy_modules_do_not_reimplement_haversine() -> None:
     for relative_path in GEODESY_MODULES:
@@ -43,8 +48,18 @@ def test_app_geodesy_rejects_invalid_sdk_coordinates() -> None:
 def test_unrealized_private_geodesy_service_stays_removed() -> None:
     assert not (BACKEND / "app/services/geo_calculations.py").exists()
 
-    flight_plan_source = (
-        BACKEND / "app/services/flight_plan_service.py"
-    ).read_text(encoding="utf-8")
+    flight_plan_source = (BACKEND / "app/services/flight_plan_service.py").read_text(
+        encoding="utf-8"
+    )
     assert "GeoCalculations" not in flight_plan_source
     assert "geo_calculations" not in flight_plan_source
+
+
+def test_wind_compatibility_surfaces_delegate_to_sdk() -> None:
+    for relative_path in WIND_MODULES:
+        source = (BACKEND / relative_path).read_text(encoding="utf-8")
+        assert "import math" not in source, relative_path
+    service_source = (BACKEND / "app/services/wind.py").read_text(encoding="utf-8")
+    assert "initial_bearing" in service_source
+    assert "wind_components" in service_source
+    assert "ground_speed" in service_source

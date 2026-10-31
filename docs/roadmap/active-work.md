@@ -108,6 +108,10 @@ release-visible outcome to `CHANGELOG.md`; Git preserves prior queue states.
   - [x] Remove G1000 and Flight Planner's unused private geodesy service scaffolds;
     their methods were never called and returned only `None` or constant zero, while
     realized route distance and bearing already delegate to `aviation.navigation`.
+  - [x] Qualify headwind/crosswind components, wind-correction angle, corrected
+    heading, and along-course ground speed with shared TypeScript/Python vectors;
+    migrate Flight Planner's bearing, wind-component, and wind-triangle arithmetic to
+    the Python realization while retaining its 30-knot planning floor as app policy.
   - [x] Define `aviation.avionics` protocol and rendering contracts, add deterministic
     telemetry/command/flight-plan/layout/pipeline vectors, and replace G1000's duplicate
     frontend telemetry schema with the shared protocol surface. Keep simulator stores,
@@ -130,7 +134,7 @@ release-visible outcome to `CHANGELOG.md`; Git preserves prior queue states.
     aviation implementations after parity qualification.
   - [ ] Classify and remove or intentionally retain every remainder beneath the legacy
     wrapper.
-- **Next action:** Continue the application inventory for common wind, airspeed, and
+- **Next action:** Continue the application inventory for common airspeed and
   aircraft-configuration logic.
 - **Evidence:** Phase 1.2 lift-and-shift identity `sha256:c5ca4361ba010f6e8d81c93398468f9f4f8b8cc352504bc8535fa74b7c6e9990`.
   Retained conversion stage is backed by current test receipt
@@ -176,6 +180,11 @@ release-visible outcome to `CHANGELOG.md`; Git preserves prior queue states.
   non-realized scaffolding and removed with application boundary tests preventing their
   reintroduction; all 30 G1000 backend tests and 178 non-integration Flight Planner
   tests pass after removal.
+  Wind-triangle qualification adds seven shared valid/invalid vectors, corrects the
+  SDK's former headwind sign and vector-magnitude ground-speed error, and passes 347
+  TypeScript SDK tests, 109 Python SDK tests, and all 179 non-integration Flight Planner
+  tests plus eight subtests. The navigation lock is
+  `sha256:0c87dbea0947d441af3e99ff548a6e0b3a3914d2296b9fdc82a395507c83915e`.
   Navigation and the dedicated SDK workflow landed in PR #339 at exact-main commit
   `9c55e4ac70dbc87def6d5ce6e6abc47aed214304`; all seven exact-commit workflows
   passed. Airports landed in PR #340 at exact-main commit
@@ -241,9 +250,9 @@ release-visible outcome to `CHANGELOG.md`; Git preserves prior queue states.
   and parity identity
   `sha256:4f5acf5f618ab336bf169ec84d4f1068f4754702371d1ff0d63c093880d5deee`.
   The current retained receipt is
-  `sha256:d5991a4e1e3c5d2b52f1d2b4c9ea8537bcf64164faf4a932c7bd33c3add126d5`
-  (candidate `sha256:7416e9a3bf4caee5465fafd9b5afc831b641b4367471be9e7f752439773e40ec`,
-  340 tests).
+  `sha256:7777144b36eeb981175a7576380da49d322083dd3c7f21897cfe89f13e1bc8d7`
+  (candidate `sha256:94d8b8f65d112d5e671141168f832831afb49755cdec9ccba6f6f0c93453758e`,
+  347 tests).
   The ADF/DME slice landed in PR #348 at exact-main commit
   `f3da7e3406b6b2d04b95da03217231d1b7313a1e`; all six exact-commit workflows
   passed: Common Aviation SDK run 41137297070, Integration Tests run 41137297059,

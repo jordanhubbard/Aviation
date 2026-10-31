@@ -1,5 +1,7 @@
 # Changelog
 
+- Qualified shared wind components and wind-triangle calculations across TypeScript
+  and Python, and migrated Flight Planner's private wind arithmetic to the SDK.
 - Removed unused G1000 and Flight Planner private geodesy service scaffolds now that
   realized route calculations are owned by the common Aviation navigation SDK.
 
