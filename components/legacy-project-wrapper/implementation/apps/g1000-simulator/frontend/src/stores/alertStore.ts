@@ -1,5 +1,6 @@
 // alertStore.ts
 import { create } from 'zustand'
+import { orderAlerts } from '@aviation/shared-sdk'
 
 export interface Alert {
   id: string;
@@ -17,12 +18,6 @@ interface AlertStore {
   clearAllAlerts: () => void;
 }
 
-const PRIORITY_ORDER = {
-  warning: 0,
-  caution: 1,
-  advisory: 2,
-};
-
 export const useAlertStore = create<AlertStore>((set) => ({
   alerts: [],
 
@@ -35,10 +30,7 @@ export const useAlertStore = create<AlertStore>((set) => ({
         acknowledged: false,
       };
 
-      // Add alert and sort by priority (warning > caution > advisory)
-      const updatedAlerts = [...state.alerts, newAlert].sort(
-        (a, b) => PRIORITY_ORDER[a.level] - PRIORITY_ORDER[b.level]
-      );
+      const updatedAlerts = orderAlerts([...state.alerts, newAlert]);
 
       // Keep only top 3 alerts
       return { alerts: updatedAlerts.slice(0, 3) };
