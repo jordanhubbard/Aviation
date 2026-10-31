@@ -270,6 +270,22 @@ release-visible outcome to `CHANGELOG.md`; Git preserves prior queue states.
     Planner tests, and retained receipt
     `sha256:c51a532d810846103e77f5476af3bdf2596720e4f1ee508e3a1c35c71b6d7d19`
     pass with all 18 Component locks current.
+  - [x] Promote the existing cross-language remote-E2E run contract into an explicit
+    `aviation.testing.e2e` Component with shared TypeScript/Python acceptance vectors
+    for run identities, application-bound short-lived credentials, isolated paths,
+    and immutable test-record tagging. Preserve HTTP routing, database creation,
+    fixture formats, cleanup timing, browser orchestration, and deployment policy in
+    SDK/application adapters; retain Aviation Accident Tracker, Aviation Chat, Flight
+    Planner, and Flight Track Analyzer as live consumers of the qualified contract.
+    Component revision
+    `sha256:ca6545a96add0e57baeaaf7ea28f3e879d51e97e59ec8d860ebda8d910d96cbc`
+    and lock
+    `sha256:a983daa0698ca90ae2740f40639de6e2d5bebfb08fb713c1d4bf3c22dee0c2e5`;
+    589 TypeScript SDK tests, 311 Python SDK tests, 127 Flight Planner tests, 73
+    Flight Track Analyzer tests, 57 Aviation Accident Tracker tests, the Aviation
+    Chat build, and retained receipt
+    `sha256:05bd764935f252a52fc05343f0c15ea557e282041c2f3a1d39f44a62d893d436`
+    pass with all 19 Component locks current.
   - [ ] Promote airports, weather, procedures/nav-data, flight dynamics, avionics
     protocols/rendering, shared UI, and integration infrastructure into
     explicit Components with owned tests and contracts.
@@ -277,10 +293,12 @@ release-visible outcome to `CHANGELOG.md`; Git preserves prior queue states.
     aviation implementations after parity qualification.
   - [ ] Classify and remove or intentionally retain every remainder beneath the legacy
     wrapper.
-- **Next action:** Land the Flight Planner `aviation.alerts` adoption slice through
-  review and exact-main CI, then inventory the next duplicated integration-
-  infrastructure domain. Do not promote retry/backoff or cache policy without a
-  second live consumer sharing the same semantics.
+- **Next action:** Inventory the remaining application-local code for the next
+  duplicated aviation-domain capability with at least two live consumers, then
+  specify and qualify that boundary before migrating adapters. Do not promote generic
+  retry or cache helpers without a second live shared semantic contract, and do not
+  absorb application routing, storage, fixture, cleanup, browser, or deployment policy
+  into the portable SDK.
 - **Evidence:** Phase 1.2 lift-and-shift identity `sha256:c5ca4361ba010f6e8d81c93398468f9f4f8b8cc352504bc8535fa74b7c6e9990`.
   Retained conversion established original-source release authority; each migration
   refreshes the verifier-owned receipt in `verification/current.json`.
