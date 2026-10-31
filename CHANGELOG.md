@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Promoted weight-and-balance loading and envelope interpolation into a tested
+  `aviation.weight-balance` Component; Preflight Check now loads the built browser SDK
+  realization instead of maintaining its own calculation module.
 - Added configurable fuel-reserve vectors to `aviation.navigation`; Flight Planner now
   delegates route time, fuel consumption, reserve, and range arithmetic to the common
   SDK while retaining route selection, refueling stops, and response construction.

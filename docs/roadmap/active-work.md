@@ -89,6 +89,9 @@ release-visible outcome to `CHANGELOG.md`; Git preserves prior queue states.
   - [x] Qualify configurable fuel-reserve arithmetic in `aviation.navigation` and
     migrate Flight Planner's route time, fuel consumption, reserve, and range formulas
     to the common SDK while retaining route selection and refueling policy.
+  - [x] Define `aviation.weight-balance`, add portable loading/envelope vectors, and
+    replace Preflight Check's independent formulas with the built browser SDK
+    realization while retaining aircraft-profile storage and presentation as app policy.
   - [x] Define `aviation.avionics` protocol and rendering contracts, add deterministic
     telemetry/command/flight-plan/layout/pipeline vectors, and replace G1000's duplicate
     frontend telemetry schema with the shared protocol surface. Keep simulator stores,
@@ -111,9 +114,8 @@ release-visible outcome to `CHANGELOG.md`; Git preserves prior queue states.
     aviation implementations after parity qualification.
   - [ ] Classify and remove or intentionally retain every remainder beneath the legacy
     wrapper.
-- **Next action:** Qualify the common weight-and-balance implementation against the
-  Preflight Check application, add Component-owned cross-language or portable vectors,
-  and migrate the app away from its independent calculation module.
+- **Next action:** Inventory and reconcile remaining app-local navigation/geodesy and
+  aircraft performance/configuration formulas against their common capabilities.
 - **Evidence:** Phase 1.2 lift-and-shift identity `sha256:c5ca4361ba010f6e8d81c93398468f9f4f8b8cc352504bc8535fa74b7c6e9990`.
   Retained conversion stage is backed by current test receipt
   `sha256:60e252aceb5834018a21d3ec5a75b667c564e207ea3cf02d475b3245640c3c79`;
@@ -137,6 +139,9 @@ release-visible outcome to `CHANGELOG.md`; Git preserves prior queue states.
   shared-SDK tests plus all 126 non-integration Flight Planner tests; delegation tests
   prove the application calls common time, consumption, reserve, and range operations
   while retaining route selection and refueling policy.
+  Weight-and-balance qualification passes 335 TypeScript SDK tests, six portable
+  Component vectors, two Preflight Check SDK-wiring tests, the shared SDK build, and a
+  clean deployment-container definition check; the app-local formulas are removed.
   Navigation and the dedicated SDK workflow landed in PR #339 at exact-main commit
   `9c55e4ac70dbc87def6d5ce6e6abc47aed214304`; all seven exact-commit workflows
   passed. Airports landed in PR #340 at exact-main commit
