@@ -7,7 +7,6 @@ import math
 from aviation import navigation
 from _conformance_contract import load_conformance_contract
 
-
 CONTRACT = load_conformance_contract("navigation")
 
 OPERATIONS = {
@@ -22,6 +21,10 @@ OPERATIONS = {
     "fuel_range": navigation.fuel_range,
     "vfr_fuel_reserve": navigation.vfr_fuel_reserve,
     "ifr_fuel_reserve": navigation.ifr_fuel_reserve,
+    "pressure_altitude": navigation.pressure_altitude,
+    "isa_temperature": navigation.isa_temperature,
+    "density_altitude": navigation.density_altitude,
+    "density_altitude_from_indicated": navigation.density_altitude_from_indicated,
     "tsd_distance": navigation.tsd_distance,
 }
 

@@ -27,6 +27,8 @@ changing units or conventions.
   minutes and returns gallons; both inputs must be finite and non-negative.
 - Fuel-range inputs must be finite and non-negative, burn and speed must be positive,
   and reserve fuel must not exceed total fuel.
+- Performance-altitude inputs must be finite; an altimeter setting must be positive.
+  Altitudes use feet, pressure uses inches of mercury, and temperature uses Celsius.
 - Results are finite numbers. Failure is explicit and distinguishable from a numeric
   result; a successful `NaN`, infinity, or implicit clamping is forbidden.
 

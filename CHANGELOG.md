@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Added Component-owned pressure-altitude, ISA-temperature, and density-altitude
+  vectors to both Aviation SDK language bindings; Flight Track Analyzer now delegates
+  atmospheric normalization to the Python SDK while retaining entered-POH interpolation
+  and measured-track comparison as application policy.
 - Replaced G1000 Trip Planning's private flight-time, reserve-fuel, density-altitude,
   station-moment, and CG formulas with the TypeScript Aviation SDK and its shared C172
   profile; the application now retains only interactive state and presentation.
