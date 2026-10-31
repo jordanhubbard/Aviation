@@ -12,11 +12,11 @@ native Component or prove its acceptance contract is complete.
 
 The pre-adoption revision `f68efb8273508c74fbc3cd710e8f0ae1bc4a8d39` had
 1,409 tracked files. The original first pass preserved those paths and established
-the wrapper baseline. The current audit is bound to main revision
-`3eb6b597e3cd15485847f31905713508341c3d89`, 19 committed Component locks, and
+the wrapper baseline. The current audit baseline is bound to main revision
+`3e3d0498fbcfb767013bb1e7621c6e6e4522c241`, 19 committed Component locks, and
 retained receipt
-`sha256:05bd764935f252a52fc05343f0c15ea557e282041c2f3a1d39f44a62d893d436`
-with 589 admitted tests. It maps all 12 application directories and 10 shared
+`sha256:dd0e6fb52f8a90b98da4dc480c29c33719cd1802f3b841b32779fd8e6468e3ba`
+with 591 admitted tests. It maps all 12 application directories and 10 shared
 package directories. That receipt proves retained lifecycle parity; it does not by
 itself prove native regeneration or authorize retiring the wrapper.
 
@@ -215,23 +215,43 @@ application code.
 | Airport data — shared navigation asset | Byte-identical `apps/flight-planner/backend/data/airports_cache.json` and `packages/shared-sdk/data/airports_cache.json`; both are bound by tested provenance manifests to SHA-256 `2ea6613e...54d3`, 82,870 records, the OurAirports public-domain declaration, and the `elevation_ft` MSL contract. | Redistributable derived snapshot. Its acquisition time and input digest were not retained, so freshness remains unknown; retain the generated asset and do not claim it is current or navigation-authoritative. |
 | Airspace data — Flight Planner retained third-party data | Tested `apps/flight-planner/backend/data/provenance.json` binds `airspaces_us.json` (23,872 records) and `airspace_cache.json` (24,232 features) to exact digests. The generator identifies openAIP, whose live API schema declared CC BY-NC 4.0 and requested attribution on 2026-10-31; the combined cache has 360 features from an unretained legacy input. | Intentionally retained app data, not a Component asset. Historical acquisition terms, dates, input digests, freshness, and the legacy additions' provenance are unresolved. Visible attribution is present, but recorded evidence does not authorize commercial use or promotion; a refresh must retain all source evidence. |
 | Accident feed fixtures and seeds — Accident Tracker | `apps/aviation-accident-tracker/backend/data/` | Asset/fixture versus runtime-ingested data must be distinguished before promotion. |
-| Application persistence and credentials — each owning app/package | `apps/flight-track-analyzer/app/flightlab/store.py`; `packages/keystore/README.md`; app READMEs and environment configuration | Named runtime state and secret contracts, not generated source. Inventory locations, migration, and rollback per app. |
+| Application persistence and credentials — each owning app/package | `docs/roadmap/application-state-contracts.json` covers every `apps/*` directory and binds each entry to current source fragments; `scripts/check_application_state_contracts.py` rejects missing apps, stale evidence, incomplete lifecycle fields, or invalid ownership classifications. Shared keystore bindings have independent TypeScript and Python tests. | Intentionally retained application runtime state and credential adapters, plus repository-infrastructure keystore code. These are not aviation-domain SDK behavior. Known default credentials, unversioned stores, and missing restore or migration oracles remain explicit gaps rather than silently becoming Component authority. |
 | Workspace build and package graph — repository harness | `Makefile`, `pnpm-workspace.yaml`, `pnpm-lock.yaml`, `go.mod`, application/package manifests, and `apps/*/Makefile` | Repository-only harness plus target Flavors; each promoted boundary must keep a reproducible build and package oracle. |
 | CI, delivery, and release — repository workflow | Root `.github/workflows/ci.yml`, `dependency-scan.yml`, `deploy.yml`, `integration-tests.yml`, `performance_regression.yml`; R `scripts/release.sh` | Workflow and acceptance oracle; all six exact-main workflows at `3eb6b597e3cd15485847f31905713508341c3d89` passed, including the 12-application deployment-image matrix (run 41194894882). |
 | Target variance — Flavor authority | App Dockerfiles, Python requirements, `pnpm-workspace.yaml`, Clojure `project.clj`, Go `go.mod`, `k8s/`, `monitoring/` | Move OS, package, container, and toolchain requirements into Flavors only when each boundary is promoted. |
 | Retained parity — adoption harness | `.literate/harness-inventory.json`, `.literate/legacy-harness-baseline.json`, `.literate/legacy-wrapper-parity.json`, `verification/current.json` at project root | Baseline and independent acceptance evidence; current project receipt does not prove native source equivalence. |
 
+## Application persistence and credential conclusion
+
+The machine-readable
+[`application-state-contracts.json`](application-state-contracts.json) distinguishes
+durable databases and JSON files, browser-local preferences, disposable caches, dormant
+retained models, and credentials for all 12 applications. The inventory records each
+store's location, schema boundary, migration, backup, rollback, test oracle, and source
+evidence. Its credential entries record key names and resolution order only; no secret
+values belong in repository evidence.
+
+This review does not create an `aviation.persistence` or `aviation.credentials`
+Component. Database schemas, browser keys, OpenClaw/LLM/provider tokens, and deployment
+secrets do not share portable aviation semantics. The encrypted keystore is shared
+repository infrastructure: Common Aviation SDK CI now runs its TypeScript suite, and
+its Python adapter has independent tests for explicit store selection, environment
+fallback, required-value failure, caching, and key listing.
+
+The review also keeps shortcomings visible. Accident Tracker and Aviation Missions use
+known fallback administrator credentials; Flight School retains known development
+session/CSRF defaults; several JSON and database stores lack versioned migration,
+atomic snapshot, or tested restore contracts; and ForeFlight retains dormant database
+and authentication modules beside the live stateless application. Classification is
+not production approval, so these remain app-owned remediation work.
+
 ## Next review
 
-The application consumer pass is complete. Continue at file-level granularity: name
-public inputs and outputs, schema versions, persistent state, test oracle, runtime
-target, and dependencies for each retained package and cross-cutting asset. Classify
-each retained path as Component intent, Flavor requirement, conversion skill,
-immutable asset, repository harness, or intentionally retained source. Prioritize the
-application persistence and credential contracts next. The airport/airspace decision
-is now explicit and machine-checked: the airport snapshot is a public-domain derived
-asset of unknown freshness, while the openAIP/mixed airspace snapshots remain
-separately licensed retained app data with unresolved historical provenance. The
-project remains at the `retained` conversion stage;
+Continue at file-level granularity: name public inputs and outputs, schema versions,
+persistent state, test oracle, runtime target, and dependencies for each retained
+package and cross-cutting asset. Distinguish Accident Tracker feed fixtures and seed
+data from runtime-ingested records before promotion. Application persistence and
+credential contracts are now explicit and machine-checked, as are the airport and
+airspace decisions. The project remains at the `retained` conversion stage;
 19 Component locks and the current receipt are evidence for the migrated boundaries,
 not authority to retire unclassified retained source.

@@ -54,6 +54,7 @@ class SecretLoader:
         self.service_name = service_name
         self.fallback_to_env = fallback_to_env
         self.npm_executable = npm_executable
+        self.keystore_path = Path(keystore_path).resolve() if keystore_path else None
         
         # Determine keystore root (monorepo root)
         if keystore_path:
@@ -169,6 +170,7 @@ class SecretLoader:
             result = subprocess.run(
                 [self.npm_executable, "run", "keystore", "list", self.service_name],
                 cwd=str(self.keystore_root),
+                env=self._subprocess_env(),
                 capture_output=True,
                 text=True,
                 check=False
@@ -206,6 +208,7 @@ class SecretLoader:
             result = subprocess.run(
                 [self.npm_executable, "run", "keystore", "get", self.service_name, key],
                 cwd=str(self.keystore_root),
+                env=self._subprocess_env(),
                 capture_output=True,
                 text=True,
                 check=False
@@ -221,6 +224,13 @@ class SecretLoader:
             return None
         except Exception as e:
             raise KeystoreError(f"Error accessing keystore: {e}")
+
+    def _subprocess_env(self) -> Dict[str, str]:
+        """Return the CLI environment, including an explicitly selected store."""
+        env = dict(os.environ)
+        if self.keystore_path is not None:
+            env["KEYSTORE_PATH"] = str(self.keystore_path)
+        return env
     
     def clear_cache(self):
         """Clear the internal cache."""

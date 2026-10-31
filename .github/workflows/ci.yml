@@ -29,6 +29,10 @@ jobs:
       - name: Validate MAC contract
         run: make validate
 
+      - name: Validate application state and credential contracts
+        working-directory: .
+        run: python scripts/check_application_state_contracts.py
+
   # Check accessibility and color contrast
   accessibility:
     name: Accessibility & Color Contrast
