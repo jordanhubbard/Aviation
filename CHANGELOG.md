@@ -9,6 +9,9 @@
 
 ## Unreleased
 
+- Link the common C172S flight-dynamics model directly to `aviation.aircraft` and remove
+  its duplicate serialized operating limits, dimensions, fuel capacity, and reference
+  performance while retaining physics-specific model data and calculations.
 - Qualified a cross-language C172S sample loading profile in
   `aviation.weight-balance`, explicitly linked it to `aviation.aircraft`, and migrated
   G1000 Trip Planning away from its mismatched C172N record while retaining entered

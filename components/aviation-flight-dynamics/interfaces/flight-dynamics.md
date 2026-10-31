@@ -9,8 +9,9 @@
   rates in rad/s, mass in kg, optional fuel in US gallons, and elapsed time in s.
 - `ControlInputs` carries normalized throttle, mixture, propeller, aileron,
   elevator, rudder, flaps, and gear state.
-- `AircraftConfig` carries identity, mass properties, aerodynamics, engine, fuel,
-  operating limits, performance references, and optional variants.
+- `AircraftConfig` carries a physics-model identity, linked `aviation.aircraft` profile
+  identity, mass properties, aerodynamics, engine, derived fuel/operating/reference
+  values, and optional variants.
 
 ## Operations
 
@@ -34,6 +35,9 @@
 
 Capture thresholds, simulator stepping, controller-reset timing, and display
 annunciation policy are application concerns and are not part of this capability.
+Aircraft identity, published operating limits, dimensions, and reference performance
+are supplied by `aviation.aircraft`; this capability owns their use in physics, not a
+second authority copy.
 
 ## Compatibility
 

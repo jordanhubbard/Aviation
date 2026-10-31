@@ -2,11 +2,12 @@ FROM python:3.11-slim
 
 WORKDIR /app
 
-# Copy package files
+# Install the aircraft authority before the dependent physics package.
+COPY packages/shared-sdk/python /tmp/aviation-shared-sdk
 COPY packages/flight-dynamics/ .
 
 # Install dependencies
-RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install --no-cache-dir /tmp/aviation-shared-sdk .
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \

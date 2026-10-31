@@ -7,8 +7,14 @@ from pathlib import Path
 
 import pytest
 
-from aviation_flight_dynamics.aircraft import C172_CONFIG, validate_aircraft_config
+from aviation.aircraft import C172S_OPERATING_PROFILE
+from aviation_flight_dynamics.aircraft import (
+    C172_CONFIG,
+    load_c172_config,
+    validate_aircraft_config,
+)
 from aviation_flight_dynamics.aircraft.models import C182_CONFIG, SR22_CONFIG
+from aviation_flight_dynamics.aircraft.models.cessna_172 import MODEL_PATH
 from aviation_flight_dynamics.autopilot import (
     AltitudeHoldController,
     AutopilotModeController,
@@ -61,68 +67,61 @@ AUTHORITY_VECTOR_PATH = (
     / "vectors.json"
 )
 VECTORS = json.loads(PACKAGE_VECTOR_PATH.read_text(encoding="utf-8"))
-AIRCRAFT_PACKAGE_VECTOR_PATH = (
-    Path(__file__).resolve().parents[1] / "conformance" / "aircraft.json"
-)
-AIRCRAFT_AUTHORITY_VECTOR_PATH = (
-    Path(__file__).resolve().parents[6]
-    / "components"
-    / "aviation-aircraft"
-    / "acceptance"
-    / "vectors.json"
-)
-AIRCRAFT_VECTORS = json.loads(
-    AIRCRAFT_PACKAGE_VECTOR_PATH.read_text(encoding="utf-8")
-)
-
-
 def test_packaged_vectors_match_component_authority() -> None:
     if AUTHORITY_VECTOR_PATH.exists():
         assert json.loads(AUTHORITY_VECTOR_PATH.read_text(encoding="utf-8")) == VECTORS
 
 
-def test_packaged_aircraft_vectors_match_component_authority() -> None:
-    if AIRCRAFT_AUTHORITY_VECTOR_PATH.exists():
-        assert (
-            json.loads(AIRCRAFT_AUTHORITY_VECTOR_PATH.read_text(encoding="utf-8"))
-            == AIRCRAFT_VECTORS
-        )
-
-
 def test_c172s_flight_model_matches_aircraft_component() -> None:
-    profile = AIRCRAFT_VECTORS["profiles"]["cessna-172s"]
-    airspeeds = profile["airspeedLimits"]
-    fuel = profile["fuelLimits"]
-    weight = profile["weightLimits"]
-    dimensions = profile["dimensions"]
-    reference = profile["referencePerformance"]
+    profile = C172S_OPERATING_PROFILE
+    airspeeds = profile.airspeed_limits
+    fuel = profile.fuel_limits
+    weight = profile.weight_limits
+    dimensions = profile.dimensions
+    reference = profile.reference_performance
     limits = C172_CONFIG.limits
-    assert C172_CONFIG.manufacturer == profile["manufacturer"]
-    assert limits.stall_speed_landing_kt == airspeeds["vsoKias"]
-    assert limits.stall_speed_clean_kt == airspeeds["vsKias"]
-    assert limits.max_flap_extended_speed_kt == airspeeds["vfeKias"]
-    assert limits.maneuvering_speed_kt == airspeeds["vaKias"]
-    assert limits.max_operating_speed_kt == airspeeds["vnoKias"]
-    assert limits.never_exceed_speed_kt == airspeeds["vneKias"]
-    assert C172_CONFIG.fuel.capacity_gal == fuel["totalCapacityGal"]
+    assert C172_CONFIG.aircraft_profile_id == profile.profile_id
+    assert C172_CONFIG.name == profile.display_name
+    assert C172_CONFIG.manufacturer == profile.manufacturer
+    assert limits.stall_speed_landing_kt == airspeeds.vso_kias
+    assert limits.stall_speed_clean_kt == airspeeds.vs_kias
+    assert limits.max_flap_extended_speed_kt == airspeeds.vfe_kias
+    assert limits.maneuvering_speed_kt == airspeeds.va_kias
+    assert limits.max_operating_speed_kt == airspeeds.vno_kias
+    assert limits.never_exceed_speed_kt == airspeeds.vne_kias
+    assert C172_CONFIG.fuel.capacity_gal == fuel.total_capacity_gal
     assert (
         C172_CONFIG.fuel.capacity_gal - C172_CONFIG.fuel.unusable_gal
-        == fuel["usableCapacityGal"]
+        == fuel.usable_capacity_gal
     )
     assert (
         C172_CONFIG.mass_properties.max_gross_weight_lbs
-        == weight["maximumTakeoffWeightLb"]
+        == weight.maximum_takeoff_weight_lb
     )
     assert (
         C172_CONFIG.aerodynamics.geometry.wing_span_ft
-        == pytest.approx(dimensions["wingspanFt"])
+        == pytest.approx(dimensions.wingspan_ft)
     )
     performance = C172_CONFIG.performance
-    assert performance.cruise_speed_kt == reference["maximumCruiseSpeedKtas"]
-    assert performance.climb_rate_fpm == reference["maximumClimbRateFpm"]
-    assert performance.service_ceiling_ft == reference["serviceCeilingFt"]
-    assert performance.takeoff_distance_ft == reference["takeoffDistanceFt"]
-    assert performance.landing_distance_ft == reference["landingDistanceFt"]
+    assert performance.cruise_speed_kt == reference.maximum_cruise_speed_ktas
+    assert performance.climb_rate_fpm == reference.maximum_climb_rate_fpm
+    assert performance.service_ceiling_ft == reference.service_ceiling_ft
+    assert performance.takeoff_distance_ft == reference.takeoff_distance_ft
+    assert performance.landing_distance_ft == reference.landing_distance_ft
+
+
+def test_c172s_asset_retains_only_physics_specific_fields() -> None:
+    model = json.loads(MODEL_PATH.read_text(encoding="utf-8"))
+    assert {"aircraft_id", "name", "manufacturer", "performance"}.isdisjoint(model)
+    assert "max_gross_weight_lbs" not in model["mass_properties"]
+    assert "wing_span_ft" not in model["aerodynamics"]["geometry"]
+    assert set(model["fuel"]) == {"fuel_density_lbs_per_gal"}
+    assert set(model["limits"]) == {"max_bank_angle_deg", "max_pitch_angle_deg"}
+
+
+def test_c172s_model_rejects_mismatched_aircraft_authority() -> None:
+    with pytest.raises(ValueError, match="cessna-172s"):
+        load_c172_config(replace(C172S_OPERATING_PROFILE, profile_id="other-aircraft"))
 
 
 def test_invalid_aircraft_operating_profiles_fail_closed() -> None:
@@ -134,13 +133,14 @@ def test_invalid_aircraft_operating_profiles_fail_closed() -> None:
         "vnoKias": "max_operating_speed_kt",
         "vneKias": "never_exceed_speed_kt",
     }
-    for mutation in AIRCRAFT_VECTORS["invalidMutations"]:
-        if mutation["path"][0] != "airspeedLimits":
-            continue
-        field = mutation["path"][1]
-        value = mutation["value"]
-        if value == "non-finite":
-            value = math.nan
+    invalid_values = {
+        "vsoKias": 49,
+        "vaKias": 48,
+        "vnoKias": 163,
+        "vfeKias": 40,
+        "vneKias": math.nan,
+    }
+    for field, value in invalid_values.items():
         with pytest.raises(ValueError):
             replace(C172_CONFIG.limits, **{field_names[field]: value})
 

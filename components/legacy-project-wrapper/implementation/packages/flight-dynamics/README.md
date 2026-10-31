@@ -19,6 +19,11 @@ The Flight Dynamics package is the Python realization of the
 - **State Serialization**: Efficient state representation for client applications
 - **Deterministic Updates**: Consistent physics calculations with fixed time steps
 
+The bundled C172S physics model depends on the Python `aviation-shared-sdk` realization
+of `aviation.aircraft` for identity and published operating/reference values. Its local
+model asset contains only physics-specific mass, aerodynamic, engine, control, and fuel
+density data.
+
 ## Installation
 
 ```bash

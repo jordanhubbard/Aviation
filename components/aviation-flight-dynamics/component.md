@@ -1,6 +1,6 @@
 ---
 namespace: aviation
-version: 0.1.0
+version: 0.2.0
 display_name: Aviation flight dynamics
 profiles:
   - library
@@ -8,11 +8,17 @@ profiles:
 sample: false
 provides:
   - name: aviation.flight-dynamics
-    version: 0.1.0
+    version: 0.2.0
     interface:
       uri: interfaces/flight-dynamics.md
       pin: null
-requires: []
+requires:
+  - requirement_id: aircraft-profile-authority
+    capability: aviation.aircraft
+    version_range: ">=0.2,<1"
+    dependency_kind: runtime
+    optional: false
+    constraints: []
 authoring_inputs:
   - kind: specification-to-source-skill
     uri: skills/specification-to-source/portable-application-implementation/SKILL.md
@@ -35,7 +41,8 @@ This Component owns deterministic atmosphere, environmental wind, scalar force,
 rigid-body integration, aircraft performance, aircraft-model validation, and
 autopilot-control primitives. It does not own avionics display state, HTTP schemas,
 alert presentation, route planning, recorded-flight analytics, or operational pilot
-decisions.
+decisions. Bundled physics models link to `aviation.aircraft` for operating identity,
+limits, dimensions, and manufacturer-published reference figures.
 
 The public surface is defined by `interfaces/flight-dynamics.md`. Every realization
 must pass `acceptance/flight-dynamics.md` against `acceptance/vectors.json` without
@@ -95,3 +102,18 @@ explicit in the acceptance vector; validation errors SHALL fail common SDK CI.
 
 - **WHEN** C172, C182, and SR22 configurations are validated
 - **THEN** their identifiers and declared error/warning counts match the vector
+
+### Requirement: Physics models use aircraft operating authority
+
+The bundled C172S model SHALL name its `aviation.aircraft` profile and derive shared
+identity, maximum takeoff weight, fuel capacity, airspeed limits, wingspan, and
+manufacturer-published reference performance from that profile at runtime. The physics
+asset SHALL retain only simulation-specific mass/CG/inertia, aerodynamic geometry and
+coefficients, engine response, fuel density, control effects, and simulation attitude
+constraints.
+
+#### Scenario: C172S physics is loaded
+
+- **WHEN** the bundled C172S configuration is constructed
+- **THEN** its shared fields equal the linked `cessna-172s` operating profile without a
+  second serialized copy in the flight-dynamics package
