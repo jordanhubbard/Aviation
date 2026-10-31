@@ -207,16 +207,22 @@ release-visible outcome to `CHANGELOG.md`; Git preserves prior queue states.
     application currently consumes this surface, so do not invent application behavior
     merely to create a consumer. Delivered under MAC task
     `task_d203ebc32768084c7b822733f605f1a7`.
+  - [x] Promote the existing cross-language `aviation-config` registry into an
+    explicit Component with shared TypeScript/Python acceptance vectors for canonical
+    service and field definitions, uniqueness, deterministic app-scope filtering, and
+    required-field configuration status. Keep environment and keystore access, HTTP
+    settings endpoints, and React presentation in adapters. Delivered under MAC task
+    `task_edf80313e775308581dd3dcdfe2e7ad9`.
   - [ ] Promote airports, weather, procedures/nav-data, flight dynamics, avionics
-    protocols/rendering, shared UI, configuration, and integration infrastructure into
+    protocols/rendering, shared UI, and integration infrastructure into
     explicit Components with owned tests and contracts.
   - [ ] Migrate each application to those capabilities and remove app-local common
     aviation implementations after parity qualification.
   - [ ] Classify and remove or intentionally retain every remainder beneath the legacy
     wrapper.
-- **Next action:** Inventory shared UI, configuration, and integration infrastructure,
-  then promote the next reusable domain into Component-owned acceptance while keeping
-  provider/application-only behavior outside it.
+- **Next action:** Inventory shared UI and integration infrastructure, promote the next
+  reusable domain into Component-owned acceptance, and continue replacing app-local
+  common aviation logic with qualified SDK consumption.
 - **Evidence:** Phase 1.2 lift-and-shift identity `sha256:c5ca4361ba010f6e8d81c93398468f9f4f8b8cc352504bc8535fa74b7c6e9990`.
   Retained conversion established original-source release authority; each migration
   refreshes the verifier-owned receipt in `verification/current.json`.
@@ -243,6 +249,15 @@ release-visible outcome to `CHANGELOG.md`; Git preserves prior queue states.
   `sha256:57ff7868b7f12f942278bf87401c75c94b47bfefd5214a89adb092d99cb79346`
   records all 510 admitted SDK tests. No application currently consumes this surface,
   so provider adapters remain separate and no synthetic consumer was introduced.
+  Configuration qualification adds Component revision
+  `sha256:a56b9dac1f26ed9954373ab24f5a09952915a8848720a7a1c8ba393a3b663d96`;
+  its shared vectors pass 14 TypeScript and 15 Python tests, including environment-
+  adapter coverage, while G1000 Settings and the meta-app both build against the common
+  package. The complete retained `make test` gate passes, retained source membership
+  admits all four configuration conformance artifacts, and verifier-owned candidate
+  `sha256:a3e1637b7c18cf2d96f6fa34751119027c01251efc8687883d06605f369ab8ba`
+  records all 510 admitted SDK tests in current receipt
+  `sha256:5c94f7c783a30a944042a7e3029545c7af2cbf60246a3c7aa24fd5042e392d1c`.
   The first native boundary has Component lock
   `sha256:b156aad3a60d74a7eba30b6f4e7ba5d8cc01c8ecc2d7c41a069348db6ed75a9b`;
   its shared acceptance vectors pass 292 TypeScript and 94 Python SDK tests, and

@@ -34,7 +34,7 @@ except Exception as _exc:
     print(f"Warning: Keystore not available: {_exc}")
     _KEYSTORE_AVAILABLE = False
 
-from .registry import SERVICE_REGISTRY, Service, get_services_by_app
+from .registry import SERVICE_REGISTRY, Service, build_service_status, get_services_by_app
 
 
 class AviationConfig:
@@ -139,20 +139,14 @@ class AviationConfig:
         """
         result = []
         for service in get_services_by_app(self.app_id):
-            field_statuses = [
-                {"key": field.key, "configured": self.is_configured(service.id, field.key)}
-                for field in service.fields
-            ]
-            all_required_configured = all(
-                fs["configured"]
-                for fs, field in zip(field_statuses, service.fields)
-                if field.required
-            )
             result.append(
-                {
-                    "id": service.id,
-                    "configured": all_required_configured,
-                    "fields": field_statuses,
-                }
+                build_service_status(
+                    service,
+                    [
+                        field.key
+                        for field in service.fields
+                        if self.is_configured(service.id, field.key)
+                    ],
+                )
             )
         return result

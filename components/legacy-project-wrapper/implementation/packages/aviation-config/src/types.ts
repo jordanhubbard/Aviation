@@ -19,6 +19,23 @@ export type ServiceDefinition = {
   appScope: string[]     // which apps use this: ['flight-planner', 'weather-briefing', 'all']
 }
 
+export type ServiceDefinitionInput = {
+  id: string
+  name: string
+  description: string
+  category: string
+  docsUrl?: string
+  fields: Array<{
+    key: string
+    label: string
+    description: string
+    required: boolean
+    secret: boolean
+    envVar: string
+  }>
+  appScope: string[]
+}
+
 export type ServiceStatus = {
   id: string
   configured: boolean
