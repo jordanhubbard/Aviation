@@ -117,6 +117,13 @@ release-visible outcome to `CHANGELOG.md`; Git preserves prior queue states.
   - [x] Remove G1000 and Flight Planner's unused private geodesy service scaffolds;
     their methods were never called and returned only `None` or constant zero, while
     realized route distance and bearing already delegate to `aviation.navigation`.
+  - [x] Qualify coordinated-turn bank and configurable synthetic piston-engine
+    instrument projection in `aviation.flight-dynamics`; migrate Flight Track
+    Analyzer's shared turn physics and G1000's synthetic engine state to those
+    operations, and route G1000 MFD map/flight-plan geodesy through
+    `aviation.navigation`. Retain measured-segment inference, regression, percentile
+    summaries, session fuel state, alerts, gauge layout, and pixel projection as
+    application policy.
   - [x] Qualify headwind/crosswind components, wind-correction angle, corrected
     heading, and along-course ground speed with shared TypeScript/Python vectors;
     migrate Flight Planner's bearing, wind-component, and wind-triangle arithmetic to
@@ -167,10 +174,10 @@ release-visible outcome to `CHANGELOG.md`; Git preserves prior queue states.
     aviation implementations after parity qualification.
   - [ ] Classify and remove or intentionally retain every remainder beneath the legacy
     wrapper.
-- **Next action:** Audit Flight Track Analyzer's remaining measured performance
-  arithmetic and G1000's synthetic engine/display projections against the aircraft and
-  flight-dynamics boundaries; qualify reusable behavior and explicitly retain only
-  measured-track inference or display policy.
+- **Next action:** Audit G1000's remaining backend heading/position stepping and Flight
+  Planner's compatibility heading semantics against navigation and flight-dynamics;
+  qualify reusable behavior while retaining simulator orchestration, capture thresholds,
+  and compatibility response policy.
 - **Evidence:** Phase 1.2 lift-and-shift identity `sha256:c5ca4361ba010f6e8d81c93398468f9f4f8b8cc352504bc8535fa74b7c6e9990`.
   Retained conversion stage is backed by current test receipt
   `sha256:60e252aceb5834018a21d3ec5a75b667c564e207ea3cf02d475b3245640c3c79`;
@@ -223,6 +230,14 @@ release-visible outcome to `CHANGELOG.md`; Git preserves prior queue states.
   the six-test G1000 SDK boundary plus production frontend build pass. Analyzer
   vectorization and HSI pixel scaling remain application policy; their private
   navigation formulas are removed.
+  Turn/instrument projection qualification adds portable coordinated-turn bank and
+  synthetic piston-engine vectors across both flight-dynamics bindings. The TypeScript
+  SDK passes 417 tests and its build, the Python flight-dynamics package passes 29
+  tests, Flight Track Analyzer passes 73 tests, G1000 passes eight SDK-boundary tests,
+  28 backend tests plus two isolated AHRS tests, and its production frontend build.
+  Analyzer segmentation/regression and G1000 session fuel, alerts, gauges, and pixel
+  projection remain explicit application policy; MFD coordinate offsets and leg
+  distance now use `aviation.navigation`.
   The G1000 and Flight Planner private geodesy service placeholders were classified as
   non-realized scaffolding and removed with application boundary tests preventing their
   reintroduction; all 30 G1000 backend tests and 178 non-integration Flight Planner

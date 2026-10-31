@@ -30,11 +30,17 @@
   vertical speed, and disconnect reason
 - `autotrim_update(state, control_inputs, dt_s, rate, deadband) -> trim_state`
 - `envelope_check(limits, bank_deg, pitch_deg, airspeed_kt) -> protection_status`
+- `coordinated_turn_bank(speed_mps, turn_rate_dps) -> bank_deg` returns the bank-angle
+  magnitude implied by a coordinated turn.
+- `piston_engine_instrument_projection(airspeed_kt, cylinder_count?) -> instruments`
+  returns deterministic RPM, fuel-flow, oil, electrical, manifold-pressure, and
+  per-cylinder EGT/CHT values for synthetic simulator telemetry.
 - compatibility scalar lift, drag, thrust, fuel-consumption, wind, and turbulence
   operations for retained applications.
 
-Capture thresholds, simulator stepping, controller-reset timing, and display
-annunciation policy are application concerns and are not part of this capability.
+Capture thresholds, simulator stepping, controller-reset timing, measured-track
+segmentation/regression, session fuel state, and display layout or annunciation policy
+are application concerns and are not part of this capability.
 Aircraft identity, published operating limits, dimensions, and reference performance
 are supplied by `aviation.aircraft`; this capability owns their use in physics, not a
 second authority copy.

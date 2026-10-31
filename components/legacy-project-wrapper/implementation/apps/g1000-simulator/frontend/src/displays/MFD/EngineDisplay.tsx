@@ -1,14 +1,13 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 
 import { TelemetrySnapshot } from '../../hooks/useTelemetrySocket'
+import { projectEngineInstruments } from '../../integrations/sharedSdk'
 import { useSoftkeyStore, useSoftkeyToggle } from '../../stores/softkeyStore'
 
 type EngineDisplayProps = {
   telemetry: TelemetrySnapshot | null
   layout?: 'summary' | 'full'
 }
-
-const clamp = (value: number, min: number, max: number) => Math.min(Math.max(value, min), max)
 
 export const EngineDisplay = ({ telemetry, layout = 'summary' }: EngineDisplayProps) => {
   const lastAction = useSoftkeyStore((state) => state.contexts.mfd.lastAction)
@@ -31,19 +30,19 @@ export const EngineDisplay = ({ telemetry, layout = 'summary' }: EngineDisplayPr
 
   const airspeed = telemetry?.velocity.airspeed_kt ?? 0
 
-  const egtValues = useMemo(() => {
-    const base = clamp(1280 + airspeed * 1.6, 1150, 1550)
-    return Array.from({ length: 6 }, (_, index) =>
-      Math.round(base + (index - 2.5) * 12 + Math.sin(index + airspeed / 40) * 8),
-    )
-  }, [airspeed])
-
-  const chtValues = useMemo(() => {
-    const base = clamp(330 + airspeed * 0.45, 300, 430)
-    return Array.from({ length: 6 }, (_, index) =>
-      Math.round(base + (index - 2.5) * 6 + Math.cos(index + airspeed / 50) * 5),
-    )
-  }, [airspeed])
+  const instruments = useMemo(() => projectEngineInstruments(airspeed), [airspeed])
+  const {
+    rpm,
+    oilTempF: oilTemp,
+    oilPressurePsi: oilPressure,
+    fuelFlowGph: fuelFlow,
+    busVolts: volts,
+    alternatorLoadAmps: amps,
+    manifoldPressureInHg: manifoldPressure,
+    batteryTempF: batteryTemp,
+    egtF: egtValues,
+    chtF: chtValues,
+  } = instruments
 
   const peakEgt = Math.max(...egtValues)
   const peakCylinder = egtValues.findIndex((value) => value === peakEgt) + 1
@@ -56,15 +55,6 @@ export const EngineDisplay = ({ telemetry, layout = 'summary' }: EngineDisplayPr
       </div>
     )
   }
-
-  const rpm = Math.round(clamp(1900 + airspeed * 6, 1800, 2700))
-  const oilTemp = Math.round(clamp(175 + airspeed * 0.35, 150, 245))
-  const oilPressure = Math.round(clamp(50 + airspeed * 0.12, 40, 85))
-  const fuelFlow = clamp(7 + airspeed * 0.03, 6, 14)
-  const volts = clamp(27.5 + airspeed * 0.01, 27.5, 28.4)
-  const amps = Math.round(clamp(20 + airspeed * 0.08, 18, 32))
-  const manifoldPressure = clamp(18 + airspeed * 0.02, 18, 29)
-  const batteryTemp = Math.round(clamp(80 + airspeed * 0.1, 70, 120))
 
   const elapsedHours = (Date.now() - fuelStartRef.current.startedAt) / 3_600_000
   const fuelRemaining = Math.max(0, fuelStartRef.current.fuel - fuelFlow * elapsedHours)

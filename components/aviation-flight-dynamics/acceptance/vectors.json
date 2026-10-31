@@ -1,5 +1,5 @@
 {
-  "schema": "aviation/flight-dynamics-vectors@1",
+  "schema": "aviation/flight-dynamics-vectors@2",
   "tolerance": 1e-6,
   "atmosphere": {
     "altitude_m": 0.0,
@@ -15,6 +15,27 @@
     "gust_frequency_hz": 0.25,
     "time_s": 1.0,
     "expected_total_mps": [12.0, 0.0, 0.0]
+  },
+  "coordinated_turn": {
+    "speed_mps": 50.0,
+    "turn_rate_dps": 3.0,
+    "expected_bank_deg": 14.947164770426596
+  },
+  "piston_engine_projection": {
+    "airspeed_kt": 100.0,
+    "cylinder_count": 6,
+    "expected": {
+      "rpm": 2500,
+      "oil_temp_f": 210,
+      "oil_pressure_psi": 62,
+      "fuel_flow_gph": 10.0,
+      "bus_volts": 28.4,
+      "alternator_load_amps": 28,
+      "manifold_pressure_inhg": 20.0,
+      "battery_temp_f": 90,
+      "egt_f": [1415, 1419, 1426, 1440, 1460, 1478],
+      "cht_f": [358, 361, 369, 379, 389, 394]
+    }
   },
   "pid": {
     "gains": [1.0, 0.1, 0.2],

@@ -7,7 +7,8 @@ WORKDIR /app
 
 COPY apps/flight-track-analyzer/app/requirements.txt ./requirements.txt
 COPY packages/shared-sdk/python /tmp/shared-sdk-python
-RUN python -m pip install --no-cache-dir -r requirements.txt /tmp/shared-sdk-python
+COPY packages/flight-dynamics /tmp/flight-dynamics
+RUN python -m pip install --no-cache-dir -r requirements.txt /tmp/shared-sdk-python /tmp/flight-dynamics
 COPY apps/flight-track-analyzer/app/ ./
 COPY packages/shared-sdk/data/airports_cache.json /opt/aviation/airports_cache.json
 

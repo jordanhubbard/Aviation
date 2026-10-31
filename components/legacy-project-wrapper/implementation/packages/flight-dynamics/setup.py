@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='aviation-flight-dynamics',
-    version='0.3.0',
+    version='0.4.0',
     description='Flight physics simulation engine for aviation applications',
     author='Aviation Team',
     packages=find_packages(),

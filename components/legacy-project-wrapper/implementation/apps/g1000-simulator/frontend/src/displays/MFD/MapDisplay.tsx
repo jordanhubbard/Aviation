@@ -8,6 +8,7 @@ import { useMfdStore, MAP_RANGE_OPTIONS } from '../../stores/mfdStore'
 import { useRotaryKnobStore } from '../../stores/rotaryKnobStore'
 import { useSoftkeyToggle } from '../../stores/softkeyStore'
 import { getTerrainAlertLevel, getTerrainElevation, terrainAlertRank } from '../../services/mfdTerrain'
+import { coordinateOffsetNm, offsetCoordinateNm } from '../../integrations/sharedSdk'
 import { formatCoordinate, formatNumber, formatSigned, normalizeHeading } from '../PFD/formatters'
 
 type MapDisplayProps = {
@@ -79,19 +80,7 @@ type Obstacle = {
   alert: 'none' | 'caution' | 'warning'
 }
 
-const NM_PER_DEG_LAT = 60
-
-const degToRad = (value: number) => (value * Math.PI) / 180
-
-const lonScale = (lat: number) => Math.cos(degToRad(lat)) || 1
-
 const clampRatio = (value: number) => Math.max(0, Math.min(1, value))
-
-const offsetCoordinates = (lat: number, lon: number, eastNm: number, northNm: number) => {
-  const latOffset = northNm / NM_PER_DEG_LAT
-  const lonOffset = eastNm / (NM_PER_DEG_LAT * lonScale(lat))
-  return { lat: lat + latOffset, lon: lon + lonOffset }
-}
 
 const toMapPoint = (
   lat: number,
@@ -101,11 +90,10 @@ const toMapPoint = (
   rangeNm: number,
 ) => {
   if (!Number.isFinite(rangeNm) || rangeNm <= 0) return null
-  const deltaLatNm = (lat - centerLat) * NM_PER_DEG_LAT
-  const deltaLonNm = (lon - centerLon) * NM_PER_DEG_LAT * lonScale(centerLat)
-  if (Math.abs(deltaLatNm) > rangeNm * 1.25 || Math.abs(deltaLonNm) > rangeNm * 1.25) return null
-  const x = 50 + (deltaLonNm / rangeNm) * 50
-  const y = 50 - (deltaLatNm / rangeNm) * 50
+  const offset = coordinateOffsetNm(lat, lon, centerLat, centerLon)
+  if (Math.abs(offset.northNm) > rangeNm * 1.25 || Math.abs(offset.eastNm) > rangeNm * 1.25) return null
+  const x = 50 + (offset.eastNm / rangeNm) * 50
+  const y = 50 - (offset.northNm / rangeNm) * 50
   return {
     x: Math.max(0, Math.min(100, x)),
     y: Math.max(0, Math.min(100, y)),
@@ -265,7 +253,7 @@ export const MapDisplay = ({ telemetry }: MapDisplayProps) => {
   const center = useMemo(() => {
     const baseLat = latitude ?? 37.618805
     const baseLon = longitude ?? -122.375416
-    return offsetCoordinates(baseLat, baseLon, panOffset.eastNm, panOffset.northNm)
+    return offsetCoordinateNm(baseLat, baseLon, panOffset.eastNm, panOffset.northNm)
   }, [latitude, longitude, panOffset.eastNm, panOffset.northNm])
 
   const cursorCoordinate = useMemo(() => {
@@ -274,7 +262,7 @@ export const MapDisplay = ({ telemetry }: MapDisplayProps) => {
       eastNm: (position.x - 0.5) * rangeNm,
       northNm: (0.5 - position.y) * rangeNm,
     }
-    return offsetCoordinates(latitude, longitude, cursorOffset.eastNm, cursorOffset.northNm)
+    return offsetCoordinateNm(latitude, longitude, cursorOffset.eastNm, cursorOffset.northNm)
   }, [isActive, latitude, longitude, position.x, position.y, rangeNm])
 
   const navFeatures = useMemo(() => {
@@ -294,7 +282,7 @@ export const MapDisplay = ({ telemetry }: MapDisplayProps) => {
       id: seed.id,
       type: seed.type,
       label: seed.label,
-      ...offsetCoordinates(baseLat, baseLon, seed.eastNm, seed.northNm),
+      ...offsetCoordinateNm(baseLat, baseLon, seed.eastNm, seed.northNm),
     })) satisfies MapFeature[]
   }, [latitude, longitude])
 
@@ -309,7 +297,7 @@ export const MapDisplay = ({ telemetry }: MapDisplayProps) => {
       id: ring.id,
       label: ring.label,
       radiusNm: ring.radiusNm,
-      ...offsetCoordinates(baseLat, baseLon, ring.eastNm, ring.northNm),
+      ...offsetCoordinateNm(baseLat, baseLon, ring.eastNm, ring.northNm),
     })) satisfies AirspaceRing[]
   }, [latitude, longitude])
 
@@ -329,7 +317,7 @@ export const MapDisplay = ({ telemetry }: MapDisplayProps) => {
         eastNm: (index - midpoint) * 8,
         northNm: (index - midpoint) * 5,
       }
-      const derived = offsetCoordinates(baseLat, baseLon, offset.eastNm, offset.northNm)
+      const derived = offsetCoordinateNm(baseLat, baseLon, offset.eastNm, offset.northNm)
       return {
         id: point.id,
         lat: point.latitude_deg ?? derived.lat,
@@ -351,7 +339,7 @@ export const MapDisplay = ({ telemetry }: MapDisplayProps) => {
       id: cell.id,
       intensity: cell.intensity,
       radiusNm: cell.radiusNm,
-      ...offsetCoordinates(baseLat, baseLon, cell.eastNm, cell.northNm),
+      ...offsetCoordinateNm(baseLat, baseLon, cell.eastNm, cell.northNm),
     })) satisfies WeatherCell[]
   }, [latitude, longitude])
 
@@ -368,7 +356,7 @@ export const MapDisplay = ({ telemetry }: MapDisplayProps) => {
       id: wind.id,
       direction: wind.direction,
       speed: wind.speed,
-      ...offsetCoordinates(baseLat, baseLon, wind.eastNm, wind.northNm),
+      ...offsetCoordinateNm(baseLat, baseLon, wind.eastNm, wind.northNm),
     })) satisfies WindOverlay[]
   }, [heading, latitude, longitude])
 
@@ -382,7 +370,7 @@ export const MapDisplay = ({ telemetry }: MapDisplayProps) => {
     ]
     return strikes.map((strike) => ({
       id: strike.id,
-      ...offsetCoordinates(baseLat, baseLon, strike.eastNm, strike.northNm),
+      ...offsetCoordinateNm(baseLat, baseLon, strike.eastNm, strike.northNm),
     })) satisfies LightningStrike[]
   }, [latitude, longitude])
 
@@ -397,7 +385,7 @@ export const MapDisplay = ({ telemetry }: MapDisplayProps) => {
       { id: 'TFC3', eastNm: 2, northNm: -12 + Math.sin(timeSeed / 3) * 4, alt: 900 },
     ]
     return offsets.map((offset) => {
-      const position = offsetCoordinates(baseLat, baseLon, offset.eastNm, offset.northNm)
+      const position = offsetCoordinateNm(baseLat, baseLon, offset.eastNm, offset.northNm)
       const distanceNm = Math.sqrt(offset.eastNm ** 2 + offset.northNm ** 2)
       const relativeAltitude = offset.alt
       const alert =
@@ -428,7 +416,7 @@ export const MapDisplay = ({ telemetry }: MapDisplayProps) => {
     ]
     const altitude = telemetry?.position.altitude_ft ?? 0
     return obstacleSeeds.map((obstacle) => {
-      const position = offsetCoordinates(baseLat, baseLon, obstacle.eastNm, obstacle.northNm)
+      const position = offsetCoordinateNm(baseLat, baseLon, obstacle.eastNm, obstacle.northNm)
       const clearance = altitude - obstacle.heightFt
       const alert = clearance <= 100 ? 'warning' : clearance <= 300 ? 'caution' : 'none'
       return {
@@ -453,7 +441,7 @@ export const MapDisplay = ({ telemetry }: MapDisplayProps) => {
       const col = index % gridSize
       const northNm = ((gridSize / 2 - (row + 0.5)) / gridSize) * rangeNm * 2
       const eastNm = (((col + 0.5) - gridSize / 2) / gridSize) * rangeNm * 2
-      const cellLatLon = offsetCoordinates(center.lat, center.lon, eastNm, northNm)
+      const cellLatLon = offsetCoordinateNm(center.lat, center.lon, eastNm, northNm)
       const elevationFt = getTerrainElevation(cellLatLon.lat, cellLatLon.lon)
       const alertLevel = getTerrainAlertLevel(altitude, elevationFt)
       return {

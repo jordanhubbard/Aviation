@@ -37,3 +37,16 @@ def test_track_geometry_delegates_to_sdk() -> None:
     assert "EARTH_R" not in source
     assert "np.radians" not in source
     assert "% 360.0" not in source
+
+
+def test_turn_physics_delegates_to_flight_dynamics_sdk() -> None:
+    source = (FLIGHTLAB / "track.py").read_text()
+    assert "from aviation_flight_dynamics import coordinated_turn_bank_deg" in source
+    assert "np.degrees(np.arctan(gs *" not in source
+    assert "np.radians(np.abs(turn_dps))" not in source
+
+
+def test_measured_performance_remains_analyzer_policy() -> None:
+    source = (FLIGHTLAB / "performance.py").read_text()
+    for policy in ("def seg_rows", "np.polyfit", "np.percentile", "best_rate_speed_kt"):
+        assert policy in source
