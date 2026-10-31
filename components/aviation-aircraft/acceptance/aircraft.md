@@ -6,7 +6,7 @@ external service.
 
 ## Requirement: Bundled operating profiles agree
 
-### Scenario: The C172S profile is loaded
+### Scenario: A bundled profile is loaded
 
 - **WHEN** the bundled profile is requested by stable ID or ICAO designator
 - **THEN** its identity, operating limits, fuel and weight limits, dimensions, and

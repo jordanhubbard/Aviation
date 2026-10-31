@@ -2,13 +2,13 @@ from setuptools import setup, find_packages
 
 setup(
     name='aviation-flight-dynamics',
-    version='0.2.0',
+    version='0.3.0',
     description='Flight physics simulation engine for aviation applications',
     author='Aviation Team',
     packages=find_packages(),
     python_requires='>=3.11',
     install_requires=[
-        'aviation-shared-sdk>=0.2.0',
+        'aviation-shared-sdk>=0.3.0',
         'fastapi>=0.70.0',
         'uvicorn>=0.15.0',
         'pydantic>=1.8.2',

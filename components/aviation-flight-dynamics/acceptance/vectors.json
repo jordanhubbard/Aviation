@@ -326,7 +326,7 @@
   "models": [
     {"identifier": "cessna-172", "errors": 0, "warnings": 0},
     {"identifier": "cessna-182", "errors": 0, "warnings": 0},
-    {"identifier": "cirrus-sr22", "errors": 0, "warnings": 1}
+    {"identifier": "cirrus-sr22", "errors": 0, "warnings": 0}
   ],
   "c172_performance": {
     "power_setting": 0.75,

@@ -80,7 +80,9 @@ class AircraftReferencePerformance:
     maximum_cruise_speed_ktas: float
     maximum_climb_rate_fpm: float
     service_ceiling_ft: float
+    takeoff_ground_roll_ft: float
     takeoff_distance_ft: float
+    landing_ground_roll_ft: float
     landing_distance_ft: float
 
     def __post_init__(self) -> None:
@@ -152,7 +154,9 @@ def aircraft_operating_profile_from_mapping(
             maximum_cruise_speed_ktas=performance["maximumCruiseSpeedKtas"],
             maximum_climb_rate_fpm=performance["maximumClimbRateFpm"],
             service_ceiling_ft=performance["serviceCeilingFt"],
+            takeoff_ground_roll_ft=performance["takeoffGroundRollFt"],
             takeoff_distance_ft=performance["takeoffDistanceFt"],
+            landing_ground_roll_ft=performance["landingGroundRollFt"],
             landing_distance_ft=performance["landingDistanceFt"],
         ),
     )
@@ -186,12 +190,88 @@ C172S_OPERATING_PROFILE = AircraftOperatingProfile(
         maximum_cruise_speed_ktas=124,
         maximum_climb_rate_fpm=730,
         service_ceiling_ft=14000,
+        takeoff_ground_roll_ft=960,
         takeoff_distance_ft=1630,
+        landing_ground_roll_ft=575,
         landing_distance_ft=1335,
     ),
 )
 
-_OPERATING_PROFILES = (C172S_OPERATING_PROFILE,)
+C182T_OPERATING_PROFILE = AircraftOperatingProfile(
+    profile_id="cessna-182t",
+    icao_type_designator="C182",
+    manufacturer="Cessna",
+    model="182T",
+    display_name="Cessna 182T Skylane",
+    airspeed_limits=AirspeedOperatingLimits(
+        vso_kias=41,
+        vs_kias=51,
+        vfe_kias=100,
+        va_kias=110,
+        vno_kias=140,
+        vne_kias=175,
+    ),
+    fuel_limits=AircraftFuelLimits(
+        total_capacity_gal=92,
+        usable_capacity_gal=87,
+    ),
+    weight_limits=AircraftWeightLimits(maximum_takeoff_weight_lb=3100),
+    dimensions=AircraftDimensions(
+        length_ft=29,
+        height_ft=9.3333333333,
+        wingspan_ft=36,
+    ),
+    reference_performance=AircraftReferencePerformance(
+        maximum_cruise_speed_ktas=145,
+        maximum_climb_rate_fpm=924,
+        service_ceiling_ft=18100,
+        takeoff_ground_roll_ft=795,
+        takeoff_distance_ft=1514,
+        landing_ground_roll_ft=590,
+        landing_distance_ft=1350,
+    ),
+)
+
+SR22_PERSPECTIVE_3600_OPERATING_PROFILE = AircraftOperatingProfile(
+    profile_id="cirrus-sr22-perspective-3600",
+    icao_type_designator="SR22",
+    manufacturer="Cirrus Aircraft",
+    model="SR22 Perspective 3600 lb",
+    display_name="Cirrus SR22 Perspective",
+    airspeed_limits=AirspeedOperatingLimits(
+        vso_kias=64,
+        vs_kias=74,
+        vfe_kias=110,
+        va_kias=140,
+        vno_kias=176,
+        vne_kias=205,
+    ),
+    fuel_limits=AircraftFuelLimits(
+        total_capacity_gal=94.5,
+        usable_capacity_gal=92,
+    ),
+    weight_limits=AircraftWeightLimits(maximum_takeoff_weight_lb=3600),
+    dimensions=AircraftDimensions(
+        length_ft=26,
+        height_ft=8.9166666667,
+        wingspan_ft=38.3333333333,
+    ),
+    reference_performance=AircraftReferencePerformance(
+        maximum_cruise_speed_ktas=183,
+        maximum_climb_rate_fpm=1270,
+        service_ceiling_ft=17500,
+        takeoff_ground_roll_ft=1082,
+        takeoff_distance_ft=1868,
+        landing_ground_roll_ft=1178,
+        landing_distance_ft=2535,
+    ),
+)
+
+_OPERATING_PROFILES = (
+    C172S_OPERATING_PROFILE,
+    C182T_OPERATING_PROFILE,
+    SR22_PERSPECTIVE_3600_OPERATING_PROFILE,
+)
 
 
 def find_aircraft_operating_profile(
@@ -205,8 +285,7 @@ def find_aircraft_operating_profile(
         (
             profile
             for profile in _OPERATING_PROFILES
-            if profile.profile_id == query
-            or profile.icao_type_designator == designator
+            if profile.profile_id == query or profile.icao_type_designator == designator
         ),
         None,
     )
@@ -220,6 +299,8 @@ __all__ = [
     "AircraftWeightLimits",
     "AirspeedOperatingLimits",
     "C172S_OPERATING_PROFILE",
+    "C182T_OPERATING_PROFILE",
+    "SR22_PERSPECTIVE_3600_OPERATING_PROFILE",
     "aircraft_operating_profile_from_mapping",
     "find_aircraft_operating_profile",
 ]

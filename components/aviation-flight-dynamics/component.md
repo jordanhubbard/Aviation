@@ -1,6 +1,6 @@
 ---
 namespace: aviation
-version: 0.2.0
+version: 0.3.0
 display_name: Aviation flight dynamics
 profiles:
   - library
@@ -8,14 +8,14 @@ profiles:
 sample: false
 provides:
   - name: aviation.flight-dynamics
-    version: 0.2.0
+    version: 0.3.0
     interface:
       uri: interfaces/flight-dynamics.md
       pin: null
 requires:
   - requirement_id: aircraft-profile-authority
     capability: aviation.aircraft
-    version_range: ">=0.2,<1"
+    version_range: ">=0.3,<1"
     dependency_kind: runtime
     optional: false
     constraints: []
@@ -105,15 +105,15 @@ explicit in the acceptance vector; validation errors SHALL fail common SDK CI.
 
 ### Requirement: Physics models use aircraft operating authority
 
-The bundled C172S model SHALL name its `aviation.aircraft` profile and derive shared
+Every bundled model SHALL name its `aviation.aircraft` profile and derive shared
 identity, maximum takeoff weight, fuel capacity, airspeed limits, wingspan, and
 manufacturer-published reference performance from that profile at runtime. The physics
 asset SHALL retain only simulation-specific mass/CG/inertia, aerodynamic geometry and
 coefficients, engine response, fuel density, control effects, and simulation attitude
 constraints.
 
-#### Scenario: C172S physics is loaded
+#### Scenario: Bundled physics is loaded
 
-- **WHEN** the bundled C172S configuration is constructed
-- **THEN** its shared fields equal the linked `cessna-172s` operating profile without a
-  second serialized copy in the flight-dynamics package
+- **WHEN** the bundled C172S, C182T, or SR22 Perspective configuration is constructed
+- **THEN** its shared fields equal the linked operating profile without a second
+  serialized copy in the flight-dynamics package
