@@ -75,6 +75,26 @@ export interface Hazard {
   sourceUrl?: string;
 }
 
+export interface HazardRecordInput {
+  id: string;
+  kind: HazardKind | string;
+  subType: string;
+  summary: string;
+  geometry: HazardGeometry;
+  altitudeBandFt: { floor: number | null; ceiling: number | null };
+  validFrom: Date | string;
+  validTo: Date | string;
+  rawText?: string;
+  sourceUrl?: string;
+}
+
+export class HazardValidationError extends Error {
+  constructor(public readonly code: string, message: string) {
+    super(message);
+    this.name = 'HazardValidationError';
+  }
+}
+
 // ---------------------------------------------------------------------------
 // Client options
 // ---------------------------------------------------------------------------
@@ -137,11 +157,16 @@ export function parseDateSafe(value: unknown): Date {
 /** Convert an AWC "polygon" coordinates array [[lon, lat], …] to LatLon[]. */
 export function awcCoordsToLatLon(coords: unknown): LatLon[] {
   if (!Array.isArray(coords)) return [];
-  return (coords as unknown[][]).map((c) => {
-    const lon = typeof c[0] === 'number' ? c[0] : 0;
-    const lat = typeof c[1] === 'number' ? c[1] : 0;
-    return { lat, lon };
-  });
+  const converted: LatLon[] = [];
+  for (const coordinate of coords as unknown[][]) {
+    const [lon, lat] = coordinate;
+    if (typeof lat !== 'number' || !Number.isFinite(lat) || lat < -90 || lat > 90 ||
+        typeof lon !== 'number' || !Number.isFinite(lon) || lon < -180 || lon > 180) {
+      return [];
+    }
+    converted.push({ lat, lon });
+  }
+  return converted;
 }
 
 /** Derive severity from kind + subType. */
@@ -159,6 +184,87 @@ export function deriveSeverity(kind: HazardKind, subType: string): HazardSeverit
   }
   // AIRMET
   return 'watch';
+}
+
+const ISO_INSTANT = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(?::\d{2}(?:\.\d+)?)?(?:Z|[+-]\d{2}:\d{2})$/i;
+
+function normalizeInstant(value: Date | string, field: 'from' | 'to'): Date {
+  if (typeof value === 'string' && !ISO_INSTANT.test(value)) {
+    throw new HazardValidationError(`hazard-valid-${field}-invalid`, `valid ${field} must be a timezone-qualified ISO instant`);
+  }
+  const result = value instanceof Date ? new Date(value.getTime()) : new Date(value);
+  if (!Number.isFinite(result.getTime())) {
+    throw new HazardValidationError(`hazard-valid-${field}-invalid`, `valid ${field} must be a valid instant`);
+  }
+  return result;
+}
+
+function normalizeCoordinate(value: LatLon): LatLon {
+  if (!value || !Number.isFinite(value.lat) || !Number.isFinite(value.lon) ||
+      value.lat < -90 || value.lat > 90 || value.lon < -180 || value.lon > 180) {
+    throw new HazardValidationError('hazard-coordinate-invalid', 'coordinates must be finite and bounded');
+  }
+  return { lat: value.lat, lon: value.lon };
+}
+
+function sameCoordinate(a: LatLon, b: LatLon): boolean {
+  return a.lat === b.lat && a.lon === b.lon;
+}
+
+/** Validate and canonicalize a provider-neutral hazard record. */
+export function normalizeHazardRecord(input: HazardRecordInput): Hazard {
+  const id = String(input.id ?? '').trim().toUpperCase();
+  if (!id) throw new HazardValidationError('hazard-id-required', 'hazard id is required');
+  const kind = String(input.kind ?? '').trim().toUpperCase();
+  if (!['SIGMET', 'AIRMET', 'TFR'].includes(kind)) {
+    throw new HazardValidationError('hazard-kind-invalid', 'hazard kind is invalid');
+  }
+  const subType = String(input.subType ?? '').trim().toUpperCase();
+  if (!subType) throw new HazardValidationError('hazard-subtype-required', 'hazard subtype is required');
+  const summary = String(input.summary ?? '').trim();
+  if (!summary) throw new HazardValidationError('hazard-summary-required', 'hazard summary is required');
+
+  let geometry: HazardGeometry;
+  if (input.geometry?.type === 'Point') {
+    geometry = { type: 'Point', coordinate: normalizeCoordinate(input.geometry.coordinate) };
+  } else if (input.geometry?.type === 'Polygon' && Array.isArray(input.geometry.coordinates)) {
+    const coordinates = input.geometry.coordinates.map(normalizeCoordinate);
+    if (coordinates.length > 1 && sameCoordinate(coordinates[0], coordinates[coordinates.length - 1])) {
+      coordinates.pop();
+    }
+    const distinct = new Set(coordinates.map((point) => `${point.lat},${point.lon}`));
+    if (coordinates.length < 3 || distinct.size < 3) {
+      throw new HazardValidationError('hazard-polygon-invalid', 'polygon requires three distinct vertices');
+    }
+    geometry = { type: 'Polygon', coordinates };
+  } else {
+    throw new HazardValidationError('hazard-geometry-invalid', 'hazard geometry is invalid');
+  }
+
+  const floor = input.altitudeBandFt?.floor ?? null;
+  const ceiling = input.altitudeBandFt?.ceiling ?? null;
+  for (const value of [floor, ceiling]) {
+    if (value !== null && (!Number.isFinite(value) || value < 0)) {
+      throw new HazardValidationError('hazard-altitude-band-invalid', 'altitudes must be non-negative finite values');
+    }
+  }
+  if (floor !== null && ceiling !== null && floor > ceiling) {
+    throw new HazardValidationError('hazard-altitude-band-invalid', 'altitude band is inverted');
+  }
+
+  const validFrom = normalizeInstant(input.validFrom, 'from');
+  const validTo = normalizeInstant(input.validTo, 'to');
+  if (validFrom > validTo) {
+    throw new HazardValidationError('hazard-effective-window-invalid', 'hazard effective window is inverted');
+  }
+  const canonicalKind = kind as HazardKind;
+  return {
+    id, kind: canonicalKind, subType, summary, geometry,
+    altitudeBandFt: { floor, ceiling }, validFrom, validTo,
+    severity: deriveSeverity(canonicalKind, subType),
+    ...(input.rawText == null ? {} : { rawText: String(input.rawText).trim() }),
+    ...(input.sourceUrl == null ? {} : { sourceUrl: String(input.sourceUrl).trim() }),
+  };
 }
 
 /** Parse a raw AWC feature into a Hazard.  Returns null if required fields
@@ -194,11 +300,9 @@ export function parseAwcFeature(
     Array.isArray((feature.geometry as { type: string; coordinates?: unknown }).coordinates)
   ) {
     const coords = (feature.geometry as { type: string; coordinates: number[] }).coordinates;
-    geometry = { type: 'Point', coordinate: { lat: coords[1] ?? 0, lon: coords[0] ?? 0 } };
-  } else {
-    // No usable geometry — create a point at 0,0 so the record is still surfaced
-    geometry = { type: 'Point', coordinate: { lat: 0, lon: 0 } };
-  }
+    if (typeof coords[0] !== 'number' || typeof coords[1] !== 'number') return null;
+    geometry = { type: 'Point', coordinate: { lat: coords[1], lon: coords[0] } };
+  } else return null;
 
   // Altitude band
   const floor =
@@ -218,7 +322,7 @@ export function parseAwcFeature(
   // Summary
   const summary = String(p['rawAirSigmet'] ?? p['rawText'] ?? p['name'] ?? `${kind} ${subType}`).slice(0, 200);
 
-  return {
+  try { return normalizeHazardRecord({
     id,
     kind,
     subType,
@@ -227,10 +331,12 @@ export function parseAwcFeature(
     altitudeBandFt: { floor, ceiling },
     validFrom,
     validTo,
-    severity: deriveSeverity(kind, subType),
     rawText: String(p['rawAirSigmet'] ?? p['rawText'] ?? ''),
     sourceUrl: undefined,
-  };
+  }); } catch (error) {
+    if (error instanceof HazardValidationError) return null;
+    throw error;
+  }
 }
 
 /** Parse a raw FAA TFR GeoJSON feature into a Hazard. Returns null if expired
@@ -258,9 +364,7 @@ export function parseFaaTfrFeature(
         (feature.geometry as { type: string; coordinates: unknown[][] }).coordinates[0]
       ),
     };
-  } else {
-    geometry = { type: 'Point', coordinate: { lat: 0, lon: 0 } };
-  }
+  } else return null;
 
   const floor =
     p['minAlt'] != null ? Number(p['minAlt']) :
@@ -273,7 +377,7 @@ export function parseFaaTfrFeature(
   const id = String(p['notamNumber'] ?? p['coreNOTAMNumber'] ?? p['id'] ?? `TFR-${validFrom.getTime()}`);
   const summary = String(p['facilityDesignation'] ?? p['name'] ?? id).slice(0, 200);
 
-  return {
+  try { return normalizeHazardRecord({
     id,
     kind: 'TFR',
     subType: rawSubType,
@@ -282,10 +386,12 @@ export function parseFaaTfrFeature(
     altitudeBandFt: { floor, ceiling },
     validFrom,
     validTo,
-    severity: deriveSeverity('TFR', rawSubType),
     rawText: String(p['notamText'] ?? ''),
     sourceUrl: undefined,
-  };
+  }); } catch (error) {
+    if (error instanceof HazardValidationError) return null;
+    throw error;
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -294,7 +400,34 @@ export function parseFaaTfrFeature(
 
 /** Ray-casting polygon point-in-polygon test (2-D, lat/lon treated as planar
  *  — sufficient for the scale of SIGMETs / AIRMETs / TFRs). */
+const GEOMETRY_EPSILON = 1e-10;
+
+function orientation(a: LatLon, b: LatLon, c: LatLon): number {
+  return (b.lon - a.lon) * (c.lat - a.lat) - (b.lat - a.lat) * (c.lon - a.lon);
+}
+
+function pointOnSegment(point: LatLon, start: LatLon, end: LatLon): boolean {
+  if (Math.abs(orientation(start, end, point)) > GEOMETRY_EPSILON) return false;
+  return point.lon >= Math.min(start.lon, end.lon) - GEOMETRY_EPSILON &&
+    point.lon <= Math.max(start.lon, end.lon) + GEOMETRY_EPSILON &&
+    point.lat >= Math.min(start.lat, end.lat) - GEOMETRY_EPSILON &&
+    point.lat <= Math.max(start.lat, end.lat) + GEOMETRY_EPSILON;
+}
+
+function segmentsIntersect(a: LatLon, b: LatLon, c: LatLon, d: LatLon): boolean {
+  if (pointOnSegment(a, c, d) || pointOnSegment(b, c, d) ||
+      pointOnSegment(c, a, b) || pointOnSegment(d, a, b)) return true;
+  const o1 = orientation(a, b, c);
+  const o2 = orientation(a, b, d);
+  const o3 = orientation(c, d, a);
+  const o4 = orientation(c, d, b);
+  return (o1 > 0) !== (o2 > 0) && (o3 > 0) !== (o4 > 0);
+}
+
 export function pointInPolygon(point: LatLon, polygon: LatLon[]): boolean {
+  for (let i = 0; i < polygon.length; i++) {
+    if (pointOnSegment(point, polygon[i], polygon[(i + 1) % polygon.length])) return true;
+  }
   const { lat, lon } = point;
   let inside = false;
   for (let i = 0, j = polygon.length - 1; i < polygon.length; j = i++) {
@@ -316,14 +449,15 @@ export function altitudeOverlaps(
   routeFloorFt: number,
   routeCeilingFt: number
 ): boolean {
+  if (!Number.isFinite(routeFloorFt) || !Number.isFinite(routeCeilingFt) ||
+      routeFloorFt > routeCeilingFt) return false;
   const hFloor = hazard.altitudeBandFt.floor ?? 0;
   const hCeiling = hazard.altitudeBandFt.ceiling ?? 60_000;
   // Ranges overlap when neither is entirely above/below the other
   return hFloor <= routeCeilingFt && hCeiling >= routeFloorFt;
 }
 
-/** Check whether a hazard intersects a route leg defined by two points.
- *  Uses simple midpoint + endpoint checks (good enough for planning purposes). */
+/** Check whether a hazard intersects a route leg defined by two points. */
 export function hazardIntersectsLeg(
   hazard: Hazard,
   legStart: LatLon,
@@ -336,21 +470,15 @@ export function hazardIntersectsLeg(
   if (!isHazardActive(hazard, at)) return false;
 
   if (hazard.geometry.type === 'Point') {
-    // For point hazards (unusual) just check proximity — treated as contained
-    return false;
+    return pointOnSegment(hazard.geometry.coordinate, legStart, legEnd);
   }
 
   const poly = hazard.geometry.coordinates;
-  const mid: LatLon = {
-    lat: (legStart.lat + legEnd.lat) / 2,
-    lon: (legStart.lon + legEnd.lon) / 2,
-  };
-
-  return (
-    pointInPolygon(legStart, poly) ||
-    pointInPolygon(legEnd, poly) ||
-    pointInPolygon(mid, poly)
-  );
+  if (pointInPolygon(legStart, poly) || pointInPolygon(legEnd, poly)) return true;
+  for (let i = 0; i < poly.length; i++) {
+    if (segmentsIntersect(legStart, legEnd, poly[i], poly[(i + 1) % poly.length])) return true;
+  }
+  return false;
 }
 
 /** Return true if the hazard is currently active. */
@@ -384,6 +512,19 @@ export function findRouteHazards(
   hazards: Hazard[],
   at: Date = new Date()
 ): RouteHazardResult[] {
+  return findRouteHazardsInBand(
+    waypoints, cruiseAltFt - 500, cruiseAltFt + 500, hazards, at
+  );
+}
+
+/** Find all active route hazards using an explicit inclusive altitude band. */
+export function findRouteHazardsInBand(
+  waypoints: LatLon[],
+  routeFloorFt: number,
+  routeCeilingFt: number,
+  hazards: Hazard[],
+  at: Date = new Date()
+): RouteHazardResult[] {
   const results: RouteHazardResult[] = [];
   const active = filterActiveHazards(hazards, at);
 
@@ -391,7 +532,7 @@ export function findRouteHazards(
     const legStart = waypoints[i];
     const legEnd = waypoints[i + 1];
     for (const hazard of active) {
-      if (hazardIntersectsLeg(hazard, legStart, legEnd, cruiseAltFt - 500, cruiseAltFt + 500, at)) {
+      if (hazardIntersectsLeg(hazard, legStart, legEnd, routeFloorFt, routeCeilingFt, at)) {
         results.push({ hazard, legStartIndex: i });
       }
     }

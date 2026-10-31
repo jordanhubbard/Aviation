@@ -1,6 +1,6 @@
 """Aviation SDK - Python wrapper for shared aviation utilities."""
 
-__version__ = "0.8.0"
+__version__ = "0.9.0"
 
 # Airport services
 from .airports import (
@@ -65,6 +65,20 @@ from .notam import (
     is_notam_effective,
     normalize_notam_record,
     sort_notams_by_severity,
+)
+from .hazards import (
+    Hazard,
+    HazardValidationError,
+    LatLon,
+    RouteHazardResult,
+    altitude_overlaps,
+    derive_severity,
+    find_route_hazards,
+    find_route_hazards_in_band,
+    hazard_intersects_leg,
+    is_hazard_active,
+    normalize_hazard_record,
+    point_in_polygon,
 )
 from .weight_balance import (
     C172S_LOADING_PROFILE,
@@ -132,6 +146,19 @@ __all__ = [
     "is_notam_effective",
     "normalize_notam_record",
     "sort_notams_by_severity",
+    # Hazard semantics
+    "Hazard",
+    "HazardValidationError",
+    "LatLon",
+    "RouteHazardResult",
+    "altitude_overlaps",
+    "derive_severity",
+    "find_route_hazards",
+    "find_route_hazards_in_band",
+    "hazard_intersects_leg",
+    "is_hazard_active",
+    "normalize_hazard_record",
+    "point_in_polygon",
     # Weight and balance
     "C172S_LOADING_PROFILE",
     "EnvelopePoint",

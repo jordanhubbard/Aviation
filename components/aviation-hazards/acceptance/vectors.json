@@ -1,0 +1,47 @@
+{
+  "schema": "aviation/hazards-acceptance-vectors@1",
+  "referenceTime": "2026-10-31T12:00:00Z",
+  "normalizationCases": [
+    {
+      "id": "canonical-convective",
+      "input": {
+        "id": " sig-1 ", "kind": "sigmet", "subType": " convective ",
+        "summary": "  Severe storms  ",
+        "geometry": {"type": "Polygon", "coordinates": [{"lat": 0, "lon": 0}, {"lat": 0, "lon": 10}, {"lat": 10, "lon": 10}, {"lat": 10, "lon": 0}, {"lat": 0, "lon": 0}]},
+        "altitudeBandFt": {"floor": 10000, "ceiling": 45000},
+        "validFrom": "2026-10-31T10:00:00Z", "validTo": "2026-10-31T14:00:00Z"
+      },
+      "expected": {"id": "SIG-1", "kind": "SIGMET", "subType": "CONVECTIVE", "summary": "Severe storms", "geometry": {"type": "Polygon", "coordinates": [{"lat": 0, "lon": 0}, {"lat": 0, "lon": 10}, {"lat": 10, "lon": 10}, {"lat": 10, "lon": 0}]}, "altitudeBandFt": {"floor": 10000, "ceiling": 45000}, "validFrom": "2026-10-31T10:00:00.000Z", "validTo": "2026-10-31T14:00:00.000Z", "severity": "warning"}
+    },
+    {
+      "id": "canonical-point-tfr",
+      "input": {"id": "tfr-1", "kind": "tfr", "subType": "sfra", "summary": " Security area ", "geometry": {"type": "Point", "coordinate": {"lat": 5, "lon": 5}}, "altitudeBandFt": {"floor": 0, "ceiling": null}, "validFrom": "2026-10-31T12:00:00+00:00", "validTo": "2026-11-01T00:00:00Z"},
+      "expected": {"id": "TFR-1", "kind": "TFR", "subType": "SFRA", "summary": "Security area", "geometry": {"type": "Point", "coordinate": {"lat": 5, "lon": 5}}, "altitudeBandFt": {"floor": 0, "ceiling": null}, "validFrom": "2026-10-31T12:00:00.000Z", "validTo": "2026-11-01T00:00:00.000Z", "severity": "emergency"}
+    }
+  ],
+  "invalidNormalizationCases": [
+    {"id": "missing-id", "input": {"id": " ", "kind": "SIGMET", "subType": "CONVECTIVE", "summary": "Storm", "geometry": {"type": "Point", "coordinate": {"lat": 0, "lon": 0}}, "altitudeBandFt": {"floor": null, "ceiling": null}, "validFrom": "2026-10-31T10:00:00Z", "validTo": "2026-10-31T14:00:00Z"}, "expectedErrorCode": "hazard-id-required"},
+    {"id": "invalid-coordinate", "input": {"id": "H2", "kind": "AIRMET", "subType": "TANGO", "summary": "Turbulence", "geometry": {"type": "Point", "coordinate": {"lat": 91, "lon": 0}}, "altitudeBandFt": {"floor": null, "ceiling": null}, "validFrom": "2026-10-31T10:00:00Z", "validTo": "2026-10-31T14:00:00Z"}, "expectedErrorCode": "hazard-coordinate-invalid"},
+    {"id": "degenerate-polygon", "input": {"id": "H3", "kind": "SIGMET", "subType": "CONVECTIVE", "summary": "Storm", "geometry": {"type": "Polygon", "coordinates": [{"lat": 0, "lon": 0}, {"lat": 1, "lon": 1}, {"lat": 0, "lon": 0}]}, "altitudeBandFt": {"floor": null, "ceiling": null}, "validFrom": "2026-10-31T10:00:00Z", "validTo": "2026-10-31T14:00:00Z"}, "expectedErrorCode": "hazard-polygon-invalid"},
+    {"id": "inverted-altitude", "input": {"id": "H4", "kind": "TFR", "subType": "VIP", "summary": "VIP", "geometry": {"type": "Point", "coordinate": {"lat": 0, "lon": 0}}, "altitudeBandFt": {"floor": 10000, "ceiling": 5000}, "validFrom": "2026-10-31T10:00:00Z", "validTo": "2026-10-31T14:00:00Z"}, "expectedErrorCode": "hazard-altitude-band-invalid"},
+    {"id": "inverted-window", "input": {"id": "H5", "kind": "TFR", "subType": "VIP", "summary": "VIP", "geometry": {"type": "Point", "coordinate": {"lat": 0, "lon": 0}}, "altitudeBandFt": {"floor": null, "ceiling": null}, "validFrom": "2026-10-31T15:00:00Z", "validTo": "2026-10-31T14:00:00Z"}, "expectedErrorCode": "hazard-effective-window-invalid"}
+  ],
+  "severityCases": [
+    {"kind": "SIGMET", "subType": "CONVECTIVE", "expected": "warning"},
+    {"kind": "SIGMET", "subType": "NON-CONVECTIVE", "expected": "watch"},
+    {"kind": "AIRMET", "subType": "SIERRA", "expected": "watch"},
+    {"kind": "TFR", "subType": "SECURITY", "expected": "emergency"},
+    {"kind": "TFR", "subType": "VIP", "expected": "advisory"}
+  ],
+  "evaluationCases": {
+    "active": [{"instant": "2026-10-31T10:00:00Z", "expected": true}, {"instant": "2026-10-31T14:00:00Z", "expected": true}, {"instant": "2026-10-31T14:00:00.001Z", "expected": false}],
+    "altitude": [{"floor": 45000, "ceiling": 45000, "expected": true}, {"floor": 45001, "ceiling": 50000, "expected": false}],
+    "points": [{"point": {"lat": 5, "lon": 5}, "expected": true}, {"point": {"lat": 0, "lon": 5}, "expected": true}, {"point": {"lat": 15, "lon": 5}, "expected": false}],
+    "legs": [
+      {"id": "edge-crossing-midpoint-outside", "start": {"lat": 5, "lon": -5}, "end": {"lat": 5, "lon": 1}, "expected": true},
+      {"id": "boundary-contact", "start": {"lat": -5, "lon": -5}, "end": {"lat": 0, "lon": 0}, "expected": true},
+      {"id": "outside", "start": {"lat": 20, "lon": 20}, "end": {"lat": 30, "lon": 30}, "expected": false}
+    ]
+  },
+  "routeCase": {"waypoints": [{"lat": 5, "lon": -5}, {"lat": 5, "lon": 15}, {"lat": 25, "lon": 25}], "floor": 12000, "ceiling": 12000, "expected": [{"id": "TFR-1", "legStartIndex": 0}, {"id": "SIG-1", "legStartIndex": 0}]}
+}
