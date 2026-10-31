@@ -95,6 +95,9 @@ release-visible outcome to `CHANGELOG.md`; Git preserves prior queue states.
   - [x] Remove Flight Planner's five independent Python haversine implementations and
     route sampling, A* routing, local-airport planning, approach waypoints, and legacy
     navigation helpers through the Python `aviation.navigation` realization.
+  - [x] Replace G1000's private route-distance and initial-course formulas with the
+    Python `aviation.navigation` realization while retaining route assembly, catalog,
+    response rounding, and presentation as simulator policy.
   - [x] Define `aviation.avionics` protocol and rendering contracts, add deterministic
     telemetry/command/flight-plan/layout/pipeline vectors, and replace G1000's duplicate
     frontend telemetry schema with the shared protocol surface. Keep simulator stores,
@@ -117,8 +120,8 @@ release-visible outcome to `CHANGELOG.md`; Git preserves prior queue states.
     aviation implementations after parity qualification.
   - [ ] Classify and remove or intentionally retain every remainder beneath the legacy
     wrapper.
-- **Next action:** Reconcile remaining G1000 navigation/geodesy and aircraft
-  performance/configuration formulas against their common capabilities.
+- **Next action:** Reconcile remaining aircraft performance/configuration formulas
+  against their common capabilities and classify non-realized geodesy placeholders.
 - **Evidence:** Phase 1.2 lift-and-shift identity `sha256:c5ca4361ba010f6e8d81c93398468f9f4f8b8cc352504bc8535fa74b7c6e9990`.
   Retained conversion stage is backed by current test receipt
   `sha256:60e252aceb5834018a21d3ec5a75b667c564e207ea3cf02d475b3245640c3c79`;
@@ -148,6 +151,9 @@ release-visible outcome to `CHANGELOG.md`; Git preserves prior queue states.
   Flight Planner geodesy consolidation passes all 126 non-integration application
   tests, including three boundary tests proving shared distance semantics, invalid
   coordinate rejection, and absence of the five former app-local formulas.
+  G1000 route-geodesy consolidation passes all 29 backend tests, including three
+  boundary tests proving shared distance/bearing semantics, invalid-coordinate
+  rejection, and absence of the former app-local formulas.
   Navigation and the dedicated SDK workflow landed in PR #339 at exact-main commit
   `9c55e4ac70dbc87def6d5ce6e6abc47aed214304`; all seven exact-commit workflows
   passed. Airports landed in PR #340 at exact-main commit
