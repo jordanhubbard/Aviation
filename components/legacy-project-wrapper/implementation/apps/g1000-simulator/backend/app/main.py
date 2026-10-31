@@ -9,7 +9,6 @@ from app.services.flight_plan import FlightPlanService
 from app.services.nav_database import NavigationDatabaseService
 from app.services.routing import RoutingService
 from app.services.procedures import ProceduresService
-from app.services.geo_calculations import GeoCalculationsService
 from app.services.flight_dynamics import FlightDynamicsSimulator
 from app.routers import settings as settings_router
 
@@ -27,7 +26,6 @@ flight_plan_service = FlightPlanService()
 nav_database_service = NavigationDatabaseService()
 routing_service = RoutingService()
 procedures_service = ProceduresService()
-geo_calculations_service = GeoCalculationsService()
 flight_dynamics_service = FlightDynamicsSimulator()
 
 

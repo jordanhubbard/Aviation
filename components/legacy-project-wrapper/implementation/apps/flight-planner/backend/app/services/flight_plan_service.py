@@ -3,7 +3,6 @@ from .envelope_protection import EnvelopeProtection
 from .nav_database import NavDatabase
 from .routing import Routing
 from .procedures import Procedures
-from .geo_calculations import GeoCalculations
 from .alert_manager import AlertManager
 from pydantic import BaseModel, Field
 from app.schemas.flight_plan import FlightPlanSummary
@@ -218,7 +217,6 @@ envelope_protection = EnvelopeProtection()
 nav_database = NavDatabase()
 routing = Routing()
 procedures = Procedures()
-geo_calculations = GeoCalculations()
 alert_manager = AlertManager()
 
 # Active flight plan tracking for en-route operations

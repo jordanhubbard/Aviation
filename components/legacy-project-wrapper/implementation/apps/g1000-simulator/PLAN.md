@@ -278,15 +278,13 @@ The backend consists of multiple services following the Aviation monorepo patter
 - Flight plan management and routing
 - Navigation database (airports, VORs, intersections)
 - Procedure handling (SIDs, STARs, approaches)
-- Great circle and rhumb line calculations
-- Cross-track error computation
+- Shared-SDK route distance and bearing calculations
 
 **Key Modules:**
 - `flight_plan.py` - Flight plan CRUD operations
 - `nav_database.py` - Navigation database interface
 - `routing.py` - Route calculation and optimization
 - `procedures.py` - SID/STAR/approach handling
-- `geo_calculations.py` - Navigation math utilities
 
 **API Endpoints:**
 - `POST /api/flight-plan` - Create flight plan

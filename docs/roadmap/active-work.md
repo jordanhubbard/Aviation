@@ -105,6 +105,9 @@ release-visible outcome to `CHANGELOG.md`; Git preserves prior queue states.
     TypeScript/Python navigation vectors and migrate Flight Track Analyzer to the
     Python realization. Retain its entered-POH interpolation, no-extrapolation rule,
     wind normalization, and measured-track comparison as analyzer-specific policy.
+  - [x] Remove G1000 and Flight Planner's unused private geodesy service scaffolds;
+    their methods were never called and returned only `None` or constant zero, while
+    realized route distance and bearing already delegate to `aviation.navigation`.
   - [x] Define `aviation.avionics` protocol and rendering contracts, add deterministic
     telemetry/command/flight-plan/layout/pipeline vectors, and replace G1000's duplicate
     frontend telemetry schema with the shared protocol surface. Keep simulator stores,
@@ -127,8 +130,8 @@ release-visible outcome to `CHANGELOG.md`; Git preserves prior queue states.
     aviation implementations after parity qualification.
   - [ ] Classify and remove or intentionally retain every remainder beneath the legacy
     wrapper.
-- **Next action:** Classify non-realized G1000 geodesy placeholders, then continue the
-  application inventory for common wind, airspeed, and aircraft-configuration logic.
+- **Next action:** Continue the application inventory for common wind, airspeed, and
+  aircraft-configuration logic.
 - **Evidence:** Phase 1.2 lift-and-shift identity `sha256:c5ca4361ba010f6e8d81c93398468f9f4f8b8cc352504bc8535fa74b7c6e9990`.
   Retained conversion stage is backed by current test receipt
   `sha256:60e252aceb5834018a21d3ec5a75b667c564e207ea3cf02d475b3245640c3c79`;
@@ -169,6 +172,10 @@ release-visible outcome to `CHANGELOG.md`; Git preserves prior queue states.
   four new shared vectors plus invalid-setting rejection; all 66 Flight Track Analyzer
   tests pass, including a source boundary proving its atmospheric conditions call the
   common Python realization.
+  The G1000 and Flight Planner private geodesy service placeholders were classified as
+  non-realized scaffolding and removed with application boundary tests preventing their
+  reintroduction; all 30 G1000 backend tests and 178 non-integration Flight Planner
+  tests pass after removal.
   Navigation and the dedicated SDK workflow landed in PR #339 at exact-main commit
   `9c55e4ac70dbc87def6d5ce6e6abc47aed214304`; all seven exact-commit workflows
   passed. Airports landed in PR #340 at exact-main commit
@@ -234,9 +241,9 @@ release-visible outcome to `CHANGELOG.md`; Git preserves prior queue states.
   and parity identity
   `sha256:4f5acf5f618ab336bf169ec84d4f1068f4754702371d1ff0d63c093880d5deee`.
   The current retained receipt is
-  `sha256:c8e7f0c9ac07338d72cea1eeccf7f56ef606f0366908cce724c67cbd236e5f28`
-  (candidate `sha256:f522f2384fbc6e420897180f0603e7e5937de94b98174cfdb7f48dafadde80f6`,
-  333 tests).
+  `sha256:d5991a4e1e3c5d2b52f1d2b4c9ea8537bcf64164faf4a932c7bd33c3add126d5`
+  (candidate `sha256:7416e9a3bf4caee5465fafd9b5afc831b641b4367471be9e7f752439773e40ec`,
+  340 tests).
   The ADF/DME slice landed in PR #348 at exact-main commit
   `f3da7e3406b6b2d04b95da03217231d1b7313a1e`; all six exact-commit workflows
   passed: Common Aviation SDK run 41137297070, Integration Tests run 41137297059,
