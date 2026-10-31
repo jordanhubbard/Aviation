@@ -1,24 +1,24 @@
 # Native boundary inventory
 
 - **Status:** partial
+- **Current scope:** consumer audit complete; residual retained-source classification remains open
 - **Owning queue item:** [ADOPT-002](active-work.md#adopt-002)
 - **Completion / archival evidence:** pending while ADOPT-002 remains open
 
-This is the first source-evidence pass for ADR 0002. Paths below are relative to
+This is the source-evidence inventory for ADR 0002. Paths below are relative to
 `components/legacy-project-wrapper/implementation` (called **R**). The retained
 source remains release authority. A row being listed does not transfer it to a
 native Component or prove its acceptance contract is complete.
 
 The pre-adoption revision `f68efb8273508c74fbc3cd710e8f0ae1bc4a8d39` had
-1,409 tracked files. All 1,409 paths still exist under R on main; 1,399 retain
-the same Git blob identity. The ten changed retained files are the workspace
-Makefile, README, four application dependency manifests, meta-app README and
-launcher, pnpm lockfile, and pnpm workspace manifest. The full retained test
-receipt and its exact-main verification establish the wrapper baseline, not native
-regeneration. Current local verification is separately blocked by Literate AI
-[issue #212](https://github.com/jordanhubbard/literate-ai/issues/212), which mistakes
-third-party dependency manifests for legacy Component authoring. This pass maps 11
-application directories and 10 shared package directories.
+1,409 tracked files. The original first pass preserved those paths and established
+the wrapper baseline. The current audit is bound to main revision
+`3eb6b597e3cd15485847f31905713508341c3d89`, 19 committed Component locks, and
+retained receipt
+`sha256:05bd764935f252a52fc05343f0c15ea557e282041c2f3a1d39f44a62d893d436`
+with 589 admitted tests. It maps all 12 application directories and 10 shared
+package directories. That receipt proves retained lifecycle parity; it does not by
+itself prove native regeneration or authorize retiring the wrapper.
 
 ## Application boundaries
 
@@ -26,19 +26,27 @@ Each row is a provisional Component candidate. Public contracts, storage, target
 variance, and acceptance need a separate review before source promotion. `none`
 means this pass found no owned test suite; it is an evidence gap.
 
-| Boundary and owner | Retained source and public-contract evidence | Existing test evidence |
-| --- | --- | --- |
-| Accident Tracker — `apps/aviation-accident-tracker` | `apps/aviation-accident-tracker/README.md`; backend/frontend `package.json`; `apps/aviation-accident-tracker/Dockerfile` | `apps/aviation-accident-tracker/backend/tests/`; `apps/aviation-accident-tracker/frontend/src/tests/App.test.tsx` |
-| Aviation Chat — `apps/aviation-chat` | `apps/aviation-chat/README.md`; `apps/aviation-chat/package.json` | none located |
-| Aviation Missions — `apps/aviation-missions-app` | `apps/aviation-missions-app/README.md`; `apps/aviation-missions-app/backend/project.clj`; frontend `package.json` | `apps/aviation-missions-app/backend/test/` |
-| Flight Planner — `apps/flight-planner` | `apps/flight-planner/README.md`; `apps/flight-planner/requirements.txt`; frontend `package.json`; `apps/flight-planner/Dockerfile` | `apps/flight-planner/backend/tests/`; `apps/flight-planner/tests/`; `apps/flight-planner/frontend/src/components/ModeSelector.test.tsx` |
-| Flight Track Analyzer — `apps/flight-track-analyzer` | `apps/flight-track-analyzer/README.md`; `apps/flight-track-analyzer/app/flightlab/api.py`; `apps/flight-track-analyzer/app/requirements.txt` | `apps/flight-track-analyzer/app/tests/` (61 tests including airport MSL) |
-| Flight Tracker — `apps/flight-tracker` | `apps/flight-tracker/README.md`; `apps/flight-tracker/package.json`; `apps/flight-tracker/Dockerfile` | `apps/flight-tracker/tests/service.test.ts` |
-| Flight School — `apps/flightschool` | `apps/flightschool/README.md`; `apps/flightschool/requirements.txt`; `apps/flightschool/Dockerfile` | `apps/flightschool/tests/` |
-| ForeFlight Dashboard — `apps/foreflight-dashboard` | `apps/foreflight-dashboard/README.md`; `apps/foreflight-dashboard/requirements.txt`; frontend `package.json` | `apps/foreflight-dashboard/tests/` |
-| G1000 Simulator — `apps/g1000-simulator` | `apps/g1000-simulator/README.md`; root/backend/frontend `package.json`; backend `requirements.txt` | `apps/g1000-simulator/tests/`; `apps/g1000-simulator/backend/tests/` |
-| Meta App — `apps/meta-app` | `apps/meta-app/README.md`; `apps/meta-app/package.json`; `apps/meta-app/src/App.tsx` | none located |
-| Weather Briefing — `apps/weather-briefing` | `apps/weather-briefing/README.md`; `apps/weather-briefing/package.json` | `apps/weather-briefing/tests/service.test.ts` |
+| Boundary and owner | Common SDK / Component consumption evidence | Application-unique responsibility retained | Test evidence |
+| --- | --- | --- | --- |
+| Accident Tracker — `apps/aviation-accident-tracker` | `backend/src/geo/airportLookup.ts` consumes `aviation.airports` and `aviation.navigation`; `backend/src/e2e/manager.ts` consumes `aviation.testing.e2e` | feed ingestion, accident classification, repository schema, scheduler, export, GraphQL/REST, and map presentation | backend and frontend test trees, including E2E isolation |
+| Aviation Chat — `apps/aviation-chat` | `src/index.ts` consumes `aviation.service.health` and `aviation.testing.e2e` | chat/OpenClaw composition, conversation policy, and HTTP surface | production build plus retained lifecycle |
+| Aviation Missions — `apps/aviation-missions-app` | no common-domain import is required: source inspection finds mission records and workflow, not airport lookup, weather, flight math, aircraft performance, or avionics algorithms | Clojure mission catalog CRUD, submissions, moderation, ratings, completion records, authentication, and presentation | `backend/test/aviation_missions/`; a zero-domain-consumer classification is intentional, not an SDK gap |
+| Flight Planner — `apps/flight-planner` | Python and TypeScript adapters consume aircraft, airports, alerts, avionics, flight dynamics, navigation, nav-data, service health, testing E2E, and weather Components | route choice, planning floors, HTTP schemas, streaming, persistence, scenario orchestration, and UI | backend, root integration, and frontend tests plus production build |
+| Flight Track Analyzer — `apps/flight-track-analyzer` | consumes airports-normalized data, flight-dynamics turn physics, navigation/geodesy/wind, and testing E2E | measured-track inference, signal processing, KD-tree search, POH interpolation, reports, and storage | `app/tests/`, including SDK-wiring and isolation tests |
+| Flight Tracker — `apps/flight-tracker` | `src/index.ts` and `src/service.ts` consume shared service health, lifecycle, and weather contracts | live tracking ingestion, WebSocket/API orchestration, tracked-flight state, and presentation | `tests/service.test.ts` and production build |
+| Flight School — `apps/flightschool` | consumes `aviation.aircraft`, shared Google integration adapters, and testing E2E isolation | fleet registration/rates/equipment, bookings, maintenance scheduling, accounts, and pages | `tests/` and retained lifecycle |
+| ForeFlight Dashboard — `apps/foreflight-dashboard` | consumes `aviation.aircraft` type-designator matching and `aviation.logbook` accounting/validation | provider CSV repair, registration/route heuristics, certificate advice, accounts, persistence, and dashboard presentation | `tests/`, including structural SDK-boundary checks |
+| G1000 Simulator — `apps/g1000-simulator` | consumes aircraft, airports, alerts, avionics protocols/devices/rendering, flight dynamics, navigation, nav-data, service health/lifecycle, and shared UI panes/plugins | simulator stepping, telemetry/session state, transports, capture thresholds, tuning, annunciation, gauge/page composition, and physical-I/O boundary | root, backend, frontend, protocol, rendering, and SDK-wiring tests |
+| Meta App — `apps/meta-app` | `src/App.tsx` consumes qualified shared pane default-selection and the UI framework | application catalog, URLs, launcher composition, feedback integration, and styling | three application tests and production build |
+| Preflight Check — `apps/preflight-check` | `public/calculations.js` directly re-exports built `aviation.weight-balance`; its image also ships the linked aircraft module | user-entered POH/AFM profile, browser persistence, risk checklist, and presentation | `calculations.test.mjs` exercises the built SDK realization |
+| Weather Briefing — `apps/weather-briefing` | `src/service.ts` consumes weather, NOTAM, service lifecycle, and shared health behavior | briefing composition, scheduled refresh, HTTP surface, cache cleanup timing, and presentation | `tests/service.test.ts` and production build |
+
+Eleven applications therefore consume common SDK capabilities directly. Aviation
+Missions is the deliberate exception because its retained aviation-themed content is
+mission catalog data, not a second implementation of a portable aviation capability.
+The audit does not require a decorative dependency where no shared behavior exists.
+Any future common-domain behavior added there must first use an existing Component or
+open a new boundary review.
 
 ## Shared package boundaries
 
@@ -195,10 +203,10 @@ formula, and G1000 telemetry supplies the common ADC result directly to the PFD.
 
 G1000's backend `aircraft_state.py` is also already a compatibility projection over
 the `aviation.flight-dynamics` C172 model. Its live position, attitude, engine, and
-telemetry records plus display-only length/height remain application state. The one
-material configuration remainder is the frontend Airspeed Tape's hard-coded C172
-V-speeds; those operating limits require a portable aircraft-profile contract before
-the app constants can be removed.
+telemetry records plus display-only length/height remain application state. The
+frontend Airspeed Tape now derives its C172 arcs and Vne marker from the qualified
+`aviation.aircraft` operating profile; scale, trend, styling, and presentation remain
+application code.
 
 ## Cross-cutting authority to classify
 
@@ -208,17 +216,18 @@ the app constants can be removed.
 | Accident feed fixtures and seeds — Accident Tracker | `apps/aviation-accident-tracker/backend/data/` | Asset/fixture versus runtime-ingested data must be distinguished before promotion. |
 | Application persistence and credentials — each owning app/package | `apps/flight-track-analyzer/app/flightlab/store.py`; `packages/keystore/README.md`; app READMEs and environment configuration | Named runtime state and secret contracts, not generated source. Inventory locations, migration, and rollback per app. |
 | Workspace build and package graph — repository harness | `Makefile`, `pnpm-workspace.yaml`, `pnpm-lock.yaml`, `go.mod`, application/package manifests, and `apps/*/Makefile` | Repository-only harness plus target Flavors; each promoted boundary must keep a reproducible build and package oracle. |
-| CI, delivery, and release — repository workflow | Root `.github/workflows/ci.yml`, `dependency-scan.yml`, `deploy.yml`, `integration-tests.yml`, `performance_regression.yml`; R `scripts/release.sh` | Workflow and acceptance oracle; four Docker image builds and the staging dry run passed on main run 39907267413. |
+| CI, delivery, and release — repository workflow | Root `.github/workflows/ci.yml`, `dependency-scan.yml`, `deploy.yml`, `integration-tests.yml`, `performance_regression.yml`; R `scripts/release.sh` | Workflow and acceptance oracle; all six exact-main workflows at `3eb6b597e3cd15485847f31905713508341c3d89` passed, including the 12-application deployment-image matrix (run 41194894882). |
 | Target variance — Flavor authority | App Dockerfiles, Python requirements, `pnpm-workspace.yaml`, Clojure `project.clj`, Go `go.mod`, `k8s/`, `monitoring/` | Move OS, package, container, and toolchain requirements into Flavors only when each boundary is promoted. |
 | Retained parity — adoption harness | `.literate/harness-inventory.json`, `.literate/legacy-harness-baseline.json`, `.literate/legacy-wrapper-parity.json`, `verification/current.json` at project root | Baseline and independent acceptance evidence; current project receipt does not prove native source equivalence. |
 
 ## Next review
 
-For each application and package, name its exact public inputs and outputs, schema
-versions, persistent state, test oracle, runtime target, and dependencies. Classify
-each retained file as Component intent, Flavor requirement, conversion skill,
-immutable asset, repository harness, or intentionally retained source. Select the
-smallest independently testable boundary only after that review. The native
-conversion stage cannot advance to `drafted` yet: the CLI reports
-`conversion_authority.component_evidence_missing` because no retained-source
-Component authority projections exist.
+The application consumer pass is complete. Continue at file-level granularity: name
+public inputs and outputs, schema versions, persistent state, test oracle, runtime
+target, and dependencies for each retained package and cross-cutting asset. Classify
+each retained path as Component intent, Flavor requirement, conversion skill,
+immutable asset, repository harness, or intentionally retained source. Prioritize the
+airport/airspace data provenance and licensing decision, then application persistence
+and credential contracts. The project remains at the `retained` conversion stage;
+19 Component locks and the current receipt are evidence for the migrated boundaries,
+not authority to retire unclassified retained source.

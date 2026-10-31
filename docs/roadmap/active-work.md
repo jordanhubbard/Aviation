@@ -286,19 +286,22 @@ release-visible outcome to `CHANGELOG.md`; Git preserves prior queue states.
     Chat build, and retained receipt
     `sha256:05bd764935f252a52fc05343f0c15ea557e282041c2f3a1d39f44a62d893d436`
     pass with all 19 Component locks current.
-  - [ ] Promote airports, weather, procedures/nav-data, flight dynamics, avionics
+  - [x] Promote airports, weather, procedures/nav-data, flight dynamics, avionics
     protocols/rendering, shared UI, and integration infrastructure into
     explicit Components with owned tests and contracts.
-  - [ ] Migrate each application to those capabilities and remove app-local common
-    aviation implementations after parity qualification.
+  - [x] Migrate applications with common-domain behavior to those capabilities and
+    remove app-local common aviation implementations after parity qualification.
+    The current consumer matrix covers all 12 applications: 11 consume qualified SDK
+    surfaces directly, while Aviation Missions is explicitly classified as a mission
+    catalog/workflow with no duplicate portable aviation algorithms and therefore no
+    artificial SDK dependency.
   - [ ] Classify and remove or intentionally retain every remainder beneath the legacy
     wrapper.
-- **Next action:** Inventory the remaining application-local code for the next
-  duplicated aviation-domain capability with at least two live consumers, then
-  specify and qualify that boundary before migrating adapters. Do not promote generic
-  retry or cache helpers without a second live shared semantic contract, and do not
-  absorb application routing, storage, fixture, cleanup, browser, or deployment policy
-  into the portable SDK.
+- **Next action:** Classify every remaining retained-wrapper path as Component intent,
+  Flavor requirement, conversion skill, immutable asset, repository harness, or
+  intentionally retained application source. Prioritize airport/airspace dataset
+  provenance and application persistence/credential contracts; do not invent a new
+  Component for unique app behavior or generic helpers without shared semantics.
 - **Evidence:** Phase 1.2 lift-and-shift identity `sha256:c5ca4361ba010f6e8d81c93398468f9f4f8b8cc352504bc8535fa74b7c6e9990`.
   Retained conversion established original-source release authority; each migration
   refreshes the verifier-owned receipt in `verification/current.json`.
