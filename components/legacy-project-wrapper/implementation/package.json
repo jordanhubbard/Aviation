@@ -15,13 +15,13 @@
     "test": "npm run test --workspaces --if-present",
     "test:e2e": "playwright test",
     "test:e2e:remote": "node deploy/remote-e2e.mjs",
-    "keystore:init": "cd packages/keystore && npm run init",
-    "keystore:services": "cd packages/keystore && npm run services",
-    "keystore": "cd packages/keystore && node dist/cli.js",
-    "keystore set": "cd packages/keystore && node dist/cli.js set",
-    "keystore get": "cd packages/keystore && node dist/cli.js get",
-    "keystore list": "cd packages/keystore && node dist/cli.js list",
-    "secrets:migrate": "cd packages/keystore && npm run migrate"
+    "keystore:init": "ts-node scripts/keystore-cli.ts init",
+    "keystore:services": "ts-node scripts/keystore-cli.ts services",
+    "keystore": "ts-node scripts/keystore-cli.ts",
+    "keystore set": "ts-node scripts/keystore-cli.ts set",
+    "keystore get": "ts-node scripts/keystore-cli.ts get",
+    "keystore list": "ts-node scripts/keystore-cli.ts list",
+    "secrets:migrate": "ts-node scripts/migrate-secrets.ts"
   },
   "devDependencies": {
     "@aviation/shared-sdk": "workspace:*",

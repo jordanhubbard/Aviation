@@ -92,6 +92,30 @@ now validates this graph and runs the previously omitted Aviation Config package
 Known application-package test omissions remain recorded as gaps, not hidden behind a
 successful workspace build.
 
+## Repository orchestration and deployment harness
+
+The machine-checked [repository harness inventory](repository-harness-inventory.json)
+covers every retained file beneath `deploy`, `k8s`, `monitoring`, `scripts`, and
+`tests`, and records the removal of obsolete `root` conversion residue. These paths
+are deployment policy, repository acceptance/orchestration, operator tooling, or
+immutable test fixtures. None is portable aviation-domain behavior and none claims a
+Component interface.
+
+The audit removed an unused placeholder Playwright file and a stale application
+validation shell script that duplicated current Make/CI authority while using npm and
+skipping material suites. It also removed the retained Loom marker. The deployment
+manifest/orchestrator and its isolated E2E adapters remain repository acceptance
+infrastructure, with `deploy/test_deploy.py` enforced by the deployment workflow.
+Kubernetes remains a dormant Accident Tracker-only policy rather than the twelve-app
+deployment authority, and that incompleteness stays explicit.
+
+The keystore CLI and migration tool remain repository operator adapters over the
+shared keystore library. Root commands now execute those real TypeScript sources;
+`keystore:init` persists an empty encrypted store through the same implementation used
+for ordinary writes, and package-owned tests cover initialization plus set/get/list/
+delete behavior. This repairs repository infrastructure without manufacturing an
+aviation SDK Component.
+
 ### First selected boundary: aviation navigation
 
 `aviation.navigation` is the first native boundary because its calculations are pure,

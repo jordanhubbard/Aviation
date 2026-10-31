@@ -1,0 +1,54 @@
+{
+  "$schema": "aviation/repository-harness-inventory@1",
+  "revision": 1,
+  "authority": "retained-repository-inventory",
+  "boundary": "Deployment, monitoring, CI, release, performance, accessibility, integration-test, and operator tooling are repository harness or deployment policy. They are not common Aviation SDK behavior and do not claim Component authority.",
+  "roots": ["deploy", "k8s", "monitoring", "scripts", "tests"],
+  "files": [
+    {"path":"deploy/README.md","classification":"repository-documentation"},
+    {"path":"deploy/apps.json","classification":"deployment-manifest"},
+    {"path":"deploy/browser-smoke.mjs","classification":"deployment-test-harness"},
+    {"path":"deploy/deploy.py","classification":"deployment-orchestrator"},
+    {"path":"deploy/e2e-fixtures/kmlab-standard.kml.gz","classification":"immutable-test-fixture"},
+    {"path":"deploy/install.sh","classification":"deployment-operator-tool"},
+    {"path":"deploy/isolated-e2e.mjs","classification":"deployment-test-harness"},
+    {"path":"deploy/isolated-native-e2e.mjs","classification":"deployment-test-harness"},
+    {"path":"deploy/remote-e2e.mjs","classification":"deployment-test-harness"},
+    {"path":"deploy/test_deploy.py","classification":"deployment-test-harness"},
+    {"path":"k8s/accident-tracker/deployment.yaml","classification":"dormant-deployment-policy"},
+    {"path":"k8s/base/namespace.yaml","classification":"dormant-deployment-policy"},
+    {"path":"monitoring/grafana/provisioning/datasources/datasources.yml","classification":"observability-policy"},
+    {"path":"monitoring/prometheus.yml","classification":"observability-policy"},
+    {"path":"scripts/check-all-contrast.sh","classification":"repository-test-harness"},
+    {"path":"scripts/check-contrast.js","classification":"repository-test-harness"},
+    {"path":"scripts/check_application_state_contracts.py","classification":"architecture-contract-validator"},
+    {"path":"scripts/check_repository_harness_inventory.py","classification":"architecture-contract-validator"},
+    {"path":"scripts/check_workspace_package_graph.py","classification":"architecture-contract-validator"},
+    {"path":"scripts/keystore-cli.ts","classification":"repository-operator-tool"},
+    {"path":"scripts/migrate-secrets.ts","classification":"repository-operator-tool"},
+    {"path":"scripts/performance_regression_checks.py","classification":"performance-test-harness"},
+    {"path":"scripts/release.sh","classification":"release-orchestrator"},
+    {"path":"scripts/store_historical_metrics.py","classification":"performance-test-harness"},
+    {"path":"tests/integration/__init__.py","classification":"repository-test-harness"},
+    {"path":"tests/integration/test_smoke.py","classification":"repository-test-harness"}
+  ],
+  "removedResidue": [
+    "scripts/e2e-test-runner.ts",
+    "scripts/validate-all-apps.sh",
+    "root/.loom-history/.loom-env-ready"
+  ],
+  "rootScripts": {
+    "keystore:init": "ts-node scripts/keystore-cli.ts init",
+    "keystore:services": "ts-node scripts/keystore-cli.ts services",
+    "keystore": "ts-node scripts/keystore-cli.ts",
+    "keystore set": "ts-node scripts/keystore-cli.ts set",
+    "keystore get": "ts-node scripts/keystore-cli.ts get",
+    "keystore list": "ts-node scripts/keystore-cli.ts list",
+    "secrets:migrate": "ts-node scripts/migrate-secrets.ts"
+  },
+  "knownGaps": [
+    "Kubernetes manifests cover only Accident Tracker and are not the current twelve-application deployment authority.",
+    "Monitoring configuration is repository deployment policy and has no standalone provisioning acceptance test.",
+    "The root integration smoke suite validates structure by default; its HTTP checks require an explicitly live environment."
+  ]
+}

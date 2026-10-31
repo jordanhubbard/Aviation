@@ -26,6 +26,13 @@ afterEach(() => {
 });
 
 describe('keystore CLI', () => {
+  it('initializes an empty encrypted store', () => {
+    const env = createEnvironment();
+    const result = execFileSync(tsNode, [cli, 'init'], { env, encoding: 'utf8' });
+    expect(result).toContain('Keystore initialized');
+    expect(fs.existsSync(env.KEYSTORE_PATH!)).toBe(true);
+  });
+
   it('sets, gets, lists, and deletes secrets', () => {
     const env = createEnvironment();
 
