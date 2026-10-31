@@ -321,11 +321,18 @@ release-visible outcome to `CHANGELOG.md`; Git preserves prior queue states.
     native Component realizations and adapters from repository infrastructure,
     reusable application services, and application-private composition. Common SDK CI
     validates the graph and now runs the previously omitted Aviation Config tests.
+  - [x] Classify repository orchestration and deployment paths under `deploy`, `k8s`,
+    `monitoring`, `scripts`, `tests`, and the obsolete `root` residue. A machine-checked
+    inventory covers every retained file in those roots without claiming SDK or
+    Component authority. Remove an unused placeholder Playwright suite, a stale
+    duplicate application validator, and the Loom marker residue; repair and extend
+    the independently tested keystore operator entrypoint so documented root commands
+    target real source rather than nonexistent package scripts and build output.
   - [ ] Classify and remove or intentionally retain every remainder beneath the legacy
     wrapper.
-- **Next action:** Classify repository-level orchestration and deployment paths
-  (`deploy`, `k8s`, `monitoring`, `scripts`, `tests`, and `root`), then continue
-  classifying every remaining retained-wrapper path as Component intent,
+- **Next action:** Classify remaining top-level configuration, conformance data,
+  examples, documentation/plans, and repository metadata, then continue classifying
+  every remaining retained-wrapper path as Component intent,
   Flavor requirement, conversion skill, immutable asset, repository harness, or
   intentionally retained application source. Do not invent a new
   Component for unique app behavior or generic helpers without shared semantics.

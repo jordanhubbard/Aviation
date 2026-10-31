@@ -37,6 +37,10 @@ jobs:
         working-directory: .
         run: python scripts/check_workspace_package_graph.py
 
+      - name: Validate repository harness classification
+        working-directory: .
+        run: python scripts/check_repository_harness_inventory.py
+
   # Check accessibility and color contrast
   accessibility:
     name: Accessibility & Color Contrast

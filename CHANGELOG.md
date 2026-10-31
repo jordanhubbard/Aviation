@@ -9,6 +9,9 @@
 
 ## Unreleased
 
+- Classified every retained deployment, monitoring, repository-script, and integration
+  harness path in a machine-checked inventory; removed three dead conversion/validation
+  residues and repaired the documented, tested root keystore operator commands.
 - Added a machine-checked workspace package/build graph covering every shared and
   application package plus all twelve application build authorities. Common SDK CI
   now validates the graph and independently runs the Aviation Config test suite.

@@ -9,6 +9,7 @@ import * as path from 'path';
 import { SecureKeyStore } from '../packages/keystore/src';
 
 const commands = {
+  init: 'Initialize an empty encrypted keystore',
   list: 'List all services or keys in a service',
   get: 'Get a secret value',
   set: 'Set a secret value',
@@ -48,6 +49,17 @@ async function main() {
   });
   
   switch (command) {
+    case 'init': {
+      // Persist and remove a sentinel so initialization uses the same encrypted
+      // storage path and permissions as ordinary writes without retaining data.
+      const sentinelService = '__aviation_keystore_init__';
+      const sentinelKey = '__sentinel__';
+      keystore.setSecret(sentinelService, sentinelKey, 'initialized');
+      keystore.deleteSecret(sentinelService, sentinelKey);
+      console.log(`✅ Keystore initialized: ${keystorePath}`);
+      break;
+    }
+
     case 'services': {
       console.log('📋 Services with secrets:\n');
       const services = new Set<string>();
