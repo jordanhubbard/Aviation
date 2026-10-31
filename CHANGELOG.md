@@ -9,6 +9,12 @@
 
 ## Unreleased
 
+- Classified persistence and credential acquisition across all 12 applications in a
+  machine-checked retained-runtime inventory. Application databases, JSON files,
+  browser state, caches, and provider credentials remain adapter-owned rather than
+  being misrepresented as aviation SDK Components. Common SDK CI now runs the shared
+  keystore's TypeScript tests, and its Python binding has independent fallback,
+  required-value, caching, listing, and explicit-store tests.
 - Classified the common SDK's bundled OurAirports catalog as a public-domain derived
   snapshot with unknown freshness, and Flight Planner's openAIP/mixed airspace caches
   as separately licensed retained app data with unresolved historical provenance.

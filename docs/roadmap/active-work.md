@@ -302,11 +302,19 @@ release-visible outcome to `CHANGELOG.md`; Git preserves prior queue states.
     harness reports 591 tests; the common SDK suites pass 591 TypeScript and 316
     Python tests, and the current receipt passes `litai verify` with all 19 locks
     current.
+  - [x] Inventory persistence, browser state, ephemeral caches, and credential
+    acquisition for all 12 applications in a machine-checked runtime contract. Keep
+    those concerns in application adapters or repository infrastructure rather than
+    manufacturing aviation-domain Components. Admit the shared TypeScript keystore
+    tests to Common Aviation SDK CI, add independent Python binding tests, and bind an
+    explicitly selected Python keystore path through to the CLI. Known development
+    credential defaults and missing migration/restore contracts remain named gaps;
+    this classification does not certify them for production.
   - [ ] Classify and remove or intentionally retain every remainder beneath the legacy
     wrapper.
-- **Next action:** Classify application persistence and credential contracts. Continue
-  classifying
-  every remaining retained-wrapper path as Component intent,
+- **Next action:** Distinguish Accident Tracker feed fixtures and seed data from
+  runtime-ingested records, then continue classifying every remaining retained-wrapper
+  path as Component intent,
   Flavor requirement, conversion skill, immutable asset, repository harness, or
   intentionally retained application source. Do not invent a new
   Component for unique app behavior or generic helpers without shared semantics.

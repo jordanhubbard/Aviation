@@ -73,7 +73,8 @@ export class SecretLoader {
    * Get a secret with a default value
    */
   getWithDefault(key: string, defaultValue: string): string {
-    return this.get(key) || defaultValue;
+    const value = this.get(key);
+    return value !== undefined ? value : defaultValue;
   }
   
   /**
