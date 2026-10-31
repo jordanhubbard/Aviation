@@ -127,6 +127,29 @@ def main() -> None:
     require(workspace.get("rootWorkspaceDependencies") ==
             manifest_workspace_dependencies(root_manifest), "root workspace dependency drift")
 
+    component_packages = data.get("componentPackages")
+    require(isinstance(component_packages, list) and component_packages,
+            "componentPackages must be a non-empty array")
+    for entry in component_packages:
+        relative = entry.get("path")
+        require(isinstance(relative, str) and relative.startswith("components/"),
+                "Component package path must be repository-relative")
+        manifest_path = ROOT / relative / "package.json"
+        require(manifest_path.is_file(), f"missing Component package manifest: {relative}")
+        manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+        require(entry.get("name") == manifest.get("name"), f"{relative}: package name drift")
+        require(manifest.get("packageManager") == workspace.get("packageManager"),
+                f"{relative}: package manager pin drift")
+        require(entry.get("classification") == "component-owned-qualification-candidate",
+                f"{relative}: Component package must remain a qualification candidate")
+        require(entry.get("componentOwner") == "aviation.service.health",
+                f"{relative}: unexpected Component owner")
+        scripts = manifest.get("scripts", {})
+        require(entry.get("buildScript") == scripts.get("build"), f"{relative}: build script drift")
+        require(entry.get("testScript") == scripts.get("test"), f"{relative}: test script drift")
+        require((ROOT / relative / "pnpm-lock.yaml").is_file(),
+                f"{relative}: independently pinned lockfile required")
+
     shared = data.get("sharedPackages")
     application_packages = data.get("applicationPackages")
     require(isinstance(shared, list) and shared, "sharedPackages must be a non-empty array")
@@ -144,6 +167,10 @@ def main() -> None:
         validate_package(entry, shared=False)
 
     sdk_workflow = (ROOT / ".github" / "workflows" / "sdk-ci.yml").read_text(encoding="utf-8")
+    for entry in component_packages:
+        require(entry["path"] in sdk_workflow, f"{entry['path']}: missing Common SDK CI path")
+        require("pnpm install --frozen-lockfile --ignore-workspace" in sdk_workflow,
+                f"{entry['path']}: missing independent install gate")
     monorepo_makefile = (IMPLEMENTATION / "Makefile").read_text(encoding="utf-8")
     for entry in shared:
         gate = entry["testGate"]

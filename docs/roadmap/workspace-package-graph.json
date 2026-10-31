@@ -1,8 +1,8 @@
 {
   "$schema": "aviation/workspace-package-graph@1",
-  "revision": 1,
+  "revision": 2,
   "authority": "retained-build-inventory",
-  "boundary": "Workspace membership and build orchestration are repository infrastructure. A package is Component authority only when its classification names a qualified native Component; application packages remain private adapters and composition.",
+  "boundary": "Workspace membership and build orchestration are repository infrastructure. Component-owned qualification candidates are tracked separately from the retained workspace and do not become release authority until regenerative qualification and consumer transfer pass; application packages remain private adapters and composition.",
   "workspace": {
     "root": "components/legacy-project-wrapper/implementation",
     "packageManager": "pnpm@10.34.5",
@@ -10,6 +10,17 @@
     "globs": ["packages/*", "apps/*", "apps/*/frontend", "apps/*/backend"],
     "rootWorkspaceDependencies": ["@aviation/shared-sdk"]
   },
+  "componentPackages": [
+    {
+      "path": "components/aviation-service-health/implementation/typescript",
+      "name": "@aviation/service-health",
+      "classification": "component-owned-qualification-candidate",
+      "componentOwner": "aviation.service.health",
+      "buildScript": "tsc && tsc -p tsconfig.esm.json && node scripts/write-esm-marker.mjs",
+      "testScript": "vitest run",
+      "testGate": "common-sdk-ci"
+    }
+  ],
   "sharedPackages": [
     {
       "path": "packages/ai-explainer",
@@ -147,6 +158,7 @@
     {"id":"weather-briefing","buildAuthorities":["apps/weather-briefing/Dockerfile","apps/weather-briefing/Makefile"],"nodePackages":["apps/weather-briefing"]}
   ],
   "knownGaps": [
+    "The TypeScript aviation.service.health realization is Component-owned; its Python realization and project release authority remain in the retained wrapper pending separate packaging and regenerative qualification.",
     "Aviation Chat and the G1000 frontend have production builds but no package-owned test command.",
     "The Missions frontend test command is an explicit no-op and ForeFlight frontend permits an empty Vitest suite.",
     "The retained root npm scripts use npm workspace traversal even though pnpm is the pinned package manager; Make and CI are the current build authorities.",

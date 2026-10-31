@@ -40,6 +40,15 @@ jobs:
         with:
           node-version: '24'
       - uses: pnpm/action-setup@v4
+      - name: Install service-health Component candidate
+        working-directory: components/aviation-service-health/implementation/typescript
+        run: pnpm install --frozen-lockfile --ignore-workspace
+      - name: Build service-health Component candidate
+        working-directory: components/aviation-service-health/implementation/typescript
+        run: pnpm run build
+      - name: Test service-health Component candidate
+        working-directory: components/aviation-service-health/implementation/typescript
+        run: pnpm run test
       - name: Install common SDK dependencies
         run: >-
           pnpm install --frozen-lockfile

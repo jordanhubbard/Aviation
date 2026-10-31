@@ -246,6 +246,14 @@ release-visible outcome to `CHANGELOG.md`; Git preserves prior queue states.
     both Python adapter checks, and retained receipt
     `sha256:98f090f35fa2c4606e35a340de77504e0845b83eb7db663dded12b0eb6f58730`
     pass with all 17 Component locks current.
+  - [x] Establish the TypeScript `aviation.service.health` realization as an
+    independently locked, buildable, and tested Component-owned qualification
+    candidate. Keep `@aviation/shared-sdk` as the retained application-facing
+    realization until regenerative qualification proves the compatibility switch;
+    Python and project release authority remain retained until their own gates pass.
+    The candidate has its own pinned package graph, dual CommonJS/ESM build, and 20
+    acceptance-vector tests; the retained full gate still records 591 tests in receipt
+    `sha256:7e8777062648be871db230a07097f722ad834f5f8a332a55dd4b5e00ce32c4d8`.
   - [x] Promote provider-neutral background-service lifecycle transitions into an
     explicit `aviation.service.lifecycle` Component with shared TypeScript/Python
     acceptance vectors and independent SDK tests. Refactor the shared TypeScript
@@ -335,11 +343,12 @@ release-visible outcome to `CHANGELOG.md`; Git preserves prior queue states.
     historical evidence. It removes stale duplicate workflows and obsolete
     Cursor/Loom/responsible-vibe/Claude bootstrap metadata rather than treating those
     files as authority.
-- **Next action:** Close the authority-transfer gaps in the native rewrite program:
-  regeneratively qualify each remaining Component realization, prove package and
-  application parity from native authority, and remove only the retained sources that
-  have earned replacement. Top-level classification is complete, but it does not by
-  itself authorize retiring the retained wrapper.
+- **Next action:** Qualify the first authority-transfer slice for
+  `aviation.service.health`: independently generate and compare the Component-owned
+  TypeScript candidate, then switch the shared-SDK compatibility surface only after
+  package and application parity pass. Transfer Python separately before changing
+  project release authority. Top-level classification and candidate tests do not by
+  themselves authorize retiring retained source.
 - **Evidence:** Phase 1.2 lift-and-shift identity `sha256:c5ca4361ba010f6e8d81c93398468f9f4f8b8cc352504bc8535fa74b7c6e9990`.
   Retained conversion established original-source release authority; each migration
   refreshes the verifier-owned receipt in `verification/current.json`.

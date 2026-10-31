@@ -1,0 +1,24 @@
+{
+  "name": "@aviation/service-health",
+  "version": "0.1.0",
+  "description": "Component-owned aviation.service.health TypeScript realization",
+  "license": "MIT",
+  "packageManager": "pnpm@10.34.5",
+  "main": "dist/index.js",
+  "module": "dist-esm/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": { "types": "./dist-esm/index.d.ts", "default": "./dist-esm/index.js" },
+      "require": { "types": "./dist/index.d.ts", "default": "./dist/index.js" }
+    },
+    "./package.json": "./package.json"
+  },
+  "files": ["dist", "dist-esm"],
+  "scripts": {
+    "build": "tsc && tsc -p tsconfig.esm.json && node scripts/write-esm-marker.mjs",
+    "clean": "rm -rf dist dist-esm",
+    "test": "vitest run"
+  },
+  "devDependencies": { "typescript": "^6.0.2", "vitest": "^4.1.1" }
+}

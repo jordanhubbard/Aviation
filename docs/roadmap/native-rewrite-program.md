@@ -33,8 +33,11 @@ carry an explicit removal checkpoint.
    variance. Every row names source/test/document evidence and an owner.
 2. [x] Classify each row as Component intent, Flavor requirement, conversion skill,
    immutable asset, repository-only harness, or intentionally retained source.
-3. [ ] Select the smallest independently buildable/testable boundary and author its
-   native authority; leave later boundaries retained.
+3. [ ] Establish `aviation.service.health` as the first independently
+   buildable/testable boundary: Component-own and independently lock the TypeScript
+   qualification candidate first, retain the release-authoritative shared-SDK
+   realization until qualification, then transfer Python without broadening the
+   application adapters.
 4. [ ] Generate, build, test, execute, and package the candidate through the ordinary
    lifecycle; compare observable results with the Phase 1.2 parity record.
 5. [ ] Independently accept and regeneratively qualify the candidate before authority
