@@ -109,6 +109,7 @@ temp/
 *.tmp
 .codegraph/
 .literate/native-projects.lock
+**/.litai-locks/
 **/provenance/component-authority/**/.append.lock
 # Playwright artifacts
 **/test-results/
