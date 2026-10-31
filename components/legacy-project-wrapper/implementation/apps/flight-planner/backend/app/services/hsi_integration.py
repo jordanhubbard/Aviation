@@ -1,8 +1,13 @@
 from __future__ import annotations
 
-import math
 from dataclasses import dataclass
 from enum import Enum
+
+from aviation_avionics import (
+    initial_bearing_deg,
+    normalize_heading,
+    normalize_signed_angle,
+)
 
 
 class CDIMode(Enum):
@@ -22,18 +27,19 @@ class HSIState:
     to_from_flag: str  # "TO", "FROM", or "OFF"
 
 
-def calculate_bearing_pointer(navaid_position: tuple[float, float], aircraft_position: tuple[float, float], aircraft_heading: float) -> float:
+def calculate_bearing_pointer(
+    navaid_position: tuple[float, float],
+    aircraft_position: tuple[float, float],
+    aircraft_heading: float,
+) -> float:
     """Calculate bearing pointer angle relative to aircraft heading."""
-    dx = navaid_position[0] - aircraft_position[0]
-    dy = navaid_position[1] - aircraft_position[1]
-    absolute_bearing = math.degrees(math.atan2(dy, dx)) % 360
-    relative_bearing = (absolute_bearing - aircraft_heading + 360) % 360
-    return relative_bearing
+    absolute_bearing = initial_bearing_deg(*aircraft_position, *navaid_position)
+    return normalize_heading(absolute_bearing - aircraft_heading)
 
 
 def calculate_cdi_deviation(course: float, radial: float, mode: CDIMode) -> float:
     """Calculate CDI deviation based on mode."""
-    deviation = (course - radial + 180) % 360 - 180
+    deviation = normalize_signed_angle(course - radial)
     if mode == CDIMode.LOC:
         # Localizer is more sensitive (2.5 degrees full scale)
         return max(-2.5, min(2.5, deviation))
@@ -47,7 +53,7 @@ def calculate_cdi_deviation(course: float, radial: float, mode: CDIMode) -> floa
 
 def calculate_to_from_flag(course: float, radial: float) -> str:
     """Determine TO/FROM flag based on course and radial."""
-    diff = (course - radial + 180) % 360 - 180
+    diff = normalize_signed_angle(course - radial)
     if abs(diff) <= 90:
         return "TO"
     else:
@@ -68,10 +74,14 @@ class HSIIntegrationService:
         radial: float,
         cdi_mode: CDIMode,
         glideslope_angle: float = 0.0,
-        aircraft_glideslope_angle: float = 0.0
+        aircraft_glideslope_angle: float = 0.0,
     ) -> None:
-        self.hsi_state.bearing_pointer_nav1 = calculate_bearing_pointer(nav1_position, aircraft_position, aircraft_heading)
-        self.hsi_state.bearing_pointer_nav2 = calculate_bearing_pointer(nav2_position, aircraft_position, aircraft_heading)
+        self.hsi_state.bearing_pointer_nav1 = calculate_bearing_pointer(
+            nav1_position, aircraft_position, aircraft_heading
+        )
+        self.hsi_state.bearing_pointer_nav2 = calculate_bearing_pointer(
+            nav2_position, aircraft_position, aircraft_heading
+        )
         self.hsi_state.cdi_mode = cdi_mode
         self.hsi_state.cdi_deviation = calculate_cdi_deviation(obs_setting, radial, cdi_mode)
         self.hsi_state.obs_setting = obs_setting

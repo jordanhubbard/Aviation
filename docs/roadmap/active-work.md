@@ -172,6 +172,10 @@ release-visible outcome to `CHANGELOG.md`; Git preserves prior queue states.
     with cross-language vectors; migrate G1000 to common state transitions while
     retaining audio playback, COM transmission, simulator orchestration, and physical
     device I/O as application-private behavior.
+  - [x] Route Flight Planner's retained nav-radio bearing/range, VOR/HSI angle, and
+    GPS track normalization through the qualified `aviation.avionics` realization.
+    Retain random GPS error injection, approach orchestration, CDI sensitivity,
+    TO/FROM selection, and instrument presentation as application policy.
   - [ ] Promote airports, weather, procedures/nav-data, flight dynamics, avionics
     protocols/rendering, shared UI, configuration, and integration infrastructure into
     explicit Components with owned tests and contracts.
@@ -179,10 +183,10 @@ release-visible outcome to `CHANGELOG.md`; Git preserves prior queue states.
     aviation implementations after parity qualification.
   - [ ] Classify and remove or intentionally retain every remainder beneath the legacy
     wrapper.
-- **Next action:** Audit Flight Planner's retained nav-radio, HSI, and GPS-simulation
-  geometry against navigation and avionics; qualify reusable calculations while
-  retaining random-error injection, approach orchestration, and instrument presentation
-  policy.
+- **Next action:** Audit Flight School's retained aircraft identity, configuration,
+  and maintenance calculations against `aviation.aircraft`; reuse qualified profile
+  data while retaining bookings, fleet availability, equipment state, rates, and
+  maintenance scheduling as application policy.
 - **Evidence:** Phase 1.2 lift-and-shift identity `sha256:c5ca4361ba010f6e8d81c93398468f9f4f8b8cc352504bc8535fa74b7c6e9990`.
   Retained conversion stage is backed by current test receipt
   `sha256:60e252aceb5834018a21d3ec5a75b667c564e207ea3cf02d475b3245640c3c79`;
@@ -249,6 +253,12 @@ release-visible outcome to `CHANGELOG.md`; Git preserves prior queue states.
   compatibility adapter now delegates heading normalization and shortest-turn semantics
   while retaining its documented `+180` tie mapping; all 184 non-integration backend
   tests plus eight subtests pass.
+  Flight Planner nav-instrument consolidation routes ADF bearing, DME great-circle
+  ground range, VOR/HSI angular normalization, and GPS track wrapping through the
+  independently tested avionics realization. The nine-test Python avionics suite and
+  all 188 non-integration Flight Planner tests plus eight subtests pass; random GPS
+  error injection, approach orchestration, CDI sensitivity, TO/FROM selection, and
+  display-relative bearing remain application policy.
   The G1000 and Flight Planner private geodesy service placeholders were classified as
   non-realized scaffolding and removed with application boundary tests preventing their
   reintroduction; all 30 G1000 backend tests and 178 non-integration Flight Planner
@@ -363,9 +373,9 @@ release-visible outcome to `CHANGELOG.md`; Git preserves prior queue states.
   and parity identity
   `sha256:4f5acf5f618ab336bf169ec84d4f1068f4754702371d1ff0d63c093880d5deee`.
   The current retained receipt is
-  `sha256:7777144b36eeb981175a7576380da49d322083dd3c7f21897cfe89f13e1bc8d7`
-  (candidate `sha256:94d8b8f65d112d5e671141168f832831afb49755cdec9ccba6f6f0c93453758e`,
-  347 tests).
+  `sha256:342a2f0bfb42a2661da7a4753a7d47146f6c005aaa70dca3643f92cc59377dd9`
+  (candidate `sha256:8aaf590c4b20959cdd289af5439fc3c4899230424e7e0d1af8f8e362858277f0`,
+  417 tests).
   The ADF/DME slice landed in PR #348 at exact-main commit
   `f3da7e3406b6b2d04b95da03217231d1b7313a1e`; all six exact-commit workflows
   passed: Common Aviation SDK run 41137297070, Integration Tests run 41137297059,

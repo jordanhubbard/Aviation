@@ -9,6 +9,10 @@
 
 ## Unreleased
 
+- Migrated Flight Planner's retained ADF bearing, DME ground range, VOR/HSI angle,
+  and GPS track normalization to the independently tested `aviation.avionics`
+  realization. Random GPS error injection, approach orchestration, CDI sensitivity,
+  TO/FROM selection, and instrument presentation remain application policy.
 - Migrated G1000 backend heading normalization, shortest-turn error, and geodesic
   position stepping to `aviation.navigation`. Flight Planner now delegates its
   retained dynamics heading semantics to the same SDK while preserving the legacy
