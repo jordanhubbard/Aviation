@@ -8,7 +8,7 @@ from setuptools import setup, find_packages
 
 setup(
     name="aviation-shared-sdk",
-    version="0.4.0",
+    version="0.5.0",
     description="Shared aviation utilities for Python applications",
     author="Aviation Team",
     packages=find_packages(),

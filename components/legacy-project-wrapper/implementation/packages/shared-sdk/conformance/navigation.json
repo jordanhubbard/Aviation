@@ -1,5 +1,5 @@
 {
-  "schema": "aviation/navigation-acceptance-vectors@2",
+  "schema": "aviation/navigation-acceptance-vectors@3",
   "vectors": [
     {
       "id": "equatorial-degree-distance",
@@ -210,6 +210,120 @@
       "args": [0.5, 10000],
       "expected": 319.1667071493,
       "absolute_tolerance": 0.0000001
+    },
+    {
+      "id": "heading-difference-crosses-north",
+      "operation": "heading_difference",
+      "args": [350, 10],
+      "expected": 20,
+      "absolute_tolerance": 0
+    },
+    {
+      "id": "heading-difference-turns-left",
+      "operation": "heading_difference",
+      "args": [10, 350],
+      "expected": -20,
+      "absolute_tolerance": 0
+    },
+    {
+      "id": "heading-difference-half-turn-is-negative",
+      "operation": "heading_difference",
+      "args": [0, 180],
+      "expected": -180,
+      "absolute_tolerance": 0
+    },
+    {
+      "id": "circular-mean-crosses-north",
+      "operation": "circular_mean_heading",
+      "args": [[350, 10]],
+      "expected": 0,
+      "absolute_tolerance": 0.0000001
+    },
+    {
+      "id": "weighted-circular-mean",
+      "operation": "circular_mean_heading",
+      "args": [
+        [0, 90],
+        [3, 1]
+      ],
+      "expected": 18.4349488229,
+      "absolute_tolerance": 0.0000001
+    },
+    {
+      "id": "north-runway-designator",
+      "operation": "runway_designator",
+      "args": [359],
+      "expected": "36"
+    },
+    {
+      "id": "east-runway-designator",
+      "operation": "runway_designator",
+      "args": [94],
+      "expected": "09"
+    },
+    {
+      "id": "runway-designator-half-up",
+      "operation": "runway_designator",
+      "args": [5],
+      "expected": "01"
+    },
+    {
+      "id": "local-tangent-east",
+      "operation": "local_east_m",
+      "args": [37.62, -122.38, 37.6, -122.4],
+      "expected": 1763.9455931826,
+      "absolute_tolerance": 0.0000001
+    },
+    {
+      "id": "local-tangent-north",
+      "operation": "local_north_m",
+      "args": [37.62, -122.38, 37.6, -122.4],
+      "expected": 2226.389815865,
+      "absolute_tolerance": 0.0000001
+    },
+    {
+      "id": "local-tangent-inverse-latitude",
+      "operation": "local_latitude",
+      "args": [1763.9455931826, 2226.389815865, 37.6, -122.4],
+      "expected": 37.62,
+      "absolute_tolerance": 0.0000000001
+    },
+    {
+      "id": "local-tangent-inverse-longitude",
+      "operation": "local_longitude",
+      "args": [1763.9455931826, 2226.389815865, 37.6, -122.4],
+      "expected": -122.38,
+      "absolute_tolerance": 0.0000000001
+    },
+    {
+      "id": "non-numeric-heading-difference-fails",
+      "operation": "heading_difference",
+      "args": ["invalid", 10],
+      "expected_error": "invalid_input"
+    },
+    {
+      "id": "empty-circular-mean-fails",
+      "operation": "circular_mean_heading",
+      "args": [[]],
+      "expected_error": "invalid_input"
+    },
+    {
+      "id": "ambiguous-circular-mean-fails",
+      "operation": "circular_mean_heading",
+      "args": [[0, 180]],
+      "expected_error": "invalid_input"
+    },
+    {
+      "id": "polar-local-projection-fails",
+      "operation": "local_east_m",
+      "args": [89, 1, 90, 0],
+      "expected_error": "invalid_input"
+    },
+    {
+      "id": "out-of-range-local-inverse-fails",
+      "operation": "local_latitude",
+      "args": [0, 20000000, 0, 0],
+      "expected_error": "invalid_input"
     },
     {
       "id": "invalid-latitude-fails",

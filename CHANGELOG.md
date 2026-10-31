@@ -9,6 +9,11 @@
 
 ## Unreleased
 
+- Qualified shortest heading differences, circular heading means, runway designators,
+  and reversible local tangent-plane projection across both `aviation.navigation`
+  bindings. Flight Track Analyzer now retains only vectorized track adaptation, and
+  G1000 HSI retains only display scaling and styling instead of private navigation
+  formulas.
 - Qualified east/north wind-vector decomposition in both `aviation.navigation`
   bindings and migrated Flight Track Analyzer's fitted-wind, reported-wind, and
   airport-distance calculations to the common SDK while retaining its spatial index

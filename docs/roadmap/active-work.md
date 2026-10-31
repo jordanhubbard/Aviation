@@ -109,6 +109,11 @@ release-visible outcome to `CHANGELOG.md`; Git preserves prior queue states.
     navigation vectors; migrate Flight Track Analyzer's fitted-wind, reported-wind,
     and final airport-distance arithmetic to the common realization while retaining
     its KD-tree candidate search and measured-track policy.
+  - [x] Qualify shortest signed heading differences, weighted circular means, runway
+    designators, and reversible local tangent-plane projection with shared
+    TypeScript/Python navigation vectors. Migrate Flight Track Analyzer's geographic
+    helpers and G1000 HSI heading/track projection to the common realization while
+    retaining vectorized sample handling and pixel/display policy.
   - [x] Remove G1000 and Flight Planner's unused private geodesy service scaffolds;
     their methods were never called and returned only `None` or constant zero, while
     realized route distance and bearing already delegate to `aviation.navigation`.
@@ -162,10 +167,10 @@ release-visible outcome to `CHANGELOG.md`; Git preserves prior queue states.
     aviation implementations after parity qualification.
   - [ ] Classify and remove or intentionally retain every remainder beneath the legacy
     wrapper.
-- **Next action:** Audit Flight Track Analyzer's remaining geographic and performance
-  arithmetic plus G1000's presentation projections against the navigation and
+- **Next action:** Audit Flight Track Analyzer's remaining measured performance
+  arithmetic and G1000's synthetic engine/display projections against the aircraft and
   flight-dynamics boundaries; qualify reusable behavior and explicitly retain only
-  measured-track or display policy.
+  measured-track inference or display policy.
 - **Evidence:** Phase 1.2 lift-and-shift identity `sha256:c5ca4361ba010f6e8d81c93398468f9f4f8b8cc352504bc8535fa74b7c6e9990`.
   Retained conversion stage is backed by current test receipt
   `sha256:60e252aceb5834018a21d3ec5a75b667c564e207ea3cf02d475b3245640c3c79`;
@@ -211,6 +216,13 @@ release-visible outcome to `CHANGELOG.md`; Git preserves prior queue states.
   distance through `aviation.navigation`, and retains only candidate indexing and
   measured-track analysis in the application. The shared suites pass 397 TypeScript
   and 154 Python tests, and all 70 Flight Track Analyzer tests pass.
+  Local-navigation geometry qualification adds 17 shared valid/invalid vectors for
+  signed heading differences, circular means, runway numbering, and reversible
+  WGS-84 local tangent-plane projection. The TypeScript SDK passes 414 tests and its
+  build, the Python SDK passes 154 tests, Flight Track Analyzer passes 71 tests, and
+  the six-test G1000 SDK boundary plus production frontend build pass. Analyzer
+  vectorization and HSI pixel scaling remain application policy; their private
+  navigation formulas are removed.
   The G1000 and Flight Planner private geodesy service placeholders were classified as
   non-realized scaffolding and removed with application boundary tests preventing their
   reintroduction; all 30 G1000 backend tests and 178 non-integration Flight Planner

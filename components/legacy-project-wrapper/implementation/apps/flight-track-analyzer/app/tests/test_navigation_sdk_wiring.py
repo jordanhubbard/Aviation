@@ -22,3 +22,18 @@ def test_reported_wind_components_delegate_to_sdk() -> None:
     source = (FLIGHTLAB / "poh.py").read_text()
     assert "wind_components" in source
     assert 'math.radians(meta["wind_from_deg"]' not in source
+
+
+def test_track_geometry_delegates_to_sdk() -> None:
+    source = (FLIGHTLAB / "geo.py").read_text()
+    for operation in (
+        "to_local_tangent_plane",
+        "from_local_tangent_plane",
+        "heading_difference",
+        "circular_mean_heading",
+        "navigation_runway_designator",
+    ):
+        assert operation in source
+    assert "EARTH_R" not in source
+    assert "np.radians" not in source
+    assert "% 360.0" not in source

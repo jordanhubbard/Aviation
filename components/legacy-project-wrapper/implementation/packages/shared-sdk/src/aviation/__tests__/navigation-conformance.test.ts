@@ -25,13 +25,18 @@ import {
   iasToTas,
   tasToMach,
   machToTas,
+  headingDifference,
+  circularMeanHeading,
+  runwayDesignator,
+  toLocalTangentPlane,
+  fromLocalTangentPlane,
 } from "../navigation/index.js";
 
 interface NavigationVector {
   id: string;
   operation: string;
   args: unknown[];
-  expected?: number;
+  expected?: number | string;
   absolute_tolerance?: number;
   expected_error?: "invalid_input";
 }
@@ -43,7 +48,7 @@ interface NavigationVectors {
 
 const contract = loadConformanceContract<NavigationVectors>("navigation");
 
-const operations: Record<string, (...args: never[]) => number> = {
+const operations: Record<string, (...args: never[]) => number | string> = {
   distance_nm: distanceNM,
   initial_bearing: initialBearing,
   headwind_component: ((
@@ -94,11 +99,46 @@ const operations: Record<string, (...args: never[]) => number> = {
   ias_to_tas: iasToTas,
   tas_to_mach: tasToMach,
   mach_to_tas: machToTas,
+  heading_difference: headingDifference,
+  circular_mean_heading: circularMeanHeading as (...args: never[]) => number,
+  runway_designator: runwayDesignator,
+  local_east_m: ((
+    lat: number,
+    lon: number,
+    originLat: number,
+    originLon: number,
+  ) => toLocalTangentPlane(lat, lon, originLat, originLon).eastMeters) as (
+    ...args: never[]
+  ) => number,
+  local_north_m: ((
+    lat: number,
+    lon: number,
+    originLat: number,
+    originLon: number,
+  ) => toLocalTangentPlane(lat, lon, originLat, originLon).northMeters) as (
+    ...args: never[]
+  ) => number,
+  local_latitude: ((
+    east: number,
+    north: number,
+    originLat: number,
+    originLon: number,
+  ) => fromLocalTangentPlane(east, north, originLat, originLon)[0]) as (
+    ...args: never[]
+  ) => number,
+  local_longitude: ((
+    east: number,
+    north: number,
+    originLat: number,
+    originLon: number,
+  ) => fromLocalTangentPlane(east, north, originLat, originLon)[1]) as (
+    ...args: never[]
+  ) => number,
 };
 
 describe("aviation.navigation Component conformance", () => {
   it("uses the versioned Component-owned vector schema", () => {
-    expect(contract.schema).toBe("aviation/navigation-acceptance-vectors@2");
+    expect(contract.schema).toBe("aviation/navigation-acceptance-vectors@3");
     expect(contract.vectors.length).toBeGreaterThan(0);
   });
 
@@ -114,15 +154,19 @@ describe("aviation.navigation Component conformance", () => {
         return;
       }
       const actual = operation(...(vector.args as never[]));
-      expect(Number.isFinite(actual)).toBe(true);
+      if (typeof vector.expected === "string") {
+        expect(actual).toBe(vector.expected);
+        return;
+      }
+      expect(typeof actual === "number" && Number.isFinite(actual)).toBe(true);
       expect(vector.expected).toBeTypeOf("number");
       expect(vector.absolute_tolerance).toBeTypeOf("number");
       if (vector.absolute_tolerance === 0) {
         expect(actual).toBe(vector.expected);
       } else {
-        expect(Math.abs(actual - vector.expected!)).toBeLessThanOrEqual(
-          vector.absolute_tolerance!,
-        );
+        expect(
+          Math.abs((actual as number) - vector.expected!),
+        ).toBeLessThanOrEqual(vector.absolute_tolerance!);
       }
     });
   }

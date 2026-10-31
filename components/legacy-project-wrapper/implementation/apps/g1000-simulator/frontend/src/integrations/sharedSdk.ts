@@ -8,7 +8,8 @@ import {
   fuelConsumption,
   fuelReserve,
   initialBearing,
-} from '@aviation/shared-sdk';
+  headingDifference,
+} from "@aviation/shared-sdk";
 
 export { C172S_OPERATING_PROFILE };
 export { C172S_LOADING_PROFILE };
@@ -20,10 +21,20 @@ export type LegSummary = {
 
 export const summarizeLeg = (
   start: { latitude: number; longitude: number },
-  end: { latitude: number; longitude: number }
+  end: { latitude: number; longitude: number },
 ): LegSummary => ({
-  distanceNm: distanceNM(start.latitude, start.longitude, end.latitude, end.longitude),
-  courseTrue: initialBearing(start.latitude, start.longitude, end.latitude, end.longitude),
+  distanceNm: distanceNM(
+    start.latitude,
+    start.longitude,
+    end.latitude,
+    end.longitude,
+  ),
+  courseTrue: initialBearing(
+    start.latitude,
+    start.longitude,
+    end.latitude,
+    end.longitude,
+  ),
 });
 
 export type TripFuelSummary = {
@@ -35,7 +46,7 @@ export const calculateTripFuel = (
   distanceNm: number,
   groundSpeedKt: number,
   fuelBurnGph: number,
-  reserveMinutes: number
+  reserveMinutes: number,
 ): TripFuelSummary => {
   if (groundSpeedKt <= 0) {
     return { timeHours: 0, fuelRequiredGallons: 0 };
@@ -44,16 +55,25 @@ export const calculateTripFuel = (
   return {
     timeHours,
     fuelRequiredGallons:
-      fuelConsumption(fuelBurnGph, timeHours) + fuelReserve(fuelBurnGph, reserveMinutes),
+      fuelConsumption(fuelBurnGph, timeHours) +
+      fuelReserve(fuelBurnGph, reserveMinutes),
   };
 };
 
 export const calculateDensityAltitude = (
   pressureAltitudeFt: number,
-  outsideAirTemperatureC: number
+  outsideAirTemperatureC: number,
 ): number => densityAltitude(pressureAltitudeFt, outsideAirTemperatureC);
 
-export const calculateC172Loading = (stationWeights: number[], fuelGallons: number) =>
+export const calculateHeadingDelta = (
+  fromHeading: number,
+  toHeading: number,
+): number => headingDifference(fromHeading, toHeading);
+
+export const calculateC172Loading = (
+  stationWeights: number[],
+  fuelGallons: number,
+) =>
   calculateLoad(C172S_LOADING_PROFILE, {
     stationWeights,
     fuelGallons,

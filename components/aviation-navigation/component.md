@@ -1,6 +1,6 @@
 ---
 namespace: aviation
-version: 0.2.0
+version: 0.3.0
 display_name: Aviation navigation
 profiles:
   - library
@@ -8,7 +8,7 @@ profiles:
 sample: false
 provides:
   - name: aviation.navigation
-    version: 0.2.0
+    version: 0.3.0
     interface:
       uri: interfaces/navigation.md
       pin: null
@@ -106,3 +106,23 @@ instead of carrying their own trigonometric projection.
 - **WHEN** an application has eastward and northward wind-velocity components
 - **THEN** `aviation.navigation` returns headwind and crosswind components for the
   selected true course using the Component's shared sign convention
+
+### Requirement: Local navigation geometry is portable
+
+The capability SHALL own shortest signed heading differences, weighted circular
+heading means, two-digit runway designators, and a reversible local tangent-plane
+projection using the WGS-84 semi-major axis. Applications MAY retain vectorization,
+display scaling, and measured-track segmentation, but SHALL NOT carry independent
+formulas for these operations.
+
+#### Scenario: A track analyzer works in a local runway frame
+
+- **WHEN** recorded WGS-84 positions are projected into local east/north metres and
+  converted back to coordinates
+- **THEN** the analyzer delegates each semantic projection to `aviation.navigation`
+  while retaining only vectorized sample handling
+
+#### Scenario: An avionics display positions a track symbol
+
+- **WHEN** a display needs the signed difference between heading and track
+- **THEN** it calls `aviation.navigation` and retains only pixel scaling and styling

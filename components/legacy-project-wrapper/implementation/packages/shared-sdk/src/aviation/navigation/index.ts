@@ -48,18 +48,24 @@ export {
   groundSpeed,
   reciprocalHeading,
   headingDifference,
+  circularMeanHeading,
+  runwayDesignator,
   isHeadingInRange,
 } from "./bearing.js";
 
 // Coordinate utilities
 export {
   type Coordinate,
+  type LocalTangentCoordinate,
+  LOCAL_TANGENT_EARTH_RADIUS_METERS,
   isValidLatitude,
   isValidLongitude,
   isValidCoordinate,
   normalizeLatitude,
   normalizeLongitude,
   normalizeCoordinate,
+  toLocalTangentPlane,
+  fromLocalTangentPlane,
   parseDecimalDegrees,
   dmsToDecimal,
   decimalToDMS,

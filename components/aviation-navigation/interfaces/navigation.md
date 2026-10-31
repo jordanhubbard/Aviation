@@ -6,9 +6,9 @@ changing units or conventions.
 
 | Operation family | Required semantic operations |
 | --- | --- |
-| Coordinates | validate latitude/longitude, normalize longitude, DMS conversion |
+| Coordinates | validate latitude/longitude, normalize longitude, DMS conversion, reversible local tangent-plane projection |
 | Geodesy | great-circle distance, initial/final bearing, midpoint, destination |
-| Headings | normalize, reciprocal, true/magnetic conversion, shortest difference |
+| Headings | normalize, reciprocal, true/magnetic conversion, shortest signed difference, weighted circular mean, runway designator |
 | Wind | correction angle, corrected heading, ground speed, head/crosswind components from wind-from direction/speed or east/north wind velocity |
 | Time/speed/distance | solve any missing value from the other two; format duration; planning IAS/TAS and ISA Mach conversion |
 | Fuel | consumption, flight fuel, range/endurance, configurable and VFR/IFR reserve, mass/volume |
@@ -19,6 +19,15 @@ changing units or conventions.
 - A coordinate is WGS-84 decimal degrees with latitude in `[-90, 90]` and longitude in
   `[-180, 180]` before calculation.
 - A bearing or heading result is in `[0, 360)` degrees clockwise from true north.
+  A shortest signed heading difference is in `[-180, 180)`, with an exact half-turn
+  represented as `-180`. Circular means reject empty, zero-weight, non-finite, or
+  directionally ambiguous samples. Runway designators round headings to the nearest
+  ten degrees using half-up ties and return `01` through `36`.
+- Local tangent-plane coordinates use metres east/north of a valid WGS-84 origin and
+  the WGS-84 semi-major axis of 6,378,137 metres. The origin cannot be a pole. The
+  inverse operation normalizes longitude and rejects results outside the latitude
+  domain. This is a local equirectangular projection, not a replacement for geodesic
+  distance over long routes.
 - Wind direction is the direction the wind comes from. A positive headwind opposes the
   selected course; a positive crosswind comes from the right of the selected course.
   East/north wind-vector inputs describe the direction toward which the air mass moves,
