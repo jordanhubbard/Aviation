@@ -9,9 +9,10 @@ Canonical `AlertLevel` values, from lowest to highest priority, are:
 - `caution`
 - `warning`
 
-Input values are trimmed and case-insensitive. `ok` is the compatibility alias for
-`normal`; `info` is the compatibility alias for `advisory`. An unrecognized value
-fails with the stable code `alert-level-invalid`.
+Input values are trimmed and case-insensitive. `ok` and `debug` are compatibility
+aliases for `normal`; `info` is the compatibility alias for `advisory`; `critical`
+is the compatibility alias for `warning`. An unrecognized value fails with the stable
+code `alert-level-invalid`.
 
 ## Lifecycle record
 

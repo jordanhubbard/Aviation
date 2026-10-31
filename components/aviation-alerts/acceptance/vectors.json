@@ -6,9 +6,11 @@
     {"input": "CAUTION", "expected": "caution", "priority": 2},
     {"input": "warning", "expected": "warning", "priority": 3},
     {"input": "ok", "expected": "normal", "priority": 0},
-    {"input": "Info", "expected": "advisory", "priority": 1}
+    {"input": "DEBUG", "expected": "normal", "priority": 0},
+    {"input": "Info", "expected": "advisory", "priority": 1},
+    {"input": " critical ", "expected": "warning", "priority": 3}
   ],
-  "invalidLevelCases": ["", "emergency", "critical"],
+  "invalidLevelCases": ["", "emergency"],
   "orderingCases": [
     {
       "id": "acknowledgement-before-severity",
@@ -24,12 +26,15 @@
     {
       "id": "canonical-and-alias-priority",
       "input": [
+        {"id": "critical", "level": "critical", "acknowledged": false},
         {"id": "normal", "level": "normal", "acknowledged": false},
         {"id": "advisory", "level": "advisory", "acknowledged": false},
         {"id": "ok", "level": "ok", "acknowledged": false},
-        {"id": "info", "level": "info", "acknowledged": false}
+        {"id": "debug", "level": "debug", "acknowledged": false},
+        {"id": "info", "level": "info", "acknowledged": false},
+        {"id": "warning", "level": "warning", "acknowledged": false}
       ],
-      "expectedIds": ["advisory", "info", "normal", "ok"]
+      "expectedIds": ["critical", "warning", "advisory", "info", "normal", "ok", "debug"]
     }
   ],
   "reconciliationCases": [

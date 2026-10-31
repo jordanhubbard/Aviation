@@ -1,7 +1,7 @@
 /** Provider-neutral aviation alert lifecycle semantics. */
 
 export type CanonicalAlertLevel = 'normal' | 'advisory' | 'caution' | 'warning';
-export type AlertLevelInput = CanonicalAlertLevel | 'ok' | 'info';
+export type AlertLevelInput = CanonicalAlertLevel | 'ok' | 'debug' | 'info' | 'critical';
 
 export interface AlertLifecycleRecord {
   id: string;
@@ -20,10 +20,12 @@ export class AlertLifecycleError extends Error {
 const LEVEL_ALIASES: Readonly<Record<string, CanonicalAlertLevel>> = {
   normal: 'normal',
   ok: 'normal',
+  debug: 'normal',
   advisory: 'advisory',
   info: 'advisory',
   caution: 'caution',
   warning: 'warning',
+  critical: 'warning',
 };
 
 const LEVEL_PRIORITY: Readonly<Record<CanonicalAlertLevel, number>> = {

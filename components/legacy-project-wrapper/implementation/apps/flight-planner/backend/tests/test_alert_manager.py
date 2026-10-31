@@ -1,5 +1,7 @@
 """Tests for alert manager."""
 
+import inspect
+
 import pytest
 from datetime import datetime
 from app.models.alert import Alert, AlertSeverity
@@ -57,6 +59,24 @@ class TestAlertManager:
         assert alerts[0].severity == AlertSeverity.CRITICAL
         assert alerts[1].severity == AlertSeverity.WARNING
         assert alerts[2].severity == AlertSeverity.INFO
+
+    def test_common_sdk_priority_preserves_extended_app_order(self):
+        """Portable tiers drive ordering; Flight Planner keeps its critical tie-break."""
+        self.manager.add_alert("Debug alert", AlertSeverity.DEBUG, "service4")
+        self.manager.add_alert("Warning alert", AlertSeverity.WARNING, "service2")
+        self.manager.add_alert("Critical alert", AlertSeverity.CRITICAL, "service1")
+        self.manager.add_alert("Info alert", AlertSeverity.INFO, "service3")
+
+        assert [alert.severity for alert in self.manager.get_active_alerts()] == [
+            AlertSeverity.CRITICAL,
+            AlertSeverity.WARNING,
+            AlertSeverity.INFO,
+            AlertSeverity.DEBUG,
+        ]
+
+        source = inspect.getsource(AlertManager)
+        assert "alert_priority" in source
+        assert "severity_order" not in source
     
     def test_get_active_alerts_filtered(self):
         """Test getting active alerts filtered by severity."""

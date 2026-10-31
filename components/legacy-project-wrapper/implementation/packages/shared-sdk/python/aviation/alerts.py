@@ -21,10 +21,12 @@ class AlertLifecycleError(ValueError):
 _LEVEL_ALIASES: dict[str, CanonicalAlertLevel] = {
     "normal": "normal",
     "ok": "normal",
+    "debug": "normal",
     "advisory": "advisory",
     "info": "advisory",
     "caution": "caution",
     "warning": "warning",
+    "critical": "warning",
 }
 _LEVEL_PRIORITY = {"normal": 0, "advisory": 1, "caution": 2, "warning": 3}
 
