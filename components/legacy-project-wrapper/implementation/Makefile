@@ -9,7 +9,7 @@ PNPM := $(shell command -v pnpm >/dev/null 2>&1 && echo pnpm || (command -v core
 .PHONY: help all build clean test test-docker release
 .PHONY: build-node build-python build-clojure
 .PHONY: clean-node clean-python clean-clojure
-.PHONY: test-node test-go test-sdk-python test-flight-dynamics test-avionics test-g1000-python test-python test-clojure test-flight-track-analyzer
+.PHONY: test-node test-go test-sdk-python test-configuration-python test-flight-dynamics test-avionics test-g1000-python test-python test-clojure test-flight-track-analyzer
 .PHONY: test-docker-node test-docker-python test-docker-clojure
 .PHONY: run-aviation-missions run-flight-planner run-flight-school
 .PHONY: run-foreflight-dashboard run-flight-tracker run-weather-briefing
@@ -163,7 +163,7 @@ clean-clojure:
 # TEST TARGETS
 #
 
-test: test-node test-go test-sdk-python test-flight-dynamics test-avionics test-g1000-python test-flight-track-analyzer
+test: test-node test-go test-sdk-python test-configuration-python test-flight-dynamics test-avionics test-g1000-python test-flight-track-analyzer
 	@echo ""
 	@echo "✅ Core application tests complete!"
 
@@ -181,7 +181,7 @@ test-node:
 	@# Ask pnpm to resolve each package's test binary from the workspace. This
 	@# keeps the root test command portable across fresh and retained checkouts.
 	@ran=0; skipped=0; \
-	for pkg in packages/shared-sdk packages/nav-data packages/ai-explainer packages/ui-framework packages/keystore \
+	for pkg in packages/shared-sdk packages/nav-data packages/ai-explainer packages/ui-framework packages/keystore packages/aviation-config \
 	           apps/aviation-accident-tracker/backend apps/aviation-accident-tracker/frontend \
 	           apps/flight-planner/frontend apps/foreflight-dashboard/frontend; do \
 		if $(PNPM) --filter "./$$pkg" exec vitest --version >/dev/null 2>&1; then \
@@ -226,6 +226,14 @@ test-sdk-python:
 	"$$python_env/bin/python" -m pip install -q -e packages/shared-sdk/python pytest; \
 	"$$python_env/bin/python" -m pytest packages/shared-sdk/python/tests -q
 	@echo "✅ Python shared SDK tests PASSED"
+
+test-configuration-python:
+	@echo "🧪 Running Python configuration Component tests..."
+	@python_env="$(abspath _build/python-envs/configuration)"; \
+	python3 -m venv "$$python_env"; \
+	"$$python_env/bin/python" -m pip install -q pytest; \
+	PYTHONPATH=packages/aviation-config/python "$$python_env/bin/python" -m pytest packages/aviation-config/python/tests -q
+	@echo "✅ Python configuration Component tests PASSED"
 
 test-flight-dynamics:
 	@echo "🧪 Running flight-dynamics Component tests..."

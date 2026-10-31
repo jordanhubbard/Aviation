@@ -1,0 +1,52 @@
+{
+  "schema": "aviation/configuration-acceptance-vectors@1",
+  "normalizationCases": [
+    {
+      "id": "canonical-weather-service",
+      "input": {
+        "id": " OpenWeather ", "name": " OpenWeatherMap ",
+        "description": " Weather data ", "category": " WEATHER ",
+        "docsUrl": " https://openweathermap.org/api ",
+        "fields": [{"key": " API_KEY ", "label": " API Key ", "description": " Access token ", "required": true, "secret": true, "envVar": " openweathermap_api_key "}],
+        "appScope": [" Flight-Planner ", " ALL ", "flight-planner"]
+      },
+      "expected": {
+        "id": "openweather", "name": "OpenWeatherMap", "description": "Weather data",
+        "category": "weather", "docsUrl": "https://openweathermap.org/api",
+        "fields": [{"key": "api_key", "label": "API Key", "description": "Access token", "required": true, "secret": true, "envVar": "OPENWEATHERMAP_API_KEY"}],
+        "appScope": ["flight-planner", "all"]
+      }
+    }
+  ],
+  "invalidDefinitionCases": [
+    {"id": "missing-id", "input": {"id": " ", "name": "X", "description": "X", "category": "weather", "fields": [{"key": "key", "label": "Key", "description": "Key", "required": true, "secret": true, "envVar": "X_KEY"}], "appScope": ["app"]}, "expectedErrorCode": "configuration-service-id-invalid"},
+    {"id": "invalid-category", "input": {"id": "x", "name": "X", "description": "X", "category": "other", "fields": [{"key": "key", "label": "Key", "description": "Key", "required": true, "secret": true, "envVar": "X_KEY"}], "appScope": ["app"]}, "expectedErrorCode": "configuration-category-invalid"},
+    {"id": "duplicate-field", "input": {"id": "x", "name": "X", "description": "X", "category": "auth", "fields": [{"key": "token", "label": "A", "description": "A", "required": true, "secret": true, "envVar": "X_TOKEN"}, {"key": "TOKEN", "label": "B", "description": "B", "required": false, "secret": true, "envVar": "X_TOKEN_2"}], "appScope": ["app"]}, "expectedErrorCode": "configuration-field-key-duplicate"},
+    {"id": "invalid-docs-url", "input": {"id": "x", "name": "X", "description": "X", "category": "auth", "docsUrl": "http://example.test", "fields": [{"key": "key", "label": "Key", "description": "Key", "required": true, "secret": true, "envVar": "X_KEY"}], "appScope": ["app"]}, "expectedErrorCode": "configuration-docs-url-invalid"}
+  ],
+  "invalidCatalogCases": [
+    {"id": "duplicate-service", "definitions": ["base", "base"], "expectedErrorCode": "configuration-service-id-duplicate"},
+    {"id": "duplicate-env-owner", "definitions": ["base", "same-env"], "expectedErrorCode": "configuration-env-var-duplicate"}
+  ],
+  "catalog": [
+    {"id":"openweather","category":"weather","fields":[["api_key","OPENWEATHERMAP_API_KEY",true,true]],"appScope":["flight-planner","weather-briefing","g1000-simulator"]},
+    {"id":"openaip","category":"navigation","fields":[["api_key","OPENAIP_API_KEY",true,true]],"appScope":["flight-planner","g1000-simulator"]},
+    {"id":"opentopography","category":"navigation","fields":[["api_key","OPENTOPOGRAPHY_API_KEY",false,true]],"appScope":["flight-planner"]},
+    {"id":"foreflight","category":"navigation","fields":[["api_key","FOREFLIGHT_API_KEY",true,true],["api_secret","FOREFLIGHT_API_SECRET",true,true]],"appScope":["foreflight-dashboard"]},
+    {"id":"google-oauth","category":"auth","fields":[["client_id","GOOGLE_CLIENT_ID",true,false],["client_secret","GOOGLE_CLIENT_SECRET",true,true],["redirect_uri","GOOGLE_REDIRECT_URI",false,false]],"appScope":["flightschool"]},
+    {"id":"smtp","category":"monitoring","fields":[["server","MAIL_SERVER",true,false],["port","MAIL_PORT",false,false],["username","MAIL_USERNAME",false,false],["password","MAIL_PASSWORD",false,true]],"appScope":["flightschool"]},
+    {"id":"sentry","category":"monitoring","fields":[["dsn","SENTRY_DSN",false,true]],"appScope":["all"]},
+    {"id":"g1000-stream","category":"streaming","fields":[["api_key","G1000_STREAM_API_KEY",false,true]],"appScope":["g1000-simulator"]},
+    {"id":"database","category":"database","fields":[["url","DATABASE_URL",false,true]],"appScope":["flightschool","foreflight-dashboard","flight-planner"]},
+    {"id":"redis","category":"database","fields":[["url","REDIS_URL",false,false]],"appScope":["foreflight-dashboard","flight-planner"]}
+  ],
+  "filterCases": [
+    {"appId":" G1000-SIMULATOR ","expectedIds":["openweather","openaip","sentry","g1000-stream"]},
+    {"appId":"unknown-app","expectedIds":["sentry"]}
+  ],
+  "lookupCases": [{"id":" OPENWEATHER ","expectedId":"openweather"},{"id":"missing","expectedId":null}],
+  "statusCases": [
+    {"serviceId":"smtp","configuredKeys":["server"],"expected":{"id":"smtp","configured":true,"fields":[{"key":"server","configured":true},{"key":"port","configured":false},{"key":"username","configured":false},{"key":"password","configured":false}]}},
+    {"serviceId":"foreflight","configuredKeys":["api_key"],"expected":{"id":"foreflight","configured":false,"fields":[{"key":"api_key","configured":true},{"key":"api_secret","configured":false}]}}
+  ]
+}

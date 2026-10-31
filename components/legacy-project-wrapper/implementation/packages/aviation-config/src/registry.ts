@@ -1,4 +1,125 @@
-import type { ServiceDefinition } from './types'
+import type {
+  ServiceDefinition,
+  ServiceDefinitionInput,
+  ServiceStatus,
+  ServiceCategory,
+} from './types'
+
+const CATEGORIES = new Set<ServiceCategory>([
+  'weather', 'navigation', 'auth', 'monitoring', 'streaming', 'database',
+])
+const SLUG = /^[a-z0-9]+(?:-[a-z0-9]+)*$/
+const FIELD_KEY = /^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$/
+const ENV_VAR = /^[A-Z][A-Z0-9]*(?:_[A-Z0-9]+)*$/
+
+export class ConfigurationValidationError extends Error {
+  constructor(public readonly code: string, message: string) {
+    super(message)
+    this.name = 'ConfigurationValidationError'
+  }
+}
+
+function requiredText(value: unknown, code: string, label: string): string {
+  const result = String(value ?? '').trim()
+  if (!result) throw new ConfigurationValidationError(code, `${label} is required`)
+  return result
+}
+
+/** Validate and canonicalize one provider-neutral service definition. */
+export function normalizeServiceDefinition(input: ServiceDefinitionInput): ServiceDefinition {
+  const id = String(input.id ?? '').trim().toLowerCase()
+  if (!SLUG.test(id)) {
+    throw new ConfigurationValidationError('configuration-service-id-invalid', 'service id must be a lowercase slug')
+  }
+  const category = String(input.category ?? '').trim().toLowerCase() as ServiceCategory
+  if (!CATEGORIES.has(category)) {
+    throw new ConfigurationValidationError('configuration-category-invalid', 'service category is invalid')
+  }
+  let docsUrl: string | undefined
+  if (input.docsUrl != null && String(input.docsUrl).trim()) {
+    docsUrl = String(input.docsUrl).trim()
+    try {
+      const parsed = new URL(docsUrl)
+      if (parsed.protocol !== 'https:') throw new Error('not HTTPS')
+    } catch {
+      throw new ConfigurationValidationError('configuration-docs-url-invalid', 'docs URL must be HTTPS')
+    }
+  }
+  if (!Array.isArray(input.fields) || input.fields.length === 0) {
+    throw new ConfigurationValidationError('configuration-fields-required', 'at least one field is required')
+  }
+  const fieldKeys = new Set<string>()
+  const envVars = new Set<string>()
+  const fields = input.fields.map((field) => {
+    const key = String(field.key ?? '').trim().toLowerCase()
+    if (!FIELD_KEY.test(key)) {
+      throw new ConfigurationValidationError('configuration-field-key-invalid', 'field key is invalid')
+    }
+    if (fieldKeys.has(key)) {
+      throw new ConfigurationValidationError('configuration-field-key-duplicate', 'field key is duplicated')
+    }
+    fieldKeys.add(key)
+    const envVar = String(field.envVar ?? '').trim().toUpperCase()
+    if (!ENV_VAR.test(envVar)) {
+      throw new ConfigurationValidationError('configuration-env-var-invalid', 'environment variable is invalid')
+    }
+    if (envVars.has(envVar)) {
+      throw new ConfigurationValidationError('configuration-env-var-duplicate', 'environment variable is duplicated')
+    }
+    envVars.add(envVar)
+    if (typeof field.required !== 'boolean' || typeof field.secret !== 'boolean') {
+      throw new ConfigurationValidationError('configuration-field-flags-invalid', 'field flags must be boolean')
+    }
+    return {
+      key,
+      label: requiredText(field.label, 'configuration-field-label-required', 'field label'),
+      description: requiredText(field.description, 'configuration-field-description-required', 'field description'),
+      required: field.required,
+      secret: field.secret,
+      envVar,
+    }
+  })
+  if (!Array.isArray(input.appScope) || input.appScope.length === 0) {
+    throw new ConfigurationValidationError('configuration-app-scope-required', 'application scope is required')
+  }
+  const appScope: string[] = []
+  for (const rawScope of input.appScope) {
+    const scope = String(rawScope ?? '').trim().toLowerCase()
+    if (scope !== 'all' && !SLUG.test(scope)) {
+      throw new ConfigurationValidationError('configuration-app-scope-invalid', 'application scope is invalid')
+    }
+    if (!appScope.includes(scope)) appScope.push(scope)
+  }
+  return {
+    id,
+    name: requiredText(input.name, 'configuration-service-name-required', 'service name'),
+    description: requiredText(input.description, 'configuration-service-description-required', 'service description'),
+    category,
+    ...(docsUrl ? { docsUrl } : {}),
+    fields,
+    appScope,
+  }
+}
+
+/** Normalize a catalog and reject ambiguous ownership. */
+export function normalizeServiceCatalog(inputs: ServiceDefinitionInput[]): ServiceDefinition[] {
+  const services = inputs.map(normalizeServiceDefinition)
+  const ids = new Set<string>()
+  const envOwners = new Set<string>()
+  for (const service of services) {
+    if (ids.has(service.id)) {
+      throw new ConfigurationValidationError('configuration-service-id-duplicate', 'service id is duplicated')
+    }
+    ids.add(service.id)
+    for (const field of service.fields) {
+      if (envOwners.has(field.envVar)) {
+        throw new ConfigurationValidationError('configuration-env-var-duplicate', 'environment variable has multiple owners')
+      }
+      envOwners.add(field.envVar)
+    }
+  }
+  return services
+}
 
 export const SERVICE_REGISTRY: ServiceDefinition[] = [
   {
@@ -115,12 +236,37 @@ export const SERVICE_REGISTRY: ServiceDefinition[] = [
   },
 ]
 
-export function getServicesByApp(appId: string): ServiceDefinition[] {
-  return SERVICE_REGISTRY.filter(
-    (s) => s.appScope.includes(appId) || s.appScope.includes('all')
+export function getServicesByApp(
+  appId: string,
+  catalog: ServiceDefinition[] = SERVICE_REGISTRY
+): ServiceDefinition[] {
+  const canonicalAppId = String(appId ?? '').trim().toLowerCase()
+  return catalog.filter(
+    (service) => service.appScope.includes(canonicalAppId) || service.appScope.includes('all')
   )
 }
 
-export function getServiceById(id: string): ServiceDefinition | undefined {
-  return SERVICE_REGISTRY.find((s) => s.id === id)
+export function getServiceById(
+  id: string,
+  catalog: ServiceDefinition[] = SERVICE_REGISTRY
+): ServiceDefinition | undefined {
+  const canonicalId = String(id ?? '').trim().toLowerCase()
+  return catalog.find((service) => service.id === canonicalId)
+}
+
+/** Compute value-free configuration status using required fields only. */
+export function buildServiceStatus(
+  service: ServiceDefinition,
+  configuredKeys: Iterable<string>
+): ServiceStatus {
+  const configured = new Set(Array.from(configuredKeys, (key) => String(key).trim().toLowerCase()))
+  const fields = service.fields.map((field) => ({
+    key: field.key,
+    configured: configured.has(field.key),
+  }))
+  return {
+    id: service.id,
+    configured: service.fields.every((field) => !field.required || configured.has(field.key)),
+    fields,
+  }
 }

@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useState } from 'react'
 import type { ServiceCategory, ServiceStatus } from '../types'
-import { SERVICE_REGISTRY } from '../registry'
+import { SERVICE_REGISTRY, buildServiceStatus, getServiceById } from '../registry'
 import { ServiceCard } from './ServiceCard'
 
 export type ConfigPanelProps = {
@@ -73,8 +73,16 @@ export function ConfigPanel({
         const fields = existing.fields.map((f) =>
           f.key === key ? { ...f, configured: true } : f
         )
-        const configured = fields.every((f) => f.configured)
-        next.set(serviceId, { ...existing, fields, configured })
+        const definition = getServiceById(serviceId)
+        if (definition) {
+          next.set(
+            serviceId,
+            buildServiceStatus(
+              definition,
+              fields.filter((field) => field.configured).map((field) => field.key)
+            )
+          )
+        }
       }
       return next
     })

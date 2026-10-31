@@ -162,20 +162,8 @@ ks = Keystore()
 
 @app.get("/api/settings")
 async def get_settings():
-    from aviation_config import SERVICE_REGISTRY  # or inline the registry
-    services = []
-    for svc in SERVICE_REGISTRY:
-        field_statuses = []
-        for field in svc["fields"]:
-            env_var = field["envVar"]
-            value = ks.get(svc["id"], field["key"])
-            field_statuses.append({"key": field["key"], "configured": bool(value)})
-        services.append({
-            "id": svc["id"],
-            "configured": all(f["configured"] for f in field_statuses if svc["fields"][i]["required"]),
-            "fields": field_statuses,
-        })
-    return {"services": services}
+    from aviation_config import AviationConfig
+    return {"services": AviationConfig("my-app").get_service_status()}
 
 
 class SecretPayload(BaseModel):
