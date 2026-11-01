@@ -70,7 +70,7 @@ try {
   const result = await new Promise(resolve => {
     const browserRun = spawn('node', ['deploy/remote-e2e.mjs', appId], {
       cwd: fileURLToPath(new URL('..', import.meta.url)), stdio: 'inherit',
-      env: { ...process.env, AVIATION_E2E_SECRET: secret,
+      env: { ...process.env, AVIATION_E2E_SECRET: secret, AVIATION_E2E_RUN_ID: runId,
         AVIATION_E2E_BASE_URL: `http://127.0.0.1:${localPort}` },
     });
     const timeout = setTimeout(() => browserRun.kill(), 180000);

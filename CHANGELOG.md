@@ -9,6 +9,11 @@
 
 ## Unreleased
 
+- Remote E2E now verifies Preflight profile reload/clear and KMLab browser
+  upload/read/delete against real isolated state, including fresh-context reads
+  and injected-failure cleanup. Native HTTP tests use common SDK signing/tagging
+  and check persisted row ownership and production/test separation.
+
 - Native KMLab E2E now runs in a bounded transient user service with a private
   runtime directory and process group. The service manager removes tagged data
   and child processes after helper or controller loss; hard-crash regression

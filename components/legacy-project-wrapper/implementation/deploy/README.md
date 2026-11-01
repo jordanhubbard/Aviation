@@ -137,3 +137,16 @@ allocating-controller SIGKILL. Native CI starts its ephemeral runner's user
 manager and requires these tests. This explicit manager mode is separate from
 the portable worker suite rather than adding unavailable cases as skipped tests.
 The six portable worker tests remain available without a user manager.
+
+
+Preflight's optional `isolated-e2e.mjs preflight-check` path runs its exact image
+in a private leased static server for qualification. Its seven browser flows
+include profile reload and Clear Profile, with separate risk-review persistence
+and zero-residual cleanup. Public deployment dispatch still needs only a fresh
+browser context for this stateless service.
+
+KMLab's eight browser flows include multipart file upload, a read from a fresh
+context, and actual UI deletion. The native launcher passes its run identity to
+the adapter. `AVIATION_E2E_FAIL_AFTER_SCREEN=upload` therefore exercises SDK and
+physical store cleanup for that same allocated run. The HTTP regression also
+checks tags, foreign-run denial, SQLite reopening and raw-file deletion.

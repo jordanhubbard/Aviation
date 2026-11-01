@@ -493,6 +493,8 @@ if (appId === 'flightschool') {
   } finally { await browser.close(); }
   console.log(`remote E2E passed: ${appId} (${baseUrl}); real H2 lifecycle and zero residual rows verified`);
 } else if (appId === 'flight-track-analyzer') {
+  const isolatedRunId = process.env.AVIATION_E2E_RUN_ID
+    ? parseE2ERunId(process.env.AVIATION_E2E_RUN_ID) : undefined;
   const browser = traceE2EBrowser(await chromium.launch({ headless: true, ...(executable ? { executablePath: executable } : {}) }), appId, process.env.AVIATION_E2E_TRACE_DIR);
   try {
     await withE2ERun(secret, async run => {
@@ -510,7 +512,21 @@ if (appId === 'flightschool') {
       });
       const errors = [];
       page.on('pageerror', error => errors.push(error.message));
-      await runDeclaredScreens(['flights', 'flight-detail', 'summary', 'performance', 'help'], [
+      let uploadedId;
+      const verifyFreshFlights = async tails => {
+        const fresh = await browser.newContext(browserContextOptions);
+        try {
+          const freshPage = await fresh.newPage();
+          freshPage.on('pageerror', error => errors.push(error.message));
+          await installIsolatedFeedbackScript(freshPage);
+          await installE2EApiHeaders(freshPage, baseUrl, appId, run);
+          await freshPage.goto(baseUrl, { waitUntil: 'domcontentloaded' });
+          await freshPage.getByRole('heading', { name: `Flights (${tails.length})`, exact: true }).waitFor();
+          for (const tail of tails) await freshPage.getByRole('cell', { name: tail, exact: true }).waitFor();
+          if (!tails.length) await freshPage.getByText('No flights yet. Upload a KML tracklog to begin.').waitFor();
+        } finally { await fresh.close(); latestPage = page; }
+      };
+      await runDeclaredScreens(['flights', 'upload', 'flight-detail', 'summary', 'performance', 'help', 'delete'], [
         {
           id: 'flights', dataMode: 'tagged-database',
           visit: () => page.goto(baseUrl, { waitUntil: 'domcontentloaded' }),
@@ -521,8 +537,34 @@ if (appId === 'flightschool') {
           },
         },
         {
+          id: 'upload', dataMode: 'tagged-database',
+          visit: async () => {
+            const filename = `${run.id}-upload.kml`;
+            // Whitespace keeps the authored flight unchanged but gives the raw file its own identity.
+            await page.locator('input[type="file"]').setInputFiles({ name: filename,
+              mimeType: 'application/vnd.google-earth.kml+xml', buffer: Buffer.concat([kml, Buffer.from('\n')]) });
+            await page.getByLabel(`tail number for ${filename}`, { exact: true }).fill('E2EUP');
+            const response = page.waitForResponse(result => new URL(result.url()).pathname === '/api/flights'
+              && result.request().method() === 'POST');
+            await page.getByRole('button', { name: 'Upload', exact: true }).click();
+            const uploaded = await response;
+            if (!uploaded.ok()) throw new Error(`KMLab UI upload returned HTTP ${uploaded.status()}`);
+            const results = (await uploaded.json()).results;
+            if (results?.length !== 1 || results[0].error || results[0].duplicate
+              || results[0].aircraft !== 'E2EUP' || !results[0].id || results[0].id === seeded.id) {
+              throw new Error('KMLab UI upload did not create the isolated flight');
+            }
+            uploadedId = results[0].id;
+          },
+          verify: async () => {
+            await page.getByRole('heading', { name: 'Flights (2)', exact: true }).waitFor();
+            await page.getByRole('cell', { name: 'E2EUP', exact: true }).waitFor();
+            await verifyFreshFlights(['E2E', 'E2EUP']);
+          },
+        },
+        {
           id: 'flight-detail', dataMode: 'tagged-database',
-          visit: () => page.locator('tbody tr').first().click(),
+          visit: () => page.getByRole('row').filter({ has: page.getByRole('cell', { name: 'E2EUP', exact: true }) }).click(),
           verify: async () => {
             await page.getByRole('heading', { name: 'Ground track' }).waitFor();
             await page.getByRole('heading', { name: 'Flight conditions' }).waitFor();
@@ -558,8 +600,33 @@ if (appId === 'flightschool') {
             if (errors.length) throw new Error(`Browser errors: ${errors.join('; ')}`);
           },
         },
+        {
+          id: 'delete', dataMode: 'tagged-database',
+          visit: async () => {
+            await page.locator('#nav button[data-view="flights"]').click();
+            for (const flight of [{ id: uploadedId, tail: 'E2EUP' }, { id: seeded.id, tail: 'E2E' }]) {
+              const response = page.waitForResponse(result => new URL(result.url()).pathname === `/api/flights/${flight.id}`
+                && result.request().method() === 'DELETE');
+              page.once('dialog', dialog => dialog.accept());
+              await page.getByRole('row').filter({ has: page.getByRole('cell', { name: flight.tail, exact: true }) })
+                .getByRole('button', { name: 'Delete', exact: true }).click();
+              const deleted = await response;
+              if (!deleted.ok() || (await deleted.json()).deleted !== flight.id) {
+                throw new Error('KMLab UI deletion did not remove the selected flight');
+              }
+              await page.getByRole('cell', { name: flight.tail, exact: true }).waitFor({ state: 'detached' });
+            }
+          },
+          verify: async () => {
+            await page.getByRole('heading', { name: 'Flights (0)', exact: true }).waitFor();
+            await verifyFreshFlights([]);
+            const response = await fetch(new URL('/api/flights', baseUrl), { headers: run.headersFor(appId) });
+            if (!response.ok || (await response.json()).flights?.length !== 0) throw new Error('KMLab deleted flights remained in server state');
+            if (errors.length) throw new Error(`Browser errors: ${errors.join('; ')}`);
+          },
+        },
       ]);
-    });
+    }, isolatedRunId);
   } finally { await browser.close(); }
   console.log(`remote E2E passed: ${appId} (${baseUrl}); tagged SQLite run removed`);
 } else if (appId === 'flight-planner') {
@@ -1182,11 +1249,12 @@ if (appId === 'flightschool') {
         const remaining = await page.evaluate(() =>
           ['aviation-preflight-profile-v1', 'aviation-preflight-risk-v1'].filter(key => localStorage.getItem(key)));
         if (remaining.length) throw new Error(`Preflight data remains: ${remaining}`);
+        console.log(`Preflight browser storage residuals for ${run.id}: 0`);
         await context.close();
       });
       const errors = [];
       page.on('pageerror', error => errors.push(error.message));
-      await runDeclaredScreens(['aircraft-profile', 'loading', 'risk', 'references'], [
+      await runDeclaredScreens(['aircraft-profile', 'profile-reload', 'loading', 'risk', 'references', 'clear-profile'], [
         {
           id: 'aircraft-profile', dataMode: 'isolated-browser',
           visit: async () => {
@@ -1210,6 +1278,17 @@ if (appId === 'flightschool') {
             await page.getByText('Aircraft profile saved in this browser.').waitFor();
             const saved = await page.evaluate(() => JSON.parse(localStorage.getItem('aviation-preflight-profile-v1')));
             if (saved.registration !== 'N123ET') throw new Error('Profile was not saved');
+          },
+        },
+        {
+          id: 'profile-reload', dataMode: 'isolated-browser',
+          visit: () => page.reload({ waitUntil: 'domcontentloaded' }),
+          verify: async () => {
+            if (await page.locator('#registration').inputValue() !== 'N123ET'
+              || await page.locator('#emptyWeight').inputValue() !== '1500'
+              || await page.locator('.station-name').first().inputValue() !== 'Front seats'
+              || await page.locator('.station-arm').first().inputValue() !== '37'
+              || await page.locator('.envelope-row').count() !== 2) throw new Error('Preflight profile did not survive reload');
           },
         },
         {
@@ -1238,6 +1317,11 @@ if (appId === 'flightschool') {
             if (stored.notes !== `Synthetic review ${run.id}` || stored.pilot !== true) {
               throw new Error('Risk review did not retain the run fixture');
             }
+            await page.reload({ waitUntil: 'domcontentloaded' });
+            if (!await page.locator('.risk').first().isChecked()
+              || await page.locator('#riskNotes').inputValue() !== `Synthetic review ${run.id}`) {
+              throw new Error('Risk review did not survive reload');
+            }
           },
         },
         {
@@ -1248,8 +1332,23 @@ if (appId === 'flightschool') {
             if (errors.length) throw new Error(`Browser errors: ${errors.join('; ')}`);
           },
         },
+        {
+          id: 'clear-profile', dataMode: 'isolated-browser',
+          visit: async () => {
+            await Promise.all([page.waitForEvent('domcontentloaded'),
+              page.getByRole('button', { name: 'Clear profile', exact: true }).click()]);
+          },
+          verify: async () => {
+            await page.waitForFunction(() => !localStorage.getItem('aviation-preflight-profile-v1')
+              && document.getElementById('registration').value === '');
+            if (await page.locator('#emptyWeight').inputValue() !== ''
+              || await page.locator('.station-name').count() !== 1
+              || await page.locator('#riskNotes').inputValue() !== `Synthetic review ${run.id}`
+              || !await page.locator('.risk').first().isChecked()) throw new Error('Clear Profile changed the wrong persisted state');
+          },
+        },
       ]);
-    });
+    }, process.env.AVIATION_E2E_RUN_ID ? parseE2ERunId(process.env.AVIATION_E2E_RUN_ID) : undefined);
   } finally { await browser.close(); }
   console.log(`remote E2E passed: ${appId} (${baseUrl}); browser fixtures removed`);
 } else await withE2ERun(secret, async run => {

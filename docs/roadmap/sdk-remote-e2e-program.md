@@ -264,6 +264,54 @@ intelligence and HTML gates are named configuration skips. This remains retained
 parity evidence without native Component generation or acceptance. Linux manager
 qualification remains separately mandatory in native CI.
 
+## Persistence inventory follow-up
+
+Preflight now verifies persisted aircraft fields after reload, verifies the risk
+review after a second reload, and exercises Clear Profile while preserving that
+separate risk review. All seven declared flows pass at desktop and mobile widths
+against the exact-main `b961b75cebe8d8ea73cafdda8db91ecb7297dafe` production image
+in a private leased container on Linux. An injected failure after the risk step
+also reports zero profile/risk storage residuals and removes the container and
+SSH forward. The clear check explicitly waits for the reload's DOM initialization.
+The optional isolated-image runner now supports this stateless Preflight image;
+ordinary deployment dispatch remains the public build with private browser state.
+
+KMLab now uploads a second synthetic KML through its actual multipart UI, reads
+both flights from a fresh browser context, exercises detail/summary/performance,
+then deletes both flights through the UI and checks an empty fresh context and
+server response. All eight declared flows pass at desktop and mobile widths.
+The browser run is bound to its allocated native run identity, enabling an
+injected failure after upload; SDK cleanup and the native controller's physical
+directory/unit checks pass on that failure as well. These browser checks use the
+candidate runner against deployed application revision
+`77012f20dff756cf8755911b38876696674a7082`; they are compatibility evidence, not
+final exact-release deployed acceptance. Desktop/mobile captures were inspected.
+
+The eight focused native worker/HTTP tests pass. The new signed multipart
+regression uses SDK signing/tagging, reopens the application to read SQLite,
+rejects foreign-run deletion, verifies all seven data tables retain their run
+tags after metadata and POH writes, checks deletion cascades and raw-file removal,
+and physically removes the run database without changing the separate production
+fixture. Three deployment dispatch unit tests pass; the two optional Docker lease
+tests were not selected in that unit invocation and remain required in CI.
+
+The G1000 settings mock conceals a confirmed runtime defect: exact-main image
+`6a6fc48d96deadf7df4850b0b6783a07469d7581` has no npm executable, and its Python
+settings save route returns failure when attempting the npm keystore CLI.
+Resolve this through the common configuration/keystore path and an isolated real
+persistence test; synthetic browser success alone is insufficient. No production
+secret was read or changed during the private, network-disabled image probe. The
+common ConfigPanel currently checks only HTTP status before optimistically marking
+a secret configured, and G1000's private field keys differ from the shared catalog.
+The common SDK save path and its runtime packaging need qualification together;
+keep storage/HTTP adapter behavior separate from the portable catalog contract.
+
+The fresh retained harness passes 631 tests with adopted receipt
+`sha256:c9b42f9afdb6890154cce15bdcd1e43b4b93d1aa8a623b7d5d98666aa3ebd33b`.
+`litai verify` passes authority, all nineteen locks and receipt freshness. Source
+intelligence and HTML gates are named configuration skips. This is retained
+parity evidence without native Component generation or acceptance.
+
 ## Acceptance contract
 
 Each deployed app must publish a screen inventory and an executable test for every
