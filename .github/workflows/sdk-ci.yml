@@ -36,7 +36,7 @@ jobs:
       - name: Validate workspace package and build graph
         working-directory: .
         run: python scripts/check_workspace_package_graph.py
-      - uses: actions/setup-node@v6
+      - uses: actions/setup-node@v7
         with:
           node-version: '24'
       - uses: pnpm/action-setup@v6
@@ -92,7 +92,7 @@ jobs:
         working-directory: components/legacy-project-wrapper/implementation
     steps:
       - uses: actions/checkout@v7
-      - uses: actions/setup-python@v6
+      - uses: actions/setup-python@v7
         with:
           python-version: '3.11'
       - name: Install common SDK packages and test runner
@@ -112,7 +112,7 @@ jobs:
         working-directory: components/legacy-project-wrapper/implementation
     steps:
       - uses: actions/checkout@v7
-      - uses: actions/setup-go@v6
+      - uses: actions/setup-go@v7
         with:
           go-version-file: components/legacy-project-wrapper/implementation/go.mod
       - name: Test Go shared packages
