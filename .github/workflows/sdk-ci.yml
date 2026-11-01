@@ -112,7 +112,7 @@ jobs:
         working-directory: components/legacy-project-wrapper/implementation
     steps:
       - uses: actions/checkout@v7
-      - uses: actions/setup-go@v6
+      - uses: actions/setup-go@v7
         with:
           go-version-file: components/legacy-project-wrapper/implementation/go.mod
       - name: Test Go shared packages
