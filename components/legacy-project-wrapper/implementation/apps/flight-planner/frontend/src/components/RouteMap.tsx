@@ -44,7 +44,7 @@ const FitBounds: React.FC<{ points: Array<[number, number]> }> = ({ points }) =>
     
     try {
       const bounds = L.latLngBounds(points.map(([lat, lon]) => [lat, lon]))
-      map.fitBounds(bounds.pad(0.25), { animate: true })
+      map.fitBounds(bounds.pad(0.25), { animate: false })
     } catch (error) {
       console.error('Error fitting map bounds:', error)
     }
@@ -96,6 +96,7 @@ const RouteMap: React.FC<Props> = ({ plan, overlays }) => {
       }}
     >
       <MapContainer
+        zoomAnimation={false}
         center={[center[0], center[1]]}
         zoom={8}
         scrollWheelZoom={!isSmall}

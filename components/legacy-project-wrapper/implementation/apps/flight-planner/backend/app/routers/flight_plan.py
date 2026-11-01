@@ -264,6 +264,6 @@ def import_flight_plan(req: ImportFlightPlanRequest) -> SavedFlightPlan:
         plan = _import_fpl(req.content, req.name)
     else:
         raise HTTPException(status_code=422, detail=f"Unsupported format {req.format!r}")
-    _plans[plan.metadata.id] = json.loads(plan.model_dump_json())
+    _plans[plan.metadata.id] = stored_record(json.loads(plan.model_dump_json()))
     _save_plans()
     return plan
