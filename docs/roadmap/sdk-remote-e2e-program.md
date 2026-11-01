@@ -197,7 +197,7 @@ all four counted records, kills its controller with SIGKILL, and observes indepe
 container removal. Six protected resources survive the expired-resource sweep,
 including a caller run-ID collision. These recovery tests are now blocking in
 Flight Tracker CI. Native KMLab forwarding is bounded and preserves the stdin EOF
-protocol; native host-crash residual storage remains an explicit audit item.
+protocol; native hard-crash recovery is qualified separately below.
 
 Five cached application-image adapters pass with the leased controller: Flight
 Tracker, Chat, Missions, Planner and Flight School. The old cached Accident Tracker
@@ -223,9 +223,46 @@ because this checkout selects provider `none` and declares no HTML artifacts.
 This retained parity evidence does not establish native Component generation
 or native Component acceptance.
 
-#332 remains open for the remaining inventories, native crash-storage audit and
-complete exact-build deployed gate after feature work. #176 remains a release
+#332 remains open for the remaining inventories and complete exact-build
+deployed gate after feature work. #176 remains a release
 prerequisite as well.
+
+## Native crash recovery checkpoint
+
+KMLab's isolated runtime now runs in an app/run-bound transient user service.
+The independent user manager owns its full process group, a bounded runtime,
+a two-second stop grace and a private runtime directory. Cleanup also occurs
+when the SSH controller or application helper is killed. On the deployed host
+`/run/user/1001` is tmpfs; this storage is volatile rather than retained across
+host reboot. Unit and directory identities derive from a validated SDK run ID.
+Existing unleased legacy directories grant no cleanup authority. The production
+unit and its data were not modified.
+
+All nine tests in `test_e2e_instance.py` pass on the actual Linux user manager,
+including three real transient-unit tests with tagged SQLite state and children
+that ignore TERM. The native CI job enables these cases and fails if its user
+manager cannot run. Local macOS qualification selects and passes the six portable worker tests;
+the three Linux manager cases belong to the explicitly enabled qualification
+mode. The retained portable harness admits no skipped selected tests.
+
+An additional isolated qualification uses the deployed KMLab application revision
+`77012f20dff756cf8755911b38876696674a7082`, the candidate helper and common SDK
+fixtures. All three cases seed actual tagged flight data and verify removal of
+the directory and application children: normal EOF (0.21 seconds), helper SIGKILL
+(0.22 seconds), and controller SIGKILL followed by independent expiry (19.18
+seconds). The last case confirms that the unit survives its allocating controller
+until its deadline. Browser compatibility also passes all six declared flows
+at desktop and mobile widths through the candidate manager-owned instance, with
+SDK row cleanup and subsequent
+physical directory removal. These checks do not replace final exact-release
+post-deployment acceptance or claim that a host reboot was exercised.
+
+The final retained harness passes 631 tests with adopted receipt
+`sha256:d0b6ac70b1a709a420859a36a15e990d14da6efc09fbbfbae4e7edd6a2273566`.
+`litai verify` passes authority, all nineteen locks and receipt freshness; source
+intelligence and HTML gates are named configuration skips. This remains retained
+parity evidence without native Component generation or acceptance. Linux manager
+qualification remains separately mandatory in native CI.
 
 ## Acceptance contract
 

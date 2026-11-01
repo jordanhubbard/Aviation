@@ -335,7 +335,15 @@ jobs:
         with:
           python-version: '3.11'
 
-      - name: Test KML analysis and airport touchdown evidence
+      - name: Start the isolated native test user manager
+        run: |
+          sudo systemctl start "user@$(id -u).service"
+          echo "XDG_RUNTIME_DIR=/run/user/$(id -u)" >> "$GITHUB_ENV"
+          echo "DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/$(id -u)/bus" >> "$GITHUB_ENV"
+
+      - name: Test KML analysis, native hard-crash cleanup and airport touchdown evidence
+        env:
+          AVIATION_E2E_NATIVE_MANAGER_TESTS: '1'
         run: make -C apps/flight-track-analyzer test
 
   # Integration Tests (placeholder until monorepo-wide integration suite exists)

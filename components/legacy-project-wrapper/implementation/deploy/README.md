@@ -118,6 +118,22 @@ independent expiration, active-run preservation, and safe handling of foreign,
 legacy, malformed, mismatched and colliding resources. Ordinary dispatch unit tests
 remain available without Docker qualification. SDK request headers are refreshed
 with five-minute lifetimes under the unchanged fifteen-minute verification limit,
-leaving headroom for small client/server clock differences. The native KMLab SSH
-session is also bounded and preserves stdin, so its remote EOF cleanup remains in
-use; native host-crash storage recovery still needs separate qualification.
+leaving headroom for small client/server clock differences.
+
+Native KMLab requires a running Linux user systemd manager. Its helper launches
+an app/run-bound transient service with `RuntimeMaxSec`, a two-second stop grace,
+`KillMode=control-group`, and a private `RuntimeDirectory` under `/run/user/<uid>`.
+The directory is manager-owned and is not preserved after the service exits.
+Normal EOF still stops the worker. The manager independently terminates children
+and removes data after helper SIGKILL or controller loss; `/run/user` is volatile
+on the deployed host. The wrapper verifies both directory absence and inactive
+unit state. This leaves the production service and legacy unleased directories
+outside cleanup authority.
+
+`test_e2e_instance.py` runs three real manager regressions when
+`AVIATION_E2E_NATIVE_MANAGER_TESTS=1`. They create a private transient unit, tagged
+SQLite state and a child that ignores TERM, then check EOF, helper SIGKILL and
+allocating-controller SIGKILL. Native CI starts its ephemeral runner's user
+manager and requires these tests. This explicit manager mode is separate from
+the portable worker suite rather than adding unavailable cases as skipped tests.
+The six portable worker tests remain available without a user manager.
