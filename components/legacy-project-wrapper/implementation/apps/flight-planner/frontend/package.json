@@ -61,8 +61,8 @@
     "jsdom": "^29.0.1",
     "prettier": "^3.4.2",
     "typescript": "^5.2.2",
-    "vite": "^8.0.2",
-    "vitest": "^4.0.16"
+    "vite": "^6.4.5",
+    "vitest": "^5.0.5"
   },
   "overrides": {
     "minimatch": ">=9.0.7"
