@@ -45,20 +45,31 @@ const runDeclaredScreens = async (expectedIds, screens) => {
     && JSON.stringify([...expectedIds].sort()) !== JSON.stringify([...declared.ids].sort())) {
     throw new Error(`Remote E2E inventory differs from adapter for ${appId}`);
   }
+  if (process.env.AVIATION_E2E_FAIL_AFTER_SCREEN
+    && (!process.env.AVIATION_E2E_RUN_ID || !expectedIds.includes(process.env.AVIATION_E2E_FAIL_AFTER_SCREEN))) {
+    throw new Error('Fault injection requires a declared screen in an isolated run');
+  }
   await runE2EScreens(expectedIds, screens.map(screen => ({ ...screen,
     verify: async () => {
       await screen.verify();
+      if (process.env.AVIATION_E2E_FAIL_AFTER_SCREEN === screen.id) {
+        throw new Error(`Injected E2E failure after ${screen.id}`);
+      }
       const captureDirectory = process.env.AVIATION_E2E_CAPTURE_DIR;
       const capturePage = screen.page || latestPage;
       if (captureDirectory && capturePage && declared.kind !== 'endpoints') {
         mkdirSync(captureDirectory, { recursive: true });
         const screenName = screen.id.replace(/[^a-z0-9-]/gi, '_');
         const stem = join(captureDirectory, `${appId}-${screenName}-${viewport}`);
-        await capturePage.screenshot({ path: `${stem}.png`, fullPage: true });
+        await capturePage.screenshot({ path: `${stem}.png`, fullPage: true, animations: 'disabled' });
+        if (await capturePage.locator('dialog[open], [role="dialog"], .modal-overlay').count()) {
+          await capturePage.screenshot({ path: `${stem}-viewport.png`, animations: 'disabled' });
+        }
         writeFileSync(`${stem}.txt`, await capturePage.locator('body').innerText());
       }
       console.log(JSON.stringify({ schema: 'aviation/e2e-screen-result@1', app: appId,
         screen: screen.id, viewport, dataMode: screen.dataMode, result: 'passed' }));
+      if (screen.afterVerify) await screen.afterVerify();
     },
   })));
 };
@@ -189,139 +200,152 @@ if (appId === 'flightschool') {
   } finally { await browser.close(); }
   console.log(`remote E2E passed: ${appId} (${baseUrl}); isolated instance cleanup is external`);
 } else if (appId === 'aviation-missions-app') {
-  const isolatedRunId = process.env.AVIATION_E2E_RUN_ID
-    ? parseE2ERunId(process.env.AVIATION_E2E_RUN_ID) : undefined;
+  if (!isolatedHost || !process.env.AVIATION_E2E_RUN_ID) {
+    throw new Error('Missions E2E requires a signed isolated application instance');
+  }
+  const isolatedRunId = parseE2ERunId(process.env.AVIATION_E2E_RUN_ID);
   const browser = traceE2EBrowser(await chromium.launch({ headless: true, ...(executable ? { executablePath: executable } : {}) }), appId, process.env.AVIATION_E2E_TRACE_DIR);
   try {
     await withE2ERun(secret, async run => {
-      if (isolatedRunId) {
-        const headers = { ...run.headersFor(appId), 'content-type': 'application/json' };
-        const status = await fetch(new URL('/__e2e/status', baseUrl), { headers });
-        const state = status.ok ? await status.json() : null;
-        if (!state || state.is_test_data !== true || state.test_run_id !== run.id || state.mission_count < 1) {
-          throw new Error('Missions isolated H2 store lacks tagged seed missions');
-        }
-        const missions = await fetch(new URL('/missions', baseUrl), { headers });
-        if (!missions.ok) throw new Error(`Missions test list failed: HTTP ${missions.status}`);
-        const first = (await missions.json()).missions?.[0];
-        if (!first || first.is_test_data !== true || first.test_run_id !== run.id) {
-          throw new Error('Missions list exposed an untagged test record');
-        }
-        const created = await fetch(new URL(`/missions/${first.id}/comments`, baseUrl), {
-          method: 'POST', headers, body: JSON.stringify({ author_name: 'E2E Pilot', content: `Run ${run.id}` }),
-        });
-        if (created.status !== 201) throw new Error(`Missions test comment failed: HTTP ${created.status}`);
-        const comment = (await created.json()).comment;
-        if (!comment || comment.is_test_data !== true || comment.test_run_id !== run.id) {
-          throw new Error('Missions test comment was not tagged in H2');
-        }
+      let adminToken;
+      const api = async (path, method = 'GET', body, authenticated = false) => {
+        const response = await fetch(new URL(path, baseUrl), { method,
+          headers: { ...run.headersFor(appId), 'content-type': 'application/json',
+            ...(authenticated ? { authorization: `Bearer ${adminToken}` } : {}) },
+          ...(body === undefined ? {} : { body: JSON.stringify(body) }) });
+        if (!response.ok) throw new Error(`Missions ${method} ${path}: HTTP ${response.status()}`);
+        return response.json();
+      };
+      const initial = await api('/__e2e/status');
+      if (initial.test_run_id !== run.id || initial.is_test_data !== true) {
+        throw new Error('Missions isolated H2 store is not bound to this run');
       }
+      // Remove bundled catalog examples inside this disposable instance only.
+      await api(`/__e2e/runs/${run.id}`, 'DELETE');
+      const fixtureFetch = async (...args) => {
+        const response = await fetch(...args);
+        if (response.ok && args[1]?.method === 'GET' && new URL(args[0]).pathname === `/__e2e/runs/${run.id}`) {
+          const residual = await response.clone().json();
+          console.log(JSON.stringify({ schema: 'aviation/e2e-residual@1', app: appId,
+            run: run.id, count: residual.count, tables: residual.tables }));
+        }
+        return response;
+      };
+      const mission = await seedRemoteFixture(run, { appId, baseUrl, fetch: fixtureFetch }, 'mission',
+        { ...standardE2EFixtures(run.id).mission, title: `E2E Pattern Mission ${run.id}`,
+          difficulty: 2, pilot_experience: 'Beginner (< 100 hours)',
+          mission_description: 'Synthetic mission for remote E2E', why_description: 'Test mission navigation',
+          route: 'KOAK KSFO', notes: `No flight required ${run.id}` });
       const context = await browser.newContext(browserContextOptions);
-      const page = await context.newPage();
-      await installIsolatedFeedbackScript(page);
       run.onCleanup(async () => {
-        await page.evaluate(() => localStorage.clear());
-        if (await page.evaluate(() => localStorage.length)) throw new Error('Missions browser data remains');
+        await context.clearCookies();
         await context.close();
       });
+      const page = await context.newPage();
+      await installIsolatedFeedbackScript(page);
       const origin = new URL(baseUrl).origin;
-      const mission = run.tag({ id: 931, title: `E2E Pattern Mission ${run.id}`,
-        category: 'Training', difficulty: 2, pilot_experience: 'Beginner (< 100 hours)',
-        objective: 'Practice a synthetic short approach', mission_description: 'Synthetic mission for remote E2E',
-        why_description: 'Test mission navigation', route: 'KOAK KOAK', comment_count: 1,
-        completion_count: 1, notes: 'No flight required' });
-      const comments = [run.tag({ id: 1, author_name: 'E2E Pilot', content: `Synthetic comment ${run.id}`,
-        created_at: '2026-01-01T00:00:00Z' })];
-      const completion = run.tag({ id: 341, pilot_name: 'E2E Pilot', completion_date: '2026-01-01',
-        notes: `Synthetic completion ${run.id}`, feedback: [] });
-      const completions = [completion];
-      const unexpected = [];
-      await page.route(`${origin}/**`, async route => {
-        const request = route.request();
-        const path = new URL(request.url()).pathname;
-        const method = request.method();
-        if (!/^(\/missions|\/submissions|\/updates|\/admin\/)/.test(path)) {
-          await route.continue(isolatedRunId ? { headers: {
-            ...request.headers(), ...run.headersFor(appId),
-          } } : undefined); return;
-        }
-        let body;
-        if (path === '/missions' && method === 'GET') body = run.tag({ missions: [mission] });
-        else if (path === '/missions/931' && method === 'GET') body = mission;
-        else if (path === '/missions/931/comments' && method === 'GET') body = run.tag({ comments });
-        else if (path === '/missions/931/completed' && method === 'GET') body = run.tag({ completions });
-        else if (path === '/missions/931/completed' && method === 'POST') {
-          const submitted = request.postDataJSON();
-          if (!submitted.pilot_name?.includes(run.id)) unexpected.push('Completion lost E2E marker');
-          completions.push(run.tag({ id: 342, pilot_name: submitted.pilot_name,
-            completion_date: submitted.completion_date, notes: '', feedback: [] }));
-          mission.completion_count += 1;
-          body = run.tag({ id: 342 });
-        }
-        else if (path === '/missions/931/completed/341/feedback' && method === 'POST') {
-          const submitted = request.postDataJSON();
-          if (!submitted.content?.includes(run.id)) unexpected.push('Feedback lost E2E marker');
-          completion.feedback.push(run.tag({ id: 441, author_name: submitted.author_name, content: submitted.content }));
-          body = run.tag({ id: 441 });
-        } else if (path === '/admin/login' && method === 'POST') {
-          const credentials = request.postDataJSON();
-          if (credentials.admin_name !== 'E2E Admin' || credentials.password !== run.id) {
-            unexpected.push('Admin login lost E2E marker');
-          }
-          body = run.tag({ token: `e2e-${run.id}`, admin_name: 'E2E Admin' });
-        } else if (path === '/admin/status' && method === 'GET') {
-          body = run.tag({ is_admin: true, admin_name: 'E2E Admin' });
-        } else if (path === '/submissions' && method === 'GET') body = run.tag({ submissions: [] });
-        else if (path === '/updates' && method === 'GET') body = run.tag({ updates: [] });
-        else {
-          unexpected.push(`${method} ${path}`);
-          await route.fulfill({ status: 599, contentType: 'application/json', body: '{"error":"unexpected E2E API request"}' });
-          return;
-        }
-        await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(body) });
-      });
       const errors = [];
-      page.on('pageerror', error => errors.push(error.message));
+      const wirePage = async target => {
+        await target.route(`${origin}/**`, route => route.continue({ headers: {
+          ...route.request().headers(), ...run.headersFor(appId),
+        } }));
+        target.on('pageerror', error => errors.push(error.message));
+        target.on('console', message => {
+          if (message.type() === 'error') errors.push(message.text());
+        });
+        target.on('response', response => {
+          if (new URL(response.url()).origin === origin && response.status() >= 400) {
+            errors.push(`HTTP ${response.status()} ${new URL(response.url()).pathname}`);
+          }
+        });
+      };
+      await wirePage(page);
       const dialogs = [];
       page.on('dialog', async dialog => {
         dialogs.push(dialog.message());
         await dialog.accept(dialog.type() === 'prompt' ? `E2E Pilot ${run.id}` : undefined);
       });
-      await runDeclaredScreens(['mission-list', 'filters', 'brief', 'comments', 'completed-feedback',
-        'completion-submit', 'suggest-edit', 'create-form', 'admin-login', 'admin-dashboard'], [
-        {
-          id: 'mission-list', dataMode: 'sdk-mock',
+      const card = page.locator(`.mission-card[data-mission-id="${mission.id}"]`);
+      const submittedTitle = `Submitted ${run.id}`;
+      const suggestedTitle = `Suggested ${run.id}`;
+      const submission = title => ({ title, category: 'Training', difficulty: 2,
+        pilot_experience: 'Beginner (< 100 hours)', objective: 'Synthetic pattern',
+        mission_description: 'Practice a synthetic approach', why_description: 'Exercise isolated persistence',
+        route: 'KOAK KSFO', suggested_route: 'KOAK KSFO', submitter_name: `E2E Pilot ${run.id}`,
+        submitter_email: 'e2e@example.com', notes: `Synthetic mission ${run.id}` });
+      const fillForm = async (form, title) => {
+        for (const [name, value] of Object.entries(submission(title))) {
+          const field = form.locator(`[name="${name}"]`);
+          if (!await field.count()) continue;
+          if (await field.evaluate(element => element.tagName) === 'SELECT') await field.selectOption(String(value));
+          else await field.fill(String(value));
+        }
+      };
+      const comment = await api(`/missions/${mission.id}/comments`, 'POST', {
+        author_name: 'E2E Pilot', content: `Synthetic comment ${run.id}` });
+      const completion = await api(`/missions/${mission.id}/completed`, 'POST', {
+        pilot_name: 'E2E Pilot', completion_date: '2026-01-01', notes: `Synthetic completion ${run.id}` });
+      const rating = await api(`/missions/${mission.id}/rating`, 'POST', {
+        pilot_name: `E2E Pilot ${run.id}`, rating: 'up' });
+      await api(`/missions/${mission.id}/reviews`, 'POST', {
+        pilot_name: `E2E Pilot ${run.id}`, review_text: `Synthetic review ${run.id}`, flight_date: '2026-01-01' });
+      const reviews = await api(`/missions/${mission.id}/reviews`);
+      if (reviews.reviews.length !== 1) throw new Error('Isolated review was not persisted');
+      // Ratings intentionally expose a public projection. Their database tags are
+      // checked by test-store-state together with every other table.
+      if (rating.rating?.rating !== 'up') throw new Error('Isolated rating was not persisted');
+      for (const record of [mission, comment.comment, completion.completion, reviews.reviews[0]]) {
+        if (record.test_run_id !== run.id || record.is_test_data !== true) throw new Error('Missions fixture lost its run tags');
+      }
+      let updateId;
+      let rejectedUpdateId;
+      let publishedId;
+      const docsPage = await context.newPage();
+      await wirePage(docsPage);
+      const screenIds = ['mission-list', 'filters', 'brief', 'comments', 'completed-feedback',
+        'completion-submit', 'suggest-edit', 'create-form', 'admin-login', 'admin-dashboard',
+        'submission-review', 'edit-review', 'edit-status', 'submission-reject', 'edit-reject',
+        'delete-mission', 'logout', 'api-docs'];
+      await runDeclaredScreens(screenIds, [
+        { id: 'mission-list', dataMode: 'tagged-database',
           visit: () => page.goto(baseUrl, { waitUntil: 'domcontentloaded' }),
-          verify: () => page.getByRole('heading', { name: mission.title }).waitFor(),
-        },
-        {
-          id: 'filters', dataMode: 'sdk-mock',
-          visit: async () => {
-            await page.locator('#searchInput').fill('NO_MATCH_E2E');
+          verify: async () => {
+            await page.getByRole('heading', { name: mission.title, exact: true }).waitFor();
+            if (await page.locator('.mission-card').count() !== 1) throw new Error('Missions catalog leaked into isolated fixtures');
+          } },
+        { id: 'filters', dataMode: 'tagged-database',
+          visit: () => page.locator('#searchInput').fill('NO_MATCH_E2E'),
+          verify: async () => {
             await page.getByText('No missions found matching your criteria.').waitFor();
             await page.locator('#searchInput').fill('Pattern Mission');
-          },
-          verify: () => page.getByRole('heading', { name: mission.title }).waitFor(),
-        },
-        {
-          id: 'brief', dataMode: 'sdk-mock',
-          visit: () => page.locator('.mission-card').getByRole('button', { name: 'BRIEF' }).click(),
+            await card.waitFor();
+            await page.locator('#searchInput').fill('');
+          } },
+        { id: 'brief', dataMode: 'tagged-database',
+          visit: () => card.getByRole('button', { name: 'BRIEF' }).click(),
           verify: async () => {
             await page.locator('.modal-overlay').getByRole('heading', { name: mission.title }).waitFor();
-            await page.locator('.modal-close').click();
-          },
-        },
-        {
-          id: 'comments', dataMode: 'sdk-mock',
-          visit: () => page.locator('.mission-card').getByRole('button', { name: /Comments/ }).click(),
+            await page.locator('.modal-overlay').getByText('Synthetic mission for remote E2E', { exact: false }).waitFor();
+          }, afterVerify: () => page.locator('.modal-close').click() },
+        { id: 'comments', dataMode: 'tagged-database',
+          visit: () => card.getByRole('button', { name: /Comments/ }).click(),
           verify: async () => {
-            await page.locator('.modal-overlay').getByText(`Synthetic comment ${run.id}`).waitFor();
-            await page.locator('.modal-close').click();
-          },
-        },
-        {
-          id: 'completed-feedback', dataMode: 'sdk-mock',
-          visit: () => page.locator('.mission-card').getByRole('button', { name: /Completed/ }).click(),
+            await page.getByText(`Synthetic comment ${run.id}`, { exact: true }).waitFor();
+            await page.locator('#comment-author').fill('E2E Pilot');
+            await page.locator('#comment-content').fill(`Browser comment ${run.id}`);
+            const saved = page.waitForResponse(r => new URL(r.url()).pathname === `/missions/${mission.id}/comments`
+              && r.request().method() === 'POST');
+            await page.getByRole('button', { name: 'Post Comment', exact: true }).click();
+            const response = await saved;
+            if (response.status() !== 201) {
+              throw new Error(`Browser comment failed: HTTP ${response.status()}`);
+            }
+            await page.locator('.modal-overlay').waitFor({ state: 'hidden' });
+            await card.getByRole('button', { name: /Comments/ }).click();
+            await page.getByText(`Browser comment ${run.id}`, { exact: true }).waitFor();
+          }, afterVerify: () => page.locator('.modal-close').click() },
+        { id: 'completed-feedback', dataMode: 'tagged-database',
+          visit: () => card.getByRole('button', { name: /Completed/ }).click(),
           verify: async () => {
             const modal = page.locator('.modal-overlay');
             await modal.getByText(`Synthetic completion ${run.id}`).waitFor();
@@ -329,65 +353,145 @@ if (appId === 'flightschool') {
             await modal.locator('textarea[name="content"]').fill(`Synthetic feedback ${run.id}`);
             await modal.getByRole('button', { name: 'Post feedback' }).click();
             await modal.getByText(`Synthetic feedback ${run.id}`).waitFor();
-            await modal.locator('.modal-close').click();
-          },
-        },
-        {
-          id: 'completion-submit', dataMode: 'sdk-mock',
+          }, afterVerify: () => page.locator('.modal-close').click() },
+        { id: 'completion-submit', dataMode: 'tagged-database',
           visit: async () => {
-            await page.locator('.mission-card').getByRole('button', { name: /Completed/ }).click();
+            await card.getByRole('button', { name: /Completed/ }).click();
             await page.locator('.modal-overlay').getByRole('button', { name: 'Mark completed' }).click();
           },
           verify: async () => {
-            await page.locator('.modal-overlay').getByText(`E2E Pilot ${run.id}`).waitFor();
-            if (!dialogs.some(message => message.includes('Enter your name'))
-              || !dialogs.some(message => message.includes('Mission marked as completed'))) {
-              throw new Error('Completion dialog flow was not exercised');
+            await page.locator('.modal-overlay').getByText(`E2E Pilot ${run.id}`, { exact: false }).first().waitFor();
+            const stored = await api(`/missions/${mission.id}/completed`);
+            if (stored.completions.length !== 2 || stored.completions.some(c => c.test_run_id !== run.id)) {
+              throw new Error('Browser completion did not reach isolated H2');
             }
-            await page.locator('.modal-overlay').locator('.modal-close').click();
-          },
-        },
-        {
-          id: 'suggest-edit', dataMode: 'isolated-browser',
-          visit: () => page.locator('.mission-card button[title="Suggest improvements to this mission"]').click(),
+          }, afterVerify: () => page.locator('.modal-close').click() },
+        { id: 'suggest-edit', dataMode: 'tagged-database',
+          visit: () => card.getByRole('button', { name: /EDIT/ }).click(),
           verify: async () => {
-            await page.locator('#editSuggestionForm').waitFor();
-            await page.locator('#edit-title').fill(`Suggested ${run.id}`);
-            await page.locator('.modal-overlay').locator('.modal-close').click();
-          },
-        },
-        {
-          id: 'create-form', dataMode: 'isolated-browser',
+            const form = page.locator('#editSuggestionForm');
+            await fillForm(form, suggestedTitle);
+            const saved = page.waitForResponse(r => new URL(r.url()).pathname === `/missions/${mission.id}` && r.request().method() === 'PUT');
+            await form.getByRole('button', { name: 'Submit Suggestion' }).click();
+            const response = await saved;
+            if (response.status() !== 201) throw new Error('Edit suggestion was not persisted');
+            updateId = (await response.json()).update_id;
+            await page.locator('.modal-overlay').waitFor({ state: 'hidden' });
+          } },
+        { id: 'create-form', dataMode: 'tagged-database',
           visit: () => page.getByRole('button', { name: 'Create Mission' }).first().click(),
           verify: async () => {
-            await page.locator('#newMissionForm').waitFor();
-            await page.locator('#newMissionForm input[name="title"]').fill(`Draft ${run.id}`);
-            await page.locator('.modal-close').click();
-          },
-        },
-        {
-          id: 'admin-login', dataMode: 'sdk-mock',
+            const form = page.locator('#newMissionForm');
+            await fillForm(form, submittedTitle);
+            const saved = page.waitForResponse(r => new URL(r.url()).pathname === '/submissions' && r.request().method() === 'POST');
+            await form.getByRole('button', { name: 'Create Mission', exact: true }).click();
+            if ((await saved).status() !== 201) throw new Error('Submission was not persisted');
+            await page.locator('#newMissionForm').waitFor({ state: 'hidden' });
+          } },
+        { id: 'admin-login', dataMode: 'tagged-database',
           visit: async () => {
             await page.getByRole('button', { name: 'Admin Login' }).click();
             await page.locator('#adminLoginForm input[name="admin_name"]').fill('E2E Admin');
             await page.locator('#adminLoginForm input[name="password"]').fill(run.id);
-            await page.locator('#adminLoginForm').getByRole('button', { name: 'Login' }).click();
+            await page.locator('#adminLoginForm').getByRole('button', { name: 'Login', exact: true }).click();
           },
-          verify: () => page.getByText('Admin: E2E Admin').waitFor(),
-        },
-        {
-          id: 'admin-dashboard', dataMode: 'sdk-mock',
+          verify: async () => {
+            await page.locator('.admin-status').filter({ hasText: 'Admin: E2E Admin' }).waitFor();
+            adminToken = await page.evaluate(() => localStorage.getItem('admin_token'));
+            if (!adminToken) throw new Error('Real admin session missing');
+            await page.locator('#adminDashboard .submission-card').filter({ hasText: submittedTitle }).waitFor();
+            await page.locator('#adminDashboard .update-card').filter({ hasText: suggestedTitle }).waitFor();
+          } },
+        { id: 'admin-dashboard', dataMode: 'tagged-database',
           visit: () => page.reload({ waitUntil: 'domcontentloaded' }),
           verify: async () => {
-            await page.getByText('Admin: E2E Admin').waitFor();
-            await page.locator('#adminDashboard').getByText('No pending submissions.').waitFor();
-            if (unexpected.length || errors.length) throw new Error(`Missions E2E errors: ${[...unexpected, ...errors].join('; ')}`);
+            await page.locator('#adminDashboard .submission-card').filter({ hasText: submittedTitle }).waitFor();
+            await page.locator('#adminDashboard .update-card').filter({ hasText: suggestedTitle }).waitFor();
+          } },
+        { id: 'submission-review', dataMode: 'tagged-database',
+          visit: () => page.locator('#adminDashboard .submission-card').filter({ hasText: submittedTitle })
+            .getByRole('button', { name: 'Approve', exact: true }).click(),
+          verify: async () => {
+            await page.locator('.mission-card').getByRole('heading', { name: submittedTitle, exact: true }).waitFor();
+            const stored = (await api('/missions')).missions.find(m => m.title === submittedTitle);
+            if (!stored || stored.test_run_id !== run.id) throw new Error('Approval did not create a tagged mission');
+            publishedId = stored.id;
+          } },
+        { id: 'edit-review', dataMode: 'tagged-database',
+          visit: () => page.locator('#adminDashboard .update-card').filter({ hasText: suggestedTitle })
+            .getByRole('button', { name: 'Approve', exact: true }).click(),
+          verify: async () => {
+            await card.getByRole('heading', { name: suggestedTitle, exact: true }).waitFor();
+            if ((await api(`/updates/${updateId}/status`)).status !== 'approved') throw new Error('Edit was not approved in H2');
+          } },
+        { id: 'edit-status', dataMode: 'tagged-database',
+          visit: () => page.reload({ waitUntil: 'domcontentloaded' }),
+          verify: async () => {
+            await card.waitFor();
+            await page.waitForFunction(id => !JSON.parse(localStorage.getItem('mission_edit_suggestions') || '[]')
+              .some(item => item.id === id), updateId);
+            if (!dialogs.some(text => text.includes('was approved'))) throw new Error('Approved edit notification missing');
+            const tracked = await page.evaluate(() => JSON.parse(localStorage.getItem('mission_edit_suggestions') || '[]'));
+            if (tracked.some(item => item.id === updateId)) throw new Error('Approved edit stayed pending in browser storage');
+          } },
+        { id: 'submission-reject', dataMode: 'tagged-database',
+          visit: async () => {
+            await api('/submissions', 'POST', submission(`Rejected ${run.id}`));
+            await page.reload({ waitUntil: 'domcontentloaded' });
+            await page.locator('#adminDashboard .submission-card').filter({ hasText: `Rejected ${run.id}` })
+              .getByRole('button', { name: 'Reject', exact: true }).click();
           },
-        },
+          verify: async () => {
+            await page.getByText('No pending submissions.', { exact: true }).waitFor();
+            const rows = (await api('/submissions', 'GET', undefined, true)).submissions;
+            if (!rows.some(row => row.title === `Rejected ${run.id}` && row.status === 'rejected')) throw new Error('Submission rejection was not persisted');
+          } },
+        { id: 'edit-reject', dataMode: 'tagged-database',
+          visit: async () => {
+            rejectedUpdateId = (await api(`/missions/${mission.id}`, 'PUT', submission(`Rejected edit ${run.id}`))).update_id;
+            await page.reload({ waitUntil: 'domcontentloaded' });
+            await page.locator('#adminDashboard .update-card').filter({ hasText: `Rejected edit ${run.id}` })
+              .getByRole('button', { name: 'Reject', exact: true }).click();
+          },
+          verify: async () => {
+            await page.getByText('No pending edit suggestions.', { exact: true }).waitFor();
+            if ((await api(`/updates/${rejectedUpdateId}/status`)).status !== 'rejected') throw new Error('Edit rejection was not persisted');
+            if ((await api(`/missions/${mission.id}`)).mission.title !== suggestedTitle) throw new Error('Rejected edit changed the mission');
+          } },
+        { id: 'delete-mission', dataMode: 'tagged-database',
+          visit: async () => {
+            await api(`/missions/${publishedId}`, 'DELETE', undefined, true);
+            await page.reload({ waitUntil: 'domcontentloaded' });
+          },
+          verify: async () => {
+            await card.waitFor();
+            if (await page.locator(`.mission-card[data-mission-id="${publishedId}"]`).count()) throw new Error('Deleted mission remained visible');
+            const state = await api('/__e2e/status');
+            if (state.mission_count !== 1 || state.tables.comments !== 2 || state.tables.mission_completions !== 2
+              || state.tables.completion_feedback !== 1 || state.tables.submissions !== 2 || state.tables.mission_updates !== 2
+              || state.tables.mission_ratings !== 1 || state.tables.reviews !== 1) {
+              throw new Error(`Missions persistent lifecycle counts differ: ${JSON.stringify(state.tables)}`);
+            }
+          } },
+        { id: 'logout', dataMode: 'isolated-browser',
+          visit: () => page.getByRole('button', { name: 'Logout', exact: true }).click(),
+          verify: async () => {
+            await page.getByRole('button', { name: 'Admin Login' }).waitFor();
+            if (await page.evaluate(() => localStorage.getItem('admin_token'))) throw new Error('Browser admin token remained after logout');
+          } },
+        { id: 'api-docs', dataMode: 'stateless', page: docsPage,
+          visit: () => docsPage.goto(new URL('/api', baseUrl).toString(), { waitUntil: 'domcontentloaded' }),
+          verify: async () => {
+            await docsPage.locator('#swagger-ui .info .title').waitFor();
+            if (!(await api('/swagger.json')).paths?.['/missions']) throw new Error('API documentation omitted missions');
+            if (errors.length) throw new Error(`Missions browser errors: ${errors.join('; ')}`);
+          } },
       ]);
+      await page.evaluate(() => localStorage.clear());
+      if (await page.evaluate(() => localStorage.length)) throw new Error('Missions browser data remains');
     }, isolatedRunId);
   } finally { await browser.close(); }
-  console.log(`remote E2E passed: ${appId} (${baseUrl}); mocked browser data removed`);
+  console.log(`remote E2E passed: ${appId} (${baseUrl}); real H2 lifecycle and zero residual rows verified`);
 } else if (appId === 'flight-track-analyzer') {
   const browser = traceE2EBrowser(await chromium.launch({ headless: true, ...(executable ? { executablePath: executable } : {}) }), appId, process.env.AVIATION_E2E_TRACE_DIR);
   try {

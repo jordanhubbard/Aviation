@@ -9,6 +9,12 @@
 
 ## Unreleased
 
+- Missions BRIEF now displays the actual mission detail response and description;
+  browser writes return valid CORS headers, and mobile controls and long modal
+  text remain reachable. Its SDK-backed E2E traversal now uses real isolated H2
+  reads and writes for review, completion, feedback and admin flows, with
+  nine-table ownership checks and zero-residual cleanup on success and failure.
+
 - Strengthened remote E2E checks: Planner loads saved plans from its isolated
   server store, tags imported plans across restart, and exercises route results
   and the import dialog. Map transitions avoid stale Leaflet animations and use

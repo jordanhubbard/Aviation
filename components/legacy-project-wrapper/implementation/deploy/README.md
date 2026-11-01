@@ -72,3 +72,12 @@ for the screen inventories, including Flight School's dynamic route sweep.
 Browser traces are retained on failure. These are
 diagnostic captures; they do not establish full acceptance without reviewing the
 visible behavior and completing the deployment gate.
+
+For a persistent-app cleanup check, set `AVIATION_E2E_FAIL_AFTER_SCREEN` to a
+name in its declared inventory while using the isolated runner. It raises a
+controlled failure after that screen's verification, then runs registered SDK
+cleanup. Missions reports the residual count for all nine H2 data tables before
+the parent destroys its temporary container and storage. Its full browser suite
+requires a signed isolated instance and uses real API responses; only external
+issue submission uses the SDK mock. The intentional failure must be distinguished
+from an unexpected test failure by its marker and zero-residual result.

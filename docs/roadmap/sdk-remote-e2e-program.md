@@ -53,8 +53,9 @@ complete inventory. The stricter Flight School sweep reaches the correct booking
 state screens and debug role, but retained traces also reveal missing static
 assets in legacy templates. Replace unavailable decorative assets with text or
 existing images, share the working Bootstrap resources, and make the sweep reject
-HTTP/console errors before claiming complete rendered acceptance. Planner and Missions browser fixtures still mock some
-API responses after the real storage lifecycle checks.
+HTTP/console errors before claiming complete rendered acceptance. Planner still mocks planning and external-data API responses after its real
+storage lifecycle checks. Missions now uses its real temporary H2 service for
+the complete browser persistence traversal.
 The declared inventories still need a route-by-route completeness audit and
 full deployed-build evidence. The retained harness receipt must be renewed
 after each source checkpoint.
@@ -90,6 +91,43 @@ These are local production-image results. They do not establish deployed-build
 coverage. Next audit the remaining applications' routes and mutations, remove
 any mocks that bypass required server persistence paths, and exercise the complete
 post-deployment gate against exact deployed revisions. E2E-001 remains open.
+
+## Missions persistence checkpoint
+
+Missions now uses the SDK fixture and cleanup protocol against its signed,
+temporary H2 instance. All 19 declared screens pass at desktop (1280 by 720) and
+mobile (390 by 844) widths. The browser creates comments, completions and feedback,
+submits missions and edits, logs in with temporary credentials, approves/rejects
+requests, observes edit-status notifications, deletes a published mission, logs
+out, opens API documentation, and exercises feedback with the SDK GitHub mock.
+Review/rating fixtures and all other persisted records are covered by the
+nine-table tag and residual inspection. SDK cleanup deletes its run record and
+queries zero residual rows; the parent also removes the temporary instance and
+storage. An injected failure after the delete-mission checkpoint passes the same
+zero-residual and container-removal checks. No paid or external mutating API is
+called. JSON exports and admin configuration remain under the run's temporary
+path, and exported test rows retain their tags.
+
+The real traversal found and fixed three product defects that the former mocks
+concealed: BRIEF consumed the wrong API envelope and description field, numeric
+CORS headers caused Jetty to return HTTP 500 after committing browser writes, and
+floating controls covered the last mobile EDIT action. Long modal text now wraps
+without hiding the close control. Desktop/mobile captures were inspected; the
+runner captures settled animation states and modal viewports. The Clojure suite
+passes 67 tests and 469 assertions, including servlet-compatible headers,
+production/foreign-run denial, exact-expiry rejection, table ownership, and
+idempotent cleanup. Deployment dispatch unit tests pass.
+
+The retained SDK qualification passes 591 tests. The adopted receipt is
+`sha256:ace37a6ab98d296d920b59953aa9e066655ce2cd148c8d73d8a18ace08ab4f96`;
+`litai verify` passes authority, all 19 locks, and the current receipt. This
+retained-runtime evidence does not claim native Component generation or acceptance.
+
+Next audit the remaining applications' routes and persistence paths, audit
+expired-run janitors after abrupt controller loss, and execute the complete
+post-deployment gate against exact deployed revisions after all feature work
+lands. Ordinary controller finally cleanup alone does not prove recovery from
+worker interruption. These local results do not close E2E-001.
 
 ## Acceptance contract
 

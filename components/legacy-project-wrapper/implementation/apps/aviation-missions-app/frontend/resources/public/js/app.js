@@ -1040,7 +1040,10 @@ class AviationMissionApp {
             if (!response.ok) {
                 throw new Error('Failed to fetch mission details');
             }
-            const mission = await response.json();
+            const { mission } = await response.json();
+            if (!mission || typeof mission !== 'object' || Array.isArray(mission)) {
+                throw new Error('Invalid mission detail response');
+            }
             this.showMissionDetailModal(mission);
         } catch (error) {
             console.error('Error fetching mission:', error);
@@ -1179,7 +1182,7 @@ class AviationMissionApp {
                         <p><strong>Difficulty:</strong> ${this.getDifficultyLabel(mission.difficulty || 1)}</p>
                         <p><strong>Route:</strong> ${this.escapeHtml(mission.route || 'See description')}</p>
                         <p><strong>Objective:</strong> ${this.escapeHtml(mission.objective || mission.mission_description)}</p>
-                        ${mission.description ? `<p><strong>Description:</strong> ${this.escapeHtml(mission.description)}</p>` : ''}
+                        ${mission.mission_description ? `<p><strong>Description:</strong> ${this.escapeHtml(mission.mission_description)}</p>` : ''}
                         ${mission.notes ? `<p><strong>Notes:</strong> ${this.escapeHtml(mission.notes)}</p>` : ''}
                         ${mission.special_challenges ? `<p><strong>Special Challenges:</strong> ${this.escapeHtml(mission.special_challenges)}</p>` : ''}
                     </div>

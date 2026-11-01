@@ -16,7 +16,7 @@ body {
 .app-container {
     max-width: 1200px;
     margin: 0 auto;
-    padding: 20px;
+    padding: 20px 20px 160px;
 }
 
 /* Header Styles */
@@ -488,6 +488,7 @@ body {
 
 .mission-stats {
   display: flex;
+  flex-wrap: wrap;
   gap: 1rem;
   align-items: center;
 }
@@ -581,7 +582,7 @@ body {
 /* Responsive Design */
 @media (max-width: 768px) {
     .app-container {
-        padding: 15px;
+        padding: 15px 15px 160px;
     }
 
     .app-header {
@@ -642,7 +643,7 @@ body {
 /* Floating Action Button */
 .fab {
   position: fixed;
-  bottom: 30px;
+  bottom: 80px;
   right: 30px;
   width: 60px;
   height: 60px;
@@ -975,7 +976,7 @@ body {
 /* Responsive FAB */
 @media (max-width: 768px) {
   .fab {
-    bottom: 20px;
+    bottom: 80px;
     right: 20px;
     width: 56px;
     height: 56px;
@@ -1098,6 +1099,7 @@ body {
 }
 
 .modal-content {
+  overflow-wrap: anywhere;
   background: white;
   border-radius: 12px;
   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
@@ -1130,12 +1132,14 @@ body {
 }
 
 .modal-header h2 {
+  min-width: 0;
   margin: 0;
   font-size: 24px;
   color: #0f172a;
 }
 
 .modal-close {
+  flex-shrink: 0;
   background: transparent;
   border: none;
   font-size: 28px;

@@ -281,6 +281,11 @@
   
   (log/info "✅ STARTUP PHASE 1 COMPLETE: Database initialized with all tables"))
 
+(def ^:private test-tables
+  ;; Children precede parents for transactional fixture cleanup.
+  ["completion_feedback" "comments" "mission_ratings" "reviews"
+   "mission_completions" "mission_updates" "submissions" "admin_sessions" "missions"])
+
 (defn tag-test-schema!
   "Confine every test row to the signed run's private H2 database."
   []
@@ -290,8 +295,7 @@
                               is_test_data BOOLEAN NOT NULL CHECK (is_test_data = TRUE))"])
     (jdbc/execute! db-spec ["MERGE INTO e2e_runs (test_run_id, is_test_data) KEY(test_run_id) VALUES (?, TRUE)"
                             e2e/run-id])
-    (doseq [table ["missions" "comments" "mission_ratings" "reviews" "mission_completions"
-                   "completion_feedback" "submissions" "mission_updates" "admin_sessions"]]
+    (doseq [table test-tables]
       (jdbc/execute! db-spec [(str "ALTER TABLE " table
                                    " ADD COLUMN IF NOT EXISTS is_test_data BOOLEAN DEFAULT TRUE NOT NULL"
                                    " CHECK (is_test_data = TRUE)")])
@@ -303,6 +307,39 @@
   (when (e2e/enabled?)
     (:count (first (jdbc/query db-spec ["SELECT COUNT(*) AS count FROM missions
                                          WHERE is_test_data = TRUE AND test_run_id = ?" e2e/run-id])))))
+
+(defn test-store-state
+  "Count every fixture table, rejecting any untagged or foreign-run record."
+  []
+  (when-not (e2e/enabled?)
+    (throw (ex-info "Test storage inspection is disabled" {})))
+  (jdbc/with-db-transaction [connection db-spec]
+    (let [counts (into {}
+                (for [table test-tables]
+                  (let [total (:count (first (jdbc/query connection [(str "SELECT COUNT(*) AS count FROM " table)])))
+                        tagged (:count (first (jdbc/query connection
+                           [(str "SELECT COUNT(*) AS count FROM " table
+                                 " WHERE is_test_data = TRUE AND test_run_id = ?") e2e/run-id])))]
+                    (when-not (= total tagged)
+                      (throw (ex-info "Test storage contains a foreign record" {:table table})))
+                    [table tagged])))
+        runs (:count (first (jdbc/query connection
+                      ["SELECT COUNT(*) AS count FROM e2e_runs WHERE test_run_id = ? AND is_test_data = TRUE" e2e/run-id])))
+        all-runs (:count (first (jdbc/query connection ["SELECT COUNT(*) AS count FROM e2e_runs"])))]
+    (when-not (= runs all-runs)
+      (throw (ex-info "Test storage contains a foreign run" {})))
+    {:is_test_data true :test_run_id e2e/run-id :tables counts :run_count runs
+     :mission_count (get counts "missions") :count (+ runs (reduce + (vals counts)))})))
+
+(defn clear-test-store!
+  "Clear only the configured test run. Production mode cannot call this operation."
+  []
+  (test-store-state)
+  (jdbc/with-db-transaction [tx db-spec]
+    (doseq [table test-tables]
+      (jdbc/execute! tx [(str "DELETE FROM " table " WHERE is_test_data = TRUE AND test_run_id = ?") e2e/run-id]))
+    (jdbc/execute! tx ["DELETE FROM e2e_runs WHERE test_run_id = ?" e2e/run-id]))
+  (test-store-state))
 
 ;; Mission CRUD operations
 (defn get-all-missions []

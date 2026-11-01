@@ -30,12 +30,14 @@
             (throw (ex-info "Partial Missions E2E configuration" {})))
           nil)))
 
+(defn- current-time-ms [] (System/currentTimeMillis))
+
 (defn- valid-headers? [headers]
   (try
     (let [supplied-run (get headers "x-aviation-test-run")
           expiry-text (get headers "x-aviation-test-expires")
           supplied-signature (get headers "x-aviation-test-signature")
-          now (System/currentTimeMillis)]
+          now (current-time-ms)]
       (when (and (= run-id supplied-run)
                  (re-matches #"[0-9]{13}" (or expiry-text ""))
                  (re-matches #"[0-9a-f]{64}" (or supplied-signature "")))
@@ -46,7 +48,7 @@
           (let [message (str "aviation-missions-app\n" run-id "\n" expiry-text)
                 expected (.doFinal mac (.getBytes message StandardCharsets/UTF_8))
                 supplied (.parseHex (java.util.HexFormat/of) supplied-signature)]
-            (and (<= now expiry (+ now max-age-ms))
+            (and (< now expiry) (<= expiry (+ now max-age-ms))
                  (MessageDigest/isEqual expected supplied))))))
     (catch Exception _ false)))
 

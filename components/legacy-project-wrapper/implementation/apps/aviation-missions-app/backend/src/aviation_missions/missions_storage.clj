@@ -44,6 +44,8 @@
                     :suggested_route
                     :pilot_experience
                     :special_challenges
+                    :is_test_data
+                    :test_run_id
                     :created_at
                     :updated_at])
       (update :created_at #(when % (str %)))
