@@ -876,9 +876,10 @@ release-visible outcome to `CHANGELOG.md`; Git preserves prior queue states.
   resolved original contributions have preserved recovery evidence and exact-main
   validation; #398 recovered #210, whose historical PR is closed. The original
   14 branches and four flagged worktrees have been reconciled.
-- **In progress:** E2E-001 route and persistence completeness audit; begin by
-  qualifying the real Missions browser/H2 lifecycle, then auditing the remaining
-  apps and interruption cleanup. Planner storage/import and map checks landed
+- **In progress:** E2E-001 route and persistence completeness audit; Missions'
+  real browser/H2 lifecycle landed through #405 after all triggered PR workflows
+  and all five exact-main workflows passed at `c7beefc63`. Audit the remaining
+  apps and interruption cleanup next. Planner storage/import and map checks landed
   through #400 with all six exact-main workflows passing. AI explanations still
   need the actual RCC queued-request/callback integration and all-app coverage.
 
@@ -894,6 +895,19 @@ release-visible outcome to `CHANGELOG.md`; Git preserves prior queue states.
     qualify package builds/tests and CI, and close each historical PR with its
     exact incorporated or superseding evidence.
   - [ ] Reconcile every scoped contribution; land and test unique changes or document an evidence-backed supersession.
+  - [ ] Reconcile [dependency PR #399](https://github.com/jordanhubbard/Aviation/pull/399):
+    preserve Vite 8 for React plugin 6 consumers, patch the Vite 6 consumer and
+    vulnerable Vitest/mocker, PostCSS and nanoid resolutions, then verify the
+    affected SDK tests, app builds and audit before superseding the failing PR.
+    The candidate uses Vitest/UI/coverage 4.1.12, Vite 8.3.5 for existing Vite 8
+    apps, and Vite 6.4.5 for G1000. Its lockfile clears all audit findings for
+    the five scoped modules; unrelated findings remain. PRs #401–#404 landed
+    the independently green Go, Node, Java and Python action updates.
+    All 15 affected package/app builds pass, as do AI explainer (12), Accident
+    Tracker backend (76 plus 2 Python), Accident Tracker frontend (70), and
+    Planner frontend (12) tests. The retained SDK suite passes 591 tests;
+    `litai verify` passes authority, 19 locks and the current receipt
+    `sha256:2b11353678837e35933aac4d4cac7f99ccd9ea150d1d5d02679391509381f9a7`.
   - [ ] Prepare, check, publish, and verify v1.0.0 from green main with no unresolved release contributions.
 - **Evidence:**
   - [ ] Ready contribution sweep, clean synchronized Git, green CI for the released commit, and verified remote tag and GitHub release.

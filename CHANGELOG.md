@@ -9,6 +9,10 @@
 
 ## Unreleased
 
+- Patched the shared Vitest/mocker toolchain and Vite dependencies, including
+  their vulnerable PostCSS and nanoid resolutions. Apps using React plugin 6
+  retain Vite 8; G1000 receives the compatible Vite 6 patch.
+
 - Missions BRIEF now displays the actual mission detail response and description;
   browser writes return valid CORS headers, and mobile controls and long modal
   text remain reachable. Its SDK-backed E2E traversal now uses real isolated H2
