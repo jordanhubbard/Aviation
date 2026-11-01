@@ -8,6 +8,7 @@ import { createE2ERunId } from '@aviation/shared-sdk/e2e';
 
 const appId = process.argv[2];
 const launch = {
+  'flight-tracker': { port: 3001 },
   'aviation-chat': { port: 31416, readyStatus: 200 },
   'aviation-accident-tracker': { port: 3002, readyStatus: 200,
     environment: runId => [`DATABASE_PATH=/tmp/aviation-e2e/${runId}/events.db`,

@@ -81,3 +81,10 @@ the parent destroys its temporary container and storage. Its full browser suite
 requires a signed isolated instance and uses real API responses; only external
 issue submission uses the SDK mock. The intentional failure must be distinguished
 from an unexpected test failure by its marker and zero-residual result.
+
+Flight Tracker uses `isolated-e2e.mjs`, rather than a public browser-only run.
+Its SDK fixtures populate the temporary process's real in-memory live feed; the
+browser calls real tracking APIs and checks the result from a fresh context.
+Cleanup checks live, tracked, history and run counts before destroying the
+container. Weather/feed polling and websocket publication are disabled in that
+signed test process. Production instances never expose these controls.

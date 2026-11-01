@@ -61,7 +61,7 @@ class VerifyTests(unittest.TestCase):
             if name == 'flight-track-analyzer':
                 self.assertTrue(script.endswith('/isolated-native-e2e.mjs'))
                 self.assertEqual(env['AVIATION_E2E_REVISION'], revision)
-            elif name in {'aviation-accident-tracker', 'aviation-chat', 'aviation-missions-app', 'flight-planner', 'flightschool'}:
+            elif name in {'aviation-accident-tracker', 'aviation-chat', 'aviation-missions-app', 'flight-planner', 'flightschool', 'flight-tracker'}:
                 self.assertTrue(script.endswith('/isolated-e2e.mjs'))
                 self.assertEqual(env['AVIATION_E2E_REVISION'], revision)
             else:

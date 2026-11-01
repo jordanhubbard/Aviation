@@ -312,7 +312,7 @@ def verify(config: dict, apps: list[dict], host: str) -> None:
         if running_revision != revision:
             raise RuntimeError(f"{app['name']} runs {running_revision}, expected {revision}")
     run("node", str(HERE / "browser-smoke.mjs"), apps[0]["name"] if len(apps) == 1 else "all", cwd=IMPLEMENTATION)
-    isolated_images = {"aviation-accident-tracker", "aviation-chat", "aviation-missions-app", "flight-planner", "flightschool"}
+    isolated_images = {"aviation-accident-tracker", "aviation-chat", "aviation-missions-app", "flight-planner", "flightschool", "flight-tracker"}
     for app in apps:
         name = app["name"]
         if app.get("runtime") == "native":
