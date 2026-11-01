@@ -9,6 +9,12 @@
 
 ## Unreleased
 
+- Isolated E2E instances and dedicated SSH forwards now have independent bounded
+  lifetimes, so controller loss cannot leave them running indefinitely. Cleanup
+  removes only expired resources with matching SDK lease, application, run and
+  container identities, and protects active resources and controller collisions.
+  Shared request credentials leave clock headroom below the verifier ceiling.
+
 - Flight Tracker remote E2E now exercises its real track/remove APIs in a
   separate signed service process, preserves SDK tags through tracking history,
   verifies state from a fresh browser context, and proves zero-residual cleanup.

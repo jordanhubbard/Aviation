@@ -50,8 +50,30 @@ explicit `nowMs` is supplied.
 - `e2e-signature-invalid`
 - `e2e-record-fields-present`
 - `e2e-record-run-mismatch`
+- `e2e-lease-lifetime-invalid`
 
 Random run-ID generation, secret discovery, HTTP routing, response mapping, directory
 creation, database schemas, fixture catalogs, browser/network orchestration, cleanup,
 residual-row verification, deployment, and scheduling are outside this interface.
 
+
+## Bounded resource lease identities
+
+- `createE2ELease(appId, runId, nowMs, ttlMs)` returns a new mapping with schema
+  `aviation/e2e-lease@1`, `app_id`, `is_test_data: true`, `test_run_id`,
+  `issued_at_ms: nowMs` and `expires_at_ms: nowMs + ttlMs`.
+- Application and run identities use the existing grammar. Timestamps must be
+  nonnegative safe integers; lifetime must be positive and at most 900000 ms, and
+  the sum must remain a safe integer. Invalid lifetime/timestamps fail with
+  `e2e-lease-lifetime-invalid`; identity errors use existing stable codes.
+- `classifyE2ELease(value, expectedAppId, nowMs)` returns `active`, `expired`, or
+  `unowned`. Only a mapping with the exact schema, true tag, valid run identity,
+  matching valid application, safe nonnegative timestamps, positive bounded
+  duration, and issue time no later than a valid nonnegative `nowMs` is owned.
+  Owned leases are expired when `expires_at_ms <= nowMs`. Every other input is
+  unowned, including boolean or fractional timestamps. Integer-valued numeric
+  representations are accepted and constructed timestamps are canonical integers.
+  Caller mappings remain unchanged.
+
+Lease classification is pure ownership policy. Resource discovery, Docker labels,
+process deadlines, cleanup timing and scheduling remain adapter behavior.

@@ -175,3 +175,39 @@ def verify_e2e_headers(app_id: str, headers: Mapping[str, str], secret: str | No
     if not hmac.compare_digest(expected, supplied):
         raise E2EContractError("e2e-signature-invalid", "invalid E2E signature")
     return run
+
+
+def _lease_integer(value: object) -> bool:
+    return (type(value) in (int, float) and 0 <= value <= MAX_SAFE_INTEGER
+            and (type(value) is int or value.is_integer()))
+
+
+def create_e2e_lease(app_id: str, run_id: str, now_ms: int, ttl_ms: int) -> dict[str, Any]:
+    """Construct a bounded Component-owned resource lease without resource access."""
+    if not isinstance(app_id, str) or not APP_ID_PATTERN.fullmatch(app_id):
+        raise E2EContractError("e2e-app-id-invalid", "invalid E2E application ID")
+    parse_e2e_run_id(run_id)
+    if (not _lease_integer(now_ms) or not _lease_integer(ttl_ms)
+        or not 1 <= ttl_ms <= MAX_AGE_MS
+        or now_ms + ttl_ms > MAX_SAFE_INTEGER):
+        raise E2EContractError("e2e-lease-lifetime-invalid", "invalid E2E resource lease lifetime")
+    now_ms, ttl_ms = int(now_ms), int(ttl_ms)
+    return tag_test_record(run_id, {"schema": "aviation/e2e-lease@1", "app_id": app_id,
+                                   "issued_at_ms": now_ms, "expires_at_ms": now_ms + ttl_ms})
+
+
+def classify_e2e_lease(value: object, app_id: str, now_ms: int) -> str:
+    """Classify metadata, granting no ownership to malformed or foreign leases."""
+    if (not isinstance(value, Mapping) or not isinstance(app_id, str)
+        or not APP_ID_PATTERN.fullmatch(app_id) or not _lease_integer(now_ms)):
+        return "unowned"
+    issued, expires = value.get("issued_at_ms"), value.get("expires_at_ms")
+    if (value.get("schema") != "aviation/e2e-lease@1" or value.get("app_id") != app_id
+        or value.get("is_test_data") is not True
+        or not isinstance(value.get("test_run_id"), str)
+        or not RUN_ID_PATTERN.fullmatch(value["test_run_id"])
+        or not _lease_integer(issued) or not _lease_integer(expires)
+        or not issued <= now_ms or not issued < expires <= MAX_SAFE_INTEGER
+        or expires - issued > MAX_AGE_MS):
+        return "unowned"
+    return "expired" if expires <= now_ms else "active"

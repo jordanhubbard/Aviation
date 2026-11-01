@@ -48,7 +48,12 @@ export async function exerciseE2EFeedback(page: E2EFeedbackPage, appId: string, 
   if (submitted.length !== 1 || submitted[0].app !== appId || submitted[0].page !== expectedPage
     || submitted[0].title !== expectedTitle || submitted[0].message !== message
     || await page.locator('#aviation-feedback-dialog textarea').inputValue()) {
-    throw new Error(`Feedback widget lost ${appId} test context`);
+    throw new Error(`Feedback widget lost ${appId} test context: ${JSON.stringify({
+      submissions: submitted.length, appMatches: submitted[0]?.app === appId,
+      pageMatches: submitted[0]?.page === expectedPage, titleMatches: submitted[0]?.title === expectedTitle,
+      messageMatches: submitted[0]?.message === message,
+      inputCleared: !(await page.locator('#aviation-feedback-dialog textarea').inputValue()),
+    })}`);
   }
   await page.locator('#aviation-feedback-cancel').click();
 }

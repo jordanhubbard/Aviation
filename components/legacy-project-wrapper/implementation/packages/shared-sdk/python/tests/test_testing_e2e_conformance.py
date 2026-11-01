@@ -6,7 +6,7 @@ from pathlib import Path
 import pytest
 
 from aviation.e2e import (
-    E2EContractError,
+    E2EContractError, create_e2e_lease, classify_e2e_lease,
     assert_test_record_for_run,
     isolated_run_directory,
     isolated_sqlite_path,
@@ -101,3 +101,22 @@ def test_invalid_credential(vector: dict[str, object]) -> None:
         )
     assert raised.value.code == vector["code"]
 
+
+
+@pytest.mark.parametrize("v", CONTRACT["leaseCreationCases"], ids=lambda v: v["id"])
+def test_create_lease(v):
+    assert create_e2e_lease(v["appId"], v["runId"], v["nowMs"], v["ttlMs"]) == v["expected"]
+
+
+@pytest.mark.parametrize("v", CONTRACT["invalidLeaseCreationCases"], ids=lambda v: v["id"])
+def test_invalid_lease_creation(v):
+    with pytest.raises(E2EContractError) as raised:
+        create_e2e_lease(v["appId"], v["runId"], v["nowMs"], v["ttlMs"])
+    assert raised.value.code == v["code"]
+
+
+@pytest.mark.parametrize("v", CONTRACT["leaseClassificationCases"], ids=lambda v: v["id"])
+def test_classify_lease(v):
+    before = deepcopy(v["input"])
+    assert classify_e2e_lease(v["input"], v["appId"], v["nowMs"]) == v["expected"]
+    assert v["input"] == before

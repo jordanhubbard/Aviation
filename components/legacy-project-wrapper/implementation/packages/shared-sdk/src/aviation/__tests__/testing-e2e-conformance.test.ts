@@ -2,7 +2,7 @@ import { basename, dirname, resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { loadConformanceContract } from './conformance-contract.js';
 import {
-  E2EContractError,
+  E2EContractError, createE2ELease, classifyE2ELease,
   assertTestDataForRun,
   isolatedRunDirectory,
   isolatedSqlitePath,
@@ -16,6 +16,9 @@ import {
 type InvalidCase = { id: string; code: string };
 type Vectors = {
   schema: string;
+  leaseCreationCases: Array<{id: string; appId: string; runId: E2ERunId; nowMs: number; ttlMs: number; expected: object}>;
+  invalidLeaseCreationCases: Array<InvalidCase & {appId: string; runId: E2ERunId; nowMs: number; ttlMs: number}>;
+  leaseClassificationCases: Array<{id: string; appId: string; nowMs: number; input: unknown; expected: string}>;
   runIdCases: Array<{ id: string; input: string; expected: string }>;
   invalidRunIdCases: Array<InvalidCase & { input: unknown }>;
   pathCases: Array<{
@@ -157,3 +160,17 @@ describe('aviation.testing.e2e Component conformance', () => {
   }
 });
 
+
+describe('Component resource lease conformance', () => {
+  for (const v of contract.leaseCreationCases) it(v.id, () => {
+    expect(createE2ELease(v.appId, v.runId, v.nowMs, v.ttlMs)).toEqual(v.expected);
+  });
+  for (const v of contract.invalidLeaseCreationCases) it(v.id, () => {
+    expectCode(() => createE2ELease(v.appId, v.runId, v.nowMs, v.ttlMs), v.code);
+  });
+  for (const v of contract.leaseClassificationCases) it(v.id, () => {
+    const before = structuredClone(v.input);
+    expect(classifyE2ELease(v.input, v.appId, v.nowMs)).toBe(v.expected);
+    expect(v.input).toEqual(before);
+  });
+});

@@ -4,19 +4,22 @@ import { spawn, spawnSync } from 'node:child_process';
 import { createServer } from 'node:net';
 import { randomBytes } from 'node:crypto';
 import { fileURLToPath } from 'node:url';
-import { createE2ERunId } from '@aviation/shared-sdk/e2e';
+import { createE2ERunId, createE2ELease, e2eHostDeadlineCommand, E2E_MAX_AGE_MS } from '@aviation/shared-sdk/e2e';
 
 const appId = process.argv[2];
 if (appId !== 'flight-track-analyzer') throw new Error(`No native E2E runtime for ${appId || '(missing app)'}`);
 const host = process.env.AVIATION_E2E_SSH_HOST;
 const revision = process.env.AVIATION_E2E_REVISION;
-if (!host || !/^[a-zA-Z0-9_.@-]+$/.test(host)) throw new Error('AVIATION_E2E_SSH_HOST is required');
+if (!host || !/^[a-zA-Z0-9_.@-]+$/.test(host) || host.startsWith('-')) throw new Error('AVIATION_E2E_SSH_HOST is required');
 if (!revision || !/^[0-9a-f]{40}$/.test(revision)) throw new Error('AVIATION_E2E_REVISION is required');
 
 const runId = createE2ERunId();
 const secret = randomBytes(32).toString('hex');
+const lifetimeMs = process.env.AVIATION_E2E_LIFETIME_MS === undefined ? E2E_MAX_AGE_MS : Number(process.env.AVIATION_E2E_LIFETIME_MS);
+createE2ELease(appId, runId, Date.now(), lifetimeMs);
+const dedicatedSsh = ['-o', 'ControlPath=none', '-o', 'ControlMaster=no', '-o', 'ControlPersist=no'];
 const ssh = (...args) => {
-  const result = spawnSync('ssh', ['-o', 'BatchMode=yes', host, ...args], {
+  const result = spawnSync('ssh', [...dedicatedSsh, '-o', 'BatchMode=yes', host, ...args], {
     encoding: 'utf8', timeout: 15000,
   });
   if (result.status !== 0) throw new Error(`Remote KMLab check failed: ${(result.stderr || '').slice(0, 500)}`);
@@ -36,8 +39,10 @@ if (!Number.isInteger(remotePort) || remotePort < 1024 || remotePort > 65535) {
 }
 const localPort = await freeLocalPort();
 const remoteCommand = `/opt/kmlab/venv/bin/python /opt/kmlab/e2e_instance.py --run-id ${runId} --revision ${revision} --port ${remotePort}`;
-const child = spawn('ssh', ['-T', '-o', 'BatchMode=yes', '-o', 'ExitOnForwardFailure=yes',
-  '-L', `127.0.0.1:${localPort}:127.0.0.1:${remotePort}`, host, remoteCommand],
+const lease = createE2ELease(appId, runId, Date.now(), lifetimeMs);
+const deadline = e2eHostDeadlineCommand(['ssh', ...dedicatedSsh, '-T', '-o', 'BatchMode=yes', '-o', 'ExitOnForwardFailure=yes',
+  '-L', `127.0.0.1:${localPort}:127.0.0.1:${remotePort}`, host, remoteCommand], lifetimeMs, 2000, lease.expires_at_ms);
+const child = spawn(deadline[0], deadline.slice(1),
 { stdio: ['pipe', 'pipe', 'pipe'] });
 let childExited = false;
 let childExitCode;

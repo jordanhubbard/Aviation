@@ -88,3 +88,36 @@ browser calls real tracking APIs and checks the result from a fresh context.
 Cleanup checks live, tracked, history and run counts before destroying the
 container. Weather/feed polling and websocket publication are disabled in that
 signed test process. Production instances never expose these controls.
+
+Isolated Docker runs carry the Component-owned `aviation/e2e-lease@1` metadata.
+Their foreground command has a private-namespace POSIX `sh`/`date`/`sleep`
+deadline. Dedicated SSH forwards use independent Node supervisors with owned
+child-process handles; timers are cancelled when those children exit, so no
+stale host PID is retained for later signalling. The absolute lease deadline includes startup time;
+timers have one-second precision and a two-second termination grace. Containers
+use `--rm` and private tmpfs, and no production bind mounts are introduced. Startup
+cleanup validates the full lease, application, run, canonical name and immutable
+container ID; active, foreign, unowned and malformed resources are preserved.
+Failure diagnostics collect logs only from a successfully created container ID.
+Finally cleanup additionally verifies a per-controller owner token, so a duplicate
+caller-supplied run ID cannot remove another controller's instance.
+
+`AVIATION_E2E_LIFETIME_MS` can reduce the default fifteen-minute budget. It must be
+positive and no greater than fifteen minutes. `AVIATION_E2E_SWEEP_ONLY=1` runs the
+safe expired-resource sweep without creating an instance. For controlled failure
+qualification, supply both `AVIATION_E2E_RUN_ID` and `AVIATION_E2E_SECRET` and set
+`AVIATION_E2E_HOLD_AFTER_READY=1`: the controller emits a ready record without the
+secret and waits only until lease expiry. This diagnostic mode never reports a
+successful browser run. It permits a test owner to seed actual data and kill only
+its own controller before checking independent expiration.
+
+The Docker recovery tests in `test_deploy.py` run when
+`AVIATION_E2E_LEASE_TEST_IMAGE` names the official Flight Tracker image. Application
+CI builds that image and requires the tests. They verify real state before SIGKILL,
+independent expiration, active-run preservation, and safe handling of foreign,
+legacy, malformed, mismatched and colliding resources. Ordinary dispatch unit tests
+remain available without Docker qualification. SDK request headers are refreshed
+with five-minute lifetimes under the unchanged fifteen-minute verification limit,
+leaving headroom for small client/server clock differences. The native KMLab SSH
+session is also bounded and preserves stdin, so its remote EOF cleanup remains in
+use; native host-crash storage recovery still needs separate qualification.

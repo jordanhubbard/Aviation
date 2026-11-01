@@ -9,7 +9,8 @@
     {"id": "path-traversal", "input": "../production", "code": "e2e-run-id-invalid"},
     {"id": "uppercase-hex", "input": "e2e_AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA", "code": "e2e-run-id-invalid"},
     {"id": "short-hex", "input": "e2e_aaaa", "code": "e2e-run-id-invalid"},
-    {"id": "non-string", "input": 42, "code": "e2e-run-id-invalid"}
+    {"id": "non-string", "input": 42, "code": "e2e-run-id-invalid"},
+    {"id": "trailing-newline", "input": "e2e_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\n", "code": "e2e-run-id-invalid"}
   ],
   "pathCases": [
     {"id": "direct-run-children", "root": "sandbox/e2e", "runId": "e2e_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "expectedDirectoryLeaf": "e2e_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "expectedSqliteLeaf": "e2e_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.db"}
@@ -37,6 +38,368 @@
     {"id": "expired", "appId": "flight-planner", "secret": "component-test-secret-at-least-32-bytes", "nowMs": 1800000060001, "headers": {"x-aviation-test-run": "e2e_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "x-aviation-test-expires": "1800000060000", "x-aviation-test-signature": "e6a7a3d5df79b8ed1ebe37d4440f541d967d07404936496418003caecd598f08"}, "code": "e2e-credentials-expired"},
     {"id": "excessive-lifetime", "appId": "flight-planner", "secret": "component-test-secret-at-least-32-bytes", "nowMs": 1799999000000, "headers": {"x-aviation-test-run": "e2e_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "x-aviation-test-expires": "1800000060000", "x-aviation-test-signature": "e6a7a3d5df79b8ed1ebe37d4440f541d967d07404936496418003caecd598f08"}, "code": "e2e-credential-lifetime-invalid"},
     {"id": "missing-secret", "appId": "flight-planner", "secret": null, "nowMs": 1800000000000, "headers": {"x-aviation-test-run": "e2e_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "x-aviation-test-expires": "1800000060000", "x-aviation-test-signature": "e6a7a3d5df79b8ed1ebe37d4440f541d967d07404936496418003caecd598f08"}, "code": "e2e-secret-invalid"},
-    {"id": "duplicate-case-variant", "appId": "flight-planner", "secret": "component-test-secret-at-least-32-bytes", "nowMs": 1800000000000, "headers": {"x-aviation-test-run": "e2e_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "X-Aviation-Test-Run": "e2e_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "x-aviation-test-expires": "1800000060000", "x-aviation-test-signature": "e6a7a3d5df79b8ed1ebe37d4440f541d967d07404936496418003caecd598f08"}, "code": "e2e-header-duplicate"}
+    {"id": "duplicate-case-variant", "appId": "flight-planner", "secret": "component-test-secret-at-least-32-bytes", "nowMs": 1800000000000, "headers": {"x-aviation-test-run": "e2e_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "X-Aviation-Test-Run": "e2e_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "x-aviation-test-expires": "1800000060000", "x-aviation-test-signature": "e6a7a3d5df79b8ed1ebe37d4440f541d967d07404936496418003caecd598f08"}, "code": "e2e-header-duplicate"},
+    {"id": "newline-application", "appId": "flight-planner\n", "headers": {}, "secret": "component-test-secret-at-least-32-bytes", "nowMs": 1800000000000, "code": "e2e-app-id-invalid"}
+  ],
+  "leaseCreationCases": [
+    {
+      "id": "bounded-app-run-lease",
+      "appId": "flight-tracker",
+      "runId": "e2e_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "nowMs": 1800000000000,
+      "ttlMs": 60000,
+      "expected": {
+        "schema": "aviation/e2e-lease@1",
+        "app_id": "flight-tracker",
+        "is_test_data": true,
+        "test_run_id": "e2e_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "issued_at_ms": 1800000000000,
+        "expires_at_ms": 1800000060000
+      }
+    },
+    {
+      "id": "integral-numeric-times",
+      "appId": "flight-tracker",
+      "runId": "e2e_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "nowMs": 1800000000000.0,
+      "ttlMs": 60000.0,
+      "expected": {
+        "schema": "aviation/e2e-lease@1",
+        "app_id": "flight-tracker",
+        "is_test_data": true,
+        "test_run_id": "e2e_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "issued_at_ms": 1800000000000,
+        "expires_at_ms": 1800000060000
+      }
+    }
+  ],
+  "invalidLeaseCreationCases": [
+    {
+      "id": "foreign-grammar",
+      "appId": "../prod",
+      "runId": "e2e_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "nowMs": 1800000000000,
+      "ttlMs": 60000,
+      "code": "e2e-app-id-invalid"
+    },
+    {
+      "id": "invalid-run",
+      "appId": "flight-tracker",
+      "runId": "../prod",
+      "nowMs": 1800000000000,
+      "ttlMs": 60000,
+      "code": "e2e-run-id-invalid"
+    },
+    {
+      "id": "zero-duration",
+      "appId": "flight-tracker",
+      "runId": "e2e_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "nowMs": 1800000000000,
+      "ttlMs": 0,
+      "code": "e2e-lease-lifetime-invalid"
+    },
+    {
+      "id": "excessive-duration",
+      "appId": "flight-tracker",
+      "runId": "e2e_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "nowMs": 1800000000000,
+      "ttlMs": 900001,
+      "code": "e2e-lease-lifetime-invalid"
+    },
+    {
+      "id": "boolean-time",
+      "appId": "flight-tracker",
+      "runId": "e2e_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "nowMs": true,
+      "ttlMs": 1,
+      "code": "e2e-lease-lifetime-invalid"
+    },
+    {
+      "id": "negative-time",
+      "appId": "flight-tracker",
+      "runId": "e2e_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "nowMs": -1,
+      "ttlMs": 1,
+      "code": "e2e-lease-lifetime-invalid"
+    },
+    {
+      "id": "overflow",
+      "appId": "flight-tracker",
+      "runId": "e2e_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "nowMs": 9007199254740991,
+      "ttlMs": 1,
+      "code": "e2e-lease-lifetime-invalid"
+    },
+    {
+      "id": "non-string-application",
+      "appId": 123,
+      "runId": "e2e_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "nowMs": 1800000000000,
+      "ttlMs": 60000,
+      "code": "e2e-app-id-invalid"
+    },
+    {
+      "id": "fractional-time",
+      "appId": "flight-tracker",
+      "runId": "e2e_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "nowMs": 1800000000000.5,
+      "ttlMs": 60000,
+      "code": "e2e-lease-lifetime-invalid"
+    },
+    {
+      "id": "newline-application",
+      "appId": "flight-tracker\n",
+      "runId": "e2e_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "nowMs": 1800000000000,
+      "ttlMs": 60000,
+      "code": "e2e-app-id-invalid"
+    }
+  ],
+  "leaseClassificationCases": [
+    {
+      "id": "active",
+      "input": {
+        "schema": "aviation/e2e-lease@1",
+        "app_id": "flight-tracker",
+        "is_test_data": true,
+        "test_run_id": "e2e_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "issued_at_ms": 1800000000000,
+        "expires_at_ms": 1800000060000
+      },
+      "appId": "flight-tracker",
+      "nowMs": 1800000059999,
+      "expected": "active"
+    },
+    {
+      "id": "exact-expiry",
+      "input": {
+        "schema": "aviation/e2e-lease@1",
+        "app_id": "flight-tracker",
+        "is_test_data": true,
+        "test_run_id": "e2e_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "issued_at_ms": 1800000000000,
+        "expires_at_ms": 1800000060000
+      },
+      "appId": "flight-tracker",
+      "nowMs": 1800000060000,
+      "expected": "expired"
+    },
+    {
+      "id": "expired",
+      "input": {
+        "schema": "aviation/e2e-lease@1",
+        "app_id": "flight-tracker",
+        "is_test_data": true,
+        "test_run_id": "e2e_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "issued_at_ms": 1800000000000,
+        "expires_at_ms": 1800000060000
+      },
+      "appId": "flight-tracker",
+      "nowMs": 1800000060001,
+      "expected": "expired"
+    },
+    {
+      "id": "foreign-app",
+      "input": {
+        "schema": "aviation/e2e-lease@1",
+        "app_id": "flight-tracker",
+        "is_test_data": true,
+        "test_run_id": "e2e_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "issued_at_ms": 1800000000000,
+        "expires_at_ms": 1800000060000
+      },
+      "appId": "flight-planner",
+      "nowMs": 1800000060001,
+      "expected": "unowned"
+    },
+    {
+      "id": "future-issued",
+      "input": {
+        "schema": "aviation/e2e-lease@1",
+        "app_id": "flight-tracker",
+        "is_test_data": true,
+        "test_run_id": "e2e_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "issued_at_ms": 1800000000000,
+        "expires_at_ms": 1800000060000
+      },
+      "appId": "flight-tracker",
+      "nowMs": 1799999999999,
+      "expected": "unowned"
+    },
+    {
+      "id": "missing",
+      "input": null,
+      "appId": "flight-tracker",
+      "nowMs": 1800000060001,
+      "expected": "unowned"
+    },
+    {
+      "id": "boolean-clock",
+      "input": {
+        "schema": "aviation/e2e-lease@1",
+        "app_id": "flight-tracker",
+        "is_test_data": true,
+        "test_run_id": "e2e_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "issued_at_ms": 1800000000000,
+        "expires_at_ms": 1800000060000
+      },
+      "appId": "flight-tracker",
+      "nowMs": true,
+      "expected": "unowned"
+    },
+    {
+      "id": "unsupported-schema",
+      "input": {
+        "schema": "unknown",
+        "app_id": "flight-tracker",
+        "is_test_data": true,
+        "test_run_id": "e2e_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "issued_at_ms": 1800000000000,
+        "expires_at_ms": 1800000060000
+      },
+      "appId": "flight-tracker",
+      "nowMs": 1800001000000,
+      "expected": "unowned"
+    },
+    {
+      "id": "production",
+      "input": {
+        "schema": "aviation/e2e-lease@1",
+        "app_id": "flight-tracker",
+        "is_test_data": false,
+        "test_run_id": "e2e_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "issued_at_ms": 1800000000000,
+        "expires_at_ms": 1800000060000
+      },
+      "appId": "flight-tracker",
+      "nowMs": 1800001000000,
+      "expected": "unowned"
+    },
+    {
+      "id": "invalid-run",
+      "input": {
+        "schema": "aviation/e2e-lease@1",
+        "app_id": "flight-tracker",
+        "is_test_data": true,
+        "test_run_id": "../production",
+        "issued_at_ms": 1800000000000,
+        "expires_at_ms": 1800000060000
+      },
+      "appId": "flight-tracker",
+      "nowMs": 1800001000000,
+      "expected": "unowned"
+    },
+    {
+      "id": "boolean-expiry",
+      "input": {
+        "schema": "aviation/e2e-lease@1",
+        "app_id": "flight-tracker",
+        "is_test_data": true,
+        "test_run_id": "e2e_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "issued_at_ms": 1800000000000,
+        "expires_at_ms": true
+      },
+      "appId": "flight-tracker",
+      "nowMs": 1800001000000,
+      "expected": "unowned"
+    },
+    {
+      "id": "excessive-duration",
+      "input": {
+        "schema": "aviation/e2e-lease@1",
+        "app_id": "flight-tracker",
+        "is_test_data": true,
+        "test_run_id": "e2e_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "issued_at_ms": 1800000000000,
+        "expires_at_ms": 1800000900001
+      },
+      "appId": "flight-tracker",
+      "nowMs": 1800001000000,
+      "expected": "unowned"
+    },
+    {
+      "id": "negative-issue",
+      "input": {
+        "schema": "aviation/e2e-lease@1",
+        "app_id": "flight-tracker",
+        "is_test_data": true,
+        "test_run_id": "e2e_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "issued_at_ms": -1,
+        "expires_at_ms": 1800000060000
+      },
+      "appId": "flight-tracker",
+      "nowMs": 1800001000000,
+      "expected": "unowned"
+    },
+    {
+      "id": "zero-duration",
+      "input": {
+        "schema": "aviation/e2e-lease@1",
+        "app_id": "flight-tracker",
+        "is_test_data": true,
+        "test_run_id": "e2e_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "issued_at_ms": 1800000000000,
+        "expires_at_ms": 1800000000000
+      },
+      "appId": "flight-tracker",
+      "nowMs": 1800001000000,
+      "expected": "unowned"
+    },
+    {
+      "id": "string-timestamp",
+      "input": {
+        "schema": "aviation/e2e-lease@1",
+        "app_id": "flight-tracker",
+        "is_test_data": true,
+        "test_run_id": "e2e_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "issued_at_ms": "1800000000000",
+        "expires_at_ms": 1800000060000
+      },
+      "appId": "flight-tracker",
+      "nowMs": 1800001000000,
+      "expected": "unowned"
+    },
+    {
+      "id": "integral-numeric-lease",
+      "input": {
+        "schema": "aviation/e2e-lease@1",
+        "app_id": "flight-tracker",
+        "is_test_data": true,
+        "test_run_id": "e2e_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "issued_at_ms": 1800000000000.0,
+        "expires_at_ms": 1800000060000.0
+      },
+      "appId": "flight-tracker",
+      "nowMs": 1800000059999,
+      "expected": "active"
+    },
+    {
+      "id": "fractional-issued-time",
+      "input": {
+        "schema": "aviation/e2e-lease@1",
+        "app_id": "flight-tracker",
+        "is_test_data": true,
+        "test_run_id": "e2e_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "issued_at_ms": 1800000000000.5,
+        "expires_at_ms": 1800000060000
+      },
+      "appId": "flight-tracker",
+      "nowMs": 1800000059999,
+      "expected": "unowned"
+    },
+    {
+      "id": "newline-run-identity",
+      "input": {
+        "schema": "aviation/e2e-lease@1",
+        "app_id": "flight-tracker",
+        "is_test_data": true,
+        "test_run_id": "e2e_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\n",
+        "issued_at_ms": 1800000000000,
+        "expires_at_ms": 1800000060000
+      },
+      "appId": "flight-tracker",
+      "nowMs": 1800000059999,
+      "expected": "unowned"
+    }
   ]
 }
