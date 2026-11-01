@@ -872,9 +872,10 @@ release-visible outcome to `CHANGELOG.md`; Git preserves prior queue states.
 
 - **Release target:** 1.0.0
 - **Contribution inventory:** [all included work](release-1.0-contributions.md).
-- **Next action:** Reconcile the 47 included open tracker items and inspect the
-  14 unresolved branches and four flagged worktrees; prove ancestry or patch
-  equivalence before declaring supersession, and preserve unique local changes.
+- **Next action:** Reconcile the 47 included tracker items before publication.
+  The original 14 branches and four flagged worktrees have been reconciled;
+  recovered changes landed in #394 and unique worktree edits remain on pushed
+  recovery refs. See the contribution inventory for validation evidence.
 
 - **Priority:** P0
 - **Owner:** release engineering
@@ -883,7 +884,7 @@ release-visible outcome to `CHANGELOG.md`; Git preserves prior queue states.
 - **Depends on:** none
 - **Completion prerequisites:** none
 - **Implementation:**
-  - [ ] Assign every open tracker item to 1.0.0 and record a complete branch and worktree inventory.
+  - [x] Assign every open tracker item to 1.0.0 and record a complete branch and worktree inventory.
   - [ ] Reconcile every scoped contribution; land and test unique changes or document an evidence-backed supersession.
   - [ ] Prepare, check, publish, and verify v1.0.0 from green main with no unresolved release contributions.
 - **Evidence:**
