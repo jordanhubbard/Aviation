@@ -117,3 +117,21 @@ Invalid geometry, audio levels, squawk codes, modes, and elapsed time SHALL fail
   squawk or mode, or advances IDENT timing
 - **THEN** it delegates to the common avionics realization rather than an app-private
   model
+
+### Requirement: Radio tuning and auxiliary audio state are portable
+
+COM and NAV active/standby tuning, swap operations, volume, receive selection,
+and COM PTT state SHALL be deterministic and equivalent across TypeScript and
+Python. The training COM model uses 118.000 through 136.975 MHz in 0.025 MHz
+steps; NAV uses 108.000 through 117.950 MHz in 0.050 MHz steps. Non-finite,
+out-of-band, and off-channel frequencies SHALL fail closed. NAV SHALL reject
+transmit commands. Intercom and music inputs SHALL share bounded volume and
+boolean enable-state transitions. Explicit marker inputs SHALL resolve inner
+before middle before outer. No model performs audio or radio hardware I/O.
+
+#### Scenario: Flight Planner operates its radio stack
+
+- **WHEN** the simulator tunes or swaps COM/NAV, changes PTT, or operates
+  intercom, music, or marker lamps
+- **THEN** it delegates state validation and transitions to the common avionics
+  realization, retaining only application composition and elapsed-time policy

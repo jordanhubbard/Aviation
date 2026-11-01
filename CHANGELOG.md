@@ -9,6 +9,15 @@
 
 ## Unreleased
 
+- Added Component-owned COM/NAV tuning, PTT, auxiliary audio, and marker-input
+  controls with shared TypeScript/Python conformance vectors. Flight Planner now
+  composes the common controls, and its Python CI gate is blocking. Accident Tracker
+  now reconciles adjacent-day or missing-registration reports against persisted
+  events while preserving provenance and rejecting ambiguous or conflicting matches.
+  Unidentified reports stay distinct through batch processing and persistence;
+  provider record IDs handle shared archive URLs and repeat imports. The legacy
+  database constraint migration preserves IDs and dependent records and rolls back
+  if it encounters unrecognized schema.
 - Consolidated the 1.0 dependency requests into the retained workspace, including
   current CI actions, TypeScript and Node declarations, Vitest, Vite, Redis,
   UUID, MSW, and Python application requirements. Kept the Flight Planner ESLint

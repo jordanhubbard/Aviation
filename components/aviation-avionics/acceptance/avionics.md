@@ -99,6 +99,14 @@ avionics device.
 
 ## Requirement: Common SDK CI runs
 
+### Scenario: Radio and auxiliary audio controls transition
+
+- **WHEN** TypeScript and Python execute the shared tuning, swapping, COM PTT,
+  receive, volume, intercom/music, and simultaneous marker-input vectors
+- **THEN** their state records agree, including both frequency-band boundaries
+- **AND** invalid bands, channel spacing, non-finite values, boolean controls,
+  volume, and NAV transmission fail without modifying the original record
+
 ### Scenario: Authority or realization changes
 
 - **WHEN** this Component, vectors, protocol/rendering package, simulator adapter, or

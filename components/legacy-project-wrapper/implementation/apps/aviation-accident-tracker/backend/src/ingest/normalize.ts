@@ -44,6 +44,7 @@ export function normalize(raw: RawEvent): NormalizedEvent {
     sources: [
       {
         sourceName: raw.source,
+        recordId: raw.id,
         url: raw.url,
         fetchedAt: raw.fetchedAt,
       },

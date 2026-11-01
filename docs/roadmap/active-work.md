@@ -878,6 +878,13 @@ release-visible outcome to `CHANGELOG.md`; Git preserves prior queue states.
   The original 14 branches and four flagged worktrees have been reconciled;
   recovered changes landed in #394 and unique worktree edits remain on pushed
   recovery refs. See the contribution inventory for validation evidence.
+- **In progress:** Recover #210 through shared COM/NAV and auxiliary audio
+  contracts with cross-language vectors, Flight Planner composition over common
+  controls, and tested exact-first/fuzzy-fallback ingest integration. Existing
+  G1000 radio geometry stays delegated to the common SDK.
+  Missing-registration reports must remain distinct through batch processing and
+  persistence; qualify migration of the legacy uniqueness constraint while
+  preserving event IDs, source rows, indexes, and rollback on unexpected schema.
 
 - **Priority:** P0
 - **Owner:** release engineering

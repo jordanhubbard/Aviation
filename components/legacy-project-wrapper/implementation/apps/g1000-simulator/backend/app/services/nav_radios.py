@@ -10,7 +10,33 @@ from aviation_avionics import (
     DmeStation,
     compute_adf as compute_common_adf,
     compute_dme as compute_common_dme,
+    great_circle_distance_nm,
+    initial_bearing_deg,
+    normalize_signed_angle,
 )
+
+
+def calculate_vor_radial(course: float, radial: float) -> float:
+    """Compatibility course deviation, using the SDK's signed-angle convention."""
+    return normalize_signed_angle(course - radial)
+
+
+def calculate_ils_localizer(localizer_course: float, aircraft_track: float) -> float:
+    """Legacy track/course difference; this is not a positional ILS beam solution."""
+    return normalize_signed_angle(aircraft_track - localizer_course)
+
+
+def calculate_adf_bearing(
+    navaid_lat: float, navaid_lon: float, aircraft_lat: float, aircraft_lon: float
+) -> float:
+    return initial_bearing_deg(aircraft_lat, aircraft_lon, navaid_lat, navaid_lon)
+
+
+def calculate_dme_range(
+    navaid_lat: float, navaid_lon: float, aircraft_lat: float, aircraft_lon: float
+) -> float:
+    """Legacy ground range in NM; compute_dme supplies the actual slant-range model."""
+    return great_circle_distance_nm(aircraft_lat, aircraft_lon, navaid_lat, navaid_lon)
 
 
 # Synthetic training beacon paired with the SDK sample catalog. It is deliberately

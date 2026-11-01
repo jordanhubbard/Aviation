@@ -11,11 +11,14 @@ from .controls import (
     IDENT_DURATION_SEC,
     TRANSPONDER_MODES,
     AudioPanelState,
+    AudioInputState,
+    RadioState,
     MarkerBeaconSite,
     MarkerBeaconStatus,
     TransponderState,
     compute_marker_beacons,
     normalize_squawk,
+    resolve_marker_lights,
 )
 from .radios import (
     AdfSolution,
@@ -37,6 +40,8 @@ __all__ = [
     "DmeStation",
     "GpsSolution",
     "AudioPanelState",
+    "AudioInputState",
+    "RadioState",
     "IDENT_DURATION_SEC",
     "MarkerBeaconSite",
     "MarkerBeaconStatus",
@@ -54,6 +59,7 @@ __all__ = [
     "is_waas_available",
     "normalize_heading",
     "normalize_squawk",
+    "resolve_marker_lights",
     "normalize_signed_angle",
     "standard_temperature_c",
 ]

@@ -1,4 +1,351 @@
 {
+  "radio_controls": {
+    "sequences": [
+      {
+        "name": "COM band edges, tune then swap, receive, PTT and volume",
+        "initial": {
+          "kind": "COM",
+          "active_frequency_mhz": 121.5,
+          "standby_frequency_mhz": 118.0,
+          "volume": 0.8,
+          "receive": true,
+          "transmit": false
+        },
+        "steps": [
+          {
+            "change": {
+              "standby_frequency_mhz": 136.975
+            },
+            "expected": {
+              "kind": "COM",
+              "active_frequency_mhz": 121.5,
+              "standby_frequency_mhz": 136.975,
+              "volume": 0.8,
+              "receive": true,
+              "transmit": false
+            }
+          },
+          {
+            "change": {
+              "active_frequency_mhz": 118.0,
+              "swap": true
+            },
+            "expected": {
+              "kind": "COM",
+              "active_frequency_mhz": 136.975,
+              "standby_frequency_mhz": 118.0,
+              "volume": 0.8,
+              "receive": true,
+              "transmit": false
+            }
+          },
+          {
+            "change": {
+              "transmit": true,
+              "receive": false,
+              "volume": 0.4
+            },
+            "expected": {
+              "kind": "COM",
+              "active_frequency_mhz": 136.975,
+              "standby_frequency_mhz": 118.0,
+              "volume": 0.4,
+              "receive": false,
+              "transmit": true
+            }
+          },
+          {
+            "change": {
+              "transmit": false,
+              "volume": 0
+            },
+            "expected": {
+              "kind": "COM",
+              "active_frequency_mhz": 136.975,
+              "standby_frequency_mhz": 118.0,
+              "volume": 0,
+              "receive": false,
+              "transmit": false
+            }
+          }
+        ]
+      },
+      {
+        "name": "NAV band edges, swap and tune",
+        "initial": {
+          "kind": "NAV",
+          "active_frequency_mhz": 108.0,
+          "standby_frequency_mhz": 117.95,
+          "volume": 0.5,
+          "receive": true,
+          "transmit": false
+        },
+        "steps": [
+          {
+            "change": {
+              "swap": true
+            },
+            "expected": {
+              "kind": "NAV",
+              "active_frequency_mhz": 117.95,
+              "standby_frequency_mhz": 108.0,
+              "volume": 0.5,
+              "receive": true,
+              "transmit": false
+            }
+          },
+          {
+            "change": {
+              "standby_frequency_mhz": 110.3,
+              "receive": false,
+              "volume": 1
+            },
+            "expected": {
+              "kind": "NAV",
+              "active_frequency_mhz": 117.95,
+              "standby_frequency_mhz": 110.3,
+              "volume": 1,
+              "receive": false,
+              "transmit": false
+            }
+          },
+          {
+            "change": {
+              "active_frequency_mhz": 108.05
+            },
+            "expected": {
+              "kind": "NAV",
+              "active_frequency_mhz": 108.05,
+              "standby_frequency_mhz": 110.3,
+              "volume": 1,
+              "receive": false,
+              "transmit": false
+            }
+          }
+        ]
+      }
+    ],
+    "invalid_radio": [
+      {
+        "kind": "COM",
+        "change": {
+          "active_frequency_mhz": 117.975
+        }
+      },
+      {
+        "kind": "COM",
+        "change": {
+          "standby_frequency_mhz": 137
+        }
+      },
+      {
+        "kind": "COM",
+        "change": {
+          "standby_frequency_mhz": 118.0125
+        }
+      },
+      {
+        "kind": "COM",
+        "change": {
+          "active_frequency_mhz": null
+        }
+      },
+      {
+        "kind": "COM",
+        "change": {
+          "active_frequency_mhz": "121.5"
+        }
+      },
+      {
+        "kind": "COM",
+        "change": {
+          "active_frequency_mhz": true
+        }
+      },
+      {
+        "kind": "COM",
+        "change": {
+          "volume": -0.01
+        }
+      },
+      {
+        "kind": "COM",
+        "change": {
+          "volume": 1.01
+        }
+      },
+      {
+        "kind": "COM",
+        "change": {
+          "volume": false
+        }
+      },
+      {
+        "kind": "COM",
+        "change": {
+          "receive": 1
+        }
+      },
+      {
+        "kind": "COM",
+        "change": {
+          "transmit": "yes"
+        }
+      },
+      {
+        "kind": "COM",
+        "change": {
+          "swap": 1
+        }
+      },
+      {
+        "kind": "COM",
+        "change": {
+          "unknown": 1
+        }
+      },
+      {
+        "kind": "NAV",
+        "change": {
+          "transmit": true
+        }
+      },
+      {
+        "kind": "NAV",
+        "change": {
+          "transmit": false
+        }
+      },
+      {
+        "kind": "NAV",
+        "change": {
+          "active_frequency_mhz": 118
+        }
+      },
+      {
+        "kind": "NAV",
+        "change": {
+          "standby_frequency_mhz": 107.95
+        }
+      },
+      {
+        "kind": "NAV",
+        "change": {
+          "standby_frequency_mhz": 108.025
+        }
+      }
+    ],
+    "audio_sequence": {
+      "initial": {
+        "enabled": false,
+        "volume": 0.3
+      },
+      "steps": [
+        {
+          "change": {
+            "enabled": true,
+            "volume": 0.7
+          },
+          "expected": {
+            "enabled": true,
+            "volume": 0.7
+          }
+        },
+        {
+          "change": {
+            "volume": 0
+          },
+          "expected": {
+            "enabled": true,
+            "volume": 0
+          }
+        },
+        {
+          "change": {
+            "enabled": false,
+            "volume": 1
+          },
+          "expected": {
+            "enabled": false,
+            "volume": 1
+          }
+        }
+      ]
+    },
+    "invalid_audio": [
+      {
+        "enabled": 1
+      },
+      {
+        "enabled": null
+      },
+      {
+        "volume": -1
+      },
+      {
+        "volume": 1.1
+      },
+      {
+        "volume": "0.5"
+      },
+      {
+        "volume": true
+      },
+      {
+        "unknown": false
+      }
+    ],
+    "markers": [
+      {
+        "input": [
+          false,
+          false,
+          false
+        ],
+        "expected": {
+          "outer_active": false,
+          "middle_active": false,
+          "inner_active": false
+        }
+      },
+      {
+        "input": [
+          true,
+          false,
+          false
+        ],
+        "expected": {
+          "outer_active": true,
+          "middle_active": false,
+          "inner_active": false
+        }
+      },
+      {
+        "input": [
+          true,
+          true,
+          false
+        ],
+        "expected": {
+          "outer_active": false,
+          "middle_active": true,
+          "inner_active": false
+        }
+      },
+      {
+        "input": [
+          true,
+          true,
+          true
+        ],
+        "expected": {
+          "outer_active": false,
+          "middle_active": false,
+          "inner_active": true
+        }
+      }
+    ]
+  },
   "schema": "aviation/avionics-vectors@1",
   "telemetry": {
     "snapshot": {

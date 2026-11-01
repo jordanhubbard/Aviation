@@ -13,6 +13,10 @@ import {
   computeMarkerBeacons,
   normalizeSquawk,
   transitionTransponder,
+  transitionRadio,
+  transitionAudioInput,
+  resolveMarkerLights,
+  type RadioState,
 } from '../index'
 
 const packagedPath = resolve('../../conformance/aviation-avionics.json')
@@ -40,6 +44,54 @@ const expectCloseRecord = (
 }
 
 describe('aviation.avionics device conformance', () => {
+  for (const sequence of vectors.radio_controls.sequences) {
+    it(sequence.name, () => {
+      let state: RadioState = sequence.initial
+      for (const step of sequence.steps) {
+        const original = { ...state }
+        const next = transitionRadio(state, step.change)
+        expect(next).toEqual(step.expected)
+        expect(state).toEqual(original)
+        state = next
+      }
+    })
+  }
+
+  it.each(vectors.radio_controls.invalid_radio)('rejects invalid radio control %j', row => {
+    const state = vectors.radio_controls.sequences.find((s: any) => s.initial.kind === row.kind).initial
+    const original = { ...state }
+    expect(() => transitionRadio(state, row.change)).toThrow()
+    expect(state).toEqual(original)
+  })
+
+  it('qualifies auxiliary audio transitions without mutating the input', () => {
+    let state = vectors.radio_controls.audio_sequence.initial
+    for (const step of vectors.radio_controls.audio_sequence.steps) {
+      const original = { ...state }
+      const next = transitionAudioInput(state, step.change)
+      expect(next).toEqual(step.expected)
+      expect(state).toEqual(original)
+      state = next
+    }
+    for (const change of vectors.radio_controls.invalid_audio) {
+      expect(() => transitionAudioInput(state, change)).toThrow()
+    }
+  })
+
+  it('qualifies marker lamp priority and strict input types', () => {
+    for (const row of vectors.radio_controls.markers) {
+      expect(resolveMarkerLights(row.input[0], row.input[1], row.input[2])).toEqual(row.expected)
+    }
+    expect(() => resolveMarkerLights(1 as unknown as boolean, false, false)).toThrow()
+  })
+
+  it.each([Number.NaN, Infinity, -Infinity])('rejects non-finite radio/audio values %s', value => {
+    const state = vectors.radio_controls.sequences[0].initial
+    expect(() => transitionRadio(state, { active_frequency_mhz: value })).toThrow()
+    expect(() => transitionRadio(state, { volume: value })).toThrow()
+    expect(() => transitionRadio({ ...state, kind: 'ADF' as RadioState['kind'] }, {})).toThrow()
+    expect(() => transitionAudioInput({ enabled: true, volume: value }, {})).toThrow()
+  })
   it('computes AHRS attitude, heading, variation, and slip/skid', () => {
     expectCloseRecord(computeAhrs(vectors.devices.ahrs.input), vectors.devices.ahrs.expected)
   })

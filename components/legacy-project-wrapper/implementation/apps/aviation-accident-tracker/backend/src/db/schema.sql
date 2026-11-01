@@ -37,8 +37,6 @@ CREATE TABLE IF NOT EXISTS events (
     created_at TEXT NOT NULL DEFAULT (datetime('now')),
     updated_at TEXT NOT NULL DEFAULT (datetime('now')),
     
-    -- Uniqueness constraint on dedupe key
-    UNIQUE(date_z, registration),
     CHECK((is_test_data = 0 AND test_run_id IS NULL) OR (is_test_data = 1 AND test_run_id IS NOT NULL))
 );
 
@@ -71,6 +69,15 @@ CREATE TABLE IF NOT EXISTS sources (
     CHECK((is_test_data = 0 AND test_run_id IS NULL) OR (is_test_data = 1 AND test_run_id IS NOT NULL))
 );
 
+-- Identity is independent of citation URL: one NTSB archive holds many events.
+CREATE TABLE IF NOT EXISTS source_identities (
+    source_name TEXT NOT NULL,
+    record_id TEXT NOT NULL CHECK(length(trim(record_id)) > 0),
+    event_id INTEGER NOT NULL REFERENCES events(id) ON DELETE CASCADE,
+    PRIMARY KEY (source_name, record_id, event_id)
+);
+CREATE INDEX IF NOT EXISTS idx_source_identities_event ON source_identities(event_id, source_name);
+
 -- Each label retains the document that explicitly supports it.
 CREATE TABLE IF NOT EXISTS causes (
     event_id INTEGER NOT NULL REFERENCES events(id) ON DELETE CASCADE,
@@ -100,9 +107,14 @@ CREATE TABLE IF NOT EXISTS ingest_status (
 
 -- Primary query: recent events descending
 CREATE INDEX IF NOT EXISTS idx_events_date_z_desc ON events(date_z DESC);
+-- Adjacent-UTC-day ingest matching accepts both date-only and ISO timestamp rows.
+CREATE INDEX IF NOT EXISTS idx_events_julian_date ON events(julianday(date_z));
 
 -- Lookup by registration and date range
 CREATE INDEX IF NOT EXISTS idx_events_reg_date ON events(registration, date_z);
+-- Missing registrations must not collapse unrelated reports into one event.
+CREATE UNIQUE INDEX IF NOT EXISTS idx_events_known_identity ON events(date_z, registration)
+WHERE upper(trim(registration)) NOT IN ('', 'UNKNOWN', 'N/A', 'NA', 'UNREGISTERED', '-');
 
 -- Geospatial queries
 CREATE INDEX IF NOT EXISTS idx_events_geo ON events(latitude, longitude) WHERE latitude IS NOT NULL AND longitude IS NOT NULL;
