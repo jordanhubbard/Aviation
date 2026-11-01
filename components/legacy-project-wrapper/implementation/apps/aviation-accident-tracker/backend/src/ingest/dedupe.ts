@@ -1,9 +1,19 @@
 import { NormalizedEvent } from './types.js';
 
+/** Provider placeholders are absence of identity, never a shared aircraft identity. */
+export function normalizeMatchRegistration(value: unknown): string {
+  const normalized = typeof value === 'string' ? value.trim().toLowerCase().replace(/[\s-]+/g, '') : '';
+  return ['', 'unknown', 'n/a', 'na', 'unregistered'].includes(normalized) ? '' : normalized;
+}
+
 export function dedupe(events: NormalizedEvent[]): NormalizedEvent[] {
-  const seen = new Map<string, NormalizedEvent>();
+  const seen = new Map<string | symbol, NormalizedEvent>();
   for (const ev of events) {
-    const key = `${ev.dateZ}::${ev.registration}`;
+    const primary = ev.sources[0];
+    const reportIdentity = primary && ['asn', 'avherald', 'ntsb'].includes(primary.sourceName) && primary.recordId
+      ? JSON.stringify(['source', primary.sourceName, primary.recordId]) : Symbol('unidentified report');
+    const key = normalizeMatchRegistration(ev.registration)
+      ? `${ev.dateZ}::${ev.registration}` : reportIdentity;
     if (seen.has(key)) {
       // Merge sources; prefer newest updatedAt
       const existing = seen.get(key)!;
@@ -51,7 +61,8 @@ function similarity(a: NormalizedEvent, b: NormalizedEvent): number {
   if (Math.abs(da - db) <= dayMs) score += 0.4;
   weight += 0.4;
   // registration exact or similar
-  if (a.registration === b.registration) score += 0.4;
+  const registration = normalizeMatchRegistration(a.registration);
+  if (registration && registration === normalizeMatchRegistration(b.registration)) score += 0.4;
   weight += 0.4;
   // country match
   if (a.country && b.country && a.country === b.country) score += 0.1;

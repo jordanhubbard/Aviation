@@ -95,12 +95,28 @@ this resolves 44 of the original 47 contributions. Original refs remain availabl
 
 ### Remaining feature acceptance
 
-PR #210 still needs implementation/review: the current G1000 adapter delegates
-to common avionics, but Flight Planner's old radio adapter retains unfinished
-controls, and the proposed repository fuzzy matcher is not wired by that PR.
-Complete the intended ingest integration and radio behavior through tested common
-SDK contracts and application adapters, preserving exact-match behavior and
-checking ambiguous/invalid input. Do not reintroduce app-private avionics models.
+PR #210 recovery now adds common COM/NAV, PTT, auxiliary-audio, and marker-input
+controls to `aviation.avionics`, with 34 conformance tests in each TypeScript and
+Python binding. Flight Planner composes those controls, injects its clock and
+optional ATC callback, and retains the legacy state API. G1000's historical
+helper APIs delegate to the SDK; track/course difference is explicitly distinct
+from a positional ILS beam solution, and ground range from slant-range DME.
+The persistent ingest pipeline now performs exact-first, unique-best contextual
+matching across complete adjacent UTC days, preserving the canonical event key,
+earlier metadata, and source provenance. Provider record IDs distinguish records
+that share an NTSB archive URL and make repeat imports idempotent. Missing
+registrations do not establish batch or database identity, and the transactional
+legacy constraint migration preserves IDs, provenance, views, triggers, indexes,
+and AUTOINCREMENT; unexpected columns roll back. Conflicting known registrations
+and ambiguous ties do not merge. Ten SQLite/migration regression cases and eight
+persistent pipeline cases pass; the full backend suite passes 76 tests. Flight Planner's
+full Python suite passes 130 tests and its CI job is now blocking. G1000's
+radio adapter suite passes five tests. The final retained build/test/package
+harness passes with receipt
+`sha256:915492f9a8dce42ba1d06e9a83aa6f66ba3a04d6de4bd4290ec60313c038fcf3`.
+Project verification passes authority, all 19 locks, and the current receipt.
+Catalog audit refreshes leave component lock bytes unchanged. Reviewed exact-main
+CI remains required before closing the historical PR.
 
 Issue #176 requires a shared explanation client, a standard explanation endpoint
 and decision control in every application, and follow-up questions through the

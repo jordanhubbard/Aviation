@@ -2,6 +2,7 @@ export type Category = 'general' | 'commercial' | 'unknown';
 
 export interface SourceAttribution {
   sourceName: string;
+  recordId?: string; // Provider record identity; an archive URL can contain many records.
   title?: string;
   url: string;
   fetchedAt: string; // ISO in Z

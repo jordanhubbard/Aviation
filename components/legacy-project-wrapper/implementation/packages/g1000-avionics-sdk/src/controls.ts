@@ -1,5 +1,25 @@
 import { greatCircleDistanceNm } from './radios'
 
+export interface RadioState {
+  kind: 'COM' | 'NAV'
+  active_frequency_mhz: number
+  standby_frequency_mhz: number
+  volume: number
+  receive: boolean
+  transmit: boolean
+}
+
+export interface RadioTransition {
+  active_frequency_mhz?: number
+  standby_frequency_mhz?: number
+  volume?: number
+  receive?: boolean
+  transmit?: boolean
+  swap?: boolean
+}
+
+export interface AudioInputState { enabled: boolean; volume: number }
+
 export const IDENT_DURATION_SEC = 18
 export const TRANSPONDER_MODES = ['OFF', 'STBY', 'A', 'C', 'S'] as const
 
@@ -69,6 +89,81 @@ const unitInterval = (name: string, value: number): number => {
   const result = finite(name, value)
   if (result < 0 || result > 1) throw new RangeError(`${name} out of range`)
   return result
+}
+
+const booleanControl = (name: string, value: unknown): void => {
+  if (typeof value !== 'boolean') throw new RangeError(`${name} must be boolean`)
+}
+
+const validateRadio = (state: RadioState): void => {
+  if (state.kind !== 'COM' && state.kind !== 'NAV') throw new RangeError('invalid radio kind')
+  const [minimum, maximum, spacing] = state.kind === 'COM'
+    ? [118, 136.975, 0.025] : [108, 117.95, 0.05]
+  for (const frequency of [state.active_frequency_mhz, state.standby_frequency_mhz]) {
+    finite('frequency_mhz', frequency)
+    const channel = (frequency - minimum) / spacing
+    if (frequency < minimum || frequency > maximum
+      || Math.abs(channel - Math.round(channel)) > 1e-7) {
+      throw new RangeError('frequency_mhz must be an in-band channel')
+    }
+  }
+  unitInterval('volume', state.volume)
+  booleanControl('receive', state.receive)
+  booleanControl('transmit', state.transmit)
+  if (state.kind === 'NAV' && state.transmit) throw new RangeError('NAV cannot transmit')
+}
+
+export const transitionRadio = (current: RadioState, change: RadioTransition): RadioState => {
+  validateRadio(current)
+  const allowed = ['active_frequency_mhz', 'standby_frequency_mhz', 'volume', 'receive', 'transmit', 'swap']
+  for (const key of Object.keys(change)) {
+    if (!allowed.includes(key)) throw new RangeError('unknown radio control')
+  }
+  for (const key of ['receive', 'transmit', 'swap'] as const) {
+    if (change[key] !== undefined) booleanControl(key, change[key])
+  }
+  if (current.kind === 'NAV' && change.transmit !== undefined) {
+    throw new RangeError('NAV cannot transmit')
+  }
+  const next: RadioState = {
+    kind: current.kind,
+    active_frequency_mhz: change.active_frequency_mhz === undefined
+      ? current.active_frequency_mhz : change.active_frequency_mhz,
+    standby_frequency_mhz: change.standby_frequency_mhz === undefined
+      ? current.standby_frequency_mhz : change.standby_frequency_mhz,
+    volume: change.volume === undefined ? current.volume : change.volume,
+    receive: change.receive === undefined ? current.receive : change.receive,
+    transmit: change.transmit === undefined ? current.transmit : change.transmit,
+  }
+  validateRadio(next)
+  if (change.swap) {
+    [next.active_frequency_mhz, next.standby_frequency_mhz] =
+      [next.standby_frequency_mhz, next.active_frequency_mhz]
+  }
+  return next
+}
+
+export const transitionAudioInput = (
+  current: AudioInputState, change: Partial<AudioInputState>,
+): AudioInputState => {
+  booleanControl('enabled', current.enabled)
+  unitInterval('volume', current.volume)
+  if (Object.keys(change).some(key => key !== 'enabled' && key !== 'volume')) {
+    throw new RangeError('unknown audio input control')
+  }
+  const next = { ...current, ...change }
+  booleanControl('enabled', next.enabled)
+  unitInterval('volume', next.volume)
+  return next
+}
+
+export const resolveMarkerLights = (
+  outer: boolean, middle: boolean, inner: boolean,
+): MarkerBeaconStatus => {
+  booleanControl('outer', outer)
+  booleanControl('middle', middle)
+  booleanControl('inner', inner)
+  return { outer_active: outer && !middle && !inner, middle_active: middle && !inner, inner_active: inner }
 }
 
 const validateMarkerSite = (site: MarkerBeaconSite): void => {

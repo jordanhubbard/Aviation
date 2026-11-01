@@ -46,6 +46,7 @@ export interface NormalizedEvent {
   causes: import('../types.js').CauseAttribution[];
   sources: {
     sourceName: string;
+    recordId?: string;
     title?: string;
     url: string;
     fetchedAt: string;

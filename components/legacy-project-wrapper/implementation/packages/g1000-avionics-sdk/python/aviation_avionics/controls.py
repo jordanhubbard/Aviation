@@ -1,11 +1,10 @@
 from __future__ import annotations
 
-from dataclasses import asdict, dataclass
+from dataclasses import asdict, dataclass, replace
 import math
 from typing import Sequence
 
 from .radios import great_circle_distance_nm
-
 
 IDENT_DURATION_SEC = 18.0
 TRANSPONDER_MODES = ("OFF", "STBY", "A", "C", "S")
@@ -26,6 +25,97 @@ def _unit_interval(name: str, value: float) -> float:
     if not 0.0 <= result <= 1.0:
         raise ValueError(f"{name} out of range")
     return result
+
+
+def _control_number(name: str, value: object) -> float:
+    if isinstance(value, bool) or not isinstance(value, (int, float)):
+        raise ValueError(f"{name} must be numeric")
+    return _finite(name, value)
+
+
+def _control_boolean(name: str, value: object) -> None:
+    if not isinstance(value, bool):
+        raise ValueError(f"{name} must be boolean")
+
+
+@dataclass(frozen=True)
+class RadioState:
+    kind: str
+    active_frequency_mhz: float
+    standby_frequency_mhz: float
+    volume: float = 0.8
+    receive: bool = True
+    transmit: bool = False
+
+    def __post_init__(self) -> None:
+        if self.kind not in ("COM", "NAV"):
+            raise ValueError("invalid radio kind")
+        minimum, maximum, spacing = (
+            (118.0, 136.975, 0.025) if self.kind == "COM" else (108.0, 117.95, 0.05)
+        )
+        for value in (self.active_frequency_mhz, self.standby_frequency_mhz):
+            frequency = _control_number("frequency_mhz", value)
+            channel = (frequency - minimum) / spacing
+            if not minimum <= frequency <= maximum or abs(channel - round(channel)) > 1e-7:
+                raise ValueError("frequency_mhz must be an in-band channel")
+        _unit_interval("volume", _control_number("volume", self.volume))
+        _control_boolean("receive", self.receive)
+        _control_boolean("transmit", self.transmit)
+        if self.kind == "NAV" and self.transmit:
+            raise ValueError("NAV cannot transmit")
+
+    def transition(self, **changes: object) -> RadioState:
+        self.__post_init__()
+        if changes.keys() - {
+            "active_frequency_mhz",
+            "standby_frequency_mhz",
+            "volume",
+            "receive",
+            "transmit",
+            "swap",
+        }:
+            raise ValueError("unknown radio control")
+        swap = changes.pop("swap", False)
+        _control_boolean("swap", swap)
+        if self.kind == "NAV" and "transmit" in changes:
+            raise ValueError("NAV cannot transmit")
+        next_state = replace(self, **changes)
+        if swap:
+            next_state = replace(
+                next_state,
+                active_frequency_mhz=next_state.standby_frequency_mhz,
+                standby_frequency_mhz=next_state.active_frequency_mhz,
+            )
+        return next_state
+
+    def to_dict(self) -> dict:
+        return asdict(self)
+
+
+@dataclass(frozen=True)
+class AudioInputState:
+    enabled: bool
+    volume: float
+
+    def __post_init__(self) -> None:
+        _control_boolean("enabled", self.enabled)
+        _unit_interval("volume", _control_number("volume", self.volume))
+
+    def transition(self, **changes: object) -> AudioInputState:
+        self.__post_init__()
+        if changes.keys() - {"enabled", "volume"}:
+            raise ValueError("unknown audio input control")
+        return replace(self, **changes)
+
+    def to_dict(self) -> dict:
+        return asdict(self)
+
+
+def resolve_marker_lights(outer: bool, middle: bool, inner: bool) -> MarkerBeaconStatus:
+    _control_boolean("outer", outer)
+    _control_boolean("middle", middle)
+    _control_boolean("inner", inner)
+    return MarkerBeaconStatus(outer and not middle and not inner, middle and not inner, inner)
 
 
 @dataclass(frozen=True)
@@ -81,11 +171,11 @@ def compute_marker_beacons(
         priority = (
             3
             if distance <= site.inner_radius_nm
-            else 2
-            if distance <= site.middle_radius_nm
-            else 1
-            if distance <= site.outer_radius_nm
-            else 0
+            else (
+                2
+                if distance <= site.middle_radius_nm
+                else 1 if distance <= site.outer_radius_nm else 0
+            )
         )
         best_priority = max(best_priority, priority)
     return MarkerBeaconStatus(
@@ -140,12 +230,10 @@ class AudioPanelState:
         return {
             **self.to_dict(),
             **volumes,
-            "adf_audio_level": volumes["adf_volume"] * signal
-            if self.adf_enabled
-            else 0.0,
-            "marker_audio_level": volumes["marker_volume"]
-            if self.marker_enabled and marker_active
-            else 0.0,
+            "adf_audio_level": volumes["adf_volume"] * signal if self.adf_enabled else 0.0,
+            "marker_audio_level": (
+                volumes["marker_volume"] if self.marker_enabled and marker_active else 0.0
+            ),
             "marker_outer_active": marker_status.outer_active,
             "marker_middle_active": marker_status.middle_active,
             "marker_inner_active": marker_status.inner_active,

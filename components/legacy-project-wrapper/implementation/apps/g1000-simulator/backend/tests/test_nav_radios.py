@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import pytest
+
 from app.services.flight_dynamics import FlightDynamicsSimulator
 from app.services.nav_radios import (
     DEFAULT_ADF_FREQUENCY_KHZ,
@@ -7,7 +9,26 @@ from app.services.nav_radios import (
     DEFAULT_DME_STATIONS,
     compute_adf,
     compute_dme,
+    calculate_vor_radial,
+    calculate_ils_localizer,
+    calculate_adf_bearing,
+    calculate_dme_range,
 )
+
+
+def test_legacy_radio_helpers_delegate_to_common_geometry() -> None:
+    assert calculate_vor_radial(1, 359) == 2
+    assert calculate_vor_radial(359, 1) == -2
+    assert calculate_ils_localizer(359, 1) == 2
+    assert calculate_ils_localizer(1, 359) == -2
+    assert calculate_adf_bearing(1, 0, 0, 0) == 0
+    assert calculate_dme_range(1, 0, 0, 0) == pytest.approx(60.0404607326)
+    # Cross the antimeridian through the short great-circle path.
+    assert calculate_dme_range(0, -179.5, 0, 179.5) == pytest.approx(60.0404607326)
+    with pytest.raises(ValueError):
+        calculate_adf_bearing(91, 0, 0, 0)
+    with pytest.raises(ValueError):
+        calculate_vor_radial(float("nan"), 0)
 
 
 def test_default_dme_station_comes_from_common_nav_data_catalog() -> None:

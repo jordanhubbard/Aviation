@@ -36,7 +36,7 @@ async function ingest(repository?: EventRepository): Promise<IngestResult> {
     event.causes.push(...mediaCauses(citations, media));
   }
 
-  const useMemoryRepo = config.env === 'test';
+  const useMemoryRepo = config.env === 'test' && !repository;
   let inserted = 0;
   let updated = 0;
 
@@ -62,8 +62,11 @@ async function ingest(repository?: EventRepository): Promise<IngestResult> {
 
   try {
     for (const ev of deduped) {
-      const existingId = await repo.findEventId(ev.dateZ, ev.registration);
-      const eventId = await repo.upsertEvent(ev);
+      const primarySource = ev.sources[0];
+      const existingId = await repo.findEventId(ev.dateZ, ev.registration)
+        ?? (primarySource ? await repo.findEventIdBySource(primarySource, ev.registration) : null)
+        ?? await repo.findFuzzyEvent(ev.dateZ, ev.country, ev.aircraftType, ev.registration, primarySource);
+      const eventId = await repo.upsertEvent(ev, existingId ?? undefined);
       if (existingId) updated += 1;
       else inserted += 1;
 

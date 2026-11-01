@@ -63,6 +63,17 @@
 - `TransponderState` carries mode, four-digit octal squawk, and IDENT timing.
 - `normalizeSquawk(value) -> four-digit code | unavailable`
 - `transitionTransponder(current, transition) -> TransponderState`
+- `RadioState` carries kind (`COM`/`NAV`), unit-explicit active and standby
+  frequencies, volume, receive selection, and transmit state.
+- `transitionRadio(current, transition) -> RadioState` tunes either frequency,
+  swaps the pair, and applies volume/receive/PTT changes atomically. Tuning is
+  validated before swapping; invalid current or proposed state is rejected.
+  Python exposes `RadioState.transition(...)` returning a new immutable record.
+- `AudioInputState` carries a boolean enable flag and volume in [0, 1].
+- `transitionAudioInput(current, transition) -> AudioInputState` applies
+  intercom/music/source changes atomically; Python exposes `transition(...)`.
+- `resolveMarkerLights(outer, middle, inner) -> MarkerBeaconStatus` rejects
+  non-boolean inputs and returns mutually exclusive lamps in inner-first order.
 
 ## Compatibility boundary
 

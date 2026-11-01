@@ -15,6 +15,20 @@ const base: NormalizedEvent = {
 };
 
 describe('fuzzyDedup', () => {
+  it('deduplicates repeated source reports without conflating different unidentified reports', () => {
+    const source = { sourceName: 'ntsb', recordId: 'one', url: 'https://example.invalid/archive', fetchedAt: base.dateZ };
+    const one = { ...base, registration: 'UNKNOWN', sources: [source] };
+    expect(dedupe([one, { ...one, id: 'repeat' }])).toHaveLength(1);
+    expect(dedupe([one, { ...one, id: 'different', sources: [{ ...source, recordId: 'two' }] }])).toHaveLength(2);
+  });
+  it('never treats a missing registration as shared aircraft identity', () => {
+    for (const registration of ['UNKNOWN', '', 'N/A', '-']) {
+      const first = { ...base, registration };
+      const second = { ...base, id: 'other', registration, country: 'CA', aircraftType: 'Boeing 737' };
+      expect(dedupe([first, second])).toHaveLength(2);
+      expect(fuzzyDedup([first, second])).toHaveLength(2);
+    }
+  });
   it('merges near-duplicate events within 1 day and same reg', () => {
     const dup: NormalizedEvent = { ...base, id: 'b', dateZ: '2025-12-02T00:00:00Z', summary: 'later update' };
     const result = fuzzyDedup([base, dup], 0.7);

@@ -23,11 +23,11 @@
           "medium": "sqlite",
           "location": "DATABASE_PATH or backend/data/events.db",
           "schema": "backend/src/db/schema.sql; unversioned idempotent initialization",
-          "migration": "CREATE IF NOT EXISTS at process startup",
+          "migration": "Idempotent startup schema; transactional replacement of the legacy registration/date uniqueness constraint with known-registration uniqueness, preserving event IDs, citations, indexes, triggers, views and AUTOINCREMENT; provider record identities are separate from archive URLs",
           "backup": "none documented",
-          "rollback": "restore the SQLite file out of band",
+          "rollback": "Identity-constraint migration rolls back on failure or unexpected columns/constraints; other rollback requires restoring the SQLite file out of band",
           "classification": "application-private-runtime-state",
-          "testOracle": "backend/tests/integration/ingestion.test.ts and backend/tests/media-persistence.test.ts",
+          "testOracle": "backend/tests/fuzzy-matching.test.ts, backend/tests/integration/ingestion.test.ts and backend/tests/media-persistence.test.ts",
           "evidence": [
             {"path": "apps/aviation-accident-tracker/backend/src/config.ts", "contains": ["DATABASE_PATH", "data/events.db"]},
             {"path": "apps/aviation-accident-tracker/backend/src/db/repository.ts", "contains": ["class EventRepository", "schema.sql"]}

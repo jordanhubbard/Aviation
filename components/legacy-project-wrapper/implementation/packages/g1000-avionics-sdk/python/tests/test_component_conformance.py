@@ -9,6 +9,8 @@ import pytest
 from aviation_avionics import (
     AdfStation,
     AudioPanelState,
+    AudioInputState,
+    RadioState,
     DmeStation,
     MarkerBeaconSite,
     MarkerBeaconStatus,
@@ -20,11 +22,13 @@ from aviation_avionics import (
     compute_gps,
     compute_marker_beacons,
     normalize_squawk,
+    resolve_marker_lights,
 )
 
-
 PACKAGED_VECTORS = Path(__file__).parents[4] / "conformance" / "aviation-avionics.json"
-AUTHORITY_VECTORS = Path(__file__).parents[7] / "components" / "aviation-avionics" / "acceptance" / "vectors.json"
+AUTHORITY_VECTORS = (
+    Path(__file__).parents[7] / "components" / "aviation-avionics" / "acceptance" / "vectors.json"
+)
 
 
 def _load_vectors() -> dict:
@@ -35,6 +39,67 @@ def _load_vectors() -> dict:
 
 
 VECTORS = _load_vectors()
+
+
+@pytest.mark.parametrize(
+    "sequence", VECTORS["radio_controls"]["sequences"], ids=lambda s: s["name"]
+)
+def test_radio_control_sequence(sequence: dict) -> None:
+    state = RadioState(**sequence["initial"])
+    for step in sequence["steps"]:
+        original = state.to_dict()
+        next_state = state.transition(**step["change"])
+        assert next_state.to_dict() == step["expected"]
+        assert state.to_dict() == original
+        state = next_state
+
+
+@pytest.mark.parametrize("row", VECTORS["radio_controls"]["invalid_radio"])
+def test_invalid_radio_controls(row: dict) -> None:
+    initial = next(
+        s["initial"]
+        for s in VECTORS["radio_controls"]["sequences"]
+        if s["initial"]["kind"] == row["kind"]
+    )
+    state = RadioState(**initial)
+    with pytest.raises(ValueError):
+        state.transition(**row["change"])
+    assert state.to_dict() == initial
+
+
+def test_auxiliary_audio_controls() -> None:
+    vector = VECTORS["radio_controls"]["audio_sequence"]
+    state = AudioInputState(**vector["initial"])
+    for step in vector["steps"]:
+        original = state.to_dict()
+        next_state = state.transition(**step["change"])
+        assert next_state.to_dict() == step["expected"]
+        assert state.to_dict() == original
+        state = next_state
+    for change in VECTORS["radio_controls"]["invalid_audio"]:
+        with pytest.raises(ValueError):
+            state.transition(**change)
+
+
+def test_marker_lamp_priority() -> None:
+    for row in VECTORS["radio_controls"]["markers"]:
+        assert resolve_marker_lights(*row["input"]).to_dict() == row["expected"]
+    with pytest.raises(ValueError):
+        resolve_marker_lights(1, False, False)
+
+
+@pytest.mark.parametrize("value", [math.nan, math.inf, -math.inf])
+def test_invalid_nonfinite_radio_audio_controls(value: float) -> None:
+    initial = VECTORS["radio_controls"]["sequences"][0]["initial"]
+    state = RadioState(**initial)
+    with pytest.raises(ValueError):
+        state.transition(active_frequency_mhz=value)
+    with pytest.raises(ValueError):
+        state.transition(volume=value)
+    with pytest.raises(ValueError):
+        RadioState(**{**initial, "kind": "ADF"})
+    with pytest.raises(ValueError):
+        AudioInputState(True, value)
 
 
 def _assert_record(actual: dict, expected: dict) -> None:
@@ -160,8 +225,7 @@ def test_device_models_reject_invalid_inputs() -> None:
             **{
                 **vector,
                 "stations": [
-                    DmeStation(**{**value, "max_range_nm": 0})
-                    for value in vector["stations"]
+                    DmeStation(**{**value, "max_range_nm": 0}) for value in vector["stations"]
                 ],
             }
         )
@@ -171,9 +235,7 @@ def test_device_models_reject_invalid_inputs() -> None:
             marker["latitude_deg"],
             marker["longitude_deg"],
             marker["altitude_ft"],
-            [
-                MarkerBeaconSite(**{**marker["sites"][0], "inner_radius_nm": 2})
-            ],
+            [MarkerBeaconSite(**{**marker["sites"][0], "inner_radius_nm": 2})],
         )
     audio = VECTORS["controls"]["audio_panel"]
     with pytest.raises(ValueError):
@@ -185,9 +247,7 @@ def test_device_models_reject_invalid_inputs() -> None:
             squawk_code="1280"
         )
     with pytest.raises(ValueError):
-        TransponderState(**VECTORS["controls"]["transponder"]["initial"]).transition(
-            mode="ALT"
-        )
+        TransponderState(**VECTORS["controls"]["transponder"]["initial"]).transition(mode="ALT")
     with pytest.raises(ValueError):
         vector = VECTORS["radios"]["dme"]["input"]
         compute_dme(

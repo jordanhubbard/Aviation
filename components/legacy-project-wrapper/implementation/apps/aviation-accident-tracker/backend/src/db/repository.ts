@@ -12,6 +12,7 @@ import { dirname } from 'path';
 import { mkdirSync } from 'fs';
 import type { EventRecord, SourceAttribution, CauseAttribution, ListEventsParams, Category } from '../types.js';
 import { assertTestDataForRun, type E2ERunId } from '@aviation/shared-sdk/e2e';
+import { normalizeMatchRegistration } from '../ingest/dedupe.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -89,6 +90,7 @@ export class EventRepository {
     const schemaPath = path.join(__dirname, '../../src/db/schema.sql');
     const schema = await fs.readFile(schemaPath, 'utf-8');
     
+    await this.dbExec('PRAGMA foreign_keys = ON');
     await this.dbExec(schema);
     // CREATE TABLE IF NOT EXISTS leaves preexisting deployments at the old shape.
     const columns: { name: string }[] = await this.dbAll('PRAGMA table_info(sources)');
@@ -110,6 +112,62 @@ export class EventRepository {
     }
     await this.dbExec('CREATE INDEX IF NOT EXISTS idx_events_test_run ON events(test_run_id) WHERE is_test_data = 1');
     await this.dbExec('CREATE INDEX IF NOT EXISTS idx_sources_test_run ON sources(test_run_id) WHERE is_test_data = 1');
+    await this.migrateUnidentifiedEventIdentity(schema);
+  }
+
+  /** Replace the legacy table-wide identity constraint without losing rows or citations. */
+  private async migrateUnidentifiedEventIdentity(schema: string): Promise<void> {
+    const indexes = await this.dbAll('PRAGMA index_list(events)');
+    const constraints = indexes.filter(index => index.origin === 'u');
+    if (!constraints.length) return;
+    const constraintColumns: string[] = [];
+    for (const index of constraints) {
+      const columns = await this.dbAll(`PRAGMA index_info("${String(index.name).replace(/"/g, '""')}")`);
+      constraintColumns.push(columns.map(column => column.name).join(','));
+    }
+    if (!constraintColumns.includes('date_z,registration')) return;
+    if (constraintColumns.some(columns => columns !== 'date_z,registration')) {
+      throw new Error('Cannot migrate events with an unrecognized unique constraint');
+    }
+    const definition = schema.match(/CREATE TABLE IF NOT EXISTS events\s*\([\s\S]*?\n\);/)?.[0];
+    if (!definition) throw new Error('Missing canonical events table definition');
+    const columns = await this.dbAll('PRAGMA table_info(events)');
+    const objects = await this.dbAll("SELECT sql FROM sqlite_master WHERE tbl_name = 'events' AND type IN ('index', 'trigger') AND sql IS NOT NULL");
+    const foreignKeys = Boolean((await this.dbGet('PRAGMA foreign_keys'))?.foreign_keys);
+    const legacyAlter = Boolean((await this.dbGet('PRAGMA legacy_alter_table'))?.legacy_alter_table);
+    let transaction = false;
+    try {
+      await this.dbExec('PRAGMA foreign_keys = OFF');
+      await this.dbExec('PRAGMA legacy_alter_table = ON');
+      await this.dbExec('BEGIN IMMEDIATE');
+      transaction = true;
+      await this.dbExec(definition.replace('CREATE TABLE IF NOT EXISTS events', 'CREATE TABLE events_identity_migration'));
+      const targetColumns = new Set((await this.dbAll('PRAGMA table_info(events_identity_migration)')).map(column => column.name));
+      if (columns.some(column => !targetColumns.has(column.name))) {
+        throw new Error('Cannot migrate events without discarding unrecognized columns');
+      }
+      const names = columns.map(column => `"${String(column.name).replace(/"/g, '""')}"`).join(',');
+      await this.dbExec(`INSERT INTO events_identity_migration (${names}) SELECT ${names} FROM events`);
+      // Keep the AUTOINCREMENT high-water mark even when the largest IDs were deleted.
+      await this.dbExec("CREATE TEMP TABLE aviation_previous_event_sequence AS SELECT seq FROM sqlite_sequence WHERE name = 'events'");
+      await this.dbExec('DROP TABLE events');
+      await this.dbExec('ALTER TABLE events_identity_migration RENAME TO events');
+      for (const object of objects) await this.dbExec(object.sql);
+      await this.dbExec("INSERT INTO sqlite_sequence (name, seq) SELECT 'events', seq FROM aviation_previous_event_sequence WHERE NOT EXISTS (SELECT 1 FROM sqlite_sequence WHERE name = 'events')");
+      await this.dbExec("UPDATE sqlite_sequence SET seq = MAX(seq, COALESCE((SELECT seq FROM aviation_previous_event_sequence LIMIT 1), seq)) WHERE name = 'events'");
+      await this.dbExec('DROP TABLE aviation_previous_event_sequence');
+      if ((await this.dbAll('PRAGMA foreign_key_check')).length) {
+        throw new Error('Event identity migration would leave invalid foreign keys');
+      }
+      await this.dbExec('COMMIT');
+      transaction = false;
+    } catch (error) {
+      if (transaction) await this.dbExec('ROLLBACK');
+      throw error;
+    } finally {
+      await this.dbExec(`PRAGMA legacy_alter_table = ${legacyAlter ? 'ON' : 'OFF'}`);
+      await this.dbExec(`PRAGMA foreign_keys = ${foreignKeys ? 'ON' : 'OFF'}`);
+    }
   }
 
   async seedTestEvent(runId: E2ERunId, value: unknown): Promise<string> {
@@ -197,36 +255,45 @@ export class EventRepository {
    * Upsert event based on (date_z, registration) uniqueness key
    * If event exists, updates fields. If not, inserts new record.
    */
-  async upsertEvent(event: Partial<EventRecord> & { dateZ: string; registration: string }): Promise<string> {
+  async upsertEvent(event: Partial<EventRecord> & { dateZ: string; registration: string }, matchedId?: string): Promise<string> {
+    const registered = Boolean(normalizeMatchRegistration(event.registration));
+    event = { ...event, registration: registered ? event.registration : 'UNKNOWN' };
     // Check if event exists
-    const existing = await this.dbGet(
-      'SELECT id FROM events WHERE date_z = ? AND registration = ?',
-      [event.dateZ, event.registration]
-    );
+    let existing: { id: number; registration: string } | undefined;
+    if (matchedId !== undefined) {
+      existing = await this.dbGet('SELECT id, registration FROM events WHERE id = ? AND is_test_data = 0', [matchedId]);
+    } else if (registered) {
+      existing = await this.dbGet('SELECT id, registration FROM events WHERE date_z = ? AND registration = ? AND is_test_data = 0',
+        [event.dateZ, event.registration]);
+    }
+    if (matchedId !== undefined && !existing) throw new Error('Matched event no longer exists');
 
     if (existing) {
       // Update existing event
       await this.dbRun(
         `UPDATE events SET
-          aircraft_type = ?,
-          operator = ?,
-          category = ?,
-          airport_icao = ?,
-          airport_iata = ?,
-          latitude = ?,
-          longitude = ?,
-          country = ?,
-          region = ?,
-          fatalities = ?,
-          injuries = ?,
-          summary = ?,
-          narrative = ?,
-          status = ?,
+          registration = ?,
+          aircraft_type = COALESCE(?, aircraft_type),
+          operator = COALESCE(?, operator),
+          category = CASE WHEN ? = 'unknown' THEN category ELSE ? END,
+          airport_icao = COALESCE(?, airport_icao),
+          airport_iata = COALESCE(?, airport_iata),
+          latitude = COALESCE(?, latitude),
+          longitude = COALESCE(?, longitude),
+          country = COALESCE(?, country),
+          region = COALESCE(?, region),
+          fatalities = COALESCE(?, fatalities),
+          injuries = COALESCE(?, injuries),
+          summary = COALESCE(?, summary),
+          narrative = COALESCE(?, narrative),
+          status = COALESCE(?, status),
           updated_at = datetime('now')
         WHERE id = ?`,
         [
+          registered && !normalizeMatchRegistration(existing.registration) ? event.registration : existing.registration,
           event.aircraftType,
           event.operator,
+          event.category || 'unknown',
           event.category || 'unknown',
           event.airportIcao,
           event.airportIata,
@@ -234,8 +301,8 @@ export class EventRepository {
           event.lon,
           event.country,
           event.region,
-          event.fatalities || 0,
-          event.injuries || 0,
+          event.fatalities ?? null,
+          event.injuries ?? null,
           event.summary,
           event.narrative,
           event.status,
@@ -278,11 +345,72 @@ export class EventRepository {
    * Find existing event ID by unique key (date_z, registration)
    */
   async findEventId(dateZ: string, registration: string): Promise<string | null> {
+    if (!normalizeMatchRegistration(registration)) return null;
     const existing = await this.dbGet(
-      'SELECT id FROM events WHERE date_z = ? AND registration = ?',
+      'SELECT id FROM events WHERE date_z = ? AND registration = ? AND is_test_data = 0',
       [dateZ, registration]
     );
     return existing ? String(existing.id) : null;
+  }
+
+  async findEventIdBySource(source: Pick<SourceAttribution, 'sourceName' | 'recordId'>,
+    registration?: string): Promise<string | null> {
+    if (!source.recordId) return null;
+    const candidateRegistration = normalizeMatchRegistration(registration);
+    const rows = (await this.dbAll(`SELECT DISTINCT e.id, e.registration FROM events e
+      JOIN source_identities s ON s.event_id = e.id
+      WHERE s.source_name = ? AND s.record_id = ? AND e.is_test_data = 0`,
+    [source.sourceName, source.recordId])).filter(row => {
+      const known = normalizeMatchRegistration(row.registration);
+      return !candidateRegistration || !known || candidateRegistration === known;
+    });
+    return rows.length === 1 ? String(rows[0].id) : null;
+  }
+
+  /** Application ingest policy: unique best contextual match within adjacent UTC days. */
+  async findFuzzyEvent(dateZ: string, country?: string, aircraftType?: string,
+    registration?: string, source?: Pick<SourceAttribution, 'sourceName' | 'recordId'>): Promise<string | null> {
+    if (typeof dateZ !== 'string' || !/^\d{4}-\d{2}-\d{2}(?:T|$)/.test(dateZ)) return null;
+    const date = new Date(dateZ);
+    const calendar = new Date(`${dateZ.slice(0, 10)}T00:00:00Z`);
+    if (!Number.isFinite(date.getTime()) || !Number.isFinite(calendar.getTime())
+      || calendar.toISOString().slice(0, 10) !== dateZ.slice(0, 10)) return null;
+    const day = Math.floor(date.getTime() / 86400000) * 86400000;
+    const low = new Date(day - 86400000).toISOString();
+    const high = new Date(day + 2 * 86400000).toISOString();
+    const normalize = (value: unknown): string => typeof value === 'string' ? value.trim().toLowerCase() : '';
+    const prefix = (value: unknown): string => normalize(value).split(/\s+/).slice(0, 2).join(' ');
+    const candidateCountry = normalize(country);
+    const candidateType = prefix(aircraftType);
+    const candidateRegistration = normalizeMatchRegistration(registration);
+    if (!candidateCountry && !candidateType) return null;
+    const rows: Array<{ id: number; country: string | null; aircraft_type: string | null;
+      registration: string }> = await this.dbAll(
+      `SELECT id, country, aircraft_type, registration FROM events
+       WHERE julianday(date_z) >= julianday(?) AND julianday(date_z) < julianday(?)
+         AND is_test_data = 0
+         ${source?.recordId ? `AND NOT EXISTS (SELECT 1 FROM source_identities s WHERE s.event_id = events.id
+           AND s.source_name = ? AND s.record_id <> ?)` : ''}
+         ORDER BY id`, source?.recordId ? [low, high, source.sourceName, source.recordId] : [low, high]);
+    let best: string | null = null;
+    let bestScore = 0;
+    let tied = false;
+    for (const row of rows) {
+      const rowCountry = normalize(row.country);
+      const rowType = prefix(row.aircraft_type);
+      const rowRegistration = normalizeMatchRegistration(row.registration);
+      if (candidateRegistration && rowRegistration && candidateRegistration !== rowRegistration) continue;
+      if (candidateCountry && rowCountry && candidateCountry !== rowCountry) continue;
+      if (candidateType && rowType && candidateType !== rowType) continue;
+      const score = Number(Boolean(candidateCountry && candidateCountry === rowCountry))
+        + Number(Boolean(candidateType && candidateType === rowType));
+      if (score > bestScore) {
+        best = String(row.id);
+        bestScore = score;
+        tied = false;
+      } else if (score > 0 && score === bestScore) tied = true;
+    }
+    return tied ? null : best;
   }
 
   /**
@@ -296,6 +424,7 @@ export class EventRepository {
     if (existing) {
       await this.dbRun('UPDATE sources SET fetched_at = ?, title = COALESCE(?, title) WHERE id = ?',
         [source.fetchedAt, source.title ?? null, existing.id]);
+      await this.rememberSourceIdentity(eventId, source);
       return String(existing.id);
     }
     const result = await this.dbRun(
@@ -311,7 +440,15 @@ export class EventRepository {
         null // raw_fragment optional
       ]
     );
+    await this.rememberSourceIdentity(eventId, source);
     return String(result.lastID);
+  }
+
+  private async rememberSourceIdentity(eventId: string, source: SourceAttribution): Promise<void> {
+    if (!source.recordId) return;
+    await this.dbRun(`INSERT OR IGNORE INTO source_identities (source_name, record_id, event_id)
+      SELECT ?, ?, id FROM events WHERE id = ? AND is_test_data = 0`,
+    [source.sourceName, source.recordId, Number(eventId)]);
   }
 
   async addCause(eventId: string, cause: CauseAttribution): Promise<void> {
