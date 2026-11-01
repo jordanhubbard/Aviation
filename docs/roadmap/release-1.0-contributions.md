@@ -146,3 +146,39 @@ Further validated recovery:
   status is now clean. No source changes were removed.
 - Four superseded security-branch lifecycle markers were pushed successfully;
   original branch refs and commits remain available.
+
+Additional comparisons:
+
+- Aircraft profile commit `c7d778f9` was incorporated as `f425ab232` (#361).
+  Current `aircraft.ts` is an extension of that contract, with the original
+  airspeed limits and C172 profile plus fuel, dimensions, performance, and type
+  designators. The branch's second commit requested the follow-redirects fix;
+  the current lock resolves 1.16.2. All 591 SDK tests and 29 Python
+  flight-dynamics conformance tests pass.
+- Hazard branch fixtures are byte-for-byte equal to main. Its entire test file
+  remains, with three additional fail-closed/geometry cases. Implementation
+  additions are the qualified normalization/validation contract. All SDK tests pass.
+- NOTAM branch tests are byte-for-byte equal to main. The public implementation
+  adds qualified record validation; Weather Briefing retains the branch's NOTAM
+  client, formatting, and unavailable-service fallback.
+- The beads migration has a successor commit `030112e1b` on main. Current source
+  contains no beads modules or reporters; live error-reporting uses MAC clients.
+  GitHub and the Literate AI roadmap now own release tracking. The old branch
+  and its ticket conversion remain reachable for historical recovery.
+- Recovered the AI explanation control into the current event-detail UI, using
+  the existing backend route. Its component cancels pending requests on close,
+  isolates state by event ID, and distinguishes analysis from official findings.
+  Three UI tests and the production frontend build pass.
+
+- Dynamic filter persistence now has a direct SQLite regression test: distinct
+  values are sorted, duplicates and empty values disappear, newly ingested
+  countries appear, and unapproved column names cannot execute SQL. It passes.
+- Five focused Weather Briefing tests pass for empty NOTAM results, severity
+  ordering, provider failure, missing weather, and stop-time cache cleanup. The
+  historical `service.test.ts` is obsolete (undeclared Jest and removed APIs);
+  its runner failure is not counted as validation. The current service build passes.
+- Six additional supersession markers were pushed for migration, express-rate-limit,
+  dynamic filters, aircraft profiles, hazards, and NOTAMs. Together with the four
+  security dispositions, ten of the original fourteen branch blockers are resolved.
+  The two router-test branches, AI branch, and ForeFlight branch await landing of
+  their recovered work through #394 and exact post-merge validation.

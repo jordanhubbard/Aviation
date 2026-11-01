@@ -6,6 +6,7 @@ import L from 'leaflet';
 import debounce from 'lodash.debounce';
 import { distanceKM } from '@aviation/shared-sdk/aviation/navigation';
 import { Badge } from './components/Badge';
+import { AccidentExplanation } from './components/AccidentExplanation';
 import { reportFrontendErrorToMac } from './utils/macReporting';
 import { countryLabel, regionLabel, parseSearchQuery } from './searchQuery';
 // import { normalizeMarkers, defaultClusterOptions } from '@aviation/ui-framework';
@@ -700,6 +701,7 @@ export function App() {
                   : '—'}
             </p>
             {selectedError && <p style={{ color: 'red' }}>Failed to load event detail: {selectedError}</p>}
+            <AccidentExplanation key={selected.id} event={selected} />
             <button onClick={() => setSelected(null)}>Close</button>
           </div>
         </div>
