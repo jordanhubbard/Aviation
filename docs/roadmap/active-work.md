@@ -867,3 +867,24 @@ release-visible outcome to `CHANGELOG.md`; Git preserves prior queue states.
 - **Evidence:**
   - [ ] SDK unit and isolation tests, per-app screen and data lifecycle coverage matrix, failure cleanup tests, retained Literate AI receipt, reviewed CI, and live post-deployment E2E run without production data leakage.
 - **Detailed program:** [SDK remote E2E program](sdk-remote-e2e-program.md).
+
+### [ ] RELEASE-001 — Reconcile all outstanding contributions into release 1.0
+
+- **Release target:** 1.0.0
+- **Contribution inventory:** [all included work](release-1.0-contributions.md).
+- **Next action:** Reconcile the 47 included open tracker items and inspect the
+  14 unresolved branches and four flagged worktrees; prove ancestry or patch
+  equivalence before declaring supersession, and preserve unique local changes.
+
+- **Priority:** P0
+- **Owner:** release engineering
+- **Direction:** The next release is 1.0; include every currently unclassified issue, review, branch, and dirty worktree.
+- **Conclusion:** All discovered work is in scope for 1.0. Reconcile obsolete or equivalent changes with evidence, land unique changes through review and CI, preserve dirty work, and publish only after the contribution sweep is ready.
+- **Depends on:** none
+- **Completion prerequisites:** none
+- **Implementation:**
+  - [ ] Assign every open tracker item to 1.0.0 and record a complete branch and worktree inventory.
+  - [ ] Reconcile every scoped contribution; land and test unique changes or document an evidence-backed supersession.
+  - [ ] Prepare, check, publish, and verify v1.0.0 from green main with no unresolved release contributions.
+- **Evidence:**
+  - [ ] Ready contribution sweep, clean synchronized Git, green CI for the released commit, and verified remote tag and GitHub release.
