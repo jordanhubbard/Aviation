@@ -867,12 +867,14 @@ release-visible outcome to `CHANGELOG.md`; Git preserves prior queue states.
 - **Evidence:**
   - [ ] SDK unit and isolation tests, per-app screen and data lifecycle coverage matrix, failure cleanup tests, retained Literate AI receipt, reviewed CI, and live post-deployment E2E run without production data leakage.
 - **Detailed program:** [SDK remote E2E program](sdk-remote-e2e-program.md).
-- **In progress:** Bounded lease identity and expiry vectors pass in both SDK
-  bindings. Docker and dedicated SSH deadlines recover from controller SIGKILL;
-  real local/remote recovery and protected-resource tests pass. The retained
-  harness passes 631 tests and `litai verify` passes. Land through reviewed CI,
-  then finish native host-crash storage recovery, remaining inventories and the
-  exact deployed-build gate. See the E2E program.
+- **In progress:** Bounded SDK lease identities and independent Docker/SSH recovery
+  landed through #408 after six exact-head workflows passed. The retained harness
+  passes 631 tests and `litai verify` passes. Candidate native manager recovery
+  passes nine real Linux worker/manager tests and tagged-data crash qualification;
+  its fresh 631-test retained receipt and `litai verify` pass. Land through
+  reviewed CI, then finish remaining inventories (including Preflight profile
+  reload/clear and KMLab browser upload/delete) and the exact deployed-build gate.
+  See the E2E program.
 
 ### [ ] RELEASE-001 — Reconcile all outstanding contributions into release 1.0
 

@@ -9,6 +9,11 @@
 
 ## Unreleased
 
+- Native KMLab E2E now runs in a bounded transient user service with a private
+  runtime directory and process group. The service manager removes tagged data
+  and child processes after helper or controller loss; hard-crash regression
+  tests are required in native CI.
+
 - Isolated E2E instances and dedicated SSH forwards now have independent bounded
   lifetimes, so controller loss cannot leave them running indefinitely. Cleanup
   removes only expired resources with matching SDK lease, application, run and

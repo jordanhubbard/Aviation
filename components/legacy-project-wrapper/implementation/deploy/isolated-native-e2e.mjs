@@ -38,8 +38,8 @@ if (!Number.isInteger(remotePort) || remotePort < 1024 || remotePort > 65535) {
   throw new Error(`Invalid remote KMLab test port: ${remotePort}`);
 }
 const localPort = await freeLocalPort();
-const remoteCommand = `/opt/kmlab/venv/bin/python /opt/kmlab/e2e_instance.py --run-id ${runId} --revision ${revision} --port ${remotePort}`;
 const lease = createE2ELease(appId, runId, Date.now(), lifetimeMs);
+const remoteCommand = `/opt/kmlab/venv/bin/python /opt/kmlab/e2e_instance.py --run-id ${runId} --revision ${revision} --port ${remotePort} --lifetime-ms ${lifetimeMs} --expires-at-ms ${lease.expires_at_ms}`;
 const deadline = e2eHostDeadlineCommand(['ssh', ...dedicatedSsh, '-T', '-o', 'BatchMode=yes', '-o', 'ExitOnForwardFailure=yes',
   '-L', `127.0.0.1:${localPort}:127.0.0.1:${remotePort}`, host, remoteCommand], lifetimeMs, 2000, lease.expires_at_ms);
 const child = spawn(deadline[0], deadline.slice(1),
@@ -91,7 +91,7 @@ try {
   try {
     let remaining;
     for (let attempt = 0; attempt < 10; attempt++) {
-      try { remaining = ssh(`test ! -e /tmp/aviation-e2e/${runId} && printf cleared`); }
+      try { remaining = ssh(`test ! -e /run/user/$(id -u)/aviation-e2e-kmlab-${runId} && ! systemctl --user is-active --quiet aviation-e2e-kmlab-${runId}.service && printf cleared`); }
       catch { await new Promise(resolve => setTimeout(resolve, 500)); }
       if (remaining === 'cleared') break;
     }
