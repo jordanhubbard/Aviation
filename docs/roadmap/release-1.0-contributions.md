@@ -127,3 +127,22 @@ Common Aviation SDK. Comparisons map old application/package paths into
 Next: validate the recovered changes in CI, preserve and resolve dirty worktree
 state, then finish behavior and patch-equivalence checks for the remaining
 feature, migration, hazard, NOTAM, dynamic-filter, and aircraft branches.
+
+Further validated recovery:
+
+- All 591 shared TypeScript SDK tests pass on the reconciliation tree, covering
+  current aircraft, hazard, and NOTAM behavior.
+- Recovered the ForeFlight branch's two missing classification-statistics tests;
+  both affected suites pass (43 tests). Current calculations use the SDK while
+  preserving tailwheel, complex, and high-performance totals.
+- Recovered the AI-explainer branch's ten-second fetch timeout using the current
+  brain-client API. All 12 explainer tests and its TypeScript build pass. The
+  branch's application wiring remains unresolved.
+- Preserved rpe edits and its historical merge report in commit `f4279a6` and
+  xqe edits in `02dd415`, with recovery branches. Both original worktrees are
+  now clean; files were committed without replacement or deletion.
+- Nav-provider lifecycle lock had no open owner and was moved recoverably to
+  that worktree's ignored `_build/reconciliation-recovery/` directory. Its Git
+  status is now clean. No source changes were removed.
+- Four superseded security-branch lifecycle markers were pushed successfully;
+  original branch refs and commits remain available.

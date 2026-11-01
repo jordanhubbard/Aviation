@@ -40,6 +40,7 @@ describe('ExplainerClient', () => {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ context: 'some context', question: 'why?' }),
+      signal: expect.any(AbortSignal),
     });
   });
 
@@ -57,6 +58,19 @@ describe('ExplainerClient', () => {
     const sentBody = JSON.parse(call[1].body as string);
     expect(sentBody).toEqual({ context: 'context only' });
     expect(sentBody.question).toBeUndefined();
+  });
+
+  it('bounds requests with the recovered ten-second timeout', async () => {
+    const signal = new AbortController().signal;
+    const timeout = vi.spyOn(AbortSignal, 'timeout').mockReturnValue(signal);
+    const fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({ explanation: 'bounded' }),
+    });
+    vi.stubGlobal('fetch', fetch);
+    await new ExplainerClient().explain('context');
+    expect(timeout).toHaveBeenCalledWith(10_000);
+    expect(fetch.mock.calls[0][1].signal).toBe(signal);
   });
 
   it('throws when response is not ok', async () => {
