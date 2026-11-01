@@ -6,7 +6,7 @@
 .PHONY: clean-node clean-python clean-clojure
 .PHONY: test-node test-python test-clojure
 .PHONY: run-aviation-missions run-flight-planner run-flight-school
-.PHONY: run-foreflight-dashboard run-flight-tracker run-weather-briefing
+.PHONY: run-foreflight-dashboard run-flight-tracker run-weather-briefing run-aviation-accident-tracker
 .PHONY: stop-all
 
 # Default target
@@ -25,6 +25,7 @@ help:
 	@echo "  make run-foreflight-dashboard - Run ForeFlight Dashboard (port 5051)"
 	@echo "  make run-flight-tracker       - Run Flight Tracker (port 3001)"
 	@echo "  make run-weather-briefing     - Run Weather Briefing (port 3002)"
+	@echo "  make run-aviation-accident-tracker - Run Aviation Accident Tracker (port 3003)"
 	@echo "  make stop-all                 - Stop all running applications"
 	@echo ""
 	@echo "Component targets:"
