@@ -9,64 +9,64 @@ does not establish merge, test, supersession, or completion evidence.
 
 ## Tracker contributions in the original scope
 
-The original scope contains 47 contributions. Four historical PRs (#303, #269,
-#245, #234) are now closed with comparison and exact-main CI evidence in their
-comments. The remaining 43 retain their 1.0 inclusion until their requested
-behavior is qualified and resolved.
+The original scope contains 47 contributions. All 44 dependency/CI PRs are now
+closed with individual comparisons and exact-main CI evidence in their comments.
+PR #210 and issues #176/#332 remain included in 1.0 until their complete
+acceptance is qualified. No feature request is closed by the dependency batch.
 
 | Kind | Item | Title | State |
 | --- | --- | --- | --- |
 | issue | [#332](https://github.com/jordanhubbard/Aviation/issues/332) | Complete isolated remote E2E coverage for all Aviation services | included; reconciliation pending |
 | issue | [#176](https://github.com/jordanhubbard/Aviation/issues/176) | feat: AI decision explanation layer for each app | included; reconciliation pending |
 | review | [#303](https://github.com/jordanhubbard/Aviation/pull/303) | Make Aviation's last three CI jobs green (integration-tests, pip-audit, trivy) (task_b3e16b5f6d9f43a69307f2827a7f6368) | closed; current pins equal/newer, exact-main named jobs pass |
-| review | [#296](https://github.com/jordanhubbard/Aviation/pull/296) | chore(deps): bump codecov/codecov-action from 6 to 7 | included; reconciliation pending |
-| review | [#295](https://github.com/jordanhubbard/Aviation/pull/295) | chore(deps): bump actions/checkout from 6 to 7 | included; reconciliation pending |
-| review | [#294](https://github.com/jordanhubbard/Aviation/pull/294) | chore(deps-dev): bump @types/node from 20.19.37 to 26.0.1 in /apps/weather-briefing | included; reconciliation pending |
-| review | [#293](https://github.com/jordanhubbard/Aviation/pull/293) | chore(deps-dev): bump @types/node from 20.19.37 to 26.0.1 in /packages/keystore | included; reconciliation pending |
-| review | [#292](https://github.com/jordanhubbard/Aviation/pull/292) | chore(deps): bump the npm_and_yarn group across 2 directories with 6 updates | included; reconciliation pending |
-| review | [#291](https://github.com/jordanhubbard/Aviation/pull/291) | chore(deps): bump the npm_and_yarn group across 3 directories with 6 updates | included; reconciliation pending |
-| review | [#290](https://github.com/jordanhubbard/Aviation/pull/290) | chore(deps): bump the npm_and_yarn group across 3 directories with 6 updates | included; reconciliation pending |
-| review | [#285](https://github.com/jordanhubbard/Aviation/pull/285) | chore(deps): bump the npm_and_yarn group across 3 directories with 7 updates | included; reconciliation pending |
-| review | [#282](https://github.com/jordanhubbard/Aviation/pull/282) | chore(deps): bump the npm_and_yarn group across 3 directories with 7 updates | included; reconciliation pending |
-| review | [#272](https://github.com/jordanhubbard/Aviation/pull/272) | chore(deps): bump the npm_and_yarn group across 1 directory with 5 updates | included; reconciliation pending |
-| review | [#270](https://github.com/jordanhubbard/Aviation/pull/270) | chore(deps-dev): bump @types/node from 20.19.37 to 25.7.0 in /apps/flight-tracker | included; reconciliation pending |
+| review | [#296](https://github.com/jordanhubbard/Aviation/pull/296) | chore(deps): bump codecov/codecov-action from 6 to 7 | closed; incorporated/superseded by #396; exact-main CI passes |
+| review | [#295](https://github.com/jordanhubbard/Aviation/pull/295) | chore(deps): bump actions/checkout from 6 to 7 | closed; incorporated/superseded by #396; exact-main CI passes |
+| review | [#294](https://github.com/jordanhubbard/Aviation/pull/294) | chore(deps-dev): bump @types/node from 20.19.37 to 26.0.1 in /apps/weather-briefing | closed; incorporated/superseded by #396; exact-main CI passes |
+| review | [#293](https://github.com/jordanhubbard/Aviation/pull/293) | chore(deps-dev): bump @types/node from 20.19.37 to 26.0.1 in /packages/keystore | closed; incorporated/superseded by #396; exact-main CI passes |
+| review | [#292](https://github.com/jordanhubbard/Aviation/pull/292) | chore(deps): bump the npm_and_yarn group across 2 directories with 6 updates | closed; incorporated/superseded by #396; exact-main CI passes |
+| review | [#291](https://github.com/jordanhubbard/Aviation/pull/291) | chore(deps): bump the npm_and_yarn group across 3 directories with 6 updates | closed; incorporated/superseded by #396; exact-main CI passes |
+| review | [#290](https://github.com/jordanhubbard/Aviation/pull/290) | chore(deps): bump the npm_and_yarn group across 3 directories with 6 updates | closed; incorporated/superseded by #396; exact-main CI passes |
+| review | [#285](https://github.com/jordanhubbard/Aviation/pull/285) | chore(deps): bump the npm_and_yarn group across 3 directories with 7 updates | closed; incorporated/superseded by #396; exact-main CI passes |
+| review | [#282](https://github.com/jordanhubbard/Aviation/pull/282) | chore(deps): bump the npm_and_yarn group across 3 directories with 7 updates | closed; incorporated/superseded by #396; exact-main CI passes |
+| review | [#272](https://github.com/jordanhubbard/Aviation/pull/272) | chore(deps): bump the npm_and_yarn group across 1 directory with 5 updates | closed; incorporated/superseded by #396; exact-main CI passes |
+| review | [#270](https://github.com/jordanhubbard/Aviation/pull/270) | chore(deps-dev): bump @types/node from 20.19.37 to 25.7.0 in /apps/flight-tracker | closed; incorporated/superseded by #396; exact-main CI passes |
 | review | [#269](https://github.com/jordanhubbard/Aviation/pull/269) | chore(deps): bump ws from 8.20.0 to 8.20.1 in /apps/flight-tracker | closed; workspace override and lock resolve 8.22.0 |
-| review | [#265](https://github.com/jordanhubbard/Aviation/pull/265) | chore(deps): bump uuid from 13.0.0 to 14.0.0 in /apps/aviation-accident-tracker/backend in the npm_and_yarn group across 1 directory | included; reconciliation pending |
-| review | [#264](https://github.com/jordanhubbard/Aviation/pull/264) | chore(deps): bump pnpm/action-setup from 4 to 6 | included; reconciliation pending |
-| review | [#263](https://github.com/jordanhubbard/Aviation/pull/263) | chore(deps): bump dependabot/fetch-metadata from 3.0.0 to 3.1.0 | included; reconciliation pending |
-| review | [#262](https://github.com/jordanhubbard/Aviation/pull/262) | chore(deps): update pytz requirement from >=2024.1 to >=2026.1.post1 in /apps/flightschool | included; reconciliation pending |
-| review | [#261](https://github.com/jordanhubbard/Aviation/pull/261) | chore(deps): update email-validator requirement from >=2.0.0 to >=2.3.0 in /apps/flightschool | included; reconciliation pending |
-| review | [#260](https://github.com/jordanhubbard/Aviation/pull/260) | chore(deps): update pillow requirement from >=10.0.0 to >=12.2.0 in /apps/flightschool | included; reconciliation pending |
-| review | [#259](https://github.com/jordanhubbard/Aviation/pull/259) | chore(deps): update google-auth-oauthlib requirement from >=1.2.0 to >=1.3.1 in /apps/flightschool | included; reconciliation pending |
-| review | [#258](https://github.com/jordanhubbard/Aviation/pull/258) | chore(deps): update werkzeug requirement from >=3.1.0 to >=3.1.8 in /apps/flightschool | included; reconciliation pending |
-| review | [#256](https://github.com/jordanhubbard/Aviation/pull/256) | chore(deps-dev): bump typescript from 5.9.3 to 6.0.3 in /apps/flight-tracker | included; reconciliation pending |
-| review | [#255](https://github.com/jordanhubbard/Aviation/pull/255) | chore(deps-dev): bump typescript from 5.9.3 to 6.0.3 in /apps/weather-briefing | included; reconciliation pending |
-| review | [#254](https://github.com/jordanhubbard/Aviation/pull/254) | chore(deps-dev): bump typescript from 5.9.3 to 6.0.3 in /packages/keystore | included; reconciliation pending |
-| review | [#251](https://github.com/jordanhubbard/Aviation/pull/251) | chore(deps-dev): bump vitest from 1.6.1 to 4.1.4 in /packages/shared-sdk | included; reconciliation pending |
-| review | [#250](https://github.com/jordanhubbard/Aviation/pull/250) | chore(deps): bump redis from 5.11.0 to 5.12.1 in /packages/shared-sdk | included; reconciliation pending |
-| review | [#249](https://github.com/jordanhubbard/Aviation/pull/249) | chore(deps-dev): bump @types/node from 20.19.37 to 25.6.0 in /packages/shared-sdk | included; reconciliation pending |
+| review | [#265](https://github.com/jordanhubbard/Aviation/pull/265) | chore(deps): bump uuid from 13.0.0 to 14.0.0 in /apps/aviation-accident-tracker/backend in the npm_and_yarn group across 1 directory | closed; incorporated/superseded by #396; exact-main CI passes |
+| review | [#264](https://github.com/jordanhubbard/Aviation/pull/264) | chore(deps): bump pnpm/action-setup from 4 to 6 | closed; incorporated/superseded by #396; exact-main CI passes |
+| review | [#263](https://github.com/jordanhubbard/Aviation/pull/263) | chore(deps): bump dependabot/fetch-metadata from 3.0.0 to 3.1.0 | closed; incorporated/superseded by #396; exact-main CI passes |
+| review | [#262](https://github.com/jordanhubbard/Aviation/pull/262) | chore(deps): update pytz requirement from >=2024.1 to >=2026.1.post1 in /apps/flightschool | closed; incorporated/superseded by #396; exact-main CI passes |
+| review | [#261](https://github.com/jordanhubbard/Aviation/pull/261) | chore(deps): update email-validator requirement from >=2.0.0 to >=2.3.0 in /apps/flightschool | closed; incorporated/superseded by #396; exact-main CI passes |
+| review | [#260](https://github.com/jordanhubbard/Aviation/pull/260) | chore(deps): update pillow requirement from >=10.0.0 to >=12.2.0 in /apps/flightschool | closed; incorporated/superseded by #396; exact-main CI passes |
+| review | [#259](https://github.com/jordanhubbard/Aviation/pull/259) | chore(deps): update google-auth-oauthlib requirement from >=1.2.0 to >=1.3.1 in /apps/flightschool | closed; incorporated/superseded by #396; exact-main CI passes |
+| review | [#258](https://github.com/jordanhubbard/Aviation/pull/258) | chore(deps): update werkzeug requirement from >=3.1.0 to >=3.1.8 in /apps/flightschool | closed; incorporated/superseded by #396; exact-main CI passes |
+| review | [#256](https://github.com/jordanhubbard/Aviation/pull/256) | chore(deps-dev): bump typescript from 5.9.3 to 6.0.3 in /apps/flight-tracker | closed; incorporated/superseded by #396; exact-main CI passes |
+| review | [#255](https://github.com/jordanhubbard/Aviation/pull/255) | chore(deps-dev): bump typescript from 5.9.3 to 6.0.3 in /apps/weather-briefing | closed; incorporated/superseded by #396; exact-main CI passes |
+| review | [#254](https://github.com/jordanhubbard/Aviation/pull/254) | chore(deps-dev): bump typescript from 5.9.3 to 6.0.3 in /packages/keystore | closed; incorporated/superseded by #396; exact-main CI passes |
+| review | [#251](https://github.com/jordanhubbard/Aviation/pull/251) | chore(deps-dev): bump vitest from 1.6.1 to 4.1.4 in /packages/shared-sdk | closed; incorporated/superseded by #396; exact-main CI passes |
+| review | [#250](https://github.com/jordanhubbard/Aviation/pull/250) | chore(deps): bump redis from 5.11.0 to 5.12.1 in /packages/shared-sdk | closed; incorporated/superseded by #396; exact-main CI passes |
+| review | [#249](https://github.com/jordanhubbard/Aviation/pull/249) | chore(deps-dev): bump @types/node from 20.19.37 to 25.6.0 in /packages/shared-sdk | closed; incorporated/superseded by #396; exact-main CI passes |
 | review | [#245](https://github.com/jordanhubbard/Aviation/pull/245) | chore(deps): bump pytest from 8.0.2 to 9.0.3 in /apps/foreflight-dashboard in the pip group across 1 directory | closed; exact 9.0.3 pin already incorporated |
-| review | [#243](https://github.com/jordanhubbard/Aviation/pull/243) | chore(deps-dev): bump vitest from 1.6.1 to 4.1.3 in /packages/ui-framework | included; reconciliation pending |
-| review | [#242](https://github.com/jordanhubbard/Aviation/pull/242) | chore(deps): bump dotenv from 17.4.0 to 17.4.1 in /apps/aviation-accident-tracker/backend | included; reconciliation pending |
-| review | [#240](https://github.com/jordanhubbard/Aviation/pull/240) | chore(deps-dev): bump @types/node from 20.19.37 to 25.5.2 in /packages/ui-framework | included; reconciliation pending |
-| review | [#239](https://github.com/jordanhubbard/Aviation/pull/239) | chore(deps-dev): bump @types/node from 20.19.37 to 25.5.2 in /apps/aviation-accident-tracker/backend | included; reconciliation pending |
-| review | [#235](https://github.com/jordanhubbard/Aviation/pull/235) | chore(deps-dev): bump jsdom from 29.0.1 to 29.0.2 in /packages/ui-framework | included; reconciliation pending |
+| review | [#243](https://github.com/jordanhubbard/Aviation/pull/243) | chore(deps-dev): bump vitest from 1.6.1 to 4.1.3 in /packages/ui-framework | closed; incorporated/superseded by #396; exact-main CI passes |
+| review | [#242](https://github.com/jordanhubbard/Aviation/pull/242) | chore(deps): bump dotenv from 17.4.0 to 17.4.1 in /apps/aviation-accident-tracker/backend | closed; incorporated/superseded by #396; exact-main CI passes |
+| review | [#240](https://github.com/jordanhubbard/Aviation/pull/240) | chore(deps-dev): bump @types/node from 20.19.37 to 25.5.2 in /packages/ui-framework | closed; incorporated/superseded by #396; exact-main CI passes |
+| review | [#239](https://github.com/jordanhubbard/Aviation/pull/239) | chore(deps-dev): bump @types/node from 20.19.37 to 25.5.2 in /apps/aviation-accident-tracker/backend | closed; incorporated/superseded by #396; exact-main CI passes |
+| review | [#235](https://github.com/jordanhubbard/Aviation/pull/235) | chore(deps-dev): bump jsdom from 29.0.1 to 29.0.2 in /packages/ui-framework | closed; incorporated/superseded by #396; exact-main CI passes |
 | review | [#234](https://github.com/jordanhubbard/Aviation/pull/234) | chore(deps): bump python-multipart from 0.0.22 to 0.0.24 in /apps/foreflight-dashboard | closed; current qualified pin is 0.0.31 |
-| review | [#233](https://github.com/jordanhubbard/Aviation/pull/233) | chore(deps): bump uvicorn from 0.42.0 to 0.44.0 in /apps/foreflight-dashboard | included; reconciliation pending |
-| review | [#231](https://github.com/jordanhubbard/Aviation/pull/231) | chore(deps): bump faker from 40.11.1 to 40.13.0 in /apps/foreflight-dashboard | included; reconciliation pending |
-| review | [#229](https://github.com/jordanhubbard/Aviation/pull/229) | chore(deps-dev): bump msw from 1.3.5 to 2.13.0 in the dev-dependencies group | included; reconciliation pending |
-| review | [#221](https://github.com/jordanhubbard/Aviation/pull/221) | chore(deps-dev): bump @typescript-eslint/parser from 6.21.0 to 8.58.0 in /apps/flight-planner/frontend | included; reconciliation pending |
-| review | [#220](https://github.com/jordanhubbard/Aviation/pull/220) | chore(deps-dev): bump jsdom from 23.2.0 to 29.0.1 in /apps/flight-planner/frontend | included; reconciliation pending |
-| review | [#219](https://github.com/jordanhubbard/Aviation/pull/219) | chore(deps): bump requests from 2.33.0 to 2.33.1 in /apps/foreflight-dashboard | included; reconciliation pending |
-| review | [#217](https://github.com/jordanhubbard/Aviation/pull/217) | chore(deps): bump pandas from 3.0.1 to 3.0.2 in /apps/foreflight-dashboard | included; reconciliation pending |
-| review | [#216](https://github.com/jordanhubbard/Aviation/pull/216) | chore(deps): bump redis from 5.10.0 to 5.11.0 | included; reconciliation pending |
+| review | [#233](https://github.com/jordanhubbard/Aviation/pull/233) | chore(deps): bump uvicorn from 0.42.0 to 0.44.0 in /apps/foreflight-dashboard | closed; incorporated/superseded by #396; exact-main CI passes |
+| review | [#231](https://github.com/jordanhubbard/Aviation/pull/231) | chore(deps): bump faker from 40.11.1 to 40.13.0 in /apps/foreflight-dashboard | closed; incorporated/superseded by #396; exact-main CI passes |
+| review | [#229](https://github.com/jordanhubbard/Aviation/pull/229) | chore(deps-dev): bump msw from 1.3.5 to 2.13.0 in the dev-dependencies group | closed; incorporated/superseded by #396; exact-main CI passes |
+| review | [#221](https://github.com/jordanhubbard/Aviation/pull/221) | chore(deps-dev): bump @typescript-eslint/parser from 6.21.0 to 8.58.0 in /apps/flight-planner/frontend | closed; incorporated/superseded by #396; exact-main CI passes |
+| review | [#220](https://github.com/jordanhubbard/Aviation/pull/220) | chore(deps-dev): bump jsdom from 23.2.0 to 29.0.1 in /apps/flight-planner/frontend | closed; incorporated/superseded by #396; exact-main CI passes |
+| review | [#219](https://github.com/jordanhubbard/Aviation/pull/219) | chore(deps): bump requests from 2.33.0 to 2.33.1 in /apps/foreflight-dashboard | closed; incorporated/superseded by #396; exact-main CI passes |
+| review | [#217](https://github.com/jordanhubbard/Aviation/pull/217) | chore(deps): bump pandas from 3.0.1 to 3.0.2 in /apps/foreflight-dashboard | closed; incorporated/superseded by #396; exact-main CI passes |
+| review | [#216](https://github.com/jordanhubbard/Aviation/pull/216) | chore(deps): bump redis from 5.10.0 to 5.11.0 | closed; incorporated/superseded by #396; exact-main CI passes |
 | review | [#210](https://github.com/jordanhubbard/Aviation/pull/210) | feat: implement aviation stubs — fuzzy ingest matching + nav radio sim | included; reconciliation pending |
-| review | [#209](https://github.com/jordanhubbard/Aviation/pull/209) | chore(deps): bump the npm_and_yarn group across 1 directory with 2 updates | included; reconciliation pending |
-| review | [#190](https://github.com/jordanhubbard/Aviation/pull/190) | chore(deps-dev): bump typescript from 5.9.3 to 6.0.2 in /apps/aviation-accident-tracker/backend | included; reconciliation pending |
+| review | [#209](https://github.com/jordanhubbard/Aviation/pull/209) | chore(deps): bump the npm_and_yarn group across 1 directory with 2 updates | closed; incorporated/superseded by #396; exact-main CI passes |
+| review | [#190](https://github.com/jordanhubbard/Aviation/pull/190) | chore(deps-dev): bump typescript from 5.9.3 to 6.0.2 in /apps/aviation-accident-tracker/backend | closed; incorporated/superseded by #396; exact-main CI passes |
 
 ## Reconciled branches
 
-### Dependency consolidation awaiting review
+### Completed dependency consolidation
 
 The retained workspace now incorporates the requested package/requirement changes
 from all remaining dependency PRs, preserving newer existing requirements. The
@@ -81,11 +81,39 @@ and 64 Flight School tests (25 pre-existing replaced-route skips). The full
 retained harness passed build, test, and package, producing finalized receipt
 `sha256:30b09e9b999a7898e83459402d33223f7fed27b27e2e79376aa8e17fff5f7171`.
 These are retained implementation checks, not native Component generation
-acceptance. Historical dependency PRs stay open pending review and exact-main CI.
+acceptance. The batch landed through [#396](https://github.com/jordanhubbard/Aviation/pull/396)
+at `b59c3862052efaac74fdbd62c602a5fa9d2fef30`. All six exact-main workflows passed:
+[Monorepo](https://github.com/jordanhubbard/Aviation/actions/runs/41324522685),
+[SDK](https://github.com/jordanhubbard/Aviation/actions/runs/41324522531),
+[Integration](https://github.com/jordanhubbard/Aviation/actions/runs/41324522534),
+[Dependency Scan](https://github.com/jordanhubbard/Aviation/actions/runs/41324522532),
+[Performance](https://github.com/jordanhubbard/Aviation/actions/runs/41324522682),
+and [Deployment Images](https://github.com/jordanhubbard/Aviation/actions/runs/41324522721).
+The forty remaining dependency PRs were then closed with their unchanged-head
+comparisons and pushed supersession markers. Together with #303/#269/#245/#234,
+this resolves 44 of the original 47 contributions. Original refs remain available.
+
+### Remaining feature acceptance
 
 PR #210 still needs implementation/review: the current G1000 adapter delegates
 to common avionics, but Flight Planner's old radio adapter retains unfinished
 controls, and the proposed repository fuzzy matcher is not wired by that PR.
+Complete the intended ingest integration and radio behavior through tested common
+SDK contracts and application adapters, preserving exact-match behavior and
+checking ambiguous/invalid input. Do not reintroduce app-private avionics models.
+
+Issue #176 requires a shared explanation client, a standard explanation endpoint
+and decision control in every application, and follow-up questions through the
+current brain API and model fallback. The current Accident Tracker, Chat,
+Planner, and G1000 wiring is partial evidence; complete and test the application
+matrix, including unavailable-service behavior and deterministic model mocks.
+
+Issue #332 follows the [SDK remote E2E program](sdk-remote-e2e-program.md).
+All twelve adapters exist. Remaining acceptance is a route-by-route inventory
+completeness audit and traversal against exact deployed builds, with isolated
+tagged data, external-service mocks, failure cleanup, traces, zero residuals, and
+the required post-deployment gate. Public runs of older builds and local
+production-image checks do not substitute for that final deployed evidence.
 
 ### Historical branch dispositions
 
