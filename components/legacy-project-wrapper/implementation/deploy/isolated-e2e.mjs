@@ -8,6 +8,7 @@ import { createE2ERunId, parseE2ERunId, createE2ELease, classifyE2ELease, e2eNam
 
 const appId = process.argv[2];
 const runtimes = {
+  'preflight-check': { port: 8080, readyStatus: 200 },
   'flight-tracker': { port: 3001 },
   'aviation-chat': { port: 31416, readyStatus: 200 },
   'aviation-accident-tracker': { port: 3002, readyStatus: 200,
