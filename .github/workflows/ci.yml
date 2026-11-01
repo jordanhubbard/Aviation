@@ -201,6 +201,22 @@ jobs:
       - name: Build frontend
         run: pnpm --filter foreflight-dashboard-frontend run build
 
+  test-flight-tracker:
+    name: Test Flight Tracker
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+      - uses: pnpm/action-setup@v6
+      - name: Install tracking service and SDK dependencies
+        run: pnpm install --frozen-lockfile --filter @aviation/flight-tracker...
+      - name: Build tracking service and SDK dependencies
+        run: pnpm --filter @aviation/flight-tracker... run build
+      - name: Test service isolation and tracking lifecycle
+        run: pnpm --filter @aviation/flight-tracker run test --runInBand
+
   # Lint and format check
   lint:
     name: Lint & Format

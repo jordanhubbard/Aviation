@@ -906,46 +906,45 @@ if (appId === 'flightschool') {
   } finally { await browser.close(); }
   console.log(`remote E2E passed: ${appId} (${baseUrl}); browser fixtures removed`);
 } else if (appId === 'flight-tracker') {
+  if (!isolatedHost || !process.env.AVIATION_E2E_RUN_ID) {
+    throw new Error('Flight Tracker E2E requires an isolated signed service instance');
+  }
+  const existingRunId = parseE2ERunId(process.env.AVIATION_E2E_RUN_ID);
   const browser = traceE2EBrowser(await chromium.launch({ headless: true, ...(executable ? { executablePath: executable } : {}) }), appId, process.env.AVIATION_E2E_TRACE_DIR);
   try {
     await withE2ERun(secret, async run => {
       const context = await browser.newContext(browserContextOptions);
+      run.onCleanup(() => context.close());
+      const api = { appId, baseUrl, fetch: async (...args) => {
+        const response = await fetch(...args);
+        if (response.ok && args[1]?.method === 'GET' && String(args[0]).includes('/__e2e/runs/')) {
+          console.log(JSON.stringify({ schema: 'aviation/e2e-residual@1', app: appId, ...await response.clone().json() }));
+        }
+        return response;
+      } };
+      await seedRemoteFixture(run, api, 'flight', run.tag({ ...standardE2EMocks(run.id).tracker.flights[0],
+        // Keep the synthetic feed point inside the initial world viewport at both widths.
+        latitude: 20, longitude: 0 }));
+      const tracked = async () => {
+        const response = await fetch(new URL('/api/tracked', baseUrl), { headers: run.headersFor(appId) });
+        if (!response.ok) throw new Error(`Tracking API failed: ${response.status}`);
+        return response.json();
+      };
       const page = await context.newPage();
+      page.setDefaultTimeout(15000);
       await installIsolatedFeedbackScript(page);
-      let tracked = [];
-      run.onCleanup(async () => { tracked = []; await context.close(); });
-      const fixture = standardE2EMocks(run.id).tracker;
-      await installE2ENetworkMocks(page, baseUrl, run,
-        [{ path: '/api/flights?*', response: fixture }]);
       const origin = new URL(baseUrl).origin;
-      await page.route(`${origin}/api/tracked**`, async route => {
-        const method = route.request().method();
-        const pathname = new URL(route.request().url()).pathname;
-        if (method === 'POST' && pathname === '/api/tracked') {
-          const payload = route.request().postDataJSON();
-          if (payload.icao24 !== 'e2e123') throw new Error('Unexpected tracked flight');
-          const flight = fixture.flights[0];
-          const point = { latitude: flight.latitude, longitude: flight.longitude,
-            altitude: flight.geoAltitude, velocity: flight.velocity, heading: flight.heading,
-            timestamp: fixture.updatedAt };
-          tracked = [{ ...flight, position: point, history: [point], isActive: true,
-            lastUpdate: fixture.updatedAt }];
-          await route.fulfill({ status: 200, contentType: 'application/json',
-            body: JSON.stringify(run.tag({ status: 'tracked' })) });
-        } else if (method === 'DELETE' && pathname === '/api/tracked/e2e123') {
-          tracked = [];
-          await route.fulfill({ status: 200, contentType: 'application/json',
-            body: JSON.stringify(run.tag({ status: 'removed' })) });
-        } else if (method === 'GET' && pathname === '/api/tracked') {
-          await route.fulfill({ status: 200, contentType: 'application/json',
-            body: JSON.stringify(run.tag({ tracked, total: tracked.length })) });
-        } else throw new Error(`Unexpected tracker mock request: ${method} ${pathname}`);
-      });
+      await page.route(`${origin}/**`, route => route.continue({
+        headers: { ...route.request().headers(), ...run.headersFor(appId) },
+      }));
       const errors = [];
       page.on('pageerror', error => errors.push(error.message));
+      page.on('requestfailed', request => errors.push(`${request.failure()?.errorText} ${request.url()}`));
+      page.on('console', message => { if (message.type() === 'error') errors.push(message.text()); });
+      page.on('response', response => { if (response.status() >= 400) errors.push(`HTTP ${response.status()} ${response.url()}`); });
       await runDeclaredScreens(['dashboard', 'track', 'remove'], [
         {
-          id: 'dashboard', dataMode: 'sdk-mock',
+          id: 'dashboard', dataMode: 'tagged-memory',
           visit: () => page.goto(baseUrl, { waitUntil: 'domcontentloaded' }),
           verify: async () => {
             await page.getByText('Live flights: 1').waitFor();
@@ -954,27 +953,50 @@ if (appId === 'flightschool') {
           },
         },
         {
-          id: 'track', dataMode: 'sdk-mock',
+          id: 'track', dataMode: 'tagged-memory',
           visit: () => page.locator('.aircraft-icon').first().click(),
           verify: async () => {
             await page.locator('#tracked-body').getByText('E2E123').waitFor();
             await page.getByText('1 flights tracked').waitFor();
-            if (tracked.length !== 1) throw new Error('Tracker mock did not register selection');
+            const state = await tracked();
+            if (state.total !== 1 || state.tracked[0].test_run_id !== run.id
+              || !state.tracked[0].history.length || state.tracked[0].history.some(row => row.test_run_id !== run.id || row.is_test_data !== true)) {
+              throw new Error('Real service tracking state or tags did not persist');
+            }
+            const freshContext = await browser.newContext(browserContextOptions);
+            run.onCleanup(() => freshContext.close());
+            const freshPage = await freshContext.newPage();
+            freshPage.setDefaultTimeout(15000);
+            freshPage.on('pageerror', error => errors.push(error.message));
+            freshPage.on('console', message => { if (message.type() === 'error') errors.push(message.text()); });
+            freshPage.on('requestfailed', request => errors.push(`${request.failure()?.errorText} ${request.url()}`));
+            freshPage.on('response', response => { if (response.status() >= 400) errors.push(`HTTP ${response.status()} ${response.url()}`); });
+            await installIsolatedFeedbackScript(freshPage);
+            await freshPage.route(`${origin}/**`, route => route.continue({
+              headers: { ...route.request().headers(), ...run.headersFor(appId) },
+            }));
+            await freshPage.goto(baseUrl, { waitUntil: 'domcontentloaded' });
+            await freshPage.locator('#tracked-body').getByText('E2E123').waitFor();
+            latestPage = page;
           },
         },
         {
-          id: 'remove', dataMode: 'sdk-mock',
+          id: 'remove', dataMode: 'tagged-memory',
           visit: () => page.locator('#tracked-body').getByRole('button', { name: 'Remove' }).click(),
           verify: async () => {
             await page.getByText('0 flights tracked').waitFor();
             await page.getByText('No flights tracked yet.').waitFor();
-            if (tracked.length || errors.length) throw new Error(`Tracker cleanup or browser error: ${errors}`);
+            if ((await tracked()).total !== 0) throw new Error('Real service track remains after deletion');
           },
         },
       ]);
-    });
+      const invalid = await page.evaluate(() => ({ overflow: document.documentElement.scrollWidth > innerWidth + 1,
+        invalidNumber: /\b(?:NaN|Infinity)\b/.test(document.body.innerText) }));
+      if (invalid.overflow || invalid.invalidNumber) throw new Error(`Invalid rendered tracker: ${JSON.stringify(invalid)}`);
+      if (errors.length) throw new Error(`Browser errors: ${errors.join('; ')}`);
+    }, existingRunId);
   } finally { await browser.close(); }
-  console.log(`remote E2E passed: ${appId} (${baseUrl}); tracked flight removed`);
+  console.log(`remote E2E passed: ${appId} (${baseUrl}); real tracked state and SDK fixtures removed`);
 } else if (appId === 'aviation-chat') {
   await withE2ERun(secret, async run => {
     let root, health, invalid, mock, denied;

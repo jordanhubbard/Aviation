@@ -9,6 +9,12 @@ import {
   warningsForConditions,
 } from '@aviation/shared-sdk';
 import { createSecretLoader } from '@aviation/keystore';
+import { parseE2ERunId, tagTestData } from '@aviation/shared-sdk/e2e';
+
+interface TestSource { is_test_data?: true; test_run_id?: string }
+function sourceTagged<T extends object>(source: TestSource, record: T): T {
+  return source.is_test_data === true ? tagTestData(parseE2ERunId(source.test_run_id), record) : record;
+}
 
 /**
  * Flight information with weather data
@@ -30,7 +36,7 @@ interface FlightBounds {
   lomax: number;
 }
 
-interface FlightState {
+export interface FlightState extends TestSource {
   icao24: string;
   callsign: string;
   originCountry: string;
@@ -45,7 +51,7 @@ interface FlightState {
   verticalRate: number | null;
 }
 
-interface FlightTrackPoint {
+interface FlightTrackPoint extends TestSource {
   latitude: number;
   longitude: number;
   altitude: number | null;
@@ -54,7 +60,7 @@ interface FlightTrackPoint {
   timestamp: string;
 }
 
-interface TrackedAircraft {
+interface TrackedAircraft extends TestSource {
   icao24: string;
   callsign: string;
   originCountry: string;
@@ -169,10 +175,7 @@ export class FlightTrackerService extends BackgroundService {
       clearInterval(this.liveIntervalId);
       this.liveIntervalId = undefined;
     }
-    this.airportCache.clear();
-    this.trackedFlights.clear();
-    this.liveFlights.clear();
-    this.trackedAircraft.clear();
+    this.clearTracking();
     console.log('✈️  Flight Tracker Service stopped monitoring flights.');
   }
 
@@ -242,7 +245,7 @@ export class FlightTrackerService extends BackgroundService {
       if (!states.length) {
         return;
       }
-      this.liveFlights = new Map(states.map((state) => [state.icao24, state]));
+      this.replaceLiveFlights(states);
       this.lastLiveFetch = now;
     } catch (error) {
       console.warn('⚠️  Unable to refresh live flights:', error);
@@ -345,14 +348,14 @@ export class FlightTrackerService extends BackgroundService {
         this.trackedAircraft.set(icao24, { ...tracked, isActive: false, lastUpdate: now });
         continue;
       }
-      const point: FlightTrackPoint = {
+      const point: FlightTrackPoint = sourceTagged(state, {
         latitude: state.latitude,
         longitude: state.longitude,
         altitude: state.geoAltitude ?? state.baroAltitude,
         velocity: state.velocity,
         heading: state.heading,
         timestamp: now,
-      };
+      });
       const history = [...tracked.history, point].slice(-this.maxTrackPoints);
       this.trackedAircraft.set(icao24, {
         ...tracked,
@@ -503,6 +506,18 @@ export class FlightTrackerService extends BackgroundService {
     );
   }
 
+  /** Admit a feed snapshot through the same state path used by live polling. */
+  public replaceLiveFlights(states: FlightState[]): void {
+    this.liveFlights = new Map(states.map(state => [state.icao24, state]));
+  }
+
+  /** Clear transient feed, track and weather state without filesystem access. */
+  public clearTracking(): void {
+    this.airportCache.clear(); this.trackedFlights.clear();
+    this.liveFlights.clear(); this.trackedAircraft.clear();
+    this.lastLiveFetch = 0;
+  }
+
   public getTrackedAircraft(): TrackedAircraft[] {
     return Array.from(this.trackedAircraft.values());
   }
@@ -517,15 +532,15 @@ export class FlightTrackerService extends BackgroundService {
       return false;
     }
     const now = new Date().toISOString();
-    const point: FlightTrackPoint = {
+    const point: FlightTrackPoint = sourceTagged(state, {
       latitude: state.latitude,
       longitude: state.longitude,
       altitude: state.geoAltitude ?? state.baroAltitude,
       velocity: state.velocity,
       heading: state.heading,
       timestamp: now,
-    };
-    this.trackedAircraft.set(normalized, {
+    });
+    this.trackedAircraft.set(normalized, sourceTagged(state, {
       icao24: normalized,
       callsign: state.callsign,
       originCountry: state.originCountry,
@@ -535,7 +550,7 @@ export class FlightTrackerService extends BackgroundService {
       history: [point],
       isActive: true,
       lastUpdate: now,
-    });
+    }));
     return true;
   }
 

@@ -53,7 +53,7 @@ export async function installE2EApiHeaders(page: E2EBrowserPage, baseUrl: string
 
 export interface E2EScreen {
   id: string;
-  dataMode: 'tagged-database' | 'isolated-browser' | 'sdk-mock' | 'stateless';
+  dataMode: 'tagged-database' | 'tagged-memory' | 'isolated-browser' | 'sdk-mock' | 'stateless';
   visit(): Promise<void>;
   verify(): Promise<void>;
 }

@@ -14,30 +14,42 @@ const macTaskCreator = new MacTaskCreator({
   debug: process.env.NODE_ENV !== "production",
 });
 
-/**
- * Flight Tracker Application Entry Point
- */
-async function main() {
-  console.log("Starting Flight Tracker Application...");
+import { parseE2ERunId, verifyE2EHeaders, assertTestDataForRun, tagTestData } from '@aviation/shared-sdk/e2e';
 
-  installNodeProcessErrorReporting({
-    service: "flight-tracker",
-    taskCreator: macTaskCreator,
-  });
+function configuredTestRun(environment: NodeJS.ProcessEnv) {
+  const id = environment.AVIATION_E2E_RUN_ID;
+  const secret = environment.AVIATION_E2E_SECRET;
+  if (!id && !secret) return null;
+  if (!id || !secret || secret.length < 32) throw new Error('Partial Flight Tracker E2E configuration');
+  return { id: parseE2ERunId(id), secret };
+}
 
-  const service = new FlightTrackerService({
-    name: "flight-tracker",
-    enabled: true,
-    autoStart: true,
-  });
-  await service.start();
-
-  const wsServer = new FlightWebSocketServer(8080);
-  const dataPublisher = new DataPublisher(wsServer);
-  dataPublisher.startPublishing();
-
-  const port = Number(process.env.PORT ?? "3001");
-  const server = http.createServer(async (req, res) => {
+/** Separate test instances reuse the real HTTP handlers and service state. */
+export function createFlightTrackerServer(service: FlightTrackerService, environment: NodeJS.ProcessEnv = process.env) {
+  const testRun = configuredTestRun(environment);
+  let registered = false;
+  const state = () => {
+    if (!testRun) throw new Error('Test storage inspection is disabled');
+    const flights = service.getLiveFlights();
+    const tracked = service.getTrackedAircraft();
+    for (const record of [...flights, ...tracked, ...tracked.flatMap(row => row.history)]) {
+      assertTestDataForRun(record, testRun.id);
+    }
+    return tagTestData(testRun.id, { live_count: flights.length, tracked_count: tracked.length,
+      history_count: tracked.reduce((count, row) => count + row.history.length, 0),
+      run_count: Number(registered), count: flights.length + tracked.length
+        + tracked.reduce((count, row) => count + row.history.length, 0) + Number(registered) });
+  };
+  const readJson = async (request: http.IncomingMessage) => {
+    let body = '';
+    for await (const chunk of request) {
+      body += chunk;
+      if (Buffer.byteLength(body) > 65536) throw new Error('Request body exceeds limit');
+    }
+    return JSON.parse(body);
+  };
+  const port = Number(environment.PORT ?? "3001");
+  return http.createServer(async (req, res) => {
     const requestUrl = new URL(req.url ?? "/", `http://localhost:${port}`);
 
     const sendJson = (status: number, payload: unknown) => {
@@ -47,6 +59,46 @@ async function main() {
       });
       res.end(JSON.stringify(payload));
     };
+
+    try {
+      const runId = verifyE2EHeaders('flight-tracker', req.headers, testRun?.secret);
+      if (testRun && runId !== testRun.id) throw new Error('Signed credentials for this test run are required');
+    } catch {
+      sendJson(403, { error: 'Invalid Flight Tracker test credentials' });
+      return;
+    }
+
+    if (requestUrl.pathname.startsWith('/__e2e/')) {
+      if (!testRun) { sendJson(404, { error: 'Not found' }); return; }
+      try {
+        if (requestUrl.pathname === '/__e2e/status' && req.method === 'GET') {
+          sendJson(200, state()); return;
+        }
+        if (requestUrl.pathname === '/__e2e/fixtures' && req.method === 'POST') {
+          const { fixture_type, record } = await readJson(req);
+          assertTestDataForRun(record, testRun.id);
+          const flight = record as typeof record & import("./service").FlightState;
+          if (fixture_type !== 'flight' || !/^[a-f0-9]{6}$/.test(flight.icao24)
+            || typeof flight.callsign !== 'string' || !flight.callsign
+            || !Number.isFinite(flight.latitude) || Math.abs(flight.latitude) > 90
+            || !Number.isFinite(flight.longitude) || Math.abs(flight.longitude) > 180) {
+            throw new Error('Invalid live-flight fixture');
+          }
+          service.replaceLiveFlights([flight]);
+          registered = true;
+          sendJson(201, state()); return;
+        }
+        if (requestUrl.pathname === `/__e2e/runs/${testRun.id}`) {
+          if (req.method === 'DELETE') {
+            state(); // Refuse cleanup when any record belongs to another run.
+            service.clearTracking(); registered = false;
+          }
+          if (req.method === 'GET' || req.method === 'DELETE') { sendJson(200, state()); return; }
+        }
+        sendJson(404, { error: 'Not found' });
+      } catch { sendJson(400, { error: 'Invalid test fixture or store ownership' }); }
+      return;
+    }
 
     if (requestUrl.pathname === "/health") {
       sendJson(200, createHealthReport());
@@ -541,6 +593,36 @@ async function main() {
     `);
   });
 
+}
+
+/**
+ * Flight Tracker Application Entry Point
+ */
+async function main() {
+  const testRun = configuredTestRun(process.env);
+  console.log("Starting Flight Tracker Application...");
+
+  installNodeProcessErrorReporting({
+    service: "flight-tracker",
+    taskCreator: macTaskCreator,
+  });
+
+  const service = new FlightTrackerService({
+    name: "flight-tracker",
+    enabled: true,
+    autoStart: true,
+  });
+  if (!testRun) await service.start();
+
+  if (!testRun) {
+    const wsServer = new FlightWebSocketServer(8080);
+    const dataPublisher = new DataPublisher(wsServer);
+    dataPublisher.startPublishing();
+  }
+
+  const port = Number(process.env.PORT ?? "3001");
+  const server = createFlightTrackerServer(service);
+
   server.listen(port, "0.0.0.0", () => {
     console.log(`HTTP server listening on port ${port}`);
   });
@@ -548,7 +630,8 @@ async function main() {
   // Handle graceful shutdown
   const shutdown = async () => {
     console.log("\nShutting down Flight Tracker...");
-    await service.stop();
+    if (testRun) service.clearTracking();
+    else await service.stop();
     await new Promise<void>((resolve) => {
       server.close(() => resolve());
     });
@@ -566,7 +649,7 @@ async function main() {
   console.log("Flight Tracker is running. Press Ctrl+C to stop.");
 }
 
-main().catch((error) => {
+if (require.main === module) main().catch((error) => {
   console.error("Failed to start Flight Tracker:", error);
   process.exit(1);
 });

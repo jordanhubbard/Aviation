@@ -34,8 +34,8 @@ found and fixed previously broken Flight School routes and templates.
 
 The deployment verifier now checks each running revision, requires the
 independent [remote E2E inventory](../../verification/remote-e2e.json), and
-dispatches all twelve adapters after the public browser smoke. The four
-persistent Docker services use temporary containers. KMLab's native deploy
+dispatches all twelve adapters after the public browser smoke. Docker adapters
+that require private server state use temporary containers. KMLab's native deploy
 records its exact revision and installs a temporary remote process runner;
 that runner's local EOF cleanup and revision rejection tests passed. These
 new remote paths have not yet been exercised against a deployment of this
@@ -49,11 +49,10 @@ branch-preview browser runs also passed.
 This remains a **partial checkpoint**: the G1000's currently shipped UI has
 only dashboard and settings routes; its simulator components and plan store
 are not exposed through those routes. Other product surfaces still need a
-complete inventory. The stricter Flight School sweep reaches the correct booking
-state screens and debug role, but retained traces also reveal missing static
-assets in legacy templates. Replace unavailable decorative assets with text or
-existing images, share the working Bootstrap resources, and make the sweep reject
-HTTP/console errors before claiming complete rendered acceptance. Planner still mocks planning and external-data API responses after its real
+complete inventory. The Flight School sweep now reaches the correct booking
+states and debug role, rejects HTTP/console errors, and loads the repaired static
+assets, as recorded in the local completeness checkpoint. Planner still mocks
+planning and external-data API responses after its real
 storage lifecycle checks. Missions now uses its real temporary H2 service for
 the complete browser persistence traversal.
 The declared inventories still need a route-by-route completeness audit and
@@ -128,6 +127,44 @@ expired-run janitors after abrupt controller loss, and execute the complete
 post-deployment gate against exact deployed revisions after all feature work
 lands. Ordinary controller finally cleanup alone does not prove recovery from
 worker interruption. These local results do not close E2E-001.
+
+## Flight Tracker memory checkpoint
+
+Flight Tracker now runs in a separate production-image process for E2E. It does
+not have a durable database; its live flights, tracked aircraft and position
+histories are transient service maps. The test process disables weather/feed
+polling and websocket publication, admits SDK-tagged flight fixtures, and uses
+SDK app-bound credentials on every request. Ordinary requests cannot reach test
+state, and production instances reject test credentials and expose no fixture
+controls. Partial configuration fails before listening.
+
+The browser calls the real tracking and removal APIs. A fresh browser context
+observes the same track, and SDK tags are retained on both the track and its
+history. All four declared flows pass at desktop (1280 by 720) and mobile
+(390 by 844) widths, with inspected captures, no document overflow, and no
+console, page, request or HTTP failures. The synthetic point is inside the
+initial viewport at either width; a real HTTP assertion verifies that bounds
+filter out other points instead of returning a browser mock regardless of bounds.
+
+The SDK fixture cleanup verifies zero live-flight, track, history and run counts
+on success and after an injected failure following tracking. The parent removes
+the temporary container. Real loopback HTTP tests cover ordinary/test separation,
+missing/partial/foreign/expired/invalid credentials, invalid fixtures, foreign-row
+cleanup denial and repeated cleanup without production changes or external calls.
+All 49 service tests and three deployment dispatch tests pass. Application CI now
+builds and runs the Flight Tracker suite independently of the SDK test job.
+After seeding a real live flight, track and history, the isolated production
+image handles SIGTERM with exit code zero in 0.106 seconds and is removed. Test
+shutdown clears transient memory without asking the stopped background service
+to perform an invalid lifecycle transition.
+
+The retained SDK qualification passes 591 tests with adopted receipt
+`sha256:bd67cf5fa92be17eafddbfdf415189049f030f83b79bcc5df4fbb353b69d66aa`.
+`litai verify` passes authority, all 19 locks and the current receipt. This is
+retained-runtime evidence, without native Component generation or acceptance.
+
+These local results advance #332. Interrupted-controller expiry recovery, the
+remaining inventory audit and exact deployed-build evidence remain open.
 
 ## Acceptance contract
 

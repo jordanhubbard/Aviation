@@ -665,3 +665,89 @@ describe('FlightTrackerService', () => {
     });
   });
 });
+
+// Real loopback HTTP coverage: browser mocks must not stand in for server mutations.
+describe('isolated tracking HTTP lifecycle', () => {
+  const { createFlightTrackerServer } = require('../src/index.ts');
+  const { signE2EHeaders, tagTestData } = require('@aviation/shared-sdk/e2e');
+  const { request } = require('node:http');
+  const runId = 'e2e_' + 'a'.repeat(32);
+  const other = 'e2e_' + 'b'.repeat(32);
+  const secret = 'test-only-secret-'.repeat(4);
+  const fixture = { icao24: 'e2e123', callsign: 'E2E123', originCountry: 'Synthetic',
+    latitude: 37.721, longitude: -122.221, baroAltitude: 1200, geoAltitude: 1200,
+    velocity: 40, heading: 270, onGround: false, lastContact: 1800000000, verticalRate: 0 };
+  const call = (server, path, method = 'GET', headers = {}, value?) => new Promise<any>((resolve, reject) => {
+    const port = server.address().port;
+    const req = request({ hostname: '127.0.0.1', port, path, method,
+      headers: { ...headers, 'content-type': 'application/json' } }, res => {
+      let body = ''; res.on('data', chunk => { body += chunk; });
+      res.on('end', () => resolve({ status: res.statusCode, body: JSON.parse(body) }));
+    });
+    req.on('error', reject);
+    req.end(value === undefined ? undefined : JSON.stringify(value));
+  });
+  const listen = server => new Promise<void>(resolve => server.listen(0, '127.0.0.1', resolve));
+  const close = server => new Promise<void>(resolve => server.close(resolve));
+
+  it('rejects partial or malformed test instance configuration before listening', () => {
+    const service = new FlightTrackerService({ name: 'contract-test', enabled: true });
+    for (const env of [{ AVIATION_E2E_RUN_ID: runId }, { AVIATION_E2E_SECRET: secret },
+      { AVIATION_E2E_RUN_ID: '../production', AVIATION_E2E_SECRET: secret }]) {
+      expect(() => createFlightTrackerServer(service, env)).toThrow();
+    }
+  });
+
+  it('separates ordinary and signed traffic, retains real tagged tracks, and cleans up after failure', async () => {
+    const productionService = new FlightTrackerService({ name: 'ordinary', enabled: true });
+    productionService.replaceLiveFlights([{ ...fixture, callsign: 'PRODUCTION' }]);
+    const testService = new FlightTrackerService({ name: 'isolated', enabled: true });
+    const production = createFlightTrackerServer(productionService, {});
+    const isolated = createFlightTrackerServer(testService, { AVIATION_E2E_RUN_ID: runId, AVIATION_E2E_SECRET: secret });
+    await listen(production); await listen(isolated);
+    const headers = signE2EHeaders('flight-tracker', runId, secret);
+    const cleanup = () => call(isolated, `/__e2e/runs/${runId}`, 'DELETE', headers);
+    try {
+      expect((await call(production, '/api/flights')).body.flights[0].callsign).toBe('PRODUCTION');
+      expect((await call(production, '/__e2e/status')).status).toBe(404);
+      expect((await call(production, '/api/flights?lamin=0&lomin=0&lamax=1&lomax=1')).body.total).toBe(0);
+      expect((await call(production, '/api/tracked', 'POST', headers, { icao24: 'e2e123' })).status).toBe(403);
+      expect((await call(isolated, '/api/flights')).status).toBe(403);
+      for (const invalid of [
+        { 'x-aviation-test-run': runId },
+        signE2EHeaders('flight-tracker', other, secret),
+        signE2EHeaders('flight-planner', runId, secret),
+        signE2EHeaders('flight-tracker', runId, secret, Date.now() - 2000, 1),
+        { ...headers, 'x-aviation-test-signature': '0'.repeat(64) },
+      ]) expect((await call(isolated, '/api/flights', 'GET', invalid)).status).toBe(403);
+      expect((await call(isolated, `/__e2e/runs/${other}`, 'DELETE', headers)).status).toBe(404);
+      for (const record of [fixture, tagTestData(other, fixture), tagTestData(runId, { ...fixture, latitude: 91 })]) {
+        expect((await call(isolated, '/__e2e/fixtures', 'POST', headers, { fixture_type: 'flight', record })).status).toBe(400);
+      }
+      expect((await call(isolated, '/__e2e/fixtures', 'POST', headers,
+        { fixture_type: 'flight', record: tagTestData(runId, fixture) })).status).toBe(201);
+      expect((await call(isolated, '/api/tracked', 'POST', headers, { icao24: 'e2e123' })).status).toBe(200);
+      const tracked = (await call(isolated, '/api/tracked', 'GET', headers)).body.tracked;
+      expect(tracked).toHaveLength(1);
+      expect(tracked[0]).toMatchObject({ is_test_data: true, test_run_id: runId, callsign: 'E2E123' });
+      expect(tracked[0].history[0]).toMatchObject({ is_test_data: true, test_run_id: runId });
+      expect((await call(isolated, `/__e2e/runs/${runId}`, 'GET', headers)).body).toMatchObject({ count: 4, live_count: 1, tracked_count: 1, history_count: 1, run_count: 1 });
+      // A foreign row must make both inspection and cleanup fail closed.
+      testService.replaceLiveFlights([tagTestData(other, fixture)]);
+      expect((await cleanup()).status).toBe(400);
+      expect(testService.getTrackedAircraft()).toHaveLength(1);
+      testService.replaceLiveFlights([tagTestData(runId, fixture)]);
+      expect((await call(isolated, '/api/tracked/e2e123', 'DELETE', headers)).status).toBe(200);
+      expect((await call(isolated, '/api/tracked', 'GET', headers)).body.total).toBe(0);
+      await expect((async () => {
+        try {
+          await call(isolated, '/api/tracked', 'POST', headers, { icao24: 'e2e123' });
+          throw new Error('simulated controller failure');
+        } finally { expect((await cleanup()).body.count).toBe(0); }
+      })()).rejects.toThrow('simulated controller failure');
+      expect((await cleanup()).body).toMatchObject({ count: 0, live_count: 0, tracked_count: 0, history_count: 0, run_count: 0 });
+      expect((await call(production, '/api/flights')).body.flights[0].callsign).toBe('PRODUCTION');
+      expect(global.fetch).not.toHaveBeenCalled();
+    } finally { await close(production); await close(isolated); }
+  });
+});

@@ -9,6 +9,11 @@
 
 ## Unreleased
 
+- Flight Tracker remote E2E now exercises its real track/remove APIs in a
+  separate signed service process, preserves SDK tags through tracking history,
+  verifies state from a fresh browser context, and proves zero-residual cleanup.
+  Its service and HTTP isolation tests now run in blocking application CI.
+
 - Patched the shared Vitest/mocker toolchain and Vite dependencies, including
   their vulnerable PostCSS and nanoid resolutions. Apps using React plugin 6
   retain Vite 8; G1000 receives the compatible Vite 6 patch.

@@ -867,6 +867,11 @@ release-visible outcome to `CHANGELOG.md`; Git preserves prior queue states.
 - **Evidence:**
   - [ ] SDK unit and isolation tests, per-app screen and data lifecycle coverage matrix, failure cleanup tests, retained Literate AI receipt, reviewed CI, and live post-deployment E2E run without production data leakage.
 - **Detailed program:** [SDK remote E2E program](sdk-remote-e2e-program.md).
+- **In progress:** Flight Tracker now passes 49 service/HTTP tests and real
+  production-image desktop/mobile traversal with zero residual memory counts on
+  success and injected tracking failure. Qualify its retained receipt and review,
+  then interrupted-run expiry cleanup and remaining inventories before the exact
+  deployed-build gate. Details are in the linked E2E program.
 
 ### [ ] RELEASE-001 — Reconcile all outstanding contributions into release 1.0
 
@@ -895,7 +900,7 @@ release-visible outcome to `CHANGELOG.md`; Git preserves prior queue states.
     qualify package builds/tests and CI, and close each historical PR with its
     exact incorporated or superseding evidence.
   - [ ] Reconcile every scoped contribution; land and test unique changes or document an evidence-backed supersession.
-  - [ ] Reconcile [dependency PR #399](https://github.com/jordanhubbard/Aviation/pull/399):
+  - [x] Reconcile [dependency PR #399](https://github.com/jordanhubbard/Aviation/pull/399):
     preserve Vite 8 for React plugin 6 consumers, patch the Vite 6 consumer and
     vulnerable Vitest/mocker, PostCSS and nanoid resolutions, then verify the
     affected SDK tests, app builds and audit before superseding the failing PR.
@@ -908,6 +913,8 @@ release-visible outcome to `CHANGELOG.md`; Git preserves prior queue states.
     Planner frontend (12) tests. The retained SDK suite passes 591 tests;
     `litai verify` passes authority, 19 locks and the current receipt
     `sha256:2b11353678837e35933aac4d4cac7f99ccd9ea150d1d5d02679391509381f9a7`.
+    PR #406 merged at `d1178828b` with all six exact-main workflows passing;
+    #399 is closed with an exact-head supersession marker and preserved refs.
   - [ ] Prepare, check, publish, and verify v1.0.0 from green main with no unresolved release contributions.
 - **Evidence:**
   - [ ] Ready contribution sweep, clean synchronized Git, green CI for the released commit, and verified remote tag and GitHub release.
