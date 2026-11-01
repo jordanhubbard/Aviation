@@ -14,7 +14,10 @@ const launch = {
       'ENABLE_CRON=false', 'PORT=3002'] },
   flightschool: { port: 5000, command: `python -m scripts.seed_e2e && exec gunicorn --bind 0.0.0.0:5000 --workers 1 'app:create_app("e2e")'` },
   'flight-planner': { port: 8000, command: 'exec uvicorn main:app --host 0.0.0.0 --port 8000 --workers 1' },
-  'aviation-missions-app': { port: 3000, command: 'exec java -jar /app/aviation-missions.jar' },
+  'aviation-missions-app': { port: 3000, command: 'exec java -jar /app/aviation-missions.jar',
+    environment: runId => ['ADMIN_USERNAME=E2E Admin', `ADMIN_PASSWORD=${runId}`,
+      `ADMINS_FILE=/tmp/aviation-e2e/${runId}/admins.json`,
+      `MISSIONS_JSON_PATH=/tmp/aviation-e2e/${runId}/missions.json`] },
 }[appId];
 if (!launch) throw new Error(`No isolated E2E runtime for ${appId || '(missing app)'}`);
 const image = process.env.AVIATION_E2E_IMAGE;

@@ -10,7 +10,7 @@
             [ring.middleware.resource :refer [wrap-resource]]
             [ring.middleware.content-type :refer [wrap-content-type]]
             [ring.middleware.not-modified :refer [wrap-not-modified]]
-            [ring.util.response :refer [response resource-response content-type]]
+            [ring.util.response :refer [response resource-response content-type status]]
             [aviation-missions.db :as db]
             [aviation-missions.e2e :as e2e]
             [aviation-missions.handlers :as handlers]
@@ -58,9 +58,25 @@
 (defroutes app-routes
   (GET "/__e2e/status" []
     (if (e2e/enabled?)
-      (response {:is_test_data true :test_run_id e2e/run-id
-                 :mission_count (db/test-mission-count)})
+      (response (db/test-store-state))
       {:status 404 :body {:error "Not found"}}))
+  (POST "/__e2e/fixtures" request
+    (if (e2e/enabled?)
+      (let [{:keys [fixture_type record]} (:body request)]
+        (if (and (= fixture_type "mission") (true? (:is_test_data record))
+                 (= e2e/run-id (:test_run_id record)))
+          (do (db/tag-test-schema!)
+              (-> (response (db/create-mission! record)) (status 201)))
+          (-> (response {:error "A mission tagged for this run is required"}) (status 400))))
+      (-> (response {:error "Not found"}) (status 404))))
+  (GET "/__e2e/runs/:run" [run]
+    (if (and (e2e/enabled?) (= run e2e/run-id))
+      (response (db/test-store-state))
+      (-> (response {:error "Not found"}) (status 404))))
+  (DELETE "/__e2e/runs/:run" [run]
+    (if (and (e2e/enabled?) (= run e2e/run-id))
+      (response (db/clear-test-store!))
+      (-> (response {:error "Not found"}) (status 404))))
   ;; API Documentation
   (GET "/swagger.json" [] swagger/swagger-spec)
   (GET "/api" []
@@ -140,7 +156,7 @@
       (wrap-cors :access-control-allow-origin [#".*"]
                  :access-control-allow-methods [:get :post :put :delete :options]
                  :access-control-allow-headers ["Content-Type" "Authorization" "Accept"]
-                 :access-control-max-age (* 60 60 24)) ; Cache preflight for 24 hours
+                 :access-control-max-age (str (* 60 60 24))) ; Servlet response headers are strings.
       wrap-keyword-params
       wrap-params
       (wrap-json-body {:keywords? true})

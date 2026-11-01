@@ -3,7 +3,7 @@
   "apps": {
     "aviation-accident-tracker": { "kind": "screens", "ids": ["list", "filters", "citations", "detail-map", "feedback"] },
     "aviation-chat": { "kind": "endpoints", "ids": ["root", "health", "chat-invalid", "chat-mock", "chat-auth"], "sharedFeedback": true },
-    "aviation-missions-app": { "kind": "screens", "ids": ["mission-list", "filters", "brief", "comments", "completed-feedback", "completion-submit", "suggest-edit", "create-form", "admin-login", "admin-dashboard", "feedback"] },
+    "aviation-missions-app": { "kind": "screens", "ids": ["mission-list", "filters", "brief", "comments", "completed-feedback", "completion-submit", "suggest-edit", "create-form", "admin-login", "admin-dashboard", "submission-review", "edit-review", "edit-status", "submission-reject", "edit-reject", "delete-mission", "logout", "api-docs", "feedback"] },
     "flight-planner": { "kind": "screens", "ids": ["planner", "import-export", "saved-plan", "route-results", "local-results", "weather", "airports", "feedback"] },
     "flight-track-analyzer": { "kind": "screens", "ids": ["flights", "flight-detail", "summary", "performance", "help", "feedback"] },
     "flight-tracker": { "kind": "screens", "ids": ["dashboard", "track", "remove", "feedback"] },

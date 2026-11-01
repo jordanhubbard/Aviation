@@ -877,8 +877,9 @@ release-visible outcome to `CHANGELOG.md`; Git preserves prior queue states.
   validation; #398 recovered #210, whose historical PR is closed. The original
   14 branches and four flagged worktrees have been reconciled.
 - **In progress:** E2E-001 route and persistence completeness audit; begin by
-  making Planner browser saved-plan loading use its isolated real storage and
-  qualifying imported-plan tagging across process restart. AI explanations still
+  qualifying the real Missions browser/H2 lifecycle, then auditing the remaining
+  apps and interruption cleanup. Planner storage/import and map checks landed
+  through #400 with all six exact-main workflows passing. AI explanations still
   need the actual RCC queued-request/callback integration and all-app coverage.
 
 - **Priority:** P0

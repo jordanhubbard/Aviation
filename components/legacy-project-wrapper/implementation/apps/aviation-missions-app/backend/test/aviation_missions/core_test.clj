@@ -4,6 +4,7 @@
             [cheshire.core :as json]
             [aviation-missions.core :refer [app]]
             [aviation-missions.db :as db]
+            [aviation-missions.e2e :as e2e]
             [aviation-missions.handlers :as handlers]))
 
 ;; Test database configuration for testing
@@ -348,3 +349,83 @@
             body (json/parse-string (:body response) true)]
         (is (= 200 (:status response)))
         (is (pos? (:imported_count body)))))))
+
+
+(defn signed-run-request [method uri body run secret & [expires-at app-id]]
+  (let [expiry (str (or expires-at (+ (System/currentTimeMillis) 60000)))
+        mac (javax.crypto.Mac/getInstance "HmacSHA256")
+        key (javax.crypto.spec.SecretKeySpec. (.getBytes ^String secret "UTF-8") "HmacSHA256")
+        _ (.init mac key)
+        signature (.formatHex (java.util.HexFormat/of)
+                    (.doFinal mac (.getBytes (str (or app-id "aviation-missions-app") "\n" run "\n" expiry) "UTF-8")))]
+    (-> (if body (json-request method uri body) (mock/request method uri))
+        (assoc-in [:headers "origin"] "http://127.0.0.1:3000")
+        (assoc-in [:headers "x-aviation-test-run"] run)
+        (assoc-in [:headers "x-aviation-test-expires"] expiry)
+        (assoc-in [:headers "x-aviation-test-signature"] signature))))
+
+(deftest sdk-fixtures-and-cleanup-use-only-the-signed-test-store
+  (let [run (str "e2e_" (apply str (repeat 32 "b")))
+        foreign (str "e2e_" (apply str (repeat 32 "c")))
+        secret "isolated-missions-test-secret-at-least-32-characters"
+        data #(json/parse-string (:body %) true)
+        request #(signed-run-request %1 %2 %3 run secret)
+        fixture {:title "E2E isolated mission" :category "Training" :difficulty 2
+                 :objective "Practice" :mission_description "Synthetic pattern"
+                 :why_description "Test the isolated lifecycle" :route "KOAK KOAK"
+                 :is_test_data true :test_run_id run}]
+    (is (= 404 (:status (app (mock/request :post "/__e2e/fixtures")))))
+    (is (thrown? clojure.lang.ExceptionInfo (db/clear-test-store!)))
+    (with-redefs-fn {#'e2e/run-id run #'e2e/secret secret}
+      (fn []
+        (db/tag-test-schema!)
+        (let [now (System/currentTimeMillis)]
+          (with-redefs-fn {#'e2e/current-time-ms (constantly now)}
+            (fn []
+              (doseq [expiry [now (dec now) (+ now 900001) "NaN"]]
+                (is (= 403 (:status (app (signed-run-request :get "/__e2e/status" nil run secret expiry)))))))))
+        (is (= 403 (:status (app (signed-run-request :get "/__e2e/status" nil run secret nil "flight-planner")))))
+        (is (= 403 (:status (app (mock/request :get "/__e2e/status")))))
+        (is (= 403 (:status (app (signed-run-request :get "/__e2e/status" nil foreign secret)))))
+        (is (= 403 (:status (app (assoc-in (request :delete (str "/__e2e/runs/" run) nil)
+                                          [:headers "x-aviation-test-signature"] (apply str (repeat 64 "0")))))))
+        (is (= 404 (:status (app (request :delete (str "/__e2e/runs/" foreign) nil)))))
+        (is (= 400 (:status (app (request :post "/__e2e/fixtures"
+                                          {:fixture_type "mission" :record (dissoc fixture :test_run_id)})))))
+        (let [seeded (app (request :post "/__e2e/fixtures" {:fixture_type "mission" :record fixture}))
+              mission (data seeded)
+              id (:id mission)]
+          (is (= 201 (:status seeded)))
+          (is (= "86400" (get-in seeded [:headers "Access-Control-Max-Age"])))
+          (is (every? (fn [value]
+                        (or (string? value) (and (sequential? value) (every? string? value))))
+                      (vals (:headers seeded))))
+          (is (= run (:test_run_id mission)))
+          (is (true? (:is_test_data mission)))
+          (clojure.java.jdbc/insert! db/db-spec :e2e_runs
+            {:test_run_id foreign :is_test_data true})
+          (is (thrown? clojure.lang.ExceptionInfo (db/test-store-state)))
+          (is (thrown? clojure.lang.ExceptionInfo (db/clear-test-store!)))
+          (is (some? (db/get-mission-by-id id)))
+          (clojure.java.jdbc/delete! db/db-spec :e2e_runs ["test_run_id = ?" foreign])
+          (is (= 201 (:status (app (request :post (str "/missions/" id "/comments")
+                                            {:author_name "E2E Pilot" :content "Tagged comment"})))))
+          (is (= 201 (:status (app (request :post (str "/missions/" id "/completed")
+                                            {:pilot_name "E2E Pilot" :notes "Tagged completion"})))))
+          (db/create-admin-session! "E2E Admin")
+          (let [state (data (app (request :get "/__e2e/status" nil)))]
+            (is (= 1 (:mission_count state)))
+            (is (= 1 (get-in state [:tables :comments])))
+            (is (= 1 (get-in state [:tables :mission_completions])))
+            (is (= 1 (get-in state [:tables :admin_sessions])))
+            (is (= 5 (:count state))))
+          ;; A failed browser run uses the same registered SDK cleanup path.
+          (try
+            (throw (ex-info "simulated browser failure" {}))
+            (catch clojure.lang.ExceptionInfo _ nil)
+            (finally
+              (is (= 0 (:count (data (app (request :delete (str "/__e2e/runs/" run) nil))))))))
+          (let [residual (data (app (request :get (str "/__e2e/runs/" run) nil)))]
+            (is (= 0 (:count residual)))
+            (is (every? zero? (vals (:tables residual)))))
+          (is (= 0 (:count (data (app (request :delete (str "/__e2e/runs/" run) nil)))))))))))
