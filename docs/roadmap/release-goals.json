@@ -1,5 +1,5 @@
 {
   "schema": "literate-ai/release-roadmap-goals@1",
   "roadmap": "docs/roadmap/active-work.md",
-  "releases": {"1.0.0": [{"id": "SDK-001"}]}
+  "releases": {"1.0.0": [{"id": "SDK-001"}, {"id": "RELEASE-001"}]}
 }

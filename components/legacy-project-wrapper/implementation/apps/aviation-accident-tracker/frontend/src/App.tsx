@@ -6,6 +6,7 @@ import L from 'leaflet';
 import debounce from 'lodash.debounce';
 import { distanceKM } from '@aviation/shared-sdk/aviation/navigation';
 import { Badge } from './components/Badge';
+import { AccidentExplanation } from './components/AccidentExplanation';
 import { reportFrontendErrorToMac } from './utils/macReporting';
 import { countryLabel, regionLabel, parseSearchQuery } from './searchQuery';
 // import { normalizeMarkers, defaultClusterOptions } from '@aviation/ui-framework';
@@ -315,7 +316,15 @@ export function App() {
 
   return (
     <div id="accident-tracker-app" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, padding: 16 }}>
-      <style>{`.leaflet-control-attribution a { color: #005a7a; text-decoration: underline; }`}</style>
+      <style>{`
+        .leaflet-control-attribution a { color: #005a7a; text-decoration: underline; }
+        @media (max-width: 600px) {
+          #accident-tracker-app { grid-template-columns: minmax(0, 1fr) !important; }
+          #accident-tracker-app > div { grid-column: 1 !important; min-width: 0; }
+          #accident-tracker-app input { min-width: 0 !important; max-width: 100%; box-sizing: border-box; }
+          #accident-tracker-app table { display: block; overflow-x: auto; }
+        }
+      `}</style>
       <div style={{ gridColumn: '1 / span 2' }}>
         <h1>Aviation Accident Tracker</h1>
         <p>Last successful sync: {syncStatus?.lastSuccessAt ? new Date(syncStatus.lastSuccessAt).toLocaleString() : 'Not recorded yet'}{syncStatus?.lastError ? ' · Latest sync failed' : ''}</p>
@@ -651,7 +660,7 @@ export function App() {
           onClick={() => setSelected(null)}
         >
           <div
-            style={{ background: 'white', padding: 24, maxWidth: 600, width: '90%', maxHeight: '80vh', overflow: 'auto' }}
+            style={{ background: 'white', padding: 24, maxWidth: 600, width: '90%', boxSizing: 'border-box', overflowWrap: 'anywhere', maxHeight: '80vh', overflow: 'auto' }}
             onClick={(e) => e.stopPropagation()}
           >
             <h2 id="event-detail-title">
@@ -700,6 +709,7 @@ export function App() {
                   : '—'}
             </p>
             {selectedError && <p style={{ color: 'red' }}>Failed to load event detail: {selectedError}</p>}
+            <AccidentExplanation key={selected.id} event={selected} />
             <button onClick={() => setSelected(null)}>Close</button>
           </div>
         </div>
