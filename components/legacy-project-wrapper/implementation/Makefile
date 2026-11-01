@@ -39,6 +39,7 @@ help:
 	@echo "  make run-foreflight-dashboard - Run ForeFlight Dashboard (port 5051)"
 	@echo "  make run-flight-tracker       - Run Flight Tracker (port 3001)"
 	@echo "  make run-weather-briefing     - Run Weather Briefing (port 3002)"
+	@echo "  make run-aviation-accident-tracker - Run Aviation Accident Tracker (port 3003)"
 	@echo "  make run-g1000-simulator      - Run G1000 Simulator (backend + frontend)"
 	@echo "  make run-flight-track-analyzer - Run Flight Track Analyzer (port 8010)"
 	@echo "  make stop-all                 - Stop all running applications"

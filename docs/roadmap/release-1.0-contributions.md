@@ -86,3 +86,44 @@ does not establish merge, test, supersession, or completion evidence.
 | `chore/openapi-docs` | attached-worktree-is-dirty | included; preserve and inspect local changes |
 | `feat/sdk-aircraft-operating-profile` | attached-worktree-branch-is-unresolved | included; preserve and inspect local changes |
 | `feat/sdk-nav-providers` | attached-worktree-is-dirty | included; preserve and inspect local changes |
+
+## Reconciliation evidence
+
+Main baseline: `a427101c8849147238630bb58424d71dcb2b19d9`. All six
+post-merge workflows passed, including Dependency Scan, Integration Tests, and
+Common Aviation SDK. Comparisons map old application/package paths into
+`components/legacy-project-wrapper/implementation`.
+
+- Router test branch `191b0a24047695d5496247262f3572ae19965b2f` contributes
+  malformed-GPX rejection. Branch `01ada9f9708ea41e8c150d40a9e9d3198844925a`
+  contributes FPL round-trip and explicit store isolation. Those three missing
+  cases are recovered in the current router suite; its delete-then-GET case was
+  already covered by `test_delete_then_get_returns_404`. The resulting suite
+  passes all 45 tests on Python 3.14.7. Landing remains pending.
+- Security branches `be5c40724fab1c9b58f474cafc0e935b169af8e1` and
+  `d1136bb5b52b0330d4ddedc22c8f420ef3767f52` are superseded by current
+  workspace overrides: ip-address 10.7.4, ws 8.22.0, react-router and
+  react-router-dom 7.18.4, and ForeFlight PyJWT 2.15.0. Their historical
+  lockfile updates must not replace the current pnpm workspace lock.
+- Security branches `ba08b17a37ca65cd3f43a352d0c1cacec0c1eef6` and
+  `d5940f5b07bccfcb4ae43487670ba449fbf25fd4` are superseded by current
+  blocking Trivy/pip-audit and integration jobs, removal of the obsolete
+  Compose startup/teardown, and the setuptools upgrade before pip-audit.
+  Current `.trivyignore` retains their documented exclusions. The exact main
+  Dependency Scan and Integration Tests workflows pass.
+- The express-rate-limit branch `d4ebdf5a662f108f96cb3a25fb1dd0d6913930dc`
+  requests ^8.3.2, already declared by the current Accident Tracker backend.
+  The branch's npm lockfile is superseded by the current pnpm workspace lock;
+  package install and application qualification still need recording here.
+- The rpe worktree's SDK export edits are present in the current barrel,
+  including cache, airport, navigation, weather, datetime, and GoogleCalendar.
+  Its untracked historical merge report and dirty index file are preserved.
+- The xqe Makefile's help addition was missing and is recovered here. Its
+  accident-tracker run target already exists in the current Makefile.
+- The nav-provider worktree's only untracked path is a lifecycle lock; no
+  source edits were found. Active-process inspection found no process using
+  the four flagged worktrees. Lock disposition remains pending.
+
+Next: validate the recovered changes in CI, preserve and resolve dirty worktree
+state, then finish behavior and patch-equivalence checks for the remaining
+feature, migration, hazard, NOTAM, dynamic-filter, and aircraft branches.

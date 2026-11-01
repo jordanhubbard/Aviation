@@ -510,3 +510,29 @@ def test_create_with_notes(client):
     plan_id = created["metadata"]["id"]
     get_resp = client.get(f"/flight-plans/{plan_id}")
     assert get_resp.json()["notes"] == "VFR corridor"
+
+
+def test_import_malformed_gpx_returns_422(client):
+    resp = client.post(
+        "/flight-plans/import",
+        json={"format": "gpx", "content": "<gpx><unclosed"},
+    )
+    assert resp.status_code == 422
+
+
+def test_fpl_roundtrip(client):
+    imported = client.post(
+        "/flight-plans/import",
+        json={"format": "fpl", "content": FPL_CONTENT, "name": "FPL Roundtrip"},
+    )
+    assert imported.status_code == 201
+    plan_id = imported.json()["metadata"]["id"]
+    exported = client.post(f"/flight-plans/{plan_id}/export?fmt=fpl")
+    assert exported.status_code == 200
+    assert "FPL" in exported.json()["content"]
+
+
+def test_storage_isolation(client):
+    response = client.get("/flight-plans/")
+    assert response.status_code == 200
+    assert response.json() == []
