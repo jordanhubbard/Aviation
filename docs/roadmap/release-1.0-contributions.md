@@ -182,3 +182,10 @@ Additional comparisons:
   security dispositions, ten of the original fourteen branch blockers are resolved.
   The two router-test branches, AI branch, and ForeFlight branch await landing of
   their recovered work through #394 and exact post-merge validation.
+
+Browser validation of the recovered explanation control passed at 1280px and
+390px: loading, successful analysis, and unavailable-service retry states all
+rendered, no page errors occurred, and neither viewport had document overflow.
+The narrow layout now constrains inputs, tables, and modal padding. Screenshots
+were inspected from disposable validation storage. Third-party map requests were
+blocked and API responses were deterministic fixtures for this UI check.
