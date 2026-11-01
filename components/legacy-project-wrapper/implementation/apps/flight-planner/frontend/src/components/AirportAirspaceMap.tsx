@@ -5,6 +5,7 @@ import { MapContainer, TileLayer, Circle, CircleMarker, GeoJSON, useMap } from '
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
 import type { Feature, GeoJsonObject, GeoJsonProperties } from 'geojson'
+import { boundingBox } from '@aviation/shared-sdk/aviation/navigation'
 
 import type { Airport, GeoJsonFeatureCollection } from '../types'
 
@@ -29,8 +30,9 @@ const FitToCircle: React.FC<{ center: [number, number]; radiusM: number }> = ({
     }
 
     try {
-      const bounds = L.circle(L.latLng(center[0], center[1]), { radius: radiusM }).getBounds()
-      map.fitBounds(bounds.pad(0.15), { animate: true })
+      const [south, west, north, east] = boundingBox(center[0], center[1], radiusM / 1852)
+      const bounds = L.latLngBounds([south, west], [north, east])
+      map.fitBounds(bounds.pad(0.15), { animate: false })
     } catch (error) {
       console.error('Error fitting map bounds:', error)
     }
@@ -86,6 +88,7 @@ const AirportAirspaceMap: React.FC<Props> = ({ airport, radiusNm = 20, airspace 
       }}
     >
       <MapContainer
+        zoomAnimation={false}
         center={[center[0], center[1]]}
         zoom={10}
         scrollWheelZoom={!isSmall}

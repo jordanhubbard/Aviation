@@ -14,7 +14,7 @@ def test_signed_run_uses_only_tagged_test_storage():
     env = {**os.environ, 'AVIATION_E2E_RUN_ID': run, 'AVIATION_E2E_SECRET': secret,
            'AVIATION_E2E_DATA_DIR': str(root), 'PYTHONPATH': str(source)}
     code = '''
-import hashlib, hmac, json, time
+import hashlib, hmac, json, subprocess, sys, time
 from fastapi.testclient import TestClient
 from app import create_app
 from app.config import settings
@@ -32,6 +32,34 @@ plan_id = created.json()['metadata']['id']
 assert client.get(f'/flight-plans/{plan_id}', headers=headers).status_code == 200
 assert client.get('/__e2e/status', headers=headers).json()['saved_plan_count'] == 1
 assert client.delete(f'/flight-plans/{plan_id}', headers=headers).status_code == 204
+imported_ids = []
+for fmt, content in [('gpx', '<gpx><trk><name>Tagged import</name></trk></gpx>'),
+                     ('fpl', '(FPL-Tagged import-IS\\n-KOAKKSFO\\n)')]:
+    imported = client.post('/flight-plans/import', headers=headers,
+                           json={'format': fmt, 'content': content, 'name': f'E2E {fmt}'})
+    assert imported.status_code == 201, imported.text
+    imported_ids.append(imported.json()['metadata']['id'])
+    # Check before update can repair an untagged imported row.
+    assert client.get('/__e2e/status', headers=headers).json()['saved_plan_count'] == len(imported_ids)
+    assert client.put(f'/flight-plans/{imported_ids[-1]}', headers=headers,
+                      json={'notes': 'Updated isolated import'}).status_code == 200
+    exported = client.post(f'/flight-plans/{imported_ids[-1]}/export?fmt={fmt}', headers=headers)
+    assert exported.status_code == 200, exported.text
+    assert exported.json()['format'] == fmt
+assert client.get('/__e2e/status', headers=headers).json()['saved_plan_count'] == 2
+# A fresh interpreter reopens the actual JSON file, not the current in-memory map.
+# Loading fails closed if either import or update lost its immutable SDK tags.
+reopened = subprocess.run([sys.executable, '-c', """
+from app.routers.flight_plan import _plans
+from app.e2e import RUN_ID
+assert len(_plans) == 2
+assert all(p['is_test_data'] is True and p['test_run_id'] == RUN_ID for p in _plans.values())
+assert all(p['notes'] == 'Updated isolated import' for p in _plans.values())
+"""], capture_output=True, text=True, timeout=60)
+assert reopened.returncode == 0, reopened.stdout + reopened.stderr
+for imported_id in imported_ids:
+    assert client.delete(f'/flight-plans/{imported_id}', headers=headers).status_code == 204
+assert client.get('/__e2e/status', headers=headers).json()['saved_plan_count'] == 0
 recording = client.post('/flight-recordings/', json={'metadata': {}, 'telemetry': {}, 'events': []}, headers=headers)
 assert recording.status_code == 200, recording.text
 recording_id = recording.json()['metadata']['id']

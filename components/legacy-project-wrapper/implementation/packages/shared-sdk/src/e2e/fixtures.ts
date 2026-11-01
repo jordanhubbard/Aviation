@@ -62,6 +62,13 @@ export function standardE2EMocks(runId: E2ERunId) {
         recommendation: 'Synthetic E2E weather', warnings: [] },
       savedPlan: { id: runId, name: `E2E saved plan ${runId}`, origin: 'KOAK',
         destination: 'KSFO', speed: 110, altitude: 3500 },
+      routePlan: tag({ route: ['KOAK', 'KSFO'], distance_nm: 10, time_hr: 0.1,
+        origin_coords: [37.721, -122.221], destination_coords: [37.619, -122.375],
+        departure_time_utc: '2026-10-24T20:00:00Z', arrival_time_utc: '2026-10-24T20:06:00Z',
+        segments: [{ start: [37.721, -122.221], end: [37.619, -122.375], type: 'cruise', vfr_altitude: 3500 }],
+        legs: [{ from_code: 'KOAK', to_code: 'KSFO', distance_nm: 10, groundspeed_kt: 100,
+          ete_minutes: 6, elapsed_minutes: 6, fuel_stop: false }],
+        alternates: [], groundspeed_kt: 100, headwind_kt: 10 }),
     }),
   };
 }

@@ -63,3 +63,12 @@ The deployment only binds application ports to 127.0.0.1. Public access goes
 through each app's HTTPS hostname. Keep the host's memory and swap health in view
 between services; stop if the host begins sustained swapping or a service exceeds
 its memory limit.
+
+Remote E2E adapters print one JSON pass record for each verified screen, including
+its data mode and viewport. Set `AVIATION_E2E_VIEWPORT=mobile` to run the same
+adapter at 390 by 844 pixels (the default desktop viewport is 1280 by 720).
+`AVIATION_E2E_CAPTURE_DIR` optionally retains full-page PNGs and rendered body text
+for the screen inventories, including Flight School's dynamic route sweep.
+Browser traces are retained on failure. These are
+diagnostic captures; they do not establish full acceptance without reviewing the
+visible behavior and completing the deployment gate.

@@ -872,19 +872,14 @@ release-visible outcome to `CHANGELOG.md`; Git preserves prior queue states.
 
 - **Release target:** 1.0.0
 - **Contribution inventory:** [all included work](release-1.0-contributions.md).
-- **Next action:** Complete feature PR #210 and issues #176/#332 before
-  publication. All 44 original dependency/CI PRs are resolved with comparisons,
-  preserved branches, and exact-main validation; #396 landed their unique updates.
-  The original 14 branches and four flagged worktrees have been reconciled;
-  recovered changes landed in #394 and unique worktree edits remain on pushed
-  recovery refs. See the contribution inventory for validation evidence.
-- **In progress:** Recover #210 through shared COM/NAV and auxiliary audio
-  contracts with cross-language vectors, Flight Planner composition over common
-  controls, and tested exact-first/fuzzy-fallback ingest integration. Existing
-  G1000 radio geometry stays delegated to the common SDK.
-  Missing-registration reports must remain distinct through batch processing and
-  persistence; qualify migration of the legacy uniqueness constraint while
-  preserving event IDs, source rows, indexes, and rollback on unexpected schema.
+- **Next action:** Complete issues #176/#332 before publication. All 45
+  resolved original contributions have preserved recovery evidence and exact-main
+  validation; #398 recovered #210, whose historical PR is closed. The original
+  14 branches and four flagged worktrees have been reconciled.
+- **In progress:** E2E-001 route and persistence completeness audit; begin by
+  making Planner browser saved-plan loading use its isolated real storage and
+  qualifying imported-plan tagging across process restart. AI explanations still
+  need the actual RCC queued-request/callback integration and all-app coverage.
 
 - **Priority:** P0
 - **Owner:** release engineering

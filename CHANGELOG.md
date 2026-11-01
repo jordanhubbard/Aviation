@@ -9,6 +9,14 @@
 
 ## Unreleased
 
+- Strengthened remote E2E checks: Planner loads saved plans from its isolated
+  server store, tags imported plans across restart, and exercises route results
+  and the import dialog. Map transitions avoid stale Leaflet animations and use
+  SDK airport viewport bounds. Flight School uses booking-state fixtures and the proper
+  role for each screen, rejects unexpected redirects and HTTP/console errors, and
+  loads existing stylesheet and image resources. Screen adapters emit individual
+  results and support mobile viewports and retained captures.
+
 - Added Component-owned COM/NAV tuning, PTT, auxiliary audio, and marker-input
   controls with shared TypeScript/Python conformance vectors. Flight Planner now
   composes the common controls, and its Python CI gate is blocking. Accident Tracker

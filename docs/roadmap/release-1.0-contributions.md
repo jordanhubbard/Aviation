@@ -11,8 +11,9 @@ does not establish merge, test, supersession, or completion evidence.
 
 The original scope contains 47 contributions. All 44 dependency/CI PRs are now
 closed with individual comparisons and exact-main CI evidence in their comments.
-PR #210 and issues #176/#332 remain included in 1.0 until their complete
-acceptance is qualified. No feature request is closed by the dependency batch.
+PR #210 was recovered by #398 and closed after exact-main CI passed, bringing
+the resolved count to 45 of 47. Issues #176/#332 remain included in 1.0 until
+their complete acceptance is qualified. New dependency PR #399 is also included.
 
 | Kind | Item | Title | State |
 | --- | --- | --- | --- |
@@ -60,7 +61,7 @@ acceptance is qualified. No feature request is closed by the dependency batch.
 | review | [#219](https://github.com/jordanhubbard/Aviation/pull/219) | chore(deps): bump requests from 2.33.0 to 2.33.1 in /apps/foreflight-dashboard | closed; incorporated/superseded by #396; exact-main CI passes |
 | review | [#217](https://github.com/jordanhubbard/Aviation/pull/217) | chore(deps): bump pandas from 3.0.1 to 3.0.2 in /apps/foreflight-dashboard | closed; incorporated/superseded by #396; exact-main CI passes |
 | review | [#216](https://github.com/jordanhubbard/Aviation/pull/216) | chore(deps): bump redis from 5.10.0 to 5.11.0 | closed; incorporated/superseded by #396; exact-main CI passes |
-| review | [#210](https://github.com/jordanhubbard/Aviation/pull/210) | feat: implement aviation stubs — fuzzy ingest matching + nav radio sim | included; reconciliation pending |
+| review | [#210](https://github.com/jordanhubbard/Aviation/pull/210) | feat: implement aviation stubs — fuzzy ingest matching + nav radio sim | closed; recovered by #398; exact-main CI passes |
 | review | [#209](https://github.com/jordanhubbard/Aviation/pull/209) | chore(deps): bump the npm_and_yarn group across 1 directory with 2 updates | closed; incorporated/superseded by #396; exact-main CI passes |
 | review | [#190](https://github.com/jordanhubbard/Aviation/pull/190) | chore(deps-dev): bump typescript from 5.9.3 to 6.0.2 in /apps/aviation-accident-tracker/backend | closed; incorporated/superseded by #396; exact-main CI passes |
 
@@ -116,7 +117,11 @@ harness passes with receipt
 `sha256:915492f9a8dce42ba1d06e9a83aa6f66ba3a04d6de4bd4290ec60313c038fcf3`.
 Project verification passes authority, all 19 locks, and the current receipt.
 Catalog audit refreshes leave component lock bytes unchanged. Reviewed exact-main
-CI remains required before closing the historical PR.
+CI passed on merge commit `c9b4d5c2fdba0bc5fdedb9c1f32f5a77bcd8a13c`: all six
+workflows, including [Monorepo](https://github.com/jordanhubbard/Aviation/actions/runs/41345449906)
+and [SDK](https://github.com/jordanhubbard/Aviation/actions/runs/41345449868).
+Historical PR #210 is closed with its original head preserved and a pushed
+supersession marker.
 
 Issue #176 requires a shared explanation client, a standard explanation endpoint
 and decision control in every application, and follow-up questions through the

@@ -3,7 +3,8 @@
 // must match the server; no fixture is created in the production database.
 import { existsSync } from 'node:fs';
 import { randomBytes } from 'node:crypto';
-import { readFileSync } from 'node:fs';
+import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { join } from 'node:path';
 import { gunzipSync } from 'node:zlib';
 import { chromium } from '@playwright/test';
 import {
@@ -24,6 +25,10 @@ if (inventory.schema !== 'aviation/remote-e2e-inventory@1' || !inventory.apps[ap
   throw new Error(`Missing remote E2E inventory for ${appId}`);
 }
 let latestPage;
+const viewport = process.env.AVIATION_E2E_VIEWPORT || 'desktop';
+if (!['desktop', 'mobile'].includes(viewport)) throw new Error('Invalid E2E viewport');
+const browserContextOptions = { viewport: viewport === 'mobile'
+  ? { width: 390, height: 844 } : { width: 1280, height: 720 } };
 const feedbackRunId = process.env.AVIATION_E2E_RUN_ID || createE2ERunId();
 const runDeclaredScreens = async (expectedIds, screens) => {
   const declared = inventory.apps[appId];
@@ -40,7 +45,22 @@ const runDeclaredScreens = async (expectedIds, screens) => {
     && JSON.stringify([...expectedIds].sort()) !== JSON.stringify([...declared.ids].sort())) {
     throw new Error(`Remote E2E inventory differs from adapter for ${appId}`);
   }
-  await runE2EScreens(expectedIds, screens);
+  await runE2EScreens(expectedIds, screens.map(screen => ({ ...screen,
+    verify: async () => {
+      await screen.verify();
+      const captureDirectory = process.env.AVIATION_E2E_CAPTURE_DIR;
+      const capturePage = screen.page || latestPage;
+      if (captureDirectory && capturePage && declared.kind !== 'endpoints') {
+        mkdirSync(captureDirectory, { recursive: true });
+        const screenName = screen.id.replace(/[^a-z0-9-]/gi, '_');
+        const stem = join(captureDirectory, `${appId}-${screenName}-${viewport}`);
+        await capturePage.screenshot({ path: `${stem}.png`, fullPage: true });
+        writeFileSync(`${stem}.txt`, await capturePage.locator('body').innerText());
+      }
+      console.log(JSON.stringify({ schema: 'aviation/e2e-screen-result@1', app: appId,
+        screen: screen.id, viewport, dataMode: screen.dataMode, result: 'passed' }));
+    },
+  })));
 };
 const baseUrl = process.env.AVIATION_E2E_BASE_URL || `https://${appId}.jordanhubbard.net`;
 const isolatedHost = ['127.0.0.1', 'localhost'].includes(new URL(baseUrl).hostname);
@@ -98,7 +118,7 @@ if (appId === 'flightschool') {
       const errors = [];
       const pages = {};
       for (const role of ['admin', 'instructor', 'student']) {
-        const context = await browser.newContext();
+        const context = await browser.newContext(browserContextOptions);
         run.onCleanup(() => context.close());
         const page = await context.newPage();
         await installIsolatedFeedbackScript(page);
@@ -107,6 +127,14 @@ if (appId === 'flightschool') {
           ...route.request().headers(), ...run.headersFor(appId),
         } }));
         page.on('pageerror', error => errors.push(`${role}: ${error.message}`));
+        page.on('console', message => {
+          if (message.type() === 'error') errors.push(`${role}: ${message.text()}`);
+        });
+        page.on('response', response => {
+          if (new URL(response.url()).origin === origin && response.status() >= 400) {
+            errors.push(`${role}: HTTP ${response.status()} ${new URL(response.url()).pathname}`);
+          }
+        });
         const loginResponse = await page.goto(new URL('/auth/login', baseUrl).toString(), { waitUntil: 'domcontentloaded' });
         if (!loginResponse?.ok()) throw new Error(`Flight School ${role} login returned HTTP ${loginResponse?.status()}`);
         if (!await page.getByLabel('Email').count()) throw new Error(`Flight School ${role} login has no email field`);
@@ -115,21 +143,28 @@ if (appId === 'flightschool') {
         await page.getByRole('button', { name: 'Sign In' }).click();
         await page.waitForURL(role === 'admin' ? /\/admin\/dashboard/ : /\/dashboard/);
       }
-      const pathFor = path => path.replaceAll('<int:booking_id>', '1').replaceAll('<int:aircraft_id>', '1')
-        .replaceAll('<int:id>', '1');
+      const roleFor = path => path.startsWith('/admin/') || path === '/debug' ? 'admin'
+        : path.startsWith('/instructor/') ? 'instructor' : 'student';
+      const pathFor = path => path.replaceAll('<int:booking_id>',
+        path.startsWith('/flight/summary/') ? '3'
+          : /^\/flight\/(status|check-out)\//.test(path) ? '2' : '1')
+        .replaceAll('<int:aircraft_id>', '1').replaceAll('<int:id>', '1');
       await runDeclaredScreens(screens, screens.map(path => ({
         id: path, dataMode: 'tagged-database',
+        page: pages[roleFor(path)],
         visit: async () => {
-          const role = path.startsWith('/admin/') ? 'admin' : path.startsWith('/instructor/') ? 'instructor' : 'student';
+          const role = roleFor(path);
           const page = pages[role];
           const response = await page.goto(new URL(pathFor(path), baseUrl).toString(), { waitUntil: 'domcontentloaded' });
           if (!response || response.status() >= 400) throw new Error(`${path} returned HTTP ${response?.status()}`);
-          if ((role === 'admin' || role === 'instructor') && !new URL(page.url()).pathname.startsWith(`/${role}/`)) {
-            throw new Error(`${path} redirected outside the ${role} screens`);
+          // This alias intentionally opens the same user form with an instructor type.
+          const expected = path === '/admin/instructor/create' ? '/admin/user/create' : pathFor(path);
+          if (new URL(page.url()).pathname !== expected) {
+            throw new Error(`${path} redirected to ${new URL(page.url()).pathname}, expected ${expected}`);
           }
         },
         verify: async () => {
-          const role = path.startsWith('/admin/') ? 'admin' : path.startsWith('/instructor/') ? 'instructor' : 'student';
+          const role = roleFor(path);
           const page = pages[role];
           const body = await page.locator('body').innerText();
           if (/Internal Server Error|Something went wrong|Application Error/i.test(body)) {
@@ -181,7 +216,7 @@ if (appId === 'flightschool') {
           throw new Error('Missions test comment was not tagged in H2');
         }
       }
-      const context = await browser.newContext();
+      const context = await browser.newContext(browserContextOptions);
       const page = await context.newPage();
       await installIsolatedFeedbackScript(page);
       run.onCleanup(async () => {
@@ -361,7 +396,7 @@ if (appId === 'flightschool') {
     const seeded = await seedRemoteFixture(run, { appId, baseUrl, fetch }, 'flight',
       run.tag({ aircraft: 'E2E', kml_base64: kml.toString('base64') }));
     if (!seeded?.id || seeded.test_run_id !== run.id) throw new Error('KMLab fixture was not tagged');
-      const context = await browser.newContext();
+      const context = await browser.newContext(browserContextOptions);
       const page = await context.newPage();
       await installIsolatedFeedbackScript(page);
       await installE2EApiHeaders(page, baseUrl, appId, run);
@@ -436,16 +471,15 @@ if (appId === 'flightschool') {
         if (!initial.ok || (await initial.json()).saved_plan_count !== 0) {
           throw new Error('Planner isolated test store did not start empty');
         }
-        const created = await fetch(new URL('/flight-plans/', baseUrl), { method: 'POST', headers,
-          body: JSON.stringify({ name: `E2E saved plan ${run.id}`, origin: 'KOAK', destination: 'KSFO' }) });
-        if (created.status !== 201) throw new Error(`Planner test plan create failed: HTTP ${created.status}`);
-        const planId = (await created.json()).metadata.id;
+        let planId;
         let recordingId;
         run.onCleanup(async () => {
-          const deleted = await fetch(new URL(`/flight-plans/${planId}`, baseUrl), {
-            method: 'DELETE', headers: run.headersFor(appId),
-          });
-          if (deleted.status !== 204) throw new Error(`Planner test plan cleanup failed: HTTP ${deleted.status}`);
+          if (planId !== undefined) {
+            const deleted = await fetch(new URL(`/flight-plans/${planId}`, baseUrl), {
+              method: 'DELETE', headers: run.headersFor(appId),
+            });
+            if (deleted.status !== 204) throw new Error(`Planner test plan cleanup failed: HTTP ${deleted.status}`);
+          }
           if (recordingId !== undefined) {
             const removedRecording = await fetch(new URL(`/flight-recordings/${recordingId}`, baseUrl), {
               method: 'DELETE', headers: run.headersFor(appId),
@@ -458,6 +492,10 @@ if (appId === 'flightschool') {
             throw new Error('Planner test records remain after cleanup');
           }
         });
+        const created = await fetch(new URL('/flight-plans/', baseUrl), { method: 'POST', headers,
+          body: JSON.stringify({ name: `E2E saved plan ${run.id}`, origin: 'KOAK', destination: 'KSFO' }) });
+        if (created.status !== 201) throw new Error(`Planner test plan create failed: HTTP ${created.status}`);
+        planId = (await created.json()).metadata.id;
         const recording = await fetch(new URL('/flight-recordings/', baseUrl), { method: 'POST', headers,
           body: JSON.stringify({ metadata: { name: `E2E recording ${run.id}` }, telemetry: {}, events: [] }) });
         if (!recording.ok) throw new Error(`Planner test recording create failed: HTTP ${recording.status}`);
@@ -468,7 +506,7 @@ if (appId === 'flightschool') {
           throw new Error('Planner test records were not tagged in the isolated store');
         }
       }
-      const context = await browser.newContext();
+      const context = await browser.newContext(browserContextOptions);
       const page = await context.newPage();
       await installIsolatedFeedbackScript(page);
       run.onCleanup(async () => {
@@ -483,6 +521,10 @@ if (appId === 'flightschool') {
         ...route.request().headers(), ...run.headersFor(appId),
       } }));
       await page.route(`${origin}/flight-plans/**`, async route => {
+        if (isolatedRunId) {
+          await route.continue({ headers: { ...route.request().headers(), ...run.headersFor(appId) } });
+          return;
+        }
         if (route.request().method() !== 'GET') throw new Error('Planner E2E attempted a production plan write');
         await route.fulfill({ status: 200, contentType: 'application/json',
           body: JSON.stringify([mocks.savedPlan]) });
@@ -492,12 +534,23 @@ if (appId === 'flightschool') {
         let body;
         let status = 200;
         if (path === '/api/meta') body = run.tag({ repo_url: null, revision: 'e2e' });
+        else if (path === '/api/mac/enabled') body = run.tag({ enabled: false, created: false });
         else if (path === '/api/airports/search') body = [airport];
         else if (path === '/api/airports/KOAK') body = run.tag(airport);
         else if (path === '/api/procedures') {
           status = 404;
           body = { detail: 'Not Found' };
         }
+        else if (path === '/api/plan/stream' && route.request().method() === 'POST') {
+          const request = route.request().postDataJSON();
+          if (request.mode !== 'route' || request.origin !== 'KOAK' || request.destination !== 'KSFO') {
+            throw new Error('Unexpected route planning request');
+          }
+          await route.fulfill({ status: 200, contentType: 'text/event-stream',
+            body: `event: done\ndata: ${JSON.stringify(run.tag({ plan: mocks.routePlan }))}\n\n` });
+          return;
+        }
+        else if (path === '/api/terrain/profile') body = run.tag({ points: [] });
         else if (path === '/api/plan' && route.request().method() === 'POST') {
           const request = route.request().postDataJSON();
           if (request.mode !== 'local' || request.airport !== 'KOAK') throw new Error('Unexpected planner request');
@@ -518,7 +571,7 @@ if (appId === 'flightschool') {
       });
       const errors = [];
       page.on('pageerror', error => errors.push(error.message));
-      await runDeclaredScreens(['planner', 'saved-plan', 'local-results', 'weather', 'airports'], [
+      await runDeclaredScreens(['planner', 'import-export', 'saved-plan', 'route-results', 'local-results', 'weather', 'airports'], [
         {
           id: 'planner', dataMode: 'sdk-mock',
           visit: async () => {
@@ -536,7 +589,20 @@ if (appId === 'flightschool') {
           },
         },
         {
-          id: 'saved-plan', dataMode: 'sdk-mock',
+          id: 'import-export', dataMode: 'isolated-browser',
+          visit: () => page.getByRole('button', { name: 'Import/Export Flight Plan' }).click(),
+          verify: async () => {
+            const dialog = page.getByRole('dialog');
+            await dialog.getByRole('heading', { name: 'Import Flight Plan' }).waitFor();
+            await dialog.locator('input[type="file"]').setInputFiles({
+              name: `${run.id}.txt`, mimeType: 'text/plain', buffer: Buffer.from(run.id),
+            });
+            await dialog.getByText('Invalid file type. Please select a GPX, FPL, or KML file.').waitFor();
+            await dialog.getByRole('button', { name: 'Cancel' }).click();
+          },
+        },
+        {
+          id: 'saved-plan', dataMode: isolatedRunId ? 'tagged-database' : 'sdk-mock',
           visit: async () => {
             await page.getByRole('button', { name: 'Load Flight Plan' }).click();
             await page.getByText(`E2E saved plan ${run.id}`).click();
@@ -544,6 +610,17 @@ if (appId === 'flightschool') {
           verify: async () => {
             const value = await page.getByRole('combobox', { name: 'Origin' }).inputValue();
             if (value !== 'KOAK') throw new Error(`Saved plan origin did not load: ${value}`);
+            const destination = await page.getByRole('combobox', { name: 'Destination' }).inputValue();
+            if (destination !== 'KSFO') throw new Error(`Saved plan destination did not load: ${destination}`);
+          },
+        },
+        {
+          id: 'route-results', dataMode: 'sdk-mock',
+          visit: () => page.getByRole('button', { name: 'Plan Route', exact: true }).click(),
+          verify: async () => {
+            await page.getByText('Route Results', { exact: true }).waitFor();
+            await page.getByText('Route: KOAK → KSFO', { exact: true }).waitFor();
+            await page.getByText('Groundspeed: 100 kt', { exact: true }).waitFor();
           },
         },
         {
@@ -592,7 +669,7 @@ if (appId === 'flightschool') {
   const browser = traceE2EBrowser(await chromium.launch({ headless: true, ...(executable ? { executablePath: executable } : {}) }), appId, process.env.AVIATION_E2E_TRACE_DIR);
   try {
     await withE2ERun(secret, async run => {
-      const context = await browser.newContext();
+      const context = await browser.newContext(browserContextOptions);
       const page = await context.newPage();
       await installIsolatedFeedbackScript(page);
       const fixture = standardForeFlightCsv(run.id);
@@ -667,7 +744,7 @@ if (appId === 'flightschool') {
   const browser = traceE2EBrowser(await chromium.launch({ headless: true, ...(executable ? { executablePath: executable } : {}) }), appId, process.env.AVIATION_E2E_TRACE_DIR);
   try {
     await withE2ERun(secret, async run => {
-      const context = await browser.newContext();
+      const context = await browser.newContext(browserContextOptions);
       const page = await context.newPage();
       await installIsolatedFeedbackScript(page);
       const origin = new URL(baseUrl).origin;
@@ -728,7 +805,7 @@ if (appId === 'flightschool') {
   const browser = traceE2EBrowser(await chromium.launch({ headless: true, ...(executable ? { executablePath: executable } : {}) }), appId, process.env.AVIATION_E2E_TRACE_DIR);
   try {
     await withE2ERun(secret, async run => {
-      const context = await browser.newContext();
+      const context = await browser.newContext(browserContextOptions);
       const page = await context.newPage();
       await installIsolatedFeedbackScript(page);
       let tracked = [];
@@ -846,7 +923,7 @@ if (appId === 'flightschool') {
     const browser = traceE2EBrowser(await chromium.launch({ headless: true,
       ...(executable ? { executablePath: executable } : {}) }), appId, process.env.AVIATION_E2E_TRACE_DIR);
     try {
-      const context = await browser.newContext();
+      const context = await browser.newContext(browserContextOptions);
       const page = await context.newPage();
       await installIsolatedFeedbackScript(page);
       await page.goto(baseUrl, { waitUntil: 'domcontentloaded' });
@@ -859,7 +936,7 @@ if (appId === 'flightschool') {
   const browser = traceE2EBrowser(await chromium.launch({ headless: true, ...(executable ? { executablePath: executable } : {}) }), appId, process.env.AVIATION_E2E_TRACE_DIR);
   try {
     await withE2ERun(secret, async run => {
-      const context = await browser.newContext();
+      const context = await browser.newContext(browserContextOptions);
       const page = await context.newPage();
       await installIsolatedFeedbackScript(page);
       run.onCleanup(async () => {
@@ -930,7 +1007,7 @@ if (appId === 'flightschool') {
     .map(app => `https://${app.hostname || app.name}.${manifest.domain}/`);
   const browser = traceE2EBrowser(await chromium.launch({ headless: true, ...(executable ? { executablePath: executable } : {}) }), appId, process.env.AVIATION_E2E_TRACE_DIR);
   try {
-    const context = await browser.newContext();
+    const context = await browser.newContext(browserContextOptions);
     const page = await context.newPage();
       await installIsolatedFeedbackScript(page);
     const errors = [];
@@ -968,7 +1045,7 @@ if (appId === 'flightschool') {
   const browser = traceE2EBrowser(await chromium.launch({ headless: true, ...(executable ? { executablePath: executable } : {}) }), appId, process.env.AVIATION_E2E_TRACE_DIR);
   try {
     await withE2ERun(secret, async run => {
-      const context = await browser.newContext();
+      const context = await browser.newContext(browserContextOptions);
       const page = await context.newPage();
       await installIsolatedFeedbackScript(page);
       run.onCleanup(async () => {

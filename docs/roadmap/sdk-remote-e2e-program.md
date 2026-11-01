@@ -49,11 +49,47 @@ branch-preview browser runs also passed.
 This remains a **partial checkpoint**: the G1000's currently shipped UI has
 only dashboard and settings routes; its simulator components and plan store
 are not exposed through those routes. Other product surfaces still need a
-complete inventory. Planner and Missions browser fixtures still mock some
+complete inventory. The stricter Flight School sweep reaches the correct booking
+state screens and debug role, but retained traces also reveal missing static
+assets in legacy templates. Replace unavailable decorative assets with text or
+existing images, share the working Bootstrap resources, and make the sweep reject
+HTTP/console errors before claiming complete rendered acceptance. Planner and Missions browser fixtures still mock some
 API responses after the real storage lifecycle checks.
 The declared inventories still need a route-by-route completeness audit and
 full deployed-build evidence. The retained harness receipt must be renewed
 after each source checkpoint.
+
+## Local completeness checkpoint
+
+Planner now exercises eight screens at desktop (1280 by 720) and mobile
+(390 by 844) widths. Its saved-plan browser load reaches the real signed,
+isolated server store; airport, weather, and planning responses remain SDK
+fixtures. The import dialog and route-result surface are included. GPX and FPL
+imports carry SDK tags immediately, survive a fresh interpreter reopening the
+JSON store, support update/export, and leave zero records after deletion.
+Both Python test directories pass (130 and 65 tests), and CI now runs both.
+The 12 frontend tests and 591 shared SDK tests pass. Route/local/page transitions
+no longer leave animated Leaflet operations targeting a removed map, and airport
+viewport fitting uses the existing shared navigation bounding box.
+
+Flight School visits 57 declared GET routes at both widths using the appropriate
+admin/instructor/student role and confirmed/in-progress/completed booking fixture.
+Unexpected redirects, HTTP failures, and console errors fail the sweep. Missing
+legacy stylesheets and decorative images were replaced by available resources
+or text. Each run writes a tagged waitlist entry, verifies its isolated row,
+and removes the temporary container and storage. Desktop/mobile captures of the
+changed screens were inspected. All adapters emit individual screen pass records;
+optional captures retain PNGs and rendered text for review.
+
+The retained build/test/package harness passes with adopted receipt
+`sha256:61f959a4af90aed31dc6128822de602426cb1ea52f2c581598403e8e217fdc61`;
+project authority, all 19 locks, and the current receipt verify. This is retained
+qualification, with no native Component generation or acceptance claim.
+
+These are local production-image results. They do not establish deployed-build
+coverage. Next audit the remaining applications' routes and mutations, remove
+any mocks that bypass required server persistence paths, and exercise the complete
+post-deployment gate against exact deployed revisions. E2E-001 remains open.
 
 ## Acceptance contract
 
