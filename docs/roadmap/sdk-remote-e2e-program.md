@@ -166,6 +166,67 @@ retained-runtime evidence, without native Component generation or acceptance.
 These local results advance #332. Interrupted-controller expiry recovery, the
 remaining inventory audit and exact deployed-build evidence remain open.
 
+## Independent lease recovery checkpoint
+
+The `aviation.testing.e2e` Component now owns bounded lease identities and pure
+active/expired/unowned classification. Its TypeScript and Python bindings evaluate
+the same authored cases for exact expiry, foreign applications, malformed tags,
+invalid identities, future issue times, boolean/fractional timestamps, safe-integer
+overflow and canonical integer-valued numeric representations. Newline-shaped
+identities fail consistently. Runtime process scheduling remains outside that
+portable contract.
+
+The SDK foreground-command wrapper preserves literal argv and stdin and observes
+both a relative lifetime and an absolute lease deadline, including startup delay.
+Private-namespace timers and separate host supervisors survive controller loss
+and escalate termination after a bounded grace. Host supervisors use owned child
+handles and cancel timers on exit rather than later signalling a saved host PID.
+Docker test instances auto-remove their private storage on exit. Dedicated SSH
+forwards disable connection sharing and have their own independent deadlines.
+Startup cleanup validates full lease metadata, app/run identity, canonical name
+and immutable container ID, and ignores active, foreign, legacy, malformed and
+mismatched resources. Finally cleanup also checks the creating controller's token.
+A caller run-ID collision cannot authorize deletion of another instance or
+collection of its logs. The integration test uses a private log marker to check
+that diagnostic isolation as well as resource preservation.
+
+Focused tests pass: 69 TypeScript tests, 55 Python conformance tests, five deployment
+unit/integration tests, and two native EOF/revision tests. The Docker integration
+writes an actual live flight, track and history, confirms an active sweep preserves
+all four counted records, kills its controller with SIGKILL, and observes independent
+container removal. Six protected resources survive the expired-resource sweep,
+including a caller run-ID collision. These recovery tests are now blocking in
+Flight Tracker CI. Native KMLab forwarding is bounded and preserves the stdin EOF
+protocol; native host-crash residual storage remains an explicit audit item.
+
+Five cached application-image adapters pass with the leased controller: Flight
+Tracker, Chat, Missions, Planner and Flight School. The old cached Accident Tracker
+image correctly failed the feedback context check because it reported a stale app
+identifier. Its exact-main image at `ab21227a6528ab21a999936dcd37b4a3295adc12`
+passes all five flows through a dedicated remote SSH forward. A remote SIGKILL
+qualification with real tagged SQLite state also verifies independent removal of
+both that container and the SSH forward. Production instances were not changed.
+These are compatibility and recovery observations, not the final all-service
+post-deployment proof.
+
+Live diagnosis found an independent clock-boundary problem: a sample signed at
+the fifteen-minute verifier ceiling rejected three of fifty requests, while all
+fifty five-minute requests succeeded. SDK run headers now refresh five-minute
+credentials below the unchanged ceiling; a deterministic regression verifies a
+one-second client/server offset. Feedback mismatch diagnostics expose only which
+context fields failed, without recording submitted messages.
+
+The final retained harness passes 631 tests. Receipt `sha256:b66d967b0c1270b0f298a26341bc9039531e4a6a0fe24d3d9d96382d4e511747`
+is adopted, and `litai verify` passes authority, all nineteen component locks
+and receipt freshness. Source intelligence and HTML observability are named skips
+because this checkout selects provider `none` and declares no HTML artifacts.
+This retained parity evidence does not establish native Component generation
+or native Component acceptance.
+
+#332 remains open for the remaining inventories, native crash-storage audit and
+complete exact-build deployed gate after feature work. #176 remains a release
+prerequisite as well.
+
 ## Acceptance contract
 
 Each deployed app must publish a screen inventory and an executable test for every

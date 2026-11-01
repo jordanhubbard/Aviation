@@ -33,8 +33,8 @@ source_dependencies: []
 
 This Component owns the provider-neutral trust and isolation contract used by remote
 end-to-end test runs across Aviation applications. It defines valid run identities,
-application-bound short-lived HMAC credentials, safe run-owned path derivation, and
-immutable test-record tagging.
+application-bound short-lived HMAC credentials, safe run-owned path derivation,
+immutable test-record tagging, and bounded run-lease identities.
 
 It does not own random identity generation, secret sourcing, HTTP middleware or
 routes, database creation or schemas, fixture formats, browser orchestration, network
@@ -82,3 +82,19 @@ foreign-run records without mutating caller data.
 - **THEN** the returned record contains both isolation fields
 - **AND** the original fixture remains unchanged
 
+
+### Requirement: Resource leases are bounded and classified without side effects
+
+Lease creation SHALL bind an application, valid run identity and nonnegative safe
+integer issue/expiry timestamps, with a positive lifetime no greater than 900000
+milliseconds. Classification SHALL return active before expiry and expired at or
+after expiry only for well-formed leases owned by the expected application.
+Malformed, untagged, unsupported, foreign-app or future-issued metadata SHALL be
+unowned and SHALL never authorize cleanup. Classification does not delete resources
+or schedule timers; adapters own those actions.
+
+#### Scenario: An expired resource from a different app is encountered
+
+- **WHEN** a lease has expired but belongs to another application
+- **THEN** classification returns unowned
+- **AND** no resource is changed

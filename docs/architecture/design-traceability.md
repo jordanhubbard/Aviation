@@ -1,6 +1,6 @@
 # Design traceability
 
-<!-- literate-ai:authority-reviewed sha256:7f181a4f377ff6bdb75cc3b61e94d36e6b66aba6d0521bc03d73ae19d6241c30 -->
+<!-- literate-ai:authority-reviewed sha256:f4d1f48fd194801cf916291080e01456e8c7602fd05ebfbcfba012082be87343 -->
 
 [Project guide](../README.md) → design traceability
 
@@ -26,3 +26,11 @@ Provider record IDs distinguish events that share an archive URL. Placeholder
 registrations never establish identity. The one-time SQLite constraint migration
 preserves IDs and dependent records and rolls back on unexpected schema rather
 than discarding application data.
+
+Bounded run leases and their active/expired/unowned classification belong to the
+`aviation.testing.e2e` Component. TypeScript and Python evaluate the same numeric,
+identity and expiry vectors. SDK foreground-command deadlines, Docker ownership
+labels and cleanup, and dedicated SSH forwarding remain runtime adapters. They
+must survive controller loss and must not derive cleanup authority from a name
+or a partial label alone. Docker recovery tests write real isolated service state,
+kill their controller, and verify expiry and preservation of unrelated resources.

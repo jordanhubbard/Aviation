@@ -31,12 +31,20 @@ export type TestTagged<T extends object> = T & {
 export type E2EHeaders = Record<(typeof E2E_HEADERS)[keyof typeof E2E_HEADERS], string>;
 export type HeaderSource = Pick<Headers, 'get'> | Record<string, string | string[] | undefined>;
 
+function validAppId(value: unknown): value is string {
+  return typeof value === 'string' && value.trim() === value && APP_PATTERN.test(value);
+}
+
+function validRunId(value: unknown): value is E2ERunId {
+  return typeof value === 'string' && value.length === 36 && RUN_PATTERN.test(value);
+}
+
 export function createE2ERunId(): E2ERunId {
   return `e2e_${randomUUID().replace(/-/g, '')}` as E2ERunId;
 }
 
 export function parseE2ERunId(value: unknown): E2ERunId {
-  if (typeof value !== 'string' || !RUN_PATTERN.test(value)) {
+  if (!validRunId(value)) {
     fail('e2e-run-id-invalid', 'invalid E2E run ID');
   }
   return value as E2ERunId;
@@ -70,7 +78,7 @@ export function assertTestDataForRun(value: unknown, runId: E2ERunId): asserts v
 
 function signature(secret: string, appId: string, runId: E2ERunId, expiresAt: number): string {
   if (secret.length < 32) fail('e2e-secret-invalid', 'E2E secret must contain at least 32 characters');
-  if (!APP_PATTERN.test(appId)) fail('e2e-app-id-invalid', 'invalid E2E application ID');
+  if (!validAppId(appId)) fail('e2e-app-id-invalid', 'invalid E2E application ID');
   return createHmac('sha256', secret).update(`${appId}\n${runId}\n${expiresAt}`).digest('hex');
 }
 
@@ -104,7 +112,7 @@ function hasHeader(source: HeaderSource, name: string): boolean {
 /** Missing credentials mean a production request; partial/invalid credentials are always rejected. */
 export function verifyE2EHeaders(appId: string, source: HeaderSource, secret: string | undefined,
   now = Date.now()): E2ERunId | null {
-  if (!APP_PATTERN.test(appId)) fail('e2e-app-id-invalid', 'invalid E2E application ID');
+  if (!validAppId(appId)) fail('e2e-app-id-invalid', 'invalid E2E application ID');
   const run = getHeader(source, E2E_HEADERS.run);
   const expires = getHeader(source, E2E_HEADERS.expires);
   const supplied = getHeader(source, E2E_HEADERS.signature);
@@ -151,7 +159,8 @@ export async function withE2ERun<T>(secret: string, test: (run: E2ERun) => Promi
   const run: E2ERun = {
     id,
     tag: value => tagTestData(id, value),
-    headersFor: appId => signE2EHeaders(appId, id, secret),
+    // Stay below the verification ceiling so small client/server clock offsets do not reject fresh traffic.
+    headersFor: appId => signE2EHeaders(appId, id, secret, Date.now(), 5 * 60 * 1000),
     onCleanup: callback => cleanup.push(callback),
   };
   let result: T | undefined;
@@ -168,6 +177,112 @@ export async function withE2ERun<T>(secret: string, test: (run: E2ERun) => Promi
     throw new E2ERunError([...(failed ? [failure] : []), ...cleanupFailures]);
   }
   return result as T;
+}
+
+export interface E2ELease {
+  readonly schema: 'aviation/e2e-lease@1';
+  readonly app_id: string;
+  readonly is_test_data: true;
+  readonly test_run_id: E2ERunId;
+  readonly issued_at_ms: number;
+  readonly expires_at_ms: number;
+}
+
+export function createE2ELease(appId: string, runId: E2ERunId, now = Date.now(),
+  ttlMs = E2E_MAX_AGE_MS): E2ELease {
+  if (!validAppId(appId)) fail('e2e-app-id-invalid', 'invalid E2E application ID');
+  parseE2ERunId(runId);
+  if (!Number.isSafeInteger(now) || now < 0 || !Number.isSafeInteger(ttlMs)
+    || ttlMs < 1 || ttlMs > E2E_MAX_AGE_MS || !Number.isSafeInteger(now + ttlMs)) {
+    fail('e2e-lease-lifetime-invalid', 'invalid E2E resource lease lifetime');
+  }
+  return tagTestData(runId, { schema: 'aviation/e2e-lease@1' as const, app_id: appId,
+    issued_at_ms: now, expires_at_ms: now + ttlMs });
+}
+
+/** Invalid or foreign metadata never grants permission to remove a resource. */
+export function classifyE2ELease(value: unknown, appId: string, now = Date.now()): 'active' | 'expired' | 'unowned' {
+  if (!value || typeof value !== 'object' || Array.isArray(value) || !validAppId(appId)
+    || !Number.isSafeInteger(now) || now < 0) return 'unowned';
+  const lease = value as Partial<E2ELease>;
+  if (lease.schema !== 'aviation/e2e-lease@1' || lease.app_id !== appId || lease.is_test_data !== true
+    || !validRunId(lease.test_run_id)
+    || !Number.isSafeInteger(lease.issued_at_ms) || !Number.isSafeInteger(lease.expires_at_ms)) return 'unowned';
+  const issued = lease.issued_at_ms!; const expires = lease.expires_at_ms!;
+  if (issued < 0 || issued > now || expires <= issued || expires - issued > E2E_MAX_AGE_MS) return 'unowned';
+  return expires <= now ? 'expired' : 'active';
+}
+
+/** Deadline for a private PID namespace; container exit discards all namespace children. */
+export function e2eNamespaceDeadlineCommand(command: readonly string[], lifetimeMs: number, graceMs = 2000, expiresAtMs?: number): string[] {
+  if (!command.length || command.some(arg => typeof arg !== 'string' || arg.includes('\0')) || !command[0]
+    || !Number.isSafeInteger(lifetimeMs) || lifetimeMs < 1 || lifetimeMs > E2E_MAX_AGE_MS
+    || !Number.isSafeInteger(graceMs) || graceMs < 1 || graceMs > 10000
+    || (expiresAtMs !== undefined && (!Number.isSafeInteger(expiresAtMs) || expiresAtMs < 0))) {
+    throw new Error('Invalid E2E foreground command deadline');
+  }
+  const script = `
+ttl=$1; grace=$2; deadline=$3; shift 3
+if [ "$deadline" -ge 0 ]; then
+  now=$(date +%s) || exit 125
+  case "$now" in ''|*[!0-9]*) exit 125;; esac
+  remaining=$((deadline - now))
+  [ "$remaining" -gt 0 ] || exit 124
+  if [ "$remaining" -lt "$ttl" ]; then ttl=$remaining; fi
+fi
+exec 3<&0
+"$@" <&3 & app_pid=$!
+(
+  sleeper=''
+  trap 'if [ -n "$sleeper" ]; then kill -TERM "$sleeper" 2>/dev/null || :; wait "$sleeper" 2>/dev/null || :; fi; exit 0' TERM INT
+  sleep "$ttl" & sleeper=$!; wait "$sleeper"
+  kill -TERM "$app_pid" 2>/dev/null || :
+  sleep "$grace" & sleeper=$!; wait "$sleeper"
+  kill -KILL "$app_pid" 2>/dev/null || :
+) & timer_pid=$!
+interrupted=0
+trap 'interrupted=1; kill -TERM "$app_pid" 2>/dev/null || :' TERM INT
+wait "$app_pid"; result=$?
+if [ "$interrupted" -eq 1 ]; then wait "$app_pid"; result=$?; fi
+kill -TERM "$timer_pid" 2>/dev/null || :
+wait "$timer_pid" 2>/dev/null || :
+exit "$result"
+`;
+  return ['sh', '-c', script, 'aviation-e2e-deadline', String(Math.ceil(lifetimeMs / 1000)),
+    String(Math.ceil(graceMs / 1000)), expiresAtMs === undefined ? '-1' : String(Math.ceil(expiresAtMs / 1000)), ...command];
+}
+
+/** Host supervisor owns its process handle and cancels timers on exit, avoiding stale-PID signals. */
+export function e2eHostDeadlineCommand(command: readonly string[], lifetimeMs: number,
+  graceMs = 2000, expiresAtMs?: number): string[] {
+  // Reuse input validation without executing the namespace command.
+  e2eNamespaceDeadlineCommand(command, lifetimeMs, graceMs, expiresAtMs);
+  const script = `
+const { spawn } = require('node:child_process');
+const options = JSON.parse(process.argv[1]);
+const remaining = Math.min(options.lifetimeMs, options.expiresAtMs === undefined
+  ? options.lifetimeMs : options.expiresAtMs - Date.now());
+if (remaining <= 0) process.exit(124);
+const child = spawn(options.command[0], options.command.slice(1), { stdio: 'inherit' });
+let expired = false;
+let escalation;
+const terminate = () => {
+  if (child.exitCode !== null || child.signalCode !== null) return;
+  child.kill('SIGTERM');
+  if (!escalation) escalation = setTimeout(() => {
+    if (child.exitCode === null && child.signalCode === null) child.kill('SIGKILL');
+  }, options.graceMs);
+};
+const timer = setTimeout(() => { expired = true; terminate(); }, remaining);
+process.on('SIGTERM', terminate);
+process.on('SIGINT', terminate);
+child.once('error', () => { clearTimeout(timer); clearTimeout(escalation); process.exitCode = 125; });
+child.once('close', code => {
+  clearTimeout(timer); clearTimeout(escalation);
+  process.exitCode = expired ? 124 : (code === null || code < 0 ? 125 : code);
+});
+`;
+  return [process.execPath, '-e', script, JSON.stringify({ command, lifetimeMs, graceMs, expiresAtMs })];
 }
 
 export { standardE2EFixtures, standardE2EMocks, standardForeFlightCsv } from './fixtures.js';

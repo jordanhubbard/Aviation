@@ -1,3 +1,6 @@
+import { spawnSync, spawn } from 'node:child_process';
+import { once } from 'node:events';
+import { e2eNamespaceDeadlineCommand, e2eHostDeadlineCommand } from '../index.js';
 import { describe, expect, it } from 'vitest';
 import { assertTestDataForRun, createE2ERunId, isolatedSqlitePath, parseE2ERunId, seedRemoteFixture,
   signE2EHeaders, standardE2EFixtures, tagTestData, verifyE2EHeaders, withE2ERun,
@@ -6,6 +9,14 @@ import { assertTestDataForRun, createE2ERunId, isolatedSqlitePath, parseE2ERunId
 const secret = 'test-only-secret-with-at-least-32-characters';
 
 describe('remote E2E isolation contract', () => {
+  it('leaves clock headroom below the server credential lifetime ceiling', async () => {
+    await withE2ERun(secret, async run => {
+      const serverNow = Date.now() - 1000;
+      const headers = run.headersFor('flight-tracker');
+      expect(verifyE2EHeaders('flight-tracker', headers, secret, serverNow)).toBe(run.id);
+    });
+  });
+
   it('requires an explicit run tag and never accepts a production or foreign record', () => {
     const runId = createE2ERunId();
     const tagged = tagTestData(runId, { title: 'fixture' });
@@ -94,4 +105,67 @@ describe('remote E2E isolation contract', () => {
         [{ path: '//other.example.test/steal', response: weather }])).rejects.toThrow('same-origin');
     });
   });
+});
+
+
+describe.skipIf(process.platform === 'win32')('POSIX independent foreground-command deadline', () => {
+  it('preserves literal argv and normal exit without a live timer', () => {
+    const args = ['spaces and quotes " here', '$(literal-not-a-command)', '$HOME'];
+    const command = e2eNamespaceDeadlineCommand([process.execPath, '-e', "console.log(JSON.stringify({args:process.argv.slice(1),input:require('node:fs').readFileSync(0,'utf8')}))", ...args], 10000);
+    const result = spawnSync(command[0], command.slice(1), { encoding: 'utf8', input: 'private test input\n', timeout: 3000 });
+    expect(result.status).toBe(0);
+    expect(JSON.parse(result.stdout)).toEqual({ args, input: 'private test input\n' });
+  });
+  it('does not start a command whose absolute resource lease has already expired', () => {
+    const command = e2eNamespaceDeadlineCommand([process.execPath, '-e', "console.log('must-not-start')"], 10000, 1000, Date.now() - 1000);
+    const result = spawnSync(command[0], command.slice(1), { encoding: 'utf8', timeout: 2000 });
+    expect(result.status).toBe(124);
+    expect(result.stdout).toBe('');
+  });
+  it('kills a foreground process that ignores the first termination signal', () => {
+    const command = e2eNamespaceDeadlineCommand([process.execPath, '-e', "process.on('SIGTERM',()=>console.log('termination-ignored'));setInterval(()=>{},10000)"], 1000, 1000);
+    const result = spawnSync(command[0], command.slice(1), { encoding: 'utf8', timeout: 4500 });
+    expect(result.stdout).toContain('termination-ignored');
+    expect(result.error).toBeUndefined();
+    expect(result.status).not.toBe(0);
+  });
+  it('retains the deadline timer after the controller shell is killed', async () => {
+    const command = e2eNamespaceDeadlineCommand([process.execPath, '-e', 'console.log(process.pid);setInterval(()=>{},10000)'], 1000, 1000);
+    const shell = spawn(command[0], command.slice(1), { stdio: ['ignore', 'pipe', 'pipe'] });
+    const [chunk] = await once(shell.stdout!, 'data');
+    const pid = Number(chunk.toString().trim());
+    expect(Number.isInteger(pid)).toBe(true);
+    shell.kill('SIGKILL');
+    await once(shell, 'close'); // Pipes close only after the independent timer and command exit.
+    const state = spawnSync('ps', ['-p', String(pid), '-o', 'stat='], { encoding: 'utf8' });
+    expect(state.status !== 0 || state.stdout.trim().startsWith('Z')).toBe(true);
+  }, 6000);
+});
+
+
+describe.skipIf(process.platform === 'win32')('owned host command supervisor', () => {
+  it('preserves arguments and stdin and cancels the deadline when the child exits', () => {
+    const args = ['literal $HOME', 'quotes " and spaces'];
+    const cmd = e2eHostDeadlineCommand([process.execPath, '-e', "console.log(JSON.stringify({args:process.argv.slice(1),input:require('node:fs').readFileSync(0,'utf8')}))", ...args], 10000);
+    const result = spawnSync(cmd[0], cmd.slice(1), { encoding: 'utf8', input: 'private input', timeout: 3000 });
+    expect(result.status).toBe(0);
+    expect(JSON.parse(result.stdout)).toEqual({args, input: 'private input'});
+  });
+  it('escalates termination through the owned handle and reports expiry', () => {
+    const cmd = e2eHostDeadlineCommand([process.execPath, '-e', "process.on('SIGTERM',()=>console.log('ignored'));setInterval(()=>{},10000)"], 1000, 1000);
+    const result = spawnSync(cmd[0], cmd.slice(1), { encoding: 'utf8', timeout: 4500 });
+    expect(result.stdout).toContain('ignored');
+    expect(result.status).toBe(124);
+  });
+  it('survives loss of the allocating controller and stops its own foreground child', async () => {
+    const command = e2eHostDeadlineCommand([process.execPath, '-e', 'console.log(process.pid);setInterval(()=>{},10000)'], 1000, 1000);
+    const controller = spawn(process.execPath, ['-e', "const {spawn}=require('node:child_process');const c=JSON.parse(process.argv[1]);spawn(c[0],c.slice(1),{stdio:['ignore','inherit','inherit']});", JSON.stringify(command)], {stdio:['ignore','pipe','pipe']});
+    const [data] = await once(controller.stdout!, 'data');
+    const pid = Number(data.toString().trim());
+    expect(Number.isInteger(pid)).toBe(true);
+    controller.kill('SIGKILL');
+    await once(controller, 'close'); // The supervisor/child still own these pipes until they finish.
+    const state = spawnSync('ps', ['-p',String(pid),'-o','stat='], {encoding:'utf8'});
+    expect(state.status !== 0 || state.stdout.trim().startsWith('Z')).toBe(true);
+  }, 6000);
 });

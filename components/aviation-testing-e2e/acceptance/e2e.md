@@ -14,3 +14,8 @@ Each realization SHALL execute every case in `vectors.json` without network acce
    storage lifecycle, cleanup, and deployment behavior outside the portable oracle.
 7. Run these vectors in common SDK CI independently of application test suites.
 
+
+8. Construct every valid lease and reject invalid creation inputs with the stable
+   declared errors. Classify active, exact-expiry, expired, foreign, malformed,
+   unsupported and future-issued metadata identically across bindings, without
+   modifying caller mappings or accessing resources.

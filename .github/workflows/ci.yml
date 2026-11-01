@@ -216,6 +216,12 @@ jobs:
         run: pnpm --filter @aviation/flight-tracker... run build
       - name: Test service isolation and tracking lifecycle
         run: pnpm --filter @aviation/flight-tracker run test --runInBand
+      - name: Build the isolated tracking qualification image
+        run: docker build -f apps/flight-tracker/Dockerfile -t aviation-flight-tracker-e2e:lease .
+      - name: Verify real controller-loss recovery and safe expired-resource cleanup
+        env:
+          AVIATION_E2E_LEASE_TEST_IMAGE: aviation-flight-tracker-e2e:lease
+        run: python3 -m unittest discover -s deploy -p test_deploy.py
 
   # Lint and format check
   lint:
