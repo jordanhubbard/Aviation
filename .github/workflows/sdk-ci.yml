@@ -32,14 +32,14 @@ jobs:
       run:
         working-directory: components/legacy-project-wrapper/implementation
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - name: Validate workspace package and build graph
         working-directory: .
         run: python scripts/check_workspace_package_graph.py
       - uses: actions/setup-node@v6
         with:
           node-version: '24'
-      - uses: pnpm/action-setup@v4
+      - uses: pnpm/action-setup@v6
       - name: Install service-health Component candidate
         working-directory: components/aviation-service-health/implementation/typescript
         run: pnpm install --frozen-lockfile --ignore-workspace
@@ -91,7 +91,7 @@ jobs:
       run:
         working-directory: components/legacy-project-wrapper/implementation
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - uses: actions/setup-python@v6
         with:
           python-version: '3.11'
@@ -111,7 +111,7 @@ jobs:
       run:
         working-directory: components/legacy-project-wrapper/implementation
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - uses: actions/setup-go@v6
         with:
           go-version-file: components/legacy-project-wrapper/implementation/go.mod

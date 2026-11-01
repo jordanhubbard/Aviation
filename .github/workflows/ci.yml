@@ -16,7 +16,7 @@ jobs:
     name: Validate MAC Repository Contract
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       - name: Set up Python
         uses: actions/setup-python@v6
@@ -50,7 +50,7 @@ jobs:
     name: Accessibility & Color Contrast
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       - name: Set up Node.js
         uses: actions/setup-node@v6
@@ -67,7 +67,7 @@ jobs:
     name: Test Aviation Missions App
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       - name: Set up Java for Clojure
         uses: actions/setup-java@v5
@@ -94,7 +94,7 @@ jobs:
     runs-on: ubuntu-latest
     continue-on-error: true  # non-blocking: many test endpoints are stubs (return 404)
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       - name: Set up Python
         uses: actions/setup-python@v6
@@ -119,7 +119,7 @@ jobs:
       # This frontend depends on workspace packages via the "workspace:" protocol,
       # which npm cannot resolve; install from the workspace root with pnpm.
       - name: Set up pnpm
-        uses: pnpm/action-setup@v4
+        uses: pnpm/action-setup@v6
 
       - name: Install frontend dependencies
         run: pnpm install --frozen-lockfile --filter flight-planner-frontend...
@@ -138,7 +138,7 @@ jobs:
     name: Test Flight School
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       - name: Set up Python
         uses: actions/setup-python@v6
@@ -156,7 +156,7 @@ jobs:
         run: pytest --cov=app --cov-report=xml
 
       - name: Upload coverage
-        uses: codecov/codecov-action@v6
+        uses: codecov/codecov-action@v7
         with:
           file: apps/flightschool/coverage.xml
           flags: flightschool
@@ -166,7 +166,7 @@ jobs:
     name: Test ForeFlight Dashboard
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       - name: Set up Python
         uses: actions/setup-python@v6
@@ -192,7 +192,7 @@ jobs:
       # Installed from the workspace root: this repo is a pnpm workspace and
       # no longer carries per-app npm lockfiles.
       - name: Set up pnpm
-        uses: pnpm/action-setup@v4
+        uses: pnpm/action-setup@v6
 
       - name: Install frontend dependencies
         run: pnpm install --frozen-lockfile --filter foreflight-dashboard-frontend...
@@ -205,7 +205,7 @@ jobs:
     name: Lint & Format
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       - name: Set up Node.js
         uses: actions/setup-node@v6
@@ -215,7 +215,7 @@ jobs:
       # Enforce the currently clean ForeFlight frontend first. Additional apps
       # can be added as their existing lint debt is resolved.
       - name: Set up pnpm
-        uses: pnpm/action-setup@v4
+        uses: pnpm/action-setup@v6
 
       - name: Install ForeFlight frontend dependencies
         run: pnpm install --frozen-lockfile --filter foreflight-dashboard-frontend...
@@ -228,7 +228,7 @@ jobs:
     name: Security Scan
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       - name: Run Trivy vulnerability scanner
         uses: aquasecurity/trivy-action@master
@@ -249,7 +249,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: [validate-mac, accessibility]
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       - name: Set up Node.js
         uses: actions/setup-node@v6
@@ -259,7 +259,7 @@ jobs:
       - name: Set up pnpm
         # Version comes from the "packageManager" field in package.json; passing
         # a conflicting `version` input here makes action-setup fail.
-        uses: pnpm/action-setup@v4
+        uses: pnpm/action-setup@v6
 
       - name: Verify monorepo Node.js structure
         run: pnpm install --ignore-scripts
@@ -275,7 +275,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: [build-check]
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       - name: Set up Python
         uses: actions/setup-python@v6
@@ -305,7 +305,7 @@ jobs:
     name: Flight Track Analyzer
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       - name: Set up Python
         uses: actions/setup-python@v6
@@ -322,7 +322,7 @@ jobs:
     needs: [build-check]
     continue-on-error: true
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       - name: Set up Python
         uses: actions/setup-python@v6

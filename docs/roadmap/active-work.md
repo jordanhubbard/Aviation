@@ -872,7 +872,9 @@ release-visible outcome to `CHANGELOG.md`; Git preserves prior queue states.
 
 - **Release target:** 1.0.0
 - **Contribution inventory:** [all included work](release-1.0-contributions.md).
-- **Next action:** Reconcile the 47 included tracker items before publication.
+- **Next action:** Resolve the remaining dependency updates, feature PR #210,
+  and issues #176/#332 before publication. Tracker reconciliation has begun with
+  evidence-backed closure of already incorporated or superseded changes.
   The original 14 branches and four flagged worktrees have been reconciled;
   recovered changes landed in #394 and unique worktree edits remain on pushed
   recovery refs. See the contribution inventory for validation evidence.
@@ -885,6 +887,9 @@ release-visible outcome to `CHANGELOG.md`; Git preserves prior queue states.
 - **Completion prerequisites:** none
 - **Implementation:**
   - [x] Assign every open tracker item to 1.0.0 and record a complete branch and worktree inventory.
+  - [ ] Consolidate the remaining dependency requests into the retained workspace,
+    qualify package builds/tests and CI, and close each historical PR with its
+    exact incorporated or superseding evidence.
   - [ ] Reconcile every scoped contribution; land and test unique changes or document an evidence-backed supersession.
   - [ ] Prepare, check, publish, and verify v1.0.0 from green main with no unresolved release contributions.
 - **Evidence:**

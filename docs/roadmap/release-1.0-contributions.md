@@ -7,13 +7,18 @@
 All items below are included in 1.0.0 by explicit user direction. A scope assignment
 does not establish merge, test, supersession, or completion evidence.
 
-## Open tracker contributions
+## Tracker contributions in the original scope
+
+The original scope contains 47 contributions. Four historical PRs (#303, #269,
+#245, #234) are now closed with comparison and exact-main CI evidence in their
+comments. The remaining 43 retain their 1.0 inclusion until their requested
+behavior is qualified and resolved.
 
 | Kind | Item | Title | State |
 | --- | --- | --- | --- |
 | issue | [#332](https://github.com/jordanhubbard/Aviation/issues/332) | Complete isolated remote E2E coverage for all Aviation services | included; reconciliation pending |
 | issue | [#176](https://github.com/jordanhubbard/Aviation/issues/176) | feat: AI decision explanation layer for each app | included; reconciliation pending |
-| review | [#303](https://github.com/jordanhubbard/Aviation/pull/303) | Make Aviation's last three CI jobs green (integration-tests, pip-audit, trivy) (task_b3e16b5f6d9f43a69307f2827a7f6368) | included; reconciliation pending |
+| review | [#303](https://github.com/jordanhubbard/Aviation/pull/303) | Make Aviation's last three CI jobs green (integration-tests, pip-audit, trivy) (task_b3e16b5f6d9f43a69307f2827a7f6368) | closed; current pins equal/newer, exact-main named jobs pass |
 | review | [#296](https://github.com/jordanhubbard/Aviation/pull/296) | chore(deps): bump codecov/codecov-action from 6 to 7 | included; reconciliation pending |
 | review | [#295](https://github.com/jordanhubbard/Aviation/pull/295) | chore(deps): bump actions/checkout from 6 to 7 | included; reconciliation pending |
 | review | [#294](https://github.com/jordanhubbard/Aviation/pull/294) | chore(deps-dev): bump @types/node from 20.19.37 to 26.0.1 in /apps/weather-briefing | included; reconciliation pending |
@@ -25,7 +30,7 @@ does not establish merge, test, supersession, or completion evidence.
 | review | [#282](https://github.com/jordanhubbard/Aviation/pull/282) | chore(deps): bump the npm_and_yarn group across 3 directories with 7 updates | included; reconciliation pending |
 | review | [#272](https://github.com/jordanhubbard/Aviation/pull/272) | chore(deps): bump the npm_and_yarn group across 1 directory with 5 updates | included; reconciliation pending |
 | review | [#270](https://github.com/jordanhubbard/Aviation/pull/270) | chore(deps-dev): bump @types/node from 20.19.37 to 25.7.0 in /apps/flight-tracker | included; reconciliation pending |
-| review | [#269](https://github.com/jordanhubbard/Aviation/pull/269) | chore(deps): bump ws from 8.20.0 to 8.20.1 in /apps/flight-tracker | included; reconciliation pending |
+| review | [#269](https://github.com/jordanhubbard/Aviation/pull/269) | chore(deps): bump ws from 8.20.0 to 8.20.1 in /apps/flight-tracker | closed; workspace override and lock resolve 8.22.0 |
 | review | [#265](https://github.com/jordanhubbard/Aviation/pull/265) | chore(deps): bump uuid from 13.0.0 to 14.0.0 in /apps/aviation-accident-tracker/backend in the npm_and_yarn group across 1 directory | included; reconciliation pending |
 | review | [#264](https://github.com/jordanhubbard/Aviation/pull/264) | chore(deps): bump pnpm/action-setup from 4 to 6 | included; reconciliation pending |
 | review | [#263](https://github.com/jordanhubbard/Aviation/pull/263) | chore(deps): bump dependabot/fetch-metadata from 3.0.0 to 3.1.0 | included; reconciliation pending |
@@ -40,13 +45,13 @@ does not establish merge, test, supersession, or completion evidence.
 | review | [#251](https://github.com/jordanhubbard/Aviation/pull/251) | chore(deps-dev): bump vitest from 1.6.1 to 4.1.4 in /packages/shared-sdk | included; reconciliation pending |
 | review | [#250](https://github.com/jordanhubbard/Aviation/pull/250) | chore(deps): bump redis from 5.11.0 to 5.12.1 in /packages/shared-sdk | included; reconciliation pending |
 | review | [#249](https://github.com/jordanhubbard/Aviation/pull/249) | chore(deps-dev): bump @types/node from 20.19.37 to 25.6.0 in /packages/shared-sdk | included; reconciliation pending |
-| review | [#245](https://github.com/jordanhubbard/Aviation/pull/245) | chore(deps): bump pytest from 8.0.2 to 9.0.3 in /apps/foreflight-dashboard in the pip group across 1 directory | included; reconciliation pending |
+| review | [#245](https://github.com/jordanhubbard/Aviation/pull/245) | chore(deps): bump pytest from 8.0.2 to 9.0.3 in /apps/foreflight-dashboard in the pip group across 1 directory | closed; exact 9.0.3 pin already incorporated |
 | review | [#243](https://github.com/jordanhubbard/Aviation/pull/243) | chore(deps-dev): bump vitest from 1.6.1 to 4.1.3 in /packages/ui-framework | included; reconciliation pending |
 | review | [#242](https://github.com/jordanhubbard/Aviation/pull/242) | chore(deps): bump dotenv from 17.4.0 to 17.4.1 in /apps/aviation-accident-tracker/backend | included; reconciliation pending |
 | review | [#240](https://github.com/jordanhubbard/Aviation/pull/240) | chore(deps-dev): bump @types/node from 20.19.37 to 25.5.2 in /packages/ui-framework | included; reconciliation pending |
 | review | [#239](https://github.com/jordanhubbard/Aviation/pull/239) | chore(deps-dev): bump @types/node from 20.19.37 to 25.5.2 in /apps/aviation-accident-tracker/backend | included; reconciliation pending |
 | review | [#235](https://github.com/jordanhubbard/Aviation/pull/235) | chore(deps-dev): bump jsdom from 29.0.1 to 29.0.2 in /packages/ui-framework | included; reconciliation pending |
-| review | [#234](https://github.com/jordanhubbard/Aviation/pull/234) | chore(deps): bump python-multipart from 0.0.22 to 0.0.24 in /apps/foreflight-dashboard | included; reconciliation pending |
+| review | [#234](https://github.com/jordanhubbard/Aviation/pull/234) | chore(deps): bump python-multipart from 0.0.22 to 0.0.24 in /apps/foreflight-dashboard | closed; current qualified pin is 0.0.31 |
 | review | [#233](https://github.com/jordanhubbard/Aviation/pull/233) | chore(deps): bump uvicorn from 0.42.0 to 0.44.0 in /apps/foreflight-dashboard | included; reconciliation pending |
 | review | [#231](https://github.com/jordanhubbard/Aviation/pull/231) | chore(deps): bump faker from 40.11.1 to 40.13.0 in /apps/foreflight-dashboard | included; reconciliation pending |
 | review | [#229](https://github.com/jordanhubbard/Aviation/pull/229) | chore(deps-dev): bump msw from 1.3.5 to 2.13.0 in the dev-dependencies group | included; reconciliation pending |
@@ -60,6 +65,29 @@ does not establish merge, test, supersession, or completion evidence.
 | review | [#190](https://github.com/jordanhubbard/Aviation/pull/190) | chore(deps-dev): bump typescript from 5.9.3 to 6.0.2 in /apps/aviation-accident-tracker/backend | included; reconciliation pending |
 
 ## Reconciled branches
+
+### Dependency consolidation awaiting review
+
+The retained workspace now incorporates the requested package/requirement changes
+from all remaining dependency PRs, preserving newer existing requirements. The
+Flight Planner ESLint plugin moves with its parser to avoid an incompatible peer
+pair. CI actions use checkout v7, pnpm setup v6, Codecov v7, and Dependabot
+metadata v3.1.0. Removed npm locks are replaced by the current pnpm workspace
+lock; it resolves the #209 brace-expansion 5.0.5 and yaml 1.10.3 fixes.
+
+Local validation passes: 13 Node test suites with none skipped, seven affected
+application builds, both affected frontend lint commands, 194 ForeFlight tests,
+and 64 Flight School tests (25 pre-existing replaced-route skips). The full
+retained harness passed build, test, and package, producing finalized receipt
+`sha256:30b09e9b999a7898e83459402d33223f7fed27b27e2e79376aa8e17fff5f7171`.
+These are retained implementation checks, not native Component generation
+acceptance. Historical dependency PRs stay open pending review and exact-main CI.
+
+PR #210 still needs implementation/review: the current G1000 adapter delegates
+to common avionics, but Flight Planner's old radio adapter retains unfinished
+controls, and the proposed repository fuzzy matcher is not wired by that PR.
+
+### Historical branch dispositions
 
 All fourteen original branches have evidence-backed supersession dispositions.
 Unique missing behavior was recovered through [#394](https://github.com/jordanhubbard/Aviation/pull/394).
