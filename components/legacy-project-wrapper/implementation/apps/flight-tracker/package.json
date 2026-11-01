@@ -21,14 +21,14 @@
     "@aviation/shared-sdk": "workspace:*",
     "@aviation/keystore": "workspace:*",
     "@aviation/ui-framework": "workspace:*",
-    "ws": "^8.18.0"
+    "ws": "^8.20.1"
   },
   "devDependencies": {
     "@types/jest": "^30.0.0",
-    "@types/node": "^25.5.0",
+    "@types/node": "^25.7.0",
     "@types/ws": "^8.5.8",
     "jest": "^30.3.0",
     "ts-jest": "^29.1.0",
-    "typescript": "^6.0.2"
+    "typescript": "^6.0.3"
   }
 }

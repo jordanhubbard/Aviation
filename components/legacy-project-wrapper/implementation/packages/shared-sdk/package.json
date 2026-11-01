@@ -234,12 +234,12 @@
   "author": "Jordan Hubbard",
   "license": "MIT",
   "dependencies": {
-    "redis": "^5.10.0"
+    "redis": "^5.12.1"
   },
   "devDependencies": {
-    "@types/node": "^25.5.0",
+    "@types/node": "^25.6.0",
     "typescript": "^6.0.2",
-    "vitest": "^4.1.1"
+    "vitest": "^4.1.4"
   },
   "module": "dist-esm/index.js"
 }

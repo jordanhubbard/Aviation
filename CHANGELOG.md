@@ -9,6 +9,10 @@
 
 ## Unreleased
 
+- Consolidated the 1.0 dependency requests into the retained workspace, including
+  current CI actions, TypeScript and Node declarations, Vitest, Vite, Redis,
+  UUID, MSW, and Python application requirements. Kept the Flight Planner ESLint
+  parser and plugin on matching versions.
 - Reconciled fourteen historical branches and four worktrees for 1.0, preserving
   local edits on recovery refs. Recovered router and classification tests, the
   AI explanation timeout and Accident Tracker control, and missing Makefile help;
