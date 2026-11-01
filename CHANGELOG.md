@@ -9,6 +9,10 @@
 
 ## Unreleased
 
+- Reconciled fourteen historical branches and four worktrees for 1.0, preserving
+  local edits on recovery refs. Recovered router and classification tests, the
+  AI explanation timeout and Accident Tracker control, and missing Makefile help;
+  added persisted-filter and Weather Briefing NOTAM regression coverage.
 - Qualified and registered the first source-free native Aviation SDK library,
   `aviation.service.health`, with TypeScript declarations, two clean regeneration
   runs, independent package acceptance, 19 parity cases, and retained evidence.

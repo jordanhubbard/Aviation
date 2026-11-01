@@ -59,35 +59,43 @@ does not establish merge, test, supersession, or completion evidence.
 | review | [#209](https://github.com/jordanhubbard/Aviation/pull/209) | chore(deps): bump the npm_and_yarn group across 1 directory with 2 updates | included; reconciliation pending |
 | review | [#190](https://github.com/jordanhubbard/Aviation/pull/190) | chore(deps-dev): bump typescript from 5.9.3 to 6.0.2 in /apps/aviation-accident-tracker/backend | included; reconciliation pending |
 
-## Unresolved branches
+## Reconciled branches
+
+All fourteen original branches have evidence-backed supersession dispositions.
+Unique missing behavior was recovered through [#394](https://github.com/jordanhubbard/Aviation/pull/394).
+The supported lifecycle state is `dead` (superseded), not an ancestry claim.
+Original refs remain reachable; no branch was deleted.
 
 | Branch | State |
 | --- | --- |
-| `chore/migrate-beads-to-mac` | included; ancestry and patch review pending |
-| `dependabot/npm_and_yarn/express-rate-limit-8.3.2` | included; ancestry and patch review pending |
-| `feat/ai-explainer-layer` | included; ancestry and patch review pending |
-| `feat/aircraft-classification-ingest-stubs` | included; ancestry and patch review pending |
-| `feat/dynamic-filter-options` | included; ancestry and patch review pending |
-| `feat/sdk-aircraft-operating-profile` | included; ancestry and patch review pending |
-| `mac/agent_bullwinkle/task_b3e16b5f6d9f43a69307f2827a7f6368-lease_e283b71f51ee452ab5` | included; ancestry and patch review pending |
-| `mac/agent_bullwinkle/task_d1b32e44832344c1b4100e1b7cccba68-lease_8170c1e1bbdc4e9691` | included; ancestry and patch review pending |
-| `mac/agent_jordanh-worker1/task_d1b32e44832344c1b4100e1b7cccba68-lease_b4fd997576404f0e83` | included; ancestry and patch review pending |
-| `mac/agent_natasha/task_92572af2ef6c4b9b846cc76e9d048ad8-lease_6351d80bc0384a8881` | included; ancestry and patch review pending |
-| `mac/agent_natasha/task_92572af2ef6c4b9b846cc76e9d048ad8-lease_90dd2ffd6cff4aa78f` | included; ancestry and patch review pending |
-| `mac/agent_natasha/task_b3e16b5f6d9f43a69307f2827a7f6368-lease_527a400ba6504ad78e` | included; ancestry and patch review pending |
-| `mac/agent_natasha/task_b3e16b5f6d9f43a69307f2827a7f6368-lease_a3b82db56e8445b291` | included; ancestry and patch review pending |
-| `mac/agent_natasha/task_b3e16b5f6d9f43a69307f2827a7f6368-lease_be65d626931a4fafa1` | included; ancestry and patch review pending |
+| `chore/migrate-beads-to-mac` | superseded by main migration `030112e1b` |
+| `dependabot/npm_and_yarn/express-rate-limit-8.3.2` | superseded by current manifest and pnpm lock |
+| `feat/ai-explainer-layer` | recovered timeout and UI in #394; current backend route retained |
+| `feat/aircraft-classification-ingest-stubs` | missing statistics tests recovered in #394; SDK calculations retained |
+| `feat/dynamic-filter-options` | superseded by persisted distinct queries; SQLite regression added in #394 |
+| `feat/sdk-aircraft-operating-profile` | original profile incorporated in `f425ab232`; extended SDK qualified |
+| `mac/agent_bullwinkle/task_b3e16b5f6d9f43a69307f2827a7f6368-lease_e283b71f51ee452ab5` | superseded by current security dependency pins |
+| `mac/agent_bullwinkle/task_d1b32e44832344c1b4100e1b7cccba68-lease_8170c1e1bbdc4e9691` | missing malformed-GPX test recovered in #394 |
+| `mac/agent_jordanh-worker1/task_d1b32e44832344c1b4100e1b7cccba68-lease_b4fd997576404f0e83` | missing roundtrip and storage-isolation tests recovered in #394 |
+| `mac/agent_natasha/task_92572af2ef6c4b9b846cc76e9d048ad8-lease_6351d80bc0384a8881` | hazard fixtures and tests preserved; normalization extends contract |
+| `mac/agent_natasha/task_92572af2ef6c4b9b846cc76e9d048ad8-lease_90dd2ffd6cff4aa78f` | NOTAM tests preserved; weather consumer qualified by five tests |
+| `mac/agent_natasha/task_b3e16b5f6d9f43a69307f2827a7f6368-lease_527a400ba6504ad78e` | superseded by blocking audit/integration jobs |
+| `mac/agent_natasha/task_b3e16b5f6d9f43a69307f2827a7f6368-lease_a3b82db56e8445b291` | superseded by current security dependency pins |
+| `mac/agent_natasha/task_b3e16b5f6d9f43a69307f2827a7f6368-lease_be65d626931a4fafa1` | superseded by current audit jobs and documented exclusions |
 
-## Worktrees requiring reconciliation
+## Reconciled worktrees
 
 | Branch | Finding | State |
 | --- | --- | --- |
-| `accident-tracker-review` | attached-worktree-is-dirty | included; preserve and inspect local changes |
-| `chore/openapi-docs` | attached-worktree-is-dirty | included; preserve and inspect local changes |
-| `feat/sdk-aircraft-operating-profile` | attached-worktree-branch-is-unresolved | included; preserve and inspect local changes |
-| `feat/sdk-nav-providers` | attached-worktree-is-dirty | included; preserve and inspect local changes |
+| `accident-tracker-review` | formerly dirty rpe checkout | clean; preserved at `f4279a68e87a17ef4a6baf4cd53ab04931bcaa26`, pushed `recovery/reconcile-rpe-exports` |
+| `chore/openapi-docs` | formerly dirty xqe checkout | clean; preserved at `02dd415206d56e1968186d17d062f56b745f2564`, pushed `recovery/reconcile-xqe-help`; missing help landed in #394 |
+| `feat/sdk-aircraft-operating-profile` | formerly unresolved sdk-autopilot checkout | clean; supported supersession marker pushed |
+| `feat/sdk-nav-providers` | unowned lifecycle lock only | clean; lock moved recoverably under ignored `_build/reconciliation-recovery/`; no source edits removed |
 
-## Reconciliation evidence
+## Reconciliation evidence recorded during recovery
+
+The progress notes below describe the intermediate comparisons. Their pending
+landing statements are superseded by the final validation record below.
 
 Main baseline: `a427101c8849147238630bb58424d71dcb2b19d9`. All six
 post-merge workflows passed, including Dependency Scan, Integration Tests, and
@@ -189,3 +197,30 @@ rendered, no page errors occurred, and neither viewport had document overflow.
 The narrow layout now constrains inputs, tables, and modal padding. Screenshots
 were inspected from disposable validation storage. Third-party map requests were
 blocked and API responses were deterministic fixtures for this UI check.
+
+## Final branch and worktree validation
+
+Recovered changes landed through #394 at main
+`5ae9f08fbf62fb1f0f5ed3a72f4f4fd30d7dcea8`. All six workflows passed on
+that exact merge commit:
+
+- [Monorepo CI/CD](https://github.com/jordanhubbard/Aviation/actions/runs/41277329831)
+- [Common Aviation SDK](https://github.com/jordanhubbard/Aviation/actions/runs/41277329855)
+- [Integration Tests](https://github.com/jordanhubbard/Aviation/actions/runs/41277330076)
+- [Dependency Scan](https://github.com/jordanhubbard/Aviation/actions/runs/41277330024)
+- [Performance Regression Check](https://github.com/jordanhubbard/Aviation/actions/runs/41277329953)
+- [Deployment Images](https://github.com/jordanhubbard/Aviation/actions/runs/41277329863)
+
+The full retained test harness passed before landing, and `litai verify` passed
+on merged main: authority, 19 committed locks, and the current committed test
+receipt. Finalized receipt identity:
+`sha256:88154a449b13e51a781d801f17b316e69e99130c9ad2ffb9e664e8b25bab3c49`.
+
+Supported supersession markers were pushed for all fourteen original branches.
+The rpe/xqe historical branches and both preservation refs also carry explicit
+dispositions. All four original worktrees are clean, and their preserved state
+remains reachable. No historical worktree or branch was deleted.
+
+This completes the fourteen-branch/four-worktree reconciliation. RELEASE-001
+remains open: the tracker contributions above still require reconciliation and
+a fresh release contribution sweep before 1.0.0 can be published.
