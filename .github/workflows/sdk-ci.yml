@@ -61,9 +61,11 @@ jobs:
           --filter @aviation/ui-framework...
           --filter @aviation/meta-app...
           --filter g1000-simulator-frontend...
+          --filter @aviation/g1000-simulator-backend...
       - name: Build common SDK packages
         run: |
           pnpm --filter @aviation/shared-sdk run build
+          pnpm --filter @aviation/ai-explainer run build
           pnpm --filter @aviation/keystore run build
           pnpm --filter @aviation/aviation-config run build
           pnpm --filter @aviation/nav-data run build
@@ -73,6 +75,8 @@ jobs:
           pnpm --filter @aviation/ui-framework run build
           pnpm --filter @aviation/meta-app run build
           pnpm --filter g1000-simulator-frontend run build
+      - name: Verify the legacy TypeScript SDK root consumer
+        run: pnpm --filter @aviation/g1000-simulator-backend run test
       - name: Install browser for SDK consumer verification
         run: pnpm exec playwright install --with-deps chromium
       - name: Verify rendered settings confirmation and browser-safe SDK consumers

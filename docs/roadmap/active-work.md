@@ -873,9 +873,10 @@ release-visible outcome to `CHANGELOG.md`; Git preserves prior queue states.
   the coverage change landed through #410. The common SDK compiled keystore
   bridge, Python write API, concurrent-write preservation and confirmed-save
   client now pass targeted and retained qualification. Desktop/mobile checks
-  render the built G1000 consumer; all 79 G1000 Jest tests also pass. Land this
-  SDK repair through reviewed CI, then wire G1000's real backend and runtime
-  image to the provider. Finish remaining inventories and exact deployed-build
+  render the built G1000 consumer; all 79 G1000 Jest tests also pass. The
+  SDK repair landed through #411 at `868419d54` with six exact-head workflows
+  passing; all six exact-main workflows also pass. Wire G1000's real backend
+  and runtime image to the provider. Finish remaining inventories and exact deployed-build
   acceptance. See the E2E program.
 
 ### [ ] RELEASE-001 — Reconcile all outstanding contributions into release 1.0
@@ -920,6 +921,25 @@ release-visible outcome to `CHANGELOG.md`; Git preserves prior queue states.
     `sha256:2b11353678837e35933aac4d4cac7f99ccd9ea150d1d5d02679391509381f9a7`.
     PR #406 merged at `d1178828b` with all six exact-main workflows passing;
     #399 is closed with an exact-head supersession marker and preserved refs.
+  - [ ] Reconcile the full development dependency audit before publication.
+    The SDK repair's production audit has zero high/critical findings, while
+    the complete graph still reports 37 high and two critical findings across
+    existing lint, test, browser and documentation dependencies. Patch within
+    existing major versions. Registry artifacts and the refreshed full audit now
+    pass with zero high/critical findings (nine moderate and three low remain).
+    The complete workspace build also exposed the new SDK type wildcard
+    redirecting its root declaration; preserve that declaration explicitly and
+    add the existing legacy consumer build to required SDK CI. The monorepo
+    Build Check previously installed dependencies without compiling; make it
+    compile every Node workspace, and require a full-graph Node audit in the
+    dependency workflow. All Node workspace builds, both affected frontend
+    lint commands and the rendered desktop/mobile settings fixtures pass.
+    The full retained build/test/package harness passed with adopted receipt
+    `sha256:2979832c00349cd5b5b2ce73de3923d1ef322d919e73100e025511ba41bedcc7`; `litai verify` passes authority, nineteen locks and receipt
+    freshness. Source intelligence and HTML remain named configuration skips.
+    The first full CI install exposed a missing `node-gyp` on the runner;
+    provision Python and the pinned native addon driver before installation.
+    Land through exact-head and exact-main CI before checking this item.
   - [ ] Prepare, check, publish, and verify v1.0.0 from green main with no unresolved release contributions.
 - **Evidence:**
   - [ ] Ready contribution sweep, clean synchronized Git, green CI for the released commit, and verified remote tag and GitHub release.

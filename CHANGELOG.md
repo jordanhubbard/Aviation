@@ -9,6 +9,14 @@
 
 ## Unreleased
 
+- Preserved the SDK root declaration alongside its public subpath type mappings
+  for legacy TypeScript consumers, with a required consumer build in SDK CI.
+- Patched the full workspace's existing test, lint, browser and documentation
+  dependency chains within their current major versions. The complete pnpm
+  audit now reports zero high or critical findings, including development tools.
+  Dependency CI audits that full graph, and the monorepo build gate compiles
+  every Node workspace consumer.
+
 - Added a bounded compiled keystore bridge for Python SDK consumers, with
   cross-process encrypted-store tests, E2E ownership checks, serialized writes
   and atomic publication. Shared settings now require explicit successful save

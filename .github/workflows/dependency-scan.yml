@@ -54,6 +54,20 @@ jobs:
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
 
+  node-audit:
+    name: Node workspace audit (including development tools)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+      - uses: pnpm/action-setup@v6
+        with:
+          package_json_file: components/legacy-project-wrapper/implementation/package.json
+      - name: Audit the complete committed workspace lock
+        run: pnpm audit --audit-level high
+
   # pip-audit for Python dependency CVEs
   pip-audit:
     runs-on: ubuntu-latest
