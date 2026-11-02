@@ -284,13 +284,11 @@ jobs:
         # a conflicting `version` input here makes action-setup fail.
         uses: pnpm/action-setup@v6
 
-      - name: Verify monorepo Node.js structure
-        run: pnpm install --ignore-scripts
+      - name: Install the committed workspace dependencies
+        run: pnpm install --frozen-lockfile
 
-      - name: Build status
-        run: |
-          echo "✅ All validation checks passed!"
-          echo "📦 Applications are ready for deployment"
+      - name: Build every Node workspace consumer
+        run: pnpm --recursive --workspace-concurrency=1 --if-present run build
 
   # Performance Regression Checks
   performance-regression:

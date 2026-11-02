@@ -244,6 +244,9 @@
   "module": "dist-esm/index.js",
   "typesVersions": {
     "*": {
+      "dist/index.d.ts": [
+        "dist/index.d.ts"
+      ],
       "e2e": [
         "dist/e2e/index.d.ts"
       ],
