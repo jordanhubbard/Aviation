@@ -1,5 +1,19 @@
 # Changelog
 
+## Unreleased
+
+## 1.0.0 - 2026-11-02
+
+[README.md](https://github.com/jordanhubbard/Aviation/blob/v1.0.0/README.md)
+
+Aviation 1.0 brings the applications onto shared aviation SDK contracts and
+implementations, with dedicated SDK tests and thin application adapters. All
+47 original tracker contributions are resolved. All twelve deployed application
+builds have qualified explanation/follow-up flows and isolated remote inventories,
+including mobile and injected-failure cleanup with zero residual test state.
+Retained application integrations remain the release authority; native Component
+acceptance and application cutover are tracked separately.
+
 - Qualified planning IAS/TAS and ISA Mach conversions across the TypeScript and Python
   SDK bindings, with shared valid and fail-closed Component vectors.
 - Qualified shared wind components and wind-triangle calculations across TypeScript
@@ -7,10 +21,8 @@
 - Removed unused G1000 and Flight Planner private geodesy service scaffolds now that
   realized route calculations are owned by the common Aviation navigation SDK.
 
-## Unreleased
-
-- Release engineering: declare the repository owner and current CI workflow for
-  strict release authorization, and enter pre-release mode targeting 1.0.
+- Release engineering: use the repository owner's strict authorization and the
+  current monorepo CI workflow for versioned releases.
 
 - Probe Preflight at its declared root health endpoint when launching a private deployment test instance; allow the common SDK CI matrix to be run explicitly for an exact release revision.
 
@@ -48,9 +60,9 @@
   and atomic publication. Shared settings now require explicit successful save
   confirmation before showing a configured key; desktop/mobile browser checks
   run in SDK CI. Browser consumers use pure SDK leaf modules so G1000 starts
-  without importing server-side Redis code. G1000 backend persistence and private
-  runtime image qualification are now covered; exact-commit deployment acceptance
-  remains required.
+  without importing server-side Redis code. G1000 backend persistence, runtime
+  image qualification and exact published-build acceptance pass, including zero
+  residual state after success and injected failure.
 - Patched the SQLite build dependency `tar` to 7.5.22 after the production audit
   identified high and critical archive-processing advisories.
 
