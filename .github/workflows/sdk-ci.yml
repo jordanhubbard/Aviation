@@ -117,9 +117,10 @@ jobs:
           pnpm --filter @aviation/shared-sdk run build
           pnpm --filter @aviation/keystore run build
       - name: Install common SDK packages and test runner
-        run: python -m pip install -e packages/shared-sdk/python -e packages/flight-dynamics -e packages/g1000-avionics-sdk/python pytest httpx
+        run: python -m pip install -e packages/shared-sdk/python -e packages/flight-dynamics -e packages/g1000-avionics-sdk/python pytest httpx fastapi
       - name: Test common Python SDK and Component conformance
         run: |
+          PYTHONPATH=packages/aviation-config/python python -m pytest packages/aviation-config/python/tests
           python -m pytest packages/keystore/python/tests
           python -m pytest packages/shared-sdk/python/tests
           python -m pytest packages/flight-dynamics/tests packages/flight-dynamics/test_api.py

@@ -28,6 +28,8 @@ export function ConfigPanel({
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [refreshCount, setRefreshCount] = useState(0)
+  const [writeAccess, setWriteAccess] = useState({ enabled: false, requiresToken: false })
+  const [accessToken, setAccessToken] = useState('')
 
   const visibleServices = SERVICE_REGISTRY.filter(
     (s) => !serviceFilter || serviceFilter.includes(s.id)
@@ -39,14 +41,18 @@ export function ConfigPanel({
     try {
       const res = await fetch(`${apiBase}/api/settings`)
       if (!res.ok) throw new Error(`HTTP ${res.status}: ${res.statusText}`)
-      const data = await res.json() as { services: ServiceStatus[] }
+      const data = await res.json() as { services: ServiceStatus[];
+        write_access?: { enabled?: boolean; requires_token?: boolean } }
       const map = new Map<string, ServiceStatus>()
       for (const s of data.services) {
         map.set(s.id, s)
       }
       setStatusMap(map)
+      setWriteAccess({ enabled: data.write_access?.enabled !== false,
+        requiresToken: data.write_access?.requires_token === true })
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load settings')
+      setWriteAccess({ enabled: false, requiresToken: false })
     } finally {
       setLoading(false)
     }
@@ -57,7 +63,9 @@ export function ConfigPanel({
   }, [fetchSettings, refreshCount])
 
   async function handleSave(serviceId: string, key: string, value: string) {
-    await saveServiceSecret(apiBase, serviceId, key, value)
+    await saveServiceSecret(apiBase, serviceId, key, value, {
+      headers: writeAccess.requiresToken ? { Authorization: `Bearer ${accessToken}` } : undefined,
+    })
     // Update local status only after the SDK confirms the write
     setStatusMap((prev) => {
       const next = new Map(prev)
@@ -83,7 +91,7 @@ export function ConfigPanel({
 
   const configuredCount = visibleServices.filter((s) => {
     const st = statusMap.get(s.id)
-    return st?.configured ?? false
+    return Boolean(st?.fields.length && st.fields.every((field) => field.configured))
   }).length
   const needsSetupCount = visibleServices.length - configuredCount
 
@@ -174,6 +182,19 @@ export function ConfigPanel({
       )}
 
       {error && <div style={errorStyle}>{error}</div>}
+      {!loading && !error && !writeAccess.enabled && (
+        <p style={summaryStyle}>Settings changes are disabled on this server.</p>
+      )}
+      {!loading && writeAccess.enabled && writeAccess.requiresToken && (
+        <label style={{ display: 'block', marginBottom: '1rem', fontSize: '0.875rem' }}>
+          Settings access token
+          <input type="password" autoComplete="off" value={accessToken}
+            onChange={event => setAccessToken(event.target.value)}
+            style={{ display: 'block', width: '100%', boxSizing: 'border-box',
+              padding: '0.5rem', marginTop: '0.4rem', color: '#111827',
+              background: '#fff', border: '1px solid #6b7280', borderRadius: '0.375rem' }} />
+        </label>
+      )}
 
       {Array.from(grouped.entries()).map(([category, catServices]) => (
         <div key={category}>
@@ -185,6 +206,7 @@ export function ConfigPanel({
               status={statusMap.get(service.id) ?? null}
               onSave={handleSave}
               isLoading={loading}
+              writeDisabled={!writeAccess.enabled || (writeAccess.requiresToken && !accessToken)}
             />
           ))}
         </div>

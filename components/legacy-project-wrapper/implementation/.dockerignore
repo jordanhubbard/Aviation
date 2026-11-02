@@ -12,6 +12,7 @@
 **/*.tsbuildinfo
 
 # Local state
+**/_build
 **/venv
 **/.venv
 **/__pycache__
@@ -25,4 +26,4 @@
 **/.env
 **/.env.local
 **/.env.*.local
-.keystore
+**/.keystore

@@ -235,10 +235,14 @@ test-sdk-python:
 	@echo "✅ Python shared SDK tests PASSED"
 
 test-configuration-python:
-	@echo "🧪 Running Python configuration Component tests..."
-	@python_env="$(abspath _build/python-envs/configuration)"; \
+	@echo "🧪 Running Python configuration Component and runtime adapter tests..."
+	$(PNPM) install --frozen-lockfile --filter @aviation/keystore...
+	$(PNPM) --filter @aviation/shared-sdk run build
+	$(PNPM) --filter @aviation/keystore run build
+	@set -e; \
+	python_env="$(abspath _build/python-envs/configuration)"; \
 	python3 -m venv "$$python_env"; \
-	"$$python_env/bin/python" -m pip install -q pytest; \
+	"$$python_env/bin/python" -m pip install -q -e packages/shared-sdk/python pytest httpx fastapi; \
 	PYTHONPATH=packages/aviation-config/python "$$python_env/bin/python" -m pytest packages/aviation-config/python/tests -q
 	@echo "✅ Python configuration Component tests PASSED"
 
@@ -271,10 +275,18 @@ test-avionics:
 
 test-g1000-python:
 	@echo "🧪 Running G1000 Python compatibility tests..."
+	$(PNPM) install --frozen-lockfile --filter @aviation/keystore...
+	$(PNPM) --filter @aviation/shared-sdk run build
+	$(PNPM) --filter @aviation/keystore run build
 	@set -e; \
 	python_env="$(abspath _build/python-envs/g1000)"; \
 	python3 -m venv "$$python_env"; \
 	(cd apps/g1000-simulator/backend && "$$python_env/bin/python" -m pip install -q -r requirements.txt pytest pytest-asyncio httpx); \
+	settings_test_dir=$$(mktemp -d); \
+	trap 'rm -rf "$$settings_test_dir"' EXIT; \
+	KEYSTORE_PATH="$$settings_test_dir/unconfigured.keystore" \
+	KEYSTORE_ENCRYPTION_KEY=synthetic-g1000-test-master-key-32-characters \
+	AVIATION_KEYSTORE_BRIDGE="$(abspath packages/keystore/dist/bridge.js)" \
 	PYTHONPATH=apps/g1000-simulator/backend "$$python_env/bin/python" -m pytest --import-mode=importlib apps/g1000-simulator/backend/tests apps/g1000-simulator/tests/backend -q
 	@echo "✅ G1000 Python compatibility tests PASSED"
 

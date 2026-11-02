@@ -11,7 +11,7 @@ import {
   installE2EApiHeaders, runE2EScreens, seedRemoteFixture,
   installE2ENetworkMocks, standardE2EFixtures, standardE2EMocks,
   standardForeFlightCsv, withE2ERun, parseE2ERunId, traceE2EBrowser,
-  createE2ERunId, exerciseE2EFeedback,
+  createE2ERunId, exerciseE2EFeedback, assertTestDataForRun,
 } from '@aviation/shared-sdk/e2e';
 
 const appId = process.argv[2];
@@ -91,7 +91,7 @@ if (appId === 'flightschool' && !process.env.AVIATION_E2E_BASE_URL) {
   throw new Error('Flight School E2E requires an isolated application instance URL');
 }
 const secret = process.env.AVIATION_E2E_SECRET
-  || (!['aviation-accident-tracker', 'aviation-chat', 'flight-track-analyzer', 'flightschool'].includes(appId) ? randomBytes(32).toString('hex') : '');
+  || (!['aviation-accident-tracker', 'aviation-chat', 'flight-track-analyzer', 'flightschool', 'g1000-simulator'].includes(appId) ? randomBytes(32).toString('hex') : '');
 if (secret.length < 32) throw new Error('AVIATION_E2E_SECRET must have at least 32 characters');
 const executable = process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH
   || (existsSync(chromium.executablePath()) ? undefined
@@ -912,31 +912,50 @@ if (appId === 'flightschool') {
   } finally { await browser.close(); }
   console.log(`remote E2E passed: ${appId} (${baseUrl}); stateless upload and browser data cleared`);
 } else if (appId === 'g1000-simulator') {
+  if (!isolatedHost || !process.env.AVIATION_E2E_RUN_ID) {
+    throw new Error('G1000 settings E2E requires an isolated signed runtime');
+  }
+  const existingRunId = parseE2ERunId(process.env.AVIATION_E2E_RUN_ID);
   const browser = traceE2EBrowser(await chromium.launch({ headless: true, ...(executable ? { executablePath: executable } : {}) }), appId, process.env.AVIATION_E2E_TRACE_DIR);
   try {
     await withE2ERun(secret, async run => {
       const context = await browser.newContext(browserContextOptions);
-      const page = await context.newPage();
-      await installIsolatedFeedbackScript(page);
-      const origin = new URL(baseUrl).origin;
-      let posted;
-      await page.route(`${origin}/api/settings**`, async route => {
-        if (route.request().method() === 'POST') {
-          posted = route.request().postDataJSON();
-          await route.fulfill({ status: 200, contentType: 'application/json',
-            body: JSON.stringify(run.tag({ success: true })) });
-        } else {
-          await route.fulfill({ status: 200, contentType: 'application/json',
-            body: JSON.stringify(run.tag({ services: [
-              { id: 'openweather', configured: false, fields: [{ key: 'api_key', configured: false }] },
-              { id: 'sentry', configured: false, fields: [{ key: 'dsn', configured: false }] },
-              { id: 'g1000-stream', configured: false, fields: [{ key: 'api_key', configured: false }] },
-            ] })) });
+      run.onCleanup(() => context.close());
+      const api = { appId, baseUrl, fetch: async (...args) => {
+        const response = await fetch(...args);
+        if (response.ok && args[1]?.method === 'GET' && String(args[0]).includes('/__e2e/runs/')) {
+          console.log(JSON.stringify({ schema: 'aviation/e2e-residual@1', app: appId, ...await response.clone().json() }));
         }
-      });
+        return response;
+      } };
+      await seedRemoteFixture(run, api, 'settings', run.tag({ purpose: 'settings-browser' }));
+      const state = async () => {
+        const response = await fetch(new URL('/__e2e/status', baseUrl), { headers: run.headersFor(appId) });
+        if (!response.ok) throw new Error(`Settings ownership check failed: HTTP ${response.status}`);
+        const value = await response.json();
+        assertTestDataForRun(value, run.id);
+        for (const entry of value.entries) assertTestDataForRun(entry, run.id);
+        if (value.run_records !== 1) throw new Error('Missing persisted settings run record');
+        return value;
+      };
+      const page = await context.newPage();
       const errors = [];
-      page.on('pageerror', error => errors.push(error.message));
-      await runDeclaredScreens(['dashboard', 'settings'], [
+      const origin = new URL(baseUrl).origin;
+      const prepare = async target => {
+        target.setDefaultTimeout(15000);
+        await installIsolatedFeedbackScript(target);
+        await target.route(`${origin}/**`, route => route.continue({
+          headers: { ...route.request().headers(), ...run.headersFor(appId) },
+        }));
+        target.on('pageerror', error => errors.push(error.message));
+        target.on('console', message => { if (message.type() === 'error') errors.push(message.text()); });
+        target.on('requestfailed', request => errors.push(`${request.failure()?.errorText} ${request.url()}`));
+        target.on('response', response => { if (response.status() >= 400) errors.push(`HTTP ${response.status()} ${response.url()}`); });
+      };
+      await prepare(page);
+      const sample = `synthetic-settings-${run.id}`;
+      let freshPage;
+      await runDeclaredScreens(['dashboard', 'settings', 'settings-reload', 'settings-delete'], [
         {
           id: 'dashboard', dataMode: 'isolated-browser',
           visit: async () => {
@@ -948,30 +967,70 @@ if (appId === 'flightschool') {
             await page.getByRole('button', { name: 'Acknowledge' }).click();
             await page.waitForFunction(() => [...document.querySelectorAll('div[style]')].some(element =>
               element.style.opacity === '0.5' && element.textContent?.includes('This is a test alert')),
-            null, { timeout: 5_000 });
+            null, { timeout: 5000 });
           },
         },
         {
-          id: 'settings', dataMode: 'sdk-mock',
+          id: 'settings', dataMode: 'isolated-keystore',
           visit: async () => {
             await page.goto(new URL('/settings', baseUrl).toString(), { waitUntil: 'domcontentloaded' });
-            await page.getByText('OpenWeatherMap').click();
-            await page.getByPlaceholder('Enter API Key').fill(`e2e-${run.id}`);
-            await page.getByRole('button', { name: 'Save' }).first().click();
+            await page.getByText('0 of 4 services configured — 4 need setup', { exact: true }).waitFor();
+            await page.getByText('OpenWeatherMap', { exact: true }).click();
+            await page.getByPlaceholder('Enter API Key', { exact: true }).fill(sample);
+            await page.getByRole('button', { name: 'Save', exact: true }).first().click();
           },
           verify: async () => {
-            await page.getByText('Saved successfully.').waitFor();
-            if (posted?.service !== 'openweather' || posted?.key !== 'api_key'
-              || posted?.value !== `e2e-${run.id}`) throw new Error('Settings mock did not receive the sample value');
-            if (errors.length) throw new Error(`Browser errors: ${errors.join('; ')}`);
+            await page.getByText('Saved successfully.', { exact: true }).waitFor();
+            const persisted = await state();
+            if (persisted.records !== 1 || persisted.count !== 2
+              || JSON.stringify(persisted).includes(sample)) throw new Error('Settings write was not persisted and redacted');
           },
         },
+        {
+          id: 'settings-reload', dataMode: 'isolated-keystore',
+          visit: async () => {
+            const fresh = await browser.newContext(browserContextOptions);
+            run.onCleanup(() => fresh.close());
+            freshPage = await fresh.newPage();
+            await prepare(freshPage);
+            await freshPage.goto(new URL('/settings', baseUrl).toString(), { waitUntil: 'domcontentloaded' });
+            await freshPage.getByRole('button', { name: 'Refresh', exact: true }).waitFor();
+            await freshPage.getByText('OpenWeatherMap', { exact: true }).click();
+          },
+          verify: async () => {
+            await freshPage.getByText('Configured ✓', { exact: true }).waitFor();
+            await freshPage.getByText('1 of 4 services configured — 3 need setup', { exact: true }).waitFor();
+            if ((await state()).records !== 1) throw new Error('Settings did not survive a fresh browser context');
+          },
+        },
+        {
+          id: 'settings-delete', dataMode: 'isolated-keystore',
+          visit: async () => {
+            const deleted = await fetch(new URL('/api/settings/secrets/openweather/api_key', baseUrl), {
+              method: 'DELETE', headers: run.headersFor(appId),
+            });
+            if (!deleted.ok || (await deleted.json()).deleted !== true) throw new Error('Settings field was not deleted');
+            await freshPage.reload({ waitUntil: 'domcontentloaded' });
+            await freshPage.getByRole('button', { name: 'Refresh', exact: true }).waitFor();
+            await freshPage.getByText('OpenWeatherMap', { exact: true }).click();
+          },
+          verify: async () => {
+            await freshPage.getByText('0 of 4 services configured — 4 need setup', { exact: true }).waitFor();
+            const emptyField = freshPage.getByPlaceholder('Enter API Key', { exact: true });
+            await emptyField.waitFor();
+            if (!(await emptyField.isEnabled()) || await freshPage.getByText('Configured ✓', { exact: true }).count()) {
+              throw new Error('Deleted settings are still configured or unavailable in the fresh browser');
+            }
+            if ((await state()).records !== 0) throw new Error('Deleted settings remain');
+            if (errors.length) throw new Error(`Browser errors: ${errors.join('; ')}`);
+            if (await freshPage.evaluate(() => document.documentElement.scrollWidth > innerWidth)) throw new Error('Settings overflow the viewport');
+          },
+          afterVerify: () => { latestPage = page; },
+        },
       ]);
-      posted = undefined;
-      await context.close();
-    });
+    }, existingRunId);
   } finally { await browser.close(); }
-  console.log(`remote E2E passed: ${appId} (${baseUrl}); browser fixtures removed`);
+  console.log(`remote E2E passed: ${appId} (${baseUrl}); encrypted fixtures and run record removed`);
 } else if (appId === 'flight-tracker') {
   if (!isolatedHost || !process.env.AVIATION_E2E_RUN_ID) {
     throw new Error('Flight Tracker E2E requires an isolated signed service instance');

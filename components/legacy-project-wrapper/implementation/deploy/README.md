@@ -150,3 +150,21 @@ context, and actual UI deletion. The native launcher passes its run identity to
 the adapter. `AVIATION_E2E_FAIL_AFTER_SCREEN=upload` therefore exercises SDK and
 physical store cleanup for that same allocated run. The HTTP regression also
 checks tags, foreign-run denial, SQLite reopening and raw-file deletion.
+
+
+G1000 settings use the shared configuration HTTP adapter and a compiled keystore
+provider packaged in its Python runtime image. Normal deployment mounts the app
+data volume at `/app/data`, with `KEYSTORE_PATH=/app/data/.keystore`. Preserve the
+store path and `KEYSTORE_ENCRYPTION_KEY` across restarts because the encrypted
+format derives its salt from the path. Settings writes are disabled unless the
+master key and `AVIATION_SETTINGS_TOKEN` are each at least 32 characters; the
+operator enters the token in the settings panel for authorized writes. The token
+is held only in browser memory.
+
+G1000's `isolated-e2e.mjs` path starts its exact image with SDK-signed app/run
+credentials, a synthetic encryption key and a private run-owned encrypted store.
+No production data volume is attached. Five flows cover dashboard, save, a fresh
+browser read, field deletion and mocked feedback. The SDK fixture ledger and
+field records are inspected for ownership before cleanup, including after
+`AVIATION_E2E_FAIL_AFTER_SCREEN=settings`. The physical private store and leased
+container are removed by the runner.

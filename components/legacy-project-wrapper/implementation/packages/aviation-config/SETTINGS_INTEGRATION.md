@@ -152,18 +152,51 @@ after persistence succeeds.
 
 ### Python host adapters
 
-The shared Python provider is `keystore.create_secret_loader`, selected with
-`AVIATION_KEYSTORE_BRIDGE` and `KEYSTORE_PATH`. It exposes `set(key, value)` on a
-service-specific loader. There is no `Keystore` class or ready-made HTTP router.
+`aviation_config.http.create_settings_router` is the optional FastAPI adapter.
+It uses the common catalog and `AviationConfig.set` / `delete`, which persist
+through `keystore.create_secret_loader` and the compiled Node bridge. No second
+Python encryption implementation is needed.
 
-A host adapter must authenticate writes, validate the service and field against
-`get_services_by_app(app_id)`, invoke the selected service loader, and return
-`success: true` only after `set` completes. Return a generic failure without
-provider stderr or secret values. `AviationConfig.get_service_status()` supplies
-the shared status shape; it currently implements reads only. Its existing
-production environment fallback requires explicit isolation handling before use
-in an E2E server. Runtime images must include Node, the compiled bridge and SDK
-dependencies. G1000's retained private router has not yet migrated to this path.
+```python
+import os
+from fastapi import FastAPI
+from aviation_config import AviationConfig
+from aviation_config.http import create_settings_router
+
+app = FastAPI()
+app.include_router(create_settings_router(
+    AviationConfig("g1000-simulator"),
+    write_token=os.environ.get("AVIATION_SETTINGS_TOKEN"),
+    encryption_ready=len(os.environ.get("KEYSTORE_ENCRYPTION_KEY", "")) >= 32,
+))
+```
+
+Select `AVIATION_KEYSTORE_BRIDGE` and `KEYSTORE_PATH` explicitly in runtime
+packaging. A compiled provider, encryption key of at least 32 characters and
+operator token of at least 32 characters are required for normal HTTP writes.
+Without them, the endpoint stays read-only. The panel uses `write_access` from
+GET status to show the access-token input or a read-only notice. Tokens stay in
+component memory and are sent as a Bearer header; they are not settings values.
+Invalid payloads and provider failures return generic errors without input,
+provider stderr or secret values. DELETE accepts the same authorization policy.
+
+Normal reads retain registered environment and historical app-namespace fallback.
+A host can declare old field names through `legacy_aliases`; new writes always
+use canonical service/field identities. Isolated reads disable every production
+fallback and bypass cached values. They require an explicit store whose parent
+is the SDK run ID, plus an app-bound signed credential on each settings request.
+A normal provider rejects test-tagged stores even if given their path.
+
+Private instances expose the shared fixture/status/run-cleanup protocol. Before
+any test write, the encrypted store receives a tagged `e2e_runs` record containing
+the app/run owner and expiry. Cleanup validates the entire store and app/run
+metadata before deleting fields and the run record. Unknown entries and foreign
+owners fail closed. Expired configuration reads and new writes fail; redacted inspection and
+authenticated owned cleanup remain available. The outer SDK instance lease removes the private
+filesystem after controller loss. These endpoints are absent in normal mode.
+
+The portable configuration Component continues to own catalog/status semantics;
+HTTP, authorization, secret storage and runtime packaging remain SDK adapters.
 
 ---
 

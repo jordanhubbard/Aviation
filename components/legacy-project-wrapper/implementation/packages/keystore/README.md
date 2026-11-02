@@ -363,3 +363,15 @@ power-loss qualification.
 An isolated Python loader pins its SDK run identity at construction and disables
 ambient environment and legacy npm fallback reads. Its compiled bridge must be
 available; it cannot fall back to production credentials when test data is absent.
+
+Normal SDK providers reject files containing test markers; an explicit matching
+run identity is required to read or mutate such files. For an explicitly chosen
+fresh store, the Python bridge can launch without an existing parent directory:
+reads leave it absent and the Node writer creates it with private permissions.
+
+For a self-contained Node runtime, build the shared SDK and keystore, then deploy
+with `pnpm --config.node-linker=hoisted --filter @aviation/keystore deploy --legacy
+--prod <destination>`. The package manifests include compiled output. Verify that
+all dependency links resolve inside the destination and exercise the bridge
+without npm or a TypeScript compiler. G1000's image performs a runtime smoke
+check using the actual copied Node binary and provider.

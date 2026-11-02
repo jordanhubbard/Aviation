@@ -875,9 +875,14 @@ release-visible outcome to `CHANGELOG.md`; Git preserves prior queue states.
   client now pass targeted and retained qualification. Desktop/mobile checks
   render the built G1000 consumer; all 79 G1000 Jest tests also pass. The
   SDK repair landed through #411 at `868419d54` with six exact-head workflows
-  passing; all six exact-main workflows also pass. Wire G1000's real backend
-  and runtime image to the provider. Finish remaining inventories and exact deployed-build
-  acceptance. See the E2E program.
+  passing; all six exact-main workflows also pass. G1000 now uses the common
+  Python settings adapter and authenticated HTTP adapter with canonical fields.
+  Isolated reads disable production fallbacks, and normal providers reject test
+  stores. Its private working-tree image passed real HTTP and desktop/mobile
+  browser persistence, fresh reads, deletion and injected-failure cleanup with
+  zero residual records. Finish review, exact-commit image acceptance and the
+  remaining application inventories.
+  See the E2E program.
 
 ### [ ] RELEASE-001 — Reconcile all outstanding contributions into release 1.0
 
@@ -921,7 +926,7 @@ release-visible outcome to `CHANGELOG.md`; Git preserves prior queue states.
     `sha256:2b11353678837e35933aac4d4cac7f99ccd9ea150d1d5d02679391509381f9a7`.
     PR #406 merged at `d1178828b` with all six exact-main workflows passing;
     #399 is closed with an exact-head supersession marker and preserved refs.
-  - [ ] Reconcile the full development dependency audit before publication.
+  - [x] Reconcile the full development dependency audit before publication.
     The SDK repair's production audit has zero high/critical findings, while
     the complete graph still reports 37 high and two critical findings across
     existing lint, test, browser and documentation dependencies. Patch within
@@ -939,7 +944,9 @@ release-visible outcome to `CHANGELOG.md`; Git preserves prior queue states.
     freshness. Source intelligence and HTML remain named configuration skips.
     The first full CI install exposed a missing `node-gyp` on the runner;
     provision Python and the pinned native addon driver before installation.
-    Land through exact-head and exact-main CI before checking this item.
+    PR #412 merged at `8b900247b` after all six exact-head workflows passed;
+    all six exact-main workflows passed, including full-graph dependency audit
+    and the actual workspace build gate.
   - [ ] Prepare, check, publish, and verify v1.0.0 from green main with no unresolved release contributions.
 - **Evidence:**
   - [ ] Ready contribution sweep, clean synchronized Git, green CI for the released commit, and verified remote tag and GitHub release.

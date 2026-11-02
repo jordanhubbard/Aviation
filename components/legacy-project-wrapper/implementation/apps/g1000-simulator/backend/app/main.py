@@ -90,4 +90,4 @@ async def health_check() -> dict:
     return {"status": "healthy"}
 
 
-app.include_router(settings_router.router)
+app.include_router(settings_router.build_settings_router())

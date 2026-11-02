@@ -7,6 +7,7 @@ export type ServiceCardProps = {
   status: ServiceStatus | null
   onSave: (serviceId: string, key: string, value: string) => Promise<void>
   isLoading?: boolean
+  writeDisabled?: boolean
 }
 
 const CATEGORY_COLORS: Record<string, string> = {
@@ -18,7 +19,7 @@ const CATEGORY_COLORS: Record<string, string> = {
   database: '#16a34a',
 }
 
-export function ServiceCard({ service, status, onSave, isLoading = false }: ServiceCardProps) {
+export function ServiceCard({ service, status, onSave, isLoading = false, writeDisabled = false }: ServiceCardProps) {
   const [expanded, setExpanded] = useState(false)
 
   const configuredCount = status
@@ -155,7 +156,7 @@ export function ServiceCard({ service, status, onSave, isLoading = false }: Serv
               isConfigured={getFieldStatus(field.key)}
               initialValue={getFieldStatus(field.key) ? '••••••••' : ''}
               onSave={(value) => onSave(service.id, field.key, value)}
-              disabled={isLoading}
+              disabled={isLoading || writeDisabled}
             />
           ))}
         </div>

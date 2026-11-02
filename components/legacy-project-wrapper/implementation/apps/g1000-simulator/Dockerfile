@@ -1,5 +1,5 @@
 # Build context is the repo root (see railway.toml / dockerfilePath).
-FROM node:20-alpine AS frontend-build
+FROM node:24-bookworm-slim AS frontend-build
 
 WORKDIR /app
 
@@ -13,8 +13,11 @@ COPY pnpm-workspace.yaml pnpm-lock.yaml package.json ./
 COPY packages ./packages
 COPY apps ./apps
 
-RUN pnpm install --frozen-lockfile --filter g1000-simulator-frontend...
+RUN pnpm install --frozen-lockfile --filter g1000-simulator-frontend... --filter @aviation/keystore...
 RUN pnpm --filter g1000-simulator-frontend... run build
+RUN pnpm --filter @aviation/shared-sdk run build \
+    && pnpm --filter @aviation/keystore run build \
+    && pnpm --config.node-linker=hoisted --filter @aviation/keystore deploy --legacy --prod /runtime/keystore
 
 
 FROM python:3.11-slim AS runtime
@@ -22,7 +25,21 @@ FROM python:3.11-slim AS runtime
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1
 
+RUN apt-get update && apt-get install -y --no-install-recommends libstdc++6 libatomic1 \
+    && rm -rf /var/lib/apt/lists/*
+COPY --from=frontend-build /usr/local/bin/node /usr/local/bin/node
+COPY --from=frontend-build /runtime/keystore /opt/aviation/keystore
+ENV AVIATION_KEYSTORE_BRIDGE=/opt/aviation/keystore/dist/bridge.js \
+    KEYSTORE_PATH=/app/data/.keystore
+
+# Exercise the actual runtime artifact, with no npm or TypeScript compiler.
+RUN ! command -v npm && ! command -v ts-node \
+    && printf '%s\n' '{"schema":"aviation/keystore-request@1","operation":"entries"}' \
+       | node "$AVIATION_KEYSTORE_BRIDGE"
+
 WORKDIR /app
+COPY packages/aviation-config/python /packages/aviation-config/python
+COPY packages/keystore/python /packages/keystore/python
 COPY apps/g1000-simulator/backend/requirements.txt ./requirements.txt
 COPY packages/shared-sdk/python /packages/shared-sdk/python
 COPY packages/shared-sdk/data /packages/shared-sdk/data

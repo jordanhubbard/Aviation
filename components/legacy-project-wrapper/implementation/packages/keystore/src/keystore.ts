@@ -177,6 +177,9 @@ export class SecureKeyStore {
         const data = JSON.parse(decrypted);
         if (this.testRunId) {
           for (const entry of Object.values(data)) assertTestDataForRun(entry, this.testRunId);
+        } else if (Object.values(data).some(entry => typeof entry === 'object' && entry !== null
+          && ('is_test_data' in entry || 'test_run_id' in entry))) {
+          throw new Error('Test entries require an explicit run identity');
         }
         
         this.secrets = new Map(
