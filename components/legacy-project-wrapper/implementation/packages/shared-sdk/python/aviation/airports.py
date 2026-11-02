@@ -258,30 +258,34 @@ class AirportDatabase:
         self._load_airports()
         
         code_u = self._normalize_airport_code(code)
+        if not code_u:
+            return None
         candidates = self._candidate_codes(code_u)
         
-        for airport in self.airports:
-            icao_code = (airport.get("icao") or airport.get("icaoCode") or "").upper()
-            iata_code = (airport.get("iata") or airport.get("iataCode") or "").upper()
+        # Resolve exact identities before any US-prefix fallback, independent of row order.
+        for candidate in [code_u, *sorted(candidates - {code_u})]:
+            for airport in self.airports:
+                icao_code = (airport.get("icao") or airport.get("icaoCode") or "").upper()
+                iata_code = (airport.get("iata") or airport.get("iataCode") or "").upper()
             
-            if not ({icao_code, iata_code} & candidates):
-                continue
+                if candidate not in {icao_code, iata_code}:
+                    continue
             
-            lat, lon = self._extract_lat_lon(airport)
-            if lat is None or lon is None:
-                continue
+                lat, lon = self._extract_lat_lon(airport)
+                if lat is None or lon is None:
+                    continue
             
-            return Airport({
-                "icao": icao_code,
-                "iata": iata_code,
-                "name": airport.get("name"),
-                "city": airport.get("city") or "",
-                "country": airport.get("country") or "",
-                "latitude": float(lat),
-                "longitude": float(lon),
-                "elevation": airport.get("elevation"),
-                "type": airport.get("type") or "",
-            })
+                return Airport({
+                    "icao": icao_code,
+                    "iata": iata_code,
+                    "name": airport.get("name"),
+                    "city": airport.get("city") or "",
+                    "country": airport.get("country") or "",
+                    "latitude": float(lat),
+                    "longitude": float(lon),
+                    "elevation": airport.get("elevation"),
+                    "type": airport.get("type") or "",
+                })
         
         return None
     

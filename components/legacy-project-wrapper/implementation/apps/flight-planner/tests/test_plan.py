@@ -471,3 +471,39 @@ def test_plan_local_mode_ok(monkeypatch) -> None:
     assert body["center"]["icao"] == "AAA"
     assert len(body["nearby_airports"]) == 1
     assert body["nearby_airports"][0]["icao"] == "BBB"
+
+
+def test_route_uses_exact_airport_before_foreign_iata_alias(monkeypatch):
+    """A K-prefixed origin must not become an intercontinental terrain request."""
+    import httpx
+    import app.models.airport as airport_model
+    from app.services import terrain_service
+
+    origin = {"icao": "KAAA", "iata": "", "latitude": 38.57910156,
+              "longitude": -121.8570023}
+    destination = {"icao": "KBBB", "iata": "", "latitude": 37.461102,
+                   "longitude": -122.114998}
+    foreign_alias = {"icao": "FZZZ", "iata": "AAA", "latitude": -12.517527,
+                     "longitude": 34.131877}
+    monkeypatch.setattr(airport_model, "load_airport_cache",
+                        lambda: [foreign_alias, origin, destination])
+    monkeypatch.setenv("TERRAIN_PROVIDER", "open-meteo")
+    sampled = []
+
+    def get(url, *, params, timeout):
+        latitudes = [float(v) for v in params["latitude"].split(",")]
+        sampled.extend(latitudes)
+        return httpx.Response(200, request=httpx.Request("GET", url, params=params),
+                              json={"elevation": [10] * len(latitudes)})
+
+    monkeypatch.setattr(terrain_service.httpx, "get", get)
+    response = TestClient(app).post("/api/plan", json={
+        "mode": "route", "origin": "KAAA", "destination": "KBBB", "speed": 110,
+        "speed_unit": "knots", "altitude": 5500, "avoid_terrain": True,
+        "apply_wind": False, "include_alternates": False,
+    })
+    assert response.status_code == 200, response.text
+    plan = response.json()
+    assert plan["origin_coords"] == [origin["latitude"], origin["longitude"]]
+    assert 65 < plan["distance_nm"] < 72
+    assert sampled and all(37 <= latitude <= 39 for latitude in sampled)

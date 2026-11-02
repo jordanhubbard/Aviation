@@ -85,30 +85,24 @@ export function candidateCodes(code: string): Set<string> {
  * @returns Airport record or undefined if not found
  */
 export function findAirport(code: string): Airport | undefined {
-  const candidates = candidateCodes(code);
-  
-  // Check cache first - try all candidate codes
-  for (const candidate of candidates) {
-    const cached = airportCodeCache.get(candidate);
-    if (cached) {
-      return cached as Airport;
-    }
+  const query = normalizeCode(code);
+  if (!query) return undefined;
+  const cached = airportCodeCache.get(query);
+  if (cached) return cached as Airport;
+
+  // Search exact identities before aliases, regardless of database row order.
+  let found: Airport | undefined;
+  for (const candidate of candidateCodes(query)) {
+    found = airportDatabase.find((airport) => {
+      const icao = normalizeCode(airport.icao);
+      const iata = airport.iata ? normalizeCode(airport.iata) : '';
+      return icao === candidate || iata === candidate;
+    });
+    if (found) break;
   }
 
-  // Search database
-  const found = airportDatabase.find((airport) => {
-    const icao = normalizeCode(airport.icao);
-    const iata = airport.iata ? normalizeCode(airport.iata) : '';
-    
-    return candidates.has(icao) || (iata && candidates.has(iata));
-  });
-
-  // Cache the result for all candidate codes
-  if (found) {
-    for (const candidate of candidates) {
-      airportCodeCache.set(candidate, found);
-    }
-  }
+  // Cache only this query: a fallback alias may be another airport's exact code.
+  if (found) airportCodeCache.set(query, found);
 
   return found;
 }

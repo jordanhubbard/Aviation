@@ -134,6 +134,9 @@ jobs:
       - name: Lint frontend
         run: pnpm --filter flight-planner-frontend run lint
 
+      - name: Test frontend VFR interactions
+        run: pnpm --filter flight-planner-frontend test
+
   # Test flightschool
   test-flightschool:
     name: Test Flight School

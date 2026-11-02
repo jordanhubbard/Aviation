@@ -28,7 +28,21 @@ def _api_key() -> str:
     return key
 
 
+# Open-Meteo permits at most 100 coordinate pairs per elevation request.
+# Use 50 to keep even full-precision encoded coordinates below a 4 KiB URI.
+# https://open-meteo.com/en/docs/elevation-api
+_OPEN_METEO_ELEVATION_BATCH_SIZE = 50
+
+
 def _fetch_open_meteo_elevations_m(points: Sequence[Tuple[float, float]]) -> List[Optional[float]]:
+    elevations: List[Optional[float]] = []
+    for offset in range(0, len(points), _OPEN_METEO_ELEVATION_BATCH_SIZE):
+        batch = points[offset : offset + _OPEN_METEO_ELEVATION_BATCH_SIZE]
+        elevations.extend(_fetch_open_meteo_elevation_batch_m(batch))
+    return elevations
+
+
+def _fetch_open_meteo_elevation_batch_m(points: Sequence[Tuple[float, float]]) -> List[Optional[float]]:
     if not points:
         return []
 

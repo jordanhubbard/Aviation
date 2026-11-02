@@ -42,3 +42,12 @@ retained cache or an external provider.
 - **WHEN** this Component, its vectors, a binding, package metadata, or the SDK workflow
   changes
 - **THEN** the TypeScript and Python conformance adapters run independently
+
+## Requirement: Exact identities precede prefix aliases
+
+### Scenario: A stripped alias names a different airport
+
+- **GIVEN** an earlier airport has IATA `AAA` and a later airport has ICAO `KAAA`
+- **WHEN** callers alternate `AAA`, `KAAA`, and lowercase queries
+- **THEN** exact identities select their own records, independent of lookup order
+- **AND** an unambiguous prefix alias still resolves when no exact identity exists
