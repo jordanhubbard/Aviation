@@ -77,6 +77,11 @@ describe('SecureKeyStore', () => {
       is_test_data: true, test_run_id: run })]);
     expect(JSON.stringify(store.listEntries())).not.toContain('synthetic-only');
     const original = fs.readFileSync(storePath);
+    const normal = new SecureKeyStore({ storePath, encryptionKey: 'test-key' });
+    expect(normal.getSecret('openweather', 'api_key')).toBeUndefined();
+    expect(() => normal.listEntries()).toThrow('could not be loaded');
+    expect(() => normal.setSecret('openweather', 'api_key', 'normal')).toThrow();
+    expect(fs.readFileSync(storePath)).toEqual(original);
     const foreign = new SecureKeyStore({ storePath, encryptionKey: 'test-key', testRunId: 'e2e_' + 'b'.repeat(32) });
     expect(() => foreign.listEntries()).toThrow('could not be loaded');
     expect(() => foreign.setSecret('openweather', 'api_key', 'foreign')).toThrow();

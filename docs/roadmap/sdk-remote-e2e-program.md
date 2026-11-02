@@ -346,6 +346,41 @@ qualification passed with adopted receipt `sha256:aacce94e68d28d724e67fe96c9c716
 authority, all nineteen locks and receipt freshness; source intelligence and
 HTML remain named configuration skips. Exact-commit CI is required before landing.
 
+## G1000 settings persistence integration
+
+The SDK settings HTTP adapter now requires canonical app-scoped fields and
+explicit operator authorization for normal writes. Private requests require
+app/run-bound SDK credentials, an explicit run-owned store, and tagged
+`e2e_runs` metadata before field persistence. Production fallback is disabled;
+normal providers also reject test-tagged files. Cleanup validates every owner
+and field before removing records, including expired runs without renewing them.
+
+Local qualification passes 46 Python configuration/keystore cases, 36 G1000
+application cases, TypeScript keystore/configuration suites, and rendered
+operator-token/read-only/failure/success states at desktop and mobile widths.
+The shared panel summary counts actual configured fields rather than optional
+service readiness; browser checks cover empty, saved and deleted summaries.
+The actual Docker testing target also built and passed all 36 backend tests
+with its packaged provider, read-only root and no network access.
+The deployed G1000 adapter no longer mocks the settings API: its five declared
+flows cover dashboard, save, fresh-context reload, deletion and mocked feedback,
+with standard fixture cleanup and residual counts. All five flows passed against
+the private working-tree image at desktop and mobile widths. An injected failure
+after settings also passed cleanup with zero residual records. Each run removed
+its owned container, private filesystem and SSH tunnel. Exact-commit execution
+remains required before deployed-build acceptance.
+
+The image packages Node 24 and a compiled provider, and persists normal settings
+under the app data volume. A local packaging probe found a workspace link in
+legacy isolated-node-linker output; hoisted deployment produces a closed
+artifact and passes real set/get/delete operations without npm or a compiler.
+The private working-tree runtime image
+also passed real HTTP writes, a fresh Python process read, normal-mode rejection
+of test state, foreign-request denial and zero-residual cleanup. Its production
+store remained absent. These runs used synthetic credentials and no production
+volumes. This is not final deployed-build acceptance; both #176 and #332 remain
+open.
+
 ## Acceptance contract
 
 Each deployed app must publish a screen inventory and an executable test for every

@@ -9,6 +9,13 @@
 
 ## Unreleased
 
+- G1000 settings now use the shared Python configuration and authenticated HTTP
+  adapters with the compiled encrypted keystore provider packaged in the runtime
+  image. Normal writes require operator authorization; isolated tests use SDK
+  credentials and run-owned stores. Real image HTTP and desktop/mobile browser
+  checks cover persistence, fresh reads, deletion and failure cleanup. The shared
+  panel counts configured fields consistently with its service cards.
+
 - Preserved the SDK root declaration alongside its public subpath type mappings
   for legacy TypeScript consumers, with a required consumer build in SDK CI.
 - Patched the full workspace's existing test, lint, browser and documentation
@@ -22,8 +29,9 @@
   and atomic publication. Shared settings now require explicit successful save
   confirmation before showing a configured key; desktop/mobile browser checks
   run in SDK CI. Browser consumers use pure SDK leaf modules so G1000 starts
-  without importing server-side Redis code. G1000 backend persistence integration
-  and runtime image qualification remain open.
+  without importing server-side Redis code. G1000 backend persistence and private
+  runtime image qualification are now covered; exact-commit deployment acceptance
+  remains required.
 - Patched the SQLite build dependency `tar` to 7.5.22 after the production audit
   identified high and critical archive-processing advisories.
 

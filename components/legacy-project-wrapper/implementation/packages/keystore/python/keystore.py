@@ -262,8 +262,13 @@ class SecretLoader:
         request = {"schema": "aviation/keystore-request@1", "operation": operation,
                    "service": self.service_name, **fields}
         try:
+            # A fresh explicitly selected store may not have a parent yet. The
+            # Node provider creates it on writes; reads must not create it.
+            cwd = self.keystore_root
+            if self.keystore_path is not None and not cwd.is_dir():
+                cwd = self.bridge_path.parent
             result = subprocess.run([self.node_executable, str(self.bridge_path)],
-                input=json.dumps(request), cwd=str(self.keystore_root),
+                input=json.dumps(request), cwd=str(cwd),
                 env=self._subprocess_env(), capture_output=True, text=True,
                 check=False, timeout=15)
             response = json.loads(result.stdout)

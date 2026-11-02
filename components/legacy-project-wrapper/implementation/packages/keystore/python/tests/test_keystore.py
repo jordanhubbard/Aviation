@@ -166,3 +166,18 @@ def test_isolated_provider_never_reads_production_environment_or_legacy_store(ru
     with pytest.raises(KeystoreError, match="compiled bridge"):
         legacy.list_keys()
     assert not store.exists()
+
+
+def test_compiled_bridge_supports_a_fresh_store_without_creating_it_on_read(tmp_path, monkeypatch):
+    bridge = Path(__file__).resolve().parents[2] / "dist/bridge.js"
+    assert bridge.is_file()
+    monkeypatch.delenv("AVIATION_E2E_RUN_ID", raising=False)
+    monkeypatch.setenv("KEYSTORE_ENCRYPTION_KEY", "synthetic-fresh-store-encryption-key-32")
+    store = tmp_path / "not-created" / ".keystore"
+    loader = SecretLoader("openweather", keystore_path=str(store), bridge_path=str(bridge), fallback_to_env=False)
+    assert loader.get("api_key") is None
+    assert not store.parent.exists()
+    loader.set("api_key", "synthetic-fresh-secret")
+    fresh = SecretLoader("openweather", keystore_path=str(store), bridge_path=str(bridge), fallback_to_env=False)
+    assert fresh.get("api_key") == "synthetic-fresh-secret"
+    assert store.is_file()

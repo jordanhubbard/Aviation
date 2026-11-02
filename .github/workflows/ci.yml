@@ -298,6 +298,23 @@ jobs:
       - name: Build every Node workspace consumer
         run: pnpm --recursive --workspace-concurrency=1 --if-present run build
 
+  test-g1000:
+    name: Test G1000 Simulator
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.11'
+      - uses: pnpm/action-setup@v6
+        with:
+          package_json_file: components/legacy-project-wrapper/implementation/package.json
+      - name: Test the real settings backend and simulator
+        run: make test-g1000-python
+
   # Performance Regression Checks
   performance-regression:
     name: Performance Regression Checks

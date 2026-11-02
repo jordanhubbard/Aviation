@@ -42,9 +42,15 @@ describe('shared settings save contract over real HTTP', () => {
       .rejects.toThrow('Secret save was not confirmed');
   });
 
+  it.each([401, 403])('reports denied access without echoing credentials for HTTP %s', async status => {
+    const origin = await endpoint(status, { error: 'synthetic-sensitive-value' });
+    await expect(saveServiceSecret(origin, 'openweather', 'api_key', 'synthetic-sensitive-value'))
+      .rejects.toThrow('Settings access was not authorized');
+  });
+
   it('does not expose HTTP failure response content', async () => {
     const origin = await endpoint(503, { error: 'synthetic-sensitive-value' });
     await expect(saveServiceSecret(origin, 'openweather', 'api_key', 'synthetic-sensitive-value'))
-      .rejects.toThrow('Save failed (HTTP 503)');
+      .rejects.toThrow('Settings changes are unavailable');
   });
 });

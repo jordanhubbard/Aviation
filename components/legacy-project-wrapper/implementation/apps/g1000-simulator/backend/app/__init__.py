@@ -28,7 +28,7 @@ def create_app(config: Settings) -> FastAPI:
     )
 
     app.include_router(health.router, prefix=config.api_prefix)
-    app.include_router(settings.router)
+    app.include_router(settings.build_settings_router())
     app.include_router(telemetry.router)
 
     static_root = Path(__file__).resolve().parents[1] / "static"

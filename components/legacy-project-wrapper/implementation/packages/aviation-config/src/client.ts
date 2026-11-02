@@ -10,6 +10,8 @@ export async function saveServiceSecret(apiBase: string, service: string, key: s
   } catch {
     throw new Error('Unable to save settings');
   }
+  if (response.status === 401 || response.status === 403) throw new Error('Settings access was not authorized');
+  if (response.status === 503) throw new Error('Settings changes are unavailable');
   if (!response.ok) throw new Error(`Save failed (HTTP ${response.status})`);
   let result: unknown;
   try { result = await response.json(); }

@@ -10,6 +10,9 @@ const appId = process.argv[2];
 const runtimes = {
   'preflight-check': { port: 8080, readyStatus: 200 },
   'flight-tracker': { port: 3001 },
+  'g1000-simulator': { port: 8000, readyPath: '/api/health', readyStatus: 200,
+    environment: runId => [`KEYSTORE_PATH=/tmp/aviation-e2e/${runId}/settings.keystore`,
+      `KEYSTORE_ENCRYPTION_KEY=synthetic-settings-fixture-${runId}`] },
   'aviation-chat': { port: 31416, readyStatus: 200 },
   'aviation-accident-tracker': { port: 3002, readyStatus: 200,
     environment: runId => [`DATABASE_PATH=/tmp/aviation-e2e/${runId}/events.db`,
@@ -92,7 +95,7 @@ const freePort = async () => {
 const waitForHttp = async port => {
   for (let attempt = 0; attempt < 120; attempt++) {
     try {
-      const response = await fetch(`http://127.0.0.1:${port}/health`, {
+      const response = await fetch(`http://127.0.0.1:${port}${launch.readyPath || '/health'}`, {
         signal: AbortSignal.timeout(1000),
       });
       // The isolated instance requires signed headers. Its 403 proves the

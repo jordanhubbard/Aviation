@@ -308,5 +308,12 @@
         "dist/*.d.ts"
       ]
     }
-  }
+  },
+  "files": [
+    "dist",
+    "dist-esm",
+    "data",
+    "conformance",
+    "python"
+  ]
 }

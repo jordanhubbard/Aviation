@@ -1,39 +1,30 @@
-"""
-Secrets management for the G1000 simulator backend.
-"""
-
+"""G1000's legacy key names adapt to the common configuration provider."""
 from __future__ import annotations
 
-import os
 from typing import Optional
-
 from app.utils.paths import add_package_path
 
-add_package_path("keystore/python")
+add_package_path("aviation-config/python")
+from aviation_config import AviationConfig, get_services_by_app
+from keystore import create_secret_loader
 
-try:
-    from keystore import create_secret_loader
-
-    _secrets = create_secret_loader("g1000-simulator")
-    KEYSTORE_AVAILABLE = True
-except Exception as exc:
-    print(f"Warning: Keystore not available: {exc}")
-    _secrets = None
-    KEYSTORE_AVAILABLE = False
+APP_ID = "g1000-simulator"
 
 
 def get_secret(key: str, default: Optional[str] = None, required: bool = False) -> Optional[str]:
-    if not KEYSTORE_AVAILABLE:
-        value = os.getenv(key, default)
-        if required and value is None:
-            raise ValueError(f"Required secret not found: {key}")
-        return value
-
-    if required:
-        return _secrets.get_required(key)
-    if default is not None:
-        return _secrets.get_with_default(key, str(default))
-    return _secrets.get(key)
+    config = AviationConfig(APP_ID)
+    field = next(((service.id, field.key) for service in get_services_by_app(APP_ID)
+                  for field in service.fields if field.env_var == key), None)
+    if field is not None:
+        value = config.get(*field)
+    elif config.isolated_run is None:
+        # Retain app-specific historical aliases without an isolated fallback.
+        value = create_secret_loader(APP_ID).get(key)
+    else:
+        value = None
+    if required and value is None:
+        raise ValueError(f"Required secret not found: {key}")
+    return value if value is not None else default
 
 
 def get_stream_api_key() -> Optional[str]:
