@@ -924,7 +924,7 @@ if (appId === 'flightschool') {
         if (route.request().method() === 'POST') {
           posted = route.request().postDataJSON();
           await route.fulfill({ status: 200, contentType: 'application/json',
-            body: JSON.stringify(run.tag({ saved: true })) });
+            body: JSON.stringify(run.tag({ success: true })) });
         } else {
           await route.fulfill({ status: 200, contentType: 'application/json',
             body: JSON.stringify(run.tag({ services: [

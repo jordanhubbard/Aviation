@@ -4,7 +4,7 @@ import {
   highestAlertLevel,
   orderAlerts,
   reconcileAcknowledgements,
-} from '@aviation/shared-sdk'
+} from '@aviation/shared-sdk/aviation/alerts'
 
 export type AlertLevel = 'ok' | 'info' | 'caution' | 'warning'
 

@@ -332,3 +332,34 @@ MIT
 - [Security Guidelines](../../docs/SECURITY.md)
 - [Monorepo Documentation](../../README.md)
 
+
+
+## Runtime bridge contract
+
+Python deployments may select the compiled SDK Node bridge with
+`AVIATION_KEYSTORE_BRIDGE`. The bridge receives one bounded JSON request on stdin
+and returns one JSON result; secrets are never command-line arguments. Operations
+are get, set, delete, keys and entries. Status/list operations never return values.
+An explicit `KEYSTORE_PATH` and the existing encryption-key environment variable
+select the same encrypted format and path-derived key as the operator CLI.
+Optional E2E identity uses the common SDK contract and tags every created entry.
+A foreign or untagged entry does not authorize E2E cleanup.
+
+Existing read-only fallback behavior remains available, but writes must fail before
+changing memory or disk if the existing file could not be loaded. The operator
+CLI retains its existing commands and default path; build the shared SDK and
+keystore packages before invoking its compiled provider. The bridge and Python adapter
+must be tested together using actual Node processes and temporary encrypted stores;
+mock subprocess output alone does not establish runtime compatibility.
+
+
+Writes must preserve unrelated keys from other SDK clients. Reload the latest
+file while holding a bounded filesystem write lock, replace the encrypted file
+atomically, and leave the prior in-memory view intact if persistence fails.
+Concurrent writers must not lose entries or publish partially written payloads.
+This is local-file writer coordination, not a claim of distributed storage or
+power-loss qualification.
+
+An isolated Python loader pins its SDK run identity at construction and disables
+ambient environment and legacy npm fallback reads. Its compiled bridge must be
+available; it cannot fall back to production credentials when test data is absent.

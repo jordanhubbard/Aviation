@@ -52,6 +52,7 @@ jobs:
       - name: Install common SDK dependencies
         run: >-
           pnpm install --frozen-lockfile
+          --filter .
           --filter @aviation/keystore...
           --filter @aviation/nav-data...
           --filter @aviation/g1000-avionics-sdk...
@@ -62,9 +63,9 @@ jobs:
           --filter g1000-simulator-frontend...
       - name: Build common SDK packages
         run: |
+          pnpm --filter @aviation/shared-sdk run build
           pnpm --filter @aviation/keystore run build
           pnpm --filter @aviation/aviation-config run build
-          pnpm --filter @aviation/shared-sdk run build
           pnpm --filter @aviation/nav-data run build
           pnpm --filter @aviation/g1000-avionics-sdk run build
           pnpm --filter @aviation/g1000-protocols run build
@@ -72,6 +73,11 @@ jobs:
           pnpm --filter @aviation/ui-framework run build
           pnpm --filter @aviation/meta-app run build
           pnpm --filter g1000-simulator-frontend run build
+      - name: Install browser for SDK consumer verification
+        run: pnpm exec playwright install --with-deps chromium
+      - name: Verify rendered settings confirmation and browser-safe SDK consumers
+        timeout-minutes: 3
+        run: node packages/aviation-config/tests/settings-browser.mjs
       - name: Test common SDK and Component conformance
         run: |
           pnpm --filter @aviation/keystore run test
@@ -95,6 +101,17 @@ jobs:
       - uses: actions/setup-python@v7
         with:
           python-version: '3.11'
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+      - uses: pnpm/action-setup@v6
+        with:
+          package_json_file: components/legacy-project-wrapper/implementation/package.json
+      - name: Build the shared keystore runtime provider
+        run: |
+          pnpm install --frozen-lockfile --filter @aviation/keystore...
+          pnpm --filter @aviation/shared-sdk run build
+          pnpm --filter @aviation/keystore run build
       - name: Install common SDK packages and test runner
         run: python -m pip install -e packages/shared-sdk/python -e packages/flight-dynamics -e packages/g1000-avionics-sdk/python pytest httpx
       - name: Test common Python SDK and Component conformance

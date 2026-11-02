@@ -312,6 +312,40 @@ The fresh retained harness passes 631 tests with adopted receipt
 intelligence and HTML gates are named configuration skips. This is retained
 parity evidence without native Component generation or acceptance.
 
+## Shared settings runtime repair
+
+A two-instance probe also reproduces loss of the first writer's unrelated key.
+Serialize provider writes, reload under the lock and publish atomically before
+using the new runtime for concurrent settings requests.
+
+Move Python runtime keystore calls to a compiled SDK Node bridge with a bounded
+stdin/stdout JSON protocol, preserving the existing encrypted format and operator
+CLI path. Add real cross-runtime roundtrip/ownership tests, reject writes after
+failed decryption, and require explicit successful field confirmation in the
+shared settings UI. The portable configuration catalog contract remains unchanged.
+
+A current G1000 frontend build also fails at startup with `Buffer is not defined`:
+browser consumers import the SDK root barrel, pulling in server-side Redis code.
+Use the existing pure navigation/aircraft/loading/dynamics and alert leaf modules
+from G1000 and the shared UI framework, then verify the actual rendered settings
+failure and success states at desktop and mobile widths. This replaces the stale
+image's apparent browser health with current-source evidence.
+
+The SDK implementation now has passing targeted checks: 15 TypeScript keystore
+cases, nine Python cases using actual compiled Node subprocesses, and 24 settings
+configuration/client cases. The built G1000 consumer passes desktop and mobile
+failure/success browser checks. Those browser requests use a private HTTP fixture;
+they do not establish G1000 backend persistence or deployment-image readiness.
+The existing SQLite dependency also required a patched `tar` resolution after a
+fresh production audit found three high/critical archive-processing advisories.
+The first full retained run exposed ts-jest's forced legacy Node resolution,
+which ignores conditional package exports. Publish matching SDK `typesVersions`
+for the existing public subpaths rather than weakening test diagnostics. All 79
+G1000 Jest tests now pass without cache. Final retained build, test and package
+qualification passed with adopted receipt `sha256:aacce94e68d28d724e67fe96c9c716557f1fd9977ce43bd61b0c181a11cf545f`. `litai verify` passes
+authority, all nineteen locks and receipt freshness; source intelligence and
+HTML remain named configuration skips. Exact-commit CI is required before landing.
+
 ## Acceptance contract
 
 Each deployed app must publish a screen inventory and an executable test for every

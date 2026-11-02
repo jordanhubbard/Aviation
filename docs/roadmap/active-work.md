@@ -870,10 +870,13 @@ release-visible outcome to `CHANGELOG.md`; Git preserves prior queue states.
 - **In progress:** Independent Docker/SSH and native manager recovery landed
   through #408/#409 with exact-main CI passing. Preflight's seven and KMLab's
   eight persistence flows pass at desktop/mobile and after injected failure;
-  the fresh 631-test retained receipt and `litai verify` pass. Land the reviewed
-  coverage change, then repair the G1000 common settings/persistence path and
-  finish remaining inventories and exact deployed-build acceptance. See the
-  E2E program.
+  the coverage change landed through #410. The common SDK compiled keystore
+  bridge, Python write API, concurrent-write preservation and confirmed-save
+  client now pass targeted and retained qualification. Desktop/mobile checks
+  render the built G1000 consumer; all 79 G1000 Jest tests also pass. Land this
+  SDK repair through reviewed CI, then wire G1000's real backend and runtime
+  image to the provider. Finish remaining inventories and exact deployed-build
+  acceptance. See the E2E program.
 
 ### [ ] RELEASE-001 — Reconcile all outstanding contributions into release 1.0
 

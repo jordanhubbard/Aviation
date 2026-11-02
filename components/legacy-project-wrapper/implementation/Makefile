@@ -225,10 +225,13 @@ test-go:
 
 test-sdk-python:
 	@echo "🧪 Running Python shared SDK tests..."
+	$(PNPM) install --frozen-lockfile --filter @aviation/keystore...
+	$(PNPM) --filter @aviation/shared-sdk run build
+	$(PNPM) --filter @aviation/keystore run build
 	@python_env="$(abspath _build/python-envs/shared-sdk)"; \
 	python3 -m venv "$$python_env"; \
 	"$$python_env/bin/python" -m pip install -q -e packages/shared-sdk/python pytest; \
-	"$$python_env/bin/python" -m pytest packages/shared-sdk/python/tests -q
+	"$$python_env/bin/python" -m pytest packages/keystore/python/tests packages/shared-sdk/python/tests -q
 	@echo "✅ Python shared SDK tests PASSED"
 
 test-configuration-python:
@@ -250,9 +253,9 @@ test-flight-dynamics:
 test-avionics:
 	@echo "🧪 Running avionics Component tests..."
 	$(PNPM) install --frozen-lockfile
+	$(PNPM) --filter @aviation/shared-sdk run build
 	$(PNPM) --filter @aviation/keystore run build
 	$(PNPM) --filter @aviation/aviation-config run build
-	$(PNPM) --filter @aviation/shared-sdk run build
 	$(PNPM) --filter @aviation/g1000-protocols run build
 	$(PNPM) --filter @aviation/g1000-protocols run test
 	$(PNPM) --filter @aviation/g1000-avionics-sdk run build

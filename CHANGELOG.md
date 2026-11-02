@@ -9,6 +9,16 @@
 
 ## Unreleased
 
+- Added a bounded compiled keystore bridge for Python SDK consumers, with
+  cross-process encrypted-store tests, E2E ownership checks, serialized writes
+  and atomic publication. Shared settings now require explicit successful save
+  confirmation before showing a configured key; desktop/mobile browser checks
+  run in SDK CI. Browser consumers use pure SDK leaf modules so G1000 starts
+  without importing server-side Redis code. G1000 backend persistence integration
+  and runtime image qualification remain open.
+- Patched the SQLite build dependency `tar` to 7.5.22 after the production audit
+  identified high and critical archive-processing advisories.
+
 - Remote E2E now verifies Preflight profile reload/clear and KMLab browser
   upload/read/delete against real isolated state, including fresh-context reads
   and injected-failure cleanup. Native HTTP tests use common SDK signing/tagging

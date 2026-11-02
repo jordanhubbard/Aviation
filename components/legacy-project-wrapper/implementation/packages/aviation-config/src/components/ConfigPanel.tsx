@@ -1,3 +1,4 @@
+import { saveServiceSecret } from '../client'
 import React, { useCallback, useEffect, useState } from 'react'
 import type { ServiceCategory, ServiceStatus } from '../types'
 import { SERVICE_REGISTRY, buildServiceStatus, getServiceById } from '../registry'
@@ -56,16 +57,8 @@ export function ConfigPanel({
   }, [fetchSettings, refreshCount])
 
   async function handleSave(serviceId: string, key: string, value: string) {
-    const res = await fetch(`${apiBase}/api/settings/secrets`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ service: serviceId, key, value }),
-    })
-    if (!res.ok) {
-      const body = await res.text()
-      throw new Error(`Save failed (HTTP ${res.status}): ${body}`)
-    }
-    // Optimistically update local status
+    await saveServiceSecret(apiBase, serviceId, key, value)
+    // Update local status only after the SDK confirms the write
     setStatusMap((prev) => {
       const next = new Map(prev)
       const existing = next.get(serviceId)
@@ -99,6 +92,9 @@ export function ConfigPanel({
     maxWidth: '800px',
     margin: '0 auto',
     padding: '1.5rem',
+    backgroundColor: '#ffffff',
+    color: '#111827',
+    borderRadius: '0.5rem',
   }
 
   const headerStyle: React.CSSProperties = {
@@ -135,7 +131,7 @@ export function ConfigPanel({
     fontWeight: 700,
     textTransform: 'uppercase',
     letterSpacing: '0.08em',
-    color: '#9ca3af',
+    color: '#6b7280',
     marginTop: '1.25rem',
     marginBottom: '0.5rem',
   }

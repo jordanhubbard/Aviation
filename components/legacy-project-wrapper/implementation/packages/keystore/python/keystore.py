@@ -40,7 +40,9 @@ class SecretLoader:
         service_name: str,
         keystore_path: Optional[str] = None,
         fallback_to_env: bool = True,
-        npm_executable: str = "npm"
+        npm_executable: str = "npm",
+        node_executable: str = "node",
+        bridge_path: Optional[str] = None
     ):
         """
         Initialize the secret loader.
@@ -54,6 +56,17 @@ class SecretLoader:
         self.service_name = service_name
         self.fallback_to_env = fallback_to_env
         self.npm_executable = npm_executable
+        selected_bridge = bridge_path or os.environ.get("AVIATION_KEYSTORE_BRIDGE")
+        self.bridge_path = Path(selected_bridge).resolve() if selected_bridge else None
+        self.node_executable = node_executable
+        self.isolated_run = os.environ.get("AVIATION_E2E_RUN_ID")
+        if self.isolated_run is not None:
+            try:
+                from aviation.e2e import parse_e2e_run_id
+                self.isolated_run = parse_e2e_run_id(self.isolated_run)
+            except (ImportError, ValueError) as error:
+                raise KeystoreError("Invalid isolated keystore identity") from error
+            self.fallback_to_env = False
         self.keystore_path = Path(keystore_path).resolve() if keystore_path else None
         
         # Determine keystore root (monorepo root)
@@ -166,6 +179,14 @@ class SecretLoader:
         Returns:
             List of secret key names
         """
+        if self.isolated_run is not None and self.bridge_path is None:
+            raise KeystoreError("Isolated keystore requires the compiled bridge")
+        if self.bridge_path is not None:
+            data = self._bridge("keys")
+            keys = data.get("keys")
+            if not isinstance(keys, list) or any(not isinstance(key, str) for key in keys):
+                raise KeystoreError("Invalid keystore response")
+            return keys
         try:
             result = subprocess.run(
                 [self.npm_executable, "run", "keystore", "list", self.service_name],
@@ -204,6 +225,16 @@ class SecretLoader:
         Raises:
             KeystoreError: If there's an error accessing the keystore
         """
+        if self.isolated_run is not None and self.bridge_path is None:
+            raise KeystoreError("Isolated keystore requires the compiled bridge")
+        if self.bridge_path is not None:
+            data = self._bridge("get", key=key)
+            if "value" not in data:
+                raise KeystoreError("Invalid keystore response")
+            value = data["value"]
+            if value is not None and not isinstance(value, str):
+                raise KeystoreError("Invalid keystore response")
+            return value
         try:
             result = subprocess.run(
                 [self.npm_executable, "run", "keystore", "get", self.service_name, key],
@@ -225,9 +256,54 @@ class SecretLoader:
         except Exception as e:
             raise KeystoreError(f"Error accessing keystore: {e}")
 
+    def _bridge(self, operation: str, **fields) -> dict:
+        if self.bridge_path is None:
+            raise KeystoreError("Configure AVIATION_KEYSTORE_BRIDGE for writes")
+        request = {"schema": "aviation/keystore-request@1", "operation": operation,
+                   "service": self.service_name, **fields}
+        try:
+            result = subprocess.run([self.node_executable, str(self.bridge_path)],
+                input=json.dumps(request), cwd=str(self.keystore_root),
+                env=self._subprocess_env(), capture_output=True, text=True,
+                check=False, timeout=15)
+            response = json.loads(result.stdout)
+            if (result.returncode != 0 or not isinstance(response, dict)
+                    or response.get("schema") != "aviation/keystore-response@1"
+                    or response.get("ok") is not True or response.get("operation") != operation
+                    or not isinstance(response.get("data"), dict)):
+                raise KeystoreError("Keystore operation failed")
+            return response["data"]
+        except KeystoreError:
+            raise
+        except Exception as error:
+            raise KeystoreError("Keystore operation failed") from error
+
+    def set(self, key: str, value: str) -> None:
+        """Persist through the compiled SDK provider; never send secrets in argv."""
+        self._bridge("set", key=key, value=value)
+        self._cache[key] = value
+
+    def delete(self, key: str) -> bool:
+        data = self._bridge("delete", key=key)
+        if not isinstance(data.get("deleted"), bool):
+            raise KeystoreError("Invalid keystore response")
+        self._cache.pop(key, None)
+        return data["deleted"]
+
+    def entries(self) -> List[Dict]:
+        """Return redacted ownership metadata, never secret values."""
+        entries = self._bridge("entries").get("entries")
+        if not isinstance(entries, list) or any(not isinstance(entry, dict) or "value" in entry for entry in entries):
+            raise KeystoreError("Invalid keystore response")
+        return entries
+
     def _subprocess_env(self) -> Dict[str, str]:
         """Return the CLI environment, including an explicitly selected store."""
         env = dict(os.environ)
+        if self.isolated_run is not None:
+            env["AVIATION_E2E_RUN_ID"] = self.isolated_run
+        else:
+            env.pop("AVIATION_E2E_RUN_ID", None)
         if self.keystore_path is not None:
             env["KEYSTORE_PATH"] = str(self.keystore_path)
         return env

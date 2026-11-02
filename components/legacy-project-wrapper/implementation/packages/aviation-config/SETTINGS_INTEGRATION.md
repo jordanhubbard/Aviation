@@ -145,63 +145,25 @@ Persists a single secret field to the keystore.
 }
 ```
 
-**Response:** `{ "ok": true }` on success.
+**Response:** `{ "success": true, "service": "openweather", "key": "api_key" }`
+after persistence succeeds.
 
 ---
 
-### FastAPI (Python) example
+### Python host adapters
 
-```python
-from fastapi import FastAPI
-from pydantic import BaseModel
-from keystore import Keystore  # @aviation/keystore Python client
+The shared Python provider is `keystore.create_secret_loader`, selected with
+`AVIATION_KEYSTORE_BRIDGE` and `KEYSTORE_PATH`. It exposes `set(key, value)` on a
+service-specific loader. There is no `Keystore` class or ready-made HTTP router.
 
-app = FastAPI()
-ks = Keystore()
-
-
-@app.get("/api/settings")
-async def get_settings():
-    from aviation_config import AviationConfig
-    return {"services": AviationConfig("my-app").get_service_status()}
-
-
-class SecretPayload(BaseModel):
-    service: str
-    key: str
-    value: str
-
-
-@app.post("/api/settings/secrets")
-async def set_secret(payload: SecretPayload):
-    ks.set(payload.service, payload.key, payload.value)
-    return {"ok": True}
-```
-
----
-
-### Flask (Python) example
-
-```python
-from flask import Flask, request, jsonify
-from keystore import Keystore
-
-app = Flask(__name__)
-ks = Keystore()
-
-
-@app.get("/api/settings")
-def get_settings():
-    # Build service status list (same logic as FastAPI example above)
-    return jsonify({"services": build_service_statuses(ks)})
-
-
-@app.post("/api/settings/secrets")
-def set_secret():
-    data = request.get_json()
-    ks.set(data["service"], data["key"], data["value"])
-    return jsonify({"ok": True})
-```
+A host adapter must authenticate writes, validate the service and field against
+`get_services_by_app(app_id)`, invoke the selected service loader, and return
+`success: true` only after `set` completes. Return a generic failure without
+provider stderr or secret values. `AviationConfig.get_service_status()` supplies
+the shared status shape; it currently implements reads only. Its existing
+production environment fallback requires explicit isolation handling before use
+in an E2E server. Runtime images must include Node, the compiled bridge and SDK
+dependencies. G1000's retained private router has not yet migrated to this path.
 
 ---
 
@@ -243,3 +205,15 @@ npm run keystore set <service> <key> <value>
 npm run keystore set openweather api_key sk-abc123
 npm run keystore set sentry dsn https://...@sentry.io/123
 ```
+
+
+## Save confirmation
+
+The shared `saveServiceSecret` client requires JSON `success: true` before the
+panel marks a field configured. HTTP success alone is insufficient. A supplied
+service/key confirmation must match the request; malformed, negative and foreign
+confirmations fail. Error messages do not echo response bodies or submitted
+secret values. Requests have a ten-second deadline. Host adapters remain responsible
+for authorization and persistence; the portable catalog Component is unchanged.
+
+The panel owns a light background so its text remains readable on dark host pages.
