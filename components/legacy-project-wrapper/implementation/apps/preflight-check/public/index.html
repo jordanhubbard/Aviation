@@ -23,7 +23,7 @@
     <div class="grid"><label>Fuel at takeoff (gal) <input id="fuelGallons" type="number" min="0" step="any"></label>
     <label>Planned fuel burn (gal) <input id="fuelBurnGallons" type="number" min="0" step="any"></label></div>
     <button type="button" id="calculate">Calculate takeoff and landing</button>
-    <div id="results" role="status" aria-live="polite"></div>
+    <div id="results" role="region" aria-label="Loading calculation results" aria-live="polite" tabindex="0"></div>
   </section>
   <section><h2>Pilot risk review</h2><p>Record your own decision for each PAVE area before departure.</p>
     <div class="grid"><label><input type="checkbox" class="risk" data-risk="pilot"> Pilot: currency, health, and personal minimums checked</label>

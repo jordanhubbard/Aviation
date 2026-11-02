@@ -1,4 +1,4 @@
-export type ServiceCategory = 'weather' | 'navigation' | 'auth' | 'monitoring' | 'streaming' | 'database'
+export type ServiceCategory = 'weather' | 'navigation' | 'ai' | 'auth' | 'monitoring' | 'streaming' | 'database'
 
 export type ServiceFieldDefinition = {
   key: string            // e.g. 'api_key'

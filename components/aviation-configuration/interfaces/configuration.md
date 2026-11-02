@@ -4,7 +4,7 @@
 
 - `id`: required lowercase slug.
 - `name` and `description`: required trimmed text.
-- `category`: `weather`, `navigation`, `auth`, `monitoring`, `streaming`, or
+- `category`: `weather`, `navigation`, `ai`, `auth`, `monitoring`, `streaming`, or
   `database`.
 - `docsUrl`: optional trimmed HTTPS URL.
 - `fields`: one or more field definitions with a unique lowercase snake-case `key`,

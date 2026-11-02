@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "private": true,
   "dependencies": {
+    "@aviation/ai-explainer": "workspace:*",
     "@aviation/aviation-config": "workspace:*",
     "@aviation/g1000-protocols": "workspace:*",
     "@aviation/g1000-rendering": "workspace:*",

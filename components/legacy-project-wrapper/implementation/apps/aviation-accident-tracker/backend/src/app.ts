@@ -8,7 +8,7 @@ import { getLastRun } from './scheduler.js';
 import { logger } from './logger.js';
 import { config } from './config.js';
 import { EventRepository } from './db/repository.js';
-import { ExplainerClient, explainerRoute } from '@aviation/ai-explainer';
+import { createExplanationRuntime } from '@aviation/ai-explainer';
 import { AccidentE2EManager } from './e2e/manager.js';
 
 const SERVICE_VERSION = '0.1.0';
@@ -18,6 +18,9 @@ export function createApp(repository: EventRepository, e2e?: AccidentE2EManager)
 
   // Middleware
   app.use(cors());
+  const explanation = createExplanationRuntime('aviation-accident-tracker');
+  app.locals.explanation = explanation;
+  app.use(explanation.middleware);
   app.use(express.json());
 
   // Request logging
@@ -54,12 +57,6 @@ export function createApp(repository: EventRepository, e2e?: AccidentE2EManager)
       service: 'accident-tracker',
     });
   });
-
-  // AI decision explanation endpoint
-  const explainer = new ExplainerClient({
-    brainUrl: process.env['RCC_BRAIN_URL'] ?? 'http://146.190.134.110:8789/api/brain/request',
-  });
-  app.use(/* @ts-ignore Express 5 Router type issue */ explainerRoute(explainer) as any);
 
   // API routes
   app.use('/api', createRouter(repository, e2e));

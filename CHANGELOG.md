@@ -9,6 +9,17 @@
 
 ## Unreleased
 
+- Added the common queued RCC explanation SDK, worker-safe Python/Ring bindings,
+  managed broker and shared decision/follow-up UI. Applications provide their own
+  decision facts and access policies; provider configuration and request lifecycle
+  remain in the SDK. Common SDK CI includes independent JVM broker tests.
+- Extended the remote deployment gate to private instances for every service,
+  including shared explanation fixtures, follow-up checks and teardown alongside
+  each application's tagged data. KMLab's native launcher supervises the same broker.
+  Its native deployment also installs the shared Python flight-dynamics package.
+- The launcher Settings page shows the shared service catalog and links to each
+  application's settings without opening an editor against a missing API.
+
 - G1000 settings now use the shared Python configuration and authenticated HTTP
   adapters with the compiled encrypted keystore provider packaged in the runtime
   image. Normal writes require operator authorization; isolated tests use SDK

@@ -1,21 +1,48 @@
 {
   "name": "@aviation/ai-explainer",
   "version": "0.1.0",
-  "description": "AI decision explanation layer \u2013 ExplainerClient and Express middleware",
+  "description": "Shared queued decision explanations, RCC adapter and HTTP broker",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
+  "bin": { "aviation-explain": "dist/run.js" },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "require": "./dist/index.js",
+      "default": "./dist/index.js"
+    },
+    "./browser": {
+      "types": "./browser/index.d.ts",
+      "import": "./browser/index.mjs",
+      "default": "./browser/index.mjs"
+    }
+  },
+  "typesVersions": {
+    "*": {
+      "dist/index.d.ts": [
+        "dist/index.d.ts"
+      ],
+      "browser": [
+        "browser/index.d.ts"
+      ]
+    }
+  },
   "scripts": {
     "build": "tsc",
     "test": "vitest run"
   },
-  "dependencies": {},
-  "peerDependencies": {
-    "express": "^4.18.0"
+  "files": [
+    "dist",
+    "browser"
+  ],
+  "dependencies": {
+    "@aviation/keystore": "workspace:*",
+    "@aviation/shared-sdk": "workspace:*",
+    "express": "4.22.1"
   },
   "devDependencies": {
     "@types/express": "^4.17.21",
     "@types/node": "^20.0.0",
-    "express": "^4.18.0",
     "typescript": "^5.0.0",
     "vitest": "^4.1.12",
     "supertest": "^6.3.0",

@@ -11,6 +11,7 @@
     "test": "node --test server.test.mjs"
   },
   "dependencies": {
+    "@aviation/ai-explainer": "workspace:*",
     "@aviation/aviation-config": "workspace:*",
     "@aviation/ui-framework": "workspace:*",
     "react": "^19.2.4",

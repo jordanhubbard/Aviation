@@ -25,12 +25,18 @@
     {
       "path": "packages/ai-explainer",
       "name": "@aviation/ai-explainer",
-      "classification": "shared-application-service",
-      "componentOwners": [],
-      "workspaceDependencies": [],
+      "classification": "shared-component-adapter",
+      "componentOwners": [
+        "aviation.ai.explanation",
+        "aviation.testing.e2e"
+      ],
+      "workspaceDependencies": [
+        "@aviation/keystore",
+        "@aviation/shared-sdk"
+      ],
       "buildScript": "tsc",
       "testScript": "vitest run",
-      "testGate": "monorepo-ci"
+      "testGate": "common-sdk-ci"
     },
     {
       "path": "packages/aviation-config",
@@ -107,7 +113,7 @@
       "name": "@aviation/shared-sdk",
       "classification": "native-component-realization",
       "componentOwners": [
-        "aviation.aircraft", "aviation.airports", "aviation.alerts", "aviation.avionics",
+        "aviation.ai.explanation", "aviation.aircraft", "aviation.airports", "aviation.alerts", "aviation.avionics",
         "aviation.configuration", "aviation.flight-dynamics", "aviation.hazards",
         "aviation.logbook", "aviation.navigation", "aviation.nav-data", "aviation.notam",
         "aviation.service.health", "aviation.testing.e2e", "aviation.ui.panes",
@@ -131,17 +137,17 @@
   ],
   "applicationPackages": [
     {"path":"apps/aviation-accident-tracker/backend","name":"@aviation/accident-tracker-backend","application":"aviation-accident-tracker","workspaceDependencies":["@aviation/ai-explainer","@aviation/keystore","@aviation/shared-sdk"],"buildScript":"tsc","testScript":"vitest run --reporter=verbose && python3 -m unittest discover -s tests -p 'test_*.py'"},
-    {"path":"apps/aviation-accident-tracker/frontend","name":"@aviation/accident-tracker-frontend","application":"aviation-accident-tracker","workspaceDependencies":["@aviation/shared-sdk","@aviation/ui-framework"],"buildScript":"tsc && vite build","testScript":"vitest run"},
+    {"path":"apps/aviation-accident-tracker/frontend","name":"@aviation/accident-tracker-frontend","application":"aviation-accident-tracker","workspaceDependencies":["@aviation/ai-explainer","@aviation/shared-sdk","@aviation/ui-framework"],"buildScript":"tsc && vite build","testScript":"vitest run"},
     {"path":"apps/aviation-chat","name":"@aviation/aviation-chat","application":"aviation-chat","workspaceDependencies":["@aviation/ai-explainer","@aviation/keystore","@aviation/shared-sdk"],"buildScript":"tsc","testScript":null},
     {"path":"apps/aviation-missions-app/frontend","name":"aviation-missions-frontend","application":"aviation-missions-app","workspaceDependencies":[],"buildScript":"echo 'Using pure JavaScript - no build needed' && exit 0","testScript":"echo 'No tests configured for pure JavaScript implementation'"},
-    {"path":"apps/flight-planner/frontend","name":"flight-planner-frontend","application":"flight-planner","workspaceDependencies":["@aviation/shared-sdk"],"buildScript":"tsc && vite build","testScript":"vitest run"},
-    {"path":"apps/flight-tracker","name":"@aviation/flight-tracker","application":"flight-tracker","workspaceDependencies":["@aviation/keystore","@aviation/shared-sdk","@aviation/ui-framework"],"buildScript":"tsc","testScript":"NO_PROXY='*' HTTP_PROXY='' HTTPS_PROXY='' jest"},
-    {"path":"apps/foreflight-dashboard/frontend","name":"foreflight-dashboard-frontend","application":"foreflight-dashboard","workspaceDependencies":[],"buildScript":"tsc && vite build","testScript":"vitest --passWithNoTests"},
+    {"path":"apps/flight-planner/frontend","name":"flight-planner-frontend","application":"flight-planner","workspaceDependencies":["@aviation/ai-explainer","@aviation/shared-sdk"],"buildScript":"tsc && vite build","testScript":"vitest run"},
+    {"path":"apps/flight-tracker","name":"@aviation/flight-tracker","application":"flight-tracker","workspaceDependencies":["@aviation/ai-explainer","@aviation/keystore","@aviation/shared-sdk","@aviation/ui-framework"],"buildScript":"tsc","testScript":"NO_PROXY='*' HTTP_PROXY='' HTTPS_PROXY='' jest"},
+    {"path":"apps/foreflight-dashboard/frontend","name":"foreflight-dashboard-frontend","application":"foreflight-dashboard","workspaceDependencies":["@aviation/ai-explainer"],"buildScript":"tsc && vite build","testScript":"vitest --passWithNoTests"},
     {"path":"apps/g1000-simulator","name":"@aviation/g1000-simulator","application":"g1000-simulator","workspaceDependencies":["@aviation/shared-sdk"],"buildScript":"tsc","testScript":"jest"},
     {"path":"apps/g1000-simulator/backend","name":"@aviation/g1000-simulator-backend","application":"g1000-simulator","workspaceDependencies":["@aviation/ai-explainer","@aviation/keystore","@aviation/shared-sdk","@aviation/ui-framework"],"buildScript":"tsc","testScript":"npm run build"},
-    {"path":"apps/g1000-simulator/frontend","name":"g1000-simulator-frontend","application":"g1000-simulator","workspaceDependencies":["@aviation/aviation-config","@aviation/g1000-protocols","@aviation/g1000-rendering","@aviation/shared-sdk"],"buildScript":"vite build","testScript":null},
-    {"path":"apps/meta-app","name":"@aviation/meta-app","application":"meta-app","workspaceDependencies":["@aviation/aviation-config","@aviation/ui-framework"],"buildScript":"tsc && vite build","testScript":"node --test server.test.mjs"},
-    {"path":"apps/weather-briefing","name":"@aviation/weather-briefing","application":"weather-briefing","workspaceDependencies":["@aviation/keystore","@aviation/shared-sdk","@aviation/ui-framework"],"buildScript":"tsc","testScript":"npm run build"}
+    {"path":"apps/g1000-simulator/frontend","name":"g1000-simulator-frontend","application":"g1000-simulator","workspaceDependencies":["@aviation/ai-explainer","@aviation/aviation-config","@aviation/g1000-protocols","@aviation/g1000-rendering","@aviation/shared-sdk"],"buildScript":"vite build","testScript":null},
+    {"path":"apps/meta-app","name":"@aviation/meta-app","application":"meta-app","workspaceDependencies":["@aviation/ai-explainer","@aviation/aviation-config","@aviation/ui-framework"],"buildScript":"tsc && vite build","testScript":"node --test server.test.mjs"},
+    {"path":"apps/weather-briefing","name":"@aviation/weather-briefing","application":"weather-briefing","workspaceDependencies":["@aviation/ai-explainer","@aviation/keystore","@aviation/shared-sdk","@aviation/ui-framework"],"buildScript":"tsc","testScript":"npm run build"}
   ],
   "applications": [
     {"id":"aviation-accident-tracker","buildAuthorities":["apps/aviation-accident-tracker/Dockerfile","apps/aviation-accident-tracker/Makefile"],"nodePackages":["apps/aviation-accident-tracker/backend","apps/aviation-accident-tracker/frontend"]},

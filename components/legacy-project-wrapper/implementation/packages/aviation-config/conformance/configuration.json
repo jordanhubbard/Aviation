@@ -16,6 +16,65 @@
         "fields": [{"key": "api_key", "label": "API Key", "description": "Access token", "required": true, "secret": true, "envVar": "OPENWEATHERMAP_API_KEY"}],
         "appScope": ["flight-planner", "all"]
       }
+    },
+    {
+      "id": "shared-ai-provider",
+      "input": {
+        "id": " RCC ",
+        "name": "Decision explanations",
+        "description": "Shared AI explanations through RCC",
+        "category": " AI ",
+        "docsUrl": "https://github.com/jordanhubbard/rocky-and-friends/tree/main/rcc",
+        "fields": [
+          {
+            "key": "request_url",
+            "label": "RCC request URL",
+            "description": "The RCC brain request endpoint",
+            "required": true,
+            "secret": false,
+            "envVar": "RCC_BRAIN_URL"
+          },
+          {
+            "key": "api_token",
+            "label": "RCC API token",
+            "description": "The token authorized by your RCC service",
+            "required": true,
+            "secret": true,
+            "envVar": "RCC_API_TOKEN"
+          }
+        ],
+        "appScope": [
+          "all"
+        ]
+      },
+      "expected": {
+        "id": "rcc",
+        "name": "Decision explanations",
+        "description": "Shared AI explanations through RCC",
+        "category": "ai",
+        "docsUrl": "https://github.com/jordanhubbard/rocky-and-friends/tree/main/rcc",
+        "fields": [
+          {
+            "key": "request_url",
+            "label": "RCC request URL",
+            "description": "The RCC brain request endpoint",
+            "required": true,
+            "secret": false,
+            "envVar": "RCC_BRAIN_URL"
+          },
+          {
+            "key": "api_token",
+            "label": "RCC API token",
+            "description": "The token authorized by your RCC service",
+            "required": true,
+            "secret": true,
+            "envVar": "RCC_API_TOKEN"
+          }
+        ],
+        "appScope": [
+          "all"
+        ]
+      }
     }
   ],
   "invalidDefinitionCases": [
@@ -38,15 +97,82 @@
     {"id":"sentry","category":"monitoring","fields":[["dsn","SENTRY_DSN",false,true]],"appScope":["all"]},
     {"id":"g1000-stream","category":"streaming","fields":[["api_key","G1000_STREAM_API_KEY",false,true]],"appScope":["g1000-simulator"]},
     {"id":"database","category":"database","fields":[["url","DATABASE_URL",false,true]],"appScope":["flightschool","foreflight-dashboard","flight-planner"]},
-    {"id":"redis","category":"database","fields":[["url","REDIS_URL",false,false]],"appScope":["foreflight-dashboard","flight-planner"]}
+    {"id":"redis","category":"database","fields":[["url","REDIS_URL",false,false]],"appScope":["foreflight-dashboard","flight-planner"]},
+    {
+      "id": "rcc",
+      "category": "ai",
+      "fields": [
+        [
+          "request_url",
+          "RCC_BRAIN_URL",
+          true,
+          false
+        ],
+        [
+          "api_token",
+          "RCC_API_TOKEN",
+          true,
+          true
+        ]
+      ],
+      "appScope": [
+        "all"
+      ]
+    }
   ],
   "filterCases": [
-    {"appId":" G1000-SIMULATOR ","expectedIds":["openweather","openaip","sentry","g1000-stream"]},
-    {"appId":"unknown-app","expectedIds":["sentry"]}
+    {"appId":" G1000-SIMULATOR ","expectedIds":["openweather", "openaip", "sentry", "g1000-stream", "rcc"]},
+    {"appId":"unknown-app","expectedIds":["sentry", "rcc"]}
   ],
-  "lookupCases": [{"id":" OPENWEATHER ","expectedId":"openweather"},{"id":"missing","expectedId":null}],
+  "lookupCases": [{"id":" OPENWEATHER ","expectedId":"openweather"},{"id":"missing","expectedId":null},
+    {
+      "id": " RCC ",
+      "expectedId": "rcc"
+    }
+  ],
   "statusCases": [
     {"serviceId":"smtp","configuredKeys":["server"],"expected":{"id":"smtp","configured":true,"fields":[{"key":"server","configured":true},{"key":"port","configured":false},{"key":"username","configured":false},{"key":"password","configured":false}]}},
-    {"serviceId":"foreflight","configuredKeys":["api_key"],"expected":{"id":"foreflight","configured":false,"fields":[{"key":"api_key","configured":true},{"key":"api_secret","configured":false}]}}
+    {"serviceId":"foreflight","configuredKeys":["api_key"],"expected":{"id":"foreflight","configured":false,"fields":[{"key":"api_key","configured":true},{"key":"api_secret","configured":false}]}},
+    {
+      "serviceId": "rcc",
+      "configuredKeys": [
+        "request_url"
+      ],
+      "expected": {
+        "id": "rcc",
+        "configured": false,
+        "fields": [
+          {
+            "key": "request_url",
+            "configured": true
+          },
+          {
+            "key": "api_token",
+            "configured": false
+          }
+        ]
+      }
+    },
+    {
+      "serviceId": "rcc",
+      "configuredKeys": [
+        "request_url",
+        "api_token"
+      ],
+      "expected": {
+        "id": "rcc",
+        "configured": true,
+        "fields": [
+          {
+            "key": "request_url",
+            "configured": true
+          },
+          {
+            "key": "api_token",
+            "configured": true
+          }
+        ]
+      }
+    }
   ]
 }

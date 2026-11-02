@@ -291,3 +291,4 @@ export { installE2EApiHeaders, installE2ENetworkMocks, runE2EScreens,
   type E2EBrowserPage, type E2EBrowserRoute, type E2ENetworkMock, type E2EScreen } from './browser.js';
 export { traceE2EBrowser } from './tracing.js';
 export { exerciseE2EFeedback, type E2EFeedbackPage } from './feedback.js';
+export { seedE2EExplanation, exerciseE2EExplanation, type E2EExplanationPage } from './explanation.js';

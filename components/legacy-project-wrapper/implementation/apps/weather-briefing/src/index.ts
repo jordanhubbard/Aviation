@@ -1,4 +1,5 @@
 import http from "http";
+import { createExplanationRuntime } from '@aviation/ai-explainer';
 import {
   MacTaskCreator,
   createHealthReport,
@@ -62,7 +63,9 @@ async function main() {
     })
     .join("");
   const regionConfigJson = JSON.stringify(regions);
+  const explanation = createExplanationRuntime('weather-briefing');
   const server = http.createServer(async (req, res) => {
+    if (explanation.handle(req, res)) return;
     const requestUrl = new URL(req.url ?? "/", `http://localhost:${port}`);
 
     if (requestUrl.pathname === "/health") {
@@ -344,6 +347,7 @@ async function main() {
             stationInput.value = stationSelect.value;
 
             let hasBriefing = false;
+            let briefingStation = null;
 
             const requestBriefing = async () => {
               const station = getStation();
@@ -364,6 +368,7 @@ async function main() {
                 }
                 const briefing = await response.text();
                 output.textContent = briefing;
+                briefingStation = station;
                 hasBriefing = true;
               } catch (error) {
                 output.textContent = 'Failed to fetch briefing: ' + (error?.message ?? 'Unknown error');
@@ -586,6 +591,18 @@ async function main() {
             void loadRegion(DEFAULT_REGION_ID);
           </script>
           <script defer data-aviation-app="weather-briefing" src="https://meta-app.jordanhubbard.net/feedback-widget.js"></script>
+          <script type="module">
+            import '/api/explain/widget.js';
+            window.AviationExplain.registerContext(() => {
+              const station = stationInput.value.trim().toUpperCase() || stationSelect.value;
+              return {
+              application: 'Weather Briefing', decision: 'Selected station weather category and briefing',
+              selectedStation: station, briefingStation, forecastDay: getSelectedDay(), region: regionSelect.value,
+              category: currentStations.find(entry => entry.code === station)?.category,
+              completedBriefing: hasBriefing && !submitBtn.disabled, displayedBriefing: output.textContent.slice(0, 3500),
+              };
+            }, 'Explain the selected weather category and briefing hazards using only these observations.');
+          </script>
         </body>
       </html>
     `);
@@ -613,6 +630,7 @@ async function main() {
 
   // Handle graceful shutdown
   const shutdown = async () => {
+    explanation.close();
     console.log("\n\nShutting down Weather Briefing Service...");
     await service.stop();
     await new Promise<void>((resolve) => {

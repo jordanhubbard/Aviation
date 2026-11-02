@@ -1,9 +1,11 @@
 import { createServer } from 'node:http';
+import { createExplanationRuntime } from '@aviation/ai-explainer';
 import { readFile, stat } from 'node:fs/promises';
 import { resolve, join, extname, sep } from 'node:path';
 
 const root = resolve('/app/dist');
 const port = Number(process.env.PORT || 8080);
+const explanation = createExplanationRuntime('meta-app');
 const apps = new Set([
   'aviation-accident-tracker', 'aviation-chat', 'aviation-missions-app', 'flight-planner',
   'flight-track-analyzer', 'flight-tracker', 'flightschool', 'foreflight-dashboard',
@@ -67,6 +69,7 @@ async function serveStatic(pathname, res) {
 }
 
 export function handler(req, res) {
+  if (explanation.handle(req, res)) return;
   const pathname = new URL(req.url, 'http://localhost').pathname;
   if (pathname !== '/api/feedback') {
     void serveStatic(pathname, res).catch(() => { res.writeHead(500); res.end(); });
@@ -100,4 +103,10 @@ export function handler(req, res) {
   });
 }
 
-if (process.argv[1] === new URL(import.meta.url).pathname) createServer(handler).listen(port);
+if (process.argv[1] === new URL(import.meta.url).pathname) {
+  const server = createServer(handler);
+  server.once('close', () => explanation.close());
+  const stop = () => { explanation.close(); server.close(); };
+  process.once('SIGTERM', stop); process.once('SIGINT', stop);
+  server.listen(port);
+}

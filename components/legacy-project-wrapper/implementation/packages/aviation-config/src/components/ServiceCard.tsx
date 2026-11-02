@@ -13,6 +13,7 @@ export type ServiceCardProps = {
 const CATEGORY_COLORS: Record<string, string> = {
   weather: '#0369a1',
   navigation: '#7c3aed',
+  ai: '#6d28d9',
   auth: '#b45309',
   monitoring: '#dc2626',
   streaming: '#0891b2',

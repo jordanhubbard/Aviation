@@ -314,6 +314,7 @@
     "dist-esm",
     "data",
     "conformance",
+    "clojure",
     "python"
   ]
 }

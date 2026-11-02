@@ -1,4 +1,5 @@
-import React, { useState, useMemo } from 'react'
+import React, { useState, useMemo, useEffect, useRef } from 'react'
+import { registerDecisionContext } from '@aviation/ai-explainer/browser'
 import {
   Box,
   Grid,
@@ -129,6 +130,20 @@ const DashboardContent: React.FC<DashboardContentProps> = ({ logbookData }) => {
 
     return filtered
   }, [logbookData.entries, searchTerm, aircraftFilter, sortBy, sortOrder])
+
+  const current = useRef({ filteredEntries, expandedRows, searchTerm, aircraftFilter })
+  current.current = { filteredEntries, expandedRows, searchTerm, aircraftFilter }
+  useEffect(() => registerDecisionContext(() => ({
+    application: 'ForeFlight Dashboard', decision: 'Filtered logbook and expanded flight records',
+    search: current.current.searchTerm, aircraft: current.current.aircraftFilter,
+    matchingFlights: current.current.filteredEntries.length,
+    expandedFlights: current.current.filteredEntries.filter((_, index) => current.current.expandedRows.has(index))
+      .slice(0, 6).map(entry => ({ date: entry.date, aircraft: entry.aircraft.registration,
+        departure: entry.departure.identifier, destination: entry.destination.identifier,
+        total_time: entry.total_time, pic_time: entry.pic_time, dual_received: entry.dual_received,
+        solo_time: entry.solo_time, landings_day: entry.landings_day, landings_night: entry.landings_night,
+        error: entry.error_explanation?.slice(0, 200), warning: entry.warning_explanation?.slice(0, 200) })),
+  }), 'Explain these logbook records and any validation findings using the supplied facts.'), [])
 
   const lastTwelveMonthsHours = useMemo(() => {
     const now = new Date()

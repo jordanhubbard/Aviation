@@ -13,11 +13,12 @@ COPY pnpm-workspace.yaml pnpm-lock.yaml package.json ./
 COPY packages ./packages
 COPY apps ./apps
 
-RUN pnpm install --frozen-lockfile --filter g1000-simulator-frontend... --filter @aviation/keystore...
+RUN pnpm install --frozen-lockfile --filter g1000-simulator-frontend...
 RUN pnpm --filter g1000-simulator-frontend... run build
 RUN pnpm --filter @aviation/shared-sdk run build \
     && pnpm --filter @aviation/keystore run build \
-    && pnpm --config.node-linker=hoisted --filter @aviation/keystore deploy --legacy --prod /runtime/keystore
+    && pnpm --filter @aviation/ai-explainer run build \
+    && pnpm --config.node-linker=hoisted --filter @aviation/ai-explainer deploy --legacy --prod /runtime/explanation
 
 
 FROM python:3.11-slim AS runtime
@@ -28,8 +29,8 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 RUN apt-get update && apt-get install -y --no-install-recommends libstdc++6 libatomic1 \
     && rm -rf /var/lib/apt/lists/*
 COPY --from=frontend-build /usr/local/bin/node /usr/local/bin/node
-COPY --from=frontend-build /runtime/keystore /opt/aviation/keystore
-ENV AVIATION_KEYSTORE_BRIDGE=/opt/aviation/keystore/dist/bridge.js \
+COPY --from=frontend-build /runtime/explanation /opt/aviation/explanation
+ENV AVIATION_KEYSTORE_BRIDGE=/opt/aviation/explanation/node_modules/@aviation/keystore/dist/bridge.js \
     KEYSTORE_PATH=/app/data/.keystore
 
 # Exercise the actual runtime artifact, with no npm or TypeScript compiler.
@@ -58,12 +59,14 @@ COPY --from=frontend-build /app/apps/g1000-simulator/frontend/dist/ /app/backend
 WORKDIR /app/backend
 
 EXPOSE 8000
+ENTRYPOINT ["node", "/opt/aviation/explanation/dist/run.js", "--app", "g1000-simulator", "--"]
 CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
 
 
 # Test stage: the backend suites live in two places (backend/tests and
 # tests/backend); the Makefile previously ran only the first.
 FROM runtime AS testing
+ENTRYPOINT []
 
 RUN /opt/venv/bin/pip install --no-cache-dir pytest pytest-asyncio httpx
 

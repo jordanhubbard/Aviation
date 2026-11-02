@@ -6,6 +6,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
+from aviation.explanation import create_explanation_router
 
 from app.config import Settings
 from app.routers import health, settings, telemetry
@@ -30,6 +31,7 @@ def create_app(config: Settings) -> FastAPI:
     app.include_router(health.router, prefix=config.api_prefix)
     app.include_router(settings.build_settings_router())
     app.include_router(telemetry.router)
+    app.include_router(create_explanation_router('g1000-simulator'))
 
     static_root = Path(__file__).resolve().parents[1] / "static"
     if (static_root / "index.html").is_file():

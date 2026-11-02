@@ -16,6 +16,11 @@
     </div>
 
     <script src="/js/app.js"></script>
+    <script type="module">
+      import '/api/explain/widget.js';
+      window.AviationExplain.registerContext(() => window.app?.explanationContext(),
+        'Explain this mission and its suitability using the supplied objectives and requirements.');
+    </script>
 <script defer data-aviation-app="aviation-missions-app" src="https://meta-app.jordanhubbard.net/feedback-widget.js"></script>
 </body>
 </html>

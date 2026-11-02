@@ -18,6 +18,7 @@
   "author": "Jordan Hubbard",
   "license": "MIT",
   "dependencies": {
+    "@aviation/ai-explainer": "workspace:*",
     "@aviation/shared-sdk": "workspace:*",
     "@aviation/keystore": "workspace:*",
     "@aviation/ui-framework": "workspace:*",

@@ -1,4 +1,5 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
+import { registerDecisionContext } from '@aviation/ai-explainer/browser'
 import {
   Container,
   Paper,
@@ -22,6 +23,20 @@ const UploadPage: React.FC = () => {
   const [isUploading, setIsUploading] = useState(false)
   const [logbookData, setLogbookData] = useState<LogbookData | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const current = useRef({ logbookData, isStudentPilot, error })
+  current.current = { logbookData, isStudentPilot, error }
+  useEffect(() => registerDecisionContext(() => {
+    const state = current.current
+    return {
+      application: 'ForeFlight Dashboard', decision: 'Logbook totals, experience and validation status',
+      studentPilot: state.isStudentPilot, entries: state.logbookData?.entries.length ?? 0,
+      stats: state.logbookData?.stats, recentExperience: state.logbookData?.recent_experience,
+      validationErrors: state.logbookData?.error_count ?? 0, uploadError: state.error,
+      flaggedEntries: state.logbookData?.entries.filter(entry => entry.error_explanation || entry.warning_explanation)
+        .slice(0, 8).map(entry => ({ date: entry.date, total_time: entry.total_time,
+          error: entry.error_explanation?.slice(0, 200), warning: entry.warning_explanation?.slice(0, 200) })),
+    }
+  }, 'Explain the displayed logbook totals and validation findings using only these records.'), [])
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = event.target.files?.[0]

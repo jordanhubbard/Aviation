@@ -12,11 +12,11 @@ test('deployment copies the built common module into the adapter URL', async () 
   const dockerfile = await readFile(new URL('./Dockerfile', import.meta.url), 'utf8');
   assert.match(
     dockerfile,
-    /dist-esm\/aviation\/weight-balance\.js \/usr\/share\/nginx\/html\/aviation-sdk\/weight-balance\.js/
+    /dist-esm\/aviation\/weight-balance\.js \/app\/public\/aviation-sdk\/weight-balance\.js/
   );
   assert.match(
     dockerfile,
-    /dist-esm\/aviation\/aircraft\.js \/usr\/share\/nginx\/html\/aviation-sdk\/aircraft\.js/
+    /dist-esm\/aviation\/aircraft\.js \/app\/public\/aviation-sdk\/aircraft\.js/
   );
 });
 

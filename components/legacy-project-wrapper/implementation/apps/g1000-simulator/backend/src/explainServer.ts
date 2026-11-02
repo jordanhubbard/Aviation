@@ -9,23 +9,21 @@
 
 import express from 'express';
 import cors from 'cors';
-import { ExplainerClient, explainerRoute } from '@aviation/ai-explainer';
+import { createExplanationRuntime } from '@aviation/ai-explainer';
 
 export function startExplainServer(port = 9011): void {
   const app = express();
   app.use(cors());
+  const explanation = createExplanationRuntime('g1000-simulator');
+  app.use(explanation.middleware);
   app.use(express.json());
-
-  const explainer = new ExplainerClient({
-    brainUrl: process.env['RCC_BRAIN_URL'] ?? 'http://146.190.134.110:8789/api/brain/request',
-  });
-  app.use(explainerRoute(explainer));
 
   app.get('/health', (_req, res) => {
     res.json({ status: 'ok', service: 'g1000-simulator-explain' });
   });
 
-  app.listen(port, () => {
+  const server = app.listen(port, () => {
     console.log(`G1000 explain HTTP server listening on port ${port}`);
   });
+  server.once('close', () => explanation.close());
 }

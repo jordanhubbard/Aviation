@@ -9,7 +9,7 @@ PNPM := $(shell command -v pnpm >/dev/null 2>&1 && echo pnpm || (command -v core
 .PHONY: help all build clean test test-docker release
 .PHONY: build-node build-python build-clojure
 .PHONY: clean-node clean-python clean-clojure
-.PHONY: test-node test-go test-sdk-python test-configuration-python test-flight-dynamics test-avionics test-g1000-python test-python test-clojure test-flight-track-analyzer
+.PHONY: test-node test-go test-sdk-python test-sdk-clojure test-configuration-python test-flight-dynamics test-avionics test-g1000-python test-python test-clojure test-flight-track-analyzer
 .PHONY: test-docker-node test-docker-python test-docker-clojure
 .PHONY: run-aviation-missions run-flight-planner run-flight-school
 .PHONY: run-foreflight-dashboard run-flight-tracker run-weather-briefing
@@ -164,7 +164,7 @@ clean-clojure:
 # TEST TARGETS
 #
 
-test: test-node test-go test-sdk-python test-configuration-python test-flight-dynamics test-avionics test-g1000-python test-flight-track-analyzer
+test: test-node test-go test-sdk-python test-sdk-clojure test-configuration-python test-flight-dynamics test-avionics test-g1000-python test-flight-track-analyzer
 	@echo ""
 	@echo "✅ Core application tests complete!"
 
@@ -177,8 +177,8 @@ test-node:
 	$(PNPM) install --frozen-lockfile
 	$(PNPM) --filter @aviation/shared-sdk run build
 	$(PNPM) --filter @aviation/nav-data run build
-	$(PNPM) --filter @aviation/ai-explainer run build
 	$(PNPM) --filter @aviation/keystore run build
+	$(PNPM) --filter @aviation/ai-explainer run build
 	@# Ask pnpm to resolve each package's test binary from the workspace. This
 	@# keeps the root test command portable across fresh and retained checkouts.
 	@ran=0; skipped=0; \
@@ -225,14 +225,25 @@ test-go:
 
 test-sdk-python:
 	@echo "🧪 Running Python shared SDK tests..."
-	$(PNPM) install --frozen-lockfile --filter @aviation/keystore...
+	$(PNPM) install --frozen-lockfile --filter @aviation/ai-explainer...
 	$(PNPM) --filter @aviation/shared-sdk run build
 	$(PNPM) --filter @aviation/keystore run build
-	@python_env="$(abspath _build/python-envs/shared-sdk)"; \
+	$(PNPM) --filter @aviation/ai-explainer run build
+	@set -e; \
+	python_env="$(abspath _build/python-envs/shared-sdk)"; \
 	python3 -m venv "$$python_env"; \
-	"$$python_env/bin/python" -m pip install -q -e packages/shared-sdk/python pytest; \
+	"$$python_env/bin/python" -m pip install -q -e packages/shared-sdk/python pytest httpx fastapi flask; \
 	"$$python_env/bin/python" -m pytest packages/keystore/python/tests packages/shared-sdk/python/tests -q
 	@echo "✅ Python shared SDK tests PASSED"
+
+test-sdk-clojure:
+	@if command -v lein >/dev/null 2>&1; then \
+		set -e; \
+		$(PNPM) install --frozen-lockfile --filter @aviation/ai-explainer...; \
+		$(PNPM) --filter @aviation/ai-explainer... run build; \
+		cd packages/shared-sdk/clojure; \
+		AVIATION_EXPLANATION_NODE_ENTRY="$(abspath packages/ai-explainer/dist/run.js)" lein test; \
+	else echo "⚠️  JVM shared SDK tests SKIPPED (Leiningen not installed; required in Common Aviation SDK CI)"; fi
 
 test-configuration-python:
 	@echo "🧪 Running Python configuration Component and runtime adapter tests..."

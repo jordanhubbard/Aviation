@@ -34,6 +34,7 @@ async function start() {
     const app = createApp(repository, e2e);
     const port = config.port;
     const httpServer = createServer(app);
+    httpServer.once('close', () => app.locals.explanation.close());
 
     // Start HTTP server
     httpServer.listen(port, () => {
@@ -56,6 +57,8 @@ async function start() {
     }
 
     const shutdown = async () => {
+      app.locals.explanation.close();
+      httpServer.close();
       try {
         await repository.close();
       } catch (error) {

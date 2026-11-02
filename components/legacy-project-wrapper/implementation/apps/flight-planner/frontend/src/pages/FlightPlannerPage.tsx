@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+import { registerDecisionContext, type DecisionContext } from '@aviation/ai-explainer/browser';
 import {
   Grid,
   Card,
@@ -70,6 +71,26 @@ const FlightPlannerPage: React.FC = () => {
 
   const isLoading = isRouteStreaming || localPlanMutation.isPending
   const error = routeStreamError || localPlanMutation.error
+  const decision = useRef<DecisionContext | null>(null)
+  decision.current = lastMode === 'route' && routePlan ? {
+    application: 'Flight Planner', decision: 'Calculated VFR route',
+    request: lastRequest, origin: routePlan.origin, destination: routePlan.destination,
+    route: routePlan.route.slice(0, 30), distance_nm: routePlan.distance_nm,
+    time_hr: routePlan.time_hr, altitude: routePlan.altitude,
+    fuel_required_gal: routePlan.fuel_required_gal,
+    fuel_required_with_reserve_gal: routePlan.fuel_required_with_reserve_gal,
+    reserve_minutes: routePlan.reserve_minutes,
+    wind_speed_kt: routePlan.wind_speed_kt, headwind_kt: routePlan.headwind_kt,
+    crosswind_kt: routePlan.crosswind_kt, groundspeed_kt: routePlan.groundspeed_kt,
+  } : lastMode === 'local' && localPlanMutation.data ? {
+    application: 'Flight Planner', decision: 'Nearby airports for a local flight',
+    request: lastRequest, airport: localPlanMutation.data.airport,
+    radius_nm: localPlanMutation.data.radius_nm,
+    nearby_airports: localPlanMutation.data.nearby_airports.slice(0, 12),
+  } : { application: 'Flight Planner', decision: 'Planning status',
+    request: lastRequest, status: isLoading ? 'Calculating' : 'No completed plan', error: error?.message }
+  useEffect(() => registerDecisionContext(() => decision.current,
+    'Explain this planning result, its route or airport choices and the limits of the supplied information.'), [])
 
   const cancelRoutePlanning = () => {
     routeAbortController?.abort()

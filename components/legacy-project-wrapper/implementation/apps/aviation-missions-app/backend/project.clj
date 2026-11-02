@@ -24,6 +24,7 @@
                  [buddy/buddy-hashers "1.8.158"]]
   :plugins [[jonase/eastwood "1.4.2"]]
   :main ^:skip-aot aviation-missions.core
+  :source-paths ["src" "../../../packages/shared-sdk/clojure/src"]
   :target-path "target/%s"
   :profiles {:dev {:dependencies [[ring/ring-mock "0.4.0"]]}
              :test {:dependencies [[ring/ring-mock "0.4.0"]]}

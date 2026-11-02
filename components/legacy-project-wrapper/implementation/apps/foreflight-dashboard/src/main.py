@@ -151,6 +151,8 @@ app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
 # Settings router (ConfigPanel support)
 app.include_router(settings_router, tags=["settings"])
+from aviation.explanation import create_explanation_router
+app.include_router(create_explanation_router('foreflight-dashboard'))
 
 # Database is now configured in src.core.database
 

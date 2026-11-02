@@ -1,6 +1,6 @@
 # Design traceability
 
-<!-- literate-ai:authority-reviewed sha256:56840a16e74026a5b69a7c366a74e6301ed258aa663bad507886f56379d61ddb -->
+<!-- literate-ai:authority-reviewed sha256:177bb4e34a6d4f7c359991935dc21b2190c521dc2a436f3e93cb2c2b4c7f56c7 -->
 
 [Project guide](../README.md) → design traceability
 
@@ -34,3 +34,12 @@ labels and cleanup, and dedicated SSH forwarding remain runtime adapters. They
 must survive controller loss and must not derive cleanup authority from a name
 or a partial label alone. Docker recovery tests write real isolated service state,
 kill their controller, and verify expiry and preservation of unrelated resources.
+
+Bounded decision inputs, follow-up history, queued provider acceptance and callback
+correlation belong to `aviation.ai.explanation`. Its authored vectors distinguish
+RCC queue acceptance from a completed explanation. The retained common SDK owns
+credentials, clocks, random capabilities, HTTP routing and request cleanup. App
+adapters supply actual decision facts and retain their own access policy. Provider
+model selection and fallback remain RCC-owned. SDK tests exercise real local HTTP
+submission/callback behavior; they do not attest native generation or all-app
+deployment acceptance.

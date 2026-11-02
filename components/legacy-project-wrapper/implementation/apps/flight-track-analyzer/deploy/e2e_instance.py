@@ -82,9 +82,15 @@ def main() -> int:
     child = None
     try:
         marker.write_text(args.run_id)
-        env = {**os.environ, 'AVIATION_E2E_SECRET': secret,
-               'PYTHONPATH': str(RUNTIME / 'sdk-python')}
+        # The private broker must never discover normal provider settings or credentials.
+        env = {'PATH': os.defpath, 'AVIATION_E2E_SECRET': secret,
+               'AVIATION_E2E_RUN_ID': args.run_id,
+               'PYTHONPATH': str(RUNTIME / 'sdk-python'),
+               'PYTHONDONTWRITEBYTECODE': '1',
+               'AVIATION_AIRPORTS_DATA': str(RUNTIME / 'data/airports_cache.json')}
         child = subprocess.Popen([
+            str(RUNTIME / 'node'), str(RUNTIME / 'explanation/dist/run.js'),
+            '--app', 'flight-track-analyzer', '--',
             str(RUNTIME / 'venv/bin/python'), str(RUNTIME / 'app/run.py'),
             '--host', '127.0.0.1', '--port', str(args.port),
             '--data-dir', str(run_dir),
@@ -102,7 +108,7 @@ def main() -> int:
         if child is not None and child.poll() is None:
             child.terminate()
             try:
-                child.wait(timeout=1)
+                child.wait(timeout=3)
             except subprocess.TimeoutExpired:
                 child.kill()
                 child.wait(timeout=1)

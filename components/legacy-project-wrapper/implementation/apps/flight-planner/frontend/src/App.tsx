@@ -1,4 +1,5 @@
 import { lazy, Suspense, useEffect, useMemo, useState } from 'react'
+import { registerDecisionContext } from '@aviation/ai-explainer/browser'
 import { Routes, Route, useLocation } from 'react-router-dom'
 import { Container, AppBar, Toolbar, Typography, Box, Button } from '@mui/material'
 import { BugReport } from '@mui/icons-material'
@@ -67,6 +68,12 @@ const pageVariants: Variants = {
 }
 
 function App() {
+  useEffect(() => registerDecisionContext(() => ({
+    application: 'Flight Planner',
+    decision: 'Displayed planning, weather and airport results',
+    page: window.location.pathname,
+    displayedFacts: (document.querySelector('main')?.textContent ?? '').slice(0, 3500),
+  }), 'Explain the displayed aviation information and its limitations using the supplied facts.'), [])
   const [themeMode, setThemeMode] = useState<'light' | 'dark' | 'night' | 'high-contrast'>('light');
 
   const theme = useMemo(() => {

@@ -1,5 +1,6 @@
 (ns aviation-missions.core
   (:require [ring.adapter.jetty :as jetty]
+            [aviation.explanation :as explanation]
             [compojure.core :refer [defroutes GET POST PUT DELETE OPTIONS]]
             [compojure.route :as route]
             [ring.middleware.json :refer [wrap-json-body wrap-json-response]]
@@ -168,7 +169,8 @@
       (wrap-defaults (-> site-defaults
                          (assoc-in [:security :anti-forgery] false)
                          (assoc-in [:security :frame-options] false)))
-      e2e/wrap-test-traffic))
+      e2e/wrap-test-traffic
+      (explanation/wrap-explanation "aviation-missions-app")))
 
 (defn -main
   "Start the server"

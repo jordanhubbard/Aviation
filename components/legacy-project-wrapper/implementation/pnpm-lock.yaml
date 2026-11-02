@@ -161,6 +161,9 @@ importers:
 
   apps/aviation-accident-tracker/frontend:
     dependencies:
+      '@aviation/ai-explainer':
+        specifier: workspace:*
+        version: link:../../../packages/ai-explainer
       '@aviation/shared-sdk':
         specifier: workspace:*
         version: link:../../../packages/shared-sdk
@@ -282,6 +285,9 @@ importers:
 
   apps/flight-planner/frontend:
     dependencies:
+      '@aviation/ai-explainer':
+        specifier: workspace:*
+        version: link:../../../packages/ai-explainer
       '@aviation/shared-sdk':
         specifier: workspace:*
         version: link:../../../packages/shared-sdk
@@ -412,6 +418,9 @@ importers:
 
   apps/flight-tracker:
     dependencies:
+      '@aviation/ai-explainer':
+        specifier: workspace:*
+        version: link:../../packages/ai-explainer
       '@aviation/keystore':
         specifier: workspace:*
         version: link:../../packages/keystore
@@ -446,6 +455,9 @@ importers:
 
   apps/foreflight-dashboard/frontend:
     dependencies:
+      '@aviation/ai-explainer':
+        specifier: workspace:*
+        version: link:../../../packages/ai-explainer
       '@emotion/react':
         specifier: ^11.11.1
         version: 11.14.0(@types/react@19.2.14)(react@19.2.4)
@@ -623,6 +635,9 @@ importers:
 
   apps/g1000-simulator/frontend:
     dependencies:
+      '@aviation/ai-explainer':
+        specifier: workspace:*
+        version: link:../../../packages/ai-explainer
       '@aviation/aviation-config':
         specifier: workspace:*
         version: link:../../../packages/aviation-config
@@ -669,6 +684,9 @@ importers:
 
   apps/meta-app:
     dependencies:
+      '@aviation/ai-explainer':
+        specifier: workspace:*
+        version: link:../../packages/ai-explainer
       '@aviation/aviation-config':
         specifier: workspace:*
         version: link:../../packages/aviation-config
@@ -703,6 +721,9 @@ importers:
 
   apps/weather-briefing:
     dependencies:
+      '@aviation/ai-explainer':
+        specifier: workspace:*
+        version: link:../../packages/ai-explainer
       '@aviation/keystore':
         specifier: workspace:*
         version: link:../../packages/keystore
@@ -721,6 +742,16 @@ importers:
         version: 6.0.3
 
   packages/ai-explainer:
+    dependencies:
+      '@aviation/keystore':
+        specifier: workspace:*
+        version: link:../keystore
+      '@aviation/shared-sdk':
+        specifier: workspace:*
+        version: link:../shared-sdk
+      express:
+        specifier: 4.22.1
+        version: 4.22.1
     devDependencies:
       '@types/express':
         specifier: ^4.17.21
@@ -731,9 +762,6 @@ importers:
       '@types/supertest':
         specifier: ^6.0.0
         version: 6.0.3
-      express:
-        specifier: ^4.18.0
-        version: 4.22.1
       supertest:
         specifier: ^6.3.0
         version: 6.3.4
@@ -8505,7 +8533,7 @@ snapshots:
       obug: 2.1.1
       std-env: 4.0.0
       tinyrainbow: 3.1.0
-      vitest: 4.1.12(@types/node@25.9.9)(@vitest/coverage-v8@4.1.12)(@vitest/ui@4.1.12)(jsdom@29.1.1(@noble/hashes@1.8.0))(msw@2.15.0(@types/node@25.9.9)(typescript@6.0.3))(vite@8.3.5(@types/node@25.9.9)(esbuild@0.27.5)(tsx@4.21.0)(yaml@2.8.3))
+      vitest: 4.1.12(@types/node@26.6.5)(@vitest/coverage-v8@4.1.12)(@vitest/ui@4.1.12)(jsdom@29.0.1(@noble/hashes@1.8.0))(msw@2.15.0(@types/node@26.6.5)(typescript@5.9.3))(vite@8.3.5(@types/node@26.6.5)(esbuild@0.27.5)(tsx@4.21.0)(yaml@2.8.3))
 
   '@vitest/expect@4.1.12':
     dependencies:
@@ -8597,7 +8625,7 @@ snapshots:
       sirv: 3.0.2
       tinyglobby: 0.2.17
       tinyrainbow: 3.1.0
-      vitest: 4.1.12(@types/node@25.9.9)(@vitest/coverage-v8@4.1.12)(@vitest/ui@4.1.12)(jsdom@29.1.1(@noble/hashes@1.8.0))(msw@2.15.0(@types/node@25.9.9)(typescript@6.0.3))(vite@8.3.5(@types/node@25.9.9)(esbuild@0.27.5)(tsx@4.21.0)(yaml@2.8.3))
+      vitest: 4.1.12(@types/node@26.6.5)(@vitest/coverage-v8@4.1.12)(@vitest/ui@4.1.12)(jsdom@29.0.1(@noble/hashes@1.8.0))(msw@2.15.0(@types/node@26.6.5)(typescript@5.9.3))(vite@8.3.5(@types/node@26.6.5)(esbuild@0.27.5)(tsx@4.21.0)(yaml@2.8.3))
 
   '@vitest/utils@4.1.12':
     dependencies:

@@ -190,6 +190,53 @@
   line-height: 1.6;
 }
 
+.settings-pane {
+  max-width: 60rem;
+  margin: 1rem auto;
+  text-align: left;
+}
+
+.settings-pane .settings-note {
+  color: #475569;
+}
+
+.settings-pane a {
+  color: #1d4ed8;
+}
+
+.settings-app-links {
+  list-style: none;
+  padding: 0;
+}
+
+.settings-app-links li {
+  margin: 0.5rem 0;
+}
+
+.settings-registry-table {
+  width: 100%;
+  table-layout: fixed;
+  border-collapse: collapse;
+}
+
+.settings-registry-table th,
+.settings-registry-table td {
+  padding: 0.6rem 0.3rem;
+  overflow-wrap: anywhere;
+  vertical-align: top;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.launcher-back-btn {
+  min-height: 44px;
+  padding: 0.6rem 1rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  background: #fff;
+  color: #1e293b;
+  cursor: pointer;
+}
+
 .pane-links {
   display: flex;
   gap: 1rem;

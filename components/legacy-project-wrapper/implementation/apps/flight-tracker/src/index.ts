@@ -1,4 +1,5 @@
 import http from "http";
+import { createExplanationRuntime } from '@aviation/ai-explainer';
 import {
   MacTaskCreator,
   createHealthReport,
@@ -26,6 +27,7 @@ function configuredTestRun(environment: NodeJS.ProcessEnv) {
 
 /** Separate test instances reuse the real HTTP handlers and service state. */
 export function createFlightTrackerServer(service: FlightTrackerService, environment: NodeJS.ProcessEnv = process.env) {
+  const explanation = createExplanationRuntime('flight-tracker', { environment });
   const testRun = configuredTestRun(environment);
   let registered = false;
   const state = () => {
@@ -49,7 +51,8 @@ export function createFlightTrackerServer(service: FlightTrackerService, environ
     return JSON.parse(body);
   };
   const port = Number(environment.PORT ?? "3001");
-  return http.createServer(async (req, res) => {
+  const server = http.createServer(async (req, res) => {
+    if (explanation.handle(req, res)) return;
     const requestUrl = new URL(req.url ?? "/", `http://localhost:${port}`);
 
     const sendJson = (status: number, payload: unknown) => {
@@ -588,11 +591,25 @@ export function createFlightTrackerServer(service: FlightTrackerService, environ
             setInterval(refreshTracked, 5000);
           </script>
           <script defer data-aviation-app="flight-tracker" src="https://meta-app.jordanhubbard.net/feedback-widget.js"></script>
+          <script type="module">
+            import '/api/explain/widget.js';
+            window.AviationExplain.registerContext(() => ({
+              application: 'Flight Tracker', decision: 'Observed aircraft status and chosen tracks',
+              visibleAircraft: latestFlights.length,
+              trackedAircraft: trackedFlights.slice(0, 12).map(flight => ({
+                icao24: flight.icao24, callsign: flight.callsign, country: flight.originCountry,
+                latitude: flight.position?.latitude, longitude: flight.position?.longitude,
+                altitude_m: flight.position?.altitude, speed_m_s: flight.position?.velocity,
+                historyPoints: flight.history?.length ?? 0,
+              })),
+            }), 'Explain these observed aircraft tracks and status. Distinguish observations from unknowns.');
+          </script>
         </body>
       </html>
     `);
   });
-
+  server.once('close', () => explanation.close());
+  return server;
 }
 
 /**

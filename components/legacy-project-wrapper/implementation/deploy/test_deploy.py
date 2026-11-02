@@ -11,6 +11,8 @@ import urllib.request
 import uuid
 import importlib.util
 import subprocess
+import shlex
+import tempfile
 import unittest
 from pathlib import Path
 from unittest.mock import patch
@@ -33,6 +35,21 @@ class HealthyResponse:
 
 
 class VerifyTests(unittest.TestCase):
+    def test_explanation_callback_origin_matches_the_rendered_public_site(self):
+        _, apps = deployment.load_manifest()
+        for app in apps:
+            with self.subTest(app=app['name']), tempfile.TemporaryDirectory() as directory:
+                target = Path(directory)
+                deployment.render(app, 'a' * 40, target)
+                site = (target / 'site.caddy').read_text().split(' {', 1)[0]
+                command = next(line.removeprefix('ExecStart=') for line in
+                               (target / 'service.unit').read_text().splitlines() if line.startswith('ExecStart='))
+                argv = shlex.split(command)
+                environment = dict(argv[index + 1].split('=', 1) for index, value in enumerate(argv)
+                                   if value == '--env')
+                self.assertEqual(environment['AVIATION_APP_ID'], app['name'])
+                self.assertEqual(environment['AVIATION_EXPLAIN_PUBLIC_URL'], 'https://' + site)
+
     def test_missing_registry_image_builds_and_ships_committed_source(self):
         config, apps = deployment.load_manifest()
         app = next(item for item in apps if item['name'] == 'meta-app')
@@ -69,11 +86,9 @@ class VerifyTests(unittest.TestCase):
             if name == 'flight-track-analyzer':
                 self.assertTrue(script.endswith('/isolated-native-e2e.mjs'))
                 self.assertEqual(env['AVIATION_E2E_REVISION'], revision)
-            elif name in {'aviation-accident-tracker', 'aviation-chat', 'aviation-missions-app', 'flight-planner', 'flightschool', 'flight-tracker', 'g1000-simulator'}:
+            else:
                 self.assertTrue(script.endswith('/isolated-e2e.mjs'))
                 self.assertEqual(env['AVIATION_E2E_REVISION'], revision)
-            else:
-                self.assertTrue(script.endswith('/remote-e2e.mjs'))
 
     def test_wrong_running_revision_stops_before_browser_traffic(self):
         config, apps = deployment.load_manifest()

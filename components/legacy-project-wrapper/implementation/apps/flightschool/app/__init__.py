@@ -1,6 +1,6 @@
 from flask import Flask, render_template, current_app, session, request, jsonify
 from flask_sqlalchemy import SQLAlchemy
-from flask_login import LoginManager
+from flask_login import LoginManager, current_user
 from flask_migrate import Migrate
 from flask_mail import Mail
 from flask_wtf.csrf import CSRFProtect
@@ -55,7 +55,7 @@ def create_app(config_name='default'):
 
     @app.before_request
     def before_request():
-        if config_name == 'e2e':
+        if config_name == 'e2e' and not (request.path == '/api/explain' or request.path.startswith('/api/explain/')):
             from aviation.e2e import verify_e2e_headers
             try:
                 signed_run = verify_e2e_headers('flightschool', request.headers,
@@ -92,6 +92,13 @@ def create_app(config_name='default'):
     app.register_blueprint(settings_blueprint.settings_bp, url_prefix='/settings')
     app.register_blueprint(flight_blueprint.flight_bp)
     app.register_blueprint(api_settings_bp)
+    from aviation.explanation import create_explanation_blueprint
+    explanation = create_explanation_blueprint('flightschool',
+        authorize=lambda: bool(current_user.is_authenticated))
+    # The SDK checks JSON requests, result tokens and callback nonces. Session
+    # authentication above applies to normal user data; RCC callbacks have no CSRF cookie.
+    csrf.exempt(explanation)
+    app.register_blueprint(explanation)
 
     if config_name == 'e2e':
         @app.route('/__e2e/status')

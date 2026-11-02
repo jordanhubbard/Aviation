@@ -1,38 +1,35 @@
-import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
-import { afterEach, expect, it, vi } from 'vitest';
+import { cleanup, render, screen } from '@testing-library/react';
+import { afterEach, beforeEach, expect, it, vi } from 'vitest';
+const { register, dispose } = vi.hoisted(() => ({ register: vi.fn(), dispose: vi.fn() }));
+vi.mock('@aviation/ai-explainer/browser', () => ({ registerDecisionContext: register }));
 import { AccidentExplanation } from '../AccidentExplanation';
 
-afterEach(() => { cleanup(); vi.unstubAllGlobals(); });
-const event = { registration: 'N123', dateZ: '2026-01-01', category: 'general', summary: 'Recorded event' };
+beforeEach(() => { register.mockReset(); dispose.mockReset(); register.mockReturnValue(dispose); });
+afterEach(cleanup);
+const event = { registration: 'N123', dateZ: '2026-01-01', category: 'general',
+  fatalities: 0, summary: 'Recorded event' };
 
-it('requests an explanation for the selected event and labels the result', async () => {
-  const fetch = vi.fn().mockResolvedValue({ ok: true, json: async () => ({ explanation: 'Recorded factors' }) });
-  vi.stubGlobal('fetch', fetch);
+it('supplies selected evidence and an attribution question to the common SDK', () => {
   render(<AccidentExplanation event={event} />);
-  fireEvent.click(screen.getByRole('button', { name: 'Explain with AI' }));
-  expect(await screen.findByText('Recorded factors')).toBeInTheDocument();
-  expect(screen.getByText(/not an official finding/)).toBeInTheDocument();
-  expect(fetch.mock.calls[0][0]).toBe('/api/explain');
-  expect(JSON.parse(fetch.mock.calls[0][1].body).context).toContain('registration: N123');
+  const [facts, question] = register.mock.calls[0];
+  expect(facts()).toMatchObject({ registration: 'N123', date: '2026-01-01',
+    category: 'general', fatalities: 0, summary: 'Recorded event' });
+  expect(question).toContain('do not invent an official cause');
+  expect(screen.getByText(/not official findings/)).toBeInTheDocument();
 });
 
-it('shows service failure and allows retry', async () => {
-  vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: false, json: async () => ({ error: 'Service unavailable' }) }));
-  render(<AccidentExplanation event={event} />);
-  fireEvent.click(screen.getByRole('button', { name: 'Explain with AI' }));
-  expect(await screen.findByRole('alert')).toHaveTextContent('Service unavailable');
-  await waitFor(() => expect(screen.getByRole('button')).toBeEnabled());
-});
-
-it('aborts a pending request when the selected event is closed', () => {
-  let signal: AbortSignal | undefined;
-  vi.stubGlobal('fetch', vi.fn((_url, options) => {
-    signal = options.signal;
-    return new Promise(() => {});
-  }));
+it('uses the current selected event without restarting the shared UI on rerender', () => {
   const view = render(<AccidentExplanation event={event} />);
-  fireEvent.click(screen.getByRole('button'));
-  expect(signal?.aborted).toBe(false);
+  const facts = register.mock.calls[0][0];
+  view.rerender(<AccidentExplanation event={{ ...event, registration: 'N456',
+    narrative: 'x'.repeat(5000) }} />);
+  expect(register).toHaveBeenCalledTimes(1);
+  expect(facts().registration).toBe('N456');
+  expect(facts().narrative).toHaveLength(2000);
+});
+
+it('releases the selected decision scope when its detail closes', () => {
+  const view = render(<AccidentExplanation event={event} />);
   view.unmount();
-  expect(signal?.aborted).toBe(true);
+  expect(dispose).toHaveBeenCalledTimes(1);
 });
