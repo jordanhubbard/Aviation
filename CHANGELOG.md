@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Release engineering: record verified 1.0 publication, advance the development
+  version to 1.1.0, and end the completed release lockdown.
+
 ## 1.0.0 - 2026-11-02
 
 [README.md](https://github.com/jordanhubbard/Aviation/blob/v1.0.0/README.md)

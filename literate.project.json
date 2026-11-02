@@ -1,7 +1,7 @@
 {
   "schema": "urn:literate-ai:schema:v2:project-definition",
   "project_id": "aviation",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "profile": "canonical",
   "agent_skill": "SKILL.md",
   "component_roots": [
@@ -113,8 +113,8 @@
   "repository_policy": {
     "schema": "literate-ai/repository-policy@1",
     "default_branch": "main",
-    "main_state": "pre-release",
-    "pre_release_version": "1.0",
+    "main_state": "free",
+    "pre_release_version": null,
     "default_component": null,
     "sample_component_roots": [
       "samples"

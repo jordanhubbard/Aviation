@@ -895,10 +895,11 @@ release-visible outcome to `CHANGELOG.md`; Git preserves prior queue states.
   state. The other eleven qualified app and SDK source trees are unchanged from
   `f61fc700d` to `28df6769a`. All accepted deployed-build criteria are complete.
 
+<a id="release-001-reconcile-all-outstanding-contributions-into-release-10"></a>
 ### [x] RELEASE-001 — Reconcile all outstanding contributions into release 1.0
 
 - **Release target:** 1.0.0
-- **Contribution inventory:** [all included work](release-1.0-contributions.md).
+- **Contribution inventory:** [all included work](../history/roadmap/release-1.0-contributions.md).
 - **Completion:** All 47 original tracker contributions are closed or merged,
   including [#176](https://github.com/jordanhubbard/Aviation/issues/176#issuecomment-6571951981)
   and [#332](https://github.com/jordanhubbard/Aviation/issues/332#issuecomment-6571954338).
@@ -1054,7 +1055,8 @@ release-visible outcome to `CHANGELOG.md`; Git preserves prior queue states.
   tracker closure cites this committed roadmap evidence. Both issues remain
   included in 1.0.0.
 
-### [ ] RELEASE-002 — Publish and verify Aviation 1.0
+<a id="release-002-publish-and-verify-aviation-10"></a>
+### [x] RELEASE-002 — Publish and verify Aviation 1.0
 
 - **Release preflight finding:** The release CLI requires repository mode
   `pre-release` targeting `1.0` before planning this cut. The initial `free`
@@ -1072,6 +1074,22 @@ release-visible outcome to `CHANGELOG.md`; Git preserves prior queue states.
 - **Depends on:** RELEASE-001
 - **Completion prerequisites:** none
 - **Implementation:**
-  - [ ] Prepare, check, publish and verify v1.0.0 from the approved release revision after the required exact-commit CI and a ready contribution sweep.
+  - [x] Prepare, check, publish and verify v1.0.0 from the approved release revision after the required exact-commit CI and a ready contribution sweep.
 - **Evidence:**
-  - [ ] Verify the remote tag and GitHub release against the exact prepared revision, preserve release receipts and complete final contribution and Git synchronization checks.
+  - [x] Verify the remote tag and GitHub release against the exact prepared revision, preserve release receipts and complete final contribution and Git synchronization checks.
+
+- **Publication evidence:** [v1.0.0](https://github.com/jordanhubbard/Aviation/releases/tag/v1.0.0)
+  is published as a stable, non-draft release at
+  `e808374dd332e98b46b4df7942518e42f5235977`. All six exact-head and
+  exact-main workflows pass. The declared `make test` release gate passes and
+  binds prepared identity
+  `sha256:528202dcf183472580b350f746b082fd4463d241f369b21ccfeae63aed9f96bc`.
+  Independent CLI verification confirms the annotated remote tag, release branch
+  and GitHub release match that exact revision, with non-empty release notes.
+  Its verification identity is
+  `sha256:bc5810468e7264fd7570204a7d65c477befccf25afdee9c7f93eeb4644966798`.
+  The final contribution sweep is ready with no included open or unclassified
+  work. All 47 original contributions remain closed or merged; source and
+  publication evidence are preserved. Post-release development moves to 1.1.0
+  with repository mode free; these bookkeeping changes are reviewed separately
+  and do not alter the published 1.0 tag.
