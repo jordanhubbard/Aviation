@@ -9,7 +9,7 @@
 
 ## Unreleased
 
-- Probe Preflight at its declared root health endpoint when launching a private deployment test instance.
+- Probe Preflight at its declared root health endpoint when launching a private deployment test instance; allow the common SDK CI matrix to be run explicitly for an exact release revision.
 
 - KMLab keeps the latest selected view when an older page request finishes or
   fails, including a Performance refresh after saving a reference table.

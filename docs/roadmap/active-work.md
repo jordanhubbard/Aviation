@@ -1033,6 +1033,9 @@ release-visible outcome to `CHANGELOG.md`; Git preserves prior queue states.
   passes desktop, mobile and injected-failure qualification. Full retained
   build/test/package qualification also passes with candidate identity
   `sha256:d801f73df7ccedeea00dc8d61d4e227dcfce3f2c4675bcf0e87c95fa84aa45fc`.
+- **Release verification:** The common SDK workflow also accepts an explicit
+  manual run, so release revisions can be verified even when its normal source
+  path filter would skip an unrelated controller or documentation change.
 - **Next action:** Land the bounded Preflight readiness correction through all
   six head and exact-main workflows, verify its committed deployment gate, then
   close #176/#332 with commit-pinned evidence. Both remain included in 1.0.0.
