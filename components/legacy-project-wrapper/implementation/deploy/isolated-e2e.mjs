@@ -8,7 +8,7 @@ import { createE2ERunId, parseE2ERunId, createE2ELease, classifyE2ELease, e2eNam
 
 const appId = process.argv[2];
 const runtimes = {
-  'preflight-check': { port: 8080, readyStatus: 200 },
+  'preflight-check': { port: 8080, readyPath: '/', readyStatus: 200 },
   'flight-tracker': { port: 3001 },
   'g1000-simulator': { port: 8000, readyPath: '/api/health', readyStatus: 200,
     environment: runId => [`KEYSTORE_PATH=/tmp/aviation-e2e/${runId}/settings.keystore`,

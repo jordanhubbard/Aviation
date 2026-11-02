@@ -9,6 +9,8 @@
 
 ## Unreleased
 
+- Probe Preflight at its declared root health endpoint when launching a private deployment test instance.
+
 - KMLab keeps the latest selected view when an older page request finishes or
   fails, including a Performance refresh after saving a reference table.
 
