@@ -72,7 +72,9 @@ elevation SHALL remain missing and SHALL NOT be converted to zero.
 ### Requirement: Lookup and proximity agree across bindings
 
 Code lookup SHALL be case-insensitive and SHALL support ICAO, IATA, and the established
-US `K`-prefix alias. Proximity distances SHALL be nautical miles and sorted nearest
+US `K`-prefix alias. Exact ICAO or IATA matches SHALL take precedence over
+prefix aliases regardless of dataset order. Cached alias lookups SHALL NOT override
+an exact identity on a later query. Proximity distances SHALL be nautical miles and sorted nearest
 first. Search results SHALL be deterministic for the same normalized dataset.
 
 #### Scenario: An IATA code is used

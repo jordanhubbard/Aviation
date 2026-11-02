@@ -1093,3 +1093,52 @@ release-visible outcome to `CHANGELOG.md`; Git preserves prior queue states.
   publication evidence are preserved. Post-release development moves to 1.1.0
   with repository mode free; these bookkeeping changes are reviewed separately
   and do not alter the published 1.0 tag.
+
+### [ ] PLAN-001 — Repair VFR form and route terrain requests
+
+- **GitHub issue:** [#421](https://github.com/jordanhubbard/Aviation/issues/421)
+- **Next action:** push the qualified repair and check its review-branch CI (in progress).
+
+- **Priority:** P1
+- **Owner:** retained Flight Planner application and aviation.airports Component
+- **Direction:** Remove instrument procedure selection from the VFR planner and fix oversized Open-Meteo elevation requests.
+- **Conclusion:** The VFR form mounts an unused instrument procedure selector and issues 404 lookups. The retained terrain client submits all samples in one GET despite the documented 100-coordinate limit. Remove that form control and batch provider calls without changing route sampling or terrain policy. Live reproduction also proves that an exact ICAO match loses to an earlier K-stripped IATA alias; fix shared airport identity precedence in both SDK bindings and prevent alias cache poisoning.
+- **Depends on:** none
+- **Completion prerequisites:** none
+- **Implementation:**
+  - [x] Remove the procedure selector from VFR route planning; preserve shared instrument-procedure capabilities for their existing consumers.
+  - [x] Bound elevation GETs to the provider coordinate limit and a conservative encoded URL size; preserve sample order and missing values, and propagate provider failures.
+  - [x] Make exact ICAO/IATA identities take precedence over K-prefix aliases in both SDK bindings; cache only the requested identity.
+- **Evidence:**
+  - [x] Regressions cover VFR form submission without procedure lookups, large terrain profiles, batch boundaries, missing values, empty input, and provider errors.
+  - [ ] Run Flight Planner frontend/backend tests and builds, retained-source authority and full test receipt checks, then push a review branch with CI evidence.
+
+- **Local evidence:** Flight Planner passes 208 backend tests and 13 frontend tests;
+  frontend production build and lint pass. Desktop (1280px) and mobile (390px)
+  browser checks show airport controls without instrument-procedure requests,
+  runtime errors, or document overflow. Provider fixtures cover 2,503 full-precision
+  samples, encoded URLs below 4 KiB, short/unknown batches, downstream errors, and
+  terrain maxima beyond the first batch.
+
+- **Discovery:** The retained catalog resolves KDWA to a different airport through
+  its DWA IATA alias before reaching the exact record. The resulting 8,841 NM
+  route requests 885 elevations; the correct coordinates are about 68 NM apart.
+  The shared airport capability owns this fix, including cross-binding synthetic
+  collision vectors and cache-order coverage. A direct 121-point live-provider
+  fetch passed; the erroneous long-route live probe hit HTTP 429, so it is not
+  end-to-end success evidence.
+
+- **Airport repair evidence:** Both bindings fail the new collision vectors before
+  the repair. The full TypeScript SDK now passes 637 tests; the Python airport
+  suites pass 41 tests. A synthetic application integration test proves the
+  selected origin and terrain samples stay in the requested region. The actual
+  terrain-enabled KDWA-to-KPAO request passes with the live elevation provider in
+  0.66 seconds and reports 68.2 NM.
+
+- **Retained qualification:** The complete build/test/package harness passes for
+  final candidate `sha256:1ef8b5027f42f5cf201c98d1b7de7afc7e31eb359ff6426bfe032b6aad5b1fb8`.
+  The committed test receipt is
+  `sha256:29d87265c16d2d2ce3c984e36f89d77a14858806d61af2156a499d4351c28a44`;
+  `litai verify` passes authority, all twenty committed locks, and receipt currency.
+  This is retained-source qualification, without native Component generation or
+  acceptance claims. Production publication remains separate from this repair.

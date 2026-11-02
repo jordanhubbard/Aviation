@@ -6,7 +6,7 @@ may use idiomatic names while preserving these operations.
 | Operation | Contract |
 | --- | --- |
 | Normalize records | Omit invalid identities/coordinates; normalize codes and optional fields |
-| Lookup by code | Case-insensitive ICAO/IATA/US-prefix lookup; missing returns no record |
+| Lookup by code | Case-insensitive ICAO/IATA lookup before US-prefix fallback; query caches preserve exact identities; missing returns no record |
 | Text search | Deterministic ranking with exact code matches first and an explicit limit |
 | Proximity search | WGS-84 origin and radius in nautical miles; nearest-first results |
 | Field elevation | Optional finite feet MSL; missing is distinct from zero |

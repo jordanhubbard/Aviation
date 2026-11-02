@@ -5,6 +5,8 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 Unified VFR flight planning app with route + local planning, terrain checks, and weather.
+The VFR planning form does not request instrument departure, arrival, or approach
+procedures and does not fetch instrument-procedure catalogs when airports change.
 
 **Note**: This application is now part of the Aviation monorepo. For monorepo-wide documentation, see the [root README](../../README.md).
 
@@ -12,7 +14,7 @@ Unified VFR flight planning app with route + local planning, terrain checks, and
 
 - **Route planning** (direct or multi-leg with fuel stops)
 - **Local planning** (nearby airports within a radius)
-- **Terrain profile** and optional terrain clearance enforcement (OpenTopography)
+- **Terrain profile** and optional terrain clearance enforcement (Open-Meteo by default, with bounded batches of up to 50 samples per request; optional OpenTopography provider)
 - **Weather**: OpenWeatherMap current conditions + METAR enrichment + Open-Meteo forecasts
 - **Map UI**: Leaflet route display + optional OpenWeatherMap tile overlays + wind markers
 
@@ -59,7 +61,8 @@ Copy `.env.example` → `.env` and set any API keys you plan to use.
 ### Backend
 
 - `OPENWEATHERMAP_API_KEY`: required for `GET /api/weather/{code}` and the map tile endpoints if you call OpenWeatherMap directly
-- `OPENTOPOGRAPHY_API_KEY`: required for `/api/terrain/*` endpoints and route planning with `avoid_terrain=true`
+- `TERRAIN_PROVIDER`: defaults to `open-meteo`; set to `opentopography` to select the optional OpenTopography provider.
+- `OPENTOPOGRAPHY_API_KEY`: required only when `TERRAIN_PROVIDER=opentopography`.
 - `OPENAIP_API_KEY`: reserved for future airspace integrations
 
 ### Frontend

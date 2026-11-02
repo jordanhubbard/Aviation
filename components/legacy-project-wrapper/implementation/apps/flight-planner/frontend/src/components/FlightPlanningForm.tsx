@@ -24,7 +24,6 @@ import { validateAirportCode } from '../utils'
 import type { Airport, FlightPlan, FlightPlanRequest, LocalPlanRequest, RoutePlanRequest } from '../types'
 import { FormSection } from './shared'
 import ModeSelector, { type PlanMode } from './ModeSelector'
-import ProcedureSelection from './ProcedureSelection'
 import { loadSavedFlightPlans } from '../services/savedFlightPlans'
 import {
   DEFAULT_AIRCRAFT_CRUISE_SPEED_KT,
@@ -182,7 +181,7 @@ const FlightPlanningForm: React.FC<Props> = ({ isLoading, onSubmit }) => {
 
       {mode === 'route' ? (
         <>
-          <Grid item xs={12} sm={6}><ProcedureSelection airportCode={origin} /></Grid><Grid item xs={12} sm={6}>
+          <Grid item xs={12} sm={6}>
             <Autocomplete
               freeSolo
               options={originOptions}

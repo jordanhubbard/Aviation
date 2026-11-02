@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+- Aviation airport SDK: prefer exact airport codes over prefix aliases and keep
+  cached aliases from selecting a different airport on a later lookup.
+
+- Flight Planner: remove instrument-procedure selection from VFR planning and split
+  large terrain profiles into bounded Open-Meteo elevation requests, preserving
+  sample order and unknown elevations.
+
 - Release engineering: record verified 1.0 publication, advance the development
   version to 1.1.0, and end the completed release lockdown.
 
