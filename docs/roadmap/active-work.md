@@ -885,7 +885,10 @@ release-visible outcome to `CHANGELOG.md`; Git preserves prior queue states.
   PR #413 merged at `ac9230531` with all six exact-head and exact-main workflows
   passing. The published image also passed SDK-launcher desktop/mobile and
   injected-failure runs with zero residual state and owned-resource cleanup.
-  See the E2E program.
+  See the E2E program. The latest all-app qualification at `f61fc700d` passes
+  every declared inventory, with 24 mobile/failure zero-residual cleanup results.
+  A Preflight readiness-path correction is qualified against that published image
+  but still needs reviewed CI and committed-controller verification before closure.
 
 ### [ ] RELEASE-001 — Reconcile all outstanding contributions into release 1.0
 
@@ -1015,6 +1018,24 @@ release-visible outcome to `CHANGELOG.md`; Git preserves prior queue states.
   `sha256:e858ae8d5c0754391ffebd965264dfaf9872a93ffb85e9cdb0a880a9dd258f45`;
   all Component locks and reviewed authority are current. This remains retained
   source qualification, without claiming native Component generation/acceptance.
-- **Next action:** Land the bounded navigation fix through all six head and
-  exact-main workflows, then finish all exact deployed-build checks. Issues #176
-  and #332 remain open in 1.0.0 until that deployed evidence passes.
+- **Fleet qualification:** PR #415 merged at `f61fc700d` after all six head
+  workflows passed; all six exact-main workflows passed. All twelve production
+  services now report that revision. Their exact published builds pass the
+  declared inventories at desktop and mobile widths and injected failure after
+  explanation. Each mobile/failure run records zero explanation actor records
+  and removal of its private instance; no test containers or native test units
+  remain. Flight School covers 58 routes/flows. KMLab passes both controlled
+  late-response cases against its installed build, including mobile.
+- **Readiness correction:** The committed launcher probes `/health` for Preflight,
+  but the isolated application returns 404 there and 200 at its declared `/`
+  health endpoint. The initial gate failure and cleanup are retained. With the
+  launcher's readiness path corrected to `/`, that same exact published image
+  passes desktop, mobile and injected-failure qualification. Full retained
+  build/test/package qualification also passes with candidate identity
+  `sha256:d801f73df7ccedeea00dc8d61d4e227dcfce3f2c4675bcf0e87c95fa84aa45fc`.
+- **Release verification:** The common SDK workflow also accepts an explicit
+  manual run, so release revisions can be verified even when its normal source
+  path filter would skip an unrelated controller or documentation change.
+- **Next action:** Land the bounded Preflight readiness correction through all
+  six head and exact-main workflows, verify its committed deployment gate, then
+  close #176/#332 with commit-pinned evidence. Both remain included in 1.0.0.

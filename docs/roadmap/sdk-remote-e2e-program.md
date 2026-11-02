@@ -381,6 +381,52 @@ store remained absent. These runs used synthetic credentials and no production
 volumes. This is not final deployed-build acceptance; both #176 and #332 remain
 open.
 
+## All-app published-build qualification
+
+PR #414 landed the shared queued RCC explanation runtime, UI and all-app adapters.
+PR #415 repaired KMLab's stale-view race at
+`f61fc700dfa243cbc63e3a39cc83a30c1c807cba`. All six workflows passed at both PR
+heads and both exact-main revisions. The twelve deployed services now report
+`f61fc700d`, using eleven published container images and the installed native
+KMLab runtime. Public health and browser smoke pass for all twelve.
+
+The exact application builds pass these inventories at desktop and mobile widths:
+
+| Application | Declared flows exercised |
+| --- | ---: |
+| Accident Tracker | 6 |
+| Aviation Chat | 6 endpoints |
+| Missions | 20 |
+| Flight Planner | 9 |
+| KMLab | 9 |
+| Flight Tracker | 5 |
+| Flight School | 58 routes/flows |
+| ForeFlight | 7 |
+| G1000 | 6 |
+| Launcher | 4 |
+| Preflight | 8 |
+| Weather | 6 |
+
+Every app also passes injected failure after explanation. All 24 mobile/failure
+runs record zero remaining explanation actor records and verified removal of the
+owned instance and storage. A final worker query finds no test containers or
+KMLab test units. Persistent domain cleanup and fresh reads remain enforced by
+the app adapters. SDK mocks supply external model, weather, feed and GitHub
+responses; these runs use synthetic app/run-bound credentials and no production
+volumes. KMLab's installed build also passes controlled late success and error
+responses after navigating away from Performance, at desktop and mobile widths.
+
+The initial Preflight deployment gate exposed a launcher configuration mismatch:
+`/health` returns 404 while its declared `/` health endpoint returns 200. The
+failed gate removed its owned instance. A one-line controller correction to probe
+`/` passes desktop, mobile and injected-failure checks against that same published
+image. This correction is still awaiting reviewed CI and committed-controller
+verification; #176 and #332 remain open until those finish. The complete retained
+build/test/package harness passes with candidate identity
+`sha256:d801f73df7ccedeea00dc8d61d4e227dcfce3f2c4675bcf0e87c95fa84aa45fc`.
+This is retained-source qualification, without native Component generation or
+acceptance claims.
+
 ## Acceptance contract
 
 Each deployed app must publish a screen inventory and an executable test for every
