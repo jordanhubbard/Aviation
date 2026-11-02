@@ -1,10 +1,10 @@
 # SDK remote E2E program
 
-- **Status:** active
-- **Owning queue item:** [E2E-001](active-work.md#e2e-001)
-- **Completion / archival evidence:** pending while E2E-001 remains open
+- **Status:** historical
+- **Owning queue item:** [E2E-001](../../roadmap/active-work.md#e2e-001)
+- **Completion / archival evidence:** [PR #416](https://github.com/jordanhubbard/Aviation/pull/416), [exact-main CI](https://github.com/jordanhubbard/Aviation/actions/runs/41408054712) and [published images](https://github.com/jordanhubbard/Aviation/actions/runs/41408054726) pass at `28df6769a`; all twelve published application builds pass their remote inventories with zero-residual cleanup, as recorded below.
 
-## Current checkpoint
+## Earlier checkpoint
 
 The SDK run contract, signed credentials in TypeScript and Python, run-scoped
 storage paths, tagged fixtures, network mocks, browser inventory helper, and
@@ -33,7 +33,7 @@ then removes the database with its throwaway container. That sweep also
 found and fixed previously broken Flight School routes and templates.
 
 The deployment verifier now checks each running revision, requires the
-independent [remote E2E inventory](../../verification/remote-e2e.json), and
+independent [remote E2E inventory](../../../verification/remote-e2e.json), and
 dispatches all twelve adapters after the public browser smoke. Docker adapters
 that require private server state use temporary containers. KMLab's native deploy
 records its exact revision and installs a temporary remote process runner;
@@ -420,8 +420,13 @@ The initial Preflight deployment gate exposed a launcher configuration mismatch:
 `/health` returns 404 while its declared `/` health endpoint returns 200. The
 failed gate removed its owned instance. A one-line controller correction to probe
 `/` passes desktop, mobile and injected-failure checks against that same published
-image. This correction is still awaiting reviewed CI and committed-controller
-verification; #176 and #332 remain open until those finish. The complete retained
+image. PR #416 then merged at `28df6769a` with all six head and exact-main
+workflows passing. The committed desktop gate, mobile inventory and injected
+failure now also pass against Preflight's published `28df6769a` image; all runs
+record zero explanation actor records and owned-instance cleanup. The other
+qualified application and SDK source trees are unchanged from `f61fc700d` to
+`28df6769a`. This completes the accepted deployed-build criteria for #176 and
+#332. The complete retained
 build/test/package harness passes with candidate identity
 `sha256:d801f73df7ccedeea00dc8d61d4e227dcfce3f2c4675bcf0e87c95fa84aa45fc`.
 This is retained-source qualification, without native Component generation or

@@ -1,8 +1,8 @@
 # Release 1.0 contribution inventory
 
-- **Status:** active
-- **Owning queue item:** [RELEASE-001](active-work.md#release-001-reconcile-all-outstanding-contributions-into-release-10)
-- **Completion / archival evidence:** pending contribution reconciliation and release publication
+- **Status:** partial
+- **Owning queue item:** [RELEASE-002](active-work.md#release-002-publish-and-verify-aviation-10)
+- **Completion / archival evidence:** all 47 original contributions are closed or merged; [AI completion](https://github.com/jordanhubbard/Aviation/issues/176#issuecomment-6571951981) and [E2E completion](https://github.com/jordanhubbard/Aviation/issues/332#issuecomment-6571954338) are recorded; publication remains pending under RELEASE-002.
 
 All items below are included in 1.0.0 by explicit user direction. A scope assignment
 does not establish merge, test, supersession, or completion evidence.
@@ -11,14 +11,15 @@ does not establish merge, test, supersession, or completion evidence.
 
 The original scope contains 47 contributions. All 44 dependency/CI PRs are now
 closed with individual comparisons and exact-main CI evidence in their comments.
-PR #210 was recovered by #398 and closed after exact-main CI passed, bringing
-the resolved count to 45 of 47. Issues #176/#332 remain included in 1.0 until
-their complete acceptance is qualified. New dependency PR #399 is also included.
+PR #210 was recovered by #398 and closed after exact-main CI passed. Issues
+#176/#332 are now closed after complete shared-SDK and deployed-build acceptance,
+bringing the original resolved count to 47 of 47. All remain included in 1.0.
+Added dependency PR #399 and follow-up repairs through #416 are reconciled too.
 
 | Kind | Item | Title | State |
 | --- | --- | --- | --- |
-| issue | [#332](https://github.com/jordanhubbard/Aviation/issues/332) | Complete isolated remote E2E coverage for all Aviation services | included; reconciliation pending |
-| issue | [#176](https://github.com/jordanhubbard/Aviation/issues/176) | feat: AI decision explanation layer for each app | included; reconciliation pending |
+| issue | [#332](https://github.com/jordanhubbard/Aviation/issues/332) | Complete isolated remote E2E coverage for all Aviation services | closed; complete deployed-build acceptance through #414–#416 |
+| issue | [#176](https://github.com/jordanhubbard/Aviation/issues/176) | feat: AI decision explanation layer for each app | closed; complete deployed-build acceptance through #414–#416 |
 | review | [#303](https://github.com/jordanhubbard/Aviation/pull/303) | Make Aviation's last three CI jobs green (integration-tests, pip-audit, trivy) (task_b3e16b5f6d9f43a69307f2827a7f6368) | closed; current pins equal/newer, exact-main named jobs pass |
 | review | [#296](https://github.com/jordanhubbard/Aviation/pull/296) | chore(deps): bump codecov/codecov-action from 6 to 7 | closed; incorporated/superseded by #396; exact-main CI passes |
 | review | [#295](https://github.com/jordanhubbard/Aviation/pull/295) | chore(deps): bump actions/checkout from 6 to 7 | closed; incorporated/superseded by #396; exact-main CI passes |
@@ -123,18 +124,20 @@ and [SDK](https://github.com/jordanhubbard/Aviation/actions/runs/41345449868).
 Historical PR #210 is closed with its original head preserved and a pushed
 supersession marker.
 
-Issue #176 requires a shared explanation client, a standard explanation endpoint
-and decision control in every application, and follow-up questions through the
-current brain API and model fallback. The current Accident Tracker, Chat,
-Planner, and G1000 wiring is partial evidence; complete and test the application
-matrix, including unavailable-service behavior and deterministic model mocks.
+Issue #176 is complete: every deployed entry point uses the shared queued RCC
+SDK protocol, and pilot-facing explanations support decision facts and follow-up
+questions. The common SDK owns protocol, credentials, bounded lifecycle, UI and
+cross-runtime bindings; application adapters supply their unique facts and policies.
 
-Issue #332 follows the [SDK remote E2E program](sdk-remote-e2e-program.md).
-All twelve adapters exist. Remaining acceptance is a route-by-route inventory
-completeness audit and traversal against exact deployed builds, with isolated
-tagged data, external-service mocks, failure cleanup, traces, zero residuals, and
-the required post-deployment gate. Public runs of older builds and local
-production-image checks do not substitute for that final deployed evidence.
+Issue #332 is complete under the archived [SDK remote E2E program](../history/roadmap/sdk-remote-e2e-program.md).
+All twelve published builds pass their declared inventories at desktop/mobile
+sizes; all 24 mobile/failure checks record zero remaining explanation records and
+private-instance cleanup. External model, weather, feed and GitHub calls use SDK
+mocks, with synthetic app/run credentials and isolated storage. The qualified fleet
+revision is `f61fc700d`; Preflight additionally passes its corrected committed gate
+at `28df6769a`. Application and SDK source trees are unchanged between those
+revisions. All six exact-head and exact-main workflows pass for PRs #415/#416,
+and current authority, twenty locks and retained-source qualification pass.
 
 ### Historical branch dispositions
 

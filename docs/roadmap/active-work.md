@@ -855,7 +855,9 @@ release-visible outcome to `CHANGELOG.md`; Git preserves prior queue states.
   - [x] Meta App production build and rendered launcher check showed ten pilot-facing destinations and no Chat card. The 273-test retained harness and `litai verify` passed; PR #330 merged at 302c8dbe6 with all 32 checks green. Exact-main image run 40129107242 succeeded, the 302c8dbe6 Meta App image was deployed, and all 12 public browser and health checks passed, including the separately running Chat API.
 
 <a id="e2e-001"></a>
-### [ ] E2E-001 — SDK-owned isolated remote application E2E harness
+### [x] E2E-001 — SDK-owned isolated remote application E2E harness
+
+- **GitHub issue:** [#332](https://github.com/jordanhubbard/Aviation/issues/332)
 
 - **Priority:** P1
 - **Owner:** shared SDK, all deployed apps, and deployment verification
@@ -863,11 +865,11 @@ release-visible outcome to `CHANGELOG.md`; Git preserves prior queue states.
 - **Conclusion:** The current remote browser gate covers roots and selected interactions only. Build reusable SDK E2E fixtures and lifecycle controls, enforce production/test data separation in every persistent app, inventory and exercise all app screens, verify cleanup after both success and failure, and make this a post-deployment gate.
 - **Depends on:** DEPLOY-001 public DNS and existing browser smoke gate
 - **Implementation:**
-  - [ ] Define SDK test-run identity, isolation and cleanup contracts; implement reusable browser/HTTP fixtures and mock data; adapt each of the twelve services including non-Node runtimes; cover every navigable screen and persist/read/delete flows where applicable; run the suite after deployment.
+  - [x] Define SDK test-run identity, isolation and cleanup contracts; implement reusable browser/HTTP fixtures and mock data; adapt each of the twelve services including non-Node runtimes; cover every navigable screen and persist/read/delete flows where applicable; run the suite after deployment.
 - **Evidence:**
-  - [ ] SDK unit and isolation tests, per-app screen and data lifecycle coverage matrix, failure cleanup tests, retained Literate AI receipt, reviewed CI, and live post-deployment E2E run without production data leakage.
-- **Detailed program:** [SDK remote E2E program](sdk-remote-e2e-program.md).
-- **In progress:** Independent Docker/SSH and native manager recovery landed
+  - [x] SDK unit and isolation tests, per-app screen and data lifecycle coverage matrix, failure cleanup tests, retained Literate AI receipt, reviewed CI, and live post-deployment E2E run without production data leakage.
+- **Detailed program:** [SDK remote E2E program](../history/roadmap/sdk-remote-e2e-program.md).
+- **Implementation history:** Independent Docker/SSH and native manager recovery landed
   through #408/#409 with exact-main CI passing. Preflight's seven and KMLab's
   eight persistence flows pass at desktop/mobile and after injected failure;
   the coverage change landed through #410. The common SDK compiled keystore
@@ -880,30 +882,36 @@ release-visible outcome to `CHANGELOG.md`; Git preserves prior queue states.
   Isolated reads disable production fallbacks, and normal providers reject test
   stores. Its private working-tree image passed real HTTP and desktop/mobile
   browser persistence, fresh reads, deletion and injected-failure cleanup with
-  zero residual records. Finish the remaining application inventories
-  and all-app deployed-build acceptance.
+  zero residual records. The remaining inventory and deployed-build qualification
+  is recorded below.
   PR #413 merged at `ac9230531` with all six exact-head and exact-main workflows
   passing. The published image also passed SDK-launcher desktop/mobile and
   injected-failure runs with zero residual state and owned-resource cleanup.
   See the E2E program. The latest all-app qualification at `f61fc700d` passes
   every declared inventory, with 24 mobile/failure zero-residual cleanup results.
-  A Preflight readiness-path correction is qualified against that published image
-  but still needs reviewed CI and committed-controller verification before closure.
+  Preflight's readiness correction landed through #416 at `28df6769a` with all six
+  head/main workflows passing. Its exact published build passes the committed
+  desktop gate, mobile inventory and injected-failure cleanup with zero residual
+  state. The other eleven qualified app and SDK source trees are unchanged from
+  `f61fc700d` to `28df6769a`. All accepted deployed-build criteria are complete.
 
-### [ ] RELEASE-001 — Reconcile all outstanding contributions into release 1.0
+### [x] RELEASE-001 — Reconcile all outstanding contributions into release 1.0
 
 - **Release target:** 1.0.0
 - **Contribution inventory:** [all included work](release-1.0-contributions.md).
-- **Next action:** Complete issues #176/#332 before publication. All 45
-  resolved original contributions have preserved recovery evidence and exact-main
-  validation; #398 recovered #210, whose historical PR is closed. The original
-  14 branches and four flagged worktrees have been reconciled.
-- **In progress:** E2E-001 route and persistence completeness audit; Missions'
-  real browser/H2 lifecycle landed through #405 after all triggered PR workflows
-  and all five exact-main workflows passed at `c7beefc63`. Audit the remaining
-  apps and interruption cleanup next. Planner storage/import and map checks landed
-  through #400 with all six exact-main workflows passing. AI explanations still
-  need the actual RCC queued-request/callback integration and all-app coverage.
+- **Completion:** All 47 original tracker contributions are closed or merged,
+  including [#176](https://github.com/jordanhubbard/Aviation/issues/176#issuecomment-6571951981)
+  and [#332](https://github.com/jordanhubbard/Aviation/issues/332#issuecomment-6571954338).
+  A live 47-item GitHub audit confirms every terminal state. The original fourteen
+  branches and four flagged worktrees have evidence-backed reconciliation, with
+  recovery refs and retained evidence preserved. Added dependency, SDK, deployment
+  and test repairs also landed through reviewed CI.
+- **Deployment evidence:** PRs #414–#416 landed the complete RCC and isolated
+  E2E integrations plus the KMLab and Preflight gate repairs. All six head and
+  exact-main workflows pass at `28df6769a`. All twelve exact published application
+  builds pass their declared inventories, with mobile and injected-failure cleanup;
+  Preflight's committed-controller deployment gate also passes at that revision.
+  The ready sweep and release publication are owned by RELEASE-002.
 
 - **Priority:** P0
 - **Owner:** release engineering
@@ -916,7 +924,7 @@ release-visible outcome to `CHANGELOG.md`; Git preserves prior queue states.
   - [x] Consolidate the remaining dependency requests into the retained workspace,
     qualify package builds/tests and CI, and close each historical PR with its
     exact incorporated or superseding evidence.
-  - [ ] Reconcile every scoped contribution; land and test unique changes or document an evidence-backed supersession.
+  - [x] Reconcile every scoped contribution; land and test unique changes or document an evidence-backed supersession.
   - [x] Reconcile [dependency PR #399](https://github.com/jordanhubbard/Aviation/pull/399):
     preserve Vite 8 for React plugin 6 consumers, patch the Vite 6 consumer and
     vulnerable Vitest/mocker, PostCSS and nanoid resolutions, then verify the
@@ -953,11 +961,11 @@ release-visible outcome to `CHANGELOG.md`; Git preserves prior queue states.
     PR #412 merged at `8b900247b` after all six exact-head workflows passed;
     all six exact-main workflows passed, including full-graph dependency audit
     and the actual workspace build gate.
-  - [ ] Prepare, check, publish, and verify v1.0.0 from green main with no unresolved release contributions.
+  - [x] Complete contribution reconciliation and hand the accepted inventory to RELEASE-002.
 - **Evidence:**
-  - [ ] Ready contribution sweep, clean synchronized Git, green CI for the released commit, and verified remote tag and GitHub release.
+  - [x] All scoped contributions accepted with committed evidence, terminal tracker dispositions and exact-commit CI; the ready contribution sweep, publication and remote tag verification belong to RELEASE-002.
 
-### [ ] AI-001 — Shared queued AI decision explanations in every Aviation app
+### [x] AI-001 — Shared queued AI decision explanations in every Aviation app
 
 - **GitHub issue:** [#176](https://github.com/jordanhubbard/Aviation/issues/176)
 
@@ -968,9 +976,9 @@ release-visible outcome to `CHANGELOG.md`; Git preserves prior queue states.
 - **Depends on:** SDK-001
 - **Completion prerequisites:** none
 - **Implementation:**
-  - [ ] Author the shared Component contract and independent conformance tests; implement RCC submission, authenticated callback/result handling and bounded cleanup; wire every deployed service and pilot-facing UI using app-specific decision context; extend the SDK-isolated remote inventory for explanations and follow-ups.
+  - [x] Author the shared Component contract and independent conformance tests; implement RCC submission, authenticated callback/result handling and bounded cleanup; wire every deployed service and pilot-facing UI using app-specific decision context; extend the SDK-isolated remote inventory for explanations and follow-ups.
 - **Evidence:**
-  - [ ] Primary RCC source contract; SDK unit and real HTTP queued/callback integration tests, including timeout and ownership failures; all application builds and exact deployed-image browser/API checks using SDK mocks without paid or mutating external calls; zero residual test state; fresh retained receipt and reviewed exact-head/main CI.
+  - [x] Primary RCC source contract; SDK unit and real HTTP queued/callback integration tests, including timeout and ownership failures; all application builds and exact deployed-image browser/API checks using SDK mocks without paid or mutating external calls; zero residual test state; fresh retained receipt and reviewed exact-head/main CI.
 
 - **AI-001 checkpoint:** All twelve deployed application entry points and their
   pilot-facing UIs delegate explanations to the shared SDK. The new
@@ -1001,7 +1009,7 @@ release-visible outcome to `CHANGELOG.md`; Git preserves prior queue states.
   semantic dependency locks are unchanged; their catalog audits are refreshed.
   This qualifies retained source, without claiming native Component generation
   or acceptance. The full dependency audit has zero high or critical findings.
-- **Deployment checkpoint:** PR #414 merged at `69d485b3b` after all six head
+- **Earlier deployment checkpoint:** PR #414 merged at `69d485b3b` after all six head
   workflows passed; all six exact-main workflows also passed. The primary checkout
   and CodeGraph are current. The launcher, Accident Tracker, Chat, Missions and
   Planner passed their exact published-image deployment gates. KMLab's installed
@@ -1036,6 +1044,25 @@ release-visible outcome to `CHANGELOG.md`; Git preserves prior queue states.
 - **Release verification:** The common SDK workflow also accepts an explicit
   manual run, so release revisions can be verified even when its normal source
   path filter would skip an unrelated controller or documentation change.
-- **Next action:** Land the bounded Preflight readiness correction through all
-  six head and exact-main workflows, verify its committed deployment gate, then
-  close #176/#332 with commit-pinned evidence. Both remain included in 1.0.0.
+- **Completion evidence:** PR #416 merged at `28df6769a` after all six head
+  workflows passed; all six exact-main workflows also passed. Preflight's exact
+  published build passes the committed desktop deployment gate and fresh mobile
+  and injected-failure runs with zero explanation records and owned-instance
+  cleanup. The eleven other qualified application trees and all SDK sources are
+  unchanged from `f61fc700d` to `28df6769a`. Authority, all twenty locks and the
+  current retained receipt pass. The complete deployed-build acceptance is met;
+  tracker closure cites this committed roadmap evidence. Both issues remain
+  included in 1.0.0.
+
+### [ ] RELEASE-002 — Publish and verify Aviation 1.0
+
+- **Priority:** P0
+- **Owner:** release engineering
+- **Direction:** Commit, push and publish the Aviation monorepo as release 1.0 after reconciling all included work.
+- **Conclusion:** Keep the prepublication contribution-reconciliation gate separate from publication, so the release does not require a published tag as its own prerequisite. RELEASE-001 establishes accepted contributions; this item owns the subsequent release lifecycle.
+- **Depends on:** RELEASE-001
+- **Completion prerequisites:** none
+- **Implementation:**
+  - [ ] Prepare, check, publish and verify v1.0.0 from the approved release revision after the required exact-commit CI and a ready contribution sweep.
+- **Evidence:**
+  - [ ] Verify the remote tag and GitHub release against the exact prepared revision, preserve release receipts and complete final contribution and Git synchronization checks.
