@@ -4,6 +4,7 @@ import { lineChart, trackMap, patternPlot, legendFor, PHASES, phaseColor } from 
 
 const $view = document.getElementById('view');
 const state = { caps: { llm: false }, view: 'flights', flightId: null, targetAgl: null };
+let renderGeneration = 0;
 window.AviationExplain.registerContext(() => ({
   application: 'Flight Track Analyzer', decision: 'Flight analysis and performance review',
   view: state.view, flightId: state.flightId, targetAgl: state.targetAgl,
@@ -62,13 +63,17 @@ window.addEventListener('hashchange', () => {
   if (m && state.flightId !== m[1]) { state.view = 'detail'; state.flightId = m[1]; setNav(); render(); }
 });
 async function render() {
-  $view.replaceChildren(h('p', { class: 'mute' }, 'Loading…'));
+  const generation = ++renderGeneration;
+  const display = (...children) => {
+    if (generation === renderGeneration) $view.replaceChildren(...children);
+  };
+  display(h('p', { class: 'mute' }, 'Loading…'));
   try {
-    if (state.view === 'flights') await viewFlights();
-    else if (state.view === 'summary') await viewSummary();
-    else if (state.view === 'performance') await viewPerformance();
-    else await viewDetail(state.flightId);
-  } catch (e) { $view.replaceChildren(panel(null, h('p', { class: 'err' }, e.message))); }
+    if (state.view === 'flights') await viewFlights(display);
+    else if (state.view === 'summary') await viewSummary(display);
+    else if (state.view === 'performance') await viewPerformance(display);
+    else await viewDetail(state.flightId, display);
+  } catch (e) { display(panel(null, h('p', { class: 'err' }, e.message))); }
 }
 
 // ---------- LLM panels (constructed only when the server reports an LLM) ----------
@@ -101,7 +106,7 @@ function llmPanel(kind, flightId) {
 }
 
 // ---------- flights list + upload ----------
-async function viewFlights() {
+async function viewFlights(display) {
   const { flights } = await api('/api/flights');
   const results = h('div', {});
   const input = h('input', { type: 'file', multiple: '', accept: '.kml,.xml', hidden: '' });
@@ -153,11 +158,11 @@ async function viewFlights() {
         } }, 'Delete')]),
       { onRow: (i) => go('detail', flights[i].id) })
     : h('p', { class: 'mute' }, 'No flights yet. Upload a KML tracklog to begin.');
-  $view.replaceChildren(panel(null, drop, input, known, results), panel(`Flights (${flights.length})`, list));
+  display(panel(null, drop, input, known, results), panel(`Flights (${flights.length})`, list));
 }
 
 // ---------- flight detail ----------
-async function viewDetail(id) {
+async function viewDetail(id, display) {
   const q = state.targetAgl ? `?target_agl_ft=${state.targetAgl}` : '';
   const a = await api(`/api/flights/${id}${q}`);
   const s = a.series, perf = a.performance, acc = a.accuracy;
@@ -279,11 +284,11 @@ async function viewDetail(id) {
   els.push(await conditionsPanel(id));
   const l = llmPanel('debrief', id);
   if (l) els.push(l);
-  $view.replaceChildren(...els);
+  display(...els);
 }
 
 // ---------- summary ----------
-async function viewSummary() {
+async function viewSummary(display) {
   const { aircraft: fleet } = await api('/api/aircraft');
   if (state.sumTail && !fleet.some((x) => x.tail === state.sumTail)) state.sumTail = null;
   const s = await api(`/api/summary${state.sumTail ? `?aircraft=${encodeURIComponent(state.sumTail)}` : ''}`);
@@ -291,7 +296,7 @@ async function viewSummary() {
     h('option', { value: '' }, 'All aircraft'), fleet.map((x) => h('option', { value: x.tail, selected: x.tail === state.sumTail ? '' : null }, `${x.tail} (${x.flights})`)));
   const els = [h('div', { class: 'row', style: 'margin-bottom:10px' }, h('h2', { style: 'margin:0' }, 'Summary'), pick)];
   if (!s.flights) {
-    $view.replaceChildren(...els, panel(null, h('p', { class: 'mute' }, 'Upload flights to see aggregate performance.')));
+    display(...els, panel(null, h('p', { class: 'mute' }, 'Upload flights to see aggregate performance.')));
     return;
   }
   const cnt = (o) => Object.entries(o).map(([k, v]) => `${v} ${k.replace(/_/g, ' ')}`).join(', ') || '–';
@@ -326,7 +331,7 @@ async function viewSummary() {
   }
   const l = llmPanel('ask');
   if (l) els.push(l);
-  $view.replaceChildren(...els);
+  display(...els);
 }
 
 // ---------- boot ----------
@@ -421,9 +426,9 @@ async function pohEditor(tail) {
   return d;
 }
 
-async function viewPerformance() {
+async function viewPerformance(display) {
   const { aircraft } = await api('/api/aircraft');
-  if (!aircraft.length) { $view.replaceChildren(panel('Performance', h('p', { class: 'mute' }, 'Upload flights first.'))); return; }
+  if (!aircraft.length) { display(panel('Performance', h('p', { class: 'mute' }, 'Upload flights first.'))); return; }
   if (!state.perfTail || !aircraft.some((a) => a.tail === state.perfTail)) state.perfTail = aircraft[0].tail;
   const sel = h('select', { 'aria-label': 'aircraft', onchange: (e) => { state.perfTail = e.target.value; render(); } },
     aircraft.map((a) => h('option', { value: a.tail, selected: a.tail === state.perfTail ? '' : null }, `${a.tail} (${a.flights} flight${a.flights === 1 ? '' : 's'})`)));
@@ -439,5 +444,5 @@ async function viewPerformance() {
   }
   if (!ac.sections.takeoff && !ac.sections.takeoff_rolling && !ac.sections.landing) els.push(panel(null, h('p', { class: 'mute' }, 'No complete take-offs or full-stop landings for this aircraft.')));
   els.push(panel(null, await pohEditor(state.perfTail)));
-  $view.replaceChildren(...els);
+  display(...els);
 }
