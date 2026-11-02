@@ -99,7 +99,7 @@
     </nav>
     {% endblock %}
 
-    <div class="container mt-4">
+    <div class="container mt-4" id="flight-school-content">
         {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}
                 {% for category, message in messages %}
@@ -143,6 +143,7 @@
         };
     </script>
     {% block extra_js %}{% endblock %}
+{% include 'includes/decision-explanation.html' %}
 <script defer data-aviation-app="flightschool" src="https://meta-app.jordanhubbard.net/feedback-widget.js"></script>
 </body>
 </html>

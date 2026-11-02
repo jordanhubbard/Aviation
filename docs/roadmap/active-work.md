@@ -880,8 +880,11 @@ release-visible outcome to `CHANGELOG.md`; Git preserves prior queue states.
   Isolated reads disable production fallbacks, and normal providers reject test
   stores. Its private working-tree image passed real HTTP and desktop/mobile
   browser persistence, fresh reads, deletion and injected-failure cleanup with
-  zero residual records. Finish review, exact-commit image acceptance and the
-  remaining application inventories.
+  zero residual records. Finish the remaining application inventories
+  and all-app deployed-build acceptance.
+  PR #413 merged at `ac9230531` with all six exact-head and exact-main workflows
+  passing. The published image also passed SDK-launcher desktop/mobile and
+  injected-failure runs with zero residual state and owned-resource cleanup.
   See the E2E program.
 
 ### [ ] RELEASE-001 — Reconcile all outstanding contributions into release 1.0
@@ -950,3 +953,52 @@ release-visible outcome to `CHANGELOG.md`; Git preserves prior queue states.
   - [ ] Prepare, check, publish, and verify v1.0.0 from green main with no unresolved release contributions.
 - **Evidence:**
   - [ ] Ready contribution sweep, clean synchronized Git, green CI for the released commit, and verified remote tag and GitHub release.
+
+### [ ] AI-001 — Shared queued AI decision explanations in every Aviation app
+
+- **GitHub issue:** [#176](https://github.com/jordanhubbard/Aviation/issues/176)
+
+- **Priority:** P1
+- **Owner:** common Aviation SDK and thin application adapters
+- **Direction:** Implement issue #176: each app exposes POST /api/explain, pilot-facing UIs offer decision explanations with follow-up questions, and RCC owns model fallback. Reuse well-tested Literate AI SDK components instead of private provider implementations.
+- **Conclusion:** The actual RCC API requires authenticated messages and returns 202 queued requests followed by callbacks; the existing synchronous context/question client cannot consume it. Specify and implement one common queued protocol, bounded request lifecycle, credential handling, result ownership and follow-up contract across required runtime bindings. Audit deployed entry points rather than counting dormant adapters.
+- **Depends on:** SDK-001
+- **Completion prerequisites:** none
+- **Implementation:**
+  - [ ] Author the shared Component contract and independent conformance tests; implement RCC submission, authenticated callback/result handling and bounded cleanup; wire every deployed service and pilot-facing UI using app-specific decision context; extend the SDK-isolated remote inventory for explanations and follow-ups.
+- **Evidence:**
+  - [ ] Primary RCC source contract; SDK unit and real HTTP queued/callback integration tests, including timeout and ownership failures; all application builds and exact deployed-image browser/API checks using SDK mocks without paid or mutating external calls; zero residual test state; fresh retained receipt and reviewed exact-head/main CI.
+
+- **AI-001 checkpoint:** All twelve deployed application entry points and their
+  pilot-facing UIs delegate explanations to the shared SDK. The new
+  `aviation.ai.explanation` Component owns the queued RCC protocol, bounded
+  input/history, independent callback/result credentials, expiry and cleanup.
+  Node applications mount one common runtime; Flask, FastAPI and Ring bindings
+  proxy to the managed broker. Applications supply decision facts and access
+  policies. RCC owns provider fallback; private tests bypass normal credentials
+  and use tagged SDK fixtures.
+  The explanation SDK passes 83 tests, the common TypeScript SDK 631, and the
+  common Python target 366, including eight real broker RPC tests. The independent
+  JVM SDK passes five tests/36 assertions on Linux; Missions' image build passes
+  67 tests/469 assertions. Shared widget browser coverage passes ten desktop/mobile
+  cases, including context replacement/restoration. Nine Linux native-manager
+  tests cover EOF, stubborn children and independent cleanup after controller or
+  helper crashes. The fresh root test target compiles keystore before explanation.
+  All eleven container application candidates pass desktop/mobile and injected
+  failure inventories with zero actor residuals and owned resource removal.
+  Flight School visits 57 routes with a fresh tagged database per run. Meta checks
+  repeated explanations across launcher/settings, a read-only service catalog,
+  no failed settings requests, and readable desktop/mobile layout without overflow.
+  KMLab also passes the full Linux UI inventory after installing both Python SDK
+  packages into an isolated runtime. Its deployment archive preserves the package
+  layout and installs flight-dynamics alongside shared-sdk. These are source
+  candidates, not exact committed/published deployment qualifications.
+  Retained source membership is current; the fresh build/test/package harness
+  passes with adopted receipt `sha256:62c7031274bfa756589ef70baa20ee1860e42eefee5df7ab595a841e6f4f2d6f`. All twenty
+  semantic dependency locks are unchanged; their catalog audits are refreshed.
+  This qualifies retained source, without claiming native Component generation
+  or acceptance. The full dependency audit has zero high or critical findings.
+- **Next action:** Verify project authority, locks and the current receipt; commit,
+  push and complete reviewed exact-head/main CI, then run the complete gate against
+  exact published images and the installed native revision. Issues #176 and #332
+  remain open and included in 1.0.0 until those deployed-build checks pass.

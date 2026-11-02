@@ -1,4 +1,12 @@
-export { ExplainerClient } from './ExplainerClient.js';
-export type { ExplainerClientOptions, BrainRequest, BrainResponse } from './ExplainerClient.js';
+export { ExplainerClient, ExplanationError } from './ExplainerClient.js';
+export type { ExplainerClientOptions, BrainRequest, BrainResponse, ExplanationTicket, ExplanationState, ProviderConfiguration } from './ExplainerClient.js';
+export { normalizeExplanationInput, acceptQueuedResponse, validateExplanationCallback, ExplanationContractError } from './protocol.js';
+export type { HistoryMessage, ExplanationInput, ExplanationResult } from './protocol.js';
 export { explainerRoute } from './explainerRoute.js';
-export type { ExplainRequestBody, ExplainResponseBody } from './explainerRoute.js';
+export type { ExplainRequestBody, ExplainResponseBody, ExplanationMiddleware } from './explainerRoute.js';
+export { startExplanationServer } from './server.js';
+export type { ExplanationServerOptions, ExplanationServer } from './server.js';
+export { providerConfigurationReader } from './configuration.js';
+export type { ExplanationEnvironment } from './configuration.js';
+export { createExplanationRuntime } from './runtime.js';
+export type { ExplanationRuntime, ExplanationRuntimeOptions } from './runtime.js';

@@ -1,4 +1,4 @@
-FROM node:20-alpine AS frontend-build
+FROM node:24-bookworm-slim AS frontend-build
 
 WORKDIR /app
 
@@ -12,8 +12,9 @@ COPY pnpm-workspace.yaml pnpm-lock.yaml package.json ./
 COPY packages ./packages
 COPY apps ./apps
 
-RUN pnpm install --frozen-lockfile --filter flight-planner-frontend...
-RUN pnpm --filter flight-planner-frontend... run build
+RUN pnpm install --frozen-lockfile --filter flight-planner-frontend... --filter @aviation/ai-explainer...
+RUN pnpm --filter flight-planner-frontend... --filter @aviation/ai-explainer... run build
+RUN pnpm --config.node-linker=hoisted --filter @aviation/ai-explainer deploy --legacy --prod /runtime/explanation
 
 
 FROM python:3.12-slim AS base
@@ -63,9 +64,15 @@ RUN apt-get update \
         proj-bin \
         libproj-dev \
         libgeos-dev \
+        libstdc++6 \
+        libatomic1 \
     && rm -rf /var/lib/apt/lists/*
 
 ENV PATH="/opt/venv/bin:$PATH"
+COPY --from=frontend-build /usr/local/bin/node /usr/local/bin/node
+COPY --from=frontend-build /runtime/explanation /opt/aviation/explanation
+ENV AVIATION_KEYSTORE_BRIDGE=/opt/aviation/explanation/node_modules/@aviation/keystore/dist/bridge.js \
+    KEYSTORE_PATH=/app/data/.keystore
 
 ENV REPO_URL=$REPO_URL \
     GIT_SHA=$GIT_SHA \
@@ -92,4 +99,5 @@ ENV UVICORN_HOST=0.0.0.0
 # PORT env var here to prevent mismatches.
 ENV UVICORN_PORT=8000
 
-CMD ["sh", "-c", "uvicorn main:app --host ${UVICORN_HOST:-0.0.0.0} --port ${PORT:-${UVICORN_PORT:-8000}} --workers ${UVICORN_WORKERS:-1}"]
+ENTRYPOINT ["node", "/opt/aviation/explanation/dist/run.js", "--app", "flight-planner", "--"]
+CMD ["sh", "-c", "exec uvicorn main:app --host ${UVICORN_HOST:-0.0.0.0} --port ${PORT:-${UVICORN_PORT:-8000}} --workers ${UVICORN_WORKERS:-1}"]

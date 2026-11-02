@@ -33,7 +33,7 @@ class ConfigurationValidationError(ValueError):
         self.code = code
 
 
-_CATEGORIES = {"weather", "navigation", "auth", "monitoring", "streaming", "database"}
+_CATEGORIES = {"weather", "navigation", "ai", "auth", "monitoring", "streaming", "database"}
 _SLUG = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
 _FIELD_KEY = re.compile(r"^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$")
 _ENV_VAR = re.compile(r"^[A-Z][A-Z0-9]*(?:_[A-Z0-9]+)*$")
@@ -354,6 +354,19 @@ SERVICE_REGISTRY: list[Service] = [
             )
         ],
         app_scope=["foreflight-dashboard", "flight-planner"],
+    ),
+    Service(
+        id="rcc", name="Decision explanations",
+        description="Shared AI explanations through RCC", category="ai",
+        docs_url="https://github.com/jordanhubbard/rocky-and-friends/tree/main/rcc",
+        fields=[
+            ServiceField(key="request_url", label="RCC request URL",
+                         description="The RCC brain request endpoint", required=True,
+                         secret=False, env_var="RCC_BRAIN_URL"),
+            ServiceField(key="api_token", label="RCC API token",
+                         description="The token authorized by your RCC service", required=True,
+                         secret=True, env_var="RCC_API_TOKEN"),
+        ], app_scope=["all"],
     ),
 ]
 

@@ -4,6 +4,16 @@ Python package providing shared utilities and services for aviation applications
 
 ## Features
 
+### Decision explanations
+
+`aviation.explanation` supplies thin FastAPI and Flask bindings to the shared
+`@aviation/ai-explainer` broker. Each application runs one broker beside its worker
+pool using the SDK supervisor; Python workers share queued requests, callbacks and
+result ownership through its loopback HTTP API. Provider behavior and browser UI
+remain in the common SDK. See the [explanation package](../../ai-explainer/README.md)
+for configuration, launch and isolated-test instructions. Install the application's
+chosen web framework separately; these bindings import it only when used.
+
 ### Google Calendar Integration
 
 Full OAuth2 and Calendar API integration matching the TypeScript implementation.

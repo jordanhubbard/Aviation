@@ -6,7 +6,7 @@ import type {
 } from './types'
 
 const CATEGORIES = new Set<ServiceCategory>([
-  'weather', 'navigation', 'auth', 'monitoring', 'streaming', 'database',
+  'weather', 'navigation', 'ai', 'auth', 'monitoring', 'streaming', 'database',
 ])
 const SLUG = /^[a-z0-9]+(?:-[a-z0-9]+)*$/
 const FIELD_KEY = /^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$/
@@ -233,6 +233,34 @@ export const SERVICE_REGISTRY: ServiceDefinition[] = [
       { key: 'url', label: 'Redis URL', description: 'Redis connection URL (e.g. redis://localhost:6379)', required: false, secret: false, envVar: 'REDIS_URL' }
     ],
     appScope: ['foreflight-dashboard', 'flight-planner'],
+  },
+  {
+    "id": "rcc",
+    "name": "Decision explanations",
+    "description": "Shared AI explanations through RCC",
+    "category": "ai",
+    "docsUrl": "https://github.com/jordanhubbard/rocky-and-friends/tree/main/rcc",
+    "fields": [
+      {
+        "key": "request_url",
+        "label": "RCC request URL",
+        "description": "The RCC brain request endpoint",
+        "required": true,
+        "secret": false,
+        "envVar": "RCC_BRAIN_URL"
+      },
+      {
+        "key": "api_token",
+        "label": "RCC API token",
+        "description": "The token authorized by your RCC service",
+        "required": true,
+        "secret": true,
+        "envVar": "RCC_API_TOKEN"
+      }
+    ],
+    "appScope": [
+      "all"
+    ]
   },
 ]
 

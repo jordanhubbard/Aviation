@@ -4,6 +4,8 @@ import { readFileSync, existsSync, mkdirSync } from 'node:fs';
 import { extname, resolve, sep } from 'node:path';
 import { createRequire } from 'node:module';
 import { fileURLToPath } from 'node:url';
+import { getServicesByApp } from '../dist/registry.js';
+const serviceCount = getServicesByApp('g1000-simulator').length;
 const impl=fileURLToPath(new URL('../../..',import.meta.url));
 const root=resolve(impl,'../../..');
 const require=createRequire(impl+'/package.json');
@@ -44,7 +46,8 @@ try{
   page.on('pageerror',e=>{errors.push(e.message);console.error('PAGEERROR',e.message);});page.on('console',m=>{if(m.type()==='error')errors.push(m.text());});
   await page.route('https://meta-app.jordanhubbard.net/feedback-widget.js',route=>route.fulfill({status:200,contentType:'text/javascript',body:readFileSync(impl+'/apps/meta-app/public/feedback-widget.js','utf8')}));
   await page.goto(base+'/settings');
-  await page.getByText('0 of 4 services configured — 4 need setup',{exact:true}).waitFor();
+  await page.getByText(`0 of ${serviceCount} services configured — ${serviceCount} need setup`,{exact:true}).waitFor();
+  await page.getByText('Decision explanations',{exact:true}).waitFor();
   await page.getByText('OpenWeatherMap',{exact:true}).click();
   await page.getByPlaceholder('Enter API Key',{exact:true}).first().fill(secret);
   await page.getByRole('button',{name:'Save',exact:true}).first().click();
@@ -56,7 +59,7 @@ try{
   await page.getByRole('button',{name:'Save',exact:true}).first().click();
   await page.getByText('Saved successfully.',{exact:true}).waitFor();
   await page.getByText('Configured ✓',{exact:true}).waitFor();
-  await page.getByText('1 of 4 services configured — 3 need setup',{exact:true}).waitFor();
+  await page.getByText(`1 of ${serviceCount} services configured — ${serviceCount - 1} need setup`,{exact:true}).waitFor();
   if(!configured)throw Error('Confirmed write was not observed');
   if(errors.length)throw Error('Browser errors: '+errors.join('; '));
   if(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth))throw Error('Document overflows');

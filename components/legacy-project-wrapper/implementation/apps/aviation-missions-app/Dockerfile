@@ -1,11 +1,19 @@
 # Multi-stage build for Clojure backend + Pure JavaScript frontend
-FROM alpine:3.22 AS base
+FROM node:24-alpine AS explanation-build
+WORKDIR /build
+RUN corepack enable pnpm
+COPY pnpm-workspace.yaml pnpm-lock.yaml package.json ./
+COPY packages ./packages
+COPY apps ./apps
+RUN pnpm install --frozen-lockfile --filter @aviation/ai-explainer...
+RUN pnpm --filter @aviation/ai-explainer... run build
+RUN pnpm --config.node-linker=hoisted --filter @aviation/ai-explainer deploy --legacy --prod /runtime/explanation
+
+FROM node:24-alpine AS base
 
 # Install system dependencies
 RUN apk add --no-cache \
     openjdk21-jre \
-    nodejs \
-    npm \
     curl \
     bash \
     ca-certificates \
@@ -61,6 +69,7 @@ RUN cd backend && LEIN_ROOT=1 lein deps
 
 # Copy source code for analysis
 COPY apps/aviation-missions-app/backend/src ./backend/src/
+COPY packages/shared-sdk/clojure/src /packages/shared-sdk/clojure/src
 
 # Create deps.edn for eastwood support
 RUN echo '{:deps {jonase/eastwood {:mvn/version "1.4.2"} org.clojure/java.jdbc {:mvn/version "0.7.12"} clj-time/clj-time {:mvn/version "0.15.2"} org.clojure/tools.logging {:mvn/version "1.2.4"} ring/ring-core {:mvn/version "1.11.0"} ring/ring-codec {:mvn/version "1.2.0"} instaparse/instaparse {:mvn/version "1.4.12"}} :aliases {:lint-eastwood {:main-opts ["-m" "eastwood.lint" "{:source-paths [\"src\"]}"]}}}' > backend/deps.edn
@@ -121,6 +130,7 @@ RUN lein deps
 
 # Copy source code
 COPY apps/aviation-missions-app/backend/src ./src/
+COPY packages/shared-sdk/clojure/src /packages/shared-sdk/clojure/src
 COPY apps/aviation-missions-app/backend/resources ./resources/
 
 # Copy frontend static files into backend resources before building
@@ -145,33 +155,26 @@ RUN cd backend && LEIN_ROOT=1 lein deps
 
 # Copy source code and test files
 COPY apps/aviation-missions-app/backend/ ./backend/
+COPY packages/shared-sdk/clojure/src /packages/shared-sdk/clojure/src
 
 # Copy missions data files for testing
 COPY apps/aviation-missions-app/missions.txt /app/missions.txt
 COPY apps/aviation-missions-app/missions.json /app/missions.json
 
-# Run backend tests (continue on failure for now due to pre-existing test issues)
-RUN echo "=== RUNNING BACKEND TESTS ===" && \
-    cd backend && \
-    echo "Running Clojure backend tests with lein..." && \
-    LEIN_ROOT=1 lein test || echo "⚠️  Some tests failed but continuing build..." && \
-    echo "✅ Backend tests completed!"
-
-# Generate test summary
-RUN echo "=== TEST SUMMARY ===" && \
-    echo "✅ All tests completed successfully!" && \
-    echo "📊 Backend test files: $(find backend/test -name '*.clj' | wc -l)" && \
-    echo "🧪 Tests run: backend unit tests"
+# A failed backend suite must fail the testing stage.
+RUN cd backend && LEIN_ROOT=1 lein test
 
 # Production stage
 FROM base AS production
 
 # Remove build tools to reduce image size
-RUN apk del npm
+RUN rm -rf /usr/local/lib/node_modules/npm /usr/local/bin/npm /usr/local/bin/npx
 
 WORKDIR /app
 
 # Copy built backend jar (which now includes frontend static files)
+COPY --from=explanation-build /runtime/explanation /opt/aviation/explanation
+ENV KEYSTORE_PATH=/app/data/.keystore
 COPY --from=backend-build /app/backend/target/uberjar/aviation-missions-*-standalone.jar /app/aviation-missions.jar
 
 # Copy missions data files to production stage
@@ -192,4 +195,5 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
 ENV API_PORT=3000
 
 # Start the application
+ENTRYPOINT ["node", "/opt/aviation/explanation/dist/run.js", "--app", "aviation-missions-app", "--"]
 CMD ["java", "-jar", "/app/aviation-missions.jar"]

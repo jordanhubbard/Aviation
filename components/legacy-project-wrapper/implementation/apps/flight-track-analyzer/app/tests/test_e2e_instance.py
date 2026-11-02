@@ -7,6 +7,7 @@ import sqlite3
 import time
 import uuid
 import subprocess
+import shutil
 import sys
 
 import pytest
@@ -15,11 +16,21 @@ import pytest
 HELPER = Path(__file__).resolve().parents[2] / 'deploy' / 'e2e_instance.py'
 RUN_ID = 'e2e_' + 'c' * 32
 REVISION = 'a' * 40
+SDK_RUNTIME = Path(os.environ['AVIATION_EXPLANATION_RUNTIME']) if os.environ.get('AVIATION_EXPLANATION_RUNTIME') else (
+    Path(__file__).resolve().parents[4] / 'packages/ai-explainer')
+
+
+def install_broker(runtime: Path):
+    node = shutil.which('node')
+    assert node and (SDK_RUNTIME / 'dist/run.js').is_file(), 'Build the shared explanation runtime first'
+    (runtime / 'node').symlink_to(node)
+    (runtime / 'explanation').symlink_to(SDK_RUNTIME, target_is_directory=True)
 
 
 def run_helper(tmp_path: Path, revision: str, *, lifetime_ms=900000, private=True) -> subprocess.CompletedProcess:
     runtime = tmp_path / 'runtime'
     (runtime / 'venv' / 'bin').mkdir(parents=True)
+    install_broker(runtime)
     (runtime / 'app').mkdir()
     (runtime / 'venv' / 'bin' / 'python').symlink_to(sys.executable)
     (runtime / 'app' / 'run.py').write_text('import time\ntime.sleep(60)\n')
@@ -84,6 +95,7 @@ if os.environ.get('AVIATION_E2E_NATIVE_MANAGER_TESTS') == '1':
         unit = 'aviation-e2e-kmlab-' + run_id
         runtime = tmp_path / 'runtime'
         (runtime / 'venv/bin').mkdir(parents=True)
+        install_broker(runtime)
         (runtime / 'venv/bin/python').symlink_to(sys.executable)
         (runtime / 'revision').write_text(REVISION)
         (runtime / 'app').mkdir()

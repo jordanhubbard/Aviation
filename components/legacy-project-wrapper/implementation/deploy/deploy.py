@@ -49,12 +49,13 @@ def load_manifest() -> tuple[dict, list[dict]]:
         raise ValueError("remote E2E inventory must cover every application")
     for app_name, entry in e2e_contract["apps"].items():
         if app_name == "flightschool":
-            if entry != {"kind": "dynamic-flask-routes", "minimum": 50, "sharedFeedback": True}:
+            if entry != {"kind": "dynamic-flask-routes", "minimum": 50, "sharedFeedback": True, "sharedExplanation": True}:
                 raise ValueError("Flight School must declare dynamic route coverage")
         elif (entry.get("kind") not in {"screens", "endpoints"}
               or not isinstance(entry.get("ids"), list) or not entry["ids"]
               or not all(isinstance(item, str) and item for item in entry["ids"])
               or len(entry["ids"]) != len(set(entry["ids"]))
+              or "explanation" not in entry["ids"]
               or (entry["kind"] == "screens" and "feedback" not in entry["ids"])):
             raise ValueError(f"invalid remote E2E inventory for {app_name}")
         if app_name == "aviation-chat" and entry.get("sharedFeedback") is not True:
@@ -159,12 +160,16 @@ def fetch_image(config: dict, app: dict, revision: str) -> str:
 def render(app: dict, revision: str, dest: Path) -> None:
     name = app["name"]
     image = image_name(app, revision)
+    domain = json.loads(MANIFEST.read_text())["domain"]
+    hostname = app.get("hostname", name)
     docker_args = [
         "/usr/bin/docker", "run", "--rm", "--name", f"aviation-{name}",
         "--pull", "never", "--memory", f"{app['memory_mb']}m",
         "--memory-swap", f"{app['memory_mb'] * 2}m",
         "--cap-drop", "ALL", "--security-opt", "no-new-privileges",
         "-p", f"127.0.0.1:{app['port']}:{app['container_port']}",
+        "--env", f"AVIATION_APP_ID={name}",
+        "--env", f"AVIATION_EXPLAIN_PUBLIC_URL=https://{hostname}.{domain}",
     ]
     for key, value in app.get("environment", {}).items():
         if not re.fullmatch(r"[A-Z][A-Z0-9_]*", key) or "\n" in value or " " in value:
@@ -192,8 +197,6 @@ TimeoutStartSec=0
 [Install]
 WantedBy=multi-user.target
 """
-    domain = json.loads(MANIFEST.read_text())["domain"]
-    hostname = app.get("hostname", name)
     caddy = f"{hostname}.{domain} {{\n\tencode zstd gzip\n\treverse_proxy 127.0.0.1:{app['port']}\n}}\n"
     (dest / "service.unit").write_text(unit)
     (dest / "site.caddy").write_text(caddy)
@@ -312,19 +315,15 @@ def verify(config: dict, apps: list[dict], host: str) -> None:
         if running_revision != revision:
             raise RuntimeError(f"{app['name']} runs {running_revision}, expected {revision}")
     run("node", str(HERE / "browser-smoke.mjs"), apps[0]["name"] if len(apps) == 1 else "all", cwd=IMPLEMENTATION)
-    isolated_images = {"aviation-accident-tracker", "aviation-chat", "aviation-missions-app", "flight-planner", "flightschool", "flight-tracker", "g1000-simulator"}
     for app in apps:
         name = app["name"]
         if app.get("runtime") == "native":
             script = "isolated-native-e2e.mjs"
             env = {**os.environ, "AVIATION_E2E_SSH_HOST": host, "AVIATION_E2E_REVISION": revision}
-        elif name in isolated_images:
+        else:
             script = "isolated-e2e.mjs"
             env = {**os.environ, "AVIATION_E2E_SSH_HOST": host, "AVIATION_E2E_REVISION": revision,
                    "AVIATION_E2E_IMAGE": image_name(app, revision)}
-        else:
-            script = "remote-e2e.mjs"
-            env = None
         run("node", str(HERE / script), name, cwd=IMPLEMENTATION, env=env)
 
 

@@ -1,0 +1,10 @@
+{% if current_user.is_authenticated %}
+<script type="module">
+  import '/api/explain/widget.js';
+  window.AviationExplain.registerContext(() => ({
+    application: 'Flight School', decision: 'Displayed booking, training and currency status',
+    page: location.pathname,
+    displayedFacts: document.getElementById('flight-school-content').innerText.slice(0, 3500),
+  }), 'Explain the displayed flight-school status and which supplied requirements affect it.');
+</script>
+{% endif %}

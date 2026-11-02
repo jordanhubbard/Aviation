@@ -39,6 +39,18 @@ class AviationMissionApp {
         }
     }
 
+    explanationContext() {
+        const mission = document.querySelector('.mission-detail') ? this.explanationMission : null;
+        return {
+            application: 'Aviation Missions', decision: 'Mission suitability, objectives and completion requirements',
+            filters: this.filters, matchingMissions: this.filteredMissions.length,
+            mission: mission ? { id: mission.id, title: mission.title, category: mission.category,
+                difficulty: mission.difficulty, pilot_experience: mission.pilot_experience,
+                description: mission.description?.slice(0, 2500), route: mission.route } : null,
+            displayedBrief: document.querySelector('.mission-detail')?.innerText.slice(0, 2500),
+        };
+    }
+
     createAppStructure() {
         const app = document.getElementById('app');
         if (!app) {
@@ -1168,6 +1180,7 @@ class AviationMissionApp {
     }
 
     showMissionDetailModal(mission) {
+        this.explanationMission = mission;
         const modal = document.createElement('div');
         modal.className = 'modal-overlay';
         modal.innerHTML = `

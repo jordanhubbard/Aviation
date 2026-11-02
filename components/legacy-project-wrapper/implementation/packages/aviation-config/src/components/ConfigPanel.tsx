@@ -13,6 +13,7 @@ export type ConfigPanelProps = {
 const CATEGORY_ORDER: ServiceCategory[] = [
   'weather',
   'navigation',
+  'ai',
   'auth',
   'monitoring',
   'streaming',

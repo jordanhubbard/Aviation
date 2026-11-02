@@ -1,7 +1,8 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
+import { registerDecisionContext } from '@aviation/ai-explainer/browser';
 import { getDefaultActiveId, TabNavigation, PaneContainer } from '@aviation/ui-framework';
 import type { PaneConfig } from '@aviation/ui-framework';
-import { ConfigPanel, SERVICE_REGISTRY } from '@aviation/aviation-config';
+import { SERVICE_REGISTRY } from '@aviation/aviation-config';
 import './App.css';
 
 type AppLink = {
@@ -166,12 +167,11 @@ function AppPane({ app }: { app: ResolvedAppLink }) {
 
 function SettingsPane() {
   return (
-    <div className="pane-content settings-pane">
+    <div className="pane-content settings-pane meta-app-pane">
       <h1>Aviation Suite Settings</h1>
       <p className="settings-note">
-        The meta-app has no backend. Configure each service from within the individual app, or use
-        the CLI:{' '}
-        <code>npm run keystore set &lt;service&gt; &lt;key&gt; &lt;value&gt;</code>
+        Configure services from each application's settings page. The service registry below
+        lists the shared services available across the suite.
       </p>
 
       <section className="settings-section">
@@ -190,7 +190,6 @@ function SettingsPane() {
 
       <section className="settings-section">
         <h2>Service Registry</h2>
-        <ConfigPanel title="Aviation Suite Settings" />
         <table className="settings-registry-table">
           <thead>
             <tr>
@@ -220,6 +219,15 @@ function App() {
   );
 
   const activePane = aviationPanes.find((p) => p.id === activeId) || null;
+  const currentPane = useRef(activeId);
+  currentPane.current = activeId;
+  useEffect(() => registerDecisionContext(() => ({
+    application: 'Aviation Suite', decision: 'Application selection and shared service setup',
+    mode: isLauncher ? 'Launcher' : 'Tabs',
+    selectedPane: isLauncher && currentPane.current !== 'settings' ? 'launcher' : currentPane.current,
+    applications: resolvedApps.map(app => ({ id: app.id, title: app.title, purpose: app.description })),
+    serviceSetup: SERVICE_REGISTRY.map(service => ({ id: service.id, name: service.name, category: service.category })),
+  }), 'Explain which listed aviation app or shared service applies to the selected task.'), []);
   const subtitle = isLauncher
     ? 'Launch aviation apps on demand'
     : 'Unified aviation application dashboard';
@@ -284,7 +292,7 @@ function App() {
                   <span className="launcher-card-icon">⚙️</span>
                   <h2 className="launcher-card-title">Settings</h2>
                 </div>
-                <p className="launcher-card-description">Configure API keys and service settings for all aviation apps.</p>
+                <p className="launcher-card-description">Find shared services and open each application's settings.</p>
                 <div className="launcher-card-actions">
                   <span className="launcher-card-cta">Open Settings →</span>
                 </div>

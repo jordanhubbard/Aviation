@@ -1,4 +1,5 @@
 import { calculateLoad } from './calculations.js';
+import '/api/explain/widget.js';
 
 const $ = id => document.getElementById(id);
 const number = id => Number($(id).value);
@@ -14,6 +15,7 @@ function addStation(name = '', arm = '', weight = '') {
   row.querySelector('.station-weight').value = weight;
   row.querySelector('button').onclick = () => { row.remove(); syncLoads(); };
   row.querySelector('.station-name').oninput = syncLoads;
+  row.querySelector('.station-weight').oninput = syncLoads;
   $('stations').append(row);
   syncLoads();
 }
@@ -130,3 +132,15 @@ $('clearProfile').onclick = () => { localStorage.removeItem(savedKey); location.
 document.querySelectorAll('.risk').forEach(box => { box.onchange = updateRisk; });
 $('riskNotes').oninput = updateRisk;
 restore();
+window.AviationExplain.registerContext(() => {
+  let load;
+  try { load = calculateLoad(profile(), loading()); }
+  catch (error) { load = { validation: error.message }; }
+  return {
+    application: 'Preflight Check',
+    decision: 'Weight and balance limits and completed pilot review areas',
+    load,
+    review: Object.fromEntries([...document.querySelectorAll('.risk')].map(box => [box.dataset.risk, box.checked])),
+    reviewStatus: $('riskStatus').textContent,
+  };
+}, 'Which supplied loading limits and review items need my attention?');

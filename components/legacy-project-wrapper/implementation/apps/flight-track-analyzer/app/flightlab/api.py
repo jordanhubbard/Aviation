@@ -66,6 +66,8 @@ class E2EFixture(BaseModel):
 
 def create_app(data_dir: str | None = None) -> FastAPI:
     app = FastAPI(title="Flight track analyzer", docs_url="/api/docs", openapi_url="/api/openapi.json")
+    from aviation.explanation import create_explanation_router
+    app.include_router(create_explanation_router('flight-track-analyzer'))
     store = Store(data_dir or os.environ.get("KMLAB_DATA_DIR", "data"))
     app.state.store = store
     active = ContextVar("kmlab_store", default=store)
@@ -87,6 +89,8 @@ def create_app(data_dir: str | None = None) -> FastAPI:
 
     @app.middleware("http")
     async def isolate_e2e(request: Request, call_next):
+        if request.url.path == '/api/explain' or request.url.path.startswith('/api/explain/'):
+            return await call_next(request)
         if not request.url.path.startswith(("/api/", "/__e2e/")):
             return await call_next(request)
         try:

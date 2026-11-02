@@ -6,13 +6,15 @@ ARG BUILDKIT_INLINE_CACHE=1
 
 # Frontend build. This repo is a pnpm workspace; npm cannot resolve the
 # "workspace:" protocol and no per-app npm lockfiles remain.
-FROM node:20-alpine AS frontend-build
+FROM node:24-bookworm-slim AS frontend-build
 WORKDIR /app
 RUN corepack enable pnpm
 COPY pnpm-workspace.yaml pnpm-lock.yaml package.json ./
 COPY packages ./packages
 COPY apps ./apps
-RUN pnpm install --frozen-lockfile --filter foreflight-dashboard-frontend...
+RUN pnpm install --frozen-lockfile --filter foreflight-dashboard-frontend... --filter @aviation/ai-explainer...
+RUN pnpm --filter @aviation/ai-explainer... run build
+RUN pnpm --config.node-linker=hoisted --filter @aviation/ai-explainer deploy --legacy --prod /runtime/explanation
 RUN pnpm --filter foreflight-dashboard-frontend run build
 
 ARG FLASK_DEBUG=1
@@ -28,9 +30,12 @@ RUN apt-get update && apt-get install -y \
     gcc \
     curl \
     bash \
-    && curl -fsSL https://deb.nodesource.com/setup_22.x | bash - \
-    && apt-get install -y nodejs \
+    libstdc++6 libatomic1 \
     && rm -rf /var/lib/apt/lists/*
+COPY --from=frontend-build /usr/local/bin/node /usr/local/bin/node
+COPY --from=frontend-build /runtime/explanation /opt/aviation/explanation
+ENV AVIATION_KEYSTORE_BRIDGE=/opt/aviation/explanation/node_modules/@aviation/keystore/dist/bridge.js \
+    KEYSTORE_PATH=/data/.keystore
 
 # Set environment variables
 ENV PYTHONPATH=/app \
@@ -85,10 +90,11 @@ ENV REACT_DEV_PORT=3005
 EXPOSE $FASTAPI_PORT $REACT_DEV_PORT
 
 # Use the entrypoint script
-ENTRYPOINT ["/docker-entrypoint.sh"]
+ENTRYPOINT ["node", "/opt/aviation/explanation/dist/run.js", "--app", "foreflight-dashboard", "--", "/docker-entrypoint.sh"]
 
 # Testing stage for running tests
 FROM development AS testing
+ENTRYPOINT []
 
 # Set testing environment variables
 ENV FLASK_DEBUG=0 \
@@ -125,4 +131,4 @@ ENV REACT_DEV_PORT=3005
 EXPOSE $FASTAPI_PORT
 
 # Use the entrypoint script
-ENTRYPOINT ["/docker-entrypoint.sh"]
+ENTRYPOINT ["node", "/opt/aviation/explanation/dist/run.js", "--app", "foreflight-dashboard", "--", "/docker-entrypoint.sh"]

@@ -1,12 +1,13 @@
 # Flight track analyzer: install, build, run (GNU Make 3.81 compatible).
 PYTHON ?= python3
+PNPM   ?= pnpm
 VENV   ?= $(abspath ../../_build/venv/flight-track-analyzer)
 PY     := $(VENV)/bin/python
 PORT   ?= 8000
 DEPLOY_HOST ?= do-host1
 HOST   ?= 127.0.0.1
 
-.PHONY: help install build test run deploy clean
+.PHONY: help install build test run deploy clean build-explanation
 
 help:
 	@echo "make install   create venv and install app/requirements.txt"
@@ -25,7 +26,11 @@ $(PY): app/requirements.txt ../../packages/shared-sdk/python/setup.py ../../pack
 
 install: $(PY)
 
-build: install
+build-explanation:
+	cd ../.. && $(PNPM) install --frozen-lockfile --filter @aviation/ai-explainer...
+	cd ../.. && $(PNPM) --filter @aviation/ai-explainer... run build
+
+build: install build-explanation
 	$(PY) -m compileall -q app/flightlab app/run.py
 	@if command -v node >/dev/null 2>&1; then \
 	  for f in app/static/*.js; do node --input-type=module --check < $$f || exit 1; done; \
@@ -34,8 +39,8 @@ build: install
 
 test: build
 
-run: install
-	cd app && $(PY) run.py --host $(HOST) --port $(PORT)
+run: install build-explanation
+	cd app && node ../../../packages/ai-explainer/dist/run.js --app flight-track-analyzer -- $(PY) run.py --host $(HOST) --port $(PORT)
 
 # Deploys exactly what is committed (git archive HEAD); refuses if app/ or deploy/ has uncommitted changes.
 deploy: build

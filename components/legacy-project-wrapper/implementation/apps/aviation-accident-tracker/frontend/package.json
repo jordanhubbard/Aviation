@@ -14,6 +14,7 @@
     "lint": "echo \"(placeholder lint)\""
   },
   "dependencies": {
+    "@aviation/ai-explainer": "workspace:*",
     "@aviation/ui-framework": "workspace:*",
     "@aviation/shared-sdk": "workspace:*",
     "leaflet": "^1.9.4",

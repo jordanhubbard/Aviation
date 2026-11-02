@@ -1,8 +1,14 @@
 import { openHelp } from './help.js';
+import '/api/explain/widget.js';
 import { lineChart, trackMap, patternPlot, legendFor, PHASES, phaseColor } from './charts.js';
 
 const $view = document.getElementById('view');
 const state = { caps: { llm: false }, view: 'flights', flightId: null, targetAgl: null };
+window.AviationExplain.registerContext(() => ({
+  application: 'Flight Track Analyzer', decision: 'Flight analysis and performance review',
+  view: state.view, flightId: state.flightId, targetAgl: state.targetAgl,
+  displayedAnalysis: $view.innerText.slice(0, 3500),
+}), 'Explain the displayed flight analysis, classifications and performance limits from these facts.');
 
 // ---------- helpers ----------
 function h(tag, attrs = {}, ...kids) {

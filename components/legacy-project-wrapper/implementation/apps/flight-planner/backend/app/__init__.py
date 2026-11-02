@@ -50,6 +50,8 @@ def create_app(settings):
 
     @app.middleware('http')
     async def separate_test_traffic(request: Request, call_next):
+        if request.url.path == '/api/explain' or request.url.path.startswith('/api/explain/'):
+            return await call_next(request)
         try:
             signed_run = verify_e2e_headers('flight-planner', request.headers, E2E_SECRET)
             if (E2E_RUN_ID and signed_run != E2E_RUN_ID) or (not E2E_RUN_ID and signed_run):

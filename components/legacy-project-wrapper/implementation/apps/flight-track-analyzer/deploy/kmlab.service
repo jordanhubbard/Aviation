@@ -8,9 +8,12 @@ Group=kmlab
 WorkingDirectory=/opt/kmlab/app
 Environment=KMLAB_DATA_DIR=/var/lib/kmlab
 Environment=AVIATION_AIRPORTS_DATA=/opt/kmlab/data/airports_cache.json
+Environment=KEYSTORE_PATH=/var/lib/kmlab/.keystore
+EnvironmentFile=/opt/kmlab/explanation/public.env
 # Optional LLM settings (ANTHROPIC_API_KEY=... or KMLAB_LLM_BASE_URL=...). Absent file = no LLM features.
 EnvironmentFile=-/etc/kmlab.env
-ExecStart=/opt/kmlab/venv/bin/python run.py --host 127.0.0.1 --port 18765
+ExecStart=/opt/kmlab/node /opt/kmlab/explanation/dist/run.js --app flight-track-analyzer -- /opt/kmlab/venv/bin/python run.py --host 127.0.0.1 --port 18765
+KillMode=control-group
 Restart=on-failure
 RestartSec=3
 NoNewPrivileges=true

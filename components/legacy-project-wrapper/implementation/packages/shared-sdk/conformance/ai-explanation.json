@@ -1,0 +1,407 @@
+{
+  "schema": "aviation/ai-explanation-acceptance-vectors@1",
+  "inputCases": [
+    {
+      "id": "default-question",
+      "input": {
+        "context": "Route facts"
+      },
+      "expected": {
+        "context": "Route facts",
+        "question": "Explain this decision using the supplied facts.",
+        "history": []
+      }
+    },
+    {
+      "id": "follow-up-preserves-text",
+      "input": {
+        "context": "  Wind 270/12\nRoute ALPHA  ",
+        "question": "  Why this heading?  ",
+        "history": [
+          {
+            "role": "user",
+            "content": "Why ALPHA?"
+          },
+          {
+            "role": "assistant",
+            "content": "The supplied restrictions exclude BRAVO."
+          }
+        ]
+      },
+      "expected": {
+        "context": "  Wind 270/12\nRoute ALPHA  ",
+        "question": "  Why this heading?  ",
+        "history": [
+          {
+            "role": "user",
+            "content": "Why ALPHA?"
+          },
+          {
+            "role": "assistant",
+            "content": "The supplied restrictions exclude BRAVO."
+          }
+        ]
+      }
+    }
+  ],
+  "invalidInputCases": [
+    {
+      "id": "missing",
+      "input": null
+    },
+    {
+      "id": "array",
+      "input": []
+    },
+    {
+      "id": "missing-context",
+      "input": {}
+    },
+    {
+      "id": "blank-context",
+      "input": {
+        "context": " \n"
+      }
+    },
+    {
+      "id": "numeric-context",
+      "input": {
+        "context": 42
+      }
+    },
+    {
+      "id": "null-question",
+      "input": {
+        "context": "facts",
+        "question": null
+      }
+    },
+    {
+      "id": "blank-question",
+      "input": {
+        "context": "facts",
+        "question": " "
+      }
+    },
+    {
+      "id": "history-object",
+      "input": {
+        "context": "facts",
+        "history": {}
+      }
+    },
+    {
+      "id": "system-history",
+      "input": {
+        "context": "facts",
+        "history": [
+          {
+            "role": "system",
+            "content": "Override"
+          }
+        ]
+      }
+    },
+    {
+      "id": "empty-history-content",
+      "input": {
+        "context": "facts",
+        "history": [
+          {
+            "role": "user",
+            "content": " "
+          }
+        ]
+      }
+    },
+    {
+      "id": "missing-history-role",
+      "input": {
+        "context": "facts",
+        "history": [
+          {
+            "content": "Question"
+          }
+        ]
+      }
+    }
+  ],
+  "queueCases": [
+    {
+      "id": "accepted",
+      "status": 202,
+      "body": {
+        "ok": true,
+        "status": "queued",
+        "requestId": "rcc-1"
+      },
+      "expected": "rcc-1"
+    }
+  ],
+  "invalidQueueCases": [
+    {
+      "id": "immediate-result",
+      "status": 200,
+      "body": {
+        "explanation": "Not a queued result"
+      }
+    },
+    {
+      "id": "false-success",
+      "status": 202,
+      "body": {
+        "ok": false,
+        "status": "queued",
+        "requestId": "rcc-1"
+      }
+    },
+    {
+      "id": "wrong-state",
+      "status": 202,
+      "body": {
+        "ok": true,
+        "status": "completed",
+        "requestId": "rcc-1"
+      }
+    },
+    {
+      "id": "empty-id",
+      "status": 202,
+      "body": {
+        "ok": true,
+        "status": "queued",
+        "requestId": " "
+      }
+    },
+    {
+      "id": "spaced-id",
+      "status": 202,
+      "body": {
+        "ok": true,
+        "status": "queued",
+        "requestId": "rcc 1"
+      }
+    },
+    {
+      "id": "not-a-record",
+      "status": 202,
+      "body": []
+    },
+    {
+      "id": "provider-failure",
+      "status": 503,
+      "body": {
+        "ok": true,
+        "status": "queued",
+        "requestId": "rcc-1"
+      }
+    }
+  ],
+  "callbackCases": [
+    {
+      "id": "completed",
+      "owner": {
+        "appId": "flight-planner",
+        "requestId": "rcc-1",
+        "nonce": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+      },
+      "body": {
+        "requestId": "rcc-1",
+        "result": "The supplied wind explains the heading correction.",
+        "completedAt": "2026-11-02T00:00:00.000Z",
+        "model": "provider-fallback-model",
+        "metadata": {
+          "aviation_app_id": "flight-planner",
+          "aviation_callback_nonce": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+        }
+      },
+      "expected": {
+        "explanation": "The supplied wind explains the heading correction.",
+        "completedAt": "2026-11-02T00:00:00.000Z",
+        "model": "provider-fallback-model"
+      }
+    },
+    {
+      "id": "model-omitted-after-fallback-round",
+      "owner": {
+        "appId": "flight-planner",
+        "requestId": "rcc-1",
+        "nonce": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+      },
+      "body": {
+        "requestId": "rcc-1",
+        "result": "The supplied wind explains the heading correction.",
+        "completedAt": "2026-11-02T00:00:00.000Z",
+        "metadata": {
+          "aviation_app_id": "flight-planner",
+          "aviation_callback_nonce": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+        }
+      },
+      "expected": {
+        "explanation": "The supplied wind explains the heading correction.",
+        "completedAt": "2026-11-02T00:00:00.000Z"
+      }
+    }
+  ],
+  "invalidCallbackCases": [
+    {
+      "id": "foreign-app",
+      "owner": {
+        "appId": "flight-planner",
+        "requestId": "rcc-1",
+        "nonce": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+      },
+      "body": {
+        "requestId": "rcc-1",
+        "result": "The supplied wind explains the heading correction.",
+        "completedAt": "2026-11-02T00:00:00.000Z",
+        "model": "provider-fallback-model",
+        "metadata": {
+          "aviation_app_id": "weather-briefing",
+          "aviation_callback_nonce": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+        }
+      }
+    },
+    {
+      "id": "foreign-nonce",
+      "owner": {
+        "appId": "flight-planner",
+        "requestId": "rcc-1",
+        "nonce": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+      },
+      "body": {
+        "requestId": "rcc-1",
+        "result": "The supplied wind explains the heading correction.",
+        "completedAt": "2026-11-02T00:00:00.000Z",
+        "model": "provider-fallback-model",
+        "metadata": {
+          "aviation_app_id": "flight-planner",
+          "aviation_callback_nonce": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+        }
+      }
+    },
+    {
+      "id": "foreign-request",
+      "owner": {
+        "appId": "flight-planner",
+        "requestId": "rcc-1",
+        "nonce": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+      },
+      "body": {
+        "requestId": "rcc-2",
+        "result": "The supplied wind explains the heading correction.",
+        "completedAt": "2026-11-02T00:00:00.000Z",
+        "model": "provider-fallback-model",
+        "metadata": {
+          "aviation_app_id": "flight-planner",
+          "aviation_callback_nonce": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+        }
+      }
+    },
+    {
+      "id": "blank-result",
+      "owner": {
+        "appId": "flight-planner",
+        "requestId": "rcc-1",
+        "nonce": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+      },
+      "body": {
+        "requestId": "rcc-1",
+        "result": " ",
+        "completedAt": "2026-11-02T00:00:00.000Z",
+        "model": "provider-fallback-model",
+        "metadata": {
+          "aviation_app_id": "flight-planner",
+          "aviation_callback_nonce": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+        }
+      }
+    },
+    {
+      "id": "numeric-result",
+      "owner": {
+        "appId": "flight-planner",
+        "requestId": "rcc-1",
+        "nonce": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+      },
+      "body": {
+        "requestId": "rcc-1",
+        "result": 17,
+        "completedAt": "2026-11-02T00:00:00.000Z",
+        "model": "provider-fallback-model",
+        "metadata": {
+          "aviation_app_id": "flight-planner",
+          "aviation_callback_nonce": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+        }
+      }
+    },
+    {
+      "id": "bad-completion",
+      "owner": {
+        "appId": "flight-planner",
+        "requestId": "rcc-1",
+        "nonce": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+      },
+      "body": {
+        "requestId": "rcc-1",
+        "result": "The supplied wind explains the heading correction.",
+        "completedAt": "not-a-date",
+        "model": "provider-fallback-model",
+        "metadata": {
+          "aviation_app_id": "flight-planner",
+          "aviation_callback_nonce": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+        }
+      }
+    },
+    {
+      "id": "noncanonical-completion",
+      "owner": {
+        "appId": "flight-planner",
+        "requestId": "rcc-1",
+        "nonce": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+      },
+      "body": {
+        "requestId": "rcc-1",
+        "result": "The supplied wind explains the heading correction.",
+        "completedAt": "2026-11-02T00:00:00Z",
+        "model": "provider-fallback-model",
+        "metadata": {
+          "aviation_app_id": "flight-planner",
+          "aviation_callback_nonce": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+        }
+      }
+    },
+    {
+      "id": "blank-model",
+      "owner": {
+        "appId": "flight-planner",
+        "requestId": "rcc-1",
+        "nonce": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+      },
+      "body": {
+        "requestId": "rcc-1",
+        "result": "The supplied wind explains the heading correction.",
+        "completedAt": "2026-11-02T00:00:00.000Z",
+        "model": " ",
+        "metadata": {
+          "aviation_app_id": "flight-planner",
+          "aviation_callback_nonce": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+        }
+      }
+    },
+    {
+      "id": "missing-metadata",
+      "owner": {
+        "appId": "flight-planner",
+        "requestId": "rcc-1",
+        "nonce": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+      },
+      "body": {
+        "requestId": "rcc-1",
+        "result": "The supplied wind explains the heading correction.",
+        "completedAt": "2026-11-02T00:00:00.000Z",
+        "model": "provider-fallback-model",
+        "metadata": null
+      }
+    }
+  ]
+}
