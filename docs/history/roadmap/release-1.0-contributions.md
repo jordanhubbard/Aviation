@@ -1,8 +1,8 @@
 # Release 1.0 contribution inventory
 
-- **Status:** partial
-- **Owning queue item:** [RELEASE-002](active-work.md#release-002-publish-and-verify-aviation-10)
-- **Completion / archival evidence:** all 47 original contributions are closed or merged; [AI completion](https://github.com/jordanhubbard/Aviation/issues/176#issuecomment-6571951981) and [E2E completion](https://github.com/jordanhubbard/Aviation/issues/332#issuecomment-6571954338) are recorded; publication remains pending under RELEASE-002.
+- **Status:** historical
+- **Owning queue item:** [RELEASE-002](../../roadmap/active-work.md#release-002-publish-and-verify-aviation-10)
+- **Completion / archival evidence:** [v1.0.0](https://github.com/jordanhubbard/Aviation/releases/tag/v1.0.0) is published and remotely verified at `e808374dd`; all 47 original contributions are closed or merged, with [AI completion](https://github.com/jordanhubbard/Aviation/issues/176#issuecomment-6571951981), [E2E completion](https://github.com/jordanhubbard/Aviation/issues/332#issuecomment-6571954338) and [exact-main CI](https://github.com/jordanhubbard/Aviation/actions/runs/41414211697).
 
 All items below are included in 1.0.0 by explicit user direction. A scope assignment
 does not establish merge, test, supersession, or completion evidence.
@@ -129,7 +129,7 @@ SDK protocol, and pilot-facing explanations support decision facts and follow-up
 questions. The common SDK owns protocol, credentials, bounded lifecycle, UI and
 cross-runtime bindings; application adapters supply their unique facts and policies.
 
-Issue #332 is complete under the archived [SDK remote E2E program](../history/roadmap/sdk-remote-e2e-program.md).
+Issue #332 is complete under the archived [SDK remote E2E program](sdk-remote-e2e-program.md).
 All twelve published builds pass their declared inventories at desktop/mobile
 sizes; all 24 mobile/failure checks record zero remaining explanation records and
 private-instance cleanup. External model, weather, feed and GitHub calls use SDK
