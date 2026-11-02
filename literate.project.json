@@ -113,8 +113,8 @@
   "repository_policy": {
     "schema": "literate-ai/repository-policy@1",
     "default_branch": "main",
-    "main_state": "free",
-    "pre_release_version": null,
+    "main_state": "pre-release",
+    "pre_release_version": "1.0",
     "default_component": null,
     "sample_component_roots": [
       "samples"
@@ -124,7 +124,7 @@
     "merge_method": "merge",
     "pull_request_labels": [],
     "release_engineer_source": "README.md#release-engineers",
-    "release_ci_workflow": "CI",
+    "release_ci_workflow": "Monorepo CI/CD",
     "patch_authority": "strict",
     "writers": [],
     "branch_gc_minimum_age_days": 7

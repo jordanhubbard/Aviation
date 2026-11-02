@@ -18,6 +18,12 @@ commands for the hosted instance.
 The applications are educational tools and are not approved for real flight
 operations. See [LEGAL.md](LEGAL.md).
 
+## Release engineers
+
+The repository owner is authorized to prepare and publish Aviation releases.
+
+- `jordanhubbard`
+
 <!-- literate-ai:parent-repositories -->
 - Parent repository: [github.com/jordanhubbard/literate-ai](<https://github.com/jordanhubbard/literate-ai>)
 <!-- /literate-ai:parent-repositories -->

@@ -1056,6 +1056,15 @@ release-visible outcome to `CHANGELOG.md`; Git preserves prior queue states.
 
 ### [ ] RELEASE-002 — Publish and verify Aviation 1.0
 
+- **Release preflight finding:** The release CLI requires repository mode
+  `pre-release` targeting `1.0` before planning this cut. The initial `free`
+  state failed with `release.state_mismatch`; use the authorized CLI state
+  transition and reviewed exact-commit CI before retrying the plan.
+  The inherited engineer source referenced a missing README section and its CI
+  workflow name was the obsolete `CI`. Declare the authenticated repository
+  owner in that section and use the actual `Monorepo CI/CD` workflow while
+  preserving strict authorization.
+
 - **Priority:** P0
 - **Owner:** release engineering
 - **Direction:** Commit, push and publish the Aviation monorepo as release 1.0 after reconciling all included work.
