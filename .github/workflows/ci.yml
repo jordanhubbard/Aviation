@@ -284,6 +284,14 @@ jobs:
         # a conflicting `version` input here makes action-setup fail.
         uses: pnpm/action-setup@v6
 
+      - name: Set up Python for native workspace dependencies
+        uses: actions/setup-python@v7
+        with:
+          python-version: '3.11'
+
+      - name: Install the native addon build driver
+        run: npm install --global node-gyp@11.5.0
+
       - name: Install the committed workspace dependencies
         run: pnpm install --frozen-lockfile
 

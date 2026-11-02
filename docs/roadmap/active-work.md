@@ -937,6 +937,8 @@ release-visible outcome to `CHANGELOG.md`; Git preserves prior queue states.
     The full retained build/test/package harness passed with adopted receipt
     `sha256:2979832c00349cd5b5b2ce73de3923d1ef322d919e73100e025511ba41bedcc7`; `litai verify` passes authority, nineteen locks and receipt
     freshness. Source intelligence and HTML remain named configuration skips.
+    The first full CI install exposed a missing `node-gyp` on the runner;
+    provision Python and the pinned native addon driver before installation.
     Land through exact-head and exact-main CI before checking this item.
   - [ ] Prepare, check, publish, and verify v1.0.0 from green main with no unresolved release contributions.
 - **Evidence:**
