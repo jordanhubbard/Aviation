@@ -95,7 +95,7 @@ export function ApiKeyField({ field, initialValue = '', isConfigured, onSave, di
 
   const envHintStyle: React.CSSProperties = {
     fontSize: '0.7rem',
-    color: '#9ca3af',
+    color: '#6b7280',
     marginTop: '0.2rem',
     fontFamily: 'monospace',
   }

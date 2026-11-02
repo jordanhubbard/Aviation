@@ -1,6 +1,6 @@
 // alertStore.ts
 import { create } from 'zustand'
-import { orderAlerts } from '@aviation/shared-sdk'
+import { orderAlerts } from '@aviation/shared-sdk/aviation/alerts'
 
 export interface Alert {
   id: string;

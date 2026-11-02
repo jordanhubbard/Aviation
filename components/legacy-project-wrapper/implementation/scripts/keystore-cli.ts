@@ -6,7 +6,7 @@
  */
 
 import * as path from 'path';
-import { SecureKeyStore } from '../packages/keystore/src';
+import { SecureKeyStore } from '../packages/keystore/dist/keystore';
 
 const commands = {
   init: 'Initialize an empty encrypted keystore',

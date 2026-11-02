@@ -94,7 +94,7 @@ export function ServiceCard({ service, status, onSave, isLoading = false }: Serv
   const chevronStyle: React.CSSProperties = {
     marginLeft: '0.5rem',
     fontSize: '0.75rem',
-    color: '#9ca3af',
+    color: '#6b7280',
   }
 
   const bodyStyle: React.CSSProperties = {

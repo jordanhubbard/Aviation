@@ -1,5 +1,8 @@
+import * as lockfile from 'proper-lockfile';
+import { performance } from 'node:perf_hooks';
+import { assertTestDataForRun, parseE2ERunId, tagTestData, type E2ERunId } from '@aviation/shared-sdk/e2e';
 import * as crypto from 'crypto';
-import * as fs from 'fs';
+import fs from 'node:fs';
 import * as path from 'path';
 
 /**
@@ -8,6 +11,7 @@ import * as path from 'path';
 export interface SecureKeyStoreConfig {
   storePath?: string;
   encryptionKey?: string;
+  testRunId?: string;
 }
 
 export interface SecretEntry {
@@ -16,6 +20,8 @@ export interface SecretEntry {
   value: string;
   createdAt: Date;
   updatedAt: Date;
+  readonly is_test_data?: true;
+  readonly test_run_id?: string;
 }
 
 /**
@@ -28,9 +34,12 @@ export class SecureKeyStore {
   private storePath: string;
   private encryptionKey: Buffer;
   private secrets: Map<string, SecretEntry>;
+  private loadFailed = false;
+  private readonly testRunId?: E2ERunId;
 
   constructor(config: SecureKeyStoreConfig = {}) {
     this.storePath = config.storePath || path.join(process.cwd(), '.keystore');
+    this.testRunId = config.testRunId === undefined ? undefined : parseE2ERunId(config.testRunId);
     
     // In production, this should come from a secure source like environment variables
     // or a hardware security module (HSM)
@@ -49,16 +58,14 @@ export class SecureKeyStore {
    * Store a secret for a service
    */
   setSecret(service: string, key: string, value: string): void {
-    const entry: SecretEntry = {
-      service,
-      key,
-      value,
-      createdAt: this.secrets.get(`${service}:${key}`)?.createdAt || new Date(),
-      updatedAt: new Date(),
-    };
-    
-    this.secrets.set(`${service}:${key}`, entry);
-    this.saveSecrets();
+    this.withWriteLock(() => {
+      const entry: SecretEntry = {
+        service, key, value,
+        createdAt: this.secrets.get(`${service}:${key}`)?.createdAt || new Date(),
+        updatedAt: new Date(),
+      };
+      this.secrets.set(`${service}:${key}`, this.testRunId ? tagTestData(this.testRunId, entry) : entry);
+    });
   }
 
   /**
@@ -73,11 +80,9 @@ export class SecureKeyStore {
    * Delete a secret for a service
    */
   deleteSecret(service: string, key: string): boolean {
-    const deleted = this.secrets.delete(`${service}:${key}`);
-    if (deleted) {
-      this.saveSecrets();
-    }
-    return deleted;
+    this.assertReadable();
+    if (!fs.existsSync(this.storePath)) { this.secrets = new Map(); return false; }
+    return this.withWriteLock(() => this.secrets.delete(`${service}:${key}`), changed => changed);
   }
 
   /**
@@ -117,15 +122,62 @@ export class SecureKeyStore {
     return decrypted;
   }
 
+  private withWriteLock<T>(mutate: () => T, changed: (result: T) => boolean = () => true): T {
+    this.assertReadable();
+    fs.mkdirSync(path.dirname(this.storePath), { recursive: true, mode: 0o700 });
+    const started = performance.now();
+    let release: (() => void) | undefined;
+    while (!release) {
+      try { release = lockfile.lockSync(this.storePath, { realpath: false, stale: 60_000 }); }
+      catch (error) {
+        if ((error as NodeJS.ErrnoException).code !== 'ELOCKED' || performance.now() - started >= 5000) {
+          throw new Error('Keystore write lock unavailable');
+        }
+        Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 25);
+      }
+    }
+    let previous: Map<string, SecretEntry> | undefined;
+    try {
+      this.loadSecrets();
+      this.assertReadable();
+      previous = new Map(this.secrets);
+      const result = mutate();
+      if (changed(result)) this.saveSecrets();
+      return result;
+    } catch (error) {
+      if (previous) this.secrets = previous;
+      throw error;
+    } finally { release(); }
+  }
+
+  /** Reject writes and machine reads after an unsuccessful load. */
+  assertReadable(): void {
+    if (this.loadFailed) throw new Error('Keystore could not be loaded');
+  }
+
+  /** Ownership metadata only; secret values are deliberately absent. */
+  listEntries(): Array<Omit<SecretEntry, 'value'>> {
+    this.assertReadable();
+    return [...this.secrets.values()].map(entry => ({
+      service: entry.service, key: entry.key,
+      createdAt: new Date(entry.createdAt), updatedAt: new Date(entry.updatedAt),
+      ...(entry.is_test_data === true ? { is_test_data: true as const, test_run_id: entry.test_run_id } : {}),
+    }));
+  }
+
   /**
    * Load secrets from disk
    */
   private loadSecrets(): void {
+    this.secrets = new Map();
     try {
       if (fs.existsSync(this.storePath)) {
         const encrypted = fs.readFileSync(this.storePath, 'utf8');
         const decrypted = this.decrypt(encrypted);
         const data = JSON.parse(decrypted);
+        if (this.testRunId) {
+          for (const entry of Object.values(data)) assertTestDataForRun(entry, this.testRunId);
+        }
         
         this.secrets = new Map(
           Object.entries(data).map(([key, value]: [string, any]) => [
@@ -139,7 +191,8 @@ export class SecureKeyStore {
         );
       }
     } catch (error) {
-      console.error('Failed to load secrets:', error);
+      console.error('Failed to load secrets');
+      this.loadFailed = true;
       this.secrets = new Map();
     }
   }
@@ -148,6 +201,7 @@ export class SecureKeyStore {
    * Save secrets to disk
    */
   private saveSecrets(): void {
+    this.assertReadable();
     try {
       const data = Object.fromEntries(this.secrets.entries());
       const json = JSON.stringify(data);
@@ -158,7 +212,11 @@ export class SecureKeyStore {
         fs.mkdirSync(dir, { recursive: true });
       }
       
-      fs.writeFileSync(this.storePath, encrypted, { mode: 0o600 });
+      const temporary = path.join(dir, `.${path.basename(this.storePath)}.${crypto.randomUUID()}.tmp`);
+      try {
+        fs.writeFileSync(temporary, encrypted, { mode: 0o600, flag: 'wx' });
+        fs.renameSync(temporary, this.storePath);
+      } finally { fs.rmSync(temporary, { force: true }); }
     } catch (error) {
       console.error('Failed to save secrets:', error);
       throw error;

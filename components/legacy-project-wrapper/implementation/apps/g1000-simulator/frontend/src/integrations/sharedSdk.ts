@@ -1,18 +1,10 @@
+import { C172S_OPERATING_PROFILE } from '@aviation/shared-sdk/aviation/aircraft';
+import { C172S_LOADING_PROFILE, calculateLoad } from '@aviation/shared-sdk/aviation/weight-balance';
+import { projectPistonEngineInstruments } from '@aviation/shared-sdk/aviation/flight-dynamics';
 import {
-  C172S_OPERATING_PROFILE,
-  C172S_LOADING_PROFILE,
-  calculateLoad,
-  densityAltitude,
-  distanceNM,
-  flightTime,
-  fuelConsumption,
-  fuelReserve,
-  fromLocalTangentPlane,
-  initialBearing,
-  headingDifference,
-  projectPistonEngineInstruments,
-  toLocalTangentPlane,
-} from "@aviation/shared-sdk";
+  densityAltitude, distanceNM, flightTime, fuelConsumption, fuelReserve,
+  fromLocalTangentPlane, initialBearing, headingDifference, toLocalTangentPlane,
+} from '@aviation/shared-sdk/aviation/navigation';
 
 export { C172S_OPERATING_PROFILE };
 export { C172S_LOADING_PROFILE };

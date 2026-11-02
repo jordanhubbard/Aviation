@@ -26,6 +26,7 @@ overrides:
   ip-address: "10.7.4"
   proxy-addr: "2.0.8"
   qs: "6.16.0"
+  tar: "7.5.22"
   "uuid@11": "11.1.1"
   "uuid@13": "13.0.1"
   ws: "8.22.0"

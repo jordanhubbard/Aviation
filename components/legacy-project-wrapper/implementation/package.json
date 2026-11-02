@@ -39,7 +39,7 @@
     "qs": ">=6.14.2",
     "rollup": ">=4.59.0",
     "serialize-javascript": ">=7.0.3",
-    "tar": ">=7.5.10",
+    "tar": ">=7.5.22",
     "underscore": ">=1.13.8",
     "webpack-dev-server": ">=5.2.1",
     "esbuild": ">=0.24.3"

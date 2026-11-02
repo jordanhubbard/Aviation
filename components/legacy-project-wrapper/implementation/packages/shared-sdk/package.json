@@ -241,5 +241,69 @@
     "typescript": "^6.0.2",
     "vitest": "^4.1.12"
   },
-  "module": "dist-esm/index.js"
+  "module": "dist-esm/index.js",
+  "typesVersions": {
+    "*": {
+      "e2e": [
+        "dist/e2e/index.d.ts"
+      ],
+      "aviation/navigation": [
+        "dist/aviation/navigation/index.d.ts"
+      ],
+      "aviation/weather": [
+        "dist/aviation/weather/index.d.ts"
+      ],
+      "aviation/nav-data": [
+        "dist/aviation/nav-data/index.d.ts"
+      ],
+      "aviation/airports": [
+        "dist/aviation/airports/index.d.ts"
+      ],
+      "aviation/airports/bundled": [
+        "dist/aviation/airports/bundled.d.ts"
+      ],
+      "aviation/notam": [
+        "dist/aviation/notam.d.ts"
+      ],
+      "aviation/hazards": [
+        "dist/aviation/hazards.d.ts"
+      ],
+      "aviation/alerts": [
+        "dist/aviation/alerts.d.ts"
+      ],
+      "aviation/health": [
+        "dist/aviation/health.d.ts"
+      ],
+      "aviation/service-lifecycle": [
+        "dist/aviation/service-lifecycle.d.ts"
+      ],
+      "aviation/weight-balance": [
+        "dist/aviation/weight-balance.d.ts"
+      ],
+      "aviation/aircraft": [
+        "dist/aviation/aircraft.d.ts"
+      ],
+      "aviation/logbook": [
+        "dist/aviation/logbook.d.ts"
+      ],
+      "aviation/flight-dynamics": [
+        "dist/aviation/flight-dynamics.d.ts"
+      ],
+      "datetime": [
+        "dist/datetime/index.d.ts"
+      ],
+      "cache": [
+        "dist/cache/index.d.ts"
+      ],
+      "integrations/google": [
+        "dist/integrations/google/index.d.ts"
+      ],
+      "plugin-sandbox": [
+        "dist/plugin-sandbox.d.ts"
+      ],
+      "*": [
+        "dist/*.d.ts"
+      ]
+    }
+  }
 }

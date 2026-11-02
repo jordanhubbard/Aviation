@@ -2,7 +2,7 @@
  * Alert types for the aviation alert message stack
  */
 
-import { alertPriority } from '@aviation/shared-sdk';
+import { alertPriority } from '@aviation/shared-sdk/aviation/alerts';
 
 /**
  * Alert severity levels following aviation standards
