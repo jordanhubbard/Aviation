@@ -9,6 +9,9 @@
 
 ## Unreleased
 
+- KMLab keeps the latest selected view when an older page request finishes or
+  fails, including a Performance refresh after saving a reference table.
+
 - Added the common queued RCC explanation SDK, worker-safe Python/Ring bindings,
   managed broker and shared decision/follow-up UI. Applications provide their own
   decision facts and access policies; provider configuration and request lifecycle

@@ -642,7 +642,13 @@ if (appId === 'flightschool') {
             await page.getByRole('heading', { name: 'Performance', exact: true }).waitFor();
             await page.getByText('Documented (AFM/POH) reference table').click();
             await page.getByRole('textbox', { name: 'take-off POH table' }).fill('0,15,780,1385');
+            const refreshed = page.waitForResponse(response => response.request().method() === 'GET'
+              && /^\/api\/aircraft\/[^/]+\/poh$/.test(new URL(response.url()).pathname));
             await page.getByRole('button', { name: 'Save reference' }).click();
+            const reference = await (await refreshed).json();
+            if (reference.takeoff?.[0]?.ground_roll_ft !== 780 || reference.takeoff?.[0]?.total50_ft !== 1385) {
+              throw new Error('KMLab saved POH reference was not returned by the real test store');
+            }
             await page.getByRole('heading', { name: 'Performance', exact: true }).waitFor();
           },
         },
@@ -658,7 +664,56 @@ if (appId === 'flightschool') {
         {
           id: 'delete', dataMode: 'tagged-database',
           visit: async () => {
-            await page.locator('#nav button[data-view="flights"]').click();
+            // Reproduce navigation while the previous view's final read is pending.
+            // Success uses the real backend response; the tagged 503 exercises its error path.
+            for (const outcome of ['success', 'error']) {
+              let heldRoute;
+              let releaseObserved;
+              let timer;
+              let released = false;
+              const observed = new Promise(resolve => { releaseObserved = resolve; });
+              const pattern = `${new URL(baseUrl).origin}/api/aircraft/*/poh`;
+              const hold = async route => {
+                if (!heldRoute && route.request().method() === 'GET') {
+                  heldRoute = route;
+                  releaseObserved();
+                  return;
+                }
+                await route.fallback();
+              };
+              await page.route(pattern, hold);
+              try {
+                const timeout = new Promise((_, reject) => {
+                  timer = setTimeout(() => reject(new Error('KMLab Performance read was not observed')), 10000);
+                });
+                await Promise.all([Promise.race([observed, timeout]),
+                  page.locator('#nav button[data-view="performance"]').click()]);
+                clearTimeout(timer);
+                await page.locator('#nav button[data-view="flights"]').click();
+                await page.getByRole('heading', { name: 'Flights (2)', exact: true }).waitFor();
+                const completed = page.waitForResponse(response => response.request().method() === 'GET'
+                  && /^\/api\/aircraft\/[^/]+\/poh$/.test(new URL(response.url()).pathname));
+                released = true;
+                if (outcome === 'success') {
+                  await heldRoute.continue({ headers: { ...heldRoute.request().headers(), ...run.headersFor(appId) } });
+                } else {
+                  await heldRoute.fulfill({ status: 503, contentType: 'application/json',
+                    body: JSON.stringify(run.tag({ error: 'Synthetic deferred performance failure' })) });
+                }
+                await (await completed).finished();
+                // Observe a paint after the response's promise callbacks have run.
+                await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
+                if (!await page.getByRole('heading', { name: 'Flights (2)', exact: true }).isVisible()) {
+                  throw new Error(`Late Performance ${outcome} replaced the selected Flights view`);
+                }
+                console.log(JSON.stringify(run.tag({ schema: 'aviation/e2e-navigation-race@1',
+                  app: appId, outcome, result: 'passed' })));
+              } finally {
+                clearTimeout(timer);
+                if (heldRoute && !released) await heldRoute.abort().catch(() => {});
+                await page.unroute(pattern, hold);
+              }
+            }
             for (const flight of [{ id: uploadedId, tail: 'E2EUP' }, { id: seeded.id, tail: 'E2E' }]) {
               page.once('dialog', dialog => dialog.accept());
               const [deleted] = await Promise.all([

@@ -137,12 +137,20 @@ trends.
   with phase shading, event tables, pattern view with each pattern overlaid in the
   runway frame, and accuracy tables.
 - Summary view with the aggregates above.
+- View navigation follows the latest selection. Responses and errors from an
+  earlier view must not replace the currently selected view, including a
+  Performance refresh still pending after saving a POH reference.
 - A Help control (?) opens a scrolling viewer that explains the algorithms, thresholds, accuracy
   limits, and exactly how uploaded data is read, stored and shared. Its AI section, and any
   mention of an LLM, appears only when an LLM is configured.
 - Everything computed by numerical analysis is available with no LLM present.
 
 ## LLM-assisted analysis
+
+Shared decision explanations follow the
+[`aviation.ai.explanation` contract](../aviation-ai-explanation/interfaces/explanation.md)
+and RCC configuration. The capability and visibility rules below describe this
+application's optional debrief and free-form analysis features.
 
 The service may be configured with an LLM through environment variables (Anthropic key,
 or any OpenAI-compatible endpoint). `GET /api/capabilities` reports whether one is
@@ -176,3 +184,7 @@ stated uncertainty. Wind is recovered within 3 kt on a steady-leg cross-country 
 graded low (no normalisation) for pattern-only flights. Hostile XML is
 rejected. With no LLM configured the capabilities route reports it disabled and LLM
 routes fail closed.
+
+With a Performance reference read delayed, navigate to Flights before releasing
+the response. Both a successful late response and a failed late response must leave
+the Flights view selected and displayed; its uploaded flights remain deletable.

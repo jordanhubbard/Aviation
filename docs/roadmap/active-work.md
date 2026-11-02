@@ -998,7 +998,23 @@ release-visible outcome to `CHANGELOG.md`; Git preserves prior queue states.
   semantic dependency locks are unchanged; their catalog audits are refreshed.
   This qualifies retained source, without claiming native Component generation
   or acceptance. The full dependency audit has zero high or critical findings.
-- **Next action:** Verify project authority, locks and the current receipt; commit,
-  push and complete reviewed exact-head/main CI, then run the complete gate against
-  exact published images and the installed native revision. Issues #176 and #332
-  remain open and included in 1.0.0 until those deployed-build checks pass.
+- **Deployment checkpoint:** PR #414 merged at `69d485b3b` after all six head
+  workflows passed; all six exact-main workflows also passed. The primary checkout
+  and CodeGraph are current. The launcher, Accident Tracker, Chat, Missions and
+  Planner passed their exact published-image deployment gates. KMLab's installed
+  native runtime is healthy, but the retained trace proves a navigation race:
+  a late Performance reference read replaces the Flights list after Flights is
+  selected. Its private manager still removed all test data after failure.
+- **Navigation repair qualification:** The controlled delayed-read regression
+  fails against installed `69d485b3b` when late Performance content replaces
+  Flights. The bounded render-generation fix passes delayed success and error
+  cases at desktop and mobile widths on an isolated Linux native runtime, with
+  both Python SDK packages installed. Normal and injected-failure runs remove
+  their private runtime and fixtures. The full retained build/test/package run
+  passes with candidate identity
+  `sha256:e858ae8d5c0754391ffebd965264dfaf9872a93ffb85e9cdb0a880a9dd258f45`;
+  all Component locks and reviewed authority are current. This remains retained
+  source qualification, without claiming native Component generation/acceptance.
+- **Next action:** Land the bounded navigation fix through all six head and
+  exact-main workflows, then finish all exact deployed-build checks. Issues #176
+  and #332 remain open in 1.0.0 until that deployed evidence passes.
