@@ -9,6 +9,9 @@
 
 ## Unreleased
 
+- Release engineering: declare the repository owner and current CI workflow for
+  strict release authorization, and enter pre-release mode targeting 1.0.
+
 - Probe Preflight at its declared root health endpoint when launching a private deployment test instance; allow the common SDK CI matrix to be run explicitly for an exact release revision.
 
 - KMLab keeps the latest selected view when an older page request finishes or
