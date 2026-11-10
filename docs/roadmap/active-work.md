@@ -1094,10 +1094,10 @@ release-visible outcome to `CHANGELOG.md`; Git preserves prior queue states.
   with repository mode free; these bookkeeping changes are reviewed separately
   and do not alter the published 1.0 tag.
 
-### [ ] PLAN-001 — Repair VFR form and route terrain requests
+### [x] PLAN-001 — Repair VFR form and route terrain requests
 
 - **GitHub issue:** [#421](https://github.com/jordanhubbard/Aviation/issues/421)
-- **Next action:** complete the hosted deployment inventory and record the live terrain-aware route result (in progress).
+- **Completion:** PR #424 is published; the installed build and corrected deployment inventory are verified through PR #425.
 
 - **Priority:** P1
 - **Owner:** retained Flight Planner application and aviation.airports Component
@@ -1143,6 +1143,13 @@ release-visible outcome to `CHANGELOG.md`; Git preserves prior queue states.
   This is retained-source qualification, without native Component generation or
   acceptance claims. Production publication remains separate from this repair.
 
+- **Publication evidence:** PR #424 merged at `ee8f9cdc73984fca8c05bf9b6969e89c83079414`
+  after full review-branch and exact-main CI. PR #425 merged at
+  `cbe1d4f97b24ebb05490f60016a1a4b6e014445c` with all six exact-main workflows
+  green and repairs the stale deployed browser expectation. That installed build
+  passes all nine desktop and mobile inventory flows and injected-failure cleanup.
+  Its real terrain/wind KDWA-to-KPAO plan returns 68.2 NM with the correct origin.
+
 ### [ ] OPS-001 — Verify hosted mapping, planning, and weather readiness
 
 - **Priority:** P1
@@ -1153,8 +1160,9 @@ release-visible outcome to `CHANGELOG.md`; Git preserves prior queue states.
 - **Completion prerequisites:** none
 - **Implementation:**
   - [x] Install the existing weather credential in the protected runtime environment without exposing its value.
-  - [ ] Deploy the exact published planning repair image through the declared deployment gate.
-  - [ ] Serve explicitly configured browser weather access through the combined hosted runtime, with no unrelated server configuration exposed.
+  - [x] Deploy the exact published planning repair image through the declared deployment gate.
+  - [x] Serve explicitly configured browser weather access through the combined hosted runtime, with no unrelated server configuration exposed.
+  - [ ] Supply the existing frontend metadata request and replace its missing starter favicon so live planning has no HTTP or console failures.
 - **Evidence:**
   - [ ] Verify current weather, forecasts, METAR briefings, base maps, overlays, and terrain-aware route planning with live data.
   - [ ] Run the deployment browser and isolated application inventories, including mobile coverage, and record remaining limitations.
@@ -1174,3 +1182,24 @@ release-visible outcome to `CHANGELOG.md`; Git preserves prior queue states.
   The current receipt is
   `sha256:419756b6e890252a3b38d9778a509c7c0d348a66f735025de216ad47587f0990`.
   Exact published-image verification remains pending.
+
+- **Live published-image checkpoint:** PR #425 is merged at
+  `cbe1d4f97b24ebb05490f60016a1a4b6e014445c`; all six exact-main workflows pass.
+  Its published image passes the desktop deployment gate, all nine mobile flows,
+  and intentional explanation-failure cleanup with zero residual records. Live
+  current weather, forecasts, route weather, airport search, local planning,
+  METAR briefings and the 68.2 NM terrain/wind route succeed. All four overlay
+  providers return image tiles in the rendered route map. The stricter live
+  browser check also finds 404s for the existing `/api/meta` request and missing
+  starter favicon; resolve these before final readiness admission.
+
+- **Final browser cleanup candidate:** The metadata response and embedded aviation
+  favicon pass 212 backend tests and the frontend production build. Both desktop
+  and mobile local live-data runs load all four overlay types, with 43 and 25
+  successful map-tile responses respectively, zero HTTP/console failures and no
+  overflow. Full retained build/test/package qualification passes with candidate
+  `sha256:7e3f2bd0a9435feb39cf573f834aab22700b90353125cf4a2c1b297de794469f`
+  and current receipt
+  `sha256:50ce2885d2b3846e42bb86895e734abb39f1991497f9f52fe4b09a1ccbe2c3c0`.
+  This remains retained-source qualification; final publication and hosted
+  clean-browser admission are pending.
