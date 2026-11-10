@@ -1252,3 +1252,13 @@ release-visible outcome to `CHANGELOG.md`; Git preserves prior queue states.
   after the workspace build. First-version WebSocket clients retain direct
   endpoints; the static preflight application is explicitly identified as having
   no standalone JSON data API. Full qualification/publication remain pending.
+
+- **Protocol follow-up before deployment:** Preserve upstream HTTP status and
+  content types for known namespace routes, including HTML authentication errors
+  and redirects. JSON errors apply to unknown Meta App routes/versions/namespaces;
+  the gateway must not infer a failed service request solely from its MIME type.
+  Add actual-provider coverage before admitting the production deployment.
+
+- **Encoded payload follow-up:** A real MCP regression also catches gzip and
+  non-UTF-8 text being decoded as UTF-8 solely from MIME type. Return those bytes
+  as base64 with original headers, preserving the same wire data as HTTP.

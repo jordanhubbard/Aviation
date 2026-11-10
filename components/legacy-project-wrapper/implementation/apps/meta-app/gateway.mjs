@@ -103,9 +103,6 @@ export function createGateway({ bindings = JSON.parse(process.env.AVIATION_GATEW
     return new Promise((resolve, reject) => {
       const { binding, target } = routed;
       const request = (target.protocol === 'https:' ? httpsRequest : httpRequest)(target, { method: routed.method, headers: routed.headers, signal }, upstream => {
-        if (path.split('?')[0].startsWith('/api/') && /text\/html/i.test(upstream.headers['content-type'] || '')) {
-          upstream.resume(); reject(new GatewayError(502, 'upstream_contract_error')); return;
-        }
         try { resolve({ upstream, headers: responseHeaders(ns, binding, upstream, scopedCookies, target), adapter: binding.adapter, request }); }
         catch { upstream.resume(); reject(new GatewayError(502, 'invalid_upstream_headers')); }
       });
@@ -137,8 +134,11 @@ export function createGateway({ bindings = JSON.parse(process.env.AVIATION_GATEW
         delete result.headers['content-length']; delete result.headers['content-encoding'];
       }
       if (bytes.length > MAX_MCP_BYTES) throw new GatewayError(502, 'response_too_large');
-      const text = /json|text\/|xml|javascript/.test(result.headers['content-type'] || '');
-      return { status: result.upstream.statusCode, headers: Object.fromEntries(Object.entries(result.headers).map(([k, v]) => [k, Array.isArray(v) ? v.join('\n') : String(v)])), body: bytes.toString(text ? 'utf8' : 'base64'), bodyEncoding: text ? 'utf8' : 'base64' };
+      const textCandidate = String(result.headers['content-encoding'] || 'identity').toLowerCase() === 'identity'
+        && /json|text\/|xml|javascript/.test(result.headers['content-type'] || '');
+      const utf8 = textCandidate ? bytes.toString('utf8') : null;
+      const text = utf8 !== null && Buffer.from(utf8).equals(bytes);
+      return { status: result.upstream.statusCode, headers: Object.fromEntries(Object.entries(result.headers).map(([k, v]) => [k, Array.isArray(v) ? v.join('\n') : String(v)])), body: text ? utf8 : bytes.toString('base64'), bodyEncoding: text ? 'utf8' : 'base64' };
     } catch (error) {
       return { status: error.status || 502, headers: { 'content-type': 'application/json' }, body: JSON.stringify({ error: { code: error instanceof GatewayError ? error.code : 'upstream_unavailable' } }), bodyEncoding: 'utf8' };
     }
