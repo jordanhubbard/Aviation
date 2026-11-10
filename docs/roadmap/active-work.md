@@ -1150,22 +1150,22 @@ release-visible outcome to `CHANGELOG.md`; Git preserves prior queue states.
   passes all nine desktop and mobile inventory flows and injected-failure cleanup.
   Its real terrain/wind KDWA-to-KPAO plan returns 68.2 NM with the correct origin.
 
-### [ ] OPS-001 — Verify hosted mapping, planning, and weather readiness
+### [x] OPS-001 — Verify hosted mapping, planning, and weather readiness
 
 - **Priority:** P1
 - **Owner:** Aviation deployment and retained Flight Planner
 - **Direction:** Configure existing weather access, deploy the merged planning repairs, and verify hosted capabilities.
-- **Conclusion:** The planning repair is merged and exact-main CI passes. The weather credential passes current-condition and overlay provider probes. The deployment inventory still expected the removed instrument-procedure selector; assert its absence and reject procedure fetches instead. The combined hosted image serves an empty static runtime configuration; add an allowlisted, uncached configuration response so explicitly configured browser weather overlays work. NOTAM integration remains pending external access and is outside this deployment.
+- **Conclusion:** The merged planning repair and hosted runtime configuration are deployed and pass real-provider API and browser checks. The deployment inventory matches the VFR form, and the metadata/favicon cleanup removes missing-resource errors. NOTAM integration remains outside this deployment while FAA NMS access is pending.
 - **Depends on:** none
 - **Completion prerequisites:** none
 - **Implementation:**
   - [x] Install the existing weather credential in the protected runtime environment without exposing its value.
   - [x] Deploy the exact published planning repair image through the declared deployment gate.
   - [x] Serve explicitly configured browser weather access through the combined hosted runtime, with no unrelated server configuration exposed.
-  - [ ] Supply the existing frontend metadata request and replace its missing starter favicon so live planning has no HTTP or console failures.
+  - [x] Supply the existing frontend metadata request and replace its missing starter favicon so live planning has no HTTP or console failures.
 - **Evidence:**
-  - [ ] Verify current weather, forecasts, METAR briefings, base maps, overlays, and terrain-aware route planning with live data.
-  - [ ] Run the deployment browser and isolated application inventories, including mobile coverage, and record remaining limitations.
+  - [x] Verify current weather, forecasts, METAR briefings, base maps, overlays, and terrain-aware route planning with live data.
+  - [x] Run the deployment browser and isolated application inventories, including mobile coverage, and record remaining limitations.
 
 - **Deployment checkpoint:** PR #424 is merged at `ee8f9cdc73984fca8c05bf9b6969e89c83079414`.
   All six exact-main application workflows passed, including thirteen image-build
@@ -1203,3 +1203,22 @@ release-visible outcome to `CHANGELOG.md`; Git preserves prior queue states.
   `sha256:50ce2885d2b3846e42bb86895e734abb39f1991497f9f52fe4b09a1ccbe2c3c0`.
   This remains retained-source qualification; final publication and hosted
   clean-browser admission are pending.
+
+- **Completion evidence:** PR #426 merged at
+  `3d36f2efb187e9e2a0c292071e7bc5aec265960d` after all six head workflows and
+  all six exact-main workflows passed. Its exact published image is installed and
+  passes the deployment gate, all nine mobile inventory flows, and intentional
+  explanation-failure cleanup with zero residual records and private-instance
+  removal. Fresh live desktop/mobile runs load all four raster overlay types,
+  render the 68.2 NM terrain/wind route, finish weather/elevation loading, and have
+  zero HTTP/console/request failures, non-finite values or document overflow.
+  All twelve public health endpoints respond and all twelve service units are active.
+  [Hosted readiness observations](../../verification/hosted-readiness.json) bind
+  the source revision, published image digest, exact CI, live API results and UI
+  inventories. Both rendered viewport captures were reviewed.
+- **Remaining boundary:** NOTAM integration awaits FAA NMS access. The deployment
+  volume has about 14.3 GiB free (9.3%), a warning rather than a failed service.
+  Docker reported roughly 5.3 GB of reclaimable images and 1.0 GB of reclaimable
+  build cache before this update; image history, data and cache were preserved.
+  These observations establish retained application availability, without native
+  Component generation/acceptance or operational-flight approval claims.

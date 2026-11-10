@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Hosted Flight Planner: enable current weather and all four map overlays, deploy
+  the airport/terrain repairs, and verify live planning and weather on desktop and
+  mobile. NOTAM integration still awaits provider access.
+
 - Flight Planner: provide the frontend build-metadata endpoint and a self-contained
   aviation favicon, removing missing-resource errors from live planning.
 
