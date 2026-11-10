@@ -8,17 +8,20 @@
     "build": "tsc && vite build",
     "preview": "vite preview",
     "clean": "rm -rf dist",
-    "test": "node --test server.test.mjs"
+    "test": "node --test *.test.mjs"
   },
   "dependencies": {
     "@aviation/ai-explainer": "workspace:*",
     "@aviation/aviation-config": "workspace:*",
     "@aviation/ui-framework": "workspace:*",
+    "@modelcontextprotocol/node": "2.1.2",
+    "@modelcontextprotocol/server": "2.4.0",
     "react": "^19.2.4",
     "react-dom": "^19.2.4",
     "react-router-dom": "^7.11.0"
   },
   "devDependencies": {
+    "@modelcontextprotocol/client": "2.4.0",
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^6.0.1",

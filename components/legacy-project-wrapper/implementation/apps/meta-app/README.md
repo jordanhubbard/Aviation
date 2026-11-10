@@ -226,3 +226,23 @@ See [Aviation monorepo CONTRIBUTING.md](../../CONTRIBUTING.md) for general guide
 ## License
 
 MIT License — see [LICENSE](../../LICENSE)
+
+## Service API gateway
+
+The launcher remains at `/`. Other services and external callers can use:
+
+- `GET /api/v1/services` — namespaces, direct APIs, MCP tools and compatibility policy.
+- `GET /api/v1/openapi.json` — public OpenAPI description.
+- `/api/v1/<namespace>/<service-path>` — stable edge routing; preserve the native API prefix.
+- `/mcp` — Streamable HTTP MCP, with `v1.<namespace>.request` tools and catalog resources.
+
+For example, POST flight planning JSON to
+`https://meta-app.jordanhubbard.net/api/v1/planning/api/plan`.
+MCP callers use `v1.planning.request` with `path: "/api/plan"`, `method: "POST"`,
+a JSON string `body`, and an explicit `Content-Type: application/json` header.
+Use the `weather` namespace for weather-briefing APIs; the planner's additional
+weather/terrain APIs remain under `planning`. Direct service URLs continue working.
+
+See [the gateway contract](gateway.md) for upstream bindings, compatibility
+adapters, caller authentication, cookie isolation, limits and streaming.
+The gateway does not add data providers or make pending NOTAM access available.

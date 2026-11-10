@@ -301,6 +301,9 @@ jobs:
       - name: Build every Node workspace consumer
         run: pnpm --recursive --workspace-concurrency=1 --if-present run build
 
+      - name: Verify Meta App HTTP and MCP gateway contracts
+        run: pnpm --filter @aviation/meta-app test
+
   test-g1000:
     name: Test G1000 Simulator
     runs-on: ubuntu-latest
