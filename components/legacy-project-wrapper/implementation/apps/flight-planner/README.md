@@ -69,6 +69,12 @@ Copy `.env.example` → `.env` and set any API keys you plan to use.
 
 - `VITE_OPENWEATHERMAP_API_KEY`: enables OpenWeatherMap tile overlays in the map UI (can be the same key as `OPENWEATHERMAP_API_KEY`)
 
+For the combined hosted container, set both variables in its protected runtime
+environment and restart the service. The backend serves `/env.js` from an explicit
+allowlist with `Cache-Control: no-store`, so overlay configuration does not require
+rebuilding the image. Only the explicitly set `VITE_OPENWEATHERMAP_API_KEY` is
+public browser configuration; server credentials are not automatically published.
+
 ## Usage examples
 
 Plan a route:
