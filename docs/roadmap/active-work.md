@@ -1223,7 +1223,7 @@ release-visible outcome to `CHANGELOG.md`; Git preserves prior queue states.
   These observations establish retained application availability, without native
   Component generation/acceptance or operational-flight approval claims.
 
-### [ ] EDGE-001 — Provide stable versioned HTTP and MCP edge gateway contracts
+### [x] EDGE-001 — Provide stable versioned HTTP and MCP edge gateway contracts
 
 - **Priority:** P1
 - **Owner:** Meta App public API contracts and service routing adapters
@@ -1232,15 +1232,15 @@ release-visible outcome to `CHANGELOG.md`; Git preserves prior queue states.
 - **Depends on:** none
 - **Completion prerequisites:** none
 - **Implementation:**
-  - [ ] Author the versioned public namespace, discovery, compatibility and upstream binding contracts.
-  - [ ] Implement HTTP routing with streaming, authentication preservation, error handling, cancellation and bounded upstream access.
-  - [ ] Expose the same namespaced service API through a standards-compliant MCP endpoint using the shared registry and schemas.
-  - [ ] Publish and deploy the qualified Meta App gateway while preserving the existing HTML UI and direct service endpoints.
+  - [x] Author the versioned public namespace, discovery, compatibility and upstream binding contracts.
+  - [x] Implement HTTP routing with streaming, authentication preservation, error handling, cancellation and bounded upstream access.
+  - [x] Expose the same namespaced service API through a standards-compliant MCP endpoint using the shared registry and schemas.
+  - [x] Publish and deploy the qualified Meta App gateway while preserving the existing HTML UI and direct service endpoints.
 - **Evidence:**
-  - [ ] Verify stable v1 requests across changed upstream addresses, path versions and request/response adaptations with actual local HTTP providers.
-  - [ ] Exercise HTTP methods, queries, bodies, files, streams, cookies, auth failures, redirects, unknown namespaces and unsafe destinations.
-  - [ ] Use a real MCP client for discovery, validation, service invocation, structured failures and HTTP/MCP parity.
-  - [ ] Pass local qualification, exact review/main CI and hosted HTTP/MCP and browser checks; retain truthful availability and compatibility boundaries.
+  - [x] Verify stable v1 requests across changed upstream addresses, path versions and request/response adaptations with actual local HTTP providers.
+  - [x] Exercise HTTP methods, queries, bodies, files, streams, cookies, auth failures, redirects, unknown namespaces and unsafe destinations.
+  - [x] Use a real MCP client for discovery, validation, service invocation, structured failures and HTTP/MCP parity.
+  - [x] Pass local qualification, exact review/main CI and hosted HTTP/MCP and browser checks; retain truthful availability and compatibility boundaries.
 
 - **Local implementation evidence:** The shared v1 contract now exposes eleven
   namespaces, catalog/OpenAPI resources and namespaced MCP tools. Eleven local
@@ -1262,3 +1262,22 @@ release-visible outcome to `CHANGELOG.md`; Git preserves prior queue states.
 - **Encoded payload follow-up:** A real MCP regression also catches gzip and
   non-UTF-8 text being decoded as UTF-8 solely from MIME type. Return those bytes
   as base64 with original headers, preserving the same wire data as HTTP.
+
+- **Completion evidence:** PRs #428 and #429 landed the gateway and response
+  fidelity corrections. All six head workflows passed before merge; all six exact-main workflows
+  pass for the deployed source `c8e057097f6c0225731864fd4adaeff28c2dd58b`.
+  [Hosted gateway observations](../../verification/meta-edge-gateway.json) bind
+  the published image digest, current receipt, schemas, 25 live observations,
+  all eleven routed service health checks, real airport/trip/weather requests,
+  real MCP calls and a gzip payload round trip containing 25 airports. Both
+  four-screen desktop/mobile inventories pass with zero residual records and
+  private-instance removal. Intentional explanation failure exits 1 as expected
+  and also leaves zero residual records and no private instance. Rendered desktop
+  and mobile captures were reviewed; all twelve service units remain active.
+- **Admission boundary:** This is retained application qualification. HTML and
+  direct service endpoints remain available. WebSocket clients use direct service
+  endpoints, MCP buffers at most 4 MiB, preflight remains a static application,
+  and NOTAM integration still awaits FAA NMS access. The deployment volume remains
+  under its 10 percent disk warning threshold; image history and shared caches
+  were preserved. Local qualification used a temporary RAM workspace while the
+  source volume lacked build headroom; the RAM workspace was removed afterward.

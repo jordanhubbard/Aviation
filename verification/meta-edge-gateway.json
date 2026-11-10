@@ -1,0 +1,333 @@
+{
+  "schema": "aviation/meta-edge-gateway-observation@1",
+  "classification": "retained-application-hosted-gateway-qualification",
+  "checked_at": "2026-11-10T18:16:53.771180+00:00",
+  "source_revision": "c8e057097f6c0225731864fd4adaeff28c2dd58b",
+  "implementation_reviews": [
+    "https://github.com/jordanhubbard/Aviation/pull/428",
+    "https://github.com/jordanhubbard/Aviation/pull/429"
+  ],
+  "published_image": {
+    "running": true,
+    "revision": "c8e057097f6c0225731864fd4adaeff28c2dd58b",
+    "image_id": "sha256:337832827e58c2157ad4f80c2efee55062aaa6e96fb48ae39d60d79d846bd72f",
+    "image_tag": "aviation/meta-app:c8e057097f6c",
+    "memory_bytes": 268435456,
+    "registry_digests": [
+      "aviation/meta-app@sha256:337832827e58c2157ad4f80c2efee55062aaa6e96fb48ae39d60d79d846bd72f",
+      "ghcr.io/jordanhubbard/meta-app@sha256:337832827e58c2157ad4f80c2efee55062aaa6e96fb48ae39d60d79d846bd72f"
+    ],
+    "observed_at": "2026-11-10T18:11:37.974384+00:00"
+  },
+  "public_endpoints": {
+    "html": "https://meta-app.jordanhubbard.net/",
+    "catalog": "https://meta-app.jordanhubbard.net/api/v1/services",
+    "openapi": "https://meta-app.jordanhubbard.net/api/v1/openapi.json",
+    "mcp": "https://meta-app.jordanhubbard.net/mcp",
+    "routing": "/api/v1/<namespace>/<service-relative-path>"
+  },
+  "contract": {
+    "version": "1.0.0",
+    "source_sha256": "856f5ceced2630e5778cc3a57ba44904d7ec333b64d0b3ce0884203a07219dad",
+    "namespaces": [
+      "accidents",
+      "chat",
+      "missions",
+      "planning",
+      "analysis",
+      "tracking",
+      "school",
+      "logbook",
+      "avionics",
+      "preflight",
+      "weather"
+    ],
+    "http_mcp_schema_parity_verified": true
+  },
+  "ci": [
+    {
+      "name": "Monorepo CI/CD",
+      "run_id": 42871433825,
+      "url": "https://github.com/jordanhubbard/Aviation/actions/runs/42871433825",
+      "conclusion": "success"
+    },
+    {
+      "name": "Integration Tests",
+      "run_id": 42871433517,
+      "url": "https://github.com/jordanhubbard/Aviation/actions/runs/42871433517",
+      "conclusion": "success"
+    },
+    {
+      "name": "Build Aviation Deployment Images",
+      "run_id": 42871433536,
+      "url": "https://github.com/jordanhubbard/Aviation/actions/runs/42871433536",
+      "conclusion": "success"
+    },
+    {
+      "name": "Dependency Scan",
+      "run_id": 42871433546,
+      "url": "https://github.com/jordanhubbard/Aviation/actions/runs/42871433546",
+      "conclusion": "success"
+    },
+    {
+      "name": "Performance Regression Check",
+      "run_id": 42871433640,
+      "url": "https://github.com/jordanhubbard/Aviation/actions/runs/42871433640",
+      "conclusion": "success"
+    },
+    {
+      "name": "Common Aviation SDK",
+      "run_id": 42871435048,
+      "url": "https://github.com/jordanhubbard/Aviation/actions/runs/42871435048",
+      "conclusion": "success"
+    }
+  ],
+  "local_qualification": {
+    "stages": [
+      "build",
+      "test",
+      "package"
+    ],
+    "tests": 637,
+    "meta_app_integration_cases": 11,
+    "candidate_identity": "sha256:764ebe07546326241ffc2eba5b596df272f439af3d0ba0d9e09629a4524795b2",
+    "receipt_identity": "sha256:a0da98bcf3f048c5c01b6ec215f983f81422f419e449bd838fb12565d04accd9",
+    "authority_locks_receipt_verified": true,
+    "temporary_ram_scratch_used": true,
+    "temporary_ram_workspace_removed": true,
+    "shared_cache_cleanup_performed": false
+  },
+  "live_observations": [
+    {
+      "path": "/",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/api/v1/services",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/api/v1/openapi.json",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/api/v1/accidents/health",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/api/v1/chat/health",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/api/v1/missions/health",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/api/v1/planning/api/health",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/api/v1/analysis/api/health",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/api/v1/tracking/health",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/api/v1/school/health",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/api/v1/logbook/health",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/api/v1/avionics/api/health",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/api/v1/preflight/",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/api/v1/weather/health",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/api/v99/services",
+      "status": 404
+    },
+    {
+      "path": "/api/unknown",
+      "status": 404
+    },
+    {
+      "path": "/api/v1/missing/health",
+      "status": 404
+    },
+    {
+      "path": "/api/v1/planning/api/airports/search?q=KDWA&limit=2",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/api/v1/planning/api/weather/KSFO",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/api/v1/weather/station?code=KSFO",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/api/v1/planning/api/plan",
+      "method": "POST",
+      "status": 200
+    },
+    {
+      "mcpTool": "v1.planning.request",
+      "path": "/api/airports/search?q=KDWA&limit=2",
+      "status": 200
+    },
+    {
+      "mcpTool": "v1.weather.request",
+      "path": "/station?code=KSFO",
+      "status": 200
+    },
+    {
+      "mcpTools": 11,
+      "mcpResources": 2,
+      "schemaParity": true
+    },
+    {
+      "mcpTool": "v1.planning.request",
+      "feature": "compressed-mapping-response",
+      "path": "/api/airports/search?q=KS&limit=25",
+      "status": 200,
+      "bodyEncoding": "base64",
+      "contentEncoding": "gzip",
+      "airports": 25
+    }
+  ],
+  "isolated_browser_inventories": [
+    {
+      "viewport": "desktop",
+      "screens": [
+        {
+          "schema": "aviation/e2e-screen-result@1",
+          "app": "meta-app",
+          "screen": "launcher",
+          "viewport": "desktop",
+          "dataMode": "stateless",
+          "result": "passed"
+        },
+        {
+          "schema": "aviation/e2e-screen-result@1",
+          "app": "meta-app",
+          "screen": "explanation",
+          "viewport": "desktop",
+          "dataMode": "sdk-mock",
+          "result": "passed"
+        },
+        {
+          "schema": "aviation/e2e-screen-result@1",
+          "app": "meta-app",
+          "screen": "settings",
+          "viewport": "desktop",
+          "dataMode": "stateless",
+          "result": "passed"
+        },
+        {
+          "schema": "aviation/e2e-screen-result@1",
+          "app": "meta-app",
+          "screen": "feedback",
+          "viewport": "desktop",
+          "dataMode": "sdk-mock",
+          "result": "passed"
+        }
+      ],
+      "residual_records": 0,
+      "private_instance_removed": true
+    },
+    {
+      "viewport": "mobile",
+      "screens": [
+        {
+          "schema": "aviation/e2e-screen-result@1",
+          "app": "meta-app",
+          "screen": "launcher",
+          "viewport": "mobile",
+          "dataMode": "stateless",
+          "result": "passed"
+        },
+        {
+          "schema": "aviation/e2e-screen-result@1",
+          "app": "meta-app",
+          "screen": "explanation",
+          "viewport": "mobile",
+          "dataMode": "sdk-mock",
+          "result": "passed"
+        },
+        {
+          "schema": "aviation/e2e-screen-result@1",
+          "app": "meta-app",
+          "screen": "settings",
+          "viewport": "mobile",
+          "dataMode": "stateless",
+          "result": "passed"
+        },
+        {
+          "schema": "aviation/e2e-screen-result@1",
+          "app": "meta-app",
+          "screen": "feedback",
+          "viewport": "mobile",
+          "dataMode": "sdk-mock",
+          "result": "passed"
+        }
+      ],
+      "residual_records": 0,
+      "private_instance_removed": true
+    }
+  ],
+  "controlled_failure_cleanup": {
+    "trigger": "explanation",
+    "expected_exit_code": 1,
+    "observed_exit_code": 1,
+    "residual_records": 0,
+    "private_instance_removed": true
+  },
+  "rendered_desktop_and_mobile_captures_reviewed": true,
+  "active_service_units": 12,
+  "other_services_redeployed": false,
+  "resource_observation": {
+    "deployment_volume_available_gib": 14.05,
+    "deployment_volume_available_percent": 9.13,
+    "disk_warning": true,
+    "meta_app_memory_limit_mib": 256,
+    "operator_cache_cleanup_performed": false
+  },
+  "boundaries": {
+    "websockets": "direct service endpoints; not part of the first HTTP gateway contract",
+    "mcp_buffer_limit_bytes": 4194304,
+    "preflight": "static application without a standalone JSON data API",
+    "NOTAM_integration": "awaiting FAA NMS access"
+  },
+  "native_component_generation": false,
+  "native_component_acceptance": false
+}
