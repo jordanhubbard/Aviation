@@ -43,3 +43,16 @@ def test_runtime_values_are_encoded_as_javascript_data(monkeypatch, client):
     response = client.get("/env.js")
     assert environment_payload(response)["VITE_OPENWEATHERMAP_API_KEY"] == value
     assert len(response.text.splitlines()) == 1
+
+
+def test_build_metadata_exposes_only_explicit_public_fields(monkeypatch, client):
+    monkeypatch.setenv("REPO_URL", "https://github.com/example/aviation")
+    monkeypatch.setenv("GIT_SHA", "public-build-revision")
+    monkeypatch.setenv("OPENCLAW_API_KEY", "private-chat-key")
+    assert client.get("/api/meta").json() == {
+        "repo_url": "https://github.com/example/aviation",
+        "revision": "public-build-revision",
+    }
+    monkeypatch.delenv("REPO_URL")
+    monkeypatch.delenv("GIT_SHA")
+    assert client.get("/api/meta").json() == {"repo_url": None, "revision": None}

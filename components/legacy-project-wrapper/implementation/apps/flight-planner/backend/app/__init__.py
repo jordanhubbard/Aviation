@@ -193,6 +193,13 @@ def create_app(settings):
         finally:
             await protocol.disconnect()
 
+    @app.get("/api/meta", include_in_schema=False)
+    def application_metadata():
+        return {
+            "repo_url": os.environ.get("REPO_URL") or None,
+            "revision": os.environ.get("GIT_SHA") or None,
+        }
+
     @app.get("/env.js", include_in_schema=False)
     def frontend_environment() -> Response:
         # Only the explicitly public tile credential belongs in browser configuration.
