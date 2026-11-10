@@ -1222,3 +1222,33 @@ release-visible outcome to `CHANGELOG.md`; Git preserves prior queue states.
   build cache before this update; image history, data and cache were preserved.
   These observations establish retained application availability, without native
   Component generation/acceptance or operational-flight approval claims.
+
+### [ ] EDGE-001 — Provide stable versioned HTTP and MCP edge gateway contracts
+
+- **Priority:** P1
+- **Owner:** Meta App public API contracts and service routing adapters
+- **Direction:** Make Meta App the edge gateway for other services and external callers, with stable versioned namespaced APIs and the same service closure through MCP, while retaining its HTML interface and direct service access.
+- **Conclusion:** The existing Meta App serves a launcher, feedback and explanation routes; it provides no aggregate service API or MCP endpoint. Own the public v1 namespace independently of upstream versions, serve a machine-readable catalog and OpenAPI contract, and share explicit routing and compatibility adapters across HTTP and MCP. API misses must never return the HTML launcher.
+- **Depends on:** none
+- **Completion prerequisites:** none
+- **Implementation:**
+  - [ ] Author the versioned public namespace, discovery, compatibility and upstream binding contracts.
+  - [ ] Implement HTTP routing with streaming, authentication preservation, error handling, cancellation and bounded upstream access.
+  - [ ] Expose the same namespaced service API through a standards-compliant MCP endpoint using the shared registry and schemas.
+  - [ ] Publish and deploy the qualified Meta App gateway while preserving the existing HTML UI and direct service endpoints.
+- **Evidence:**
+  - [ ] Verify stable v1 requests across changed upstream addresses, path versions and request/response adaptations with actual local HTTP providers.
+  - [ ] Exercise HTTP methods, queries, bodies, files, streams, cookies, auth failures, redirects, unknown namespaces and unsafe destinations.
+  - [ ] Use a real MCP client for discovery, validation, service invocation, structured failures and HTTP/MCP parity.
+  - [ ] Pass local qualification, exact review/main CI and hosted HTTP/MCP and browser checks; retain truthful availability and compatibility boundaries.
+
+- **Local implementation evidence:** The shared v1 contract now exposes eleven
+  namespaces, catalog/OpenAPI resources and namespaced MCP tools. Eleven local
+  tests pass against actual HTTP providers and a real MCP client, including
+  relocated/versioned providers with request/response field adaptation, HTTP/MCP
+  parity, binary and streaming data, credentials, cookies, redirects, path
+  validation, timeouts, cancellation and HTML/API separation. The production
+  dependency deployment imports successfully. CI now runs this gateway suite
+  after the workspace build. First-version WebSocket clients retain direct
+  endpoints; the static preflight application is explicitly identified as having
+  no standalone JSON data API. Full qualification/publication remain pending.

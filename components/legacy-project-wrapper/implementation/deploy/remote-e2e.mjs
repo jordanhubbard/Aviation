@@ -1414,6 +1414,26 @@ if (appId === 'flightschool') {
         visit: () => page.goto(baseUrl, { waitUntil: 'domcontentloaded' }),
         verify: async () => {
           await page.getByRole('heading', { name: /Aviation Suite/ }).first().waitFor();
+          const catalogResponse = await context.request.get(new URL('/api/v1/services', baseUrl).href);
+          if (!catalogResponse.ok()) throw new Error('Meta App API discovery is unavailable');
+          const catalog = await catalogResponse.json();
+          if (catalog.version !== '1.0.0' || catalog.services.length !== 11 ||
+              !catalog.services.some(service => service.namespace === 'planning' && service.mcpTool === 'v1.planning.request')) {
+            throw new Error('Meta App public gateway catalog differs from its v1 contract');
+          }
+          const openapiResponse = await context.request.get(new URL('/api/v1/openapi.json', baseUrl).href);
+          if (!openapiResponse.ok() || (await openapiResponse.json()).openapi !== '3.1.0') throw new Error('Meta App OpenAPI is unavailable');
+          const mcpResponse = await context.request.post(new URL('/mcp', baseUrl).href, {
+            headers: { 'Content-Type': 'application/json', Accept: 'application/json, text/event-stream' },
+            data: { jsonrpc: '2.0', id: 1, method: 'tools/list', params: {} },
+          });
+          const mcpText = await mcpResponse.text();
+          const mcpJson = JSON.parse(mcpText.startsWith('event:') || mcpText.startsWith('data:')
+            ? mcpText.split('\n').find(line => line.startsWith('data:')).slice(5).trim() : mcpText);
+          if (!mcpResponse.ok() || mcpJson.result?.tools?.length !== 11 ||
+              !mcpJson.result.tools.some(tool => tool.name === 'v1.planning.request')) throw new Error('Meta App MCP discovery differs from its v1 catalog');
+          const missingApi = await context.request.get(new URL('/api/v2/services', baseUrl).href);
+          if (missingApi.status() !== 404 || !(missingApi.headers()['content-type'] || '').includes('application/json')) throw new Error('Unknown Meta App API must return a JSON 404');
           const links = await page.locator('.launcher-card-cta[href]').evaluateAll(elements =>
             elements.map(element => element.getAttribute('href')));
           const missing = expected.filter(url => !links.includes(url));

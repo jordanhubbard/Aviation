@@ -1,0 +1,184 @@
+{
+  "version": "1.0.0",
+  "apiVersion": "v1",
+  "compatibility": "Public v1 paths and semantics are stable. Upstream moves and version changes require gateway binding/adapter updates and conformance checks. Breaking public changes require a new major namespace. Direct service endpoints remain available.",
+  "services": [
+    {
+      "namespace": "accidents",
+      "app": "aviation-accident-tracker",
+      "http": "/api/v1/accidents",
+      "mcpTool": "v1.accidents.request",
+      "direct": "https://aviation-accident-tracker.jordanhubbard.net",
+      "description": "Accident search, classification, provenance and export.",
+      "healthPath": "/health"
+    },
+    {
+      "namespace": "chat",
+      "app": "aviation-chat",
+      "http": "/api/v1/chat",
+      "mcpTool": "v1.chat.request",
+      "direct": "https://aviation-chat.jordanhubbard.net",
+      "description": "Aviation chat API.",
+      "healthPath": "/health"
+    },
+    {
+      "namespace": "missions",
+      "app": "aviation-missions-app",
+      "http": "/api/v1/missions",
+      "mcpTool": "v1.missions.request",
+      "direct": "https://aviation-missions-app.jordanhubbard.net",
+      "description": "Training missions, search, submissions and review.",
+      "healthPath": "/health"
+    },
+    {
+      "namespace": "planning",
+      "app": "flight-planner",
+      "http": "/api/v1/planning",
+      "mcpTool": "v1.planning.request",
+      "direct": "https://flight-planner.jordanhubbard.net",
+      "description": "Flight planning, airport/navigation mapping data, terrain, weather and saved plans.",
+      "healthPath": "/api/health"
+    },
+    {
+      "namespace": "analysis",
+      "app": "flight-track-analyzer",
+      "http": "/api/v1/analysis",
+      "mcpTool": "v1.analysis.request",
+      "direct": "https://kmlab.jordanhubbard.net",
+      "description": "Flight track upload, analysis and performance summaries.",
+      "healthPath": "/api/health"
+    },
+    {
+      "namespace": "tracking",
+      "app": "flight-tracker",
+      "http": "/api/v1/tracking",
+      "mcpTool": "v1.tracking.request",
+      "direct": "https://flight-tracker.jordanhubbard.net",
+      "description": "Live aircraft tracking API.",
+      "healthPath": "/health"
+    },
+    {
+      "namespace": "school",
+      "app": "flightschool",
+      "http": "/api/v1/school",
+      "mcpTool": "v1.school.request",
+      "direct": "https://flightschool.jordanhubbard.net",
+      "description": "Flight school management and training APIs.",
+      "healthPath": "/health"
+    },
+    {
+      "namespace": "logbook",
+      "app": "foreflight-dashboard",
+      "http": "/api/v1/logbook",
+      "mcpTool": "v1.logbook.request",
+      "direct": "https://foreflight-dashboard.jordanhubbard.net",
+      "description": "ForeFlight logbook upload, search and dashboards.",
+      "healthPath": "/health"
+    },
+    {
+      "namespace": "avionics",
+      "app": "g1000-simulator",
+      "http": "/api/v1/avionics",
+      "mcpTool": "v1.avionics.request",
+      "direct": "https://g1000-simulator.jordanhubbard.net",
+      "description": "G1000 simulator configuration and instrument data.",
+      "healthPath": "/api/health"
+    },
+    {
+      "namespace": "preflight",
+      "app": "preflight-check",
+      "http": "/api/v1/preflight",
+      "mcpTool": "v1.preflight.request",
+      "direct": "https://preflight-check.jordanhubbard.net",
+      "description": "Static preflight application; currently has no standalone JSON data API.",
+      "healthPath": "/"
+    },
+    {
+      "namespace": "weather",
+      "app": "weather-briefing",
+      "http": "/api/v1/weather",
+      "mcpTool": "v1.weather.request",
+      "direct": "https://weather-briefing.jordanhubbard.net",
+      "description": "Weather station lookup, METAR/TAF and briefing APIs.",
+      "healthPath": "/health"
+    }
+  ],
+  "requestSchema": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+      "path"
+    ],
+    "properties": {
+      "path": {
+        "type": "string",
+        "pattern": "^/",
+        "description": "Stable service-relative path, including its /api prefix when present. Query string may be included."
+      },
+      "method": {
+        "type": "string",
+        "enum": [
+          "GET",
+          "HEAD",
+          "POST",
+          "PUT",
+          "PATCH",
+          "DELETE",
+          "OPTIONS"
+        ],
+        "default": "GET"
+      },
+      "headers": {
+        "type": "object",
+        "additionalProperties": {
+          "type": "string"
+        },
+        "description": "Explicit upstream credentials/headers. MCP transport credentials are never inherited."
+      },
+      "body": {
+        "type": "string",
+        "description": "UTF-8 request body; set Content-Type explicitly."
+      },
+      "body_base64": {
+        "type": "string",
+        "description": "Binary request body, mutually exclusive with body.",
+        "pattern": "^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$"
+      }
+    },
+    "not": {
+      "required": [
+        "body",
+        "body_base64"
+      ]
+    }
+  },
+  "responseSchema": {
+    "type": "object",
+    "required": [
+      "status",
+      "headers",
+      "body",
+      "bodyEncoding"
+    ],
+    "properties": {
+      "status": {
+        "type": "integer"
+      },
+      "headers": {
+        "type": "object",
+        "additionalProperties": {
+          "type": "string"
+        }
+      },
+      "body": {
+        "type": "string"
+      },
+      "bodyEncoding": {
+        "enum": [
+          "utf8",
+          "base64"
+        ]
+      }
+    }
+  }
+}

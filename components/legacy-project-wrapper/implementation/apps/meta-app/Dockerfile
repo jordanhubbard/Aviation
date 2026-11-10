@@ -29,14 +29,12 @@ ENV VITE_META_APP_MODE=${VITE_META_APP_MODE}
 
 RUN pnpm install --frozen-lockfile --filter @aviation/meta-app...
 RUN pnpm --filter @aviation/meta-app... run build
-RUN pnpm --config.node-linker=hoisted --filter @aviation/ai-explainer deploy --legacy --prod /runtime/explanation
+RUN pnpm --config.node-linker=hoisted --filter @aviation/meta-app deploy --legacy --prod /runtime/meta-app
 
 FROM node:${NODE_VERSION}-alpine AS production
 
 WORKDIR /app
-COPY apps/meta-app/server.mjs ./server.mjs
-COPY --from=build /app/apps/meta-app/dist ./dist
-COPY --from=build /runtime/explanation ./node_modules/@aviation/ai-explainer
+COPY --from=build /runtime/meta-app ./
 
 EXPOSE 8080
 USER node

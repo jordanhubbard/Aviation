@@ -1,9 +1,11 @@
 import { createServer } from 'node:http';
+import { createGateway, sendJson } from './gateway.mjs';
+const gateway = createGateway();
 import { createExplanationRuntime } from '@aviation/ai-explainer';
 import { readFile, stat } from 'node:fs/promises';
 import { resolve, join, extname, sep } from 'node:path';
 
-const root = resolve('/app/dist');
+const root = resolve(process.env.META_APP_DIST || '/app/dist');
 const port = Number(process.env.PORT || 8080);
 const explanation = createExplanationRuntime('meta-app');
 const apps = new Set([
@@ -64,15 +66,19 @@ async function serveStatic(pathname, res) {
     if (!(await stat(target)).isFile()) target = join(root, 'index.html');
   } catch { target = join(root, 'index.html'); }
   const type = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.svg': 'image/svg+xml' }[extname(target)] || 'application/octet-stream';
+  const bytes = await readFile(target);
   res.writeHead(200, { 'Content-Type': `${type}; charset=utf-8`, 'X-Content-Type-Options': 'nosniff' });
-  res.end(await readFile(target));
+  res.end(bytes);
 }
 
-export function handler(req, res) {
+export async function handler(req, res) {
+  try { if (await gateway.handle(req, res)) return; }
+  catch { if (!res.headersSent) sendJson(res, 500, { error: { code: 'gateway_error' } }); else res.destroy(); return; }
   if (explanation.handle(req, res)) return;
   const pathname = new URL(req.url, 'http://localhost').pathname;
   if (pathname !== '/api/feedback') {
-    void serveStatic(pathname, res).catch(() => { res.writeHead(500); res.end(); });
+    if (pathname === '/api' || pathname.startsWith('/api/') || pathname.startsWith('/mcp/')) { sendJson(res, 404, { error: { code: 'unknown_api_route' } }); return; }
+    void serveStatic(pathname, res).catch(() => { if (!res.headersSent) res.writeHead(500); res.end(); });
     return;
   }
   const origin = req.headers.origin;
@@ -105,7 +111,7 @@ export function handler(req, res) {
 
 if (process.argv[1] === new URL(import.meta.url).pathname) {
   const server = createServer(handler);
-  server.once('close', () => explanation.close());
+  server.once('close', () => { explanation.close(); void gateway.close(); });
   const stop = () => { explanation.close(); server.close(); };
   process.once('SIGTERM', stop); process.once('SIGINT', stop);
   server.listen(port);

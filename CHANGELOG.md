@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- Meta App: add a versioned HTTP edge gateway, service catalog, OpenAPI and MCP
+  tools over the service namespaces. Keep public routing independent of upstream
+  addresses and versions through reviewed bindings and compatibility adapters.
+  The HTML launcher and direct service URLs remain available.
+
 - Hosted Flight Planner: enable current weather and all four map overlays, deploy
   the airport/terrain repairs, and verify live planning and weather on desktop and
   mobile. NOTAM integration still awaits provider access.
