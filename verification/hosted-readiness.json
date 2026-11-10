@@ -1,0 +1,387 @@
+{
+  "classification": "retained-application-hosted-readiness-observation",
+  "checked_at": "2026-11-10T16:45:15.767482+00:00",
+  "source_revision": "3d36f2efb187e9e2a0c292071e7bc5aec265960d",
+  "published_image": {
+    "revision": "3d36f2efb187e9e2a0c292071e7bc5aec265960d",
+    "running": true,
+    "image_id": "sha256:a5f34369af371329ad68e82500f6cf172c4a0434ba49863d7dd9abc509adb7e5",
+    "local_tag": "aviation/flight-planner:3d36f2efb187",
+    "registry_digests": [
+      "aviation/flight-planner@sha256:a5f34369af371329ad68e82500f6cf172c4a0434ba49863d7dd9abc509adb7e5",
+      "ghcr.io/jordanhubbard/flightplanner@sha256:a5f34369af371329ad68e82500f6cf172c4a0434ba49863d7dd9abc509adb7e5"
+    ],
+    "observed_at": "2026-11-10T16:44:51.829454+00:00"
+  },
+  "native_component_generation": false,
+  "native_component_acceptance": false,
+  "retained_test_receipt": "sha256:50ce2885d2b3846e42bb86895e734abb39f1991497f9f52fe4b09a1ccbe2c3c0",
+  "project_authority_locks_receipt_verified": true,
+  "ci": [
+    {
+      "name": "Monorepo CI/CD",
+      "run_id": 42856180481,
+      "url": "https://github.com/jordanhubbard/Aviation/actions/runs/42856180481",
+      "conclusion": "success"
+    },
+    {
+      "name": "Integration Tests",
+      "run_id": 42856180656,
+      "url": "https://github.com/jordanhubbard/Aviation/actions/runs/42856180656",
+      "conclusion": "success"
+    },
+    {
+      "name": "Build Aviation Deployment Images",
+      "run_id": 42856180657,
+      "url": "https://github.com/jordanhubbard/Aviation/actions/runs/42856180657",
+      "conclusion": "success"
+    },
+    {
+      "name": "Dependency Scan",
+      "run_id": 42856180428,
+      "url": "https://github.com/jordanhubbard/Aviation/actions/runs/42856180428",
+      "conclusion": "success"
+    },
+    {
+      "name": "Performance Regression Check",
+      "run_id": 42856180516,
+      "url": "https://github.com/jordanhubbard/Aviation/actions/runs/42856180516",
+      "conclusion": "success"
+    },
+    {
+      "name": "Common Aviation SDK",
+      "run_id": 42856308329,
+      "url": "https://github.com/jordanhubbard/Aviation/actions/runs/42856308329",
+      "conclusion": "success"
+    }
+  ],
+  "live_api_observations": [
+    {
+      "app": "aviation-accident-tracker",
+      "status": 200
+    },
+    {
+      "app": "aviation-chat",
+      "status": 200
+    },
+    {
+      "app": "aviation-missions-app",
+      "status": 200
+    },
+    {
+      "app": "flight-planner",
+      "status": 200
+    },
+    {
+      "app": "flight-track-analyzer",
+      "status": 200
+    },
+    {
+      "app": "flight-tracker",
+      "status": 200
+    },
+    {
+      "app": "flightschool",
+      "status": 200
+    },
+    {
+      "app": "foreflight-dashboard",
+      "status": 200
+    },
+    {
+      "app": "g1000-simulator",
+      "status": 200
+    },
+    {
+      "app": "meta-app",
+      "status": 200
+    },
+    {
+      "app": "preflight-check",
+      "status": 200
+    },
+    {
+      "app": "weather-briefing",
+      "status": 200
+    },
+    {
+      "feature": "runtime-overlay-configuration",
+      "status": 200,
+      "keyConfigured": true,
+      "allowlistOnly": true,
+      "cacheControl": "no-store"
+    },
+    {
+      "feature": "current-weather",
+      "status": 200,
+      "conditions": "mist",
+      "temperatureF": 61.0
+    },
+    {
+      "feature": "forecast",
+      "status": 200,
+      "days": 7
+    },
+    {
+      "feature": "route-weather",
+      "status": 200,
+      "points": 3
+    },
+    {
+      "feature": "basic-route",
+      "status": 200,
+      "route": [
+        "KSFO",
+        "KSAC"
+      ],
+      "distanceNm": 67.9,
+      "groundspeed": null
+    },
+    {
+      "feature": "terrain-and-wind-route",
+      "status": 200,
+      "route": [
+        "KDWA",
+        "KPAO"
+      ],
+      "distanceNm": 68.2,
+      "groundspeed": 108.6
+    },
+    {
+      "feature": "local-plan",
+      "status": 200,
+      "airports": 25
+    },
+    {
+      "feature": "airport-search",
+      "status": 200,
+      "firstCode": "KDWA"
+    },
+    {
+      "feature": "METAR",
+      "status": 200,
+      "report": "METAR KSFO 101556Z 00000KT 10SM FEW005 16/14 A3021 RMK AO2 SLP230 T01560139"
+    },
+    {
+      "feature": "briefing",
+      "status": 200,
+      "NOTAMsPendingFAAAccess": true
+    }
+  ],
+  "live_browser_observations": [
+    {
+      "viewport": "desktop",
+      "route": "KDWA-KPAO",
+      "terrain": true,
+      "wind": true,
+      "overlay_layers": [
+        "clouds_new",
+        "precipitation_new",
+        "temp_new",
+        "wind_new"
+      ],
+      "successful_tile_responses": 42,
+      "http_failures": 0,
+      "console_errors": 0,
+      "request_failures": 0,
+      "document_overflow": false
+    },
+    {
+      "viewport": "mobile",
+      "route": "KDWA-KPAO",
+      "terrain": true,
+      "wind": true,
+      "overlay_layers": [
+        "clouds_new",
+        "precipitation_new",
+        "temp_new",
+        "wind_new"
+      ],
+      "successful_tile_responses": 27,
+      "http_failures": 0,
+      "console_errors": 0,
+      "request_failures": 0,
+      "document_overflow": false
+    }
+  ],
+  "isolated_browser_inventories": [
+    {
+      "viewport": "desktop",
+      "screens": [
+        {
+          "schema": "aviation/e2e-screen-result@1",
+          "app": "flight-planner",
+          "screen": "planner",
+          "viewport": "desktop",
+          "dataMode": "sdk-mock",
+          "result": "passed"
+        },
+        {
+          "schema": "aviation/e2e-screen-result@1",
+          "app": "flight-planner",
+          "screen": "import-export",
+          "viewport": "desktop",
+          "dataMode": "isolated-browser",
+          "result": "passed"
+        },
+        {
+          "schema": "aviation/e2e-screen-result@1",
+          "app": "flight-planner",
+          "screen": "saved-plan",
+          "viewport": "desktop",
+          "dataMode": "tagged-database",
+          "result": "passed"
+        },
+        {
+          "schema": "aviation/e2e-screen-result@1",
+          "app": "flight-planner",
+          "screen": "route-results",
+          "viewport": "desktop",
+          "dataMode": "sdk-mock",
+          "result": "passed"
+        },
+        {
+          "schema": "aviation/e2e-screen-result@1",
+          "app": "flight-planner",
+          "screen": "explanation",
+          "viewport": "desktop",
+          "dataMode": "sdk-mock",
+          "result": "passed"
+        },
+        {
+          "schema": "aviation/e2e-screen-result@1",
+          "app": "flight-planner",
+          "screen": "local-results",
+          "viewport": "desktop",
+          "dataMode": "sdk-mock",
+          "result": "passed"
+        },
+        {
+          "schema": "aviation/e2e-screen-result@1",
+          "app": "flight-planner",
+          "screen": "weather",
+          "viewport": "desktop",
+          "dataMode": "sdk-mock",
+          "result": "passed"
+        },
+        {
+          "schema": "aviation/e2e-screen-result@1",
+          "app": "flight-planner",
+          "screen": "airports",
+          "viewport": "desktop",
+          "dataMode": "sdk-mock",
+          "result": "passed"
+        },
+        {
+          "schema": "aviation/e2e-screen-result@1",
+          "app": "flight-planner",
+          "screen": "feedback",
+          "viewport": "desktop",
+          "dataMode": "sdk-mock",
+          "result": "passed"
+        }
+      ],
+      "residual_records": 0,
+      "private_instance_removed": true
+    },
+    {
+      "viewport": "mobile",
+      "screens": [
+        {
+          "schema": "aviation/e2e-screen-result@1",
+          "app": "flight-planner",
+          "screen": "planner",
+          "viewport": "mobile",
+          "dataMode": "sdk-mock",
+          "result": "passed"
+        },
+        {
+          "schema": "aviation/e2e-screen-result@1",
+          "app": "flight-planner",
+          "screen": "import-export",
+          "viewport": "mobile",
+          "dataMode": "isolated-browser",
+          "result": "passed"
+        },
+        {
+          "schema": "aviation/e2e-screen-result@1",
+          "app": "flight-planner",
+          "screen": "saved-plan",
+          "viewport": "mobile",
+          "dataMode": "tagged-database",
+          "result": "passed"
+        },
+        {
+          "schema": "aviation/e2e-screen-result@1",
+          "app": "flight-planner",
+          "screen": "route-results",
+          "viewport": "mobile",
+          "dataMode": "sdk-mock",
+          "result": "passed"
+        },
+        {
+          "schema": "aviation/e2e-screen-result@1",
+          "app": "flight-planner",
+          "screen": "explanation",
+          "viewport": "mobile",
+          "dataMode": "sdk-mock",
+          "result": "passed"
+        },
+        {
+          "schema": "aviation/e2e-screen-result@1",
+          "app": "flight-planner",
+          "screen": "local-results",
+          "viewport": "mobile",
+          "dataMode": "sdk-mock",
+          "result": "passed"
+        },
+        {
+          "schema": "aviation/e2e-screen-result@1",
+          "app": "flight-planner",
+          "screen": "weather",
+          "viewport": "mobile",
+          "dataMode": "sdk-mock",
+          "result": "passed"
+        },
+        {
+          "schema": "aviation/e2e-screen-result@1",
+          "app": "flight-planner",
+          "screen": "airports",
+          "viewport": "mobile",
+          "dataMode": "sdk-mock",
+          "result": "passed"
+        },
+        {
+          "schema": "aviation/e2e-screen-result@1",
+          "app": "flight-planner",
+          "screen": "feedback",
+          "viewport": "mobile",
+          "dataMode": "sdk-mock",
+          "result": "passed"
+        }
+      ],
+      "residual_records": 0,
+      "private_instance_removed": true
+    }
+  ],
+  "controlled_failure_cleanup": {
+    "trigger": "explanation",
+    "expected_nonzero_exit": true,
+    "residual_records": 0,
+    "private_instance_removed": true
+  },
+  "active_deployment_service_units": 12,
+  "resource_observation": {
+    "deployment_volume_available_gib": 14.26,
+    "deployment_volume_available_percent": 9.26,
+    "disk_warning": true,
+    "observed_at": "2026-11-10T16:49:30.373663+00:00",
+    "operator_cache_cleanup_performed": false,
+    "docker_reported_reclaimable_images_gb_before_update": 5.28,
+    "docker_reported_reclaimable_build_cache_gb_before_update": 0.9977,
+    "note": "Image history and cache are preserved; shared image layers prevent adding per-image sizes as a reclaim estimate."
+  },
+  "remaining_dependency": {
+    "NOTAM_integration": "awaiting FAA NMS access"
+  }
+}
