@@ -82,7 +82,17 @@ test('unsafe paths and destinations fail before any upstream request; timeouts b
   const oversized = await gateway.invoke('planning', { path: '/large' }); assert.equal(oversized.status, 502); assert.match(oversized.body, /response_too_large/);
 });
 test('public v1 stays stable across relocated/versioned upstream and response adaptation', async t => {
+  const oldOrigin = await listen(t, async (req, res) => {
+    assert.equal(req.url, '/api/items');
+    const chunks = []; for await (const chunk of req) chunks.push(chunk);
+    sendJson(res, 200, { value: req.method === 'POST' ? JSON.parse(Buffer.concat(chunks)).value : 42 });
+  });
+  const oldGateway = createGateway({ bindings: { planning: { origin: oldOrigin } } }); t.after(() => oldGateway.close());
+  const oldEdge = await listen(t, (req, res) => oldGateway.handle(req, res));
+  const baselineGet = await (await fetch(oldEdge + '/api/v1/planning/api/items')).json();
+  const baselinePost = await (await fetch(oldEdge + '/api/v1/planning/api/items', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ value: 81 }) })).json();
   const { origin } = await fixture(t);
+  assert.notEqual(origin, oldOrigin);
   const gateway = createGateway({ bindings: { planning: { origin, basePath: '/new', adapter: 'provider-v2' } }, adapters: {
     'provider-v2': { request: async request => {
       let body = request.body;
@@ -94,8 +104,8 @@ test('public v1 stays stable across relocated/versioned upstream and response ad
     }, response: bytes => JSON.stringify({ value: JSON.parse(bytes).renamed }) },
   } }); t.after(() => gateway.close());
   const edge = await listen(t, async (req, res) => gateway.handle(req, res));
-  const response = await fetch(edge + '/api/v1/planning/api/items'); assert.deepEqual(await response.json(), { value: 42 });
-  const post = await fetch(edge + '/api/v1/planning/api/items', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ value: 81 }) }); assert.deepEqual(await post.json(), { value: 81 });
+  const response = await fetch(edge + '/api/v1/planning/api/items'); assert.deepEqual(await response.json(), baselineGet);
+  const post = await fetch(edge + '/api/v1/planning/api/items', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ value: 81 }) }); assert.deepEqual(await post.json(), baselinePost);
   const client = new Client({ name: 'adapter-conformance', version: '1.0.0' });
   await client.connect(new StreamableHTTPClientTransport(new URL(edge + '/mcp'))); t.after(() => client.close());
   const tool = await client.callTool({ name: 'v1.planning.request', arguments: { path: '/api/items', method: 'POST', body: JSON.stringify({ value: 42 }), headers: { 'content-type': 'application/json' } } }); assert.equal(tool.structuredContent.status, 200); assert.deepEqual(JSON.parse(tool.structuredContent.body), { value: 42 });
