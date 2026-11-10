@@ -1,4 +1,5 @@
 import test from 'node:test';
+import { gzipSync, gunzipSync } from 'node:zlib';
 import { mkdtemp, writeFile, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -17,8 +18,12 @@ async function fixture(t, options = {}) {
   const origin = await listen(t, async (req, res) => {
     const chunks = []; for await (const chunk of req) chunks.push(chunk);
     const body = Buffer.concat(chunks); calls.push({ url: req.url, method: req.method, headers: req.headers, body });
+    if (req.url === '/api/auth-html') { res.writeHead(401, { 'content-type': 'text/html' }); res.end('<html>Authentication required</html>'); return; }
+    if (req.url === '/api/login-redirect') { res.writeHead(302, { 'content-type': 'text/html', location: '/login' }); res.end('<html>Sign in</html>'); return; }
     if (req.url === '/api/spa-miss') { res.writeHead(200, { 'content-type': 'text/html' }); res.end('<html>launcher</html>'); return; }
     if (req.url === '/slow') { setTimeout(() => res.end('late'), 150).unref(); return; }
+    if (req.url === '/compressed') { res.writeHead(200, { 'content-type': 'application/json', 'content-encoding': 'gzip' }); res.end(gzipSync(JSON.stringify({ value: 42 }))); return; }
+    if (req.url === '/legacy-text') { res.writeHead(200, { 'content-type': 'text/plain; charset=iso-8859-1' }); res.end(Buffer.from([0xe9])); return; }
     if (req.url === '/binary') { res.writeHead(200, { 'content-type': 'application/octet-stream' }); res.end(body.length ? body : Buffer.from([0, 255, 17])); return; }
     if (req.url === '/redirect') { res.writeHead(302, { location: '/api/items?x=1' }); res.end(); return; }
     if (req.url === '/cookie') { res.writeHead(200, { 'set-cookie': ['session=private; Domain=upstream.invalid; Path=/; Secure; HttpOnly'] }); res.end(); return; }
@@ -47,7 +52,9 @@ test('HTTP discovery owns versioned namespaces and structured API misses', async
 });
 test('HTTP retains verbs, query, JSON, binary, upstream status and streaming', async t => {
   const { edge, calls } = await fixture(t);
-  assert.equal((await fetch(edge + '/api/v1/planning/api/spa-miss')).status, 502);
+  const nativeHtml = await fetch(edge + '/api/v1/planning/api/spa-miss'); assert.equal(nativeHtml.status, 200); assert.match(await nativeHtml.text(), /launcher/);
+  assert.equal((await fetch(edge + '/api/v1/planning/api/auth-html')).status, 401);
+  const login = await fetch(edge + '/api/v1/planning/api/login-redirect', { redirect: 'manual' }); assert.equal(login.status, 302); assert.equal(login.headers.get('location'), '/api/v1/planning/login');
   const response = await fetch(edge + '/api/v1/planning/api/items?a=1&a=2', { method: 'PATCH', headers: { 'content-type': 'application/json', authorization: 'Bearer child', 'x-forwarded-for': 'spoof' }, body: '{"x":1}' });
   assert.deepEqual(await response.json(), { path: '/api/items?a=1&a=2', method: 'PATCH', body: '{"x":1}', auth: 'Bearer child', cookie: null });
   assert.equal(calls.at(-1).headers['x-forwarded-for'], undefined);
@@ -124,11 +131,19 @@ test('real MCP client discovers matching schemas/resources and invokes same serv
   const authorized = await client.callTool({ name: tool.name, arguments: { path: '/protected', headers: { authorization: 'Bearer child', cookie: 'session=explicit-child' } } });
   assert.equal(calls.at(-1).headers.cookie, 'session=explicit-child');
   assert.equal(authorized.isError, false); assert.equal(authorized.structuredContent.status, 200);
+  const htmlError = await client.callTool({ name: tool.name, arguments: { path: '/api/auth-html' } });
+  assert.equal(htmlError.isError, true); assert.equal(htmlError.structuredContent.status, 401); assert.match(htmlError.structuredContent.body, /Authentication required/);
+  const htmlRedirect = await client.callTool({ name: tool.name, arguments: { path: '/api/login-redirect' } });
+  assert.equal(htmlRedirect.structuredContent.status, 302); assert.equal(htmlRedirect.structuredContent.headers.location, '/api/v1/planning/login');
   const count = calls.length;
   try { const invalid = await client.callTool({ name: tool.name, arguments: { path: '/echo', method: 'INVALID' } }); assert.equal(invalid.isError, true); } catch (error) { assert.match(error.message, /valid|schema|method|enum/i); }
   assert.equal(calls.length, count);
   const binary = await client.callTool({ name: tool.name, arguments: { path: '/binary' } });
   assert.equal(binary.structuredContent.bodyEncoding, 'base64'); assert.deepEqual(Buffer.from(binary.structuredContent.body, 'base64'), Buffer.from([0, 255, 17]));
+  const compressed = await client.callTool({ name: tool.name, arguments: { path: '/compressed', headers: { 'accept-encoding': 'gzip' } } });
+  assert.equal(compressed.structuredContent.bodyEncoding, 'base64'); assert.deepEqual(JSON.parse(gunzipSync(Buffer.from(compressed.structuredContent.body, 'base64'))), { value: 42 });
+  const legacyText = await client.callTool({ name: tool.name, arguments: { path: '/legacy-text' } });
+  assert.equal(legacyText.structuredContent.bodyEncoding, 'base64'); assert.deepEqual(Buffer.from(legacyText.structuredContent.body, 'base64'), Buffer.from([0xe9]));
   assert.equal((await fetch(edge + '/mcp', { method: 'POST', headers: { origin: 'https://attacker.invalid' }, body: '{}' })).status, 403);
 });
 

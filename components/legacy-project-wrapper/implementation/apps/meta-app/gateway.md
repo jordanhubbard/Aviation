@@ -9,11 +9,16 @@ A service-relative path follows the namespace, retaining the service's current
 API prefix. For example POST `/api/v1/planning/api/plan` forwards to the planner's
 `/api/plan`; GET `/api/v1/weather/briefing` forwards to weather briefing. HTTP
 preserves methods, query strings, raw bodies, response status and streaming.
-Unknown versions/namespaces return JSON errors; they never fall through to HTML.
+Unknown Meta App versions/namespaces return JSON errors; they never fall through
+to the launcher. A known namespace preserves upstream status/content types,
+including HTML authentication failures or redirects; MIME type alone is not a
+service error.
 
 `/mcp` exposes Streamable HTTP MCP tools `v1.<namespace>.request` and readable
 catalog/OpenAPI resources. Each tool uses the same service path and explicit
 headers/body; responses contain status, headers and a UTF-8 or base64 body.
+Compressed responses and text that is not valid UTF-8 use base64 so callers can
+recover the original bytes and apply the declared content encoding/charset.
 MCP buffers at most 4 MiB; use HTTP for streaming or larger downloads. Tool
 validation precedes upstream execution. Transport cookies and Authorization
 never become service credentials. Upstream failures retain status and structured
