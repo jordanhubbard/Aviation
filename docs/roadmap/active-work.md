@@ -1097,7 +1097,7 @@ release-visible outcome to `CHANGELOG.md`; Git preserves prior queue states.
 ### [ ] PLAN-001 — Repair VFR form and route terrain requests
 
 - **GitHub issue:** [#421](https://github.com/jordanhubbard/Aviation/issues/421)
-- **Next action:** push the qualified repair and check its review-branch CI (in progress).
+- **Next action:** complete the hosted deployment inventory and record the live terrain-aware route result (in progress).
 
 - **Priority:** P1
 - **Owner:** retained Flight Planner application and aviation.airports Component
@@ -1111,7 +1111,7 @@ release-visible outcome to `CHANGELOG.md`; Git preserves prior queue states.
   - [x] Make exact ICAO/IATA identities take precedence over K-prefix aliases in both SDK bindings; cache only the requested identity.
 - **Evidence:**
   - [x] Regressions cover VFR form submission without procedure lookups, large terrain profiles, batch boundaries, missing values, empty input, and provider errors.
-  - [ ] Run Flight Planner frontend/backend tests and builds, retained-source authority and full test receipt checks, then push a review branch with CI evidence.
+  - [x] Run Flight Planner frontend/backend tests and builds, retained-source authority and full test receipt checks, then push a review branch with CI evidence.
 
 - **Local evidence:** Flight Planner passes 208 backend tests and 13 frontend tests;
   frontend production build and lint pass. Desktop (1280px) and mobile (390px)
@@ -1142,3 +1142,35 @@ release-visible outcome to `CHANGELOG.md`; Git preserves prior queue states.
   `litai verify` passes authority, all twenty committed locks, and receipt currency.
   This is retained-source qualification, without native Component generation or
   acceptance claims. Production publication remains separate from this repair.
+
+### [ ] OPS-001 — Verify hosted mapping, planning, and weather readiness
+
+- **Priority:** P1
+- **Owner:** Aviation deployment and retained Flight Planner
+- **Direction:** Configure existing weather access, deploy the merged planning repairs, and verify hosted capabilities.
+- **Conclusion:** The planning repair is merged and exact-main CI passes. The weather credential passes current-condition and overlay provider probes. The deployment inventory still expected the removed instrument-procedure selector; assert its absence and reject procedure fetches instead. The combined hosted image serves an empty static runtime configuration; add an allowlisted, uncached configuration response so explicitly configured browser weather overlays work. NOTAM integration remains pending external access and is outside this deployment.
+- **Depends on:** none
+- **Completion prerequisites:** none
+- **Implementation:**
+  - [x] Install the existing weather credential in the protected runtime environment without exposing its value.
+  - [ ] Deploy the exact published planning repair image through the declared deployment gate.
+  - [ ] Serve explicitly configured browser weather access through the combined hosted runtime, with no unrelated server configuration exposed.
+- **Evidence:**
+  - [ ] Verify current weather, forecasts, METAR briefings, base maps, overlays, and terrain-aware route planning with live data.
+  - [ ] Run the deployment browser and isolated application inventories, including mobile coverage, and record remaining limitations.
+
+- **Deployment checkpoint:** PR #424 is merged at `ee8f9cdc73984fca8c05bf9b6969e89c83079414`.
+  All six exact-main application workflows passed, including thirteen image-build
+  jobs. The installed planner now returns current weather and a terrain-aware,
+  wind-adjusted KDWA-to-KPAO plan at 68.2 NM. The original deployment inventory
+  failed on its obsolete procedure-selector expectation and removed its owned
+  fixtures. The corrected inventory passes all nine desktop flows with zero
+  explanation records and removal of its private container and storage.
+- **Overlay repair checks:** All 211 planner backend tests, 13 frontend tests,
+  frontend lint/build, MAC contract validation and deployment unit tests pass.
+  The two Docker-dependent deployment tests remain outside the portable run.
+  Full retained build/test/package qualification passes with candidate
+  `sha256:543cb6ab67eb7c89f8b721d8a24472dcc55e6a678d12b6797e52f9921298ffee`.
+  The current receipt is
+  `sha256:419756b6e890252a3b38d9778a509c7c0d348a66f735025de216ad47587f0990`.
+  Exact published-image verification remains pending.

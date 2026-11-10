@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Flight Planner: load weather map overlay configuration from the hosted runtime,
+  keeping server credentials private and browser configuration uncached. Align the
+  deployed browser inventory with the VFR form without instrument procedures.
+
 - Aviation airport SDK: prefer exact airport codes over prefix aliases and keep
   cached aliases from selecting a different airport on a later lookup.
 

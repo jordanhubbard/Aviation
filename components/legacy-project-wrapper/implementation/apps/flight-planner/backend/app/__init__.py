@@ -1,8 +1,10 @@
 # Initialize the backend application
+import json
+import os
 from pathlib import Path
 
 from fastapi import FastAPI, Request
-from fastapi.responses import FileResponse, JSONResponse
+from fastapi.responses import FileResponse, JSONResponse, Response
 from aviation.e2e import verify_e2e_headers
 from .e2e import RUN_ID as E2E_RUN_ID, SECRET as E2E_SECRET
 from fastapi.staticfiles import StaticFiles
@@ -190,6 +192,18 @@ def create_app(settings):
             print(f"Commands WebSocket error: {e}")
         finally:
             await protocol.disconnect()
+
+    @app.get("/env.js", include_in_schema=False)
+    def frontend_environment() -> Response:
+        # Only the explicitly public tile credential belongs in browser configuration.
+        public_env = {
+            "VITE_OPENWEATHERMAP_API_KEY": os.environ.get("VITE_OPENWEATHERMAP_API_KEY", ""),
+        }
+        return Response(
+            "window.__ENV__ = " + json.dumps(public_env) + ";\n",
+            media_type="application/javascript",
+            headers={"Cache-Control": "no-store"},
+        )
 
     static_root = Path(__file__).resolve().parents[1] / "static"
     if (static_root / "index.html").is_file():

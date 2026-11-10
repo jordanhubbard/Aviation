@@ -824,8 +824,7 @@ if (appId === 'flightschool') {
         else if (path === '/api/airports/search') body = [airport];
         else if (path === '/api/airports/KOAK') body = run.tag(airport);
         else if (path === '/api/procedures') {
-          status = 404;
-          body = { detail: 'Not Found' };
+          throw new Error('VFR planner requested instrument procedures');
         }
         else if (path === '/api/plan/stream' && route.request().method() === 'POST') {
           const request = route.request().postDataJSON();
@@ -863,14 +862,15 @@ if (appId === 'flightschool') {
           visit: async () => {
             await page.goto(baseUrl, { waitUntil: 'domcontentloaded' });
             await page.getByRole('combobox', { name: 'Origin' }).fill('KOAK');
-            await page.getByText('Procedures are unavailable for this airport.').waitFor();
-            await page.getByRole('combobox', { name: 'Procedure' }).click();
           },
           verify: async () => {
             await page.getByText('Select a planning mode and enter details to generate a plan').waitFor();
             if (await page.getByText(/^Joystick:/).count()) throw new Error('Simulator controls leaked into planner');
+            if (await page.getByRole('combobox', { name: 'Procedure' }).count()) {
+              throw new Error('Instrument procedure selection leaked into VFR planning');
+            }
             if (await page.getByText('Something went wrong').count()) {
-              throw new Error('Unavailable procedures crossed into the planner error boundary');
+              throw new Error('Planner crossed into the error boundary');
             }
           },
         },
