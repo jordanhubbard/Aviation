@@ -14,7 +14,7 @@ A modern, stateless web application for analyzing ForeFlight logbook data. This 
 
 🐳 **Container-First Architecture**: This application is designed exclusively for containerized deployment. All operations run inside Docker containers for consistency, security, and easy deployment to any container platform.
 
-🔷 **MAC Task Tracking**: Work for this application is tracked in the `Aviation` project in MAC, including dependencies, dispatch, review, and evidence.
+**Issue tracking**: Use [GitHub Issues](https://github.com/jordanhubbard/Aviation/issues) and pull requests for this application.
 
 ## Features
 

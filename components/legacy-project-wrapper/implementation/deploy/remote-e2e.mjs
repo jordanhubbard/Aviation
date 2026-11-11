@@ -820,7 +820,7 @@ if (appId === 'flightschool') {
         let body;
         let status = 200;
         if (path === '/api/meta') body = run.tag({ repo_url: null, revision: 'e2e' });
-        else if (path === '/api/mac/enabled') body = run.tag({ enabled: false, created: false });
+        else if (path === '/api/issues/enabled') body = run.tag({ enabled: false, created: false });
         else if (path === '/api/airports/search') body = [airport];
         else if (path === '/api/airports/KOAK') body = run.tag(airport);
         else if (path === '/api/procedures') {

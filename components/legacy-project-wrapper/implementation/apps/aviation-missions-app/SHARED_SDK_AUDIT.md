@@ -1,5 +1,7 @@
 # Shared SDK Migration Audit: aviation-missions-app
 
+> Tracker note: work and review now live in [GitHub Issues](https://github.com/jordanhubbard/Aviation/issues). Legacy task references below are historical provenance.
+
 **Date**: 2026-01-14
 **Auditor**: AI Assistant
 **Status**: ✅ **No Migration Needed**

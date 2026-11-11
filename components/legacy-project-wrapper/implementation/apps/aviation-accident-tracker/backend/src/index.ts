@@ -6,7 +6,7 @@ import { logger } from "./logger.js";
 import { createServer } from "http";
 import { runRecentIngest } from "./ingest/ingestService.js";
 import { installNodeProcessErrorReporting } from "@aviation/shared-sdk";
-import { macTaskCreator } from "./mac.js";
+import { githubIssueCreator } from "./issues.js";
 import { AccidentE2EManager } from './e2e/manager.js';
 import { dirname, join } from 'node:path';
 
@@ -14,7 +14,7 @@ async function start() {
   try {
     installNodeProcessErrorReporting({
       service: "aviation-accident-tracker-backend",
-      taskCreator: macTaskCreator,
+      issueCreator: githubIssueCreator,
     });
 
     // Initialize database
@@ -78,13 +78,12 @@ async function start() {
     );
 
     const err = error instanceof Error ? error : new Error(String(error));
-    await macTaskCreator.createAutoFiledTask({
+    await githubIssueCreator.createAutoFiledIssue({
       title: `[backend][startup] accident-tracker: ${err.message}`.slice(
         0,
         180,
       ),
-      description: `Where: startup\n\nMessage:\n${err.message}\n\nStack:\n${err.stack ?? "(no stack)"}`,
-      priority: 1,
+      body: `Where: startup\n\nMessage:\n${err.message}\n\nStack:\n${err.stack ?? "(no stack)"}`,
       autoFiledContext: "backend failed to start",
     });
     process.exit(1);

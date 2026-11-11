@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Repository: use GitHub Issues and PRs for all engineering work and review;
+  migrate outstanding records, preserve historical task references, and replace
+  the retired tracker contracts, CI gates and runtime reporters with GitHub adapters.
+
 - Meta App: route all deployed application hosts through the shared HTTP/MCP
   registry, preserve native sessions and URLs, and support live WebSocket upgrades.
   Add preflighted ingress updates with Caddy validation and rollback.

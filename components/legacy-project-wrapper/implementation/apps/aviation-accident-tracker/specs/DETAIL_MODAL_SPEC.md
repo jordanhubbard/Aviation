@@ -1,6 +1,6 @@
 # Event Detail Modal Component Implementation Spec
 
-**MAC task:** [Aviation-c8f] Implement event detail modal
+**Historical work reference:** [Aviation-c8f] Implement event detail modal
 **Priority:** P1 - High Priority
 **Effort:** 1-2 days
 **Dependencies:**

@@ -1,5 +1,7 @@
 # Railway Deployment Status Check
 
+> Tracker note: work and review now live in [GitHub Issues](https://github.com/jordanhubbard/Aviation/issues). Legacy task references below are historical provenance.
+
 ## 🚨 Current Issues
 
 ### Issue 1: aviation-missions-app - Empty Missions Database

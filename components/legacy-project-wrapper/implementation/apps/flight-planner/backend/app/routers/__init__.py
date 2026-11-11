@@ -1,9 +1,9 @@
-from . import airspace, airports, flight_plan, health, local, mac_tasks, plan, route, settings, terrain, weather
+from . import airspace, airports, flight_plan, health, local, issues, plan, route, settings, terrain, weather
 
 __all__ = [
     "airspace",
     "airports",
-    "mac_tasks",
+    "issues",
     "flight_plan",
     "health",
     "local",

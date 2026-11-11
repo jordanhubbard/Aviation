@@ -1,6 +1,6 @@
 # Filters UI Component Implementation Spec
 
-**MAC task:** [Aviation-czw] Implement filters UI component
+**Historical work reference:** [Aviation-czw] Implement filters UI component
 **Priority:** P0 - MVP Blocker
 **Effort:** 2 days
 **Dependencies:**

@@ -1,5 +1,7 @@
 # Database Utilities Design Document
 
+> Tracker note: work and review now live in [GitHub Issues](https://github.com/jordanhubbard/Aviation/issues). Legacy task references below are historical provenance.
+
 > **MAC task:** Database Utilities & ORM Patterns (Phase 2)
 > **Priority:** P0 - Highest ROI
 > **Estimated Effort:** 3-4 days

@@ -1,5 +1,7 @@
 # Airport Database and Search
 
+> Tracker note: work and review now live in [GitHub Issues](https://github.com/jordanhubbard/Aviation/issues). Legacy task references below are historical provenance.
+
 > Comprehensive airport lookup and search functionality for aviation applications
 
 Part of the **@aviation/shared-sdk** package, extracted from the FlightPlanner application to provide unified airport database access across the entire Aviation monorepo.

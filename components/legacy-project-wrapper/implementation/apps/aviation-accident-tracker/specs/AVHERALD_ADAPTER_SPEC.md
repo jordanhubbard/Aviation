@@ -1,6 +1,6 @@
 # AVHerald Adapter Implementation Spec
 
-**MAC task:** [Aviation-82s] Implement AVHerald data ingestion adapter
+**Historical work reference:** [Aviation-82s] Implement AVHerald data ingestion adapter
 **Priority:** P0 - MVP Blocker
 **Effort:** 2 days
 **Dependencies:**

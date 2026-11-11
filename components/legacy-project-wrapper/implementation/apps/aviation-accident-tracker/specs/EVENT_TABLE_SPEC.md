@@ -1,6 +1,6 @@
 # Event Table Component Implementation Spec
 
-**MAC task:** [Aviation-6f2] Implement event table with sorting and pagination
+**Historical work reference:** [Aviation-6f2] Implement event table with sorting and pagination
 **Priority:** P0 - MVP Blocker
 **Effort:** 2 days
 **Dependencies:**

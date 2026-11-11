@@ -7,7 +7,7 @@ import debounce from 'lodash.debounce';
 import { distanceKM } from '@aviation/shared-sdk/aviation/navigation';
 import { Badge } from './components/Badge';
 import { AccidentExplanation } from './components/AccidentExplanation';
-import { reportFrontendErrorToMac } from './utils/macReporting';
+import { reportFrontendError } from './utils/issueReporting';
 import { countryLabel, regionLabel, parseSearchQuery } from './searchQuery';
 // import { normalizeMarkers, defaultClusterOptions } from '@aviation/ui-framework';
 
@@ -113,7 +113,7 @@ export function App() {
             );
           })
           .catch((err) => {
-            void reportFrontendErrorToMac(err, {
+            void reportFrontendError(err, {
               kind: 'fetch',
               extra: { endpoint: '/api/airports', query: q },
             });
@@ -160,7 +160,7 @@ export function App() {
         setLoading(false);
       })
       .catch((err) => {
-        void reportFrontendErrorToMac(err, {
+        void reportFrontendError(err, {
           kind: 'fetch',
           extra: { endpoint: '/api/events', query: params.toString() },
         });
@@ -215,7 +215,7 @@ export function App() {
       .then((r) => r.json())
       .then((data) => setOptions(data))
       .catch((err) => {
-        void reportFrontendErrorToMac(err, { kind: 'fetch', extra: { endpoint: '/api/filters/options' } });
+        void reportFrontendError(err, { kind: 'fetch', extra: { endpoint: '/api/filters/options' } });
         setOptions({ countries: [], regions: [] });
       });
   }, []);
@@ -252,7 +252,7 @@ export function App() {
       .catch((err) => {
         if (controller.signal.aborted) return;
 
-        void reportFrontendErrorToMac(err, {
+        void reportFrontendError(err, {
           kind: 'fetch',
           extra: { endpoint: `/api/events/${selected.id}` },
         });

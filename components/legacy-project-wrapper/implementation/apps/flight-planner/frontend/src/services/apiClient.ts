@@ -1,7 +1,7 @@
 import axios, { AxiosError } from 'axios'
 import toast from 'react-hot-toast'
 
-import { reportFrontendErrorToMac } from '../utils/macReporting'
+import { reportFrontendError } from '../utils/issueReporting'
 import { API_CONSTANTS } from '../utils/constants'
 
 const toastOnce = (message: string) => {
@@ -44,7 +44,7 @@ apiClient.interceptors.response.use(
           ? String((error.response.data as { detail: unknown }).detail)
           : undefined
 
-      void reportFrontendErrorToMac(error, {
+      void reportFrontendError(error, {
         kind: 'api-client',
         extra: {
           status,

@@ -14,7 +14,7 @@ This document provides comprehensive guidelines for LLM agents working with this
 6. [Monorepo Best Practices](#monorepo-best-practices)
 7. [Aviation SDK & Shared Tools](#aviation-sdk--shared-tools)
 8. [Application-Specific Best Practices](#application-specific-best-practices)
-9. [Work Organization with MAC](#work-organization-with-mac)
+9. [Work Organization with GitHub](#work-organization-with-github)
 10. [Security & Secrets Management](#security--secrets-management)
 11. [Development Workflows](#development-workflows)
 12. [Testing Strategy](#testing-strategy)
@@ -84,7 +84,7 @@ Dockerfiles build an app together with its workspace packages.
 4. **Multi-Modal UI**: Support for web, mobile, and multi-tab interfaces
 5. **Polyglot**: Multiple languages optimized for each use case
 6. **Organized**: All user facing documentation must be in docs/
-7. **AI optimized**: All AI-generated planning files must be in `plans/`; all work items belong in the Aviation project in MAC, not Markdown task lists.
+7. **AI optimized**: All AI-generated planning files must be in `plans/`; all engineering work belongs in GitHub Issues and PRs, not local task ledgers.
 ---
 
 ## Adding New Aviation Applications
@@ -180,18 +180,14 @@ my-aviation-app/
 }
 ```
 
-#### 4. Create MAC tasks
+#### 4. Create or reuse a GitHub issue
 
-Track implementation work in the `Aviation` MAC project. Keep task topology,
-dependencies, and evidence in MAC rather than adding a repository-local ledger.
+Track implementation work and dependencies in GitHub Issues. Link the issue from
+its PR and retain test/CI evidence there.
 
 ```bash
-/Users/jkh/Src/mac/.venv/bin/mac task create "Implement core service" \
-  --project Aviation --no-ticket \
-  --description "Scope, acceptance criteria, and test plan"
-/Users/jkh/Src/mac/.venv/bin/mac task create "Add API layer" \
-  --project Aviation --no-ticket --dependencies <core-task-id> \
-  --description "REST endpoints and integration tests"
+gh issue list --repo jordanhubbard/Aviation --state open
+gh issue create --repo jordanhubbard/Aviation --title "Implement core service" --body-file issue.md
 ```
 
 #### 5. Create Makefile
@@ -599,12 +595,12 @@ The meta app is just another consumer of your application:
 
 ```bash
 # From monorepo root
-make ci-check
+make validate
 ```
 
 Or manually run each step:
 
-#### 1. Validate the MAC Repository Contract
+#### 1. Validate the GitHub Repository Contract
 
 ```bash
 make validate
@@ -612,10 +608,10 @@ make validate
 
 **Expected Output:**
 ```
-✅ MAC repository contract valid
+✅ GitHub repository contract valid
 ```
 
-**If it fails**: Fix `.mac/project.yaml` so it matches the repository's real bootstrap and test contract.
+**If it fails**: Fix `.github/issue-tracking.json` so it matches the repository's real bootstrap and test contract.
 
 #### 2. Run All Tests
 
@@ -687,7 +683,7 @@ The CI/CD pipeline (`.github/workflows/ci.yml`) runs automatically on:
 
 **Pipeline Stages:**
 
-1. **Validate MAC** - Checks the root repository contract
+1. **Validate GitHub** - Checks the root repository contract
 2. **Accessibility** - Checks WCAG AA color contrast
 3. **Test Applications** - Runs tests for each app:
    - `test-missions-app` - Clojure backend tests
@@ -703,12 +699,12 @@ The CI/CD pipeline (`.github/workflows/ci.yml`) runs automatically on:
 **CRITICAL RULES:**
 
 1. ✅ **Never merge failing CI/CD** - All checks must pass
-2. ✅ **Run pre-commit checks** - Use `make ci-check` before every push
+2. ✅ **Run pre-commit checks** - Use `make validate` and the relevant test/build targets before every push
 3. ✅ **Fix broken builds immediately** - Don't leave main branch broken
 4. ✅ **Keep tests passing** - Don't commit code that breaks existing tests
 5. ✅ **Maintain 80%+ coverage** - Add tests for new code
 6. ✅ **No linter errors** - Clean code only
-7. ✅ **Keep MAC current** - Task state and evidence must match the repository outcome
+7. ✅ **Keep GitHub current** - Task state and evidence must match the repository outcome
 
 ### Local CI/CD Simulation
 
@@ -721,7 +717,7 @@ set -e
 
 echo "🔍 Running CI/CD checks locally..."
 
-echo "1. Validating MAC repository contract..."
+echo "1. Validating GitHub repository contract..."
 make validate
 
 echo "2. Checking color contrast..."
@@ -755,7 +751,7 @@ New applications are **automatically** included in CI/CD if they follow the stan
 1. **Have test scripts** - `npm test` or `pytest` or `lein test`
 2. **Follow naming conventions** - Tests in `tests/` or `test/` directory
 3. **Have a Makefile** - With standard targets (`build`, `test`, `clean`)
-4. **Track work in MAC** - Use the `Aviation` project for tasks and dependencies
+4. **Track work in GitHub** - Use the `Aviation` project for tasks and dependencies
 
 To add custom CI/CD steps, edit `.github/workflows/ci.yml`:
 
@@ -790,14 +786,14 @@ When CI/CD fails:
 2. **Look at the error logs** - Identify the specific failure
 3. **Reproduce locally** - Run the exact same command that failed
 4. **Fix the issue** - Make the necessary changes
-5. **Verify locally** - Ensure the fix works with `make ci-check`
+5. **Verify locally** - Ensure the fix works with `make validate`
 6. **Push the fix** - CI/CD will automatically re-run
 
 Common failures:
 
 | Error | Cause | Fix |
 |-------|-------|-----|
-| "MAC repository contract invalid" | Root contract is missing or stale | Update `.mac/project.yaml` |
+| "GitHub repository contract invalid" | Root contract is missing or stale | Update `.github/issue-tracking.json` |
 | "Test failed" | Failing unit/integration tests | Fix the failing tests |
 | "Lint errors" | Code style violations | Run `npm run format` or `black` |
 | "Type error" | TypeScript type issues | Fix type errors, run `npm run type-check` |
@@ -2098,35 +2094,21 @@ export class WeatherApiClient {
 
 ---
 
-## Work Organization with MAC
+## Work Organization with GitHub
 
-MAC is the sole task ledger for this repository. The `Aviation` project holds
-task state, dependencies, dispatch, review, and evidence. Do not add local
-ticket databases, per-app task YAML, or Markdown task lists.
-
-### Common task commands
+GitHub Issues and pull requests in `jordanhubbard/Aviation` are the sole work,
+review and closure authority. Link dependencies and acceptance criteria in the
+issue. Keep verification evidence in its PR and close the issue after completion.
 
 ```bash
-MAC=/Users/jkh/Src/mac/.venv/bin/mac
-$MAC task ready --project Aviation
-$MAC task show <task-id>
-$MAC task create "Task title" --project Aviation \
-  --no-ticket --description "Scope, acceptance criteria, and verification plan"
-$MAC task create "Dependent task" --project Aviation \
-  --no-ticket --dependencies <task-id> \
-  --description "Why this dependency is required"
+gh issue list --repo jordanhubbard/Aviation --state open
+gh issue view NUMBER --repo jordanhubbard/Aviation
+gh issue create --repo jordanhubbard/Aviation --title "Outcome" --body-file issue.md
 ```
 
-### Best practices
-
-1. Keep tasks focused on one verifiable outcome.
-2. Express dependencies with MAC task IDs.
-3. Use repository tests for implementation proof and MAC evidence for task proof.
-4. Create follow-up tasks for newly discovered work rather than Markdown TODOs.
-5. Never bypass lifecycle, review, or canonical-integration gates merely to change task state.
-
-Validate the repository execution contract with `make validate`; inspect the
-live ledger with `mac task stats --project Aviation`.
+The root `AGENTS.md` overrides inherited tracker defaults. Roadmap files are design
+references and archives, rather than a second status ledger. Use `make validate`
+to check the GitHub tracking contract. No separate task-service review is needed.
 
 ---
 
@@ -2684,14 +2666,14 @@ make stop-all
 ### CI/CD Checks
 
 ```bash
-# Validate the MAC repository contract
+# Validate the GitHub repository contract
 make validate
 
 # Check color contrast
 ./scripts/check-all-contrast.sh
 
 # Run all CI checks locally
-make ci-check  # If available
+make validate  # If available
 # OR manually:
 make validate && ./scripts/check-all-contrast.sh && make test && npm run lint
 ```
@@ -2772,7 +2754,7 @@ docker-compose down -v --rmi all
 
 - [ ] Create app directory under `apps/`
 - [ ] Add `package.json` (if TypeScript) or `requirements.txt` (if Python)
-- [ ] Create MAC tasks for implementation work and dependencies
+- [ ] Create GitHub issues for implementation work and dependencies
 - [ ] Add `Makefile` with standard targets
 - [ ] Create `README.md` with documentation
 - [ ] Implement the application code
@@ -2810,7 +2792,7 @@ For questions about this monorepo structure or conventions, please:
 4. **PUSH TO REMOTE** - This is MANDATORY:
    ```bash
    git pull --rebase
-   /Users/jkh/Src/mac/.venv/bin/mac task stats --project Aviation
+   gh issue list --repo jordanhubbard/Aviation --state open
    git push
    git status  # MUST show "up to date with origin"
    ```

@@ -4,7 +4,6 @@
   "authority": "retained-wrapper-remainder-inventory",
   "boundary": "This inventory classifies the retained wrapper's top-level ownership boundaries. It does not turn repository configuration, documentation, plans, examples, deployment policy, runtime state, or application-private source into common Aviation SDK Components.",
   "topLevelDirectories": [
-    {"path":".mac","classification":"repository-automation-contract","coverage":"path-manifest","fileCount":1,"pathsSha256":"42918d7ae37617968f5d0aba6e74ce3f336c457640d7b7f91b0aee0084aab3d4"},
     {"path":"apps","classification":"application-private-source","coverage":"application-state-contracts-and-workspace-package-graph"},
     {"path":"conformance","classification":"retained-component-conformance-vectors","coverage":"path-manifest","fileCount":1,"pathsSha256":"2207469767d601f17f0629f95ae7bfd1797586d37936439d00208f9974b32027"},
     {"path":"deploy","classification":"repository-harness","coverage":"repository-harness-inventory"},

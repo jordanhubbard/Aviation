@@ -11,9 +11,9 @@ defaults:
     working-directory: components/legacy-project-wrapper/implementation
 
 jobs:
-  # Validate the sole task/execution contract.
-  validate-mac:
-    name: Validate MAC Repository Contract
+  # Validate the sole engineering issue tracker.
+  validate-github-tracking:
+    name: Validate GitHub Issue Tracking
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
@@ -23,10 +23,7 @@ jobs:
         with:
           python-version: '3.11'
 
-      - name: Install contract parser
-        run: pip install PyYAML
-
-      - name: Validate MAC contract
+      - name: Validate GitHub tracking contract
         run: make validate
 
       - name: Validate application state and credential contracts
@@ -273,7 +270,7 @@ jobs:
   build-check:
     name: Build Check
     runs-on: ubuntu-latest
-    needs: [validate-mac, accessibility]
+    needs: [validate-github-tracking, accessibility]
     steps:
       - uses: actions/checkout@v7
 

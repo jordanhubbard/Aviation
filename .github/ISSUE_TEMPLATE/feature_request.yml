@@ -1,0 +1,20 @@
+name: Feature or engineering work
+description: Propose a concrete outcome for Aviation.
+body:
+  - type: textarea
+    id: outcome
+    attributes:
+      label: Desired outcome and reason
+    validations:
+      required: true
+  - type: textarea
+    id: scope
+    attributes:
+      label: Scope and dependencies
+      description: Link related or blocking GitHub issues.
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance and verification
+    validations:
+      required: true

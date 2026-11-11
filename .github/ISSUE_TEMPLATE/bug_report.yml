@@ -1,0 +1,23 @@
+name: Bug report
+description: Report an Aviation application or engineering defect.
+title: "[bug] "
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: What happened?
+      description: Name the affected application or component and the expected behavior.
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Reproduction and evidence
+      description: Include the version, minimal steps and relevant redacted logs or screenshots.
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance criteria
+      description: Describe the observable result that would resolve this issue.

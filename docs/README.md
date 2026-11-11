@@ -10,7 +10,9 @@ for development, tests, builds, and deployment; the original KMLab repository is
 archived and retained only as a historical record.
 
 Start with [getting started](user/getting-started.md) for installation and usage.
-See [active work](roadmap/active-work.md) for current development status.
+Use [GitHub Issues](https://github.com/jordanhubbard/Aviation/issues) for current
+development status. The [work index](roadmap/active-work.md) retains design links;
+[the tracking guide](development/issue-tracking.md) describes the workflow.
 
 ## Development
 

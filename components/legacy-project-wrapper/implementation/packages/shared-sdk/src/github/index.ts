@@ -1,8 +1,8 @@
 export {
-  MacTaskCreator,
-  type CreateTaskResult,
-  type CreateTaskOptions,
-} from "./taskCreator.js";
+  GitHubIssueCreator,
+  type CreateIssueResult,
+  type CreateIssueOptions,
+} from "./issueCreator.js";
 export {
   installNodeProcessErrorReporting,
   type InstallNodeErrorReportingOptions,

@@ -1,6 +1,6 @@
 # Airport Extraction Implementation Spec
 
-**MAC task:** [Aviation-o2d] Extract airport database and search to @aviation/shared-sdk
+**Historical work reference:** [Aviation-o2d] Extract airport database and search to @aviation/shared-sdk
 **Priority:** P0 - MVP Blocker
 **Effort:** 2-3 days
 **Dependencies:** None

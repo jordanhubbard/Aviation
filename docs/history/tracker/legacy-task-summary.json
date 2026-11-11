@@ -1,0 +1,3563 @@
+{
+  "schema": "aviation/retired-tracker-summary@1",
+  "authority": "historical-only",
+  "source": "Read-only export made during issue 434 migration; no future task state is maintained here.",
+  "task_count": 507,
+  "state_counts": {
+    "failed": 109,
+    "completed": 254,
+    "cancelled": 137,
+    "open": 7
+  },
+  "tasks": [
+    {
+      "id": "task_00b98c93e7fc8c6ee444728a077d3ccd",
+      "title": "Flight-tracker: OpenSky API 429 rate limit",
+      "state": "completed",
+      "created_at": "2026-07-21T22:47:37.884750+00:00",
+      "updated_at": "2026-08-11T05:42:18.355264+00:00"
+    },
+    {
+      "id": "task_0138d8b33d5ad175cfe93b8d49b34742",
+      "title": "Remove wind barb station dots",
+      "state": "completed",
+      "created_at": "2026-07-21T22:47:58.152663+00:00",
+      "updated_at": "2026-08-11T05:42:20.015046+00:00"
+    },
+    {
+      "id": "task_0150e4e544d64babad475c0916ef9308",
+      "title": "Groom backlog for Aviation",
+      "state": "failed",
+      "created_at": "2026-09-10T00:59:21.235929+00:00",
+      "updated_at": "2026-09-10T02:04:38.591603+00:00"
+    },
+    {
+      "id": "task_019dd8bdff1f4b2ab517e7edb227f7f2",
+      "title": "Enable hosted Flight Planner weather overlays and verify readiness",
+      "state": "open",
+      "created_at": "2026-11-10T15:52:06.266635+00:00",
+      "updated_at": "2026-11-10T18:32:22.404502+00:00"
+    },
+    {
+      "id": "task_02f387e0cc20606899c83c515395b62f",
+      "title": "Allow users to suggest edits to mission fields for admin review",
+      "state": "cancelled",
+      "created_at": "2026-07-21T22:47:51.151940+00:00",
+      "updated_at": "2026-08-11T05:42:55.839183+00:00"
+    },
+    {
+      "id": "task_0314464807eadba16838b6d36f5c4577",
+      "title": "Implement API gateway and reverse proxy",
+      "state": "completed",
+      "created_at": "2026-07-21T22:47:31.113008+00:00",
+      "updated_at": "2026-08-11T05:42:55.327263+00:00"
+    },
+    {
+      "id": "task_0328303fb35445dca1fa161e51692787",
+      "title": "Groom backlog for Aviation",
+      "state": "failed",
+      "created_at": "2026-09-10T04:01:06.328399+00:00",
+      "updated_at": "2026-09-10T04:02:54.415433+00:00"
+    },
+    {
+      "id": "task_04e11b5b295a4946b5ec3a4f3b30ee4f",
+      "title": "Repair contract prerequisites: Add nav-database FastAPI router to flight-planner backend",
+      "state": "cancelled",
+      "created_at": "2026-07-12T08:40:09.027476+00:00",
+      "updated_at": "2026-08-11T05:43:44.178360+00:00"
+    },
+    {
+      "id": "task_05b5a7452e54b1c05d5db14fbe39f9b7",
+      "title": "Create Docker configuration for backend",
+      "state": "completed",
+      "created_at": "2026-07-21T22:48:07.547974+00:00",
+      "updated_at": "2026-08-11T05:42:57.572222+00:00"
+    },
+    {
+      "id": "task_05c363c33de869bf694d8f22e6019f44",
+      "title": "EPIC: Migrate all apps to use shared aviation SDK",
+      "state": "completed",
+      "created_at": "2026-07-21T22:47:46.705827+00:00",
+      "updated_at": "2026-08-11T05:42:18.964226+00:00"
+    },
+    {
+      "id": "task_066bd10199604a03948d45bc5197d7e3",
+      "title": "Fix Flight Planner procedure autocomplete crash",
+      "state": "failed",
+      "created_at": "2026-10-30T03:36:26.225668+00:00",
+      "updated_at": "2026-10-30T03:55:30.216227+00:00"
+    },
+    {
+      "id": "task_0675235d362e4494820cd70465c82dd0",
+      "title": "Groom backlog for Aviation",
+      "state": "failed",
+      "created_at": "2026-09-09T19:47:05.107942+00:00",
+      "updated_at": "2026-09-09T19:51:57.172975+00:00"
+    },
+    {
+      "id": "task_077393245baf16f973668d49e25c8332",
+      "title": "Create unified API router structure",
+      "state": "completed",
+      "created_at": "2026-07-21T22:47:56.154211+00:00",
+      "updated_at": "2026-08-11T05:44:20.390483+00:00"
+    },
+    {
+      "id": "task_07b80cfe8606c64fe4a9ff8e7b29fccd",
+      "title": "Implement weather caching and rate limiting",
+      "state": "completed",
+      "created_at": "2026-07-21T22:48:02.007300+00:00",
+      "updated_at": "2026-08-11T05:42:57.378316+00:00"
+    },
+    {
+      "id": "task_07e0c6b722f749298adbfc647a5ddc51",
+      "title": "Groom backlog for Aviation",
+      "state": "failed",
+      "created_at": "2026-09-10T03:00:33.015915+00:00",
+      "updated_at": "2026-09-10T03:01:50.371615+00:00"
+    },
+    {
+      "id": "task_08493ecf59744954b8cb7164cdfef54b",
+      "title": "Add nav-database Pydantic schemas to flight-planner backend",
+      "state": "cancelled",
+      "created_at": "2026-07-12T13:59:07.406267+00:00",
+      "updated_at": "2026-08-11T05:43:45.409104+00:00"
+    },
+    {
+      "id": "task_08600329c670dbc7b6b16cc6ee45be08",
+      "title": "Add weight and balance calculator to flightplanner",
+      "state": "completed",
+      "created_at": "2026-07-21T22:47:33.594241+00:00",
+      "updated_at": "2026-08-11T05:42:17.467700+00:00"
+    },
+    {
+      "id": "task_098fccb6a3a5f5e9734ef91c573d637e",
+      "title": "Create LICENSE and initial README.md",
+      "state": "completed",
+      "created_at": "2026-07-21T22:48:17.402896+00:00",
+      "updated_at": "2026-08-11T05:42:57.837284+00:00"
+    },
+    {
+      "id": "task_0a77579c3cd5494984ce3bd1feea0b41",
+      "title": "Add flight-plan FastAPI router to flight-planner backend",
+      "state": "cancelled",
+      "created_at": "2026-07-12T05:56:30.622782+00:00",
+      "updated_at": "2026-08-11T05:43:43.258711+00:00"
+    },
+    {
+      "id": "task_0b1008f0a5148b0abac47b4b5099b655",
+      "title": "Add UTC times/dates to all planning data",
+      "state": "completed",
+      "created_at": "2026-07-21T22:47:53.299499+00:00",
+      "updated_at": "2026-08-11T05:42:19.898289+00:00"
+    },
+    {
+      "id": "task_0b945f7f0dd920f892a67b6e424e320b",
+      "title": "aviation-missions-app CI: Clojure test failures in db/validation",
+      "state": "completed",
+      "created_at": "2026-07-21T22:48:04.942422+00:00",
+      "updated_at": "2026-08-11T05:42:57.482537+00:00"
+    },
+    {
+      "id": "task_0b9c84bf3a6fb8096b238f626dbdb0c9",
+      "title": "Aviation Accident Tracker: Database",
+      "state": "completed",
+      "created_at": "2026-07-21T22:47:33.593698+00:00",
+      "updated_at": "2026-08-11T05:42:55.452592+00:00"
+    },
+    {
+      "id": "task_0cb6600e304c2ed8c98105059cf95972",
+      "title": "aviation-missions-app: bootstrap missions.json + persist updates",
+      "state": "completed",
+      "created_at": "2026-07-21T22:47:24.532995+00:00",
+      "updated_at": "2026-08-11T05:42:54.348116+00:00"
+    },
+    {
+      "id": "task_0d1069aa76d66e10573bd427c883eb91",
+      "title": "Reconcile CI health for jordanhubbard/Aviation",
+      "state": "failed",
+      "created_at": "2026-09-03T09:29:01.901533+00:00",
+      "updated_at": "2026-09-03T09:34:18.480574+00:00"
+    },
+    {
+      "id": "task_0d62f2ed74ac41d9ad6445e3d0aa23f9",
+      "title": "Verify weather-briefing layout change and satisfy Aviation repository contract",
+      "state": "cancelled",
+      "created_at": "2026-07-23T04:51:03.809317+00:00",
+      "updated_at": "2026-08-11T05:42:59.594337+00:00"
+    },
+    {
+      "id": "task_0ddb7f10779841f4bf50559adbe972f4",
+      "title": "Reorganize weather-briefing layout: selector -> map -> decoded METAR (HTML/CSS in index.ts)",
+      "state": "cancelled",
+      "created_at": "2026-07-22T19:56:27.010264+00:00",
+      "updated_at": "2026-08-11T05:42:58.697483+00:00"
+    },
+    {
+      "id": "task_0eecd333480141cab94ce696376f5e07",
+      "title": "Groom backlog for Aviation",
+      "state": "failed",
+      "created_at": "2026-09-09T23:09:24.050998+00:00",
+      "updated_at": "2026-09-09T23:10:55.492352+00:00"
+    },
+    {
+      "id": "task_0f7fe6c5212691370dbe2b4e96296378",
+      "title": "Implement ASN adapter for real data ingestion",
+      "state": "completed",
+      "created_at": "2026-07-21T22:47:40.515802+00:00",
+      "updated_at": "2026-08-11T05:42:18.530048+00:00"
+    },
+    {
+      "id": "task_10d8ec8591e942a4ae39e9f7e4ce7296",
+      "title": "Add nav-database Pydantic v2 schemas to flight-planner backend",
+      "state": "cancelled",
+      "created_at": "2026-07-12T20:48:33.335761+00:00",
+      "updated_at": "2026-08-11T05:43:48.392737+00:00"
+    },
+    {
+      "id": "task_1241187592134bb29d7544828b1167cf",
+      "title": "Groom backlog for Aviation",
+      "state": "failed",
+      "created_at": "2026-09-09T23:24:34.167075+00:00",
+      "updated_at": "2026-09-09T23:28:16.100967+00:00"
+    },
+    {
+      "id": "task_128437798e9a33f7a847361eae345ed7",
+      "title": "Validation logic incorrectly rejects PIC + Dual for certificated pilots",
+      "state": "cancelled",
+      "created_at": "2026-07-21T22:47:43.211895+00:00",
+      "updated_at": "2026-08-11T05:42:55.726196+00:00"
+    },
+    {
+      "id": "task_12a04273a498ad7501c52a44d16c0399",
+      "title": "Provide PNG social preview image",
+      "state": "completed",
+      "created_at": "2026-07-21T22:48:00.356891+00:00",
+      "updated_at": "2026-08-11T05:42:14.690093+00:00"
+    },
+    {
+      "id": "task_12b38e884baf200cfdd75c9ef0ffbc3a",
+      "title": "Deployment & Infrastructure",
+      "state": "completed",
+      "created_at": "2026-07-21T22:48:07.224278+00:00",
+      "updated_at": "2026-08-11T05:42:20.196826+00:00"
+    },
+    {
+      "id": "task_137caae08d3d79f231869a63e42803bc",
+      "title": "Implement fuel planning calculations",
+      "state": "completed",
+      "created_at": "2026-07-21T22:48:06.475134+00:00",
+      "updated_at": "2026-08-11T05:42:57.556441+00:00"
+    },
+    {
+      "id": "task_13b361cdbe35ef2862e074b1f451aab4",
+      "title": "Integrate Leaflet map component",
+      "state": "completed",
+      "created_at": "2026-07-21T22:48:09.815656+00:00",
+      "updated_at": "2026-08-11T05:44:20.791676+00:00"
+    },
+    {
+      "id": "task_14b2e0f79138499db72e97b7f25a8124",
+      "title": "Make flight-planner CI test job blocking by fixing stub 404 endpoints",
+      "state": "failed",
+      "created_at": "2026-07-31T19:00:55.178534+00:00",
+      "updated_at": "2026-08-11T05:47:06.066823+00:00"
+    },
+    {
+      "id": "task_14cc6cb4e22169c699d1dd151873d4ba",
+      "title": "PROD: Logbook import incorrectly classifies solo PIC flights as INSTRUCTOR role",
+      "state": "completed",
+      "created_at": "2026-07-21T22:47:50.242944+00:00",
+      "updated_at": "2026-08-11T05:44:20.110015+00:00"
+    },
+    {
+      "id": "task_15eff506fef546f3ad8d60f6178a9647",
+      "title": "Groom backlog for Aviation",
+      "state": "failed",
+      "created_at": "2026-09-09T17:30:29.908077+00:00",
+      "updated_at": "2026-09-09T17:35:12.543618+00:00"
+    },
+    {
+      "id": "task_1626ec2f44a047efa79f02ede6c9d931",
+      "title": "Groom backlog for Aviation",
+      "state": "cancelled",
+      "created_at": "2026-07-31T16:38:35.206653+00:00",
+      "updated_at": "2026-09-14T18:04:13.916073+00:00"
+    },
+    {
+      "id": "task_16c8ce2d58e7c8ce43f67a8da6abff78",
+      "title": "Add Python weather SDK wrappers",
+      "state": "completed",
+      "created_at": "2026-07-21T22:47:38.769138+00:00",
+      "updated_at": "2026-08-11T05:42:55.612944+00:00"
+    },
+    {
+      "id": "task_179aac10f4074bc88da87f45d70598d2",
+      "title": "Groom backlog for Aviation",
+      "state": "failed",
+      "created_at": "2026-09-10T03:45:56.838498+00:00",
+      "updated_at": "2026-09-10T03:48:11.593229+00:00"
+    },
+    {
+      "id": "task_1915be16da0bd8e9cb1c63638923ad38",
+      "title": "Archive xctry-planner repository using gh CLI",
+      "state": "completed",
+      "created_at": "2026-07-21T22:47:52.638762+00:00",
+      "updated_at": "2026-08-11T05:42:14.593701+00:00"
+    },
+    {
+      "id": "task_19413734f6b1a473c2afdaecfe921252",
+      "title": "Add alternate airport recommendations",
+      "state": "completed",
+      "created_at": "2026-07-21T22:48:07.227160+00:00",
+      "updated_at": "2026-08-11T05:42:20.217437+00:00"
+    },
+    {
+      "id": "task_1978251ccaa3ade6f39e04b1964753ae",
+      "title": "Extract Google Calendar integration to @aviation/shared-sdk",
+      "state": "completed",
+      "created_at": "2026-07-21T22:47:26.698935+00:00",
+      "updated_at": "2026-08-11T05:42:17.139912+00:00"
+    },
+    {
+      "id": "task_197ae8348b8b49e988e364adf78bf1ae",
+      "title": "Verify all three routers integrate cleanly and tests pass",
+      "state": "cancelled",
+      "created_at": "2026-07-12T05:56:30.622782+00:00",
+      "updated_at": "2026-08-11T05:43:43.303050+00:00"
+    },
+    {
+      "id": "task_19b9a01156f277b6a53c6b6679d1b814",
+      "title": "We are not using the standard key names",
+      "state": "completed",
+      "created_at": "2026-07-21T22:48:14.043560+00:00",
+      "updated_at": "2026-08-11T05:42:14.756185+00:00"
+    },
+    {
+      "id": "task_1a5e67f51f574ecb8a2dbf13a095cab6",
+      "title": "Groom backlog for Aviation",
+      "state": "cancelled",
+      "created_at": "2026-09-09T02:48:09.695477+00:00",
+      "updated_at": "2026-09-14T18:04:14.608476+00:00"
+    },
+    {
+      "id": "task_1ab91b13c745cfe24d488585c9437b1e",
+      "title": "Instrument /api/plan with per-phase timing",
+      "state": "completed",
+      "created_at": "2026-07-21T22:48:14.044776+00:00",
+      "updated_at": "2026-08-11T05:42:57.765909+00:00"
+    },
+    {
+      "id": "task_1c374096705a4088aa8f272fa8b2ad28",
+      "title": "Repair environment prerequisites: Repair contract prerequisites: Repair contract prerequisites: Add unit tests for flight_plan router",
+      "state": "cancelled",
+      "created_at": "2026-07-13T08:31:11.110146+00:00",
+      "updated_at": "2026-08-11T05:43:56.148252+00:00"
+    },
+    {
+      "id": "task_1c42bbe71abb4b6697107615eab283f7",
+      "title": "Fix corrupted main.py module-level simulation code",
+      "state": "completed",
+      "created_at": "2026-07-13T12:43:16.634056+00:00",
+      "updated_at": "2026-08-11T05:43:57.739499+00:00"
+    },
+    {
+      "id": "task_1d644306286146ea839c5ef6471fc82e",
+      "title": "Repair contract prerequisites: Add hazard Pydantic v2 schemas to flight-planner backend",
+      "state": "cancelled",
+      "created_at": "2026-07-12T21:46:12.752062+00:00",
+      "updated_at": "2026-08-11T05:43:49.105159+00:00"
+    },
+    {
+      "id": "task_1d662b663850526347b693db7f23c4ea",
+      "title": "Create Mission button fails - implement admin submission queue",
+      "state": "cancelled",
+      "created_at": "2026-07-21T22:47:22.203683+00:00",
+      "updated_at": "2026-08-11T05:42:54.143297+00:00"
+    },
+    {
+      "id": "task_1d819286c698569e35f78c14b4b768b0",
+      "title": "Build A* pathfinding with aviation constraints",
+      "state": "completed",
+      "created_at": "2026-07-21T22:48:06.168238+00:00",
+      "updated_at": "2026-08-11T05:42:57.540636+00:00"
+    },
+    {
+      "id": "task_1dea8ae097fb4b5e89e840006e0db340",
+      "title": "Certificate-level UI in profile/import and info-badge rendering",
+      "state": "cancelled",
+      "created_at": "2026-07-22T20:01:30.584798+00:00",
+      "updated_at": "2026-08-11T05:42:59.298037+00:00"
+    },
+    {
+      "id": "task_1e2a6da417ac94be74307049585f55ea",
+      "title": "Fix React act warnings in frontend unit tests",
+      "state": "completed",
+      "created_at": "2026-07-21T22:47:59.437137+00:00",
+      "updated_at": "2026-08-11T05:42:14.637812+00:00"
+    },
+    {
+      "id": "task_1ef4768d926a4ceba59bfc2deafa3d75",
+      "title": "Groom backlog for Aviation",
+      "state": "failed",
+      "created_at": "2026-09-13T20:34:36.906182+00:00",
+      "updated_at": "2026-09-13T20:36:41.303177+00:00"
+    },
+    {
+      "id": "task_1f366346ce604ebcba76c3892f01d714",
+      "title": "Groom backlog for Aviation",
+      "state": "failed",
+      "created_at": "2026-09-10T05:02:13.914279+00:00",
+      "updated_at": "2026-09-13T20:18:33.444659+00:00"
+    },
+    {
+      "id": "task_1f69985b86e64747817f12956fb23e9f",
+      "title": "Repair contract prerequisites: Repair contract prerequisites: Add HazardLayer component and hook to flight-planner map",
+      "state": "cancelled",
+      "created_at": "2026-07-12T05:51:27.871283+00:00",
+      "updated_at": "2026-08-11T05:43:43.226959+00:00"
+    },
+    {
+      "id": "task_2004f71d3bf43f0aef1ab81585393a6b",
+      "title": "Aviation Accident Tracker: Docs",
+      "state": "completed",
+      "created_at": "2026-07-21T22:47:22.203552+00:00",
+      "updated_at": "2026-08-11T05:42:16.953635+00:00"
+    },
+    {
+      "id": "task_202be76e147e414c90f4c6a1452cd66a",
+      "title": "Groom backlog for Aviation",
+      "state": "failed",
+      "created_at": "2026-09-13T22:04:49.564054+00:00",
+      "updated_at": "2026-09-13T22:05:38.412922+00:00"
+    },
+    {
+      "id": "task_20ace2157807be4c943d94f5258242c0",
+      "title": "Implement METAR parsing and display",
+      "state": "completed",
+      "created_at": "2026-07-21T22:48:01.026527+00:00",
+      "updated_at": "2026-08-11T05:44:20.489687+00:00"
+    },
+    {
+      "id": "task_20b458c6f8bd1be229b8d31637d95227",
+      "title": "Write comprehensive suite documentation",
+      "state": "completed",
+      "created_at": "2026-07-21T22:47:29.369815+00:00",
+      "updated_at": "2026-08-11T05:42:17.377649+00:00"
+    },
+    {
+      "id": "task_20fa238013ce4e8daad8aef6d2eeac3a",
+      "title": "Repair contract prerequisites: Repair contract prerequisites: Repair contract prerequisites: Add unit tests for nav_database schemas",
+      "state": "cancelled",
+      "created_at": "2026-07-13T11:18:37.498067+00:00",
+      "updated_at": "2026-08-11T05:43:57.268396+00:00"
+    },
+    {
+      "id": "task_218427ba71e843c99803353de1b37956",
+      "title": "Add HazardLayer component and hook to flight-planner map",
+      "state": "failed",
+      "created_at": "2026-07-11T23:15:16.188357+00:00",
+      "updated_at": "2026-08-11T05:43:33.514613+00:00"
+    },
+    {
+      "id": "task_219a38d70872e47a1335fce7016d4cbb",
+      "title": "Fix social preview text readability",
+      "state": "completed",
+      "created_at": "2026-07-21T22:48:12.483944+00:00",
+      "updated_at": "2026-08-11T05:42:14.735265+00:00"
+    },
+    {
+      "id": "task_21ae3ef78cfc47bb8f2189a81e524fc0",
+      "title": "Replace the NOTAM stub with a real FAA NOTAM integration (+ tests)",
+      "state": "completed",
+      "created_at": "2026-06-25T02:38:46.258604+00:00",
+      "updated_at": "2026-08-11T05:43:03.902587+00:00"
+    },
+    {
+      "id": "task_221c7567279b5adf455c07294136d8f0",
+      "title": "Implement missing weather utility functions",
+      "state": "completed",
+      "created_at": "2026-07-21T22:47:36.996820+00:00",
+      "updated_at": "2026-08-11T05:42:55.593596+00:00"
+    },
+    {
+      "id": "task_23218cb07afa42a8a28a8cfa94f55d08",
+      "title": "make run-flight-planner fails: No rule to make target dev-up",
+      "state": "completed",
+      "created_at": "2026-06-26T04:48:56.119827+00:00",
+      "updated_at": "2026-08-11T05:43:04.026042+00:00"
+    },
+    {
+      "id": "task_243966fc08426c183fe80207de919a57",
+      "title": "Performance testing and optimization",
+      "state": "completed",
+      "created_at": "2026-07-21T22:47:46.083391+00:00",
+      "updated_at": "2026-08-11T05:42:18.947667+00:00"
+    },
+    {
+      "id": "task_2484bf57f4f34536bd468a59e9bfbeba",
+      "title": "Add nav-database FastAPI router and register it in the app",
+      "state": "failed",
+      "created_at": "2026-07-12T13:59:07.406267+00:00",
+      "updated_at": "2026-08-11T05:43:46.081257+00:00"
+    },
+    {
+      "id": "task_253669dd67a35e1d4fb57f9975f2786b",
+      "title": "Implement loading states and error handling",
+      "state": "completed",
+      "created_at": "2026-07-21T22:48:11.077753+00:00",
+      "updated_at": "2026-08-11T05:42:57.677762+00:00"
+    },
+    {
+      "id": "task_25e0fff411f14c74b650579c18deca65",
+      "title": "Repair contract prerequisites: Repair contract prerequisites: Add hazard Pydantic schemas to flight-planner backend",
+      "state": "cancelled",
+      "created_at": "2026-07-12T17:39:28.844327+00:00",
+      "updated_at": "2026-08-11T05:43:47.209501+00:00"
+    },
+    {
+      "id": "task_2625201a1bf64f91b1a5c6c52790bd54",
+      "title": "Groom backlog for Aviation",
+      "state": "failed",
+      "created_at": "2026-09-10T04:46:41.829347+00:00",
+      "updated_at": "2026-09-13T20:18:33.424695+00:00"
+    },
+    {
+      "id": "task_262aa654305d8796debc5b5e5a60d432",
+      "title": "Write comprehensive API usage guide",
+      "state": "completed",
+      "created_at": "2026-07-21T22:47:39.091550+00:00",
+      "updated_at": "2026-08-11T05:42:18.484603+00:00"
+    },
+    {
+      "id": "task_266e382647b08ae9863947245f1020a7",
+      "title": "Aviation Suite: Meta-App with Multi-Tab UI",
+      "state": "completed",
+      "created_at": "2026-07-21T22:47:28.502413+00:00",
+      "updated_at": "2026-08-11T05:42:55.160617+00:00"
+    },
+    {
+      "id": "task_26cde93d1afe440ab5a8d7a1088b25ee",
+      "title": "Repair contract prerequisites: Repair contract prerequisites: Add unit tests for flight_plan router",
+      "state": "cancelled",
+      "created_at": "2026-07-13T06:38:38.262395+00:00",
+      "updated_at": "2026-08-11T05:43:55.545992+00:00"
+    },
+    {
+      "id": "task_28c5f76a678bee4d00bfb2980108f62e",
+      "title": "Documentation",
+      "state": "completed",
+      "created_at": "2026-07-21T22:48:12.484089+00:00",
+      "updated_at": "2026-08-11T05:42:20.466578+00:00"
+    },
+    {
+      "id": "task_290ded22c58e7ecc8c428d0b34063ce1",
+      "title": "Add caching layer for shared SDK airport data",
+      "state": "completed",
+      "created_at": "2026-07-21T22:47:45.432899+00:00",
+      "updated_at": "2026-08-11T05:42:18.891187+00:00"
+    },
+    {
+      "id": "task_298cb3d2e353e74ab3f636ce1862c481",
+      "title": "Reconcile CI health for jordanhubbard/Aviation",
+      "state": "failed",
+      "created_at": "2026-09-01T09:10:52.068277+00:00",
+      "updated_at": "2026-09-03T06:29:24.166328+00:00"
+    },
+    {
+      "id": "task_29ff6254249145d0b40a892dfd4efd9a",
+      "title": "Add hazard Pydantic v2 schemas to flight-planner backend",
+      "state": "cancelled",
+      "created_at": "2026-07-12T19:51:15.430452+00:00",
+      "updated_at": "2026-08-11T05:43:48.132787+00:00"
+    },
+    {
+      "id": "task_2a9998c62269473c806735a92becadc8",
+      "title": "Add weather test coverage in shared-sdk (cache, departure windows, errors)",
+      "state": "failed",
+      "created_at": "2026-07-31T19:00:55.178534+00:00",
+      "updated_at": "2026-08-11T05:47:06.176520+00:00"
+    },
+    {
+      "id": "task_2afca3149b894c4fb613a95463d955db",
+      "title": "Repair contract prerequisites: Repair contract prerequisites: Repair contract prerequisites: Add nav-database FastAPI router to flight-planner backend",
+      "state": "cancelled",
+      "created_at": "2026-07-12T13:42:08.401307+00:00",
+      "updated_at": "2026-08-11T05:43:45.328183+00:00"
+    },
+    {
+      "id": "task_2be267f17c914b6a9e6fd05f0bb9b190",
+      "title": "Add pytest tests for hazard router endpoints",
+      "state": "cancelled",
+      "created_at": "2026-07-12T09:45:39.794023+00:00",
+      "updated_at": "2026-08-11T05:43:44.325105+00:00"
+    },
+    {
+      "id": "task_2c0bf6421772483b8230a2c01ab1d291",
+      "title": "Repair contract prerequisites: Add hazard Pydantic schemas to flight-planner backend",
+      "state": "cancelled",
+      "created_at": "2026-07-12T15:26:52.058241+00:00",
+      "updated_at": "2026-08-11T05:43:46.265454+00:00"
+    },
+    {
+      "id": "task_2c3f631cd9e7e3cadebea37bf95d0f16",
+      "title": "Fuel stop planning inputs (fuel on board + burn + reserve)",
+      "state": "completed",
+      "created_at": "2026-07-21T22:47:57.507024+00:00",
+      "updated_at": "2026-08-11T05:42:56.590012+00:00"
+    },
+    {
+      "id": "task_2caed95a1c0d0fa19e55a96311ecdb83",
+      "title": "Aviation Accident Tracker: API",
+      "state": "completed",
+      "created_at": "2026-07-21T22:47:41.503892+00:00",
+      "updated_at": "2026-08-11T05:42:55.658123+00:00"
+    },
+    {
+      "id": "task_2cedeacf29f74d1b8a3acd48d7dcacf4",
+      "title": "Repair contract prerequisites: Create flight_plan.py FastAPI router in routers/ directory",
+      "state": "cancelled",
+      "created_at": "2026-07-12T23:49:52.133902+00:00",
+      "updated_at": "2026-08-11T05:43:49.288119+00:00"
+    },
+    {
+      "id": "task_2dfc5b0a6e1b2238495f5a2ab35c6587",
+      "title": "Add mobile-responsive UI to all applications",
+      "state": "completed",
+      "created_at": "2026-07-21T22:47:44.811236+00:00",
+      "updated_at": "2026-08-11T05:42:18.861541+00:00"
+    },
+    {
+      "id": "task_2f6ab26e18ff4e1089525de225d8b47e",
+      "title": "Verify the deploy workflow builds and repo tests pass",
+      "state": "cancelled",
+      "created_at": "2026-08-07T04:20:44.786930+00:00",
+      "updated_at": "2026-09-01T05:29:52.645532+00:00"
+    },
+    {
+      "id": "task_2f7d2e9d3aaf4469816bd08ba86364da",
+      "title": "Repair VFR planner form and bounded terrain elevation requests",
+      "state": "failed",
+      "created_at": "2026-11-02T17:29:49.660358+00:00",
+      "updated_at": "2026-11-02T17:55:02.645741+00:00"
+    },
+    {
+      "id": "task_2fb4788d841e4ccc9a89843be2678ede",
+      "title": "Export hazards module from shared-sdk and wire hazard overlay into flight-planner map",
+      "state": "failed",
+      "created_at": "2026-07-10T00:23:36.426617+00:00",
+      "updated_at": "2026-08-11T05:43:19.221825+00:00"
+    },
+    {
+      "id": "task_30414901dd3cf3892b5838d8bdc3befe",
+      "title": "Add startup check for missing external API keys",
+      "state": "completed",
+      "created_at": "2026-07-21T22:48:15.485880+00:00",
+      "updated_at": "2026-08-11T05:42:57.819437+00:00"
+    },
+    {
+      "id": "task_314ca529528c4bd4a6baa338113a451f",
+      "title": "Add nav-database FastAPI router to flight-planner backend",
+      "state": "cancelled",
+      "created_at": "2026-07-12T05:56:30.622782+00:00",
+      "updated_at": "2026-08-11T05:43:43.276989+00:00"
+    },
+    {
+      "id": "task_3345140aab4f3d3cf1f8abac32035bc5",
+      "title": "Fix Dependabot security vulnerabilities",
+      "state": "completed",
+      "created_at": "2026-07-21T22:47:43.211840+00:00",
+      "updated_at": "2026-08-11T05:44:19.992005+00:00"
+    },
+    {
+      "id": "task_335429cc582a9b1cb0d725c1555c323f",
+      "title": "Implement airport lookup service (ICAO/IATA geo)",
+      "state": "completed",
+      "created_at": "2026-07-21T22:47:28.502424+00:00",
+      "updated_at": "2026-08-11T05:42:17.288453+00:00"
+    },
+    {
+      "id": "task_336374fdf2dd45feb51284ff36e79209",
+      "title": "Complete backend mission-edit-suggestion moderation workflow (request-changes, audit trail, rate limiting)",
+      "state": "cancelled",
+      "created_at": "2026-07-22T20:06:22.922523+00:00",
+      "updated_at": "2026-08-11T05:42:59.399687+00:00"
+    },
+    {
+      "id": "task_3389201dfb3133dc50c28f1f8bd2694d",
+      "title": "Clone source repositories locally",
+      "state": "completed",
+      "created_at": "2026-07-21T22:48:16.439148+00:00",
+      "updated_at": "2026-08-11T05:44:20.924433+00:00"
+    },
+    {
+      "id": "task_34bb670dc5ae4618a7dd7658f0e17161",
+      "title": "Repair contract prerequisites: Repair contract prerequisites: Add backend hazard router and schema for flight-planner",
+      "state": "cancelled",
+      "created_at": "2026-07-12T09:41:09.493317+00:00",
+      "updated_at": "2026-08-11T05:43:44.270008+00:00"
+    },
+    {
+      "id": "task_35d1ea4741cb1b0213ee05094d6d2f1d",
+      "title": "aviation-missions-app CI: health monitoring job checks too early",
+      "state": "completed",
+      "created_at": "2026-07-21T22:48:00.356380+00:00",
+      "updated_at": "2026-08-11T05:42:57.327013+00:00"
+    },
+    {
+      "id": "task_37540ce11fe94113b1beb677fbd8e1d0",
+      "title": "Real live-traffic tracking (ADS-B) for flight-tracker",
+      "state": "completed",
+      "created_at": "2026-06-26T00:17:38.969498+00:00",
+      "updated_at": "2026-08-11T05:43:03.969684+00:00"
+    },
+    {
+      "id": "task_377a4956fec787997184f88008e0b3f0",
+      "title": "Port cross-country route planning from xctry-planner",
+      "state": "completed",
+      "created_at": "2026-07-21T22:48:05.880840+00:00",
+      "updated_at": "2026-08-11T05:44:20.629050+00:00"
+    },
+    {
+      "id": "task_37f7626cfdf04b13a5275c6e047422ea",
+      "title": "Fix nav_database.py ImportError: the schemas it imports do not exist",
+      "state": "failed",
+      "created_at": "2026-08-02T03:00:25.009930+00:00",
+      "updated_at": "2026-08-11T05:42:12.227366+00:00"
+    },
+    {
+      "id": "task_38854065db4c4798a0f22c7763ea1785",
+      "title": "Groom backlog for Aviation",
+      "state": "failed",
+      "created_at": "2026-09-09T15:24:45.156258+00:00",
+      "updated_at": "2026-09-09T15:27:37.914421+00:00"
+    },
+    {
+      "id": "task_39e296fa4e6c4c62ba8d6486a6de2348",
+      "title": "Make Aviation's four remaining CI jobs green (Flight Planner, integration, pip-audit, trivy)",
+      "state": "completed",
+      "created_at": "2026-10-03T12:55:00.401423+00:00",
+      "updated_at": "2026-10-03T13:02:34.438013+00:00"
+    },
+    {
+      "id": "task_3b0257188ce13777a4b431653c9e3297",
+      "title": "Add responsive design and mobile support",
+      "state": "completed",
+      "created_at": "2026-07-21T22:48:11.076301+00:00",
+      "updated_at": "2026-08-11T05:42:20.343000+00:00"
+    },
+    {
+      "id": "task_3b29812a9f8e44b08d1efe80ac684827",
+      "title": "Add g1000-simulator CI job to .github/workflows/ci.yml",
+      "state": "failed",
+      "created_at": "2026-07-10T00:23:36.426617+00:00",
+      "updated_at": "2026-08-11T05:43:19.248518+00:00"
+    },
+    {
+      "id": "task_3b6fafd80fc0a539f07306146fd96c6d",
+      "title": "Create API integration tests",
+      "state": "completed",
+      "created_at": "2026-07-21T22:48:03.225805+00:00",
+      "updated_at": "2026-08-11T05:42:57.442011+00:00"
+    },
+    {
+      "id": "task_3b7b387e8ebd485391e63f21bef465e2",
+      "title": "Groom backlog for Aviation",
+      "state": "failed",
+      "created_at": "2026-09-09T21:38:29.926810+00:00",
+      "updated_at": "2026-09-09T21:40:50.908665+00:00"
+    },
+    {
+      "id": "task_3b8e8c833e5d4e57b2c5aa9bf0d86853",
+      "title": "Repair contract prerequisites: Repair contract prerequisites: Add flight_plan.py FastAPI router to flight-planner backend",
+      "state": "cancelled",
+      "created_at": "2026-07-12T21:19:28.117026+00:00",
+      "updated_at": "2026-08-11T05:43:49.023706+00:00"
+    },
+    {
+      "id": "task_3bbb766d955b43c9b57ed8429f43f25f",
+      "title": "Commit changes and push to remote branch",
+      "state": "cancelled",
+      "created_at": "2026-07-13T01:50:20.128842+00:00",
+      "updated_at": "2026-08-11T05:43:49.564623+00:00"
+    },
+    {
+      "id": "task_3c20a2383065e0b83b205aef7baa5223",
+      "title": "Central error-collection SDK + supervisor/worker audit",
+      "state": "completed",
+      "created_at": "2026-07-21T22:47:32.763884+00:00",
+      "updated_at": "2026-08-11T05:42:55.416406+00:00"
+    },
+    {
+      "id": "task_3cdf409fe5d04011855ff8141dcd25f7",
+      "title": "Groom backlog for Aviation",
+      "state": "failed",
+      "created_at": "2026-09-09T14:56:55.008378+00:00",
+      "updated_at": "2026-09-09T15:04:05.599222+00:00"
+    },
+    {
+      "id": "task_3d97bcc5b754fe7a4c4cc54ee1bed49e",
+      "title": "aviation-missions-app CI: DB migration test asserts on missing 'missions_loaded' log",
+      "state": "completed",
+      "created_at": "2026-07-21T22:48:14.043209+00:00",
+      "updated_at": "2026-08-11T05:42:21.220449+00:00"
+    },
+    {
+      "id": "task_3e0d7e95e2744214a8f4badcb62ed8a1",
+      "title": "Repair contract prerequisites: Add flight_plan.py FastAPI router and tests to flight-planner backend",
+      "state": "cancelled",
+      "created_at": "2026-07-12T15:19:44.243702+00:00",
+      "updated_at": "2026-08-11T05:43:46.241570+00:00"
+    },
+    {
+      "id": "task_3e440464d2054edeb433db05a1a1e604",
+      "title": "Verify test_nav_database_schemas.py passes",
+      "state": "cancelled",
+      "created_at": "2026-07-13T11:35:24.446489+00:00",
+      "updated_at": "2026-08-11T05:43:57.345023+00:00"
+    },
+    {
+      "id": "task_3f3e2555c05d4b37b463aadba8dd324d",
+      "title": "Fix g1000-simulator backend: implement create_app factory and export FlightDynamicsSimulator",
+      "state": "completed",
+      "created_at": "2026-07-12T00:33:52.159614+00:00",
+      "updated_at": "2026-08-11T05:43:38.275728+00:00"
+    },
+    {
+      "id": "task_3fbe21f5d6ef496187af6d1a67119aba",
+      "title": "Groom backlog for Aviation",
+      "state": "failed",
+      "created_at": "2026-09-09T20:40:54.758735+00:00",
+      "updated_at": "2026-09-09T20:43:51.880768+00:00"
+    },
+    {
+      "id": "task_3fe651ad1c6e19c3bb725c8f9d58bda3",
+      "title": "PROD: Flight Planner airports endpoint crashes with layerPointToLatLng error",
+      "state": "completed",
+      "created_at": "2026-07-21T22:47:44.810736+00:00",
+      "updated_at": "2026-08-11T05:44:20.021406+00:00"
+    },
+    {
+      "id": "task_3ff9291673a2d7c6e38f5ed4b8dd2278",
+      "title": "Bind services for Railway private networking (IPv6)",
+      "state": "completed",
+      "created_at": "2026-07-21T22:48:19.047513+00:00",
+      "updated_at": "2026-08-11T05:42:21.336005+00:00"
+    },
+    {
+      "id": "task_401778172691162143c4ad6e11205bfb",
+      "title": "Add authentication and rate limiting to accident-tracker API",
+      "state": "completed",
+      "created_at": "2026-07-21T22:47:27.628927+00:00",
+      "updated_at": "2026-08-11T05:42:17.220938+00:00"
+    },
+    {
+      "id": "task_40ed570700154240944c96c3a433a166",
+      "title": "Repair contract prerequisites: Add hazard Pydantic schemas to flight-planner backend",
+      "state": "cancelled",
+      "created_at": "2026-07-12T11:39:34.094593+00:00",
+      "updated_at": "2026-08-11T05:43:45.192080+00:00"
+    },
+    {
+      "id": "task_41298f7cc2ab441280ec24d53a3a006d",
+      "title": "Repair contract prerequisites: Add backend hazard router and schema for flight-planner",
+      "state": "cancelled",
+      "created_at": "2026-07-12T07:39:40.131155+00:00",
+      "updated_at": "2026-08-11T05:43:44.075783+00:00"
+    },
+    {
+      "id": "task_4260dcfcc4e1a203f7a81083c327f074",
+      "title": "screen real-estate is very poorly managed",
+      "state": "completed",
+      "created_at": "2026-07-21T22:47:58.136118+00:00",
+      "updated_at": "2026-08-11T05:42:20.000019+00:00"
+    },
+    {
+      "id": "task_429cbcaff6a84f06a383bac4c1c9eb83",
+      "title": "Remove unrelated Flight Planner G1000 demo controls and canvas",
+      "state": "open",
+      "created_at": "2026-10-24T18:52:42.393120+00:00",
+      "updated_at": "2026-10-24T18:52:42.393120+00:00"
+    },
+    {
+      "id": "task_42eedacdcfd345f8a31d5e1bbf400485",
+      "title": "Add autopilot module to g1000-avionics-sdk TypeScript package",
+      "state": "failed",
+      "created_at": "2026-07-10T00:23:36.426617+00:00",
+      "updated_at": "2026-08-11T05:43:19.271145+00:00"
+    },
+    {
+      "id": "task_430681f004e94c56bdfe2af6f9f26f1f",
+      "title": "Commit all changes and push to remote branch",
+      "state": "cancelled",
+      "created_at": "2026-07-12T01:37:11.555279+00:00",
+      "updated_at": "2026-08-11T05:43:42.237008+00:00"
+    },
+    {
+      "id": "task_441ea5c1269e40ce979ee0d547b6a746",
+      "title": "Groom backlog for Aviation",
+      "state": "failed",
+      "created_at": "2026-09-09T15:39:56.711120+00:00",
+      "updated_at": "2026-09-09T15:46:51.826819+00:00"
+    },
+    {
+      "id": "task_4542786226f2b6e0c9d7a3c6f9382647",
+      "title": "Create integration tests for meta-app suite",
+      "state": "completed",
+      "created_at": "2026-07-21T22:47:31.938875+00:00",
+      "updated_at": "2026-08-11T05:42:17.410609+00:00"
+    },
+    {
+      "id": "task_459f5c9bbf912d4237196582377e9219",
+      "title": "Extract route planning logic from xctry-planner",
+      "state": "completed",
+      "created_at": "2026-07-21T22:47:56.154092+00:00",
+      "updated_at": "2026-08-11T05:44:20.365776+00:00"
+    },
+    {
+      "id": "task_46b2163482f995a8de446feea794c6ba",
+      "title": "Implement frontend event list/table component",
+      "state": "completed",
+      "created_at": "2026-07-21T22:47:27.629238+00:00",
+      "updated_at": "2026-08-11T05:42:17.257197+00:00"
+    },
+    {
+      "id": "task_46bf95596d90c10db3417d6a757fdd3f",
+      "title": "Data Layer Integration",
+      "state": "completed",
+      "created_at": "2026-07-21T22:47:53.321994+00:00",
+      "updated_at": "2026-08-11T05:42:55.935853+00:00"
+    },
+    {
+      "id": "task_46ecdebba8d957efce6a091068d44215",
+      "title": "Migrate flightschool to use shared SDK (Google Calendar)",
+      "state": "completed",
+      "created_at": "2026-07-21T22:47:26.701367+00:00",
+      "updated_at": "2026-08-11T05:42:17.169034+00:00"
+    },
+    {
+      "id": "task_47eb696b8004b4eaf340051c7b5d5e16",
+      "title": "Aviation Accident Tracker: Data Sources",
+      "state": "completed",
+      "created_at": "2026-07-21T22:47:26.701379+00:00",
+      "updated_at": "2026-08-11T05:42:54.435896+00:00"
+    },
+    {
+      "id": "task_48f2da691fac81450e75a5827306017b",
+      "title": "Componentize common Aviation alert lifecycle",
+      "state": "cancelled",
+      "created_at": "2026-10-31T08:26:47.548527+00:00",
+      "updated_at": "2026-10-31T08:43:41.991106+00:00"
+    },
+    {
+      "id": "task_4931bb1cb6c84de19eca97acdcab83fd",
+      "title": "Add pytest tests for flight_plan router",
+      "state": "cancelled",
+      "created_at": "2026-07-12T21:41:40.546651+00:00",
+      "updated_at": "2026-08-11T05:43:49.088459+00:00"
+    },
+    {
+      "id": "task_4aabdb674e6f463aaef470465a8f4d46",
+      "title": "Update requirements.txt and Makefile to include g1000-simulator backend tests",
+      "state": "failed",
+      "created_at": "2026-07-12T01:37:11.555279+00:00",
+      "updated_at": "2026-08-11T05:43:42.193267+00:00"
+    },
+    {
+      "id": "task_4ad7c7a952c44429941ffbd0f0242c27",
+      "title": "Verify backend tests pass and push branch for the Aviation repo contract",
+      "state": "cancelled",
+      "created_at": "2026-07-12T03:52:23.659534+00:00",
+      "updated_at": "2026-08-11T05:43:42.973266+00:00"
+    },
+    {
+      "id": "task_4af86e382e436bee465b0cc28c406035",
+      "title": "Deploy accident-tracker to production",
+      "state": "completed",
+      "created_at": "2026-07-21T22:47:38.199344+00:00",
+      "updated_at": "2026-08-11T05:42:18.401106+00:00"
+    },
+    {
+      "id": "task_4b1b79edf9fd7e4e5cc6b5391a7375d6",
+      "title": "Write docker-compose.yml for development",
+      "state": "completed",
+      "created_at": "2026-07-21T22:48:07.863966+00:00",
+      "updated_at": "2026-08-11T05:42:57.612151+00:00"
+    },
+    {
+      "id": "task_4cf14bcf44235612bea3967fa2e50ece",
+      "title": "Create Docker infrastructure for 4 apps missing it",
+      "state": "completed",
+      "created_at": "2026-07-21T22:47:23.769391+00:00",
+      "updated_at": "2026-08-11T05:44:19.905240+00:00"
+    },
+    {
+      "id": "task_4eddb688831b4208ab76356519b943ce",
+      "title": "Run make test, commit remaining files, and push branch",
+      "state": "cancelled",
+      "created_at": "2026-07-11T23:15:16.188357+00:00",
+      "updated_at": "2026-08-11T05:43:33.476872+00:00"
+    },
+    {
+      "id": "task_4eea0384fbc440bea9780e3f1fff7587",
+      "title": "Repair contract prerequisites: Repair contract prerequisites: Add nav-database Pydantic v2 schemas to flight-planner backend",
+      "state": "cancelled",
+      "created_at": "2026-07-13T00:43:56.759686+00:00",
+      "updated_at": "2026-08-11T05:43:49.343605+00:00"
+    },
+    {
+      "id": "task_501580117097c84cb18fc4acd42edcb9",
+      "title": "Create production docker-compose configuration",
+      "state": "completed",
+      "created_at": "2026-07-21T22:48:08.487667+00:00",
+      "updated_at": "2026-08-11T05:42:20.238261+00:00"
+    },
+    {
+      "id": "task_5017ed4b6eb83497f34c2e172cfaed62",
+      "title": "Set up FastAPI application factory",
+      "state": "completed",
+      "created_at": "2026-07-21T22:47:56.829854+00:00",
+      "updated_at": "2026-08-11T05:44:20.443324+00:00"
+    },
+    {
+      "id": "task_5326ed3551b9acf595de5140eb0cdb15",
+      "title": "Configure Railway for monorepo deployment",
+      "state": "completed",
+      "created_at": "2026-07-21T22:47:23.763583+00:00",
+      "updated_at": "2026-08-11T05:42:54.264331+00:00"
+    },
+    {
+      "id": "task_53c5192c490e418787425da4e10c77b4",
+      "title": "Run full test suite, commit, and push",
+      "state": "cancelled",
+      "created_at": "2026-07-13T11:35:24.446489+00:00",
+      "updated_at": "2026-08-11T05:43:57.384523+00:00"
+    },
+    {
+      "id": "task_5493eff3e000439e889478ef63d5f2de",
+      "title": "Stand up a minimal real integration-test suite to replace the CI placeholder",
+      "state": "failed",
+      "created_at": "2026-07-31T19:00:55.178534+00:00",
+      "updated_at": "2026-08-11T05:47:06.147398+00:00"
+    },
+    {
+      "id": "task_550adfb71e281ae4cd6db64a2e1f1631",
+      "title": "Set weather-briefing OPENWEATHERMAP_API_KEY in Railway from root .env",
+      "state": "completed",
+      "created_at": "2026-07-21T22:47:39.383633+00:00",
+      "updated_at": "2026-08-11T05:42:18.507730+00:00"
+    },
+    {
+      "id": "task_5572d95d0f55ac2b6ed42523c20ec5a9",
+      "title": "Extract map integration patterns to @aviation/ui-framework",
+      "state": "completed",
+      "created_at": "2026-07-21T22:47:46.984039+00:00",
+      "updated_at": "2026-08-11T05:44:20.078820+00:00"
+    },
+    {
+      "id": "task_565ea02adbc64c9d850b9f9deb60a8b3",
+      "title": "Repair contract prerequisites: Repair contract prerequisites: Add unit tests for nav_database schemas",
+      "state": "cancelled",
+      "created_at": "2026-07-13T09:18:13.930704+00:00",
+      "updated_at": "2026-08-11T05:43:56.580484+00:00"
+    },
+    {
+      "id": "task_566bc4f5b13944aca456c30114fb17cd",
+      "title": "Mission-edit-suggestion moderation DB layer: moderation audit trail",
+      "state": "cancelled",
+      "created_at": "2026-07-23T05:30:31.603227+00:00",
+      "updated_at": "2026-08-11T05:42:59.662755+00:00"
+    },
+    {
+      "id": "task_56b1b3cf955a44d7ba78b1114e15624f",
+      "title": "Run make test, commit all hazard changes, and push branch",
+      "state": "cancelled",
+      "created_at": "2026-07-12T06:00:03.389314+00:00",
+      "updated_at": "2026-08-11T05:43:43.336366+00:00"
+    },
+    {
+      "id": "task_56b22b04f9b09612c641d44bd57f022e",
+      "title": "Create base project structure",
+      "state": "completed",
+      "created_at": "2026-07-21T22:48:17.402428+00:00",
+      "updated_at": "2026-08-11T05:44:21.032131+00:00"
+    },
+    {
+      "id": "task_56dcbfb6430dfad38a493479235a020d",
+      "title": "Weather briefing: persist airport selection and refresh map",
+      "state": "completed",
+      "created_at": "2026-07-21T22:47:44.807427+00:00",
+      "updated_at": "2026-08-11T05:42:18.798906+00:00"
+    },
+    {
+      "id": "task_58895862eac1b2669b6feb0f809f7f2a",
+      "title": "Implement missing weather utility functions",
+      "state": "completed",
+      "created_at": "2026-07-21T22:47:25.284132+00:00",
+      "updated_at": "2026-08-11T05:42:54.403340+00:00"
+    },
+    {
+      "id": "task_590462cf87692699ee3eeb08e6e880ec",
+      "title": "Flight log: highlight fuel stops + per-leg elapsed time",
+      "state": "completed",
+      "created_at": "2026-07-21T22:48:12.483828+00:00",
+      "updated_at": "2026-08-11T05:42:20.441063+00:00"
+    },
+    {
+      "id": "task_5920b5138047496abacc8dd1fda6cf5f",
+      "title": "Groom backlog for Aviation",
+      "state": "failed",
+      "created_at": "2026-09-10T03:15:41.477258+00:00",
+      "updated_at": "2026-09-10T03:17:18.057249+00:00"
+    },
+    {
+      "id": "task_5a772187a26eca3b7c6e1498a80ab784",
+      "title": "Create aviation-suite meta-app application",
+      "state": "completed",
+      "created_at": "2026-07-21T22:47:30.285946+00:00",
+      "updated_at": "2026-08-11T05:42:55.256231+00:00"
+    },
+    {
+      "id": "task_5ad2c534e590492ebaa1299139c314b4",
+      "title": "Groom backlog for Aviation",
+      "state": "failed",
+      "created_at": "2026-09-11T03:26:21.448077+00:00",
+      "updated_at": "2026-09-13T20:28:12.321114+00:00"
+    },
+    {
+      "id": "task_5aeb8abe5484511ca96cf7afba5af741",
+      "title": "Aviation-accidents: ingest persistence fails (lastID undefined)",
+      "state": "completed",
+      "created_at": "2026-07-21T22:47:31.937322+00:00",
+      "updated_at": "2026-08-11T05:42:17.395186+00:00"
+    },
+    {
+      "id": "task_5b0a60be4e1347bc924a255bb28397c9",
+      "title": "Wire new routers into create_app factory and unify app/main.py",
+      "state": "failed",
+      "created_at": "2026-07-12T01:37:11.555279+00:00",
+      "updated_at": "2026-08-11T05:43:42.163016+00:00"
+    },
+    {
+      "id": "task_5bc4e25983761e921ca61fb7963c6e87",
+      "title": "Set up GitHub Actions CI/CD",
+      "state": "completed",
+      "created_at": "2026-07-21T22:48:08.490451+00:00",
+      "updated_at": "2026-08-11T05:42:20.306118+00:00"
+    },
+    {
+      "id": "task_5bca98b43202a12f1b4a144e0a6e7c28",
+      "title": "Increase frontend plan request timeout (configurable)",
+      "state": "completed",
+      "created_at": "2026-07-21T22:48:11.077738+00:00",
+      "updated_at": "2026-08-11T05:42:20.383275+00:00"
+    },
+    {
+      "id": "task_5c154b71da60200e6ac5f6e55967752f",
+      "title": "Set up Git LFS for large data files",
+      "state": "completed",
+      "created_at": "2026-07-21T22:47:54.228315+00:00",
+      "updated_at": "2026-08-11T05:44:20.177186+00:00"
+    },
+    {
+      "id": "task_5c7d0219e5f8606be157066e42c7bd86",
+      "title": "Create API documentation",
+      "state": "completed",
+      "created_at": "2026-07-21T22:48:12.776572+00:00",
+      "updated_at": "2026-08-11T05:42:57.727603+00:00"
+    },
+    {
+      "id": "task_5c8e69c895b942c3a507b435ff4dd756",
+      "title": "Groom backlog for Aviation",
+      "state": "failed",
+      "created_at": "2026-09-09T16:25:21.513695+00:00",
+      "updated_at": "2026-09-09T17:35:11.403642+00:00"
+    },
+    {
+      "id": "task_5c96e97c8c6743adb3ede5b39256cb7a",
+      "title": "Create nav_database.py Pydantic v2 schemas, commit ALL files, run make test, and push",
+      "state": "cancelled",
+      "created_at": "2026-07-13T01:00:54.225616+00:00",
+      "updated_at": "2026-08-11T05:43:49.387085+00:00"
+    },
+    {
+      "id": "task_5d188b95362c4ba198919f483ab6c8ca",
+      "title": "Mission moderation DB layer: add request-changes status + migration",
+      "state": "cancelled",
+      "created_at": "2026-07-23T07:13:26.879274+00:00",
+      "updated_at": "2026-08-11T05:42:59.786134+00:00"
+    },
+    {
+      "id": "task_5d5cc1c9929f4dee9514e2f8528d9bbb",
+      "title": "Mission-edit-suggestion moderation DB layer: submission rate-limit tracking",
+      "state": "cancelled",
+      "created_at": "2026-07-23T05:30:31.603227+00:00",
+      "updated_at": "2026-08-11T05:42:59.644992+00:00"
+    },
+    {
+      "id": "task_5d73eb39bbc344d2ac71aa5491e4efe7",
+      "title": "Groom backlog for Aviation",
+      "state": "failed",
+      "created_at": "2026-09-13T20:19:34.648332+00:00",
+      "updated_at": "2026-09-13T20:36:41.294075+00:00"
+    },
+    {
+      "id": "task_608b78522dc3ff95fffad8f8ba298a5c",
+      "title": "Build flight planning form component",
+      "state": "completed",
+      "created_at": "2026-07-21T22:48:09.818028+00:00",
+      "updated_at": "2026-08-11T05:44:20.823369+00:00"
+    },
+    {
+      "id": "task_60bb33610af642999ca48f84a3fe6f18",
+      "title": "Add flight_plan.py FastAPI router to flight-planner backend",
+      "state": "cancelled",
+      "created_at": "2026-07-12T17:39:38.373776+00:00",
+      "updated_at": "2026-08-11T05:43:47.231795+00:00"
+    },
+    {
+      "id": "task_60c5715284bc9f93722b86b077fa3b49",
+      "title": "Add Open-Meteo API integration",
+      "state": "completed",
+      "created_at": "2026-07-21T22:48:01.025477+00:00",
+      "updated_at": "2026-08-11T05:44:20.466592+00:00"
+    },
+    {
+      "id": "task_60d15f5d321dd130bb87e67a6ac2b0c2",
+      "title": "Create mode selection UI component",
+      "state": "completed",
+      "created_at": "2026-07-21T22:48:09.815461+00:00",
+      "updated_at": "2026-08-11T05:44:20.758910+00:00"
+    },
+    {
+      "id": "task_610635e255a2ab76db32e81a5ecb1217",
+      "title": "Set up pytest and testing infrastructure",
+      "state": "completed",
+      "created_at": "2026-07-21T22:48:02.620636+00:00",
+      "updated_at": "2026-08-11T05:42:57.405147+00:00"
+    },
+    {
+      "id": "task_610e9b394a3647d1bec2068bcbeec540",
+      "title": "Groom backlog for Aviation",
+      "state": "failed",
+      "created_at": "2026-09-09T15:09:38.233769+00:00",
+      "updated_at": "2026-09-09T15:14:57.670441+00:00"
+    },
+    {
+      "id": "task_621736eb5cbdaa6bd9b7107eb9242256",
+      "title": "Extract weather services to @aviation/shared-sdk",
+      "state": "completed",
+      "created_at": "2026-07-21T22:47:39.386968+00:00",
+      "updated_at": "2026-08-11T05:44:19.941437+00:00"
+    },
+    {
+      "id": "task_6263ebb239e3472b89362e24b43f3511",
+      "title": "Add unit tests for nav_database schemas",
+      "state": "cancelled",
+      "created_at": "2026-07-13T04:43:42.339175+00:00",
+      "updated_at": "2026-08-11T05:43:51.751099+00:00"
+    },
+    {
+      "id": "task_6288c58afeac4a4daa1f7c0facec28a7",
+      "title": "Add hazard Pydantic schemas to flight-planner backend",
+      "state": "cancelled",
+      "created_at": "2026-07-12T13:17:45.116349+00:00",
+      "updated_at": "2026-08-11T05:43:45.264601+00:00"
+    },
+    {
+      "id": "task_63d5214ef058ea54c47105c03d298b85",
+      "title": "Enhance ui-framework with full multi-tab components",
+      "state": "completed",
+      "created_at": "2026-07-21T22:47:30.288143+00:00",
+      "updated_at": "2026-08-11T05:42:55.277241+00:00"
+    },
+    {
+      "id": "task_6528b35fc20a4259844e3b5566b427af",
+      "title": "Implement NavDatabase service with search and procedure lookup",
+      "state": "failed",
+      "created_at": "2026-07-12T13:59:07.406267+00:00",
+      "updated_at": "2026-08-11T05:43:46.016960+00:00"
+    },
+    {
+      "id": "task_655df332aeb91c6316855b24a3b332be",
+      "title": "Create seed data script for testing",
+      "state": "completed",
+      "created_at": "2026-07-21T22:47:33.594254+00:00",
+      "updated_at": "2026-08-11T05:42:17.484817+00:00"
+    },
+    {
+      "id": "task_65783206afbb6145bb3be8c145c8cf7f",
+      "title": "Aviation Accident Tracker: Geo",
+      "state": "completed",
+      "created_at": "2026-07-21T22:47:50.240719+00:00",
+      "updated_at": "2026-08-11T05:42:19.811194+00:00"
+    },
+    {
+      "id": "task_66cc43b19ff249f8b54f1c67c9b2a1ef",
+      "title": "Repair remaining Aviation suite service contracts",
+      "state": "failed",
+      "created_at": "2026-09-01T10:28:21.095254+00:00",
+      "updated_at": "2026-09-03T06:25:25.336895+00:00"
+    },
+    {
+      "id": "task_679529dc53e495cac937754fd49749bf",
+      "title": "Hide non-reporting airports from local map weather status circles",
+      "state": "completed",
+      "created_at": "2026-07-21T22:48:11.362221+00:00",
+      "updated_at": "2026-08-11T05:42:20.411841+00:00"
+    },
+    {
+      "id": "task_680e260363f94a4285c84f9be8976e8d",
+      "title": "Repair contract prerequisites: Fix g1000-simulator Makefile: add start, dev-up, test, and backend-test targets",
+      "state": "failed",
+      "created_at": "2026-07-12T00:08:19.943665+00:00",
+      "updated_at": "2026-08-11T05:43:36.910576+00:00"
+    },
+    {
+      "id": "task_683dfc6df69b4769a9606a0aa51e2336",
+      "title": "Export hazards module from shared-sdk index.ts",
+      "state": "completed",
+      "created_at": "2026-07-11T23:15:16.188357+00:00",
+      "updated_at": "2026-08-11T05:43:33.497991+00:00"
+    },
+    {
+      "id": "task_68d9b738b2d64d8b8d2c37040bc7de84",
+      "title": "Groom backlog for Aviation",
+      "state": "failed",
+      "created_at": "2026-09-13T21:49:47.583111+00:00",
+      "updated_at": "2026-09-13T21:50:33.827503+00:00"
+    },
+    {
+      "id": "task_6ab3aa43673f471e9bc493f0810ae0f8",
+      "title": "Fix g1000-simulator backend: add create_app factory and StreamingService",
+      "state": "cancelled",
+      "created_at": "2026-07-10T00:23:36.426617+00:00",
+      "updated_at": "2026-08-11T05:43:19.192805+00:00"
+    },
+    {
+      "id": "task_6b299b14aaa08a11226866cb3be29aae",
+      "title": "Add weather-based flight recommendations",
+      "state": "completed",
+      "created_at": "2026-07-21T22:48:02.300995+00:00",
+      "updated_at": "2026-08-11T05:42:20.032420+00:00"
+    },
+    {
+      "id": "task_6bae54fc047b49d9bd48ed7d33a82b93",
+      "title": "Repair contract prerequisites: Add HazardLayer component and hook to flight-planner map",
+      "state": "cancelled",
+      "created_at": "2026-07-12T03:49:18.945769+00:00",
+      "updated_at": "2026-08-11T05:43:42.938834+00:00"
+    },
+    {
+      "id": "task_6bd4e3d67c694d9fa29f9d65f315d63f",
+      "title": "Install flight-planner Python deps into project venv",
+      "state": "completed",
+      "created_at": "2026-07-13T12:43:16.634056+00:00",
+      "updated_at": "2026-08-11T05:43:57.762454+00:00"
+    },
+    {
+      "id": "task_6c45b0f30883f77a5e574ad09aaf31a2",
+      "title": "Implement mode selection endpoint",
+      "state": "completed",
+      "created_at": "2026-07-21T22:47:56.154602+00:00",
+      "updated_at": "2026-08-11T05:44:20.418748+00:00"
+    },
+    {
+      "id": "task_6c9f4ab255f9441f87676b3083c8fa1f",
+      "title": "Make Aviation CI green so it can be the landing gate",
+      "state": "completed",
+      "created_at": "2026-10-01T07:08:52.239967+00:00",
+      "updated_at": "2026-10-03T12:52:32.969105+00:00"
+    },
+    {
+      "id": "task_6cdd338440a4018ab5b52180918e7830",
+      "title": "EPIC: Extract shared aviation data services to common SDK",
+      "state": "completed",
+      "created_at": "2026-07-21T22:47:47.582813+00:00",
+      "updated_at": "2026-08-11T05:42:18.980996+00:00"
+    },
+    {
+      "id": "task_6d3a2b7aa8a7f87e50d0beb9abb04265",
+      "title": "Write user guide and tutorials",
+      "state": "completed",
+      "created_at": "2026-07-21T22:48:13.113551+00:00",
+      "updated_at": "2026-08-11T05:42:20.758876+00:00"
+    },
+    {
+      "id": "task_6db7c13ef47f4dd3bc1deebae035e60b",
+      "title": "Reconcile CI health for jordanhubbard/Aviation",
+      "state": "failed",
+      "created_at": "2026-09-16T02:17:16.422641+00:00",
+      "updated_at": "2026-09-16T15:35:41.698035+00:00"
+    },
+    {
+      "id": "task_6dea2e08030941b794ebbc72f5d734d3",
+      "title": "Groom backlog for Aviation",
+      "state": "failed",
+      "created_at": "2026-09-13T23:50:04.869345+00:00",
+      "updated_at": "2026-09-13T23:50:39.168552+00:00"
+    },
+    {
+      "id": "task_6f2d51e114254ce4b8a9d55bf67e9e35",
+      "title": "Mission-edit-suggestion moderation: handlers + routes (request-changes endpoint, audit trail wiring, rate limiting enforcement)",
+      "state": "cancelled",
+      "created_at": "2026-07-23T03:35:45.092341+00:00",
+      "updated_at": "2026-08-11T05:42:59.558759+00:00"
+    },
+    {
+      "id": "task_7039312006a6d3d485493c8c712504ea",
+      "title": "Create migration announcement and documentation",
+      "state": "completed",
+      "created_at": "2026-07-21T22:47:52.638677+00:00",
+      "updated_at": "2026-08-11T05:42:14.573856+00:00"
+    },
+    {
+      "id": "task_70c30a778866ed55deddc14c6e3ecf07",
+      "title": "Aviation Accident Tracker: Frontend",
+      "state": "completed",
+      "created_at": "2026-07-21T22:47:22.203695+00:00",
+      "updated_at": "2026-08-11T05:42:54.191252+00:00"
+    },
+    {
+      "id": "task_712fa72e55564e819bdaf6203a9f9f16",
+      "title": "Repair contract prerequisites: Set up Python venv and install flight-planner dependencies",
+      "state": "completed",
+      "created_at": "2026-07-13T13:55:20.518839+00:00",
+      "updated_at": "2026-08-11T05:43:57.862128+00:00"
+    },
+    {
+      "id": "task_719001fd8d97d5a7551f54feb8253196",
+      "title": "Railway deploy: bind to 0.0.0.0 by default",
+      "state": "completed",
+      "created_at": "2026-07-21T22:48:14.422486+00:00",
+      "updated_at": "2026-08-11T05:42:57.781199+00:00"
+    },
+    {
+      "id": "task_71cd9a26049130ea3ebba6d7f2a4b9a3",
+      "title": "Migrate aviation-missions-app to use shared SDK (minimal)",
+      "state": "completed",
+      "created_at": "2026-07-21T22:47:47.583852+00:00",
+      "updated_at": "2026-08-11T05:42:18.995887+00:00"
+    },
+    {
+      "id": "task_71f28160bfc2b8d9ecb3f2ca2001a11f",
+      "title": "Support FAA/local airport codes like 7S5",
+      "state": "completed",
+      "created_at": "2026-07-21T22:48:15.485837+00:00",
+      "updated_at": "2026-08-11T05:42:57.799538+00:00"
+    },
+    {
+      "id": "task_72a684e831568149ec5b4ade37e9063e",
+      "title": "Aviation-accidents: AVHerald fixture missing in dist",
+      "state": "completed",
+      "created_at": "2026-07-21T22:47:43.211853+00:00",
+      "updated_at": "2026-08-11T05:42:18.671395+00:00"
+    },
+    {
+      "id": "task_72f53372d2774750af18c0decfc34056",
+      "title": "Make the root `make test` target fail closed instead of masking failures",
+      "state": "cancelled",
+      "created_at": "2026-07-31T23:14:10.718024+00:00",
+      "updated_at": "2026-09-01T05:29:52.297928+00:00"
+    },
+    {
+      "id": "task_72ffa048d7ef7aa342b75c83068b2343",
+      "title": "Fix OpenTopography terrain requests (bbox too small)",
+      "state": "completed",
+      "created_at": "2026-07-21T22:48:08.851379+00:00",
+      "updated_at": "2026-08-11T05:42:57.627339+00:00"
+    },
+    {
+      "id": "task_744f5a79d1d44daea395a959b36cd4cf",
+      "title": "Repair contract prerequisites: Add test_flight_plan_router.py unit tests and verify suite passes",
+      "state": "completed",
+      "created_at": "2026-07-13T17:39:23.889019+00:00",
+      "updated_at": "2026-08-11T05:43:58.477934+00:00"
+    },
+    {
+      "id": "task_750e66071c01473d8858070f360efa67",
+      "title": "Verify & fix Create Mission form submission and admin pending queue (frontend)",
+      "state": "cancelled",
+      "created_at": "2026-07-22T19:51:58.569400+00:00",
+      "updated_at": "2026-08-11T05:42:58.001504+00:00"
+    },
+    {
+      "id": "task_7518314cde7ac9ef1ceca107af83fa44",
+      "title": "Add GraphQL API option for flexible queries",
+      "state": "completed",
+      "created_at": "2026-07-21T22:47:39.093903+00:00",
+      "updated_at": "2026-08-11T05:42:14.487295+00:00"
+    },
+    {
+      "id": "task_75d9c2bf5976433bbfb08354e8148d10",
+      "title": "Add procedures FastAPI router to flight-planner backend",
+      "state": "failed",
+      "created_at": "2026-07-12T05:56:30.622782+00:00",
+      "updated_at": "2026-08-11T05:43:43.241720+00:00"
+    },
+    {
+      "id": "task_7739e39109cb483d8d46bb1aa871abfd",
+      "title": "Add tests for hazard Pydantic schemas",
+      "state": "cancelled",
+      "created_at": "2026-07-12T13:17:45.116349+00:00",
+      "updated_at": "2026-08-11T05:43:45.281051+00:00"
+    },
+    {
+      "id": "task_77635937d8513bdde51ce4443fa20e8a",
+      "title": "Add OpenAPI/Swagger documentation",
+      "state": "completed",
+      "created_at": "2026-07-21T22:47:49.334626+00:00",
+      "updated_at": "2026-08-11T05:42:19.704830+00:00"
+    },
+    {
+      "id": "task_77b31dd4e0eb6bfa4d6e218e7d1a566d",
+      "title": "BLOCKER: TypeScript module resolution fails for shared-sdk re-exports",
+      "state": "completed",
+      "created_at": "2026-07-21T22:47:23.763934+00:00",
+      "updated_at": "2026-08-11T05:44:19.869223+00:00"
+    },
+    {
+      "id": "task_77e2a681e2ad41f29ac3276375c3c851",
+      "title": "Regression tests for certificate-level PIC+Dual validation",
+      "state": "cancelled",
+      "created_at": "2026-07-22T20:01:30.584798+00:00",
+      "updated_at": "2026-08-11T05:42:59.276666+00:00"
+    },
+    {
+      "id": "task_789ff8468b4843efb66f7ef672834e0a",
+      "title": "Groom backlog for Aviation",
+      "state": "failed",
+      "created_at": "2026-09-09T16:10:14.410494+00:00",
+      "updated_at": "2026-09-09T16:16:08.040888+00:00"
+    },
+    {
+      "id": "task_78d47eb48d7cb1bc83a23314548138dd",
+      "title": "Add integration tests for API and repository",
+      "state": "completed",
+      "created_at": "2026-07-21T22:47:26.702251+00:00",
+      "updated_at": "2026-08-11T05:42:17.192284+00:00"
+    },
+    {
+      "id": "task_790f09bc67174dff9ae18773fc7b7c95",
+      "title": "Make the CI lint job enforce, instead of discarding, lint failures",
+      "state": "cancelled",
+      "created_at": "2026-07-31T23:14:10.718024+00:00",
+      "updated_at": "2026-09-01T05:29:52.374454+00:00"
+    },
+    {
+      "id": "task_790fd794d6994af298cc8db7ff437938",
+      "title": "Groom backlog for Aviation",
+      "state": "failed",
+      "created_at": "2026-09-10T02:14:56.639837+00:00",
+      "updated_at": "2026-09-10T02:15:50.902118+00:00"
+    },
+    {
+      "id": "task_797eb9631ffc4d6c9653117a4109b7d1",
+      "title": "Repair contract prerequisites: Create nav_database.py Pydantic v2 schemas",
+      "state": "completed",
+      "created_at": "2026-07-13T04:39:54.895092+00:00",
+      "updated_at": "2026-08-11T05:43:51.657842+00:00"
+    },
+    {
+      "id": "task_7b4d0f64f68a4413ba781c7f0e08a25d",
+      "title": "Add HazardLayer component, service, hook, and types to flight-planner frontend",
+      "state": "failed",
+      "created_at": "2026-07-12T06:00:03.389314+00:00",
+      "updated_at": "2026-08-11T05:43:43.354254+00:00"
+    },
+    {
+      "id": "task_7b4dbb043de4415d9719465905e8a768",
+      "title": "Add backend tests for the completed mission-edit-suggestion workflow and verify make test",
+      "state": "cancelled",
+      "created_at": "2026-07-22T20:06:22.922523+00:00",
+      "updated_at": "2026-08-11T05:42:59.369094+00:00"
+    },
+    {
+      "id": "task_7b66203b92b54656adbafeaae006c40c",
+      "title": "Commit all hazard changes and push branch to remote",
+      "state": "cancelled",
+      "created_at": "2026-07-12T09:45:39.794023+00:00",
+      "updated_at": "2026-08-11T05:43:44.339869+00:00"
+    },
+    {
+      "id": "task_7b73f2fed6595f28dda8787e0413e60d",
+      "title": "Flight tracker: interactive map selection and multi-flight tracking",
+      "state": "completed",
+      "created_at": "2026-07-21T22:47:22.203708+00:00",
+      "updated_at": "2026-08-11T05:42:54.221290+00:00"
+    },
+    {
+      "id": "task_7c3fd3d411d2c569ef825f3f3aa2ba1e",
+      "title": "Merge airspace data from both applications",
+      "state": "completed",
+      "created_at": "2026-07-21T22:47:54.230946+00:00",
+      "updated_at": "2026-08-11T05:44:20.234553+00:00"
+    },
+    {
+      "id": "task_7c7f5b71fbce438081c58ee4621eb7e3",
+      "title": "Repair contract prerequisites: Add unit tests for flight_plan router",
+      "state": "cancelled",
+      "created_at": "2026-07-13T04:56:49.150276+00:00",
+      "updated_at": "2026-08-11T05:43:52.680627+00:00"
+    },
+    {
+      "id": "task_7cd2ad0996a54dacb0c575606f5dcd8e",
+      "title": "Repair contract prerequisites: Repair contract prerequisites: Add nav-database Pydantic schemas to flight-planner backend",
+      "state": "cancelled",
+      "created_at": "2026-07-12T18:06:27.047003+00:00",
+      "updated_at": "2026-08-11T05:43:47.346898+00:00"
+    },
+    {
+      "id": "task_7d1fd69364e248c09b8cdb41f3e91b3b",
+      "title": "Add unit tests for flight_plan router",
+      "state": "cancelled",
+      "created_at": "2026-07-13T08:35:52.840053+00:00",
+      "updated_at": "2026-08-11T05:43:56.213610+00:00"
+    },
+    {
+      "id": "task_7d68f6f252b219fe56443f10a9bc8d83",
+      "title": "Root path returns 404 for aviation-accidents",
+      "state": "completed",
+      "created_at": "2026-07-21T22:47:22.204852+00:00",
+      "updated_at": "2026-08-11T05:42:16.990565+00:00"
+    },
+    {
+      "id": "task_7d825aa3c8ce4160a6050757056afeb1",
+      "title": "Groom backlog for Aviation",
+      "state": "failed",
+      "created_at": "2026-09-10T02:30:05.421015+00:00",
+      "updated_at": "2026-09-10T02:31:37.624587+00:00"
+    },
+    {
+      "id": "task_7d97ba5595a3b200fefd0956869d63d1",
+      "title": "Consolidate airport database files",
+      "state": "completed",
+      "created_at": "2026-07-21T22:47:54.230873+00:00",
+      "updated_at": "2026-08-11T05:44:20.206594+00:00"
+    },
+    {
+      "id": "task_7e1b3dd219de6db414a9e904e4f9e1dd",
+      "title": "Accident tracker: quick date range dropdown + map click country",
+      "state": "completed",
+      "created_at": "2026-07-21T22:47:37.002941+00:00",
+      "updated_at": "2026-08-11T05:42:18.225530+00:00"
+    },
+    {
+      "id": "task_7e38a1d88e7745b283ef32162754cee6",
+      "title": "Create flight_plan.py FastAPI router in apps/flight-planner/backend/app/routers/",
+      "state": "cancelled",
+      "created_at": "2026-07-12T23:47:40.441099+00:00",
+      "updated_at": "2026-08-11T05:43:49.254396+00:00"
+    },
+    {
+      "id": "task_7e58af77908a1cc12921716c5a1e46e3",
+      "title": "Frontend: fix 'failed to fetch dynamically imported module' error",
+      "state": "completed",
+      "created_at": "2026-07-21T22:48:11.711264+00:00",
+      "updated_at": "2026-08-11T05:42:57.711454+00:00"
+    },
+    {
+      "id": "task_7e878b0d73d543aeb0e8958575402a90",
+      "title": "Groom backlog for Aviation",
+      "state": "failed",
+      "created_at": "2026-09-09T20:37:54.971506+00:00",
+      "updated_at": "2026-09-09T20:40:37.386925+00:00"
+    },
+    {
+      "id": "task_7eabe14dcdfc44a09e42cc56fd81bf5f",
+      "title": "Groom backlog for Aviation",
+      "state": "cancelled",
+      "created_at": "2026-09-08T18:01:08.525555+00:00",
+      "updated_at": "2026-09-14T18:04:14.262758+00:00"
+    },
+    {
+      "id": "task_7eb1795abaaa4d3496116f714e439dca",
+      "title": "Groom backlog for Aviation",
+      "state": "failed",
+      "created_at": "2026-09-09T22:23:52.646870+00:00",
+      "updated_at": "2026-09-09T22:24:25.252022+00:00"
+    },
+    {
+      "id": "task_7fef1867b27a4593bf0f424d46399475",
+      "title": "Add Request Changes admin action and decision notifications to mission edit suggestions UI",
+      "state": "cancelled",
+      "created_at": "2026-07-22T20:06:22.922523+00:00",
+      "updated_at": "2026-08-11T05:42:59.382613+00:00"
+    },
+    {
+      "id": "task_7ff937810a6d62de247d813f58358c2d",
+      "title": "Create production deployment configurations",
+      "state": "completed",
+      "created_at": "2026-07-21T22:47:28.502434+00:00",
+      "updated_at": "2026-08-11T05:42:17.309698+00:00"
+    },
+    {
+      "id": "task_80e5bf09938941bc9090dba424738c78",
+      "title": "Inspect Aviation repo worktree state and identify missing files",
+      "state": "cancelled",
+      "created_at": "2026-07-13T01:00:54.225616+00:00",
+      "updated_at": "2026-08-11T05:43:49.360806+00:00"
+    },
+    {
+      "id": "task_810d55a34c3a0066754de55950722a00",
+      "title": "Real-time flight planning progress + backend parallelization",
+      "state": "completed",
+      "created_at": "2026-07-21T22:48:19.047569+00:00",
+      "updated_at": "2026-08-11T05:42:57.914386+00:00"
+    },
+    {
+      "id": "task_8202934c91da44ee8fda70adaf174c66",
+      "title": "Create nav_database.py Pydantic v2 schemas",
+      "state": "completed",
+      "created_at": "2026-07-13T02:32:13.712152+00:00",
+      "updated_at": "2026-08-11T05:43:51.045588+00:00"
+    },
+    {
+      "id": "task_821e5ddf479c638b15132ed0c99f77ea",
+      "title": "Migrate flightplanner to use shared aviation SDK",
+      "state": "completed",
+      "created_at": "2026-07-21T22:47:37.011164+00:00",
+      "updated_at": "2026-08-11T05:42:18.292624+00:00"
+    },
+    {
+      "id": "task_824bed8bf9d54df69744e779014957ea",
+      "title": "Repair contract prerequisites: Add nav-database Pydantic v2 schemas to flight-planner backend",
+      "state": "cancelled",
+      "created_at": "2026-07-12T22:53:51.059116+00:00",
+      "updated_at": "2026-08-11T05:43:49.124572+00:00"
+    },
+    {
+      "id": "task_82f792b86a46b1df60f6378a06a98115",
+      "title": "Write comprehensive README.md",
+      "state": "completed",
+      "created_at": "2026-07-21T22:48:12.776609+00:00",
+      "updated_at": "2026-08-11T05:42:57.748259+00:00"
+    },
+    {
+      "id": "task_8437752ade04f5a7134177e1ac965d06",
+      "title": "Root path returns 502 for weather-briefing",
+      "state": "completed",
+      "created_at": "2026-07-21T22:47:46.082156+00:00",
+      "updated_at": "2026-08-11T05:42:18.929378+00:00"
+    },
+    {
+      "id": "task_84643ae2cb694c568f0b96481e36206c",
+      "title": "Groom backlog for Aviation",
+      "state": "failed",
+      "created_at": "2026-09-09T14:54:29.772295+00:00",
+      "updated_at": "2026-09-09T15:04:05.494201+00:00"
+    },
+    {
+      "id": "task_84a184aa89d24cfd8be33fb2e8590f52",
+      "title": "Groom backlog for Aviation",
+      "state": "failed",
+      "created_at": "2026-09-09T22:39:00.337223+00:00",
+      "updated_at": "2026-09-09T22:39:49.866768+00:00"
+    },
+    {
+      "id": "task_84ee79b82e494743acef3bc9ace35d98",
+      "title": "Repair contract prerequisites: Repair contract prerequisites: Add nav-database Pydantic v2 schemas to flight-planner backend",
+      "state": "cancelled",
+      "created_at": "2026-07-13T04:36:50.824552+00:00",
+      "updated_at": "2026-08-11T05:43:51.638294+00:00"
+    },
+    {
+      "id": "task_84f005b9d3c69ab719b64fe1c22562a8",
+      "title": "Planning cancellation + timeout policy",
+      "state": "completed",
+      "created_at": "2026-07-21T22:48:15.485865+00:00",
+      "updated_at": "2026-08-11T05:42:21.311011+00:00"
+    },
+    {
+      "id": "task_858f360f826249b09bab48af43aec561",
+      "title": "navmath: add crosswind_component helper",
+      "state": "completed",
+      "created_at": "2026-06-21T04:49:43.183433+00:00",
+      "updated_at": "2026-08-11T05:43:03.651543+00:00"
+    },
+    {
+      "id": "task_85c0fc38c9cd457ba8aba741d8c7af78",
+      "title": "Deduplicate or silence weather fetch errors for local map station queries",
+      "state": "completed",
+      "created_at": "2026-07-21T22:47:59.444347+00:00",
+      "updated_at": "2026-08-11T05:42:57.308555+00:00"
+    },
+    {
+      "id": "task_86902e34f61a54057f4066c1b136764f",
+      "title": "Test and fix existing Docker deployments",
+      "state": "completed",
+      "created_at": "2026-07-21T22:47:23.769378+00:00",
+      "updated_at": "2026-08-11T05:44:19.886562+00:00"
+    },
+    {
+      "id": "task_86de2d02f253d3aa60492b2604596df0",
+      "title": "Implement scheduled/automated ingestion",
+      "state": "completed",
+      "created_at": "2026-07-21T22:47:44.476628+00:00",
+      "updated_at": "2026-08-11T05:42:18.783511+00:00"
+    },
+    {
+      "id": "task_87c16f0ab15dba6b74bbdf436cd0debc",
+      "title": "Fix accident-tracker TypeScript build errors",
+      "state": "completed",
+      "created_at": "2026-07-21T22:47:36.332284+00:00",
+      "updated_at": "2026-08-11T05:42:55.561293+00:00"
+    },
+    {
+      "id": "task_87f02438c0c24774b2259695a036c970",
+      "title": "Create flight_plan.py FastAPI router in routers/ directory",
+      "state": "cancelled",
+      "created_at": "2026-07-12T21:41:40.546651+00:00",
+      "updated_at": "2026-08-11T05:43:49.046633+00:00"
+    },
+    {
+      "id": "task_88541d0b40153c7ee4de5b925eefa200",
+      "title": "Implement frontend filters UI",
+      "state": "completed",
+      "created_at": "2026-07-21T22:47:38.206018+00:00",
+      "updated_at": "2026-08-11T05:42:18.442612+00:00"
+    },
+    {
+      "id": "task_88d6fda4217e4aa5ace919bc840a53d8",
+      "title": "Repair contract prerequisites: Repair contract prerequisites: Add unit tests for flight_plan router",
+      "state": "completed",
+      "created_at": "2026-07-13T12:00:06.466553+00:00",
+      "updated_at": "2026-08-11T05:43:57.418921+00:00"
+    },
+    {
+      "id": "task_895c3275f049221853e1c37399782915",
+      "title": "Fix accident-tracker TypeScript build errors",
+      "state": "completed",
+      "created_at": "2026-07-21T22:47:46.084730+00:00",
+      "updated_at": "2026-08-11T05:42:55.768754+00:00"
+    },
+    {
+      "id": "task_898c5114b37353ad0d92c44488b1dbf7",
+      "title": "Run full monorepo validation and CI/CD suite",
+      "state": "completed",
+      "created_at": "2026-07-21T22:47:35.421348+00:00",
+      "updated_at": "2026-08-11T05:42:17.583721+00:00"
+    },
+    {
+      "id": "task_8a68fa958b3e4946821b4d2db3c5cce4",
+      "title": "Verify tests pass and commit all changes",
+      "state": "failed",
+      "created_at": "2026-07-13T02:32:13.712152+00:00",
+      "updated_at": "2026-08-11T05:43:51.089569+00:00"
+    },
+    {
+      "id": "task_8a8a4cb83ac846310bd6dd26f4951d89",
+      "title": "Weather Integration",
+      "state": "completed",
+      "created_at": "2026-07-21T22:48:00.356409+00:00",
+      "updated_at": "2026-08-11T05:42:57.345788+00:00"
+    },
+    {
+      "id": "task_8ae577b36e9ea423e35b9a73b938874c",
+      "title": "Auto-create bd issues from frontend/backend errors",
+      "state": "completed",
+      "created_at": "2026-07-21T22:47:57.508017+00:00",
+      "updated_at": "2026-08-11T05:42:57.148015+00:00"
+    },
+    {
+      "id": "task_8af1dfaa8a454578b0e0edf8554960dc",
+      "title": "Document FAR 61.51 PIC+Dual validation rules",
+      "state": "cancelled",
+      "created_at": "2026-07-22T20:01:30.584798+00:00",
+      "updated_at": "2026-08-11T05:42:59.336136+00:00"
+    },
+    {
+      "id": "task_8af90000661ede346d1e226cb24e71d6",
+      "title": "Migration & Cleanup",
+      "state": "completed",
+      "created_at": "2026-07-21T22:47:52.053825+00:00",
+      "updated_at": "2026-08-11T05:42:14.515928+00:00"
+    },
+    {
+      "id": "task_8b87ac653c8a40a7a6764e027f60ff6f",
+      "title": "Add hazard FastAPI router to flight-planner backend",
+      "state": "failed",
+      "created_at": "2026-07-12T19:51:15.430452+00:00",
+      "updated_at": "2026-08-11T05:43:48.341708+00:00"
+    },
+    {
+      "id": "task_8c313feec8964404b2e214423b39e94a",
+      "title": "Groom backlog for Aviation",
+      "state": "failed",
+      "created_at": "2026-09-13T22:19:51.633278+00:00",
+      "updated_at": "2026-09-13T22:20:42.239362+00:00"
+    },
+    {
+      "id": "task_8c33da22aa67478c905c031b9535f71a",
+      "title": "Repair contract prerequisites: Repair contract prerequisites: Add flight_plan.py FastAPI router and tests to flight-planner backend",
+      "state": "cancelled",
+      "created_at": "2026-07-12T17:32:34.196459+00:00",
+      "updated_at": "2026-08-11T05:43:47.194907+00:00"
+    },
+    {
+      "id": "task_8c6f8442d45248e3910c75d15b75019f",
+      "title": "Groom backlog for Aviation",
+      "state": "failed",
+      "created_at": "2026-09-10T00:12:39.586185+00:00",
+      "updated_at": "2026-09-10T00:30:33.022925+00:00"
+    },
+    {
+      "id": "task_8c9038ee3fd843e087302bf7f71616d8",
+      "title": "Groom backlog for Aviation",
+      "state": "failed",
+      "created_at": "2026-09-13T23:20:00.573007+00:00",
+      "updated_at": "2026-09-13T23:20:49.720063+00:00"
+    },
+    {
+      "id": "task_8e368788acae4f49a13f4d977153e7da",
+      "title": "Reorganize weather-briefing layout to selector -> map -> decoded METAR in index.ts",
+      "state": "cancelled",
+      "created_at": "2026-07-23T02:54:51.744383+00:00",
+      "updated_at": "2026-08-11T05:42:59.454209+00:00"
+    },
+    {
+      "id": "task_8f333f23299f72b129d80db5aac7acb4",
+      "title": "Add GitHub social preview image",
+      "state": "completed",
+      "created_at": "2026-07-21T22:48:07.227188+00:00",
+      "updated_at": "2026-08-11T05:42:14.713698+00:00"
+    },
+    {
+      "id": "task_8f5544094cfb43a9845770baca443bad",
+      "title": "Wire request-changes handler + route for mission moderation",
+      "state": "cancelled",
+      "created_at": "2026-07-23T07:13:26.879274+00:00",
+      "updated_at": "2026-08-11T05:42:59.744617+00:00"
+    },
+    {
+      "id": "task_8f6c201f1ad346cea88a7ceb2efe7217",
+      "title": "Run tests, fix failures, and commit",
+      "state": "cancelled",
+      "created_at": "2026-07-13T08:35:52.840053+00:00",
+      "updated_at": "2026-08-11T05:43:56.181444+00:00"
+    },
+    {
+      "id": "task_8fa9ac24b70691d0054ce61db273df78",
+      "title": "Improve weather briefing layout: map below selector, METAR below map",
+      "state": "cancelled",
+      "created_at": "2026-07-21T22:47:35.421373+00:00",
+      "updated_at": "2026-08-11T05:42:55.512334+00:00"
+    },
+    {
+      "id": "task_8fde5f9eaf40ec3f281fa27057cd4386",
+      "title": "Add NOTAM integration to weather-briefing",
+      "state": "completed",
+      "created_at": "2026-07-21T22:47:32.763909+00:00",
+      "updated_at": "2026-08-11T05:42:17.425928+00:00"
+    },
+    {
+      "id": "task_90c143e4164b4b15b09af0174774b32a",
+      "title": "Run make test, commit all changes, and push branch",
+      "state": "cancelled",
+      "created_at": "2026-07-12T21:41:40.546651+00:00",
+      "updated_at": "2026-08-11T05:43:49.070869+00:00"
+    },
+    {
+      "id": "task_92572af2ef6c4b9b846cc76e9d048ad8",
+      "title": "Add an in-flight hazard layer: SIGMETs / AIRMETs / TFRs",
+      "state": "completed",
+      "created_at": "2026-06-26T02:19:37.408770+00:00",
+      "updated_at": "2026-08-11T05:43:03.998271+00:00"
+    },
+    {
+      "id": "task_92da2b48f3d549cf8e8a2ab18f232ddd",
+      "title": "Apply the bounded fix to the Deploy Aviation Applications workflow",
+      "state": "failed",
+      "created_at": "2026-08-07T04:20:44.786930+00:00",
+      "updated_at": "2026-08-14T08:42:51.688206+00:00"
+    },
+    {
+      "id": "task_93234c633d9d194b23c88a6fc45eb9e1",
+      "title": "Add terrain analysis and avoidance",
+      "state": "completed",
+      "created_at": "2026-07-21T22:48:06.167648+00:00",
+      "updated_at": "2026-08-11T05:44:20.651747+00:00"
+    },
+    {
+      "id": "task_941b3ee9c2b54b7b980a62cad0eeb3af",
+      "title": "Groom backlog for Aviation",
+      "state": "failed",
+      "created_at": "2026-09-09T15:55:05.415337+00:00",
+      "updated_at": "2026-09-09T15:59:33.556016+00:00"
+    },
+    {
+      "id": "task_948a40ea9bbc761ef824f572351c6aff",
+      "title": "Migrate weather-briefing to use shared weather SDK",
+      "state": "completed",
+      "created_at": "2026-07-21T22:47:49.333585+00:00",
+      "updated_at": "2026-08-11T05:42:19.653025+00:00"
+    },
+    {
+      "id": "task_94971fb4aac64180b9c0c4deba93d9dd",
+      "title": "Groom backlog for Aviation",
+      "state": "failed",
+      "created_at": "2026-09-09T20:25:57.899315+00:00",
+      "updated_at": "2026-09-09T20:40:37.232275+00:00"
+    },
+    {
+      "id": "task_94af4c92d76fee55840eacb60c1cc7b0",
+      "title": "Add frontend component tests",
+      "state": "completed",
+      "created_at": "2026-07-21T22:48:03.225621+00:00",
+      "updated_at": "2026-08-11T05:42:20.068733+00:00"
+    },
+    {
+      "id": "task_95552eb98a4c6e9bea14d5c89cd64cb1",
+      "title": "Conduct user acceptance testing",
+      "state": "completed",
+      "created_at": "2026-07-21T22:47:52.055013+00:00",
+      "updated_at": "2026-08-11T05:42:19.878315+00:00"
+    },
+    {
+      "id": "task_958d9287873f46209f9d18c2c502c94d",
+      "title": "Diagnose and classify the failed \"Deploy Aviation Applications\" run",
+      "state": "completed",
+      "created_at": "2026-08-07T04:20:44.786930+00:00",
+      "updated_at": "2026-08-12T03:09:17.988537+00:00"
+    },
+    {
+      "id": "task_986aadb32c3d4bc191553bdbcfa7007f",
+      "title": "Mission-edit-suggestion moderation: DB layer (request-changes status, audit trail, rate-limit tracking)",
+      "state": "cancelled",
+      "created_at": "2026-07-23T03:35:45.092341+00:00",
+      "updated_at": "2026-08-11T05:42:59.522123+00:00"
+    },
+    {
+      "id": "task_9912280406514e008095367efa0408a7",
+      "title": "Groom backlog for Aviation",
+      "state": "failed",
+      "created_at": "2026-09-09T20:10:46.521170+00:00",
+      "updated_at": "2026-09-09T20:14:29.092301+00:00"
+    },
+    {
+      "id": "task_995bf04cdeb64763a8d625edd89ac914",
+      "title": "Repair contract prerequisites: Add flight_plan.py FastAPI router to flight-planner backend",
+      "state": "cancelled",
+      "created_at": "2026-07-12T19:29:27.298001+00:00",
+      "updated_at": "2026-08-11T05:43:47.388696+00:00"
+    },
+    {
+      "id": "task_9973b054bd73b02ae3958ca518fb3a84",
+      "title": "Design meta-app architecture and navigation UX",
+      "state": "completed",
+      "created_at": "2026-07-21T22:47:28.501079+00:00",
+      "updated_at": "2026-08-11T05:42:55.090468+00:00"
+    },
+    {
+      "id": "task_99a102887a9040bca79c55e014d87973",
+      "title": "Groom backlog for Aviation",
+      "state": "failed",
+      "created_at": "2026-09-13T22:49:56.248879+00:00",
+      "updated_at": "2026-09-13T22:50:23.843971+00:00"
+    },
+    {
+      "id": "task_99cff8e5931391b6b32170b7867594c8",
+      "title": "Componentize common Aviation NOTAM behavior",
+      "state": "cancelled",
+      "created_at": "2026-10-31T07:04:04.735547+00:00",
+      "updated_at": "2026-10-31T07:34:39.802190+00:00"
+    },
+    {
+      "id": "task_9a968c1af50c44439b903d792baa5685",
+      "title": "Repair contract prerequisites: Add nav-database Pydantic schemas to flight-planner backend",
+      "state": "cancelled",
+      "created_at": "2026-07-12T16:04:52.101840+00:00",
+      "updated_at": "2026-08-11T05:43:47.079038+00:00"
+    },
+    {
+      "id": "task_9af31f8f963b3f1513a023cc6ccc79a9",
+      "title": "Initialize Git and create .gitignore",
+      "state": "completed",
+      "created_at": "2026-07-21T22:48:17.402411+00:00",
+      "updated_at": "2026-08-11T05:44:21.001554+00:00"
+    },
+    {
+      "id": "task_9b06ee53f1a1fd7cbc89235f8e78329f",
+      "title": "Create data loading utilities",
+      "state": "completed",
+      "created_at": "2026-07-21T22:47:54.550023+00:00",
+      "updated_at": "2026-08-11T05:44:20.276130+00:00"
+    },
+    {
+      "id": "task_9c7bacaaee694338c9b1ddd06f704ee8",
+      "title": "Consolidate .env files into single root .env and deprecate per-app envs",
+      "state": "completed",
+      "created_at": "2026-07-21T22:47:22.204864+00:00",
+      "updated_at": "2026-08-11T05:42:17.020198+00:00"
+    },
+    {
+      "id": "task_9d8c04f851484d8aac05e0b4482bcdb8",
+      "title": "Repair contract prerequisites: Add unit tests for nav_database schemas",
+      "state": "cancelled",
+      "created_at": "2026-07-13T07:35:23.615593+00:00",
+      "updated_at": "2026-08-11T05:43:55.646611+00:00"
+    },
+    {
+      "id": "task_9d93602b2fffa9e4252650ba6cee0f82",
+      "title": "Terrain calls timing out / failing in prod due to OpenTopography quota",
+      "state": "completed",
+      "created_at": "2026-07-21T22:48:04.620521+00:00",
+      "updated_at": "2026-08-11T05:44:20.560560+00:00"
+    },
+    {
+      "id": "task_9e27ba33f7f94d2b8733efb63b355d9f",
+      "title": "Add create_app factory, StreamingService, and wire g1000-simulator backend",
+      "state": "cancelled",
+      "created_at": "2026-07-11T23:46:05.996262+00:00",
+      "updated_at": "2026-08-11T05:43:35.467195+00:00"
+    },
+    {
+      "id": "task_9e5b82b7260458fe2ad5de71dc144341",
+      "title": "Create unified Docker Compose orchestration",
+      "state": "completed",
+      "created_at": "2026-07-21T22:47:31.108168+00:00",
+      "updated_at": "2026-08-11T05:42:55.302793+00:00"
+    },
+    {
+      "id": "task_9ecdb2bc6a7d87272bc9792a1332cdfe",
+      "title": "Add Kubernetes deployment configurations",
+      "state": "completed",
+      "created_at": "2026-07-21T22:47:49.335677+00:00",
+      "updated_at": "2026-08-11T05:42:19.784274+00:00"
+    },
+    {
+      "id": "task_9efcab1b63b225c49c585ff86143c0ed",
+      "title": "Add API documentation and OpenAPI customization",
+      "state": "completed",
+      "created_at": "2026-07-21T22:47:56.828281+00:00",
+      "updated_at": "2026-08-11T05:42:19.966303+00:00"
+    },
+    {
+      "id": "task_9f0be0dec57adfa9cac30936e8c74553",
+      "title": "Extract airport database and search to @aviation/shared-sdk",
+      "state": "completed",
+      "created_at": "2026-07-21T22:47:46.082442+00:00",
+      "updated_at": "2026-08-11T05:44:20.047838+00:00"
+    },
+    {
+      "id": "task_9f737b37fee247619b00808c13cd7ccf",
+      "title": "Repair contract prerequisites: Fix g1000-simulator backend: add create_app factory and StreamingService",
+      "state": "cancelled",
+      "created_at": "2026-07-11T23:40:55.490557+00:00",
+      "updated_at": "2026-08-11T05:43:34.874329+00:00"
+    },
+    {
+      "id": "task_a045f9d9954d4c97bb0a6e39b55f7ecc",
+      "title": "Repair contract prerequisites: Create FastAPI router modules for flight-plan, nav-database, and procedures",
+      "state": "cancelled",
+      "created_at": "2026-07-12T05:50:16.333419+00:00",
+      "updated_at": "2026-08-11T05:43:43.212875+00:00"
+    },
+    {
+      "id": "task_a04bf8a1babf04f7722d240978042ddd",
+      "title": "Add Dockerfiles for all backend services",
+      "state": "completed",
+      "created_at": "2026-07-21T22:47:31.939348+00:00",
+      "updated_at": "2026-08-11T05:42:55.394887+00:00"
+    },
+    {
+      "id": "task_a07822cccc2e1bd7501e02e6d8f2b71d",
+      "title": "Project Setup & Infrastructure",
+      "state": "completed",
+      "created_at": "2026-07-21T22:48:15.483201+00:00",
+      "updated_at": "2026-08-11T05:44:20.897978+00:00"
+    },
+    {
+      "id": "task_a0e7e832571dc1f730e8d47f745fd5e9",
+      "title": "Future enhancements and extensibility",
+      "state": "completed",
+      "created_at": "2026-07-21T22:47:30.288156+00:00",
+      "updated_at": "2026-08-11T05:42:14.161245+00:00"
+    },
+    {
+      "id": "task_a162a5fa684f4fddba49f4756a5b1ab3",
+      "title": "Add hazard Pydantic schemas to flight-planner backend",
+      "state": "cancelled",
+      "created_at": "2026-07-12T09:45:39.794023+00:00",
+      "updated_at": "2026-08-11T05:43:44.285836+00:00"
+    },
+    {
+      "id": "task_a18e1a6968eb4aeeb1229fd9facf9815",
+      "title": "Groom backlog for Aviation",
+      "state": "failed",
+      "created_at": "2026-09-10T02:45:11.258187+00:00",
+      "updated_at": "2026-09-10T02:46:30.336366+00:00"
+    },
+    {
+      "id": "task_a1d32f6072b04ca7b66392688cd6f3ea",
+      "title": "Add unit tests and a `test` script for the @aviation/keystore package",
+      "state": "cancelled",
+      "created_at": "2026-07-31T23:14:10.718024+00:00",
+      "updated_at": "2026-09-01T05:29:52.295444+00:00"
+    },
+    {
+      "id": "task_a219c7d44ee44addb3d01dd57ae20985",
+      "title": "Set up Python venv and install flight-planner dependencies",
+      "state": "failed",
+      "created_at": "2026-07-13T11:35:24.446489+00:00",
+      "updated_at": "2026-08-11T05:43:57.307768+00:00"
+    },
+    {
+      "id": "task_a24a0d39ebdee4326619603ba67040d9",
+      "title": "Implement frontend detail modal/view",
+      "state": "completed",
+      "created_at": "2026-07-21T22:47:37.884385+00:00",
+      "updated_at": "2026-08-11T05:42:18.329313+00:00"
+    },
+    {
+      "id": "task_a29df467d7ac71bbb8c4423989a8a20b",
+      "title": "Fix CI e2e failure (Route Results not visible)",
+      "state": "completed",
+      "created_at": "2026-07-21T22:47:58.782005+00:00",
+      "updated_at": "2026-08-11T05:42:57.290412+00:00"
+    },
+    {
+      "id": "task_a2b43e198b835786d51ba43ae4868f93",
+      "title": "Update GitHub repository metadata",
+      "state": "completed",
+      "created_at": "2026-07-21T22:47:52.636303+00:00",
+      "updated_at": "2026-08-11T05:42:14.551038+00:00"
+    },
+    {
+      "id": "task_a2ea5b1f86f44aa295bb4335e26e95a7",
+      "title": "Repair contract prerequisites: Repair contract prerequisites: Add hazard Pydantic v2 schemas to flight-planner backend",
+      "state": "cancelled",
+      "created_at": "2026-07-12T23:42:31.149128+00:00",
+      "updated_at": "2026-08-11T05:43:49.162123+00:00"
+    },
+    {
+      "id": "task_a31b25394bec4ba0996648397c8eb398",
+      "title": "Groom backlog for Aviation",
+      "state": "failed",
+      "created_at": "2026-09-09T22:54:16.599049+00:00",
+      "updated_at": "2026-09-09T22:55:53.167521+00:00"
+    },
+    {
+      "id": "task_a322b1cfd63e467cbfbab0b5ff37c906",
+      "title": "Add automated verification for weather-briefing layout order and acceptance markers",
+      "state": "cancelled",
+      "created_at": "2026-07-22T19:56:27.010264+00:00",
+      "updated_at": "2026-08-11T05:42:58.668875+00:00"
+    },
+    {
+      "id": "task_a36a447de34bfb6ee0644bd2a066d406",
+      "title": "Write backend unit tests",
+      "state": "completed",
+      "created_at": "2026-07-21T22:48:03.225194+00:00",
+      "updated_at": "2026-08-11T05:42:57.421237+00:00"
+    },
+    {
+      "id": "task_a3fe2ce981ae46e48802efbf5f421a22",
+      "title": "Groom backlog for Aviation",
+      "state": "failed",
+      "created_at": "2026-09-13T22:34:54.027821+00:00",
+      "updated_at": "2026-09-13T22:35:20.073660+00:00"
+    },
+    {
+      "id": "task_a4de52acc182562cd3ff34ad0247bb16",
+      "title": "Integrate OpenWeatherMap API client",
+      "state": "completed",
+      "created_at": "2026-07-21T22:48:01.037371+00:00",
+      "updated_at": "2026-08-11T05:44:20.512111+00:00"
+    },
+    {
+      "id": "task_a530afda2b55c889c2497e8c89fddef3",
+      "title": "Meta-app root path not serving top page (no Railway domain yet)",
+      "state": "completed",
+      "created_at": "2026-07-21T22:47:36.331654+00:00",
+      "updated_at": "2026-08-11T05:42:17.624951+00:00"
+    },
+    {
+      "id": "task_a56a446d84dd4fd183928cdc63e51acc",
+      "title": "Groom backlog for Aviation",
+      "state": "failed",
+      "created_at": "2026-09-10T00:44:13.834955+00:00",
+      "updated_at": "2026-09-10T02:02:15.221485+00:00"
+    },
+    {
+      "id": "task_a56fba31ce05ff0e34556929def1df60",
+      "title": "Implement end-to-end testing",
+      "state": "completed",
+      "created_at": "2026-07-21T22:48:03.574096+00:00",
+      "updated_at": "2026-08-11T05:42:20.115307+00:00"
+    },
+    {
+      "id": "task_a5aa96c5a851e577e7348c526d82b3f2",
+      "title": "Add wind calculations and effects",
+      "state": "completed",
+      "created_at": "2026-07-21T22:48:02.005845+00:00",
+      "updated_at": "2026-08-11T05:42:57.361081+00:00"
+    },
+    {
+      "id": "task_a6223208cf5c496a981f1a91505705e3",
+      "title": "Groom backlog for Aviation",
+      "state": "failed",
+      "created_at": "2026-09-09T18:31:12.552697+00:00",
+      "updated_at": "2026-09-09T18:34:44.668631+00:00"
+    },
+    {
+      "id": "task_a64849a0d99642d2af3dc5ab307a074e",
+      "title": "Fix g1000-simulator Makefile: add start, dev-up, test, and backend-test targets",
+      "state": "completed",
+      "created_at": "2026-07-12T00:33:52.159614+00:00",
+      "updated_at": "2026-08-11T05:43:38.258727+00:00"
+    },
+    {
+      "id": "task_a657caba5308467fbc76b346b7ec785c",
+      "title": "Run make test gate and finalize commit/push for weather-briefing layout repair",
+      "state": "cancelled",
+      "created_at": "2026-07-23T02:54:51.744383+00:00",
+      "updated_at": "2026-08-11T05:42:59.472502+00:00"
+    },
+    {
+      "id": "task_a7ba417cdb1d4cccaac1608796aca2f2",
+      "title": "Repair contract prerequisites: Repair contract prerequisites: Add hazard Pydantic schemas to flight-planner backend",
+      "state": "cancelled",
+      "created_at": "2026-07-12T13:11:23.272707+00:00",
+      "updated_at": "2026-08-11T05:43:45.247450+00:00"
+    },
+    {
+      "id": "task_a807fb4805cfb23e5a38cfac8f8dc285",
+      "title": "Migrate flight-tracker to use shared aviation SDK",
+      "state": "completed",
+      "created_at": "2026-07-21T22:47:37.885142+00:00",
+      "updated_at": "2026-08-11T05:42:18.379514+00:00"
+    },
+    {
+      "id": "task_a85004589b9bbece4566d910484af461",
+      "title": "PROD: Aviation Missions - Comments, Completed, and Brief buttons non-functional",
+      "state": "completed",
+      "created_at": "2026-07-21T22:47:39.982653+00:00",
+      "updated_at": "2026-08-11T05:44:19.963474+00:00"
+    },
+    {
+      "id": "task_a96f0330057f4b5994c2d6a7dc427a35",
+      "title": "Repair contract prerequisites: Verify tests pass and commit all changes",
+      "state": "completed",
+      "created_at": "2026-07-13T06:54:11.662113+00:00",
+      "updated_at": "2026-08-11T05:43:55.619287+00:00"
+    },
+    {
+      "id": "task_a99128c6bfef470d93eab2f77196ef3d",
+      "title": "Re-enable blocking accident-tracker deploy build (remove stale workspaces guard)",
+      "state": "failed",
+      "created_at": "2026-07-31T19:00:55.178534+00:00",
+      "updated_at": "2026-08-11T05:47:06.124081+00:00"
+    },
+    {
+      "id": "task_a99de1b63b7f6e396471eeace41a9aa3",
+      "title": "Backend concurrency/scaling knobs",
+      "state": "completed",
+      "created_at": "2026-07-21T22:48:18.754214+00:00",
+      "updated_at": "2026-08-11T05:42:57.884524+00:00"
+    },
+    {
+      "id": "task_aa2eba13fd5f4a0e9b64547ab74a1901",
+      "title": "Create nav_database.py Pydantic v2 schemas",
+      "state": "completed",
+      "created_at": "2026-07-13T04:43:42.339175+00:00",
+      "updated_at": "2026-08-11T05:43:51.767932+00:00"
+    },
+    {
+      "id": "task_aa7f3331fb82577178843db0150939bf",
+      "title": "Implement caching layer for improved performance",
+      "state": "completed",
+      "created_at": "2026-07-21T22:47:25.940132+00:00",
+      "updated_at": "2026-08-11T05:42:17.119320+00:00"
+    },
+    {
+      "id": "task_aa9769cb9714da8b3dd01b1e30e7c6c5",
+      "title": "Batch METAR fetching for alternates",
+      "state": "completed",
+      "created_at": "2026-07-21T22:48:04.943367+00:00",
+      "updated_at": "2026-08-11T05:42:57.500102+00:00"
+    },
+    {
+      "id": "task_ac56181007be3ef5f23df75897c29611",
+      "title": "Fix avoid_airspaces route truncation (destination dropped)",
+      "state": "completed",
+      "created_at": "2026-07-21T22:48:18.748147+00:00",
+      "updated_at": "2026-08-11T05:42:57.868958+00:00"
+    },
+    {
+      "id": "task_ac69dead14e73666c481529959767dbc",
+      "title": "Extract navigation utilities to @aviation/shared-sdk",
+      "state": "completed",
+      "created_at": "2026-07-21T22:47:51.152960+00:00",
+      "updated_at": "2026-08-11T05:44:20.143363+00:00"
+    },
+    {
+      "id": "task_acfc6176d5fa5af76bd665b398149412",
+      "title": "Add comprehensive monitoring and observability",
+      "state": "completed",
+      "created_at": "2026-07-21T22:47:44.112562+00:00",
+      "updated_at": "2026-08-11T05:42:18.768408+00:00"
+    },
+    {
+      "id": "task_ad4970e8c8134bc7b3a7282ca73ece58",
+      "title": "Add tests for hazard schemas and router",
+      "state": "failed",
+      "created_at": "2026-07-12T19:51:15.430452+00:00",
+      "updated_at": "2026-08-11T05:43:48.359943+00:00"
+    },
+    {
+      "id": "task_adb878c2a9f4431c9943c13999e241db",
+      "title": "Add backend hazard router and schema for flight-planner",
+      "state": "cancelled",
+      "created_at": "2026-07-12T06:00:03.389314+00:00",
+      "updated_at": "2026-08-11T05:43:43.317934+00:00"
+    },
+    {
+      "id": "task_aded5792d86ce979cb3c0e1d218e9ec7",
+      "title": "Create CONTRIBUTING.md guide",
+      "state": "completed",
+      "created_at": "2026-07-21T22:48:13.756634+00:00",
+      "updated_at": "2026-08-11T05:42:21.166421+00:00"
+    },
+    {
+      "id": "task_afa32bf12e3343898f7a0c9dabd4c322",
+      "title": "Groom backlog for Aviation",
+      "state": "failed",
+      "created_at": "2026-09-09T21:08:06.138375+00:00",
+      "updated_at": "2026-09-09T21:08:21.208090+00:00"
+    },
+    {
+      "id": "task_afba15c70a6f3f5c4a3f4e02de449283",
+      "title": "Show flight-category color behind wind barb station markers",
+      "state": "completed",
+      "created_at": "2026-07-21T22:47:57.494124+00:00",
+      "updated_at": "2026-08-11T05:42:19.984459+00:00"
+    },
+    {
+      "id": "task_b029ba288b9fec3bc80b1c6210384c30",
+      "title": "Reconcile CI health for jordanhubbard/Aviation",
+      "state": "completed",
+      "created_at": "2026-08-12T04:18:56.748417+00:00",
+      "updated_at": "2026-08-12T04:37:33.891068+00:00"
+    },
+    {
+      "id": "task_b055651e30916be09fcf846849b55d9e",
+      "title": "Set flight-planner API keys in Railway from root .env",
+      "state": "completed",
+      "created_at": "2026-07-21T22:47:48.720336+00:00",
+      "updated_at": "2026-08-11T05:42:19.086577+00:00"
+    },
+    {
+      "id": "task_b0cd9b1bad2a6eb71b6644a8f75ab60d",
+      "title": "Implement airport search and filtering",
+      "state": "completed",
+      "created_at": "2026-07-21T22:47:54.858059+00:00",
+      "updated_at": "2026-08-11T05:42:55.967487+00:00"
+    },
+    {
+      "id": "task_b15c0ef40cea1647c3c73db359da9fde",
+      "title": "Implement frontend map with Leaflet/MapLibre",
+      "state": "completed",
+      "created_at": "2026-07-21T22:47:25.281700+00:00",
+      "updated_at": "2026-08-11T05:42:17.040960+00:00"
+    },
+    {
+      "id": "task_b1fd06f6dc27e52fae98b844877fd346",
+      "title": "Add frontend component and E2E tests",
+      "state": "completed",
+      "created_at": "2026-07-21T22:47:49.331324+00:00",
+      "updated_at": "2026-08-11T05:42:19.105098+00:00"
+    },
+    {
+      "id": "task_b24b96e2406f46f5b1e41c3c12949b18",
+      "title": "Verify tests pass and push changes to remote",
+      "state": "cancelled",
+      "created_at": "2026-07-13T04:43:42.339175+00:00",
+      "updated_at": "2026-08-11T05:43:51.733755+00:00"
+    },
+    {
+      "id": "task_b2e0a193e8bb4cbf9ad3b912b8891a3b",
+      "title": "Groom backlog for Aviation",
+      "state": "failed",
+      "created_at": "2026-09-09T20:53:03.870526+00:00",
+      "updated_at": "2026-09-09T20:56:20.249530+00:00"
+    },
+    {
+      "id": "task_b3e16b5f6d9f43a69307f2827a7f6368",
+      "title": "Make Aviation's last three CI jobs green (integration-tests, pip-audit, trivy)",
+      "state": "cancelled",
+      "created_at": "2026-10-03T16:15:06.529686+00:00",
+      "updated_at": "2026-10-04T04:13:33.072748+00:00"
+    },
+    {
+      "id": "task_b416cc1fb566a63e848452b67b0e910e",
+      "title": "Complete flightplanner frontend migration to shared SDK",
+      "state": "completed",
+      "created_at": "2026-07-21T22:47:34.426703+00:00",
+      "updated_at": "2026-08-11T05:42:55.481074+00:00"
+    },
+    {
+      "id": "task_b4843a7080834995a42dd41ee6610629",
+      "title": "Repair contract prerequisites: Repair contract prerequisites: Repair contract prerequisites: Add nav-database Pydantic schemas to flight-planner backend",
+      "state": "cancelled",
+      "created_at": "2026-07-12T20:37:51.954682+00:00",
+      "updated_at": "2026-08-11T05:43:48.376058+00:00"
+    },
+    {
+      "id": "task_b491196a36aa4d1fa67dd01e58a02299",
+      "title": "Groom backlog for Aviation",
+      "state": "failed",
+      "created_at": "2026-09-13T21:04:41.228901+00:00",
+      "updated_at": "2026-09-13T21:05:25.114320+00:00"
+    },
+    {
+      "id": "task_b4b382959dc741a4869497ed2846c34c",
+      "title": "Verify tests pass and push branch",
+      "state": "cancelled",
+      "created_at": "2026-07-12T19:51:15.430452+00:00",
+      "updated_at": "2026-08-11T05:43:48.324270+00:00"
+    },
+    {
+      "id": "task_b5127459cbefea4b375b2255e5306398",
+      "title": "Reconcile CI health for jordanhubbard/Aviation",
+      "state": "failed",
+      "created_at": "2026-08-07T04:16:51.938810+00:00",
+      "updated_at": "2026-08-11T05:47:18.073662+00:00"
+    },
+    {
+      "id": "task_b536b365ef2e48f084b26c358b2a02a3",
+      "title": "Repair contract prerequisites: Repair contract prerequisites: Add nav-database FastAPI router to flight-planner backend",
+      "state": "cancelled",
+      "created_at": "2026-07-12T11:11:20.191530+00:00",
+      "updated_at": "2026-08-11T05:43:44.962878+00:00"
+    },
+    {
+      "id": "task_b5c1c6eb0f31442897290b410b5a3832",
+      "title": "navmath: add haversine_nm helper",
+      "state": "completed",
+      "created_at": "2026-06-21T04:49:43.368753+00:00",
+      "updated_at": "2026-08-11T05:43:03.672121+00:00"
+    },
+    {
+      "id": "task_b60b14d8d3b5730b10a404eddff471d9",
+      "title": "Document architecture and design decisions",
+      "state": "completed",
+      "created_at": "2026-07-21T22:48:13.756560+00:00",
+      "updated_at": "2026-08-11T05:42:21.140001+00:00"
+    },
+    {
+      "id": "task_b87c9686bda84d30af066482326677b6",
+      "title": "Repair contract prerequisites: Add missing FastAPI routers for flight-plan, nav-database, and procedures",
+      "state": "cancelled",
+      "created_at": "2026-07-12T03:44:49.868308+00:00",
+      "updated_at": "2026-08-11T05:43:42.921881+00:00"
+    },
+    {
+      "id": "task_b925bee300584bcdafe114d9f9b32404",
+      "title": "Centralize all Aviation app ingress through Meta App HTTP and MCP layer",
+      "state": "open",
+      "created_at": "2026-11-11T01:04:42.811309+00:00",
+      "updated_at": "2026-11-11T02:10:44.155210+00:00"
+    },
+    {
+      "id": "task_b9bac070faf04b2cbcbe5596a80e82f0",
+      "title": "navmath: add heading_difference helper",
+      "state": "completed",
+      "created_at": "2026-06-21T04:49:42.948829+00:00",
+      "updated_at": "2026-08-11T05:43:03.633389+00:00"
+    },
+    {
+      "id": "task_bbd75c3e131e44378ef1df1c3f8235b5",
+      "title": "Groom backlog for Aviation",
+      "state": "failed",
+      "created_at": "2026-09-13T21:19:43.302887+00:00",
+      "updated_at": "2026-09-13T21:20:56.262792+00:00"
+    },
+    {
+      "id": "task_bcbb4a916b1d47bd8a101ee7a347ebbe",
+      "title": "Investigate low-confidence dream finding: tests",
+      "state": "failed",
+      "created_at": "2026-07-13T12:35:55.766886+00:00",
+      "updated_at": "2026-08-11T05:43:57.673442+00:00"
+    },
+    {
+      "id": "task_bd7c93c8a01fbb110fcc450089567f79",
+      "title": "npm audit fix --force",
+      "state": "completed",
+      "created_at": "2026-07-21T22:48:18.100583+00:00",
+      "updated_at": "2026-08-11T05:42:57.854840+00:00"
+    },
+    {
+      "id": "task_bdc05b24f2784650af9884d93611dabb",
+      "title": "Groom backlog for Aviation",
+      "state": "failed",
+      "created_at": "2026-09-13T20:49:39.079341+00:00",
+      "updated_at": "2026-09-13T21:02:05.441503+00:00"
+    },
+    {
+      "id": "task_be97726920184fed92444fa20602a4a8",
+      "title": "Groom backlog for Aviation",
+      "state": "cancelled",
+      "created_at": "2026-07-09T23:02:37.857652+00:00",
+      "updated_at": "2026-08-11T05:43:18.236499+00:00"
+    },
+    {
+      "id": "task_bf2ef6248694efcd845087439ed1b886",
+      "title": "Frontend: progress UI + incremental route rendering",
+      "state": "completed",
+      "created_at": "2026-07-21T22:48:19.047199+00:00",
+      "updated_at": "2026-08-11T05:42:57.900859+00:00"
+    },
+    {
+      "id": "task_bf9b63b0c47e41fc9c880fe8ef8efb1b",
+      "title": "Repair contract prerequisites: Repair contract prerequisites: Repair contract prerequisites: Add flight-plan FastAPI router to flight-planner backend",
+      "state": "cancelled",
+      "created_at": "2026-07-12T12:12:00.949094+00:00",
+      "updated_at": "2026-08-11T05:43:45.208256+00:00"
+    },
+    {
+      "id": "task_c037ef70698550761a66933dd785e43d",
+      "title": "Flight Planning Logic",
+      "state": "completed",
+      "created_at": "2026-07-21T22:48:05.239212+00:00",
+      "updated_at": "2026-08-11T05:42:57.516252+00:00"
+    },
+    {
+      "id": "task_c1dc90029bf10f94f855e3c2a13ca0a7",
+      "title": "Set foreflight-dashboard secrets in Railway",
+      "state": "completed",
+      "created_at": "2026-07-21T22:47:36.332240+00:00",
+      "updated_at": "2026-08-11T05:42:17.642912+00:00"
+    },
+    {
+      "id": "task_c31a321588450d2735e223bf84a19c15",
+      "title": "Build route weather analysis",
+      "state": "completed",
+      "created_at": "2026-07-21T22:48:02.007321+00:00",
+      "updated_at": "2026-08-11T05:44:20.539774+00:00"
+    },
+    {
+      "id": "task_c3e98ffb151683498de0cc2764724629",
+      "title": "Port React frontend structure from xctry-planner",
+      "state": "completed",
+      "created_at": "2026-07-21T22:48:09.146099+00:00",
+      "updated_at": "2026-08-11T05:44:20.710177+00:00"
+    },
+    {
+      "id": "task_c4271576776e4eebb2151aa7caa7647b",
+      "title": "Add weather-briefing service tests for departure windows, briefing format, and cache TTL",
+      "state": "failed",
+      "created_at": "2026-07-31T19:00:55.178534+00:00",
+      "updated_at": "2026-08-11T05:47:06.092751+00:00"
+    },
+    {
+      "id": "task_c435af4ddb27fa151366f9c45ef09b98",
+      "title": "Implement fuzzy deduplication logic",
+      "state": "completed",
+      "created_at": "2026-07-21T22:47:25.283836+00:00",
+      "updated_at": "2026-08-11T05:42:17.095227+00:00"
+    },
+    {
+      "id": "task_c59998683ba90253cea137f30486c4f1",
+      "title": "Auto-file P1 beads from runtime errors/crashes",
+      "state": "completed",
+      "created_at": "2026-07-21T22:47:42.300694+00:00",
+      "updated_at": "2026-08-11T05:42:55.687802+00:00"
+    },
+    {
+      "id": "task_c5de5eda0e690f0f99898755f0624bc8",
+      "title": "Set up code quality tools",
+      "state": "completed",
+      "created_at": "2026-07-21T22:48:03.572761+00:00",
+      "updated_at": "2026-08-11T05:42:20.096912+00:00"
+    },
+    {
+      "id": "task_c62fb1a30b964f69a38fa94861106336",
+      "title": "Add hazard FastAPI router to flight-planner backend",
+      "state": "cancelled",
+      "created_at": "2026-07-12T09:45:39.794023+00:00",
+      "updated_at": "2026-08-11T05:43:44.306353+00:00"
+    },
+    {
+      "id": "task_c660a8bc65bd4d71b4e11e6cce625dce",
+      "title": "Repair contract prerequisites: Add hazard Pydantic v2 schemas to flight-planner backend and commit new files",
+      "state": "cancelled",
+      "created_at": "2026-07-12T19:43:40.286885+00:00",
+      "updated_at": "2026-08-11T05:43:47.552347+00:00"
+    },
+    {
+      "id": "task_c7016eaf8a794379b3304a49ae1c28d3",
+      "title": "Ensure submission-workflow test coverage and full 'make test' passes",
+      "state": "cancelled",
+      "created_at": "2026-07-22T19:51:58.569400+00:00",
+      "updated_at": "2026-08-11T05:42:57.986741+00:00"
+    },
+    {
+      "id": "task_c7befa4095b74be7967535e52557d21b",
+      "title": "Make every deployed Aviation service navigable from Meta App",
+      "state": "open",
+      "created_at": "2026-10-24T18:53:52.945318+00:00",
+      "updated_at": "2026-10-24T18:53:52.945318+00:00"
+    },
+    {
+      "id": "task_c818f7cdcb5eb1bb2a2afe0c10e66eab",
+      "title": "Add CI/CD workflow for automated deployments",
+      "state": "completed",
+      "created_at": "2026-07-21T22:47:48.718929+00:00",
+      "updated_at": "2026-08-11T05:42:19.061766+00:00"
+    },
+    {
+      "id": "task_c8b623cbe409712acfacf2069eab60df",
+      "title": "Root path returns 502 for flight-tracker",
+      "state": "completed",
+      "created_at": "2026-07-21T22:47:45.736079+00:00",
+      "updated_at": "2026-08-11T05:42:18.912575+00:00"
+    },
+    {
+      "id": "task_c990554b8e8141a4a5f04fe2767e5549",
+      "title": "Groom backlog for Aviation",
+      "state": "failed",
+      "created_at": "2026-09-09T17:45:44.169305+00:00",
+      "updated_at": "2026-09-09T17:50:11.168248+00:00"
+    },
+    {
+      "id": "task_ca2064911992488fb7c8afc58afd920b",
+      "title": "Groom backlog for Aviation",
+      "state": "failed",
+      "created_at": "2026-09-10T04:16:14.302584+00:00",
+      "updated_at": "2026-09-10T04:17:26.711491+00:00"
+    },
+    {
+      "id": "task_cb3f84b60f9b41019d7a7e703f7f12b9",
+      "title": "Groom backlog for Aviation",
+      "state": "failed",
+      "created_at": "2026-09-09T21:23:19.098052+00:00",
+      "updated_at": "2026-09-09T21:24:56.347328+00:00"
+    },
+    {
+      "id": "task_cb72a3045286b401fb2f73c9d4e89de3",
+      "title": "Support single-service Railway deploy from repo root",
+      "state": "completed",
+      "created_at": "2026-07-21T22:48:19.700443+00:00",
+      "updated_at": "2026-08-11T05:42:57.935675+00:00"
+    },
+    {
+      "id": "task_cb9bb1bb468007933197448d21e2c8fb",
+      "title": "Planning: default planning date/time to current UTC",
+      "state": "completed",
+      "created_at": "2026-07-21T22:48:04.618956+00:00",
+      "updated_at": "2026-08-11T05:42:20.149977+00:00"
+    },
+    {
+      "id": "task_cce6db81ac2a4e3190b485de0631868a",
+      "title": "Add unit tests for flight_plan router",
+      "state": "cancelled",
+      "created_at": "2026-07-13T01:50:20.128842+00:00",
+      "updated_at": "2026-08-11T05:43:49.525487+00:00"
+    },
+    {
+      "id": "task_cced8d12e46f4723bfbb888a36a45702",
+      "title": "Add hazard Pydantic v2 schemas to flight-planner backend and commit new files",
+      "state": "cancelled",
+      "created_at": "2026-07-12T17:45:10.324299+00:00",
+      "updated_at": "2026-08-11T05:43:47.281077+00:00"
+    },
+    {
+      "id": "task_cd588a17ee5149fda07884433a5dfbbc",
+      "title": "Groom backlog for Aviation",
+      "state": "failed",
+      "created_at": "2026-09-09T16:40:45.126851+00:00",
+      "updated_at": "2026-09-09T17:35:11.938842+00:00"
+    },
+    {
+      "id": "task_cd5a6164c4a9a8bc569afdceb66a9c8a",
+      "title": "Add data update scripts",
+      "state": "completed",
+      "created_at": "2026-07-21T22:47:54.858240+00:00",
+      "updated_at": "2026-08-11T05:42:19.914678+00:00"
+    },
+    {
+      "id": "task_cea26e0958a2be61bd8a3dc598d27866",
+      "title": "Set weather-briefing OPENAI_API_KEY in Railway from root .env",
+      "state": "completed",
+      "created_at": "2026-07-21T22:47:40.518131+00:00",
+      "updated_at": "2026-08-11T05:42:18.590007+00:00"
+    },
+    {
+      "id": "task_cf05853bfe6d48f084340164832ad189",
+      "title": "Groom backlog for Aviation",
+      "state": "failed",
+      "created_at": "2026-09-09T18:00:50.114388+00:00",
+      "updated_at": "2026-09-09T18:03:28.927642+00:00"
+    },
+    {
+      "id": "task_d00ab7a117274c05a99afab72d20d6ab",
+      "title": "Groom backlog for Aviation",
+      "state": "failed",
+      "created_at": "2026-09-09T22:08:46.158622+00:00",
+      "updated_at": "2026-09-09T22:09:07.135227+00:00"
+    },
+    {
+      "id": "task_d03036ad8f7f426e8b4b0251b54310dc",
+      "title": "Finalize mission-edit-suggestion moderation DB layer: verify, commit, push",
+      "state": "cancelled",
+      "created_at": "2026-07-23T05:30:31.603227+00:00",
+      "updated_at": "2026-08-11T05:42:59.678987+00:00"
+    },
+    {
+      "id": "task_d0b0f0449247c58135b921155efc3827",
+      "title": "Port vfr-flightplanner modular backend structure",
+      "state": "completed",
+      "created_at": "2026-07-21T22:47:55.485918+00:00",
+      "updated_at": "2026-08-11T05:44:20.304607+00:00"
+    },
+    {
+      "id": "task_d13a4c5bd9bb6018190ffd8e425566ee",
+      "title": "Archive vfr-flightplanner repository using gh CLI",
+      "state": "completed",
+      "created_at": "2026-07-21T22:47:53.320522+00:00",
+      "updated_at": "2026-08-11T05:42:14.615651+00:00"
+    },
+    {
+      "id": "task_d14d3f96972cb26e7b8be3817c4ceba2",
+      "title": "investigate github check failures",
+      "state": "completed",
+      "created_at": "2026-07-21T22:48:04.620321+00:00",
+      "updated_at": "2026-08-11T05:42:20.173921+00:00"
+    },
+    {
+      "id": "task_d16ccad8a9384ef68fd094e99e76176b",
+      "title": "Repair contract prerequisites: Repair contract prerequisites: Add flight-plan FastAPI router to flight-planner backend",
+      "state": "cancelled",
+      "created_at": "2026-07-12T10:11:44.655251+00:00",
+      "updated_at": "2026-08-11T05:43:44.904487+00:00"
+    },
+    {
+      "id": "task_d18857cbacb95d3d55e648056b01e1f9",
+      "title": "Reconcile CI health for jordanhubbard/Aviation",
+      "state": "cancelled",
+      "created_at": "2026-07-24T10:58:53.884336+00:00",
+      "updated_at": "2026-08-11T05:47:15.920046+00:00"
+    },
+    {
+      "id": "task_d1b32e44832344c1b4100e1b7cccba68",
+      "title": "Add test_flight_plan_router.py unit tests and verify suite passes",
+      "state": "failed",
+      "created_at": "2026-07-13T12:43:16.634056+00:00",
+      "updated_at": "2026-08-11T05:43:57.787428+00:00"
+    },
+    {
+      "id": "task_d203ebc32768084c7b822733f605f1a7",
+      "title": "Componentize common Aviation hazard geometry",
+      "state": "open",
+      "created_at": "2026-10-31T07:35:17.636503+00:00",
+      "updated_at": "2026-10-31T07:35:17.636503+00:00"
+    },
+    {
+      "id": "task_d3533c655f6e48dea235e720174b9726",
+      "title": "Groom backlog for Aviation",
+      "state": "failed",
+      "created_at": "2026-09-10T04:31:35.049054+00:00",
+      "updated_at": "2026-09-10T04:32:34.078014+00:00"
+    },
+    {
+      "id": "task_d3ab86e406a145e89d8bd7bcedaaa6aa",
+      "title": "Add hazard Pydantic v2 schemas to flight-planner backend",
+      "state": "completed",
+      "created_at": "2026-07-12T23:47:40.441099+00:00",
+      "updated_at": "2026-08-11T05:43:49.270796+00:00"
+    },
+    {
+      "id": "task_d3e137abe423ac20e3c512617a9f62d0",
+      "title": "Testing & Quality Assurance",
+      "state": "completed",
+      "created_at": "2026-07-21T22:48:02.315856+00:00",
+      "updated_at": "2026-08-11T05:42:20.046865+00:00"
+    },
+    {
+      "id": "task_d76b597d8f95461bad6b9a5eeee64d99",
+      "title": "Repair contract prerequisites: Add nav-database Pydantic v2 schemas to flight-planner backend",
+      "state": "cancelled",
+      "created_at": "2026-07-13T02:33:55.990797+00:00",
+      "updated_at": "2026-08-11T05:43:51.126342+00:00"
+    },
+    {
+      "id": "task_d7720c9e608dd4e0ab5cc06724cabf30",
+      "title": "Verify Railway deployments and check for missing env vars",
+      "state": "completed",
+      "created_at": "2026-07-21T22:47:43.211884+00:00",
+      "updated_at": "2026-08-11T05:42:18.747042+00:00"
+    },
+    {
+      "id": "task_d778f52939173b538546ee639d340e81",
+      "title": "Implement local flight planning mode",
+      "state": "completed",
+      "created_at": "2026-07-21T22:48:05.874684+00:00",
+      "updated_at": "2026-08-11T05:44:20.584931+00:00"
+    },
+    {
+      "id": "task_d77b835628c3a521159f9c1026980625",
+      "title": "Migrate foreflight-dashboard to use shared SDK",
+      "state": "completed",
+      "created_at": "2026-07-21T22:47:44.807660+00:00",
+      "updated_at": "2026-08-11T05:42:18.814866+00:00"
+    },
+    {
+      "id": "task_d89362bbd8753f986162b5b4cd7d5d30",
+      "title": "Improve GitHub social preview image",
+      "state": "completed",
+      "created_at": "2026-07-21T22:47:59.441195+00:00",
+      "updated_at": "2026-08-11T05:42:14.663245+00:00"
+    },
+    {
+      "id": "task_d893af477da34801860c73aa1d36497b",
+      "title": "Run full test suite and push final branch with all changes",
+      "state": "cancelled",
+      "created_at": "2026-07-12T23:47:40.441099+00:00",
+      "updated_at": "2026-08-11T05:43:49.236395+00:00"
+    },
+    {
+      "id": "task_d9d00b1781a15eca28018d0b613971dd",
+      "title": "Write operational documentation and runbook",
+      "state": "completed",
+      "created_at": "2026-07-21T22:47:34.428715+00:00",
+      "updated_at": "2026-08-11T05:42:17.553578+00:00"
+    },
+    {
+      "id": "task_daaefa1ecd6e819faa27a34f50447421",
+      "title": "Aviation-accidents: AVHerald RSS returns 404",
+      "state": "completed",
+      "created_at": "2026-07-21T22:47:43.211873+00:00",
+      "updated_at": "2026-08-11T05:42:18.707184+00:00"
+    },
+    {
+      "id": "task_daf69440e66046aea493ef25686c634c",
+      "title": "Create FastAPI router modules for flight-plan, nav-database, and procedures",
+      "state": "cancelled",
+      "created_at": "2026-07-12T03:52:23.659534+00:00",
+      "updated_at": "2026-08-11T05:43:42.987919+00:00"
+    },
+    {
+      "id": "task_db1ab2592ad3869645ba134f8fbe736a",
+      "title": "Set up Python virtual environment and requirements.txt",
+      "state": "completed",
+      "created_at": "2026-07-21T22:48:17.402380+00:00",
+      "updated_at": "2026-08-11T05:44:20.949785+00:00"
+    },
+    {
+      "id": "task_db3576411f1b4a2097e6230467f0a9d3",
+      "title": "Reconcile README.md with the actual apps and packages in the tree",
+      "state": "failed",
+      "created_at": "2026-07-31T23:14:10.718024+00:00",
+      "updated_at": "2026-08-11T05:47:09.156607+00:00"
+    },
+    {
+      "id": "task_dbf9a5a50fdf72535cfa6a587d5cc2ba",
+      "title": "Add weather display panels",
+      "state": "completed",
+      "created_at": "2026-07-21T22:48:10.445169+00:00",
+      "updated_at": "2026-08-11T05:42:57.662401+00:00"
+    },
+    {
+      "id": "task_dc87c736e2002500d45641259b2240a6",
+      "title": "Backend: streaming flight planning endpoint (SSE)",
+      "state": "completed",
+      "created_at": "2026-07-21T22:48:20.022243+00:00",
+      "updated_at": "2026-08-11T05:42:57.954130+00:00"
+    },
+    {
+      "id": "task_dcf3cd80b5c64c25bd6e770ef4593358",
+      "title": "Groom backlog for Aviation",
+      "state": "failed",
+      "created_at": "2026-09-10T00:28:54.428915+00:00",
+      "updated_at": "2026-09-10T00:30:33.285979+00:00"
+    },
+    {
+      "id": "task_dd7b4e69f12840488413dbee5ad9f930",
+      "title": "Add backend-test Makefile target and wire g1000-simulator into root test-python",
+      "state": "cancelled",
+      "created_at": "2026-07-11T23:46:05.996262+00:00",
+      "updated_at": "2026-08-11T05:43:35.502161+00:00"
+    },
+    {
+      "id": "task_de02f68803835698dfd0fd0f18a5754a",
+      "title": "Create pane components for all existing apps",
+      "state": "completed",
+      "created_at": "2026-07-21T22:47:30.284160+00:00",
+      "updated_at": "2026-08-11T05:42:55.226375+00:00"
+    },
+    {
+      "id": "task_de2454aea08848489357e6de06a9f2a7",
+      "title": "Groom backlog for Aviation",
+      "state": "failed",
+      "created_at": "2026-09-09T21:53:38.990680+00:00",
+      "updated_at": "2026-09-09T21:54:41.830268+00:00"
+    },
+    {
+      "id": "task_de7a31a00f4a4763b7a3de987b15eb23",
+      "title": "Verify tests pass, push branch, and produce evidence for flight-planner hazard schemas",
+      "state": "cancelled",
+      "created_at": "2026-07-12T17:45:10.324299+00:00",
+      "updated_at": "2026-08-11T05:43:47.301535+00:00"
+    },
+    {
+      "id": "task_deef6144904d4e89a69b7b10a6290a3f",
+      "title": "Repair contract prerequisites: Add create_app factory, StreamingService, and wire g1000-simulator backend",
+      "state": "cancelled",
+      "created_at": "2026-07-12T01:18:36.491333+00:00",
+      "updated_at": "2026-08-11T05:43:41.227500+00:00"
+    },
+    {
+      "id": "task_dfd144f1c37632ea570330c23dd6beba",
+      "title": "use standard wind barbs using the aviation standard rendering",
+      "state": "completed",
+      "created_at": "2026-07-21T22:47:55.489977+00:00",
+      "updated_at": "2026-08-11T05:42:19.943992+00:00"
+    },
+    {
+      "id": "task_dfe8a7f835f74f6c9fa8c268734a8485",
+      "title": "Add unit tests for flight_plan router",
+      "state": "cancelled",
+      "created_at": "2026-07-13T11:35:24.446489+00:00",
+      "updated_at": "2026-08-11T05:43:57.367126+00:00"
+    },
+    {
+      "id": "task_e00a54f9f1b9fa3896de68ae781cf284",
+      "title": "Create .env.example and environment configuration",
+      "state": "completed",
+      "created_at": "2026-07-21T22:48:17.402396+00:00",
+      "updated_at": "2026-08-11T05:44:20.975774+00:00"
+    },
+    {
+      "id": "task_e00b262d748d40b88fc8f16ff8dee189",
+      "title": "Groom backlog for Aviation",
+      "state": "failed",
+      "created_at": "2026-09-13T23:04:58.476124+00:00",
+      "updated_at": "2026-09-13T23:05:18.259343+00:00"
+    },
+    {
+      "id": "task_e1d6e3a4c19956c2c9f6de2f5a3954c1",
+      "title": "Create Docker configuration for frontend",
+      "state": "completed",
+      "created_at": "2026-07-21T22:48:07.548200+00:00",
+      "updated_at": "2026-08-11T05:42:57.592565+00:00"
+    },
+    {
+      "id": "task_e1f0f38aba7d4c6c886b4f1d4fe4e653",
+      "title": "Groom backlog for Aviation",
+      "state": "failed",
+      "created_at": "2026-09-09T19:31:54.089621+00:00",
+      "updated_at": "2026-09-09T19:35:35.555804+00:00"
+    },
+    {
+      "id": "task_e2362a1301d24346b38f97e03bda5406",
+      "title": "Add flight_plan.py FastAPI router and tests to flight-planner backend",
+      "state": "cancelled",
+      "created_at": "2026-07-12T12:21:47.943875+00:00",
+      "updated_at": "2026-08-11T05:43:45.225049+00:00"
+    },
+    {
+      "id": "task_e24329ddddd14ab4a86dca9d43750615",
+      "title": "Resolve grouped Dependabot security-update failures",
+      "state": "open",
+      "created_at": "2026-11-11T02:00:49.091342+00:00",
+      "updated_at": "2026-11-11T02:00:49.091342+00:00"
+    },
+    {
+      "id": "task_e2bfe410d657432993ccb7a43d717499",
+      "title": "Groom backlog for Aviation",
+      "state": "failed",
+      "created_at": "2026-09-09T19:16:31.762994+00:00",
+      "updated_at": "2026-09-09T19:27:00.119641+00:00"
+    },
+    {
+      "id": "task_e338ad5b6fe187b81566260eda8d052f",
+      "title": "Normalize airport code inputs with descriptions",
+      "state": "completed",
+      "created_at": "2026-07-21T22:48:03.942648+00:00",
+      "updated_at": "2026-08-11T05:42:57.462082+00:00"
+    },
+    {
+      "id": "task_e40c828db8d1a545a5f8a2f2c703e0f2",
+      "title": "Aviation Accident Tracker: Tests",
+      "state": "completed",
+      "created_at": "2026-07-21T22:47:35.421362+00:00",
+      "updated_at": "2026-08-11T05:42:17.599569+00:00"
+    },
+    {
+      "id": "task_e44ca67d55f8edabba901256821e36a7",
+      "title": "Validate flightplanner: 100% tests, build, and deploy",
+      "state": "completed",
+      "created_at": "2026-07-21T22:47:47.583864+00:00",
+      "updated_at": "2026-08-11T05:42:19.031447+00:00"
+    },
+    {
+      "id": "task_e44d3d832f204e30b06d912c7f559fc6",
+      "title": "Groom backlog for Aviation",
+      "state": "failed",
+      "created_at": "2026-09-09T20:02:12.071834+00:00",
+      "updated_at": "2026-09-09T20:14:28.646988+00:00"
+    },
+    {
+      "id": "task_e4638e9dec8e6448863e9a82d710ae83",
+      "title": "Frontend Development",
+      "state": "completed",
+      "created_at": "2026-07-21T22:48:08.849345+00:00",
+      "updated_at": "2026-08-11T05:44:20.679152+00:00"
+    },
+    {
+      "id": "task_e62fbccc3ac2d4424134212ce282fbfd",
+      "title": "Show map + weather overlays for local planning results",
+      "state": "completed",
+      "created_at": "2026-07-21T22:48:11.360576+00:00",
+      "updated_at": "2026-08-11T05:42:57.691156+00:00"
+    },
+    {
+      "id": "task_e652647f9bb84471859bcc58e3a2f834",
+      "title": "Repair contract prerequisites: Add flight-plan FastAPI router to flight-planner backend",
+      "state": "cancelled",
+      "created_at": "2026-07-12T08:01:38.000814+00:00",
+      "updated_at": "2026-08-11T05:43:44.125962+00:00"
+    },
+    {
+      "id": "task_e69e2101650a4e89a7d271eb116a25de",
+      "title": "Add nav-database Pydantic v2 schemas to flight-planner backend",
+      "state": "cancelled",
+      "created_at": "2026-07-12T23:47:40.441099+00:00",
+      "updated_at": "2026-08-11T05:43:49.212666+00:00"
+    },
+    {
+      "id": "task_e6a190591f1141dfab7203b4f31654a6",
+      "title": "Implement stable versioned Meta App edge API and MCP gateway",
+      "state": "open",
+      "created_at": "2026-11-10T17:08:21.658025+00:00",
+      "updated_at": "2026-11-10T18:32:20.012140+00:00"
+    },
+    {
+      "id": "task_e72b31b5a50145e2953e599ec63d6219",
+      "title": "Groom backlog for Aviation",
+      "state": "failed",
+      "created_at": "2026-09-13T23:35:02.822336+00:00",
+      "updated_at": "2026-09-13T23:35:43.612238+00:00"
+    },
+    {
+      "id": "task_e88691d482dcce9afa9ffc90fbb4e266",
+      "title": "Extract common aviation logbook validation into the SDK",
+      "state": "cancelled",
+      "created_at": "2026-10-31T06:39:49.397033+00:00",
+      "updated_at": "2026-10-31T07:01:39.651208+00:00"
+    },
+    {
+      "id": "task_e926e507859e4116829f0065aec2fbcc",
+      "title": "Create routers/flight_plan.py FastAPI router",
+      "state": "completed",
+      "created_at": "2026-07-13T01:50:20.128842+00:00",
+      "updated_at": "2026-08-11T05:43:49.545272+00:00"
+    },
+    {
+      "id": "task_e985cff012f5eeac3e75d6ff797ab419",
+      "title": "EPIC: Validate all apps post-migration (CI/CD green)",
+      "state": "completed",
+      "created_at": "2026-07-21T22:47:41.503879+00:00",
+      "updated_at": "2026-08-11T05:42:18.641964+00:00"
+    },
+    {
+      "id": "task_e9b03d5f58714d5386563115ea7c1a37",
+      "title": "Repair contract prerequisites: Inspect Aviation repo worktree state and identify missing files",
+      "state": "failed",
+      "created_at": "2026-07-13T02:22:55.601542+00:00",
+      "updated_at": "2026-08-11T05:43:50.286532+00:00"
+    },
+    {
+      "id": "task_e9bce169e2894f0b814cb5797c333e87",
+      "title": "Groom backlog for Aviation",
+      "state": "failed",
+      "created_at": "2026-09-09T18:16:05.601728+00:00",
+      "updated_at": "2026-09-09T18:19:25.900777+00:00"
+    },
+    {
+      "id": "task_ea3c9150cba083c4ce6b9d91e78d22dc",
+      "title": "Implement unified authentication and session management",
+      "state": "completed",
+      "created_at": "2026-07-21T22:47:31.938848+00:00",
+      "updated_at": "2026-08-11T05:42:55.355783+00:00"
+    },
+    {
+      "id": "task_ea3f3039c4cf4f9b95b083e5c57b6d45",
+      "title": "Reorganize weather-briefing layout to selector -> map -> decoded METAR in index.ts",
+      "state": "cancelled",
+      "created_at": "2026-07-23T04:51:03.809317+00:00",
+      "updated_at": "2026-08-11T05:42:59.610784+00:00"
+    },
+    {
+      "id": "task_ea5907afe372459182de73dddadcb992",
+      "title": "Fix the deploy workflow release gates that treat skipped builds as success",
+      "state": "cancelled",
+      "created_at": "2026-07-31T23:14:10.718024+00:00",
+      "updated_at": "2026-09-01T05:29:52.296095+00:00"
+    },
+    {
+      "id": "task_eb313c9e63a44cbf82627ddcf23a4413",
+      "title": "Mission-edit-suggestion moderation DB layer: request-changes status + migration",
+      "state": "cancelled",
+      "created_at": "2026-07-23T05:30:31.603227+00:00",
+      "updated_at": "2026-08-11T05:42:59.697580+00:00"
+    },
+    {
+      "id": "task_eb75cc28e67f323c2c57eb10204b18cd",
+      "title": "Review and fix Dependabot security vulnerabilities",
+      "state": "completed",
+      "created_at": "2026-07-21T22:47:39.384781+00:00",
+      "updated_at": "2026-08-11T05:42:55.641102+00:00"
+    },
+    {
+      "id": "task_ebb0f91be4a44cafb2b056878e34995a",
+      "title": "Certificate-aware flight-time validation in models.py",
+      "state": "cancelled",
+      "created_at": "2026-07-22T20:01:30.584798+00:00",
+      "updated_at": "2026-08-11T05:42:59.318157+00:00"
+    },
+    {
+      "id": "task_ecfc239e88124ee685f22b0211668315",
+      "title": "Groom backlog for Aviation",
+      "state": "failed",
+      "created_at": "2026-09-13T21:34:45.500642+00:00",
+      "updated_at": "2026-09-13T21:35:23.852353+00:00"
+    },
+    {
+      "id": "task_ed1b15e8399dfa06233c4fc5c91fa7cd",
+      "title": "Implement AVHerald adapter for incident data",
+      "state": "completed",
+      "created_at": "2026-07-21T22:47:33.593942+00:00",
+      "updated_at": "2026-08-11T05:42:17.450445+00:00"
+    },
+    {
+      "id": "task_ed2cd5d546ac4d5ca9674b90dd80120a",
+      "title": "Add missing FastAPI routers for flight-plan, nav-database, and procedures",
+      "state": "failed",
+      "created_at": "2026-07-12T01:37:11.555279+00:00",
+      "updated_at": "2026-08-11T05:43:42.216700+00:00"
+    },
+    {
+      "id": "task_ed3ce37cb2644266aa03e9e1cada6ab5",
+      "title": "Add tests for the nav-database router and push a PR",
+      "state": "failed",
+      "created_at": "2026-07-12T13:59:07.406267+00:00",
+      "updated_at": "2026-08-11T05:43:45.465781+00:00"
+    },
+    {
+      "id": "task_edf80313e775308581dd3dcdfe2e7ad9",
+      "title": "Componentize common Aviation configuration registry",
+      "state": "cancelled",
+      "created_at": "2026-10-31T08:02:42.695300+00:00",
+      "updated_at": "2026-10-31T08:25:49.076861+00:00"
+    },
+    {
+      "id": "task_ee7cfbd7eef09ad50eac099e98cc87be",
+      "title": "Create Pydantic schemas for requests/responses",
+      "state": "completed",
+      "created_at": "2026-07-21T22:47:56.829808+00:00",
+      "updated_at": "2026-08-11T05:42:55.998813+00:00"
+    },
+    {
+      "id": "task_ee9a43f6a2fa4db88f24a1e123c937e6",
+      "title": "Add tests for flight_plan router, verify make test, and push",
+      "state": "cancelled",
+      "created_at": "2026-07-12T17:39:38.373776+00:00",
+      "updated_at": "2026-08-11T05:43:47.249952+00:00"
+    },
+    {
+      "id": "task_eec049237b904c7a82c69340ad1f3a18",
+      "title": "Mission-edit-suggestion moderation: backend tests (request-changes, audit trail, rate limiting)",
+      "state": "cancelled",
+      "created_at": "2026-07-23T03:35:45.092341+00:00",
+      "updated_at": "2026-08-11T05:42:59.543741+00:00"
+    },
+    {
+      "id": "task_ef377536c0a1fe173472d3a0e0798b88",
+      "title": "aviation-missions-app: Missing missions in production deployment",
+      "state": "completed",
+      "created_at": "2026-07-21T22:47:23.765145+00:00",
+      "updated_at": "2026-08-11T05:42:54.305258+00:00"
+    },
+    {
+      "id": "task_f0de7d31214dfd49008297bd9b1bd6a0",
+      "title": "Add route waypoint weather summary table",
+      "state": "completed",
+      "created_at": "2026-07-21T22:47:58.781946+00:00",
+      "updated_at": "2026-08-11T05:42:57.273338+00:00"
+    },
+    {
+      "id": "task_f10a80372fc503f793ba68786dfd9bd3",
+      "title": "Backend Architecture",
+      "state": "completed",
+      "created_at": "2026-07-21T22:47:55.491008+00:00",
+      "updated_at": "2026-08-11T05:44:20.332786+00:00"
+    },
+    {
+      "id": "task_f1139a5cdb2a4d5583c0dea603fd3f05",
+      "title": "Tests + make test gate + commit/push repository contract",
+      "state": "cancelled",
+      "created_at": "2026-07-23T07:13:26.879274+00:00",
+      "updated_at": "2026-08-11T05:42:59.763794+00:00"
+    },
+    {
+      "id": "task_f2221dfbd65124504670fecaa7a37335",
+      "title": "Add Makefile for common operations",
+      "state": "completed",
+      "created_at": "2026-07-21T22:48:08.487992+00:00",
+      "updated_at": "2026-08-11T05:42:20.267762+00:00"
+    },
+    {
+      "id": "task_f2617570241351f87bc201138130bb08",
+      "title": "Build route visualization components",
+      "state": "completed",
+      "created_at": "2026-07-21T22:48:10.135147+00:00",
+      "updated_at": "2026-08-11T05:42:57.645458+00:00"
+    },
+    {
+      "id": "task_f2c2ac6e83ddc82c2963ba333fa19373",
+      "title": "add wind barbs",
+      "state": "completed",
+      "created_at": "2026-07-21T22:47:58.152103+00:00",
+      "updated_at": "2026-08-11T05:42:57.213788+00:00"
+    },
+    {
+      "id": "task_f2caaad66bc84bf78e594b3aad19e254",
+      "title": "Groom backlog for Aviation",
+      "state": "failed",
+      "created_at": "2026-09-10T03:30:47.128332+00:00",
+      "updated_at": "2026-09-10T03:31:42.846600+00:00"
+    },
+    {
+      "id": "task_f350585abb5eeaacb81c04adc01c70bf",
+      "title": "Set flightschool SECRET_KEY in Railway",
+      "state": "completed",
+      "created_at": "2026-07-21T22:47:41.503433+00:00",
+      "updated_at": "2026-08-11T05:42:18.614642+00:00"
+    },
+    {
+      "id": "task_f39d92286fe536ff44853d524f2bbdf7",
+      "title": "Implement airspace avoidance logic",
+      "state": "completed",
+      "created_at": "2026-07-21T22:48:05.879493+00:00",
+      "updated_at": "2026-08-11T05:44:20.607585+00:00"
+    },
+    {
+      "id": "task_f3db098d3db147f4836e643e7bed15ac",
+      "title": "Groom backlog for Aviation",
+      "state": "failed",
+      "created_at": "2026-09-08T11:46:19.955103+00:00",
+      "updated_at": "2026-09-08T11:49:28.648168+00:00"
+    },
+    {
+      "id": "task_f40d021e80d1411db7ff1700d8e61b8a",
+      "title": "Implement containerized testing for all apps",
+      "state": "completed",
+      "created_at": "2026-07-21T22:47:25.283811+00:00",
+      "updated_at": "2026-08-11T05:42:54.378900+00:00"
+    },
+    {
+      "id": "task_f44f5a5d8d174d52956a88c111496557",
+      "title": "Groom backlog for Aviation",
+      "state": "failed",
+      "created_at": "2026-09-09T18:46:19.278398+00:00",
+      "updated_at": "2026-09-09T18:49:39.217641+00:00"
+    },
+    {
+      "id": "task_f4e51356abcc459fb7f78a8ff060c2d5",
+      "title": "Repair contract prerequisites: Repair contract prerequisites: Create flight_plan.py FastAPI router in routers/ directory",
+      "state": "cancelled",
+      "created_at": "2026-07-13T01:38:28.387919+00:00",
+      "updated_at": "2026-08-11T05:43:49.487142+00:00"
+    },
+    {
+      "id": "task_f6c7db2615cc4861b8c386cc5b212648",
+      "title": "Groom backlog for Aviation",
+      "state": "failed",
+      "created_at": "2026-09-09T19:01:26.422025+00:00",
+      "updated_at": "2026-09-09T19:06:16.081693+00:00"
+    },
+    {
+      "id": "task_f6fb10a2dc7b4e20e785ed1aab40f09d",
+      "title": "Create weather overlay controls",
+      "state": "completed",
+      "created_at": "2026-07-21T22:48:10.138321+00:00",
+      "updated_at": "2026-08-11T05:44:20.854844+00:00"
+    },
+    {
+      "id": "task_f97f1fd3a1de147509d93258b2fa01da",
+      "title": "Aviation Accident Tracker: Planning",
+      "state": "completed",
+      "created_at": "2026-07-21T22:47:47.583840+00:00",
+      "updated_at": "2026-08-11T05:42:55.809278+00:00"
+    },
+    {
+      "id": "task_f9801c5238f94a9287c59d297b5abe63",
+      "title": "Fix g1000-simulator Makefile: add start, dev-up, test, and backend-test targets",
+      "state": "cancelled",
+      "created_at": "2026-07-10T00:23:36.426617+00:00",
+      "updated_at": "2026-08-11T05:43:19.169153+00:00"
+    },
+    {
+      "id": "task_f992ce0eb249db22b449bab175efac03",
+      "title": "Show weather status circles on nearby airport markers",
+      "state": "completed",
+      "created_at": "2026-07-21T22:48:15.485826+00:00",
+      "updated_at": "2026-08-11T05:42:21.245109+00:00"
+    },
+    {
+      "id": "task_f9a75c20fde458d7802586eeec39ca35",
+      "title": "Aviation Accident Tracker: Backend Service",
+      "state": "completed",
+      "created_at": "2026-07-21T22:47:51.152973+00:00",
+      "updated_at": "2026-08-11T05:42:55.865485+00:00"
+    },
+    {
+      "id": "task_f9e3637f0b32e43b9167350fb891da91",
+      "title": "Pre-Meta-App: Audit and fix standalone app deployments",
+      "state": "completed",
+      "created_at": "2026-07-21T22:47:22.977589+00:00",
+      "updated_at": "2026-08-11T05:44:19.845933+00:00"
+    },
+    {
+      "id": "task_fa91455a337757617b52ea3e2e014a35",
+      "title": "Verify feature parity with both source apps",
+      "state": "completed",
+      "created_at": "2026-07-21T22:47:52.053525+00:00",
+      "updated_at": "2026-08-11T05:42:19.855777+00:00"
+    },
+    {
+      "id": "task_faed7e904b944ad0f0e8298d6671d34d",
+      "title": "Wind barbs not rendering on route map",
+      "state": "completed",
+      "created_at": "2026-07-21T22:47:51.153051+00:00",
+      "updated_at": "2026-08-11T05:42:55.905257+00:00"
+    },
+    {
+      "id": "task_faf7e31b18204a058a42cfcebdcd3cf2",
+      "title": "Verify & fix create-mission admin submission queue (backend + DB)",
+      "state": "cancelled",
+      "created_at": "2026-07-22T19:51:58.569400+00:00",
+      "updated_at": "2026-08-11T05:42:57.968982+00:00"
+    },
+    {
+      "id": "task_fb7c7a66458741d991d89d5b7b121999",
+      "title": "Repair contract prerequisites: Export hazards module from shared-sdk and wire hazard overlay into flight-planner map",
+      "state": "cancelled",
+      "created_at": "2026-07-11T23:09:37.494643+00:00",
+      "updated_at": "2026-08-11T05:43:33.284087+00:00"
+    },
+    {
+      "id": "task_fc8c7858ca71532779a13f02973c6687",
+      "title": "Optimize performance and resource usage",
+      "state": "completed",
+      "created_at": "2026-07-21T22:47:29.369926+00:00",
+      "updated_at": "2026-08-11T05:42:14.446463+00:00"
+    },
+    {
+      "id": "task_fcf7799e414c409da8dc15d2eafbcf2b",
+      "title": "Surface PIC+Dual valid-training as info (not error) in API responses",
+      "state": "cancelled",
+      "created_at": "2026-07-22T20:01:30.584798+00:00",
+      "updated_at": "2026-08-11T05:42:59.352056+00:00"
+    },
+    {
+      "id": "task_fdebf4c66376cc270ef81626a13bd30a",
+      "title": "Prepare Railway deployment (PORT + env var wiring)",
+      "state": "completed",
+      "created_at": "2026-07-21T22:47:58.772611+00:00",
+      "updated_at": "2026-08-11T05:42:57.252319+00:00"
+    },
+    {
+      "id": "task_feb50a22ec0043569f6c3ef314da2f6e",
+      "title": "Repair contract prerequisites: Add unit tests for flight_plan router",
+      "state": "failed",
+      "created_at": "2026-07-13T10:19:25.706598+00:00",
+      "updated_at": "2026-08-11T05:43:56.919124+00:00"
+    },
+    {
+      "id": "task_fed917d7eb75474515c5ee691662607c",
+      "title": "Migrate accident-tracker to use shared aviation SDK",
+      "state": "completed",
+      "created_at": "2026-07-21T22:47:35.423147+00:00",
+      "updated_at": "2026-08-11T05:44:19.921328+00:00"
+    },
+    {
+      "id": "task_fffb874e8c22e83853bd66c5165bcd84",
+      "title": "Add accident-tracker data export functionality",
+      "state": "completed",
+      "created_at": "2026-07-21T22:47:25.283823+00:00",
+      "updated_at": "2026-08-11T05:42:17.060878+00:00"
+    },
+    {
+      "id": "task_repair_1290e3947da7a032dbb98292",
+      "title": "Repair contract prerequisites: Reorganize weather-briefing layout to selector -> map -> decoded METAR in index.ts",
+      "state": "failed",
+      "created_at": "2026-07-23T06:31:27.467640+00:00",
+      "updated_at": "2026-08-11T05:42:59.712767+00:00"
+    },
+    {
+      "id": "task_repair_13e0b302b88276733d74adbb",
+      "title": "Repair contract prerequisites: Mission-edit-suggestion moderation: DB layer (request-changes status, audit trail, rate-limit tracking)",
+      "state": "cancelled",
+      "created_at": "2026-07-23T05:26:25.897179+00:00",
+      "updated_at": "2026-08-11T05:42:59.627087+00:00"
+    },
+    {
+      "id": "task_repair_230573ced02017c8711dbaa0",
+      "title": "Repair contract prerequisites: Complete backend mission-edit-suggestion moderation workflow (request-changes, audit trail, rate limiting)",
+      "state": "cancelled",
+      "created_at": "2026-07-23T03:31:45.353701+00:00",
+      "updated_at": "2026-08-11T05:42:59.505729+00:00"
+    },
+    {
+      "id": "task_repair_344d8c1253dbbe8a3cbd1436",
+      "title": "Repair contract prerequisites: Reorganize weather-briefing layout: selector -> map -> decoded METAR (HTML/CSS in index.ts)",
+      "state": "cancelled",
+      "created_at": "2026-07-23T02:31:04.940385+00:00",
+      "updated_at": "2026-08-11T05:42:59.439361+00:00"
+    },
+    {
+      "id": "task_repair_61b1157c4d7480094302e591",
+      "title": "Repair contract prerequisites: Certificate-aware flight-time validation in models.py",
+      "state": "failed",
+      "created_at": "2026-07-23T02:54:54.797606+00:00",
+      "updated_at": "2026-08-11T05:42:59.488249+00:00"
+    },
+    {
+      "id": "task_repair_9031c56afb49402f75350741",
+      "title": "Repair contract prerequisites: Mission moderation DB layer: add request-changes status + migration",
+      "state": "failed",
+      "created_at": "2026-07-23T08:48:16.035643+00:00",
+      "updated_at": "2026-08-11T05:42:59.818933+00:00"
+    },
+    {
+      "id": "task_repair_a4265c94440c1bbc3beadd0f",
+      "title": "Repair contract prerequisites: Reorganize weather-briefing layout to selector -> map -> decoded METAR in index.ts",
+      "state": "cancelled",
+      "created_at": "2026-07-23T04:42:40.348712+00:00",
+      "updated_at": "2026-08-11T05:42:59.575283+00:00"
+    },
+    {
+      "id": "task_repair_accdc8fd4c3569909123ca6f",
+      "title": "Repair contract prerequisites: Verify & fix create-mission admin submission queue (backend + DB)",
+      "state": "failed",
+      "created_at": "2026-07-23T02:22:59.035591+00:00",
+      "updated_at": "2026-08-11T05:42:59.420417+00:00"
+    },
+    {
+      "id": "task_repair_b9bf4107a5ec60b79b4bbab8",
+      "title": "Repair contract prerequisites: Mission-edit-suggestion moderation DB layer: request-changes status + migration",
+      "state": "cancelled",
+      "created_at": "2026-07-23T07:07:43.012796+00:00",
+      "updated_at": "2026-08-11T05:42:59.727923+00:00"
+    },
+    {
+      "id": "task_repair_d25fcfae5071d640512b582b",
+      "title": "Repair contract prerequisites: Reconcile CI health for jordanhubbard/Aviation",
+      "state": "failed",
+      "created_at": "2026-07-24T13:50:26.668325+00:00",
+      "updated_at": "2026-08-11T05:47:16.009795+00:00"
+    }
+  ]
+}

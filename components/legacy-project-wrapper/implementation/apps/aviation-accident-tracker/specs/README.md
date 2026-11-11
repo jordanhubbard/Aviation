@@ -13,7 +13,7 @@ These specs support the **Incremental Execution Plan (Option B)**, which extract
 ## Specifications
 
 ### 1. [Airports Extraction](./AIRPORTS_EXTRACTION_SPEC.md)
-**MAC task:** [Aviation-o2d] ⭐ P0 - MVP Blocker
+**Historical work reference:** [Aviation-o2d] ⭐ P0 - MVP Blocker
 **Effort:** 2-3 days
 **Dependencies:** None
 
@@ -40,7 +40,7 @@ These specs support the **Incremental Execution Plan (Option B)**, which extract
 ---
 
 ### 2. [Weather Services Extraction](./WEATHER_EXTRACTION_SPEC.md)
-**MAC task:** [Aviation-dx3] ⭐ P0 - MVP Blocker
+**Historical work reference:** [Aviation-dx3] ⭐ P0 - MVP Blocker
 **Effort:** 3-4 days
 **Dependencies:** Aviation-o2d (for coordinate lookup)
 
@@ -73,7 +73,7 @@ These specs support the **Incremental Execution Plan (Option B)**, which extract
 ---
 
 ### 3. [Navigation Utilities Extraction](./NAVIGATION_EXTRACTION_SPEC.md)
-**MAC task:** [Aviation-ywm] ⭐ P0 - MVP Blocker
+**Historical work reference:** [Aviation-ywm] ⭐ P0 - MVP Blocker
 **Effort:** 2 days
 **Dependencies:** None
 
@@ -100,7 +100,7 @@ These specs support the **Incremental Execution Plan (Option B)**, which extract
 ---
 
 ### 4. [Map Integration Extraction](./MAP_EXTRACTION_SPEC.md)
-**MAC task:** [Aviation-r2l] ⭐ P0 - MVP Blocker
+**Historical work reference:** [Aviation-r2l] ⭐ P0 - MVP Blocker
 **Effort:** 3-4 days
 **Dependencies:** None (but benefits from airports and navigation)
 
@@ -379,8 +379,8 @@ const apiKey = secrets.getRequired('OPENWEATHERMAP_API_KEY');
 # 1. Read the spec
 cat specs/AIRPORTS_EXTRACTION_SPEC.md
 
-# 2. Inspect the MAC task
-/Users/jkh/Src/mac/.venv/bin/mac task show <task-id>
+# 2. Inspect the GitHub issue
+gh issue view NUMBER --repo jordanhubbard/Aviation
 
 # 3. Create package structure
 cd packages/shared-sdk
@@ -392,8 +392,8 @@ mkdir -p src/aviation/airports
 # 5. Run tests
 npm test
 
-# 6. Submit evidence through the MAC task lifecycle
-/Users/jkh/Src/mac/.venv/bin/mac task show <task-id>
+# 6. Attach verification evidence to the GitHub issue and PR
+gh issue view NUMBER --repo jordanhubbard/Aviation
 ```
 
 ### Using in Accident-Tracker

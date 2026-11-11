@@ -1,5 +1,7 @@
 # Garmin G1000 Simulator — Comprehensive Work Plan
 
+> Tracker note: work and review now live in [GitHub Issues](https://github.com/jordanhubbard/Aviation/issues). Legacy task references below are historical provenance.
+
 ## Introduction
 
 ### Project Objectives

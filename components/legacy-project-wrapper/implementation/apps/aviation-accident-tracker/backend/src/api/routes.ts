@@ -5,10 +5,10 @@ import { runRecentIngest } from "../ingest/ingestService.js";
 import { searchAirports } from "../geo/airportLookup.js";
 import { EventRepository } from "../db/repository.js";
 import { config } from "../config.js";
-import { macTaskCreator } from "../mac.js";
+import { githubIssueCreator } from "../issues.js";
 import { AccidentE2EManager } from '../e2e/manager.js';
 
-type MacErrorReport = {
+type IssueErrorReport = {
   source: "frontend" | "backend" | "log" | string;
   message: string;
   stack?: string | null;
@@ -40,21 +40,28 @@ export function createRouter(repository: EventRepository, e2e?: AccidentE2EManag
   const activeRepository = (res: express.Response): EventRepository =>
     (res.locals.e2eRepository as EventRepository | undefined) ?? repository;
 
-  router.get("/mac/enabled", (_req, res) => {
-    res.json({ enabled: macTaskCreator.enabled(), created: false });
+  // Compatibility redirects never contact the retired tracker.
+  router.get("/mac/enabled", (_req, res) => res.redirect(307, "/api/issues/enabled"));
+  router.post("/mac/report", (_req, res) => res.redirect(307, "/api/issues/report"));
+  router.get("/issues/enabled", (_req, res) => {
+    res.json({ enabled: githubIssueCreator.enabled(), created: false });
   });
 
-  router.post("/mac/report", async (req, res) => {
-    const enabled = macTaskCreator.enabled();
+  router.post("/issues/report", async (req, res) => {
+    const enabled = githubIssueCreator.enabled();
     if (!enabled) {
       return res.json({
         enabled: false,
         created: false,
-        reason: "MAC autoreport disabled",
+        reason: "GitHub issue reporting disabled",
       });
     }
 
-    const payload = req.body as MacErrorReport;
+    const payload = req.body as IssueErrorReport;
+    if (!payload || typeof payload.message !== "string" || !payload.message.trim() || payload.message.length > 4000
+      || (payload.stack != null && (typeof payload.stack !== "string" || payload.stack.length > 12000))) {
+      return res.status(400).json({ error: "Invalid issue report" });
+    }
     const titlePrefix =
       payload.source === "frontend"
         ? "[frontend]"
@@ -69,7 +76,6 @@ export function createRouter(repository: EventRepository, e2e?: AccidentE2EManag
 
     const context = {
       ...(payload.context ?? {}),
-      client: req.ip,
       url: payload.url ?? undefined,
       user_agent: payload.user_agent ?? undefined,
     };
@@ -93,18 +99,17 @@ export function createRouter(repository: EventRepository, e2e?: AccidentE2EManag
         : undefined;
     const autoFiledContext = `error report (source=${payload.source}, kind=${kind ?? "unknown"})`;
 
-    const result = await macTaskCreator.createAutoFiledTask({
+    const result = await githubIssueCreator.createAutoFiledIssue({
       title,
-      description,
-      taskType: "bug",
-      priority: 1,
+      body: description,
       autoFiledContext,
     });
 
     return res.json({
       enabled: true,
       created: result.created,
-      task_id: result.taskId,
+      issue_number: result.issueNumber,
+      issue_url: result.issueUrl,
       reason: result.reason,
     });
   });

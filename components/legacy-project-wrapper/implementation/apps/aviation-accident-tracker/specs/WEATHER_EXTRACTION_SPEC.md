@@ -1,6 +1,6 @@
 # Weather Services Extraction Implementation Spec
 
-**MAC task:** [Aviation-dx3] Extract weather services to @aviation/shared-sdk
+**Historical work reference:** [Aviation-dx3] Extract weather services to @aviation/shared-sdk
 **Priority:** P0 - MVP Blocker
 **Effort:** 3-4 days
 **Dependencies:** Aviation-o2d (airports, for coordinate lookup)

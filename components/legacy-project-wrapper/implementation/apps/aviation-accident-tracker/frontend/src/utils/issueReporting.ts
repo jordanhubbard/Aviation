@@ -1,4 +1,4 @@
-type MacEnabledResponse = {
+type IssueReportingEnabledResponse = {
   enabled: boolean;
 };
 
@@ -7,7 +7,7 @@ type FrontendErrorContext = {
   extra?: Record<string, unknown>;
 };
 
-type MacErrorReport = {
+type IssueErrorReport = {
   source: "frontend";
   message: string;
   stack?: string | null;
@@ -26,12 +26,12 @@ const hashString = (value: string) => {
   return String(hash);
 };
 
-export const macReportingEnabled = async () => {
+export const issueReportingEnabled = async () => {
   if (enabledPromise) return enabledPromise;
-  enabledPromise = fetch("/api/mac/enabled", { method: "GET" })
+  enabledPromise = fetch("/api/issues/enabled", { method: "GET" })
     .then(async (response) => {
       if (!response.ok) return false;
-      const json = (await response.json()) as MacEnabledResponse;
+      const json = (await response.json()) as IssueReportingEnabledResponse;
       return Boolean(json.enabled);
     })
     .catch(() => false);
@@ -46,11 +46,11 @@ const shouldSend = (signature: string, ttlMs = 15 * 60 * 1000) => {
   return true;
 };
 
-export const reportFrontendErrorToMac = async (
+export const reportFrontendError = async (
   error: unknown,
   context: FrontendErrorContext,
 ): Promise<void> => {
-  if (!(await macReportingEnabled())) return;
+  if (!(await issueReportingEnabled())) return;
 
   const err = error instanceof Error ? error : new Error(String(error));
   const message = err.message || String(error);
@@ -58,7 +58,7 @@ export const reportFrontendErrorToMac = async (
   const signature = hashString(`${context.kind}\n${message}\n${stack ?? ""}`);
   if (!shouldSend(signature)) return;
 
-  const payload: MacErrorReport = {
+  const payload: IssueErrorReport = {
     source: "frontend",
     message,
     stack,
@@ -68,7 +68,7 @@ export const reportFrontendErrorToMac = async (
   };
 
   try {
-    await fetch("/api/mac/report", {
+    await fetch("/api/issues/report", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
@@ -78,13 +78,13 @@ export const reportFrontendErrorToMac = async (
   }
 };
 
-export const installFrontendMacErrorReporting = () => {
+export const installFrontendIssueErrorReporting = () => {
   window.addEventListener("error", (event) => {
-    void reportFrontendErrorToMac(event.error ?? event.message, {
+    void reportFrontendError(event.error ?? event.message, {
       kind: "window.onerror",
     });
   });
   window.addEventListener("unhandledrejection", (event) => {
-    void reportFrontendErrorToMac(event.reason, { kind: "unhandledrejection" });
+    void reportFrontendError(event.reason, { kind: "unhandledrejection" });
   });
 };

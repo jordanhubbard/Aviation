@@ -4,13 +4,13 @@ Thanks for your interest in contributing to **flight-planner**.
 
 ## 1) Task tracking (required)
 
-This application uses the `Aviation` project in MAC as its sole task ledger.
+This application uses [GitHub Issues](https://github.com/jordanhubbard/Aviation/issues)
+and pull requests for all work, dependencies, evidence and review.
 
-```bash
-/Users/jkh/Src/mac/.venv/bin/mac task ready --project Aviation
-/Users/jkh/Src/mac/.venv/bin/mac task show <task-id>
-/Users/jkh/Src/mac/.venv/bin/mac task create "Follow-up" --project Aviation \
-  --no-ticket --description "Detailed context"
+```sh
+gh issue list --repo jordanhubbard/Aviation --state open
+gh issue view NUMBER --repo jordanhubbard/Aviation
+gh issue create --repo jordanhubbard/Aviation --title "Follow-up" --body-file issue.md
 ```
 
 ## 2) Development setup
@@ -104,7 +104,7 @@ Then hooks will run automatically on commits.
 
 ## 6) Pull request checklist
 
-- [ ] Work is tracked in MAC and the relevant task has current evidence and state.
+- [ ] Work is linked to a GitHub issue and the PR includes current verification evidence.
 - [ ] Backend tests pass (`pytest`).
 - [ ] Frontend checks pass (`npm run type-check`, `npm run lint`, `npm run test`).
 - [ ] If UI flows changed, Playwright e2e passes (`npm run e2e`).

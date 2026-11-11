@@ -67,12 +67,14 @@ assert notam.severity == "critical"
 Provider transport/authentication and application presentation remain outside this
 module.
 
-### MAC task reporting
+### GitHub issue reporting
 
-`aviation.mac_tasks.MacTaskCreator` creates idempotent runtime error tasks in
-the MAC hub. Configure `MAC_API_URL` and, when required, `MAC_API_TOKEN`; tasks
-default to the `Aviation` project. Test and CI processes stay disabled unless
-`MAC_AUTOREPORT_FORCE=1` is set explicitly.
+`aviation.github_issues.GitHubIssueCreator` uses GitHub's title/body API and returns
+`issue_number` and `issue_url`. Configure a server-side `GITHUB_ISSUES_TOKEN` and
+`GITHUB_ISSUES_AUTOREPORT=1`; the default repository is `jordanhubbard/Aviation`.
+Reporting remains off in CI/tests unless a private provider is explicitly selected
+with `GITHUB_ISSUES_AUTOREPORT_FORCE=1`. Duplicate reports are suppressed, failed
+requests can be retried, and filing is bounded to five attempts per hour.
 
 ## Installation
 
