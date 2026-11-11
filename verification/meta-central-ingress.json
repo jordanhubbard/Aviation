@@ -1,0 +1,1021 @@
+{
+  "schema": "aviation/central-ingress-observation@1",
+  "gateway_source_revision": "d08c8e9e56ed2e77e6598cd6f548fcdd857acc04",
+  "implementation_reviews": [
+    "https://github.com/jordanhubbard/Aviation/pull/431",
+    "https://github.com/jordanhubbard/Aviation/pull/432"
+  ],
+  "classification": "retained-application-hosted-gateway-qualification",
+  "gateway_ci": [
+    {
+      "conclusion": "success",
+      "databaseId": 42939192327,
+      "name": "Performance Regression Check",
+      "status": "completed",
+      "url": "https://github.com/jordanhubbard/Aviation/actions/runs/42939192327"
+    },
+    {
+      "conclusion": "success",
+      "databaseId": 42939192364,
+      "name": "Dependency Scan",
+      "status": "completed",
+      "url": "https://github.com/jordanhubbard/Aviation/actions/runs/42939192364"
+    },
+    {
+      "conclusion": "success",
+      "databaseId": 42939192325,
+      "name": "Integration Tests",
+      "status": "completed",
+      "url": "https://github.com/jordanhubbard/Aviation/actions/runs/42939192325"
+    },
+    {
+      "conclusion": "success",
+      "databaseId": 42939192396,
+      "name": "Common Aviation SDK",
+      "status": "completed",
+      "url": "https://github.com/jordanhubbard/Aviation/actions/runs/42939192396"
+    },
+    {
+      "conclusion": "success",
+      "databaseId": 42939192227,
+      "name": "Monorepo CI/CD",
+      "status": "completed",
+      "url": "https://github.com/jordanhubbard/Aviation/actions/runs/42939192227"
+    },
+    {
+      "conclusion": "success",
+      "databaseId": 42939192301,
+      "name": "Build Aviation Deployment Images",
+      "status": "completed",
+      "url": "https://github.com/jordanhubbard/Aviation/actions/runs/42939192301"
+    }
+  ],
+  "browser": {
+    "baseline": [
+      {
+        "app": "aviation-accident-tracker",
+        "viewport": "desktop",
+        "status": 200,
+        "pageErrors": 0,
+        "errors": [],
+        "overflow": false
+      },
+      {
+        "app": "aviation-chat",
+        "viewport": "desktop",
+        "status": 200,
+        "pageErrors": 0,
+        "errors": [],
+        "overflow": false
+      },
+      {
+        "app": "aviation-missions-app",
+        "viewport": "desktop",
+        "status": 200,
+        "pageErrors": 1,
+        "errors": [
+          "https://aviation-missions-app.jordanhubbard.net/favicon.ico: Failed to load resource: the server responded with a status of 404 ()"
+        ],
+        "overflow": false
+      },
+      {
+        "app": "flight-planner",
+        "viewport": "desktop",
+        "status": 200,
+        "pageErrors": 0,
+        "errors": [],
+        "overflow": false
+      },
+      {
+        "app": "flight-track-analyzer",
+        "viewport": "desktop",
+        "status": 200,
+        "pageErrors": 0,
+        "errors": [],
+        "overflow": false
+      },
+      {
+        "app": "flight-tracker",
+        "viewport": "desktop",
+        "status": 200,
+        "pageErrors": 0,
+        "errors": [],
+        "overflow": false
+      },
+      {
+        "app": "flightschool",
+        "viewport": "desktop",
+        "status": 200,
+        "pageErrors": 1,
+        "errors": [
+          "https://flightschool.jordanhubbard.net/favicon.ico: Failed to load resource: the server responded with a status of 404 ()"
+        ],
+        "overflow": false
+      },
+      {
+        "app": "foreflight-dashboard",
+        "viewport": "desktop",
+        "status": 200,
+        "pageErrors": 4,
+        "errors": [
+          "https://foreflight-dashboard.jordanhubbard.net/: Loading the stylesheet 'https://fonts.googleapis.com/icon?family=Material+Icons' violates the following Content Security Policy directive: \"style-src 'self' 'unsafe-inline'\". Note that 'style-src-elem' was not explicitly set, so 'style-src' is used as a fallback. The action has been blocked.",
+          "https://fonts.googleapis.com/icon?family=Material+Icons: csp",
+          "https://foreflight-dashboard.jordanhubbard.net/: Loading the stylesheet 'https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap' violates the following Content Security Policy directive: \"style-src 'self' 'unsafe-inline'\". Note that 'style-src-elem' was not explicitly set, so 'style-src' is used as a fallback. The action has been blocked.",
+          "https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap: csp"
+        ],
+        "overflow": false
+      },
+      {
+        "app": "g1000-simulator",
+        "viewport": "desktop",
+        "status": 200,
+        "pageErrors": 1,
+        "errors": [
+          "https://g1000-simulator.jordanhubbard.net/favicon.ico: Failed to load resource: the server responded with a status of 404 ()"
+        ],
+        "overflow": false
+      },
+      {
+        "app": "meta-app",
+        "viewport": "desktop",
+        "status": 200,
+        "pageErrors": 0,
+        "errors": [],
+        "overflow": false
+      },
+      {
+        "app": "preflight-check",
+        "viewport": "desktop",
+        "status": 200,
+        "pageErrors": 1,
+        "errors": [
+          "https://preflight-check.jordanhubbard.net/favicon.ico: Failed to load resource: the server responded with a status of 404 ()"
+        ],
+        "overflow": false
+      },
+      {
+        "app": "weather-briefing",
+        "viewport": "desktop",
+        "status": 200,
+        "pageErrors": 0,
+        "errors": [],
+        "overflow": false
+      },
+      {
+        "app": "aviation-accident-tracker",
+        "viewport": "mobile",
+        "status": 200,
+        "pageErrors": 0,
+        "errors": [],
+        "overflow": false
+      },
+      {
+        "app": "aviation-chat",
+        "viewport": "mobile",
+        "status": 200,
+        "pageErrors": 0,
+        "errors": [],
+        "overflow": false
+      },
+      {
+        "app": "aviation-missions-app",
+        "viewport": "mobile",
+        "status": 200,
+        "pageErrors": 0,
+        "errors": [],
+        "overflow": false
+      },
+      {
+        "app": "flight-planner",
+        "viewport": "mobile",
+        "status": 200,
+        "pageErrors": 0,
+        "errors": [],
+        "overflow": false
+      },
+      {
+        "app": "flight-track-analyzer",
+        "viewport": "mobile",
+        "status": 200,
+        "pageErrors": 0,
+        "errors": [],
+        "overflow": false
+      },
+      {
+        "app": "flight-tracker",
+        "viewport": "mobile",
+        "status": 200,
+        "pageErrors": 0,
+        "errors": [],
+        "overflow": false
+      },
+      {
+        "app": "flightschool",
+        "viewport": "mobile",
+        "status": 200,
+        "pageErrors": 0,
+        "errors": [],
+        "overflow": false
+      },
+      {
+        "app": "foreflight-dashboard",
+        "viewport": "mobile",
+        "status": 200,
+        "pageErrors": 4,
+        "errors": [
+          "https://foreflight-dashboard.jordanhubbard.net/: Loading the stylesheet 'https://fonts.googleapis.com/icon?family=Material+Icons' violates the following Content Security Policy directive: \"style-src 'self' 'unsafe-inline'\". Note that 'style-src-elem' was not explicitly set, so 'style-src' is used as a fallback. The action has been blocked.",
+          "https://fonts.googleapis.com/icon?family=Material+Icons: csp",
+          "https://foreflight-dashboard.jordanhubbard.net/: Loading the stylesheet 'https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap' violates the following Content Security Policy directive: \"style-src 'self' 'unsafe-inline'\". Note that 'style-src-elem' was not explicitly set, so 'style-src' is used as a fallback. The action has been blocked.",
+          "https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap: csp"
+        ],
+        "overflow": false
+      },
+      {
+        "app": "g1000-simulator",
+        "viewport": "mobile",
+        "status": 200,
+        "pageErrors": 0,
+        "errors": [],
+        "overflow": false
+      },
+      {
+        "app": "meta-app",
+        "viewport": "mobile",
+        "status": 200,
+        "pageErrors": 0,
+        "errors": [],
+        "overflow": false
+      },
+      {
+        "app": "preflight-check",
+        "viewport": "mobile",
+        "status": 200,
+        "pageErrors": 0,
+        "errors": [],
+        "overflow": false
+      },
+      {
+        "app": "weather-briefing",
+        "viewport": "mobile",
+        "status": 200,
+        "pageErrors": 0,
+        "errors": [],
+        "overflow": false
+      }
+    ],
+    "after_cutover": [
+      {
+        "app": "aviation-accident-tracker",
+        "viewport": "desktop",
+        "status": 200,
+        "pageErrors": 0,
+        "errors": [],
+        "overflow": false
+      },
+      {
+        "app": "aviation-chat",
+        "viewport": "desktop",
+        "status": 200,
+        "pageErrors": 0,
+        "errors": [],
+        "overflow": false
+      },
+      {
+        "app": "aviation-missions-app",
+        "viewport": "desktop",
+        "status": 200,
+        "pageErrors": 1,
+        "errors": [
+          "https://aviation-missions-app.jordanhubbard.net/favicon.ico: Failed to load resource: the server responded with a status of 404 ()"
+        ],
+        "overflow": false
+      },
+      {
+        "app": "flight-planner",
+        "viewport": "desktop",
+        "status": 200,
+        "pageErrors": 0,
+        "errors": [],
+        "overflow": false
+      },
+      {
+        "app": "flight-track-analyzer",
+        "viewport": "desktop",
+        "status": 200,
+        "pageErrors": 0,
+        "errors": [],
+        "overflow": false
+      },
+      {
+        "app": "flight-tracker",
+        "viewport": "desktop",
+        "status": 200,
+        "pageErrors": 0,
+        "errors": [],
+        "overflow": false
+      },
+      {
+        "app": "flightschool",
+        "viewport": "desktop",
+        "status": 200,
+        "pageErrors": 1,
+        "errors": [
+          "https://flightschool.jordanhubbard.net/favicon.ico: Failed to load resource: the server responded with a status of 404 ()"
+        ],
+        "overflow": false
+      },
+      {
+        "app": "foreflight-dashboard",
+        "viewport": "desktop",
+        "status": 200,
+        "pageErrors": 4,
+        "errors": [
+          "https://foreflight-dashboard.jordanhubbard.net/: Loading the stylesheet 'https://fonts.googleapis.com/icon?family=Material+Icons' violates the following Content Security Policy directive: \"style-src 'self' 'unsafe-inline'\". Note that 'style-src-elem' was not explicitly set, so 'style-src' is used as a fallback. The action has been blocked.",
+          "https://fonts.googleapis.com/icon?family=Material+Icons: csp",
+          "https://foreflight-dashboard.jordanhubbard.net/: Loading the stylesheet 'https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap' violates the following Content Security Policy directive: \"style-src 'self' 'unsafe-inline'\". Note that 'style-src-elem' was not explicitly set, so 'style-src' is used as a fallback. The action has been blocked.",
+          "https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap: csp"
+        ],
+        "overflow": false
+      },
+      {
+        "app": "g1000-simulator",
+        "viewport": "desktop",
+        "status": 200,
+        "pageErrors": 1,
+        "errors": [
+          "https://g1000-simulator.jordanhubbard.net/favicon.ico: Failed to load resource: the server responded with a status of 404 ()"
+        ],
+        "overflow": false
+      },
+      {
+        "app": "meta-app",
+        "viewport": "desktop",
+        "status": 200,
+        "pageErrors": 0,
+        "errors": [],
+        "overflow": false
+      },
+      {
+        "app": "preflight-check",
+        "viewport": "desktop",
+        "status": 200,
+        "pageErrors": 1,
+        "errors": [
+          "https://preflight-check.jordanhubbard.net/favicon.ico: Failed to load resource: the server responded with a status of 404 ()"
+        ],
+        "overflow": false
+      },
+      {
+        "app": "weather-briefing",
+        "viewport": "desktop",
+        "status": 200,
+        "pageErrors": 0,
+        "errors": [],
+        "overflow": false
+      },
+      {
+        "app": "aviation-accident-tracker",
+        "viewport": "mobile",
+        "status": 200,
+        "pageErrors": 0,
+        "errors": [],
+        "overflow": false
+      },
+      {
+        "app": "aviation-chat",
+        "viewport": "mobile",
+        "status": 200,
+        "pageErrors": 0,
+        "errors": [],
+        "overflow": false
+      },
+      {
+        "app": "aviation-missions-app",
+        "viewport": "mobile",
+        "status": 200,
+        "pageErrors": 0,
+        "errors": [],
+        "overflow": false
+      },
+      {
+        "app": "flight-planner",
+        "viewport": "mobile",
+        "status": 200,
+        "pageErrors": 0,
+        "errors": [],
+        "overflow": false
+      },
+      {
+        "app": "flight-track-analyzer",
+        "viewport": "mobile",
+        "status": 200,
+        "pageErrors": 0,
+        "errors": [],
+        "overflow": false
+      },
+      {
+        "app": "flight-tracker",
+        "viewport": "mobile",
+        "status": 200,
+        "pageErrors": 0,
+        "errors": [],
+        "overflow": false
+      },
+      {
+        "app": "flightschool",
+        "viewport": "mobile",
+        "status": 200,
+        "pageErrors": 0,
+        "errors": [],
+        "overflow": false
+      },
+      {
+        "app": "foreflight-dashboard",
+        "viewport": "mobile",
+        "status": 200,
+        "pageErrors": 4,
+        "errors": [
+          "https://foreflight-dashboard.jordanhubbard.net/: Loading the stylesheet 'https://fonts.googleapis.com/icon?family=Material+Icons' violates the following Content Security Policy directive: \"style-src 'self' 'unsafe-inline'\". Note that 'style-src-elem' was not explicitly set, so 'style-src' is used as a fallback. The action has been blocked.",
+          "https://fonts.googleapis.com/icon?family=Material+Icons: csp",
+          "https://foreflight-dashboard.jordanhubbard.net/: Loading the stylesheet 'https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap' violates the following Content Security Policy directive: \"style-src 'self' 'unsafe-inline'\". Note that 'style-src-elem' was not explicitly set, so 'style-src' is used as a fallback. The action has been blocked.",
+          "https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap: csp"
+        ],
+        "overflow": false
+      },
+      {
+        "app": "g1000-simulator",
+        "viewport": "mobile",
+        "status": 200,
+        "pageErrors": 0,
+        "errors": [],
+        "overflow": false
+      },
+      {
+        "app": "meta-app",
+        "viewport": "mobile",
+        "status": 200,
+        "pageErrors": 0,
+        "errors": [],
+        "overflow": false
+      },
+      {
+        "app": "preflight-check",
+        "viewport": "mobile",
+        "status": 200,
+        "pageErrors": 0,
+        "errors": [],
+        "overflow": false
+      },
+      {
+        "app": "weather-briefing",
+        "viewport": "mobile",
+        "status": 200,
+        "pageErrors": 0,
+        "errors": [],
+        "overflow": false
+      }
+    ],
+    "pages": 24,
+    "new_browser_errors": 0,
+    "document_overflow": 0,
+    "font_wait_disabled_for_capture": true
+  },
+  "initial_cutover": {
+    "updated_existing_sites": 10,
+    "meta_app_and_flight_tracker_deployed_separately": true,
+    "all_public_hosts_use_gateway": true
+  },
+  "local": {
+    "retained_tests": 637,
+    "meta_app_tests": 14,
+    "portable_deployment_tests": 6,
+    "g1000_tests_with_real_uvicorn": 37
+  },
+  "native_component_generation": false,
+  "native_component_acceptance": false,
+  "remaining": [],
+  "runtime_source_revision": "47aa5f959305c6fc5c4538a90d6579722ecac9e3",
+  "runtime_gap": {
+    "provider": "g1000-simulator",
+    "missing_before": [
+      "websockets",
+      "wsproto"
+    ],
+    "symptom": "Uvicorn warns unsupported upgrade and responds HTTP 404",
+    "repair": "Declare the WebSocket runtime dependency and test a real listening Uvicorn server",
+    "installed_transport": {
+      "websockets": "17.4"
+    }
+  },
+  "checked_at": "2026-11-11T02:04:08.699743+00:00",
+  "runtime_ci": [
+    {
+      "conclusion": "failure",
+      "databaseId": 42942260916,
+      "name": "npm_and_yarn in /components/legacy-project-wrapper/implementation for @babel/core, @humanfs/node, brace-expansion, brace-expansion, deepmerge, esbuild, fflate, glob, minimatch, qs - Update #1694476151",
+      "status": "completed",
+      "url": "https://github.com/jordanhubbard/Aviation/actions/runs/42942260916"
+    },
+    {
+      "conclusion": "success",
+      "databaseId": 42941881442,
+      "name": "Graph Update: pip in /components/legacy-project-wrapper/implementation/apps/g1000-simulator/backend #1694466291",
+      "status": "completed",
+      "url": "https://github.com/jordanhubbard/Aviation/actions/runs/42941881442"
+    },
+    {
+      "conclusion": "success",
+      "databaseId": 42941872980,
+      "name": "Dependency Scan",
+      "status": "completed",
+      "url": "https://github.com/jordanhubbard/Aviation/actions/runs/42941872980"
+    },
+    {
+      "conclusion": "success",
+      "databaseId": 42941873199,
+      "name": "Performance Regression Check",
+      "status": "completed",
+      "url": "https://github.com/jordanhubbard/Aviation/actions/runs/42941873199"
+    },
+    {
+      "conclusion": "success",
+      "databaseId": 42941873006,
+      "name": "Integration Tests",
+      "status": "completed",
+      "url": "https://github.com/jordanhubbard/Aviation/actions/runs/42941873006"
+    },
+    {
+      "conclusion": "success",
+      "databaseId": 42941872985,
+      "name": "Monorepo CI/CD",
+      "status": "completed",
+      "url": "https://github.com/jordanhubbard/Aviation/actions/runs/42941872985"
+    },
+    {
+      "conclusion": "success",
+      "databaseId": 42941873080,
+      "name": "Build Aviation Deployment Images",
+      "status": "completed",
+      "url": "https://github.com/jordanhubbard/Aviation/actions/runs/42941873080"
+    }
+  ],
+  "published_images": {
+    "meta-app": {
+      "image_id": "sha256:c96fc7978091d1ed9b8fa331b371b0c60352cc3d92c6d0287c452a00c7e00e92",
+      "source_revision": "d08c8e9e56ed2e77e6598cd6f548fcdd857acc04",
+      "network": "host",
+      "digests": [
+        "aviation/meta-app@sha256:c96fc7978091d1ed9b8fa331b371b0c60352cc3d92c6d0287c452a00c7e00e92",
+        "ghcr.io/jordanhubbard/meta-app@sha256:c96fc7978091d1ed9b8fa331b371b0c60352cc3d92c6d0287c452a00c7e00e92"
+      ]
+    },
+    "flight-tracker": {
+      "image_id": "sha256:fd54cbfa1b200d0617c8657d2d88cf2b08ba1a0852759d95bc159a8d7f4c9fe6",
+      "source_revision": "d08c8e9e56ed2e77e6598cd6f548fcdd857acc04",
+      "network": "bridge",
+      "digests": [
+        "aviation/flight-tracker@sha256:fd54cbfa1b200d0617c8657d2d88cf2b08ba1a0852759d95bc159a8d7f4c9fe6",
+        "ghcr.io/jordanhubbard/flight-tracker@sha256:fd54cbfa1b200d0617c8657d2d88cf2b08ba1a0852759d95bc159a8d7f4c9fe6"
+      ]
+    },
+    "g1000-simulator": {
+      "image_id": "sha256:6151f0d7e25a1ac74aac87e6821e6466486025173fdc7cba6d2810d4f307eac2",
+      "source_revision": "47aa5f959305c6fc5c4538a90d6579722ecac9e3",
+      "network": "bridge",
+      "digests": [
+        "aviation/g1000-simulator@sha256:6151f0d7e25a1ac74aac87e6821e6466486025173fdc7cba6d2810d4f307eac2",
+        "ghcr.io/jordanhubbard/g1000-simulator@sha256:6151f0d7e25a1ac74aac87e6821e6466486025173fdc7cba6d2810d4f307eac2"
+      ]
+    }
+  },
+  "live_observations": [
+    {
+      "kind": "http",
+      "url": "https://aviation-accident-tracker.jordanhubbard.net/health",
+      "namespace": "accidents",
+      "status": 200
+    },
+    {
+      "kind": "http",
+      "url": "https://meta-app.jordanhubbard.net/api/v1/accidents/health",
+      "namespace": "accidents",
+      "status": 200
+    },
+    {
+      "kind": "http",
+      "url": "https://aviation-chat.jordanhubbard.net/health",
+      "namespace": "chat",
+      "status": 200
+    },
+    {
+      "kind": "http",
+      "url": "https://meta-app.jordanhubbard.net/api/v1/chat/health",
+      "namespace": "chat",
+      "status": 200
+    },
+    {
+      "kind": "http",
+      "url": "https://aviation-missions-app.jordanhubbard.net/health",
+      "namespace": "missions",
+      "status": 200
+    },
+    {
+      "kind": "http",
+      "url": "https://meta-app.jordanhubbard.net/api/v1/missions/health",
+      "namespace": "missions",
+      "status": 200
+    },
+    {
+      "kind": "http",
+      "url": "https://flight-planner.jordanhubbard.net/api/health",
+      "namespace": "planning",
+      "status": 200
+    },
+    {
+      "kind": "http",
+      "url": "https://meta-app.jordanhubbard.net/api/v1/planning/api/health",
+      "namespace": "planning",
+      "status": 200
+    },
+    {
+      "kind": "http",
+      "url": "https://kmlab.jordanhubbard.net/api/health",
+      "namespace": "analysis",
+      "status": 200
+    },
+    {
+      "kind": "http",
+      "url": "https://meta-app.jordanhubbard.net/api/v1/analysis/api/health",
+      "namespace": "analysis",
+      "status": 200
+    },
+    {
+      "kind": "http",
+      "url": "https://flight-tracker.jordanhubbard.net/health",
+      "namespace": "tracking",
+      "status": 200
+    },
+    {
+      "kind": "http",
+      "url": "https://meta-app.jordanhubbard.net/api/v1/tracking/health",
+      "namespace": "tracking",
+      "status": 200
+    },
+    {
+      "kind": "http",
+      "url": "https://flightschool.jordanhubbard.net/health",
+      "namespace": "school",
+      "status": 200
+    },
+    {
+      "kind": "http",
+      "url": "https://meta-app.jordanhubbard.net/api/v1/school/health",
+      "namespace": "school",
+      "status": 200
+    },
+    {
+      "kind": "http",
+      "url": "https://foreflight-dashboard.jordanhubbard.net/health",
+      "namespace": "logbook",
+      "status": 200
+    },
+    {
+      "kind": "http",
+      "url": "https://meta-app.jordanhubbard.net/api/v1/logbook/health",
+      "namespace": "logbook",
+      "status": 200
+    },
+    {
+      "kind": "http",
+      "url": "https://g1000-simulator.jordanhubbard.net/api/health",
+      "namespace": "avionics",
+      "status": 200
+    },
+    {
+      "kind": "http",
+      "url": "https://meta-app.jordanhubbard.net/api/v1/avionics/api/health",
+      "namespace": "avionics",
+      "status": 200
+    },
+    {
+      "kind": "http",
+      "url": "https://preflight-check.jordanhubbard.net/",
+      "namespace": "preflight",
+      "status": 200
+    },
+    {
+      "kind": "http",
+      "url": "https://meta-app.jordanhubbard.net/api/v1/preflight/",
+      "namespace": "preflight",
+      "status": 200
+    },
+    {
+      "kind": "http",
+      "url": "https://weather-briefing.jordanhubbard.net/health",
+      "namespace": "weather",
+      "status": 200
+    },
+    {
+      "kind": "http",
+      "url": "https://meta-app.jordanhubbard.net/api/v1/weather/health",
+      "namespace": "weather",
+      "status": 200
+    },
+    {
+      "kind": "real-provider-api",
+      "path": "/api/v1/planning/api/airports/search?q=KDWA&limit=2",
+      "status": 200
+    },
+    {
+      "kind": "real-provider-api",
+      "path": "/api/v1/planning/api/weather/KSFO",
+      "status": 200
+    },
+    {
+      "kind": "real-provider-api",
+      "path": "/api/v1/weather/station?code=KSFO",
+      "status": 200
+    },
+    {
+      "kind": "mcp",
+      "tool": "v1.accidents.request",
+      "status": 200
+    },
+    {
+      "kind": "mcp",
+      "tool": "v1.chat.request",
+      "status": 200
+    },
+    {
+      "kind": "mcp",
+      "tool": "v1.missions.request",
+      "status": 200
+    },
+    {
+      "kind": "mcp",
+      "tool": "v1.planning.request",
+      "status": 200
+    },
+    {
+      "kind": "mcp",
+      "tool": "v1.analysis.request",
+      "status": 200
+    },
+    {
+      "kind": "mcp",
+      "tool": "v1.tracking.request",
+      "status": 200
+    },
+    {
+      "kind": "mcp",
+      "tool": "v1.school.request",
+      "status": 200
+    },
+    {
+      "kind": "mcp",
+      "tool": "v1.logbook.request",
+      "status": 200
+    },
+    {
+      "kind": "mcp",
+      "tool": "v1.avionics.request",
+      "status": 200
+    },
+    {
+      "kind": "mcp",
+      "tool": "v1.preflight.request",
+      "status": 200
+    },
+    {
+      "kind": "mcp",
+      "tool": "v1.weather.request",
+      "status": 200
+    },
+    {
+      "kind": "websocket",
+      "url": "wss://meta-app.jordanhubbard.net/api/v1/avionics/ws/telemetry",
+      "type": "telemetry",
+      "frame_fields": [
+        "position",
+        "attitude",
+        "velocity"
+      ],
+      "ping_pong": true
+    },
+    {
+      "kind": "websocket",
+      "url": "wss://g1000-simulator.jordanhubbard.net/ws/telemetry",
+      "type": "telemetry",
+      "frame_fields": [
+        "position",
+        "attitude",
+        "velocity"
+      ],
+      "ping_pong": true
+    },
+    {
+      "kind": "websocket",
+      "url": "wss://meta-app.jordanhubbard.net/api/v1/tracking/",
+      "type": "SYSTEM_STATUS"
+    },
+    {
+      "kind": "websocket",
+      "url": "wss://flight-tracker.jordanhubbard.net/",
+      "type": "SYSTEM_STATUS"
+    }
+  ],
+  "resource_observation": {
+    "services": {
+      "aviation-aviation-accident-tracker": "active",
+      "aviation-aviation-chat": "active",
+      "aviation-aviation-missions-app": "active",
+      "aviation-flight-planner": "active",
+      "kmlab": "active",
+      "aviation-flight-tracker": "active",
+      "aviation-flightschool": "active",
+      "aviation-foreflight-dashboard": "active",
+      "aviation-g1000-simulator": "active",
+      "aviation-meta-app": "active",
+      "aviation-preflight-check": "active",
+      "aviation-weather-briefing": "active"
+    },
+    "disk": {
+      "total_bytes": 165295407104,
+      "free_bytes": 13375913984,
+      "warning": true
+    },
+    "private_ingress_listeners": [
+      "LISTEN 0      511                                 127.0.0.1:18774      0.0.0.0:*   ",
+      "LISTEN 0      4096                                127.0.0.1:18777      0.0.0.0:*   "
+    ]
+  },
+  "current_receipt_identity": "sha256:c794af53cddef9e75030f771728fb0f9e8ce87a83bf7421905f422d5590579a0",
+  "product_ci_passed": true,
+  "all_repository_checks_passed": false,
+  "unrelated_maintenance_failure": {
+    "run_id": 42942260916,
+    "url": "https://github.com/jordanhubbard/Aviation/actions/runs/42942260916",
+    "event": "dynamic",
+    "workflow_path": "dynamic/dependabot/dependabot-updates",
+    "conclusion": "failure",
+    "errors": [
+      "security_update_not_possible",
+      "security_update_not_found"
+    ],
+    "scope": "Existing npm security patch resolution, separate from product test/build qualification",
+    "follow_up": "DEP-001",
+    "mac_task": "task_e24329ddddd14ab4a86dca9d43750615"
+  },
+  "isolated_browser_inventories": [
+    {
+      "app": "meta-app",
+      "screens": [
+        {
+          "schema": "aviation/e2e-screen-result@1",
+          "app": "meta-app",
+          "screen": "launcher",
+          "viewport": "desktop",
+          "dataMode": "stateless",
+          "result": "passed"
+        },
+        {
+          "schema": "aviation/e2e-screen-result@1",
+          "app": "meta-app",
+          "screen": "explanation",
+          "viewport": "desktop",
+          "dataMode": "sdk-mock",
+          "result": "passed"
+        },
+        {
+          "schema": "aviation/e2e-screen-result@1",
+          "app": "meta-app",
+          "screen": "settings",
+          "viewport": "desktop",
+          "dataMode": "stateless",
+          "result": "passed"
+        },
+        {
+          "schema": "aviation/e2e-screen-result@1",
+          "app": "meta-app",
+          "screen": "feedback",
+          "viewport": "desktop",
+          "dataMode": "sdk-mock",
+          "result": "passed"
+        }
+      ],
+      "residual_records": 0,
+      "private_instance_removed": true
+    },
+    {
+      "app": "flight-tracker",
+      "screens": [
+        {
+          "schema": "aviation/e2e-screen-result@1",
+          "app": "flight-tracker",
+          "screen": "dashboard",
+          "viewport": "desktop",
+          "dataMode": "tagged-memory",
+          "result": "passed"
+        },
+        {
+          "schema": "aviation/e2e-screen-result@1",
+          "app": "flight-tracker",
+          "screen": "track",
+          "viewport": "desktop",
+          "dataMode": "tagged-memory",
+          "result": "passed"
+        },
+        {
+          "schema": "aviation/e2e-screen-result@1",
+          "app": "flight-tracker",
+          "screen": "explanation",
+          "viewport": "desktop",
+          "dataMode": "sdk-mock",
+          "result": "passed"
+        },
+        {
+          "schema": "aviation/e2e-screen-result@1",
+          "app": "flight-tracker",
+          "screen": "remove",
+          "viewport": "desktop",
+          "dataMode": "tagged-memory",
+          "result": "passed"
+        },
+        {
+          "schema": "aviation/e2e-screen-result@1",
+          "app": "flight-tracker",
+          "screen": "feedback",
+          "viewport": "desktop",
+          "dataMode": "sdk-mock",
+          "result": "passed"
+        }
+      ],
+      "residual_records": 0,
+      "private_instance_removed": true
+    },
+    {
+      "app": "g1000-simulator",
+      "screens": [
+        {
+          "schema": "aviation/e2e-screen-result@1",
+          "app": "g1000-simulator",
+          "screen": "dashboard",
+          "viewport": "desktop",
+          "dataMode": "isolated-browser",
+          "result": "passed"
+        },
+        {
+          "schema": "aviation/e2e-screen-result@1",
+          "app": "g1000-simulator",
+          "screen": "explanation",
+          "viewport": "desktop",
+          "dataMode": "sdk-mock",
+          "result": "passed"
+        },
+        {
+          "schema": "aviation/e2e-screen-result@1",
+          "app": "g1000-simulator",
+          "screen": "settings",
+          "viewport": "desktop",
+          "dataMode": "isolated-keystore",
+          "result": "passed"
+        },
+        {
+          "schema": "aviation/e2e-screen-result@1",
+          "app": "g1000-simulator",
+          "screen": "settings-reload",
+          "viewport": "desktop",
+          "dataMode": "isolated-keystore",
+          "result": "passed"
+        },
+        {
+          "schema": "aviation/e2e-screen-result@1",
+          "app": "g1000-simulator",
+          "screen": "settings-delete",
+          "viewport": "desktop",
+          "dataMode": "isolated-keystore",
+          "result": "passed"
+        },
+        {
+          "schema": "aviation/e2e-screen-result@1",
+          "app": "g1000-simulator",
+          "screen": "feedback",
+          "viewport": "desktop",
+          "dataMode": "sdk-mock",
+          "result": "passed"
+        }
+      ],
+      "residual_records": 0,
+      "private_instance_removed": true
+    }
+  ],
+  "boundaries": [
+    "Retained application qualification; no native Component generation or acceptance claim.",
+    "Public application URLs retain their paths and native session behavior, with Meta App now an availability dependency.",
+    "MCP remains request/response with a 4 MiB buffer; live streams use HTTP/WebSocket.",
+    "Preflight remains browser-local with no standalone JSON data API; no new external provider access is added.",
+    "Existing favicon 404s and ForeFlight external-font CSP rejections were observed before cutover and remain; no new browser errors or document overflow.",
+    "Dependency maintenance run 42942260916 failed separately and is tracked as DEP-001; no overall all-checks-green claim.",
+    "Deployment disk remains below its ten-percent warning threshold; existing image history and caches were preserved."
+  ]
+}
