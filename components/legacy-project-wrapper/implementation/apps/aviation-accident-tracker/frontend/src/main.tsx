@@ -1,8 +1,8 @@
 import ReactDOM from 'react-dom/client';
 import App from './App';
-import { installFrontendMacErrorReporting } from './utils/macReporting';
+import { installFrontendIssueErrorReporting } from './utils/issueReporting';
 
-installFrontendMacErrorReporting();
+installFrontendIssueErrorReporting();
 
 ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
   <App />

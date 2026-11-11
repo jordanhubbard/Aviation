@@ -86,22 +86,21 @@ export const processFlightData = (data: FlightData[]): number => {
 - Include code examples where helpful
 - Keep documentation up-to-date with code changes
 
-## Work Organization with MAC
+## Work Organization with GitHub
 
-MAC is the sole task ledger for this monorepo. Do not create repository-local
-ticket databases or Markdown task lists.
-
-Use the current CLI from `/Users/jkh/Src/mac` when available:
+GitHub Issues and pull requests in `jordanhubbard/Aviation` are the sole tracking
+and review authority. Reuse or create an issue before substantive implementation.
+Record dependencies as linked GitHub issues and attach test/CI evidence in the PR.
 
 ```bash
-/Users/jkh/Src/mac/.venv/bin/mac task ready --project Aviation
-/Users/jkh/Src/mac/.venv/bin/mac task create "Task title" \
-  --project Aviation --no-ticket --description "Detailed context"
-/Users/jkh/Src/mac/.venv/bin/mac task show <task-id>
+gh issue list --repo jordanhubbard/Aviation --state open
+gh issue create --repo jordanhubbard/Aviation --title "Task title" --body-file issue.md
+gh issue view NUMBER --repo jordanhubbard/Aviation
 ```
 
-Declare dependencies with MAC task IDs. Keep implementation code and tests in
-their normal application/package directories; task topology belongs in MAC.
+Keep implementation and tests in their owning application/package. Use `Fixes #NN`
+for admitted work and close issues after the declared gates pass. Repository design
+and historical documents are references, not separate task ledgers.
 
 ## Testing
 

@@ -1,1335 +1,197 @@
-# Active work
+# GitHub work index
 
-This file is the durable resumption queue for user-directed and discovered work. Before
-implementation, follow `skills/agent/record-user-directed-work/SKILL.md`.
-Keep detailed designs in focused roadmap documents and link them here.
-Record release scope in the [release-goal manifest](release-goals.json); the release
-gate cross-checks it against this queue.
+[GitHub Issues](https://github.com/jordanhubbard/Aviation/issues) are the sole source
+of truth for work, dependencies, status and closure. This file is a documentation
+index, not an independently maintained task list. Use `gh issue` and `gh pr`.
 
-## Detailed-roadmap lifecycle
+## Current work and requests
 
-This file is the sole resumable queue. Create a supporting file beneath `docs/roadmap/`
-only when one item cannot keep a program's rationale, ordering, and acceptance contract
-readable. Put this visible header immediately after the detailed document's title:
+- [#434 — GitHub tracking migration](https://github.com/jordanhubbard/Aviation/issues/434)
+- [#442 — Native Literate AI rewrite](https://github.com/jordanhubbard/Aviation/issues/442)
+- [#441 — Dependabot security-update follow-up](https://github.com/jordanhubbard/Aviation/issues/441)
+- [#421 — VFR planning procedures](https://github.com/jordanhubbard/Aviation/issues/421)
+- [#422 — Saved aircraft tail numbers](https://github.com/jordanhubbard/Aviation/issues/422)
+- [#423 — Feedback dialog completion](https://github.com/jordanhubbard/Aviation/issues/423)
 
-```markdown
-- **Status:** active
-- **Owning queue item:** [AREA-NNN](active-work.md#area-nnn-heading)
-- **Completion / archival evidence:** pending while AREA-NNN remains open
-```
+## Design and historical work references
 
-Status is exactly `active`, `partial`, `deferred`, `completed`, or `historical`. The
-owner must resolve to a checkbox or named program heading in this file. A terminal state
-requires linked evidence. Keep a completed plan here only when doing so preserves useful
-inbound links; move substantial closed programs beneath `docs/history/roadmap/`, retain
-their owner, and mark them `historical`. Do not create a separate file for an ordinary
-queue item or let `docs/roadmap/` become a plan archive.
+Legacy work IDs below remain link targets for design documents and release history.
+They do not carry local status or grant execution/closure authority. Historical
+checkboxes are frozen in the [migration snapshot](../history/tracker/pre-github-roadmap.md).
 
-## P0
+<a id="sdk-001"></a>
+<a id="x-sdk-001--qualify-the-first-native-shared-aviation-library"></a>
+### SDK-001 — Qualify the first native shared Aviation library
 
-### [x] SDK-001 — Qualify the first native shared Aviation library
+[Historical design and evidence](../history/tracker/pre-github-roadmap.md#x-sdk-001--qualify-the-first-native-shared-aviation-library).
 
-- **Release target:** 1.0.0
-- **Evidence:** Registered service-health child passed two clean regenerative
-  qualification runs, independent library acceptance, all 19 parity cases, and a
-  native build with a current test receipt. Retained archive and decision are in
-  `verification/qualifications/service-health.json` and `verification/evidence/`.
-- **Boundary:** This release establishes qualified SDK authority; ADOPT-002 remains
-  open for importer admission, application cutover, Python transfer, and other domains.
+<a id="onboard-001"></a>
+<a id="--onboard-001--replace-this-starter-item-with-the-first-project-outcome"></a>
+### ONBOARD-001 — Replace this starter item with the first project outcome
 
-### [ ] ONBOARD-001 — Replace this starter item with the first project outcome
-
-- **Owner:** project core
-- **Direction:** Record the user's desired outcome without copying conversation noise.
-- **Conclusion:** State the evidence-backed implementation boundary.
-- **Depends on:** none
-- **Implementation:**
-  - [ ] Name the next concrete change.
-- **Evidence:**
-  - [ ] Name the build, test, execution, or review proof required for completion.
-
-Check the parent only after every required subtask and evidence item passes. Add the
-release-visible outcome to `CHANGELOG.md`; Git preserves prior queue states.
+Unused starter template; it was never an actionable project issue.
 
 <a id="adopt-002"></a>
-### [ ] ADOPT-002 — Native Literate AI rewrite
+<a id="--adopt-002--native-literate-ai-rewrite"></a>
+### ADOPT-002 — Native Literate AI rewrite
 
-- **Owner:** project architecture / Components / Flavors / skills / assets
-- **Direction:** Execute
-  [ADR 0002](../decisions/0002-native-literate-ai-rewrite.md) through the
-  [native rewrite program](native-rewrite-program.md), preserving retained source
-  authority until each boundary independently qualifies. The target architecture is a
-  rich common Aviation SDK made from independently specified and tested Literate AI
-  Components; applications consume those capabilities and retain only behavior unique
-  to the application.
-- **Conclusion:** The retained workspace has useful shared packages, but package
-  placement alone does not establish Component authority, cross-language behavioral
-  equivalence, required SDK CI, or removal of duplicated app-local aviation logic.
-  Promote one independently testable domain at a time, beginning with navigation, and
-  do not transfer release authority until its retained realizations satisfy the same
-  independent acceptance contract.
-- **Depends on:** none; E2E-001 consumes the common SDK lifecycle after its contracts
-  exist.
-- **Implementation:**
-  - [x] Define `aviation.navigation` as a native Component with a public interface,
-    independent acceptance contract, and shared TypeScript/Python conformance vectors.
-  - [x] Make common SDK tests a dedicated CI workflow rather than an optional side
-    effect of application builds.
-  - [x] Define `aviation.airports`, add synthetic cross-language normalization/query
-    vectors, and migrate Flight Track Analyzer's duplicate dataset ingestion to the
-    SDK while retaining only its application-specific vectorized spatial index.
-  - [x] Define `aviation.weather`, add synthetic cross-language METAR/category/provider
-    vectors, and replace Flight Planner's duplicated weather algorithms and provider
-    clients with SDK compatibility surfaces.
-  - [x] Define `aviation.nav-data`, add synthetic cross-language normalization/query/
-    freshness vectors, and replace Flight Planner and G1000 navaid/procedure catalogs
-    with SDK compatibility surfaces while retaining app-specific schemas and avionics
-    state.
-  - [x] Define `aviation.flight-dynamics`, add deterministic atmosphere/wind/PID/
-    performance/model vectors, and replace Flight Planner's duplicate scalar physics
-    and PID implementation with SDK compatibility adapters. Reconcile G1000's bounded
-    PID implementation and duplicated C172 model fields onto the same capability.
-  - [x] Qualify the remaining common flight-dynamics autopilot primitives with
-    Component-owned axis-controller, mode-transition, autotrim, and envelope vectors;
-    move their tests out of the G1000 application and remove Flight Planner's
-    redundant app-local controller implementation.
-  - [x] Qualify reusable flight-director active/armed/capture/disconnect transitions
-    and migrate G1000 to the shared state machine while retaining capture thresholds,
-    PID reset timing, simulator stepping, and limit annunciation as application policy.
-  - [x] Qualify configurable fuel-reserve arithmetic in `aviation.navigation` and
-    migrate Flight Planner's route time, fuel consumption, reserve, and range formulas
-    to the common SDK while retaining route selection and refueling policy.
-  - [x] Define `aviation.weight-balance`, add portable loading/envelope vectors, and
-    replace Preflight Check's independent formulas with the built browser SDK
-    realization while retaining aircraft-profile storage and presentation as app policy.
-  - [x] Remove Flight Planner's five independent Python haversine implementations and
-    route sampling, A* routing, local-airport planning, approach waypoints, and legacy
-    navigation helpers through the Python `aviation.navigation` realization.
-  - [x] Replace G1000's private route-distance and initial-course formulas with the
-    Python `aviation.navigation` realization while retaining route assembly, catalog,
-    response rounding, and presentation as simulator policy.
-  - [x] Replace G1000 Trip Planning's private time/fuel, density-altitude, station-
-    moment, and CG formulas and its duplicate C172 loading data with the TypeScript
-    navigation and weight-and-balance realizations plus the shared C172 profile.
-  - [x] Qualify pressure altitude, ISA temperature, and density altitude with shared
-    TypeScript/Python navigation vectors and migrate Flight Track Analyzer to the
-    Python realization. Retain its entered-POH interpolation, no-extrapolation rule,
-    wind normalization, and measured-track comparison as analyzer-specific policy.
-  - [x] Qualify east/north wind-vector decomposition with shared TypeScript/Python
-    navigation vectors; migrate Flight Track Analyzer's fitted-wind, reported-wind,
-    and final airport-distance arithmetic to the common realization while retaining
-    its KD-tree candidate search and measured-track policy.
-  - [x] Qualify shortest signed heading differences, weighted circular means, runway
-    designators, and reversible local tangent-plane projection with shared
-    TypeScript/Python navigation vectors. Migrate Flight Track Analyzer's geographic
-    helpers and G1000 HSI heading/track projection to the common realization while
-    retaining vectorized sample handling and pixel/display policy.
-  - [x] Remove G1000 and Flight Planner's unused private geodesy service scaffolds;
-    their methods were never called and returned only `None` or constant zero, while
-    realized route distance and bearing already delegate to `aviation.navigation`.
-  - [x] Qualify coordinated-turn bank and configurable synthetic piston-engine
-    instrument projection in `aviation.flight-dynamics`; migrate Flight Track
-    Analyzer's shared turn physics and G1000's synthetic engine state to those
-    operations, and route G1000 MFD map/flight-plan geodesy through
-    `aviation.navigation`. Retain measured-segment inference, regression, percentile
-    summaries, session fuel state, alerts, gauge layout, and pixel projection as
-    application policy.
-  - [x] Migrate G1000 backend heading normalization, shortest-turn error, and
-    geodesic position stepping to the qualified `aviation.navigation` operations;
-    migrate Flight Planner's retained dynamics heading calculation through its SDK
-    compatibility adapter. Retain G1000 timing/capture/telemetry orchestration and
-    Flight Planner's legacy `+180` tie response, controller outputs, and alert policy.
-  - [x] Qualify headwind/crosswind components, wind-correction angle, corrected
-    heading, and along-course ground speed with shared TypeScript/Python vectors;
-    migrate Flight Planner's bearing, wind-component, and wind-triangle arithmetic to
-    the Python realization while retaining its 30-knot planning floor as app policy.
-  - [x] Inventory common airspeed and aircraft-configuration behavior; qualify the
-    shared SDK's public planning IAS/TAS and ISA Mach conversions with cross-language
-    valid/invalid vectors. Confirm Flight Planner and G1000 already delegate sensor
-    air data to `aviation.avionics`, while G1000's backend C172 compatibility record
-    derives from `aviation.flight-dynamics` and retains only telemetry/display shape.
-  - [x] Qualify a portable `aviation.aircraft` operating-profile surface with shared
-    TypeScript/Python valid and fail-closed vectors; add the missing Vfe limit to the
-    common C172S model and make G1000 Airspeed Tape derive its arcs and Vne marker from
-    that authority while retaining only scale, trend, styling, and presentation code.
-  - [x] Expand `aviation.aircraft` with a real Python SDK realization, stable ICAO
-    lookup, fuel and weight limits, dimensions, and cited reference performance.
-    Remove Flight Planner's unused contradictory C172 YAML profile; make its plan
-    defaults and FPL export plus G1000's selector and backend compatibility record
-    consume the common profile while retaining user loading and planning policy.
-  - [x] Qualify a cross-language C172S sample loading profile in
-    `aviation.weight-balance`, link its 2550-pound and 53-gallon limits explicitly to
-    `aviation.aircraft`, and migrate G1000 Trip Planning away from the mismatched C172N
-    record while retaining entered station weights and fuel as application state.
-  - [x] Link the C172S flight-dynamics model directly to `aviation.aircraft` and remove
-    its duplicate serialized identity, gross weight, fuel capacity, airspeed limits,
-    wingspan, and reference performance while retaining physics-specific model data.
-  - [x] Qualify C182T and SR22 Perspective 3600 operating profiles across both SDK
-    bindings and link their flight-dynamics models to that authority while retaining
-    only physics-specific coefficients and variant policy in the model package.
-  - [x] Define `aviation.avionics` protocol and rendering contracts, add deterministic
-    telemetry/command/flight-plan/layout/pipeline vectors, and replace G1000's duplicate
-    frontend telemetry schema with the shared protocol surface. Keep simulator stores,
-    transport hooks, display composition, and placeholder device models outside this
-    authority until separately qualified.
-  - [x] Qualify shared AHRS, ADC, and GPS device models with cross-language vectors and
-    migrate G1000 and Flight Planner away from app-private implementations and stubs.
-  - [x] Qualify deterministic ADF and DME receiver models with cross-language station,
-    tuning, geometry, service-volume, and unavailable-signal vectors; make G1000 consume
-    the common models and the common navigation-data catalog instead of fixed-zero
-    app-private placeholders.
-  - [x] Qualify deterministic marker-beacon, audio-panel, and transponder state models
-    with cross-language vectors; migrate G1000 to common state transitions while
-    retaining audio playback, COM transmission, simulator orchestration, and physical
-    device I/O as application-private behavior.
-  - [x] Route Flight Planner's retained nav-radio bearing/range, VOR/HSI angle, and
-    GPS track normalization through the qualified `aviation.avionics` realization.
-    Retain random GPS error injection, approach orchestration, CDI sensitivity,
-    TO/FROM selection, and instrument presentation as application policy.
-  - [x] Qualify exact, fail-closed manufacturer/model matching in both
-    `aviation.aircraft` bindings and migrate Flight School's fleet presentation to
-    common identity, weight, fuel, and reference-performance data. Retain tail
-    registration, rates, equipment, availability, bookings, and explicit 100-hour/
-    annual maintenance scheduling as application policy; remove two unused invalid
-    legacy maintenance helpers.
-  - [x] Promote ForeFlight Dashboard's private aircraft type-designator catalog into
-    cross-language `aviation.aircraft` acceptance data and lookup APIs. Retain CSV
-    parsing, logbook validation policy, compatibility response shapes, accounts, and
-    dashboard presentation as application code; explicitly bound the SDK snapshot as
-    non-authoritative versus current ICAO Doc 8643.
-  - [x] Promote ForeFlight Dashboard's qualified common PIC/dual/solo accounting,
-    student restrictions, flight-condition totals, role normalization, and landing
-    consistency into cross-language `aviation.logbook` acceptance data and APIs.
-    Retain provider CSV parsing and repair, registration and route-text heuristics,
-    certificate-distance advice, accounts, persistence, and presentation as application
-    policy. Delivered under MAC task `task_e88691d482dcce9afa9ffc90fbb4e266`.
-  - [x] Promote the live public `aviation.notam` SDK surface into an explicit
-    Component with shared TypeScript/Python acceptance vectors for canonical FAA-item
-    normalization, severity/category classification, effective-time and route
-    filtering, stable ordering, and text formatting. Keep FAA HTTP/authentication,
-    credential-free development fallback, and Weather Briefing presentation outside
-    the portable authority. Delivered under MAC task
-    `task_99cff8e5931391b6b32170b7867594c8`.
-  - [x] Promote the public `aviation.hazards` surface into an explicit Component
-    with shared TypeScript/Python vectors for validated hazard records, severity,
-    active windows, altitude overlap, and exact polygon/route-segment intersection.
-    Keep AWC/FAA GeoJSON parsing and HTTP orchestration in provider adapters; no
-    application currently consumes this surface, so do not invent application behavior
-    merely to create a consumer. Delivered under MAC task
-    `task_d203ebc32768084c7b822733f605f1a7`.
-  - [x] Promote the existing cross-language `aviation-config` registry into an
-    explicit Component with shared TypeScript/Python acceptance vectors for canonical
-    service and field definitions, uniqueness, deterministic app-scope filtering, and
-    required-field configuration status. Keep environment and keystore access, HTTP
-    settings endpoints, and React presentation in adapters. Delivered under MAC task
-    `task_edf80313e775308581dd3dcdfe2e7ad9`.
-  - [x] Promote provider-neutral alert lifecycle semantics into an explicit
-    `aviation.alerts` Component with shared TypeScript/Python/Go vectors for severity
-    normalization, priority, stable ordering, acknowledgement reconciliation, and
-    highest-active-severity. Migrate both live G1000 alert state paths and the UI
-    framework to the common core while retaining telemetry thresholds, messages,
-    persistence, events, timestamps, sounds, visibility limits, and rendering as
-    adapter policy. Delivered under MAC task
-    `task_48f2da691fac81450e75a5827306017b`.
-  - [x] Promote provider-neutral pane ordering, default selection, relative
-    navigation, reordering, and close-state transitions from `@aviation/ui-framework`
-    into an explicit `aviation.ui.panes` Component with deterministic acceptance
-    vectors. Make Meta App consume the qualified default-selection operation and keep
-    React renderers, application URLs, icons, styling, and layout as adapter policy;
-    preserve G1000's shared `PaneConfig` consumption as a second application boundary.
-    Component revision
-    `sha256:5d5e07a47217e1d7be6018a6a230e2382ea0ab760b7fa7f39d4cfc721e4717d3`;
-    52 independent UI-framework tests, three Meta App tests, both consumer production
-    builds, and retained receipt
-    `sha256:768f72bba249dd13bfe5aef669e60e6ff3862924152aa89aa400ca0f899ea783`
-    pass with all 16 Component locks current.
-  - [x] Promote the repeated service-health response semantics into an explicit
-    `aviation.service.health` Component with shared TypeScript/Python acceptance
-    vectors for status normalization, stable report construction, and fail-closed
-    reserved fields. Migrate live TypeScript and Python application endpoints while
-    retaining HTTP routing, timestamps, dependency probes, scheduler state, and
-    deployment readiness policy in application adapters. Aviation Chat, Flight
-    Tracker, Weather Briefing, G1000, and Flight Planner now consume the common
-    contract. Component revision
-    `sha256:4fc7ada231d43eb7e0e8c22b6a7fa2689a99c323156d3f4b9d2f0d664f77ceee`;
-    547 TypeScript SDK tests, 276 Python SDK tests, three TypeScript consumer builds,
-    both Python adapter checks, and retained receipt
-    `sha256:98f090f35fa2c4606e35a340de77504e0845b83eb7db663dded12b0eb6f58730`
-    pass with all 17 Component locks current.
-  - [x] Establish the TypeScript `aviation.service.health` realization as an
-    independently locked, buildable, and tested Component-owned qualification
-    candidate. Keep `@aviation/shared-sdk` as the retained application-facing
-    realization until regenerative qualification proves the compatibility switch;
-    Python and project release authority remain retained until their own gates pass.
-    The candidate has its own pinned package graph, dual CommonJS/ESM build, and 20
-    acceptance-vector tests; the retained full gate still records 591 tests in receipt
-    `sha256:7e8777062648be871db230a07097f722ad834f5f8a332a55dd4b5e00ce32c4d8`.
-  - [x] Promote provider-neutral background-service lifecycle transitions into an
-    explicit `aviation.service.lifecycle` Component with shared TypeScript/Python
-    acceptance vectors and independent SDK tests. Refactor the shared TypeScript
-    `BackgroundService` to consume the transition authority and migrate Weather
-    Briefing away from its private start/stop implementation while retaining hooks,
-    errors, configuration, clocks, cache cleanup, and process orchestration in
-    adapters. Component revision
-    `sha256:8baf2e1a36f0cbc682d438cbc3632d7b176915c255246eaadc74a8e307776be6`;
-    564 TypeScript SDK tests, 287 Python SDK tests, 47 Flight Tracker tests, Weather
-    Briefing and G1000 backend builds, and retained receipt
-    `sha256:755bab72e38320de5fbcdf22c20ffed18957500cbe4154fa2ff8c096cc541a4f`
-    pass with all 18 Component locks current.
-  - [x] Extend the existing `aviation.alerts` provider-alias contract for Flight
-    Planner's live alert severities and replace its duplicated severity-order table
-    with the common SDK priority function. Retain alert creation, timestamps,
-    persistence, filtering, acknowledgement, and aircraft-specific detection policy
-    in the application adapter. Component revision
-    `sha256:8b4e429c10721cbe58342bfc25d7c5147b39bfa91a9a4bd76780d5033f58fa5f`
-    and lock
-    `sha256:8849808b6a8e353f9141d32cf1de66dabeb546aa6665886c9626e60bd34ea43c`;
-    565 TypeScript SDK tests, 288 Python SDK tests, Go conformance, all 189 Flight
-    Planner tests, and retained receipt
-    `sha256:c51a532d810846103e77f5476af3bdf2596720e4f1ee508e3a1c35c71b6d7d19`
-    pass with all 18 Component locks current.
-  - [x] Promote the existing cross-language remote-E2E run contract into an explicit
-    `aviation.testing.e2e` Component with shared TypeScript/Python acceptance vectors
-    for run identities, application-bound short-lived credentials, isolated paths,
-    and immutable test-record tagging. Preserve HTTP routing, database creation,
-    fixture formats, cleanup timing, browser orchestration, and deployment policy in
-    SDK/application adapters; retain Aviation Accident Tracker, Aviation Chat, Flight
-    Planner, and Flight Track Analyzer as live consumers of the qualified contract.
-    Component revision
-    `sha256:ca6545a96add0e57baeaaf7ea28f3e879d51e97e59ec8d860ebda8d910d96cbc`
-    and lock
-    `sha256:a983daa0698ca90ae2740f40639de6e2d5bebfb08fb713c1d4bf3c22dee0c2e5`;
-    589 TypeScript SDK tests, 311 Python SDK tests, 127 Flight Planner tests, 73
-    Flight Track Analyzer tests, 57 Aviation Accident Tracker tests, the Aviation
-    Chat build, and retained receipt
-    `sha256:05bd764935f252a52fc05343f0c15ea557e282041c2f3a1d39f44a62d893d436`
-    pass with all 19 Component locks current.
-  - [x] Promote airports, weather, procedures/nav-data, flight dynamics, avionics
-    protocols/rendering, shared UI, and integration infrastructure into
-    explicit Components with owned tests and contracts.
-  - [x] Migrate applications with common-domain behavior to those capabilities and
-    remove app-local common aviation implementations after parity qualification.
-    The current consumer matrix covers all 12 applications: 11 consume qualified SDK
-    surfaces directly, while Aviation Missions is explicitly classified as a mission
-    catalog/workflow with no duplicate portable aviation algorithms and therefore no
-    artificial SDK dependency.
-  - [x] Classify airport and airspace data with exact snapshot identities, source and
-    license evidence, freshness boundaries, machine-enforced manifests, and visible
-    openAIP attribution. Keep unresolved mixed-provenance airspace data outside native
-    Component authority and record the refresh requirements. The admitted retained
-    harness reports 591 tests; the common SDK suites pass 591 TypeScript and 316
-    Python tests, and the current receipt passes `litai verify` with all 19 locks
-    current.
-  - [x] Inventory persistence, browser state, ephemeral caches, and credential
-    acquisition for all 12 applications in a machine-checked runtime contract. Keep
-    those concerns in application adapters or repository infrastructure rather than
-    manufacturing aviation-domain Components. Admit the shared TypeScript keystore
-    tests to Common Aviation SDK CI, add independent Python binding tests, and bind an
-    explicitly selected Python keystore path through to the CLI. Known development
-    credential defaults and missing migration/restore contracts remain named gaps;
-    this classification does not certify them for production.
-  - [x] Separate Accident Tracker runtime ingestion from test and demo data. Remove
-    the dead ASN fixture, automatic AVHerald fabricated fallback, ineffective
-    in-memory seed command, and obsolete private airport list. Adapter tests now prove
-    that unavailable or empty external feeds return no records, while airport lookup
-    remains supplied by the common Aviation SDK catalog.
-  - [x] Classify the retained workspace package and build graph. A machine-checked
-    inventory now covers all 10 shared package manifests, all 12 application package
-    manifests, and build authority for every application directory; it distinguishes
-    native Component realizations and adapters from repository infrastructure,
-    reusable application services, and application-private composition. Common SDK CI
-    validates the graph and now runs the previously omitted Aviation Config tests.
-  - [x] Classify repository orchestration and deployment paths under `deploy`, `k8s`,
-    `monitoring`, `scripts`, `tests`, and the obsolete `root` residue. A machine-checked
-    inventory covers every retained file in those roots without claiming SDK or
-    Component authority. Remove an unused placeholder Playwright suite, a stale
-    duplicate application validator, and the Loom marker residue; repair and extend
-    the independently tested keystore operator entrypoint so documented root commands
-    target real source rather than nonexistent package scripts and build output.
-  - [x] Classify and remove or intentionally retain every remainder beneath the legacy
-    wrapper. The machine-checked remainder inventory assigns every top-level file and
-    directory to application source, shared-package realization, Component
-    conformance, repository harness/configuration, runtime state, documentation, or
-    historical evidence. It removes stale duplicate workflows and obsolete
-    Cursor/Loom/responsible-vibe/Claude bootstrap metadata rather than treating those
-    files as authority.
-- **Next action:** Admit the qualified JavaScript `aviation.service.health` library
-  from `.literate/native-projects/local-service-health` into the shared-SDK
-  compatibility surface after package and application parity pass. The native child
-  passed two clean generations, builds, generated tests, independent package
-  acceptance, and all 19 parity cases; decision `d88c16b2c595c40e9b87ace48d1c6ad251c8ddfea8827b7d4916ec001533a303`
-  and its immutable archive are retained under `verification/`. Literate AI 1.4
-  supports JavaScript importable libraries but rejects TypeScript library targets;
-  the qualified package includes TypeScript declarations. The existing root
-  Component and retained implementations remain compatibility authority until
-  importer admission and application parity pass. Transfer Python separately before changing
-  project release authority. Top-level classification and candidate tests do not by
-  themselves authorize retiring retained source.
-- **Evidence:** Phase 1.2 lift-and-shift identity `sha256:c5ca4361ba010f6e8d81c93398468f9f4f8b8cc352504bc8535fa74b7c6e9990`.
-  Retained conversion established original-source release authority; each migration
-  refreshes the verifier-owned receipt in `verification/current.json`.
-  Logbook qualification adds Component revision
-  `sha256:6eee7074a496b58a257dbd893b57d8d6a4fbb13dc629ddd1a031b4f826179b9c`;
-  its shared acceptance vectors pass 460 TypeScript and 196 Python SDK tests, and the
-  ForeFlight adapter passes all 192 application tests while a structural boundary test
-  proves the former private common arithmetic is absent. The retained harness passes
-  all 460 admitted SDK tests.
-  NOTAM qualification adds Component revision
-  `sha256:191c48acbb7f8b2661748dbace9cdc00b778df8b57609a90b166b78e0aaa14aa`;
-  its shared acceptance vectors pass 482 TypeScript and 217 Python SDK tests, Weather
-  Briefing compiles against the common package, and the complete retained `make test`
-  gate passes. Retained source membership now admits the four NOTAM realization and
-  conformance files, and verifier-owned receipt candidate
-  `sha256:90e4bcc15150666a44a51068f886cad49515c5f119e0f6dda9c86cdc68e13d6c`
-  records all 482 admitted SDK tests.
-  Hazard qualification adds Component revision
-  `sha256:0097a1787fc37a84e265f89d01b56a091a3b2da3832805665f712d700db4489f`;
-  shared normalization and exact geometry vectors pass 510 TypeScript and 241 Python
-  SDK tests, including the former endpoint/midpoint blind spot. The complete retained
-  `make test` gate passes, retained source membership admits all four hazard
-  realization/conformance files, and verifier-owned candidate
-  `sha256:57ff7868b7f12f942278bf87401c75c94b47bfefd5214a89adb092d99cb79346`
-  records all 510 admitted SDK tests. No application currently consumes this surface,
-  so provider adapters remain separate and no synthetic consumer was introduced.
-  Configuration qualification adds Component revision
-  `sha256:a56b9dac1f26ed9954373ab24f5a09952915a8848720a7a1c8ba393a3b663d96`;
-  its shared vectors pass 14 TypeScript and 15 Python tests, including environment-
-  adapter coverage, while G1000 Settings and the meta-app both build against the common
-  package. The complete retained `make test` gate passes, retained source membership
-  admits all four configuration conformance artifacts, and verifier-owned candidate
-  `sha256:a3e1637b7c18cf2d96f6fa34751119027c01251efc8687883d06605f369ab8ba`
-  records all 510 admitted SDK tests in current receipt
-  `sha256:5c94f7c783a30a944042a7e3029545c7af2cbf60246a3c7aa24fd5042e392d1c`.
-  Alert-lifecycle qualification adds Component revision
-  `sha256:239c9fb3ba338d4d79675520d04863c19d55193c83b838bb49e5f67d3bcaf984`
-  and lock
-  `sha256:e0a21f6a2f7af18311c7de67fa0315f6a1513c798319879abaaacad07e9ea41a`.
-  The shared vectors pass 527 TypeScript SDK tests, 257 Python SDK tests, and Go
-  conformance; the UI framework passes 38 tests and builds, G1000 passes 77 tests,
-  and its production frontend builds while telemetry thresholds remain private.
-  Retained source membership admits all eight new realization/conformance files, the
-  complete retained `make test` gate passes, and verifier-owned candidate
-  `sha256:e79bd02fd770d86310e0698043a7d5540416fb2362d6712d9ec7b794c0c1a2a2`
-  records all 527 admitted SDK tests in current receipt
-  `sha256:a381487023f5fe8f8f568431c03eed4927217f8d64a883704b50a90c1023b5bf`.
-  The first native boundary has Component lock
-  `sha256:b156aad3a60d74a7eba30b6f4e7ba5d8cc01c8ecc2d7c41a069348db6ed75a9b`;
-  its shared acceptance vectors pass 292 TypeScript and 94 Python SDK tests, and
-  the full retained `make test` gate passes locally. Literate AI issue
-  [#212](https://github.com/jordanhubbard/literate-ai/issues/212) tracks the
-  verifier false positive caused by third-party `component.json` files under the
-  retained implementation's `node_modules`; generated dependency trees remain
-  outside authority, and current Component locks and `litai verify` pass.
-  Autopilot-primitives qualification passes 20 independent flight-dynamics tests,
-  25 G1000 compatibility tests, and the 321-test retained receipt; Flight Planner's
-  redundant controller module and G1000-owned common-package test file are removed.
-  Flight-director qualification passes 22 independent flight-dynamics tests, 26
-  G1000 compatibility tests, and the 321-test retained receipt; G1000 has no remaining
-  direct assignments for common engagement, active/armed mode, capture, target
-  vertical-speed, or disconnect state.
-  Configurable navigation-fuel qualification passes 328 TypeScript and 109 Python
-  shared-SDK tests plus all 126 non-integration Flight Planner tests; delegation tests
-  prove the application calls common time, consumption, reserve, and range operations
-  while retaining route selection and refueling policy.
-  Weight-and-balance qualification passes 335 TypeScript SDK tests, six portable
-  Component vectors, two Preflight Check SDK-wiring tests, the shared SDK build, and a
-  clean deployment-container definition check; the app-local formulas are removed.
-  Flight Planner geodesy consolidation passes all 126 non-integration application
-  tests, including three boundary tests proving shared distance semantics, invalid
-  coordinate rejection, and absence of the five former app-local formulas.
-  G1000 route-geodesy consolidation passes all 29 backend tests, including three
-  boundary tests proving shared distance/bearing semantics, invalid-coordinate
-  rejection, and absence of the former app-local formulas.
-  G1000 Trip Planning consolidation passes all 71 retained TypeScript tests, including
-  three SDK-boundary tests for fuel/reserve, density altitude, shared C172 loading, and
-  absence of the former display formulas; all 29 backend tests and the production
-  frontend build also pass.
-  Performance-altitude parity passes 340 TypeScript and 109 Python SDK tests across
-  four new shared vectors plus invalid-setting rejection; all 66 Flight Track Analyzer
-  tests pass, including a source boundary proving its atmospheric conditions call the
-  common Python realization.
-  Flight Track Analyzer navigation consolidation adds five shared valid/invalid wind-
-  vector vectors, routes fitted and reported wind components plus final airport
-  distance through `aviation.navigation`, and retains only candidate indexing and
-  measured-track analysis in the application. The shared suites pass 397 TypeScript
-  and 154 Python tests, and all 70 Flight Track Analyzer tests pass.
-  Local-navigation geometry qualification adds 17 shared valid/invalid vectors for
-  signed heading differences, circular means, runway numbering, and reversible
-  WGS-84 local tangent-plane projection. The TypeScript SDK passes 414 tests and its
-  build, the Python SDK passes 154 tests, Flight Track Analyzer passes 71 tests, and
-  the six-test G1000 SDK boundary plus production frontend build pass. Analyzer
-  vectorization and HSI pixel scaling remain application policy; their private
-  navigation formulas are removed.
-  Turn/instrument projection qualification adds portable coordinated-turn bank and
-  synthetic piston-engine vectors across both flight-dynamics bindings. The TypeScript
-  SDK passes 417 tests and its build, the Python flight-dynamics package passes 29
-  tests, Flight Track Analyzer passes 73 tests, G1000 passes eight SDK-boundary tests,
-  28 backend tests plus two isolated AHRS tests, and its production frontend build.
-  Analyzer segmentation/regression and G1000 session fuel, alerts, gauges, and pixel
-  projection remain explicit application policy; MFD coordinate offsets and leg
-  distance now use `aviation.navigation`.
-  Simulator-stepping consolidation routes G1000 heading normalization, shortest-turn
-  error, and destination projection through the common Python navigation realization;
-  its backend passes 29 tests plus two isolated AHRS tests. Flight Planner's
-  compatibility adapter now delegates heading normalization and shortest-turn semantics
-  while retaining its documented `+180` tie mapping; all 184 non-integration backend
-  tests plus eight subtests pass.
-  Flight Planner nav-instrument consolidation routes ADF bearing, DME great-circle
-  ground range, VOR/HSI angular normalization, and GPS track wrapping through the
-  independently tested avionics realization. The nine-test Python avionics suite and
-  all 188 non-integration Flight Planner tests plus eight subtests pass; random GPS
-  error injection, approach orchestration, CDI sensitivity, TO/FROM selection, and
-  display-relative bearing remain application policy.
-  Flight School aircraft-profile adoption advances `aviation.aircraft` to 0.4.0 with
-  Component lock
-  `sha256:de1c1f68d0a2f433a544462ab710737859728b62437a8da3303dc04b65bd81e3`.
-  Thirty TypeScript and 32 Python aircraft conformance tests cover exact normalized
-  identity and fail-closed unknown/partial matches within full 424-test TypeScript and
-  161-test Python SDK suites. Flight School passes 64 tests with 25 documented skips;
-  its fleet page renders matched SDK reference data, Piper PA-28-181 remains unmatched,
-  and application-owned scheduling fields and policies remain intact.
-  ForeFlight aircraft-designator migration advances `aviation.aircraft` to 0.5.0 and
-  moves all 157 detailed records plus 13 additional supported codes into one
-  Component-owned vector set with generated TypeScript and Python realizations. The
-  SDK passes 438 TypeScript and 175 Python tests; ForeFlight's full 190-test suite
-  passes through its compatibility adapter. The bounded snapshot is explicitly not a
-  substitute for current ICAO Doc 8643, while CSV parsing, logbook validation policy,
-  accounts, and presentation remain application-owned.
-  The G1000 and Flight Planner private geodesy service placeholders were classified as
-  non-realized scaffolding and removed with application boundary tests preventing their
-  reintroduction; all 30 G1000 backend tests and 178 non-integration Flight Planner
-  tests pass after removal.
-  Wind-triangle qualification adds seven shared valid/invalid vectors, corrects the
-  SDK's former headwind sign and vector-magnitude ground-speed error, and passes 347
-  TypeScript SDK tests, 109 Python SDK tests, and all 179 non-integration Flight Planner
-  tests plus eight subtests. The navigation lock is
-  `sha256:0c87dbea0947d441af3e99ff548a6e0b3a3914d2296b9fdc82a395507c83915e`.
-  Airspeed/configuration inventory confirms both application ADC adapters are pure
-  `aviation.avionics` delegations and the G1000 backend C172 record maps the common
-  flight-dynamics model. Eight new navigation vectors qualify standard-day and
-  hot/high IAS-to-TAS, TAS/Mach conversion, and negative/domain rejection; all 355
-  TypeScript SDK tests, 109 Python SDK tests, two Flight Planner ADC tests, and six
-  G1000 aircraft/autopilot compatibility tests pass. G1000's frontend V-speed constants
-  were the next unqualified aircraft-profile boundary.
-  Aircraft-profile qualification adds a dedicated `aviation.aircraft` Component and
-  eight invalid-profile vectors; 364 TypeScript SDK tests, 25 Python flight-dynamics
-  tests, four G1000 SDK-boundary tests, and the production G1000 frontend build pass.
-  The airspeed tape now imports the common C172S profile and contains no private V-speed
-  constants; Python model validation also rejects non-finite speeds and invalid limit
-  ordering.
-  Aircraft-reference qualification advances the Component lock to
-  `sha256:4d5ce77ed3ee64c3e4d7332077deadf99916e239b50d918f4fd3259edf8de61b`
-  with 14 fail-closed mutations and four ID/designator lookup vectors. The independent
-  suites pass 374 TypeScript and 128 Python shared-SDK tests plus 25 flight-dynamics
-  tests. Flight Planner passes 182 non-integration Python tests, 12 frontend tests, and
-  a production build; G1000 passes 73 TypeScript and 30 Python tests plus its production
-  frontend build. Its former private aircraft YAML is removed, and cited C172S values
-  correct total/usable fuel to 56/53 gallons and the common maximum-cruise, climb, and
-  landing reference figures.
-  C172S loading qualification advances the Component graph lock to
-  `sha256:acdaa9b39c2d9de4f4aaa467fa82a8bed09cf05312aa9c85608dbab0d3a89937`
-  and replaces the former 43-gallon/2300-pound C172N record with Component-owned sample
-  empty weight/moment, five station arms, baggage limits,
-  6-pound-per-gallon fuel at FS 48, and the normal-category CG envelope cited from the
-  manufacturer handbook. Its 21 TypeScript and 20 Python conformance tests pass within the
-  full 388-test TypeScript and 148-test Python SDK suites; G1000 passes 73 frontend tests
-  and its production build, and Preflight Check's three browser-SDK wiring/compatibility
-  tests remain
-  green. The app's default/editable occupant, baggage, and fuel values remain React
-  state rather than SDK profile data.
-  C172S flight-dynamics authority advances the graph lock to
-  `sha256:0bf3c704b883d567057217130dba144dba833f291a5cd729b90c762e3bd2b1e6`.
-  The Python model now imports `aviation.aircraft` at runtime and its serialized asset
-  contains only model identity plus physics-specific mass/CG/inertia, wing area/chord,
-  aerodynamic/control coefficients, engine response, fuel density, and bank/pitch
-  constraints. The independent 26-test flight-dynamics suite and G1000's 30-test
-  backend suite pass with the linked profile.
-  Navigation and the dedicated SDK workflow landed in PR #339 at exact-main commit
-  `9c55e4ac70dbc87def6d5ce6e6abc47aed214304`; all seven exact-commit workflows
-  passed. Airports landed in PR #340 at exact-main commit
-  `67d505a9ab47e3584b094c41f6d5abdcbdc99d2d`; all six exact-commit workflows
-  passed, including Common Aviation SDK run 41103415439, Integration Tests run
-  41103415429, Monorepo CI/CD run 41103415361, and deployment-image run
-  41103415358. The airport graph lock is
-  `sha256:82d0bbe3f36eaf3c1640681036821db992629db80a6a0eee0b823b09dace083d`.
-  Weather landed in PR #341 at exact-main commit
-  `5ccbe7d889ec7e92fa94d7bf2591b43748ac5ece`; all six exact-commit workflows
-  passed, including Common Aviation SDK run 41105586694, Integration Tests run
-  41105586797, Monorepo CI/CD run 41105586686, and deployment-image run
-  41105586742. The weather Component lock is
-  `sha256:a176e62833839cca2fbbe897ee68de0cccdd2d2b514041f1184b6b920bb3f9fc`.
-  Nav-data core landed in PR #342 at exact-main commit
-  `079af9398dcf540c8dbe4b5d9760e322493f77b5`; all seven exact-commit workflows
-  passed, including Common Aviation SDK run 41110871727 and Integration Tests run
-  41110871688. Provider reconciliation landed in PR #343 at exact-main commit
-  `1a9d42c8b02ada926f173474f66eb7a4ea3d6efd`; all six direct exact-main workflows
-  passed, including Common Aviation SDK run 41115026210, Integration Tests run
-  41115026166, Monorepo CI/CD run 41115026320, and deployment-image run 41115026360.
-  Flight dynamics and Flight Planner delegation landed in PR #344 at exact-main commit
-  `55088f0b33ab4fbda8df82a17744632ef1fc5f6f`; all seven exact-main workflows passed,
-  including Common Aviation SDK run 41119233841, Integration Tests run 41119234024,
-  Monorepo CI/CD run 41119234068, deployment-image run 41119233837, and dependency
-  graph run 41119239572. G1000 flight-dynamics reconciliation landed in PR #345 at
-  exact-main commit `7c36bd734185fdb83e2e4219bc5d5e6d9de2108b`; all seven exact-main workflows
-  passed, including Common Aviation SDK run 41122926192, Integration Tests run
-  41122926152, Monorepo CI/CD run 41122926122, deployment-image run 41122926237,
-  Dependency Scan run 41122926302, Performance Regression Check run 41122926123,
-  and dependency graph run 41122936981. The avionics protocol/rendering slice has
-  Component lock
-  `sha256:d0adc77ef53c41396e29dc8e583bbbca075c56a72a76097c6eab93a25c702892`;
-  3 protocol and 3 rendering conformance tests, the production G1000 frontend build,
-  all 68 retained G1000 TypeScript tests, all 101 G1000 Python tests, and the full
-  retained `CI=true make test` lifecycle pass locally. The slice landed in PR #346 at
-  exact-main commit `217f985f70fb599c47bdad3016cc85248ae9d5db`; all six triggered
-  exact-main workflows passed, including Common Aviation SDK run 41127278668,
-  Integration Tests run 41127278697, Monorepo CI/CD run 41127278760, deployment-image
-  run 41127278767, Dependency Scan run 41127278888, and Performance Regression Check
-  run 41127279392. The AHRS/ADC/GPS slice has Component lock
-  `sha256:510968d491836d091a50a5cd3962ea0a75ab9b56f31fda82a4d7e2f269eef4f8`;
-  four TypeScript and four Python device conformance tests pass from shared vectors,
-  all 77 G1000 Python compatibility tests pass, all 173 Flight Planner backend tests
-  pass, and the retained `CI=true make test` lifecycle passes locally. Retained source
-  readmission passed with baseline identity
-  `sha256:26d3daabc4953bb168715e1d727c273ce07487281d2a1fd6b0f03f12eff5e6ee`
-  and parity identity
-  `sha256:abb50e5f62745c7c590773e1b518f73e524e06e0bc3601e5f5d3c5c9c9fecaa9`.
-  The ADF/DME slice has Component lock
-  `sha256:fa177de4924d455d393237f750d05ea9ebc4993bc1912fe0e4f13930abed6865`;
-  seven TypeScript and seven Python avionics conformance tests pass, all 61 G1000
-  Python compatibility tests pass, and retained source readmission passed with
-  baseline identity
-  `sha256:ef3451131134d83d1ead44c8bbfefe47868db6e65355c8f3d80ce5c11ce5bc60`
-  and parity identity
-  `sha256:5436a2ed6cb02e12eee0ddbbd8c1750fca184980aa459bbdf31b0f04d732b08a`.
-  The marker-beacon/audio-panel/transponder slice has Component lock
-  `sha256:e5df5a1dd6e3c3427a411738ba0a56da88050866bb96de2e88f07d0f98b727e4`;
-  nine TypeScript and nine Python avionics conformance tests pass, all 64 G1000 Python
-  compatibility tests pass, and retained source readmission passed with baseline
-  identity `sha256:3655035fb873c9c31ba28776c819ff4de1d9d7de579d9e810516a9d83cd300a6`
-  and parity identity
-  `sha256:4f5acf5f618ab336bf169ec84d4f1068f4754702371d1ff0d63c093880d5deee`.
-  Before the Flight School adoption slice, the retained receipt was
-  `sha256:342a2f0bfb42a2661da7a4753a7d47146f6c005aaa70dca3643f92cc59377dd9`
-  (candidate `sha256:8aaf590c4b20959cdd289af5439fc3c4899230424e7e0d1af8f8e362858277f0`,
-  417 tests). The current exact receipt is recorded in `verification/current.json`;
-  the expanded retained harness passes 424 tests.
-  The ADF/DME slice landed in PR #348 at exact-main commit
-  `f3da7e3406b6b2d04b95da03217231d1b7313a1e`; all six exact-commit workflows
-  passed: Common Aviation SDK run 41137297070, Integration Tests run 41137297059,
-  Monorepo CI/CD run 41137297055, deployment-image run 41137297063, Dependency Scan
-  run 41137297214, and Performance Regression Check run 41137297025.
-  - [ ] Each promoted Component has a current lock, independent acceptance evidence,
-    and exact-main CI evidence.
-  - [ ] An architecture inventory proves every application imports common capabilities
-    and contains no duplicated common aviation implementation.
-  - [ ] Full retained parity, deployment E2E, and a current authenticated Literate AI
-    receipt prove the wrapper can be retired.
+Current tracking: [GitHub issue](https://github.com/jordanhubbard/Aviation/issues/442). [Historical design and evidence](../history/tracker/pre-github-roadmap.md#--adopt-002--native-literate-ai-rewrite).
 
-### [x] ADOPT-003 — Preserve Aviation interfaces and integrate flight analyzer
+<a id="adopt-003"></a>
+<a id="x-adopt-003--preserve-aviation-interfaces-and-integrate-flight-analyzer"></a>
+### ADOPT-003 — Preserve Aviation interfaces and integrate flight analyzer
 
-- **Priority:** P0
-- **Owner:** components/legacy-project-wrapper and flight-analyzer
-- **Direction:** Keep existing Aviation functionality after Literate AI adoption and merge the KML flight analyzer with airport MSL elevation access.
-- **Conclusion:** The CLI lift-and-shift preserved retained source and wrapper parity but moved the old workspace paths and workflows below the retained Component. Restore compatible entrypoints, then add the analyzer as an Aviation application and use the existing bundled airport dataset as optional corroborating touchdown evidence.
-- **Depends on:** ADOPT-002 retained source boundary; KMLab FLIGHT-002
-- **Implementation:**
-  - [x] Restore root workspace and CI entrypoints against the retained implementation (root symlinks, Make wrapper, and GitHub workflows)
-  - [x] Integrate KMLab source, API, UI, tests, and runtime paths as an Aviation app (`apps/flight-track-analyzer`)
-  - [x] Add airport identity and MSL elevation to landing analysis with bias, missing-data, and proximity safeguards (61 analyzer tests)
-- **Evidence:**
-  - [x] Literate AI project validate and verify pass (authority, two locks, current retained receipt at 4646278fb)
-  - [x] Existing Aviation app tests and all 54 KMLab tests pass in the merged tree (`make test`: 13 Node suites, Go, 61 analyzer tests)
-  - [x] Synthetic touchdown tests exercise airport elevation, GPS bias, touch-and-go, and go-around (`app/tests/test_airports.py`)
-  - [x] Hosted CI confirms retained apps and new analyzer after push (PR #304, a5fa6fa9d: 19 checks passed, Dependabot skipped)
+[Historical design and evidence](../history/tracker/pre-github-roadmap.md#x-adopt-003--preserve-aviation-interfaces-and-integrate-flight-analyzer).
 
-### [x] ADOPT-004 — Repair retained deployment workflow after conversion
+<a id="adopt-004"></a>
+<a id="x-adopt-004--repair-retained-deployment-workflow-after-conversion"></a>
+### ADOPT-004 — Repair retained deployment workflow after conversion
 
-- **Priority:** P0
-- **Owner:** workflows/deploy.yml
-- **Direction:** Restore the main-branch deployment dry run after the Literate AI source relocation.
-- **Conclusion:** The job-level working directory is unavailable before checkout, and Docker builds must use the real retained implementation as context so workspace COPY instructions see actual files.
-- **Depends on:** ADOPT-003 merged adoption
-- **Implementation:**
-  - [x] Remove the unnecessary workflow-wide working directory and point Docker actions at the retained implementation (`.github/workflows/deploy.yml` in PR #305).
-- **Evidence:**
-  - [x] Workflow YAML parses, PR #305 passed 19 checks, and exact main run 39905597056 built four images and passed the staging dry run at c8b958a34.
+[Historical design and evidence](../history/tracker/pre-github-roadmap.md#x-adopt-004--repair-retained-deployment-workflow-after-conversion).
 
-### [x] DEPLOY-001 — Deploy every Aviation application with KMLab-style services
+<a id="deploy-001"></a>
+<a id="x-deploy-001--deploy-every-aviation-application-with-kmlab-style-services"></a>
+### DEPLOY-001 — Deploy every Aviation application with KMLab-style services
 
-- **Priority:** P0
-- **Owner:** retained application deployment and monorepo operations
-- **Direction:** Build, run, and deploy every Aviation application from the monorepo using KMLab-style service management, unique loopback ports, DNS names, and live public checks.
-- **Conclusion:** All eleven applications build and deploy from Aviation with unique loopback ports, DigitalOcean DNS records, systemd units, and public HTTPS health checks. Application revision d619a2c0 is deployed; later main commit 6db095f3 changes only this roadmap and passed exact-main CI. Accident Tracker serves 742 recent NTSB records with source attribution. OpenClaw is an optional upstream integration for Chat's `/chat` route, not a dependency of the Aviation build or deployment. Existing Sentiment workers drive do-host1's memory and swap use; the 16 GiB rescue swapfile is persistent while a dedicated-host option is considered.
-- **Depends on:** ADOPT-003; ADOPT-004
-- **Optional follow-up:** A dedicated Aviation droplet would isolate the eleven services from Sentiment; choosing and cutting over that host is a separate infrastructure decision.
-- **Implementation:**
-  - [x] Inventory each application runtime, data and credential requirements; keep the manifest aligned with its actual health path and writable state.
-  - [x] Build and smoke-test deploy packages from committed Aviation source; qualify the exact revision on native amd64 CI.
-  - [x] Install idempotent systemd/Caddy services with unique loopback ports, health checks, and rollback; preserve the existing analyzer service and its airport data.
-  - [x] Increase host capacity, register DNS, and deploy each service serially with resource checks.
-- **Evidence:**
-  - [x] All eleven application build gates pass, including native analyzer tests and ten target-architecture container images (exact-main image run 39927730949; all eleven public health routes returned HTTP 200 after the serial rollout).
-  - [x] Project verification passes three applicable gates, the retained receipt covers 273 tests, PR #314 checks passed, and all exact-main workflows for d619a2c0 completed successfully.
-  - [x] All eleven active units and Caddy sites validate, and every DNS name responds over HTTPS to a meaningful health request.
-  - [x] Accident Tracker's live API returns 742 NTSB events with official source URLs; repeated ingestion updated the same records without duplicates.
-  - [x] The deployment verifier confirms all eleven public DNS names resolve to do-host1 and their service health routes return HTTP 200; OpenClaw-dependent chat behavior is outside this deployment check.
+[Historical design and evidence](../history/tracker/pre-github-roadmap.md#x-deploy-001--deploy-every-aviation-application-with-kmlab-style-services).
 
-### [x] ACCIDENT-001 — Discover and display accident citations
+<a id="accident-001"></a>
+<a id="x-accident-001--discover-and-display-accident-citations"></a>
+### ACCIDENT-001 — Discover and display accident citations
 
-- **Priority:** P1
-- **Owner:** retained Accident Tracker backend, frontend, and source attribution contract
-- **Direction:** Find relevant media and aviation reports when accident records are ingested and show citations in an expandable table row.
-- **Conclusion:** Reuse event source attribution, discover bounded feed articles with registration and date matching, preserve provenance and deduplication, and render accessible inline citations.
-- **Depends on:** Existing NTSB ingest and source repository
-- **Implementation:**
-  - [x] Add bounded concurrent media feed discovery and persistence; expose citation metadata; add expandable table rows and targeted tests.
-- **Evidence:**
-  - [x] Deterministic matching and persistence tests, frontend interaction test, and application build pass locally.
-  - [x] PR #317 and citation correction PR #318 merged; exact-main image run 40108419185 passed. The public event API exposes the verified AeroTime N514AX crash article with its NTSB source, and the browser disclosure passes. An unrelated AOPA link was removed and did not recur after ingestion.
+[Historical design and evidence](../history/tracker/pre-github-roadmap.md#x-accident-001--discover-and-display-accident-citations).
 
-### [x] CHAT-001 — Explain Aviation Chat at its root URL
+<a id="chat-001"></a>
+<a id="x-chat-001--explain-aviation-chat-at-its-root-url"></a>
+### CHAT-001 — Explain Aviation Chat at its root URL
 
-- **Priority:** P2
-- **Owner:** retained Aviation Chat service
-- **Direction:** Make the public root URL explain what Aviation Chat does instead of showing Cannot GET /.
-- **Conclusion:** The service is an API proxy with POST /chat and no browser UI; serve a simple informational root page.
-- **Depends on:** none
-- **Implementation:**
-  - [x] Add a root route and document the API-only behavior.
-- **Evidence:**
-  - [x] Service build passes locally.
-  - [x] Public root and health return HTTP 200; the full eleven-service browser sweep confirms the root, and an invalid POST /chat returns HTTP 400.
+[Historical design and evidence](../history/tracker/pre-github-roadmap.md#x-chat-001--explain-aviation-chat-at-its-root-url).
 
-### [x] FLIGHT-001 — Repair deployed Flight Planner and add browser deployment gates
+<a id="flight-001"></a>
+<a id="x-flight-001--repair-deployed-flight-planner-and-add-browser-deployment-gates"></a>
+### FLIGHT-001 — Repair deployed Flight Planner and add browser deployment gates
 
-- **Priority:** P0
-- **Owner:** retained Flight Planner frontend and Aviation deployment verification
-- **Direction:** Fix the live TypeError and verify rendered application behavior after deployment under Literate AI gates.
-- **Conclusion:** The frontend requests a nonexistent /api/flight-plans route, accepts its 404 JSON body as an array, and crashes at render; use the available /flight-plans/ route with response validation, then make browser smoke checks a deployment gate.
-- **Depends on:** none
-- **Implementation:**
-  - [x] Repair fetch and saved-plan mapping; add regression coverage; add post-deployment rendered checks for browser apps and API-only chat.
-- **Evidence:**
-  - [x] Live browser reproduction, frontend tests, and full build pass locally; the new browser gate rejects the deployed error page.
-  - [x] Public Chromium sweep loads Flight Planner, opens its saved-plans dialog without an error boundary, and passes for all eleven service roots.
-  - [x] Retained source scope and test receipt are refreshed; `litai verify` passes all three applicable gates.
+[Historical design and evidence](../history/tracker/pre-github-roadmap.md#x-flight-001--repair-deployed-flight-planner-and-add-browser-deployment-gates).
 
-### [x] FORE-001 — Accept overlapping solo and PIC logbook time
+<a id="fore-001"></a>
+<a id="x-fore-001--accept-overlapping-solo-and-pic-logbook-time"></a>
+### FORE-001 — Accept overlapping solo and PIC logbook time
 
-- **Priority:** P1
-- **Owner:** retained ForeFlight Dashboard validator and deployed browser contract
-- **Direction:** Treat solo time as overlapping PIC time for a certificated pilot, and verify a representative ForeFlight upload after deployment.
-- **Conclusion:** The existing time-accountability sum counts solo and PIC twice. Preserve both fields and show a validation error only when the covered flight time is inconsistent.
-- **Depends on:** ForeFlight CSV importer and public deployment browser gate
-- **Implementation:**
-  - [x] Correct the validator, add model and upload regressions, and add a post-deployment browser upload check.
-- **Evidence:**
-  - [x] ForeFlight Dashboard test suite passes locally (188 tests).
-  - [x] PR #319 merged; exact-main ForeFlight image deployed. Public Chromium gate uploads 0.2 total / 0.2 PIC / 0.2 solo CSV, observes zero validation errors, and renders the dashboard without an error banner; full eleven-service sweep passes.
+[Historical design and evidence](../history/tracker/pre-github-roadmap.md#x-fore-001--accept-overlapping-solo-and-pic-logbook-time).
 
-### [x] FORE-002 — Avoid false excessive-landing errors
+<a id="fore-002"></a>
+<a id="x-fore-002--avoid-false-excessive-landing-errors"></a>
+### FORE-002 — Avoid false excessive-landing errors
 
-- **Priority:** P1
-- **Owner:** retained ForeFlight Dashboard validator and deployed browser contract
-- **Direction:** Accept rapid pattern-work landing counts, including eight landings in half an hour, without declaring valid data erroneous.
-- **Conclusion:** The current rule assumes a four-minute minimum between landings and cannot infer an impossible rate from total flight time alone; remove the frequency heuristic as a data validation error while retaining concrete consistency checks.
-- **Depends on:** FORE-001
-- **Implementation:**
-  - [x] Remove the 15-landings-per-hour error and add representative model and upload regressions.
-- **Evidence:**
-  - [x] PR #321 merged at eeb4e684b; 190 local ForeFlight tests, the 273-test retained receipt, and three Literate AI gates pass. The exact-main image is deployed; its public Chromium upload of eight landings in 0.5 hours returns zero errors, and the full eleven-service browser sweep passes.
+[Historical design and evidence](../history/tracker/pre-github-roadmap.md#x-fore-002--avoid-false-excessive-landing-errors).
 
-### [x] FORE-003 — Repair ICAO designator verification link
+<a id="fore-003"></a>
+<a id="x-fore-003--repair-icao-designator-verification-link"></a>
+### FORE-003 — Repair ICAO designator verification link
 
-- **Priority:** P1
-- **Owner:** retained ForeFlight Dashboard ICAO validator
-- **Direction:** Give pilots a working authoritative lookup when an aircraft type code is invalid.
-- **Conclusion:** The error links to a nonresolving domain and the validator documents two obsolete ICAO URLs; use ICAO current Doc 8643 search page as the single remediation destination.
-- **Depends on:** FORE-001
-- **Implementation:**
-  - [x] Update validation message and resource metadata, and test the exact C82S remediation URL.
-- **Evidence:**
-  - [x] ICAO's current Doc 8643 search page returned HTTP 200. PR #321 merged at eeb4e684b; 190 ForeFlight tests and Literate AI verification pass. The deployed public browser upload of invalid C82S shows the current ICAO URL in the expanded row, and the full eleven-service sweep passes.
+[Historical design and evidence](../history/tracker/pre-github-roadmap.md#x-fore-003--repair-icao-designator-verification-link).
 
-### [x] ACCIDENT-002 — Show sourced accident cause badges
+<a id="accident-002"></a>
+<a id="x-accident-002--show-sourced-accident-cause-badges"></a>
+### ACCIDENT-002 — Show sourced accident cause badges
 
-- **Priority:** P1
-- **Owner:** retained Accident Tracker ingestion, repository, and frontend
-- **Direction:** Classify accident causes from available accident data and relevant reports, showing Unknown only when no supported cause is available.
-- **Conclusion:** NTSB weekly data carries probable-cause narratives, flagged findings, and event sequences, while matched aviation reports can state mechanisms. Store sourced labels separately from flight category, distinguish official cause, NTSB occurrence, and reported mechanism, and show them in accident rows.
-- **Depends on:** ACCIDENT-001 citation ingestion
-- **Implementation:**
-  - [x] Extract explicit cause labels from NTSB probable-cause data and matched reports; persist attribution across ingestion and deduplication; render cause badges and evidence in row details.
-- **Evidence:**
-  - [x] Local backend extraction and persistence tests (51 Vitest, 2 Python), frontend interaction tests (64 Vitest), and both app builds pass.
-  - [x] Literate AI retained test receipt refreshed and `litai verify` passed for implementation commit 396a0ce5a.
-  - [x] PR #323 checks passed and merged at b03fd66e3; exact-main CI 40121936341 and image build 40121936340 passed. The image was deployed on do-host1, public health and browser checks passed, and all eleven public app browser checks passed. Live API returned 742 events with 30 loss-of-control, 21 engine-failure, 3 CFIT, 8 fuel-exhaustion, and 1 weather attribution; a Chromium row check verified N30718's badge and NTSB source link. Unclassified events still show Unknown.
+[Historical design and evidence](../history/tracker/pre-github-roadmap.md#x-accident-002--show-sourced-accident-cause-badges).
 
-### [x] FLIGHT-002 — Remove unrelated planner demo controls and canvas
+<a id="flight-002"></a>
+<a id="x-flight-002--remove-unrelated-planner-demo-controls-and-canvas"></a>
+### FLIGHT-002 — Remove unrelated planner demo controls and canvas
 
-- **Priority:** P2
-- **Owner:** retained Flight Planner frontend
-- **Direction:** Explain and correct the initial blank canvas and joystick controls visible in Flight Planner.
-- **Conclusion:** App.tsx mounts a G1000 demo control and fixed sample canvas globally; neither powers the real plan maps. Remove those shell mounts while preserving the form and its existing pre-plan empty state. MAC task task_429cbcaff6a84f06a383bac4c1c9eb83 tracks the same work.
-- **Depends on:** FLIGHT-001 deployed planner
-- **Implementation:**
-  - [x] Remove global demo components from the planner shell and cover the initial view in a rendered post-deployment browser check.
-- **Evidence:**
-  - [x] Flight Planner frontend build and 8 tests pass; the new browser check rejects the current deployed demo controls.
-  - [x] Retained source scope, test receipt, and `litai verify` passed for PR #325; all PR checks passed and merged at b350ad59d.
-  - [x] Exact-main CI 40123358725 and image run 40123358794 passed. do-host1 runs the b350ad59d Flight Planner image; public health, initial-view browser check, and eleven-app sweep passed.
+Current tracking: [GitHub issue](https://github.com/jordanhubbard/Aviation/issues/436). [Historical design and evidence](../history/tracker/pre-github-roadmap.md#x-flight-002--remove-unrelated-planner-demo-controls-and-canvas).
 
-### [x] META-001 — Navigate to every Aviation service from Meta App
+<a id="meta-001"></a>
+<a id="x-meta-001--navigate-to-every-aviation-service-from-meta-app"></a>
+### META-001 — Navigate to every Aviation service from Meta App
 
-- **Priority:** P2
-- **Owner:** retained Meta App and deployment browser verification
-- **Direction:** Ensure all deployed Aviation applications can be opened from Meta App.
-- **Conclusion:** The deployed manifest has eleven entries; Meta App is the current application and has links to nine of the other ten. Add the missing Aviation Chat destination and use the manifest as the browser gate for destination completeness. MAC task task_c7befa4095b74be7967535e52557d21b tracks the same work.
-- **Depends on:** DEPLOY-001 public DNS
-- **Implementation:**
-  - [x] Add Aviation Chat destination to Meta App and assert each other deployed application has a matching launch link.
-- **Evidence:**
-  - [x] Meta App and dependencies build; the manifest browser check rejects the current deployed launcher because Aviation Chat is missing (9/10 destinations).
-  - [x] Retained source scope, test receipt, and `litai verify` passed for PR #325; all PR checks passed and merged at b350ad59d.
-  - [x] Exact-main CI 40123358725 and image run 40123358794 passed. do-host1 runs the b350ad59d Meta App image; the public browser gate confirmed all ten outbound links match the manifest, and all eleven app roots passed.
+Current tracking: [GitHub issue](https://github.com/jordanhubbard/Aviation/issues/437). [Historical design and evidence](../history/tracker/pre-github-roadmap.md#x-meta-001--navigate-to-every-aviation-service-from-meta-app).
 
-### [x] ACCIDENT-003 — Improve tracker provenance, freshness, filters, and search
+<a id="accident-003"></a>
+<a id="x-accident-003--improve-tracker-provenance-freshness-filters-and-search"></a>
+### ACCIDENT-003 — Improve tracker provenance, freshness, filters, and search
 
-- **Priority:** P1
-- **Owner:** retained Accident Tracker backend, frontend, and deployment browser contract
-- **Direction:** Show source and last sync time, make category filtering useful, expand abbreviations in selectors, and support natural-language accident search without an external token.
-- **Conclusion:** The live category filter applies correctly but all 742 events are unknown because NTSB FAR part is dropped. Preserve source attributions in list rows, persist successful ingest time, classify NTSB operation from FAR part, display full country/state labels, and map plain-language search to explicit supported filters with a deterministic parser.
-- **Depends on:** ACCIDENT-002 sourced causes
-- **Implementation:**
-  - [x] Add list-row sources, durable ingest status, NTSB operation classification, readable filter labels, and a deterministic query parser with UI and post-deployment coverage.
-- **Evidence:**
-  - [x] Backend and frontend tests (53 backend and 67 frontend), live category counts (457 general, 40 commercial, 245 unknown), successful ingest status (741 updated), deterministic search tests and live browser query for general aviation in California passed. PR #327 merged at f20475a07; exact-main image CI, all-app browser gate and Literate AI verification passed.
+[Historical design and evidence](../history/tracker/pre-github-roadmap.md#x-accident-003--improve-tracker-provenance-freshness-filters-and-search).
 
-### [x] MISSIONS-001 — Add written feedback under completed missions
+<a id="missions-001"></a>
+<a id="x-missions-001--add-written-feedback-under-completed-missions"></a>
+### MISSIONS-001 — Add written feedback under completed missions
 
-- **Priority:** P1
-- **Owner:** retained Aviation Missions backend and frontend
-- **Direction:** Allow pilots to add comments under a completed mission.
-- **Conclusion:** The Completed action currently records a pilot name and empty notes but offers no way to view or submit feedback later. Add a completion detail view with written feedback persisted against the completion, with no file attachments.
-- **Depends on:** Existing mission completions API
-- **Implementation:**
-  - [x] Persist feedback comments for a completion and render submission and history beneath Completed.
-- **Evidence:**
-  - [x] Clojure API and DB tests (9 tests, 78 assertions), live rendered browser submission with a synthetic intercepted completion, Literate AI verification, reviewed PR #327 and exact-main image CI passed; deployment verification passed for all 12 apps.
+[Historical design and evidence](../history/tracker/pre-github-roadmap.md#x-missions-001--add-written-feedback-under-completed-missions).
 
-### [x] FEEDBACK-001 — Submit contextual GitHub feedback from every Aviation app
+<a id="feedback-001"></a>
+<a id="x-feedback-001--submit-contextual-github-feedback-from-every-aviation-app"></a>
+### FEEDBACK-001 — Submit contextual GitHub feedback from every Aviation app
 
-- **Priority:** P1
-- **Owner:** Aviation
-- **Direction:** Add a shared feedback widget and server issue endpoint to all eleven deployed apps
-- **Conclusion:** A feedback control in every app should collect a short description and create an Aviation monorepo issue with the current app, page, and browser context; keep GitHub credentials on the server and limit abuse.
-- **Depends on:** none
-- **Implementation:**
-  - [x] Build a shared widget served by meta-app, install it in each app document, provide a server-side GitHub Issues endpoint with validation and rate limits, and provision a scoped credential on do-host1.
-  - [x] Load the widget independently on KMLab, where its module graph delays deferred scripts; allow the widget and issue API in ForeFlight Dashboard's CSP; verify the rendered buttons on both deployed hostnames.
-- **Evidence:**
-  - [x] Widget/API tests, all 12 public browser checks, and live issue creation (#328, closed after smoke) passed. PRs #327 and #329, exact-main CI and image run 40128092475 passed; all services and health endpoints passed deployment verification.
+[Historical design and evidence](../history/tracker/pre-github-roadmap.md#x-feedback-001--submit-contextual-github-feedback-from-every-aviation-app).
 
-### [x] PREFLIGHT-001 — Add GA preflight weight and balance application
+<a id="preflight-001"></a>
+<a id="x-preflight-001--add-ga-preflight-weight-and-balance-application"></a>
+### PREFLIGHT-001 — Add GA preflight weight and balance application
 
-- **Priority:** P1
-- **Owner:** Aviation
-- **Direction:** Build a preflight tool for aircraft-specific loading, takeoff and landing CG, and pilot risk review
-- **Conclusion:** The suite covers weather and route planning but lacks an aircraft-specific loading and preflight risk workspace. FAA AC 91-92 and Weight and Balance Handbook support this capability.
-- **Depends on:** none
-- **Implementation:**
-  - [x] Add a browser-local preflight app requiring user-entered POH/AFM limits and stations; compute takeoff and landing weight/CG against an envelope, persist profiles locally, and link from Meta App.
-- **Evidence:**
-  - [x] Calculation unit tests, live browser weight/CG example and Meta App link, exact-main CI/image build, DNS and deployment verification passed at preflight-check.jordanhubbard.net.
+[Historical design and evidence](../history/tracker/pre-github-roadmap.md#x-preflight-001--add-ga-preflight-weight-and-balance-application).
 
-### [x] META-002 — Show only pilot-facing apps in Meta App
+<a id="meta-002"></a>
+<a id="x-meta-002--show-only-pilot-facing-apps-in-meta-app"></a>
+### META-002 — Show only pilot-facing apps in Meta App
 
-- **Priority:** P2
-- **Owner:** retained Meta App and deployment browser verification
-- **Direction:** Remove the internal Aviation Chat API from the Meta App launcher because it has no user-facing UI.
-- **Conclusion:** Keep Aviation Chat deployed as an API service, but exclude it from Meta App navigation and from the launcher destination contract.
-- **Depends on:** META-001
-- **Implementation:**
-  - [x] Remove Aviation Chat from the launcher app list while retaining its API deployment; update the browser contract to expect only pilot-facing destinations.
-- **Evidence:**
-  - [x] Meta App production build and rendered launcher check showed ten pilot-facing destinations and no Chat card. The 273-test retained harness and `litai verify` passed; PR #330 merged at 302c8dbe6 with all 32 checks green. Exact-main image run 40129107242 succeeded, the 302c8dbe6 Meta App image was deployed, and all 12 public browser and health checks passed, including the separately running Chat API.
+[Historical design and evidence](../history/tracker/pre-github-roadmap.md#x-meta-002--show-only-pilot-facing-apps-in-meta-app).
+
+<a id="release-001"></a>
+<a id="x-release-001--reconcile-all-outstanding-contributions-into-release-10"></a>
+### RELEASE-001 — Reconcile all outstanding contributions into release 1.0
+
+[Historical design and evidence](../history/tracker/pre-github-roadmap.md#x-release-001--reconcile-all-outstanding-contributions-into-release-10).
+
+<a id="ai-001"></a>
+<a id="x-ai-001--shared-queued-ai-decision-explanations-in-every-aviation-app"></a>
+### AI-001 — Shared queued AI decision explanations in every Aviation app
+
+[Historical design and evidence](../history/tracker/pre-github-roadmap.md#x-ai-001--shared-queued-ai-decision-explanations-in-every-aviation-app).
+
+<a id="release-002"></a>
+<a id="x-release-002--publish-and-verify-aviation-10"></a>
+### RELEASE-002 — Publish and verify Aviation 1.0
+
+[Historical design and evidence](../history/tracker/pre-github-roadmap.md#x-release-002--publish-and-verify-aviation-10).
+
+<a id="plan-001"></a>
+<a id="x-plan-001--repair-vfr-form-and-route-terrain-requests"></a>
+### PLAN-001 — Repair VFR form and route terrain requests
+
+[Historical design and evidence](../history/tracker/pre-github-roadmap.md#x-plan-001--repair-vfr-form-and-route-terrain-requests).
+
+<a id="ops-001"></a>
+<a id="x-ops-001--verify-hosted-mapping-planning-and-weather-readiness"></a>
+### OPS-001 — Verify hosted mapping, planning, and weather readiness
+
+Current tracking: [GitHub issue](https://github.com/jordanhubbard/Aviation/issues/438). [Historical design and evidence](../history/tracker/pre-github-roadmap.md#x-ops-001--verify-hosted-mapping-planning-and-weather-readiness).
+
+<a id="edge-001"></a>
+<a id="x-edge-001--provide-stable-versioned-http-and-mcp-edge-gateway-contracts"></a>
+### EDGE-001 — Provide stable versioned HTTP and MCP edge gateway contracts
+
+Current tracking: [GitHub issue](https://github.com/jordanhubbard/Aviation/issues/439). [Historical design and evidence](../history/tracker/pre-github-roadmap.md#x-edge-001--provide-stable-versioned-http-and-mcp-edge-gateway-contracts).
+
+<a id="edge-002"></a>
+<a id="x-edge-002--route-every-deployed-app-through-the-central-meta-app-layer"></a>
+### EDGE-002 — Route every deployed app through the central Meta App layer
+
+Current tracking: [GitHub issue](https://github.com/jordanhubbard/Aviation/issues/440). [Historical design and evidence](../history/tracker/pre-github-roadmap.md#x-edge-002--route-every-deployed-app-through-the-central-meta-app-layer).
+
+<a id="dep-001"></a>
+<a id="--dep-001--resolve-inherited-grouped-dependabot-security-update-failures"></a>
+### DEP-001 — Resolve inherited grouped Dependabot security-update failures
+
+Current tracking: [GitHub issue](https://github.com/jordanhubbard/Aviation/issues/441). [Historical design and evidence](../history/tracker/pre-github-roadmap.md#--dep-001--resolve-inherited-grouped-dependabot-security-update-failures).
 
 <a id="e2e-001"></a>
-### [x] E2E-001 — SDK-owned isolated remote application E2E harness
+### E2E-001 — SDK-owned isolated remote application E2E harness
 
-- **GitHub issue:** [#332](https://github.com/jordanhubbard/Aviation/issues/332)
-
-- **Priority:** P1
-- **Owner:** shared SDK, all deployed apps, and deployment verification
-- **Direction:** Exercise every application screen remotely with SDK-provided mocks and sample data that is explicitly tagged and isolated from production records, then clean it up after each test run.
-- **Conclusion:** The current remote browser gate covers roots and selected interactions only. Build reusable SDK E2E fixtures and lifecycle controls, enforce production/test data separation in every persistent app, inventory and exercise all app screens, verify cleanup after both success and failure, and make this a post-deployment gate.
-- **Depends on:** DEPLOY-001 public DNS and existing browser smoke gate
-- **Implementation:**
-  - [x] Define SDK test-run identity, isolation and cleanup contracts; implement reusable browser/HTTP fixtures and mock data; adapt each of the twelve services including non-Node runtimes; cover every navigable screen and persist/read/delete flows where applicable; run the suite after deployment.
-- **Evidence:**
-  - [x] SDK unit and isolation tests, per-app screen and data lifecycle coverage matrix, failure cleanup tests, retained Literate AI receipt, reviewed CI, and live post-deployment E2E run without production data leakage.
-- **Detailed program:** [SDK remote E2E program](../history/roadmap/sdk-remote-e2e-program.md).
-- **Implementation history:** Independent Docker/SSH and native manager recovery landed
-  through #408/#409 with exact-main CI passing. Preflight's seven and KMLab's
-  eight persistence flows pass at desktop/mobile and after injected failure;
-  the coverage change landed through #410. The common SDK compiled keystore
-  bridge, Python write API, concurrent-write preservation and confirmed-save
-  client now pass targeted and retained qualification. Desktop/mobile checks
-  render the built G1000 consumer; all 79 G1000 Jest tests also pass. The
-  SDK repair landed through #411 at `868419d54` with six exact-head workflows
-  passing; all six exact-main workflows also pass. G1000 now uses the common
-  Python settings adapter and authenticated HTTP adapter with canonical fields.
-  Isolated reads disable production fallbacks, and normal providers reject test
-  stores. Its private working-tree image passed real HTTP and desktop/mobile
-  browser persistence, fresh reads, deletion and injected-failure cleanup with
-  zero residual records. The remaining inventory and deployed-build qualification
-  is recorded below.
-  PR #413 merged at `ac9230531` with all six exact-head and exact-main workflows
-  passing. The published image also passed SDK-launcher desktop/mobile and
-  injected-failure runs with zero residual state and owned-resource cleanup.
-  See the E2E program. The latest all-app qualification at `f61fc700d` passes
-  every declared inventory, with 24 mobile/failure zero-residual cleanup results.
-  Preflight's readiness correction landed through #416 at `28df6769a` with all six
-  head/main workflows passing. Its exact published build passes the committed
-  desktop gate, mobile inventory and injected-failure cleanup with zero residual
-  state. The other eleven qualified app and SDK source trees are unchanged from
-  `f61fc700d` to `28df6769a`. All accepted deployed-build criteria are complete.
+[Historical design and evidence](../history/tracker/pre-github-roadmap.md#e2e-001).
 
 <a id="release-001-reconcile-all-outstanding-contributions-into-release-10"></a>
-### [x] RELEASE-001 — Reconcile all outstanding contributions into release 1.0
-
-- **Release target:** 1.0.0
-- **Contribution inventory:** [all included work](../history/roadmap/release-1.0-contributions.md).
-- **Completion:** All 47 original tracker contributions are closed or merged,
-  including [#176](https://github.com/jordanhubbard/Aviation/issues/176#issuecomment-6571951981)
-  and [#332](https://github.com/jordanhubbard/Aviation/issues/332#issuecomment-6571954338).
-  A live 47-item GitHub audit confirms every terminal state. The original fourteen
-  branches and four flagged worktrees have evidence-backed reconciliation, with
-  recovery refs and retained evidence preserved. Added dependency, SDK, deployment
-  and test repairs also landed through reviewed CI.
-- **Deployment evidence:** PRs #414–#416 landed the complete RCC and isolated
-  E2E integrations plus the KMLab and Preflight gate repairs. All six head and
-  exact-main workflows pass at `28df6769a`. All twelve exact published application
-  builds pass their declared inventories, with mobile and injected-failure cleanup;
-  Preflight's committed-controller deployment gate also passes at that revision.
-  The ready sweep and release publication are owned by RELEASE-002.
-
-- **Priority:** P0
-- **Owner:** release engineering
-- **Direction:** The next release is 1.0; include every currently unclassified issue, review, branch, and dirty worktree.
-- **Conclusion:** All discovered work is in scope for 1.0. Reconcile obsolete or equivalent changes with evidence, land unique changes through review and CI, preserve dirty work, and publish only after the contribution sweep is ready.
-- **Depends on:** none
-- **Completion prerequisites:** none
-- **Implementation:**
-  - [x] Assign every open tracker item to 1.0.0 and record a complete branch and worktree inventory.
-  - [x] Consolidate the remaining dependency requests into the retained workspace,
-    qualify package builds/tests and CI, and close each historical PR with its
-    exact incorporated or superseding evidence.
-  - [x] Reconcile every scoped contribution; land and test unique changes or document an evidence-backed supersession.
-  - [x] Reconcile [dependency PR #399](https://github.com/jordanhubbard/Aviation/pull/399):
-    preserve Vite 8 for React plugin 6 consumers, patch the Vite 6 consumer and
-    vulnerable Vitest/mocker, PostCSS and nanoid resolutions, then verify the
-    affected SDK tests, app builds and audit before superseding the failing PR.
-    The candidate uses Vitest/UI/coverage 4.1.12, Vite 8.3.5 for existing Vite 8
-    apps, and Vite 6.4.5 for G1000. Its lockfile clears all audit findings for
-    the five scoped modules; unrelated findings remain. PRs #401–#404 landed
-    the independently green Go, Node, Java and Python action updates.
-    All 15 affected package/app builds pass, as do AI explainer (12), Accident
-    Tracker backend (76 plus 2 Python), Accident Tracker frontend (70), and
-    Planner frontend (12) tests. The retained SDK suite passes 591 tests;
-    `litai verify` passes authority, 19 locks and the current receipt
-    `sha256:2b11353678837e35933aac4d4cac7f99ccd9ea150d1d5d02679391509381f9a7`.
-    PR #406 merged at `d1178828b` with all six exact-main workflows passing;
-    #399 is closed with an exact-head supersession marker and preserved refs.
-  - [x] Reconcile the full development dependency audit before publication.
-    The SDK repair's production audit has zero high/critical findings, while
-    the complete graph still reports 37 high and two critical findings across
-    existing lint, test, browser and documentation dependencies. Patch within
-    existing major versions. Registry artifacts and the refreshed full audit now
-    pass with zero high/critical findings (nine moderate and three low remain).
-    The complete workspace build also exposed the new SDK type wildcard
-    redirecting its root declaration; preserve that declaration explicitly and
-    add the existing legacy consumer build to required SDK CI. The monorepo
-    Build Check previously installed dependencies without compiling; make it
-    compile every Node workspace, and require a full-graph Node audit in the
-    dependency workflow. All Node workspace builds, both affected frontend
-    lint commands and the rendered desktop/mobile settings fixtures pass.
-    The full retained build/test/package harness passed with adopted receipt
-    `sha256:2979832c00349cd5b5b2ce73de3923d1ef322d919e73100e025511ba41bedcc7`; `litai verify` passes authority, nineteen locks and receipt
-    freshness. Source intelligence and HTML remain named configuration skips.
-    The first full CI install exposed a missing `node-gyp` on the runner;
-    provision Python and the pinned native addon driver before installation.
-    PR #412 merged at `8b900247b` after all six exact-head workflows passed;
-    all six exact-main workflows passed, including full-graph dependency audit
-    and the actual workspace build gate.
-  - [x] Complete contribution reconciliation and hand the accepted inventory to RELEASE-002.
-- **Evidence:**
-  - [x] All scoped contributions accepted with committed evidence, terminal tracker dispositions and exact-commit CI; the ready contribution sweep, publication and remote tag verification belong to RELEASE-002.
-
-### [x] AI-001 — Shared queued AI decision explanations in every Aviation app
-
-- **GitHub issue:** [#176](https://github.com/jordanhubbard/Aviation/issues/176)
-
-- **Priority:** P1
-- **Owner:** common Aviation SDK and thin application adapters
-- **Direction:** Implement issue #176: each app exposes POST /api/explain, pilot-facing UIs offer decision explanations with follow-up questions, and RCC owns model fallback. Reuse well-tested Literate AI SDK components instead of private provider implementations.
-- **Conclusion:** The actual RCC API requires authenticated messages and returns 202 queued requests followed by callbacks; the existing synchronous context/question client cannot consume it. Specify and implement one common queued protocol, bounded request lifecycle, credential handling, result ownership and follow-up contract across required runtime bindings. Audit deployed entry points rather than counting dormant adapters.
-- **Depends on:** SDK-001
-- **Completion prerequisites:** none
-- **Implementation:**
-  - [x] Author the shared Component contract and independent conformance tests; implement RCC submission, authenticated callback/result handling and bounded cleanup; wire every deployed service and pilot-facing UI using app-specific decision context; extend the SDK-isolated remote inventory for explanations and follow-ups.
-- **Evidence:**
-  - [x] Primary RCC source contract; SDK unit and real HTTP queued/callback integration tests, including timeout and ownership failures; all application builds and exact deployed-image browser/API checks using SDK mocks without paid or mutating external calls; zero residual test state; fresh retained receipt and reviewed exact-head/main CI.
-
-- **AI-001 checkpoint:** All twelve deployed application entry points and their
-  pilot-facing UIs delegate explanations to the shared SDK. The new
-  `aviation.ai.explanation` Component owns the queued RCC protocol, bounded
-  input/history, independent callback/result credentials, expiry and cleanup.
-  Node applications mount one common runtime; Flask, FastAPI and Ring bindings
-  proxy to the managed broker. Applications supply decision facts and access
-  policies. RCC owns provider fallback; private tests bypass normal credentials
-  and use tagged SDK fixtures.
-  The explanation SDK passes 83 tests, the common TypeScript SDK 631, and the
-  common Python target 366, including eight real broker RPC tests. The independent
-  JVM SDK passes five tests/36 assertions on Linux; Missions' image build passes
-  67 tests/469 assertions. Shared widget browser coverage passes ten desktop/mobile
-  cases, including context replacement/restoration. Nine Linux native-manager
-  tests cover EOF, stubborn children and independent cleanup after controller or
-  helper crashes. The fresh root test target compiles keystore before explanation.
-  All eleven container application candidates pass desktop/mobile and injected
-  failure inventories with zero actor residuals and owned resource removal.
-  Flight School visits 57 routes with a fresh tagged database per run. Meta checks
-  repeated explanations across launcher/settings, a read-only service catalog,
-  no failed settings requests, and readable desktop/mobile layout without overflow.
-  KMLab also passes the full Linux UI inventory after installing both Python SDK
-  packages into an isolated runtime. Its deployment archive preserves the package
-  layout and installs flight-dynamics alongside shared-sdk. These are source
-  candidates, not exact committed/published deployment qualifications.
-  Retained source membership is current; the fresh build/test/package harness
-  passes with adopted receipt `sha256:62c7031274bfa756589ef70baa20ee1860e42eefee5df7ab595a841e6f4f2d6f`. All twenty
-  semantic dependency locks are unchanged; their catalog audits are refreshed.
-  This qualifies retained source, without claiming native Component generation
-  or acceptance. The full dependency audit has zero high or critical findings.
-- **Earlier deployment checkpoint:** PR #414 merged at `69d485b3b` after all six head
-  workflows passed; all six exact-main workflows also passed. The primary checkout
-  and CodeGraph are current. The launcher, Accident Tracker, Chat, Missions and
-  Planner passed their exact published-image deployment gates. KMLab's installed
-  native runtime is healthy, but the retained trace proves a navigation race:
-  a late Performance reference read replaces the Flights list after Flights is
-  selected. Its private manager still removed all test data after failure.
-- **Navigation repair qualification:** The controlled delayed-read regression
-  fails against installed `69d485b3b` when late Performance content replaces
-  Flights. The bounded render-generation fix passes delayed success and error
-  cases at desktop and mobile widths on an isolated Linux native runtime, with
-  both Python SDK packages installed. Normal and injected-failure runs remove
-  their private runtime and fixtures. The full retained build/test/package run
-  passes with candidate identity
-  `sha256:e858ae8d5c0754391ffebd965264dfaf9872a93ffb85e9cdb0a880a9dd258f45`;
-  all Component locks and reviewed authority are current. This remains retained
-  source qualification, without claiming native Component generation/acceptance.
-- **Fleet qualification:** PR #415 merged at `f61fc700d` after all six head
-  workflows passed; all six exact-main workflows passed. All twelve production
-  services now report that revision. Their exact published builds pass the
-  declared inventories at desktop and mobile widths and injected failure after
-  explanation. Each mobile/failure run records zero explanation actor records
-  and removal of its private instance; no test containers or native test units
-  remain. Flight School covers 58 routes/flows. KMLab passes both controlled
-  late-response cases against its installed build, including mobile.
-- **Readiness correction:** The committed launcher probes `/health` for Preflight,
-  but the isolated application returns 404 there and 200 at its declared `/`
-  health endpoint. The initial gate failure and cleanup are retained. With the
-  launcher's readiness path corrected to `/`, that same exact published image
-  passes desktop, mobile and injected-failure qualification. Full retained
-  build/test/package qualification also passes with candidate identity
-  `sha256:d801f73df7ccedeea00dc8d61d4e227dcfce3f2c4675bcf0e87c95fa84aa45fc`.
-- **Release verification:** The common SDK workflow also accepts an explicit
-  manual run, so release revisions can be verified even when its normal source
-  path filter would skip an unrelated controller or documentation change.
-- **Completion evidence:** PR #416 merged at `28df6769a` after all six head
-  workflows passed; all six exact-main workflows also passed. Preflight's exact
-  published build passes the committed desktop deployment gate and fresh mobile
-  and injected-failure runs with zero explanation records and owned-instance
-  cleanup. The eleven other qualified application trees and all SDK sources are
-  unchanged from `f61fc700d` to `28df6769a`. Authority, all twenty locks and the
-  current retained receipt pass. The complete deployed-build acceptance is met;
-  tracker closure cites this committed roadmap evidence. Both issues remain
-  included in 1.0.0.
 
 <a id="release-002-publish-and-verify-aviation-10"></a>
-### [x] RELEASE-002 — Publish and verify Aviation 1.0
-
-- **Release preflight finding:** The release CLI requires repository mode
-  `pre-release` targeting `1.0` before planning this cut. The initial `free`
-  state failed with `release.state_mismatch`; use the authorized CLI state
-  transition and reviewed exact-commit CI before retrying the plan.
-  The inherited engineer source referenced a missing README section and its CI
-  workflow name was the obsolete `CI`. Declare the authenticated repository
-  owner in that section and use the actual `Monorepo CI/CD` workflow while
-  preserving strict authorization.
-
-- **Priority:** P0
-- **Owner:** release engineering
-- **Direction:** Commit, push and publish the Aviation monorepo as release 1.0 after reconciling all included work.
-- **Conclusion:** Keep the prepublication contribution-reconciliation gate separate from publication, so the release does not require a published tag as its own prerequisite. RELEASE-001 establishes accepted contributions; this item owns the subsequent release lifecycle.
-- **Depends on:** RELEASE-001
-- **Completion prerequisites:** none
-- **Implementation:**
-  - [x] Prepare, check, publish and verify v1.0.0 from the approved release revision after the required exact-commit CI and a ready contribution sweep.
-- **Evidence:**
-  - [x] Verify the remote tag and GitHub release against the exact prepared revision, preserve release receipts and complete final contribution and Git synchronization checks.
-
-- **Publication evidence:** [v1.0.0](https://github.com/jordanhubbard/Aviation/releases/tag/v1.0.0)
-  is published as a stable, non-draft release at
-  `e808374dd332e98b46b4df7942518e42f5235977`. All six exact-head and
-  exact-main workflows pass. The declared `make test` release gate passes and
-  binds prepared identity
-  `sha256:528202dcf183472580b350f746b082fd4463d241f369b21ccfeae63aed9f96bc`.
-  Independent CLI verification confirms the annotated remote tag, release branch
-  and GitHub release match that exact revision, with non-empty release notes.
-  Its verification identity is
-  `sha256:bc5810468e7264fd7570204a7d65c477befccf25afdee9c7f93eeb4644966798`.
-  The final contribution sweep is ready with no included open or unclassified
-  work. All 47 original contributions remain closed or merged; source and
-  publication evidence are preserved. Post-release development moves to 1.1.0
-  with repository mode free; these bookkeeping changes are reviewed separately
-  and do not alter the published 1.0 tag.
-
-### [x] PLAN-001 — Repair VFR form and route terrain requests
-
-- **GitHub issue:** [#421](https://github.com/jordanhubbard/Aviation/issues/421)
-- **Completion:** PR #424 is published; the installed build and corrected deployment inventory are verified through PR #425.
-
-- **Priority:** P1
-- **Owner:** retained Flight Planner application and aviation.airports Component
-- **Direction:** Remove instrument procedure selection from the VFR planner and fix oversized Open-Meteo elevation requests.
-- **Conclusion:** The VFR form mounts an unused instrument procedure selector and issues 404 lookups. The retained terrain client submits all samples in one GET despite the documented 100-coordinate limit. Remove that form control and batch provider calls without changing route sampling or terrain policy. Live reproduction also proves that an exact ICAO match loses to an earlier K-stripped IATA alias; fix shared airport identity precedence in both SDK bindings and prevent alias cache poisoning.
-- **Depends on:** none
-- **Completion prerequisites:** none
-- **Implementation:**
-  - [x] Remove the procedure selector from VFR route planning; preserve shared instrument-procedure capabilities for their existing consumers.
-  - [x] Bound elevation GETs to the provider coordinate limit and a conservative encoded URL size; preserve sample order and missing values, and propagate provider failures.
-  - [x] Make exact ICAO/IATA identities take precedence over K-prefix aliases in both SDK bindings; cache only the requested identity.
-- **Evidence:**
-  - [x] Regressions cover VFR form submission without procedure lookups, large terrain profiles, batch boundaries, missing values, empty input, and provider errors.
-  - [x] Run Flight Planner frontend/backend tests and builds, retained-source authority and full test receipt checks, then push a review branch with CI evidence.
-
-- **Local evidence:** Flight Planner passes 208 backend tests and 13 frontend tests;
-  frontend production build and lint pass. Desktop (1280px) and mobile (390px)
-  browser checks show airport controls without instrument-procedure requests,
-  runtime errors, or document overflow. Provider fixtures cover 2,503 full-precision
-  samples, encoded URLs below 4 KiB, short/unknown batches, downstream errors, and
-  terrain maxima beyond the first batch.
-
-- **Discovery:** The retained catalog resolves KDWA to a different airport through
-  its DWA IATA alias before reaching the exact record. The resulting 8,841 NM
-  route requests 885 elevations; the correct coordinates are about 68 NM apart.
-  The shared airport capability owns this fix, including cross-binding synthetic
-  collision vectors and cache-order coverage. A direct 121-point live-provider
-  fetch passed; the erroneous long-route live probe hit HTTP 429, so it is not
-  end-to-end success evidence.
-
-- **Airport repair evidence:** Both bindings fail the new collision vectors before
-  the repair. The full TypeScript SDK now passes 637 tests; the Python airport
-  suites pass 41 tests. A synthetic application integration test proves the
-  selected origin and terrain samples stay in the requested region. The actual
-  terrain-enabled KDWA-to-KPAO request passes with the live elevation provider in
-  0.66 seconds and reports 68.2 NM.
-
-- **Retained qualification:** The complete build/test/package harness passes for
-  final candidate `sha256:1ef8b5027f42f5cf201c98d1b7de7afc7e31eb359ff6426bfe032b6aad5b1fb8`.
-  The committed test receipt is
-  `sha256:29d87265c16d2d2ce3c984e36f89d77a14858806d61af2156a499d4351c28a44`;
-  `litai verify` passes authority, all twenty committed locks, and receipt currency.
-  This is retained-source qualification, without native Component generation or
-  acceptance claims. Production publication remains separate from this repair.
-
-- **Publication evidence:** PR #424 merged at `ee8f9cdc73984fca8c05bf9b6969e89c83079414`
-  after full review-branch and exact-main CI. PR #425 merged at
-  `cbe1d4f97b24ebb05490f60016a1a4b6e014445c` with all six exact-main workflows
-  green and repairs the stale deployed browser expectation. That installed build
-  passes all nine desktop and mobile inventory flows and injected-failure cleanup.
-  Its real terrain/wind KDWA-to-KPAO plan returns 68.2 NM with the correct origin.
-
-### [x] OPS-001 — Verify hosted mapping, planning, and weather readiness
-
-- **Priority:** P1
-- **Owner:** Aviation deployment and retained Flight Planner
-- **Direction:** Configure existing weather access, deploy the merged planning repairs, and verify hosted capabilities.
-- **Conclusion:** The merged planning repair and hosted runtime configuration are deployed and pass real-provider API and browser checks. The deployment inventory matches the VFR form, and the metadata/favicon cleanup removes missing-resource errors. NOTAM integration remains outside this deployment while FAA NMS access is pending.
-- **Depends on:** none
-- **Completion prerequisites:** none
-- **Implementation:**
-  - [x] Install the existing weather credential in the protected runtime environment without exposing its value.
-  - [x] Deploy the exact published planning repair image through the declared deployment gate.
-  - [x] Serve explicitly configured browser weather access through the combined hosted runtime, with no unrelated server configuration exposed.
-  - [x] Supply the existing frontend metadata request and replace its missing starter favicon so live planning has no HTTP or console failures.
-- **Evidence:**
-  - [x] Verify current weather, forecasts, METAR briefings, base maps, overlays, and terrain-aware route planning with live data.
-  - [x] Run the deployment browser and isolated application inventories, including mobile coverage, and record remaining limitations.
-
-- **Deployment checkpoint:** PR #424 is merged at `ee8f9cdc73984fca8c05bf9b6969e89c83079414`.
-  All six exact-main application workflows passed, including thirteen image-build
-  jobs. The installed planner now returns current weather and a terrain-aware,
-  wind-adjusted KDWA-to-KPAO plan at 68.2 NM. The original deployment inventory
-  failed on its obsolete procedure-selector expectation and removed its owned
-  fixtures. The corrected inventory passes all nine desktop flows with zero
-  explanation records and removal of its private container and storage.
-- **Overlay repair checks:** All 211 planner backend tests, 13 frontend tests,
-  frontend lint/build, MAC contract validation and deployment unit tests pass.
-  The two Docker-dependent deployment tests remain outside the portable run.
-  Full retained build/test/package qualification passes with candidate
-  `sha256:543cb6ab67eb7c89f8b721d8a24472dcc55e6a678d12b6797e52f9921298ffee`.
-  The current receipt is
-  `sha256:419756b6e890252a3b38d9778a509c7c0d348a66f735025de216ad47587f0990`.
-  Exact published-image verification remains pending.
-
-- **Live published-image checkpoint:** PR #425 is merged at
-  `cbe1d4f97b24ebb05490f60016a1a4b6e014445c`; all six exact-main workflows pass.
-  Its published image passes the desktop deployment gate, all nine mobile flows,
-  and intentional explanation-failure cleanup with zero residual records. Live
-  current weather, forecasts, route weather, airport search, local planning,
-  METAR briefings and the 68.2 NM terrain/wind route succeed. All four overlay
-  providers return image tiles in the rendered route map. The stricter live
-  browser check also finds 404s for the existing `/api/meta` request and missing
-  starter favicon; resolve these before final readiness admission.
-
-- **Final browser cleanup candidate:** The metadata response and embedded aviation
-  favicon pass 212 backend tests and the frontend production build. Both desktop
-  and mobile local live-data runs load all four overlay types, with 43 and 25
-  successful map-tile responses respectively, zero HTTP/console failures and no
-  overflow. Full retained build/test/package qualification passes with candidate
-  `sha256:7e3f2bd0a9435feb39cf573f834aab22700b90353125cf4a2c1b297de794469f`
-  and current receipt
-  `sha256:50ce2885d2b3846e42bb86895e734abb39f1991497f9f52fe4b09a1ccbe2c3c0`.
-  This remains retained-source qualification; final publication and hosted
-  clean-browser admission are pending.
-
-- **Completion evidence:** PR #426 merged at
-  `3d36f2efb187e9e2a0c292071e7bc5aec265960d` after all six head workflows and
-  all six exact-main workflows passed. Its exact published image is installed and
-  passes the deployment gate, all nine mobile inventory flows, and intentional
-  explanation-failure cleanup with zero residual records and private-instance
-  removal. Fresh live desktop/mobile runs load all four raster overlay types,
-  render the 68.2 NM terrain/wind route, finish weather/elevation loading, and have
-  zero HTTP/console/request failures, non-finite values or document overflow.
-  All twelve public health endpoints respond and all twelve service units are active.
-  [Hosted readiness observations](../../verification/hosted-readiness.json) bind
-  the source revision, published image digest, exact CI, live API results and UI
-  inventories. Both rendered viewport captures were reviewed.
-- **Remaining boundary:** NOTAM integration awaits FAA NMS access. The deployment
-  volume has about 14.3 GiB free (9.3%), a warning rather than a failed service.
-  Docker reported roughly 5.3 GB of reclaimable images and 1.0 GB of reclaimable
-  build cache before this update; image history, data and cache were preserved.
-  These observations establish retained application availability, without native
-  Component generation/acceptance or operational-flight approval claims.
-
-### [x] EDGE-001 — Provide stable versioned HTTP and MCP edge gateway contracts
-
-- **Priority:** P1
-- **Owner:** Meta App public API contracts and service routing adapters
-- **Direction:** Make Meta App the edge gateway for other services and external callers, with stable versioned namespaced APIs and the same service closure through MCP, while retaining its HTML interface and direct service access.
-- **Conclusion:** The existing Meta App serves a launcher, feedback and explanation routes; it provides no aggregate service API or MCP endpoint. Own the public v1 namespace independently of upstream versions, serve a machine-readable catalog and OpenAPI contract, and share explicit routing and compatibility adapters across HTTP and MCP. API misses must never return the HTML launcher.
-- **Depends on:** none
-- **Completion prerequisites:** none
-- **Implementation:**
-  - [x] Author the versioned public namespace, discovery, compatibility and upstream binding contracts.
-  - [x] Implement HTTP routing with streaming, authentication preservation, error handling, cancellation and bounded upstream access.
-  - [x] Expose the same namespaced service API through a standards-compliant MCP endpoint using the shared registry and schemas.
-  - [x] Publish and deploy the qualified Meta App gateway while preserving the existing HTML UI and direct service endpoints.
-- **Evidence:**
-  - [x] Verify stable v1 requests across changed upstream addresses, path versions and request/response adaptations with actual local HTTP providers.
-  - [x] Exercise HTTP methods, queries, bodies, files, streams, cookies, auth failures, redirects, unknown namespaces and unsafe destinations.
-  - [x] Use a real MCP client for discovery, validation, service invocation, structured failures and HTTP/MCP parity.
-  - [x] Pass local qualification, exact review/main CI and hosted HTTP/MCP and browser checks; retain truthful availability and compatibility boundaries.
-
-- **Local implementation evidence:** The shared v1 contract now exposes eleven
-  namespaces, catalog/OpenAPI resources and namespaced MCP tools. Eleven local
-  tests pass against actual HTTP providers and a real MCP client, including
-  relocated/versioned providers with request/response field adaptation, HTTP/MCP
-  parity, binary and streaming data, credentials, cookies, redirects, path
-  validation, timeouts, cancellation and HTML/API separation. The production
-  dependency deployment imports successfully. CI now runs this gateway suite
-  after the workspace build. First-version WebSocket clients retain direct
-  endpoints; the static preflight application is explicitly identified as having
-  no standalone JSON data API. Full qualification/publication remain pending.
-
-- **Protocol follow-up before deployment:** Preserve upstream HTTP status and
-  content types for known namespace routes, including HTML authentication errors
-  and redirects. JSON errors apply to unknown Meta App routes/versions/namespaces;
-  the gateway must not infer a failed service request solely from its MIME type.
-  Add actual-provider coverage before admitting the production deployment.
-
-- **Encoded payload follow-up:** A real MCP regression also catches gzip and
-  non-UTF-8 text being decoded as UTF-8 solely from MIME type. Return those bytes
-  as base64 with original headers, preserving the same wire data as HTTP.
-
-- **Completion evidence:** PRs #428 and #429 landed the gateway and response
-  fidelity corrections. All six head workflows passed before merge; all six exact-main workflows
-  pass for the deployed source `c8e057097f6c0225731864fd4adaeff28c2dd58b`.
-  [Hosted gateway observations](../../verification/meta-edge-gateway.json) bind
-  the published image digest, current receipt, schemas, 25 live observations,
-  all eleven routed service health checks, real airport/trip/weather requests,
-  real MCP calls and a gzip payload round trip containing 25 airports. Both
-  four-screen desktop/mobile inventories pass with zero residual records and
-  private-instance removal. Intentional explanation failure exits 1 as expected
-  and also leaves zero residual records and no private instance. Rendered desktop
-  and mobile captures were reviewed; all twelve service units remain active.
-- **Admission boundary:** This is retained application qualification. HTML and
-  direct service endpoints remain available. WebSocket clients use direct service
-  endpoints, MCP buffers at most 4 MiB, preflight remains a static application,
-  and NOTAM integration still awaits FAA NMS access. The deployment volume remains
-  under its 10 percent disk warning threshold; image history and shared caches
-  were preserved. Local qualification used a temporary RAM workspace while the
-  source volume lacked build headroom; the RAM workspace was removed afterward.
-
-### [x] EDGE-002 — Route every deployed app through the central Meta App layer
-
-- **Priority:** P1
-- **Owner:** Meta App gateway and deployment adapters
-- **Direction:** Finish the single API and MCP abstraction and update affected apps.
-- **Conclusion:** The existing versioned gateway is now the ingress for every deployed
-  application hostname. One registry selects private HTTP and WebSocket providers,
-  while native paths, sessions, redirects and CSRF origins remain intact. MAC task
-  `task_b925bee300584bcdafe114d9f9b32404` tracks the same implementation.
-- **Depends on:** EDGE-001
-- **Completion prerequisites:** none
-- **Implementation:**
-  - [x] Implement host-bound HTTP and WebSocket ingress with shared namespace routing and fail-closed bindings.
-  - [x] Update every app ingress and the Meta App runtime, including the native analyzer and Flight Tracker's separate socket listener.
-  - [x] Install G1000's production WebSocket transport and qualify a real Uvicorn handshake, telemetry and ping/pong.
-- **Evidence:**
-  - [x] Pass real-provider HTTP, MCP, WebSocket, session isolation and deployment controls.
-  - [x] Pass retained qualification, current receipt/authority checks and exact review/main product CI; commit and push through reviewed branches.
-  - [x] Verify hosted rollout and every app through the central layer.
-- **Completion evidence:** PRs [#431](https://github.com/jordanhubbard/Aviation/pull/431)
-  and [#432](https://github.com/jordanhubbard/Aviation/pull/432) passed all applicable
-  product workflows before merging. Meta App and Flight Tracker run exact image
-  revision `d08c8e9e5`; G1000 runs `47aa5f959`, which adds the missing Uvicorn
-  protocol dependency. Fresh retained qualification passes 637 tests; fourteen
-  Meta App tests, six portable deployment controls and all 37 G1000 Python tests pass.
-  Hosted checks pass 40 HTTP/MCP/provider/socket observations, including actual
-  G1000 telemetry frames and ping/pong on both native and namespaced routes.
-  All 24 desktop/mobile root views have no new errors or overflow; all twelve
-  service units are active. Three isolated app inventories pass with zero residual
-  records and private-instance removal. See the image digests, CI runs and detailed
-  [hosted central ingress observations](../../verification/meta-central-ingress.json).
-- **Admission boundaries:** This is retained application qualification. Preflight
-  remains browser-local, MCP buffers at most 4 MiB, and Meta App is an availability
-  dependency for all public apps. Existing favicon/font-policy warnings remain.
-  The separate automatic Dependabot security-update failure is tracked by DEP-001;
-  it is explicitly excluded from product qualification, with no claim that all
-  repository checks are green. Disk remains below its ten-percent warning threshold;
-  existing images, data and caches were preserved.
-
-### [ ] DEP-001 — Resolve inherited grouped Dependabot security-update failures
-
-- **Priority:** P1
-- **Owner:** Repository dependency maintenance
-- **Direction:** Track the failed automatic security update discovered while qualifying central ingress.
-- **Conclusion:** Dynamic Dependabot run 42942260916 cannot resolve existing npm security patches and reports security_update_not_found for deepmerge. It is separate from passing product CI and the Python transport fix; retain that failure explicitly and investigate supported patched resolutions without weakening scan policy. MAC task task_e24329ddddd14ab4a86dca9d43750615 tracks this follow-up.
-- **Depends on:** none
-- **Completion prerequisites:** none
-- **Implementation:**
-  - [ ] Investigate the failed dependency resolutions and select independently reviewable supported updates.
-- **Evidence:**
-  - [ ] Pass the dependency/security and affected application suites, and verify a successful bot update or document a justified upstream constraint.

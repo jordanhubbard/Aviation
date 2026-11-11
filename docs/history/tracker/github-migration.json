@@ -1,0 +1,79 @@
+{
+  "schema": "aviation/github-tracker-migration@1",
+  "migration_issue": 434,
+  "canonical_repository": "jordanhubbard/Aviation",
+  "items": [
+    {
+      "legacy_task_id": "task_d203ebc32768084c7b822733f605f1a7",
+      "legacy_state": "open",
+      "work_id": "ADOPT-002",
+      "github_issue": 435,
+      "url": "https://github.com/jordanhubbard/Aviation/issues/435",
+      "github_state": "closed",
+      "legacy_retirement_state": "cancelled-preserved"
+    },
+    {
+      "legacy_task_id": "task_429cbcaff6a84f06a383bac4c1c9eb83",
+      "legacy_state": "open",
+      "work_id": "FLIGHT-002",
+      "github_issue": 436,
+      "url": "https://github.com/jordanhubbard/Aviation/issues/436",
+      "github_state": "closed",
+      "legacy_retirement_state": "cancelled-preserved"
+    },
+    {
+      "legacy_task_id": "task_c7befa4095b74be7967535e52557d21b",
+      "legacy_state": "open",
+      "work_id": "META-001",
+      "github_issue": 437,
+      "url": "https://github.com/jordanhubbard/Aviation/issues/437",
+      "github_state": "closed",
+      "legacy_retirement_state": "cancelled-preserved"
+    },
+    {
+      "legacy_task_id": "task_019dd8bdff1f4b2ab517e7edb227f7f2",
+      "legacy_state": "open",
+      "work_id": "OPS-001",
+      "github_issue": 438,
+      "url": "https://github.com/jordanhubbard/Aviation/issues/438",
+      "github_state": "closed",
+      "legacy_retirement_state": "cancelled-preserved"
+    },
+    {
+      "legacy_task_id": "task_e6a190591f1141dfab7203b4f31654a6",
+      "legacy_state": "open",
+      "work_id": "EDGE-001",
+      "github_issue": 439,
+      "url": "https://github.com/jordanhubbard/Aviation/issues/439",
+      "github_state": "closed",
+      "legacy_retirement_state": "cancelled-preserved"
+    },
+    {
+      "legacy_task_id": "task_b925bee300584bcdafe114d9f9b32404",
+      "legacy_state": "open",
+      "work_id": "EDGE-002",
+      "github_issue": 440,
+      "url": "https://github.com/jordanhubbard/Aviation/issues/440",
+      "github_state": "closed",
+      "legacy_retirement_state": "cancelled-preserved"
+    },
+    {
+      "legacy_task_id": "task_e24329ddddd14ab4a86dca9d43750615",
+      "legacy_state": "open",
+      "work_id": "DEP-001",
+      "github_issue": 441,
+      "url": "https://github.com/jordanhubbard/Aviation/issues/441",
+      "github_state": "open",
+      "legacy_retirement_state": "cancelled-preserved"
+    },
+    {
+      "work_id": "ADOPT-002",
+      "scope": "native-rewrite-program",
+      "github_issue": 442,
+      "url": "https://github.com/jordanhubbard/Aviation/issues/442",
+      "github_state": "open"
+    }
+  ],
+  "terminal_history": "legacy-task-summary.json",
+  "legacy_retirement": "All seven previously active task records retired as cancelled-preserved with canonical GitHub issue URLs; terminal history retained read-only."
+}

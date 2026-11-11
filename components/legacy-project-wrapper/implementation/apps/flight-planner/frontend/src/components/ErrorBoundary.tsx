@@ -2,7 +2,7 @@ import { Component, ErrorInfo, ReactNode } from 'react'
 import { Alert, AlertTitle, Button, Box, Typography, Paper } from '@mui/material'
 import { Error as ErrorIcon, Refresh } from '@mui/icons-material'
 
-import { reportFrontendErrorToMac } from '../utils/macReporting'
+import { reportFrontendError } from '../utils/issueReporting'
 
 interface Props {
   children: ReactNode
@@ -38,7 +38,7 @@ export class ErrorBoundary extends Component<Props, State> {
   componentDidCatch(error: Error, errorInfo: ErrorInfo) {
     console.error('ErrorBoundary caught an error:', error, errorInfo)
 
-    void reportFrontendErrorToMac(error, {
+    void reportFrontendError(error, {
       kind: 'react-error-boundary',
       componentStack: errorInfo.componentStack || undefined,
     })

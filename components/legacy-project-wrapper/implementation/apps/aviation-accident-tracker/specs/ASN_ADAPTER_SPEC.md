@@ -1,6 +1,6 @@
 # ASN Aviation Safety Network Adapter Implementation Spec
 
-**MAC task:** [Aviation-gil] Implement ASN data ingestion adapter
+**Historical work reference:** [Aviation-gil] Implement ASN data ingestion adapter
 **Priority:** P0 - MVP Blocker
 **Effort:** 2-3 days
 **Dependencies:**

@@ -12,14 +12,18 @@ Shared SDK for aviation applications providing common services, AI integration p
 - `AIProvider` - Interface for AI provider implementations
 - Common AI patterns and utilities
 
-### MAC runtime task reporting
+### GitHub runtime issue reporting
 
-- `MacTaskCreator` submits idempotent error tasks to the MAC hub.
-- `installNodeProcessErrorReporting` reports uncaught Node.js process errors.
-- Configure `MAC_API_URL` and, when required, `MAC_API_TOKEN`; the project
-  defaults to `Aviation`.
-- CI and test processes do not create live tasks unless
-  `MAC_AUTOREPORT_FORCE=1` is set explicitly.
+`GitHubIssueCreator` files engineering issues directly in GitHub using the
+server-side `GITHUB_ISSUES_TOKEN`, `GITHUB_ISSUES_REPOSITORY` and explicit
+`GITHUB_ISSUES_AUTOREPORT=1` opt-in. It returns an issue number and URL, suppresses
+duplicates and limits each process to five attempts per hour. CI/test reporting
+stays off unless a private-provider test explicitly sets
+`GITHUB_ISSUES_AUTOREPORT_FORCE=1`.
+
+`installNodeProcessErrorReporting({ service, issueCreator })` installs the optional
+backend error hooks. See [the tracking guide](../../../../../docs/development/issue-tracking.md)
+for privacy, configuration and migration details.
 
 ### Aviation Data Services
 

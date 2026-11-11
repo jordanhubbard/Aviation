@@ -1,4 +1,5 @@
 import { afterEach, describe, expect, it } from 'vitest';
+import request from 'supertest';
 import { mkdtemp, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -66,7 +67,7 @@ describe('Accident Tracker remote E2E isolation', () => {
         headers: signE2EHeaders('aviation-chat', run.id, secret),
       });
       expect(invalid.status).toBe(403);
-      const sideEffect = await fetch(`${baseUrl}/api/mac/report`, {
+      const sideEffect = await fetch(`${baseUrl}/api/issues/report`, {
         method: 'POST', headers: { ...run.headersFor('aviation-accident-tracker'),
           'content-type': 'application/json' }, body: JSON.stringify({ source: 'frontend', message: 'test' }),
       });
@@ -90,5 +91,24 @@ describe('Accident Tracker remote E2E isolation', () => {
       is_test_data: true, test_run_id: createE2ERunId(),
     })).rejects.toThrow('not tagged for this E2E run');
     expect(await manager.count(runId)).toBe(0);
+  });
+});
+
+
+describe('GitHub issue reporting routes', () => {
+  it('keeps reporting disabled in tests and redirects cached client routes', async () => {
+    const repository = new EventRepository(':memory:');
+    resources.push(() => repository.close());
+    const app = createApp(repository);
+    const capability = await request(app).get('/api/issues/enabled');
+    expect(capability.body.enabled).toBe(false);
+    const report = await request(app).post('/api/issues/report').send({ message: 'test failure' });
+    expect(report.status).toBe(200);
+    expect(report.body).toMatchObject({ enabled: false, created: false });
+    for (const [method, route] of [['get', 'enabled'], ['post', 'report']] as const) {
+      const response = await request(app)[method](`/api/mac/${route}`);
+      expect(response.status).toBe(307);
+      expect(response.headers.location).toBe(`/api/issues/${route}`);
+    }
   });
 });

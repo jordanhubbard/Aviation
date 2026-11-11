@@ -1,0 +1,10 @@
+{
+  "schema": "aviation/github-issue-tracking@1",
+  "provider": "github",
+  "repository": "jordanhubbard/Aviation",
+  "issues_url": "https://github.com/jordanhubbard/Aviation/issues",
+  "review": "pull-requests",
+  "migration_issue": 434,
+  "migration_map": "docs/history/tracker/github-migration.json",
+  "guide": "docs/development/issue-tracking.md"
+}

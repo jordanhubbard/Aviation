@@ -99,7 +99,7 @@ The machine-checked
 top-level directory and file beneath **R**. Application and shared-package trees are
 owned by the application-state and workspace-package inventories; deployment,
 monitoring, scripts, and integration tests are owned by the repository-harness
-inventory. Path manifests cover the retained MAC contract, Component conformance
+inventory. Path manifests cover Component conformance
 vectors, documentation, examples, and historical plans. Every root configuration,
 lock, legal, state-seed, and historical file has an explicit classification.
 
@@ -107,7 +107,7 @@ The audit removes the nested `.github` copy because GitHub executes only the rep
 root workflows and the retained copies had materially drifted from them. It also
 removes obsolete Cursor npm bootstrap, Loom environment, responsible-vibe MCP/settings,
 and stale Claude-template guidance. Those files contradicted the pinned pnpm workspace,
-current AGENTS.md, MAC, and Literate AI authorities; they are conversion residue, not
+current AGENTS.md, GitHub, and Literate AI authorities; they are conversion residue, not
 an SDK capability. The retained avionics vector remains Component conformance evidence
 consumed by four independent package test adapters. Documentation and plans remain
 provenance or operator material and explicitly do not claim current Component authority.

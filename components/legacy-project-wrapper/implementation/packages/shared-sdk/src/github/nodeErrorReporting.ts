@@ -1,8 +1,8 @@
-import { MacTaskCreator } from "./taskCreator.js";
+import { GitHubIssueCreator } from "./issueCreator.js";
 
 export type InstallNodeErrorReportingOptions = {
   service: string;
-  taskCreator: MacTaskCreator;
+  issueCreator: GitHubIssueCreator;
 };
 
 const normalizeUnknownError = (error: unknown): Error => {
@@ -13,8 +13,8 @@ const normalizeUnknownError = (error: unknown): Error => {
 export function installNodeProcessErrorReporting(
   options: InstallNodeErrorReportingOptions,
 ): void {
-  const { taskCreator, service } = options;
-  if (!taskCreator.enabled()) return;
+  const { issueCreator, service } = options;
+  if (!issueCreator.enabled()) return;
 
   let inHandler = false;
 
@@ -22,14 +22,13 @@ export function installNodeProcessErrorReporting(
     if (inHandler) return;
     inHandler = true;
     const err = normalizeUnknownError(error);
-    void taskCreator
-      .createAutoFiledTask({
+    void issueCreator
+      .createAutoFiledIssue({
         title: `[backend][uncaughtException] ${service}: ${err.message}`.slice(
           0,
           180,
         ),
-        description: `Service: ${service}\n\nMessage:\n${err.message}\n\nStack:\n${err.stack ?? "(no stack)"}`,
-        priority: 1,
+        body: `Service: ${service}\n\nMessage:\n${err.message}\n\nStack:\n${err.stack ?? "(no stack)"}`,
         autoFiledContext: `uncaughtException in ${service}.`,
       })
       .finally(() => {
@@ -41,14 +40,13 @@ export function installNodeProcessErrorReporting(
     if (inHandler) return;
     inHandler = true;
     const err = normalizeUnknownError(reason);
-    void taskCreator
-      .createAutoFiledTask({
+    void issueCreator
+      .createAutoFiledIssue({
         title: `[backend][unhandledRejection] ${service}: ${err.message}`.slice(
           0,
           180,
         ),
-        description: `Service: ${service}\n\nMessage:\n${err.message}\n\nStack:\n${err.stack ?? "(no stack)"}`,
-        priority: 1,
+        body: `Service: ${service}\n\nMessage:\n${err.message}\n\nStack:\n${err.stack ?? "(no stack)"}`,
         autoFiledContext: `unhandledRejection in ${service}.`,
       })
       .finally(() => {

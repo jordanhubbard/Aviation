@@ -1,5 +1,7 @@
 # Worktree Merge Complete - January 14, 2026
 
+> Tracker note: work and review now live in [GitHub Issues](https://github.com/jordanhubbard/Aviation/issues). Legacy task references below are historical provenance.
+
 ## ✅ All Worktrees Merged and Pushed
 
 All parallel development from multiple git worktrees has been successfully consolidated into the `main` branch and pushed to remote.

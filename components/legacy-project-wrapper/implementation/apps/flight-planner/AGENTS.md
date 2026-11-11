@@ -1,28 +1,14 @@
 # Agent Instructions
 
-This application uses the Aviation project in MAC for all task tracking. Do not
-create local ticket databases or Markdown task lists.
+Follow the repository root `AGENTS.md` and `SKILL.md`. GitHub Issues and pull
+requests in `jordanhubbard/Aviation` are the sole work and review authority.
 
-## Task workflow
-
-Use the current CLI from the MAC source checkout when it is available:
-
-```bash
-/Users/jkh/Src/mac/.venv/bin/mac task ready --project Aviation
-/Users/jkh/Src/mac/.venv/bin/mac task show <task-id>
-/Users/jkh/Src/mac/.venv/bin/mac task create "Follow-up title" \
-  --project Aviation --no-ticket --description "Detailed context"
+```sh
+gh issue list --repo jordanhubbard/Aviation --state open
+gh issue view NUMBER --repo jordanhubbard/Aviation
+gh issue create --repo jordanhubbard/Aviation --title "Outcome" --body-file issue.md
 ```
 
-The MAC hub owns task state, dependencies, evidence, and dispatch. New tasks
-must use `--project Aviation --no-ticket`; dependencies must be MAC task IDs.
-
-## Session completion
-
-1. Create MAC follow-up tasks for remaining work.
-2. Run the relevant tests, linters, and builds.
-3. Attach evidence and update the active MAC task through its normal lifecycle.
-4. Commit and push authorized repository changes.
-5. Verify the branch and MAC task state agree before handing off.
-
-Never bypass MAC review or evidence gates merely to make a task appear done.
+Keep dependencies and acceptance evidence in the issue and its PR. Run relevant
+checks, commit and push the change, and close the GitHub issue after completion.
+Do not create a task in a separate tracker or require its lifecycle review.

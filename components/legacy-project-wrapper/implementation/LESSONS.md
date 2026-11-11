@@ -1,20 +1,18 @@
 # Lessons Learned
 
+> Tracker note: work and review now live in [GitHub Issues](https://github.com/jordanhubbard/Aviation/issues). Legacy task references below are historical provenance.
+
 ## System Context
-This project uses MAC as its task system. Key facts for agents:
+This project tracks engineering work in [GitHub Issues](https://github.com/jordanhubbard/Aviation/issues).
 
-### MAC Task Lifecycle
-- Inspect work with `mac task ready --project Aviation` and `mac task show <task-id>`.
-- Start work through MAC's normal assignment and lease flow.
-- Complete work only after its required validation and evidence are available.
-- Use `mac task close <task-id> --no-ticket` for the normal completion flow.
-
-### Git Workflow
-- Keep task IDs in commit or PR context when the change belongs to a MAC task.
-- Build and test the affected application before committing.
+### Issue and review lifecycle
+- Inspect work with `gh issue list --repo jordanhubbard/Aviation` and `gh issue view NUMBER`.
+- Reuse or file the issue before implementation; link evidence and blockers there.
+- Build and test the affected application before committing, push the branch, and
+  submit a pull request. Close the issue after the required gates pass and work lands.
 
 ### Common Mistakes
-1. **Forgetting to reconcile MAC** — completed code with a stale task state leaves the project ledger misleading
+1. **Forgetting to reconcile GitHub** — completed code with a stale issue state leaves the project tracker misleading
 2. **Committing without pushing** — commit exists locally but remote never gets it; always push
 3. **Import errors** — do NOT add `import (...)` statements inside function bodies; imports go at top of file
 4. **Duplicate declarations** — check if a function/method already exists before adding it
@@ -28,6 +26,6 @@ This project uses MAC as its task system. Key facts for agents:
 
 ### Deadlock Escape
 If you are stuck and cannot make progress:
-1. Record the attempted approaches and exact blocker on the MAC task.
-2. Include the specific error in the task evidence.
+1. Record the attempted approaches and exact blocker on the GitHub issue.
+2. Include the specific error in the issue evidence.
 3. Do NOT keep retrying the same failing operation

@@ -1,6 +1,6 @@
 export * from './ai.js';
 export * from './service.js';
-export * from './mac/index.js';
+export * from './github/index.js';
 
 // Caching
 export * from './cache/index.js';

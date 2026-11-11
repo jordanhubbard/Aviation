@@ -1,5 +1,7 @@
 # Aviation Accident Tracker - Integration Status
 
+> Tracker note: work and review now live in [GitHub Issues](https://github.com/jordanhubbard/Aviation/issues). Legacy task references below are historical provenance.
+
 **Date:** January 15, 2026
 **Status:** ⚠️ **PARTIALLY INTEGRATED - BUILD ERRORS**
 

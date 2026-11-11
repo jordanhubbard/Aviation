@@ -1,4 +1,6 @@
 # Aviation-o2d Complete ✅
+
+> Tracker note: work and review now live in [GitHub Issues](https://github.com/jordanhubbard/Aviation/issues). Legacy task references below are historical provenance.
 ## Airport Database & Search Extraction
 
 > **MAC task:** Aviation-o2d (P0 - MVP Blocker)

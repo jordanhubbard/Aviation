@@ -1,15 +1,14 @@
 import http from "http";
 import { createExplanationRuntime } from '@aviation/ai-explainer';
 import {
-  MacTaskCreator,
+  GitHubIssueCreator,
   createHealthReport,
   installNodeProcessErrorReporting,
 } from "@aviation/shared-sdk";
 import { WeatherBriefingService } from "./service";
 import { defaultRegionId, getRegion, regions } from "./regions";
 
-const macTaskCreator = new MacTaskCreator({
-  project: "Aviation",
+const githubIssueCreator = new GitHubIssueCreator({
   requireDebug: true,
   debug: process.env.NODE_ENV !== "production",
 });
@@ -25,7 +24,7 @@ async function main() {
 
   installNodeProcessErrorReporting({
     service: "weather-briefing",
-    taskCreator: macTaskCreator,
+    issueCreator: githubIssueCreator,
   });
 
   // Initialize service with shared SDK

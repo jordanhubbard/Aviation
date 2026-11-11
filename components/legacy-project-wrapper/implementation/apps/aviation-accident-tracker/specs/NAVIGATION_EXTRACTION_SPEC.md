@@ -1,6 +1,6 @@
 # Navigation Utilities Extraction Implementation Spec
 
-**MAC task:** [Aviation-ywm] Extract navigation utilities to @aviation/shared-sdk
+**Historical work reference:** [Aviation-ywm] Extract navigation utilities to @aviation/shared-sdk
 **Priority:** P0 - MVP Blocker
 **Effort:** 2 days
 **Dependencies:** None

@@ -1,6 +1,6 @@
 # Integration Tests Implementation Spec
 
-**MAC task:** [Aviation-5ra] Implement integration tests
+**Historical work reference:** [Aviation-5ra] Implement integration tests
 **Priority:** P1 - High Priority
 **Effort:** 1-2 days
 **Dependencies:**

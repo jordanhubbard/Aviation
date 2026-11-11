@@ -1,7 +1,7 @@
 import http from "http";
 import { createExplanationRuntime } from '@aviation/ai-explainer';
 import {
-  MacTaskCreator,
+  GitHubIssueCreator,
   createHealthReport,
   installNodeProcessErrorReporting,
 } from "@aviation/shared-sdk";
@@ -9,8 +9,7 @@ import { FlightTrackerService } from "./service";
 import { FlightWebSocketServer } from "./websocket-server";
 import { DataPublisher } from "./data-publisher";
 
-const macTaskCreator = new MacTaskCreator({
-  project: "Aviation",
+const githubIssueCreator = new GitHubIssueCreator({
   requireDebug: true,
   debug: process.env.NODE_ENV !== "production",
 });
@@ -621,7 +620,7 @@ async function main() {
 
   installNodeProcessErrorReporting({
     service: "flight-tracker",
-    taskCreator: macTaskCreator,
+    issueCreator: githubIssueCreator,
   });
 
   const service = new FlightTrackerService({

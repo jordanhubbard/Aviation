@@ -1,6 +1,6 @@
 # Map Integration Extraction Implementation Spec
 
-**MAC task:** [Aviation-r2l] Extract map integration patterns to @aviation/ui-framework
+**Historical work reference:** [Aviation-r2l] Extract map integration patterns to @aviation/ui-framework
 **Priority:** P0 - MVP Blocker
 **Effort:** 3-4 days
 **Dependencies:** None (but will benefit from Aviation-o2d airports, Aviation-ywm navigation)

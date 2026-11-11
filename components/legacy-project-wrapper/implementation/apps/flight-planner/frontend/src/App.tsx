@@ -11,7 +11,7 @@ import KeyboardShortcuts from './components/KeyboardShortcuts'
 import { ErrorBoundary } from './components/ErrorBoundary'
 import { LoadingState } from './components/shared'
 import { getRuntimeEnv, githubNewIssueUrl } from './utils'
-import { reportFrontendErrorToMac } from './utils/macReporting'
+import { reportFrontendError } from './utils/issueReporting'
 
 // Code splitting with React.lazy for better performance
 const FlightPlannerPage = lazy(() => import('./pages/FlightPlannerPage'))
@@ -22,7 +22,7 @@ function MissingRoute() {
   const location = useLocation()
 
   useEffect(() => {
-    void reportFrontendErrorToMac(new Error(`Missing route: ${location.pathname}`), {
+    void reportFrontendError(new Error(`Missing route: ${location.pathname}`), {
       kind: 'missing-route',
       extra: {
         pathname: location.pathname,
