@@ -1282,42 +1282,54 @@ release-visible outcome to `CHANGELOG.md`; Git preserves prior queue states.
   were preserved. Local qualification used a temporary RAM workspace while the
   source volume lacked build headroom; the RAM workspace was removed afterward.
 
-### [ ] EDGE-002 — Route every deployed app through the central Meta App layer
+### [x] EDGE-002 — Route every deployed app through the central Meta App layer
 
 - **Priority:** P1
 - **Owner:** Meta App gateway and deployment adapters
-- **Direction:** Finish the single API and MCP abstraction and update affected applications.
-- **Conclusion:** Existing HTTP/MCP namespaces are deployed, but app ingress bypasses the registry and WebSockets remain direct. Route declared application hosts through Meta App with private loopback bindings, preserve native sessions and redirects, and support upgrades using the same registry. MAC task task_b925bee300584bcdafe114d9f9b32404 tracks execution.
+- **Direction:** Finish the single API and MCP abstraction and update affected apps.
+- **Conclusion:** The existing versioned gateway is now the ingress for every deployed
+  application hostname. One registry selects private HTTP and WebSocket providers,
+  while native paths, sessions, redirects and CSRF origins remain intact. MAC task
+  `task_b925bee300584bcdafe114d9f9b32404` tracks the same implementation.
 - **Depends on:** EDGE-001
 - **Completion prerequisites:** none
 - **Implementation:**
-  - [x] Install the G1000 production WebSocket transport and qualify an actual Uvicorn handshake, greeting and ping/pong.
-  - [x] Implement host-bound HTTP and WebSocket ingress with shared namespace routing and fail-closed configuration.
-  - [x] Update every application ingress and Meta App runtime deployment, including native analyzer configuration, without changing application URLs.
+  - [x] Implement host-bound HTTP and WebSocket ingress with shared namespace routing and fail-closed bindings.
+  - [x] Update every app ingress and the Meta App runtime, including the native analyzer and Flight Tracker's separate socket listener.
+  - [x] Install G1000's production WebSocket transport and qualify a real Uvicorn handshake, telemetry and ping/pong.
 - **Evidence:**
-  - [x] Pass real-provider HTTP, WebSocket, session isolation and MCP parity tests plus deployment configuration controls.
-  - [ ] Pass retained lifecycle qualification and exact review CI; commit and push the implementation.
-  - [ ] Verify hosted rollout and every application through the central layer.
+  - [x] Pass real-provider HTTP, MCP, WebSocket, session isolation and deployment controls.
+  - [x] Pass retained qualification, current receipt/authority checks and exact review/main product CI; commit and push through reviewed branches.
+  - [x] Verify hosted rollout and every app through the central layer.
+- **Completion evidence:** PRs [#431](https://github.com/jordanhubbard/Aviation/pull/431)
+  and [#432](https://github.com/jordanhubbard/Aviation/pull/432) passed all applicable
+  product workflows before merging. Meta App and Flight Tracker run exact image
+  revision `d08c8e9e5`; G1000 runs `47aa5f959`, which adds the missing Uvicorn
+  protocol dependency. Fresh retained qualification passes 637 tests; fourteen
+  Meta App tests, six portable deployment controls and all 37 G1000 Python tests pass.
+  Hosted checks pass 40 HTTP/MCP/provider/socket observations, including actual
+  G1000 telemetry frames and ping/pong on both native and namespaced routes.
+  All 24 desktop/mobile root views have no new errors or overflow; all twelve
+  service units are active. Three isolated app inventories pass with zero residual
+  records and private-instance removal. See the image digests, CI runs and detailed
+  [hosted central ingress observations](../../verification/meta-central-ingress.json).
+- **Admission boundaries:** This is retained application qualification. Preflight
+  remains browser-local, MCP buffers at most 4 MiB, and Meta App is an availability
+  dependency for all public apps. Existing favicon/font-policy warnings remain.
+  The separate automatic Dependabot security-update failure is tracked by DEP-001;
+  it is explicitly excluded from product qualification, with no claim that all
+  repository checks are green. Disk remains below its ten-percent warning threshold;
+  existing images, data and caches were preserved.
 
-- **Local evidence:** Fourteen Meta App tests pass with actual HTTP providers, a real
-  MCP client, duplex WebSocket frames, protocol negotiation, initial upgrade bytes,
-  distinct HTTP/socket providers, every native app host and both session modes.
-  Six portable deployment tests pass, including all manifest bindings, loopback-only
-  socket publication, namespace preflight, idempotence and rollback after validation
-  or reload failure. Two existing Docker lease controls remain in image-backed CI.
-  The Meta App production build and all four repository architecture inventories pass.
-  The documented `make ci-check` target is absent; the underlying available gates
-  are run explicitly. Hosted cutover and exact-head CI remain pending.
+### [ ] DEP-001 — Resolve inherited grouped Dependabot security-update failures
 
-- **Hosted runtime discovery:** The initial central cutover serves every app host and
-  passes HTTP/MCP checks plus 24 desktop/mobile root checks with no new browser
-  errors or overflow. Actual G1000 socket negotiation returns HTTP 404 because
-  the production image has neither `websockets` nor `wsproto`; Uvicorn logs the
-  unsupported upgrade. Existing ASGI TestClient tests do not exercise its server
-  protocol. Install the transport as an application dependency and add a real
-  listening-server regression before completing live socket admission.
-
-- **Transport repair evidence:** The actual Uvicorn server test passes along with
-  all 37 G1000 Python compatibility tests. Flight Tracker's public native and
-  namespaced live sockets both deliver real `SYSTEM_STATUS` messages. G1000 image
-  publication/deployment and the final four-socket hosted check remain pending.
+- **Priority:** P1
+- **Owner:** Repository dependency maintenance
+- **Direction:** Track the failed automatic security update discovered while qualifying central ingress.
+- **Conclusion:** Dynamic Dependabot run 42942260916 cannot resolve existing npm security patches and reports security_update_not_found for deepmerge. It is separate from passing product CI and the Python transport fix; retain that failure explicitly and investigate supported patched resolutions without weakening scan policy. MAC task task_e24329ddddd14ab4a86dca9d43750615 tracks this follow-up.
+- **Depends on:** none
+- **Completion prerequisites:** none
+- **Implementation:**
+  - [ ] Investigate the failed dependency resolutions and select independently reviewable supported updates.
+- **Evidence:**
+  - [ ] Pass the dependency/security and affected application suites, and verify a successful bot update or document a justified upstream constraint.
