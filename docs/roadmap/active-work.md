@@ -1291,6 +1291,7 @@ release-visible outcome to `CHANGELOG.md`; Git preserves prior queue states.
 - **Depends on:** EDGE-001
 - **Completion prerequisites:** none
 - **Implementation:**
+  - [x] Install the G1000 production WebSocket transport and qualify an actual Uvicorn handshake, greeting and ping/pong.
   - [x] Implement host-bound HTTP and WebSocket ingress with shared namespace routing and fail-closed configuration.
   - [x] Update every application ingress and Meta App runtime deployment, including native analyzer configuration, without changing application URLs.
 - **Evidence:**
@@ -1307,3 +1308,16 @@ release-visible outcome to `CHANGELOG.md`; Git preserves prior queue states.
   The Meta App production build and all four repository architecture inventories pass.
   The documented `make ci-check` target is absent; the underlying available gates
   are run explicitly. Hosted cutover and exact-head CI remain pending.
+
+- **Hosted runtime discovery:** The initial central cutover serves every app host and
+  passes HTTP/MCP checks plus 24 desktop/mobile root checks with no new browser
+  errors or overflow. Actual G1000 socket negotiation returns HTTP 404 because
+  the production image has neither `websockets` nor `wsproto`; Uvicorn logs the
+  unsupported upgrade. Existing ASGI TestClient tests do not exercise its server
+  protocol. Install the transport as an application dependency and add a real
+  listening-server regression before completing live socket admission.
+
+- **Transport repair evidence:** The actual Uvicorn server test passes along with
+  all 37 G1000 Python compatibility tests. Flight Tracker's public native and
+  namespaced live sockets both deliver real `SYSTEM_STATUS` messages. G1000 image
+  publication/deployment and the final four-socket hosted check remain pending.
