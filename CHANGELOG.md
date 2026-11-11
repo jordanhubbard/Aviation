@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Meta App: route all deployed application hosts through the shared HTTP/MCP
+  registry, preserve native sessions and URLs, and support live WebSocket upgrades.
+  Add preflighted ingress updates with Caddy validation and rollback.
+
 - Meta App: add a versioned HTTP edge gateway, service catalog, OpenAPI and MCP
   tools over the service namespaces. Keep public routing independent of upstream
   addresses and versions through reviewed bindings and compatibility adapters.

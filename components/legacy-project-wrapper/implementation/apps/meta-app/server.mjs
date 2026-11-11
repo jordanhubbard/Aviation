@@ -111,8 +111,9 @@ export async function handler(req, res) {
 
 if (process.argv[1] === new URL(import.meta.url).pathname) {
   const server = createServer(handler);
+  server.on('upgrade', (req, socket, head) => { void gateway.upgrade(req, socket, head); });
   server.once('close', () => { explanation.close(); void gateway.close(); });
-  const stop = () => { explanation.close(); server.close(); };
+  const stop = () => { explanation.close(); void gateway.close(); server.close(); };
   process.once('SIGTERM', stop); process.once('SIGINT', stop);
-  server.listen(port);
+  server.listen(port, process.env.LISTEN_HOST || '0.0.0.0');
 }

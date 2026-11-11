@@ -33,7 +33,7 @@ changes compatible. Direct service APIs remain independently accessible.
 
 Only operator configuration `AVIATION_GATEWAY_BINDINGS` may change origins,
 base paths or select a declared adapter; callers cannot supply destinations.
-The JSON maps namespace to `{origin, basePath, adapter}`; defaults use each
+The JSON maps namespace to `{origin, websocketOrigin?, basePath, adapter}`; defaults use each
 service's public HTTPS origin, empty basePath and `identity` adapter. Secrets
 must be supplied by callers to the destination service, never configured as
 gateway-wide injected credentials. Each service retains its own authorization.
@@ -43,9 +43,40 @@ Cookie headers are explicit service cookies and are passed as supplied; tool
 responses retain service Set-Cookie values. Transport cookies are never inherited. Redirects are
 not followed, and same-service locations are rewritten through the namespace.
 HTTP timeout is 180 seconds; unsafe paths and hop-by-hop headers are rejected
-or removed. WebSocket service upgrades are not part of this first public
-contract; clients continue using direct WebSocket service endpoints.
+or removed. WebSocket upgrades use the same namespaced paths and private bindings.
+The handshake deadline is 180 seconds; established sessions stream in both directions
+until a peer disconnects or the gateway stops. Origin must match the destination
+application or Meta App when present. Protocol negotiation and initial upgrade bytes
+are preserved. MCP remains a request/response interface, with HTTP/WebSocket used
+for live transport.
+
+## Central application ingress
+
+In production, each application hostname also terminates at Meta App. The gateway
+selects that hostname's namespace from the same catalog and forwards its original
+path to the private provider. HTML, assets, API calls, forms, uploads and live sockets
+therefore share the central routing layer without changes to app URLs or local
+standalone development. Native host routes retain their own cookie names, paths,
+redirects and CSRF Origin headers; they do not interpret Meta App's discovery or MCP
+paths. On Meta App's hostname, `/api/v1` continues to isolate cookies by namespace.
+Providers receive their canonical public Host and HTTPS forwarding metadata. Client
+IP forwarding is accepted only from the loopback reverse proxy in application-host
+mode, using the final address appended by Caddy.
+
+Enable this mode explicitly with `AVIATION_GATEWAY_APP_HOSTS=1`. It requires an
+explicit binding for every service and refuses public ingress destinations that
+would recurse. The deployment manifest derives these bindings from service loopback
+ports, including a separate `websocketOrigin` when a service has a separate live
+listener. Flight Tracker publishes that listener only on host loopback port 18777.
+The Meta App container alone uses host networking and listens strictly on
+`127.0.0.1`, allowing it to reach both Docker services and the native analyzer.
+Every other container keeps its existing isolated network and loopback publication.
+The deployed Caddy sites forward to Meta App's loopback port. Native app responses
+include `X-Aviation-Gateway: v1` and `X-Aviation-Namespace` for cutover verification.
+The central process is now an availability dependency for every public application;
+private providers remain independently reachable on the host.
 
 Acceptance uses real local upstream servers and an MCP client, covering routing,
 upstream relocation/version adapters, auth, cookies, redirects, binary bodies,
-streaming, bounded failures and schema parity. Hosted checks are read-only.
+streaming, bounded failures, native sessions for every app host, real WebSocket
+frames and schema parity. Hosted checks are read-only.

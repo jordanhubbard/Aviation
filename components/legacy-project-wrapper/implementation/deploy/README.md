@@ -4,7 +4,8 @@ The [application manifest](apps.json) is the list of all twelve apps, their publ
 names, health paths, and unique loopback ports. `make deploy-check` rejects missing
 apps, missing Dockerfiles, and duplicate names or ports. The analyzer keeps its
 native Python systemd service on port 18765; the other apps run as Docker images
-under individual systemd units. Caddy terminates HTTPS and proxies to loopback.
+under individual systemd units. Caddy terminates HTTPS and forwards all application hosts to Meta App. Meta App
+selects the private loopback provider from its shared HTTP/MCP service registry.
 
 Run the commands from the Aviation repository root on a machine with Docker,
 Python 3, SSH access to do-host1, and enough local disk for the images:
@@ -168,3 +169,35 @@ browser read, field deletion and mocked feedback. The SDK fixture ledger and
 field records are inspected for ownership before cleanup, including after
 `AVIATION_E2E_FAIL_AFTER_SCREEN=settings`. The physical private store and leased
 container are removed by the runner.
+
+## Central ingress rollout
+
+Deploy the qualified Meta App image first. Its generated unit uses host networking,
+binds only `127.0.0.1:18774`, and derives explicit private bindings for every other
+application from `apps.json`. The existing `/etc/aviation/meta-app.env` is preserved;
+remove stale overrides of `PORT`, `LISTEN_HOST`, `AVIATION_GATEWAY_APP_HOSTS` or
+`AVIATION_GATEWAY_BINDINGS` before rollout if they conflict with the generated unit.
+
+Deploy Flight Tracker once with the new unit to publish its separate socket listener
+on loopback port 18777; other existing app processes can stay running.
+After Meta App's exact-image and browser gates pass, update the ingress of every
+installed application without restarting its process:
+
+```sh
+python3 components/legacy-project-wrapper/implementation/deploy/deploy.py ingress --app all
+```
+
+The command first checks every native-host health route through Meta App and verifies
+its namespace header. It then edits only each installed site's loopback proxy target,
+including the native analyzer's legacy inline Caddy block when present. It retains
+configuration backups under `/etc/caddy/aviation-ingress-*`, validates the complete
+configuration, and reloads Caddy. Validation or reload failure restores the previous
+files and reloads them. Unknown proxy configurations fail before any edits. Repeating
+the command is safe. A normal subsequent app deployment emits the same central route.
+
+Verify public health responses carry `X-Aviation-Gateway: v1` and the expected
+`X-Aviation-Namespace`. Check native login/forms and live sockets as well as the
+single public `/api/v1/services` catalog and `/mcp` endpoint on Meta App. This cutover
+makes Meta App an availability dependency for all public apps; the private providers
+continue to listen on their original loopback ports. Local standalone app development
+is unchanged. No provider credentials are injected by the central gateway.

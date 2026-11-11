@@ -24,6 +24,11 @@ deployment = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(deployment)
 
 
+ingress_spec = importlib.util.spec_from_file_location('aviation_ingress', Path(__file__).with_name('ingress.py'))
+ingress = importlib.util.module_from_spec(ingress_spec)
+ingress_spec.loader.exec_module(ingress)
+
+
 class HealthyResponse:
     status = 200
 
@@ -49,6 +54,80 @@ class VerifyTests(unittest.TestCase):
                                    if value == '--env')
                 self.assertEqual(environment['AVIATION_APP_ID'], app['name'])
                 self.assertEqual(environment['AVIATION_EXPLAIN_PUBLIC_URL'], 'https://' + site)
+
+    def test_all_public_sites_use_gateway_and_private_bindings_cover_every_service(self):
+        config, apps = deployment.load_manifest()
+        gateway = next(app for app in apps if app['name'] == 'meta-app')
+        for app in apps:
+            with self.subTest(app=app['name']), tempfile.TemporaryDirectory() as directory:
+                target = Path(directory)
+                deployment.render(app, 'a' * 40, target)
+                self.assertIn(f"reverse_proxy 127.0.0.1:{gateway['port']}", (target / 'site.caddy').read_text())
+                command = next(line.removeprefix('ExecStart=') for line in (target / 'service.unit').read_text().splitlines() if line.startswith('ExecStart='))
+                argv = shlex.split(command)
+                if app['name'] == 'meta-app':
+                    self.assertNotIn('-p', argv)
+                    self.assertEqual(argv[argv.index('--network') + 1], 'host')
+                    env = dict(argv[i + 1].split('=', 1) for i, value in enumerate(argv) if value == '--env')
+                    self.assertEqual(env['LISTEN_HOST'], '127.0.0.1')
+                    self.assertEqual(env['PORT'], str(gateway['port']))
+                    self.assertEqual(env['AVIATION_GATEWAY_APP_HOSTS'], '1')
+                    bindings = json.loads(env['AVIATION_GATEWAY_BINDINGS'])
+                    self.assertEqual(bindings['tracking']['websocketOrigin'], 'http://127.0.0.1:18777')
+                    self.assertEqual({binding['origin'] for binding in bindings.values()},
+                                     {f"http://127.0.0.1:{item['port']}" for item in apps if item['name'] != 'meta-app'})
+                else:
+                    self.assertIn(f"127.0.0.1:{app['port']}:{app['container_port']}", argv)
+                    if 'websocket_port' in app:
+                        self.assertIn(f"127.0.0.1:{app['websocket_port']}:{app['container_websocket_port']}", argv)
+
+    def test_ingress_cutover_preflights_all_hosts_and_rolls_back_failed_caddy_validation(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            (root / 'aviation-sites').mkdir()
+            caddy = root / 'Caddyfile'
+            caddy.write_text('import aviation-sites/*.caddy\nkmlab.example.test {\n    reverse_proxy 127.0.0.1:18765\n}\n')
+            site = root / 'aviation-sites/planner.caddy'
+            site.write_text('planner.example.test {\n    reverse_proxy 127.0.0.1:18769\n}\n')
+            config = {'gateway_port': 18774, 'apps': [
+                {'name': 'planner', 'host': 'planner.example.test', 'namespace': 'planning', 'health': '/api/health', 'port': 18769},
+                {'name': 'analyzer', 'host': 'kmlab.example.test', 'namespace': 'analysis', 'health': '/api/health', 'port': 18765, 'native': True},
+            ]}
+            originals = {path: path.read_text() for path in [caddy, site]}
+            calls = []
+            class Response(HealthyResponse):
+                def __init__(self, namespace):
+                    self.headers = {'x-aviation-namespace': namespace}
+            def open_url(request, timeout):
+                self.assertEqual(timeout, 10)
+                self.assertTrue(request.full_url.startswith('http://127.0.0.1:18774/'))
+                self.assertEqual({path: path.read_text() for path in originals}, originals)
+                calls.append(request.get_header('Host'))
+                return Response('planning' if calls[-1].startswith('planner') else 'analysis')
+            for actions in ([subprocess.CalledProcessError(1, 'caddy'), None, None],
+                            [None, subprocess.CalledProcessError(1, 'reload'), None, None]):
+                calls.clear()
+                runner = unittest.mock.Mock(side_effect=actions)
+                with self.assertRaises(subprocess.CalledProcessError):
+                    ingress.configure(config, root=root, run=runner, open_url=open_url)
+                self.assertEqual(calls, ['planner.example.test', 'kmlab.example.test'])
+                self.assertEqual({path: path.read_text() for path in originals}, originals)
+            runner = unittest.mock.Mock()
+            ingress.configure(config, root=root, run=runner, open_url=open_url)
+            self.assertEqual(runner.call_count, 2)
+            self.assertIn('reverse_proxy 127.0.0.1:18774', site.read_text())
+            self.assertIn('reverse_proxy 127.0.0.1:18774', caddy.read_text())
+            runner.reset_mock()
+            def already_ready(request, timeout):
+                return Response('planning' if request.get_header('Host').startswith('planner') else 'analysis')
+            ingress.configure(config, root=root, run=runner, open_url=already_ready)
+            runner.assert_not_called()
+            # A wrong namespace fails before touching either installed file.
+            updated = {path: path.read_text() for path in originals}
+            with self.assertRaisesRegex(RuntimeError, 'not ready'):
+                ingress.configure(config, root=root, run=runner, open_url=lambda *_args, **_kwargs: Response('wrong'))
+            self.assertEqual({path: path.read_text() for path in originals}, updated)
+            runner.assert_not_called()
 
     def test_missing_registry_image_builds_and_ships_committed_source(self):
         config, apps = deployment.load_manifest()
