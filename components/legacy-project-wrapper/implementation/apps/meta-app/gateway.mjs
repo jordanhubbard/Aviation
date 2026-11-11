@@ -1,5 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { request as httpRequest } from 'node:http';
+import { isIP } from 'node:net';
 import { request as httpsRequest } from 'node:https';
 import { createMcpHandler, McpServer, fromJsonSchema } from '@modelcontextprotocol/server';
 import { toNodeHandler } from '@modelcontextprotocol/node';
@@ -54,29 +55,54 @@ export function openapi() {
       responses: { default: { description: 'Upstream status, headers and body, or a JSON gateway error.' } },
     }]))])), components: { schemas: { ServiceRequest: contract.requestSchema, ServiceResponse: contract.responseSchema } } };
 }
-export function createGateway({ bindings = JSON.parse(process.env.AVIATION_GATEWAY_BINDINGS || '{}'), adapters = {}, timeoutMs = 180000, allowedHosts = ['meta-app.jordanhubbard.net', 'localhost', '127.0.0.1', '[::1]'] } = {}) {
+export function createGateway({ bindings = JSON.parse(process.env.AVIATION_GATEWAY_BINDINGS || '{}'), adapters = {}, timeoutMs = 180000, appHosts = process.env.AVIATION_GATEWAY_APP_HOSTS === '1', allowedHosts = ['meta-app.jordanhubbard.net', 'localhost', '127.0.0.1', '[::1]'] } = {}) {
   const registry = new Map();
+  const sockets = new Set();
+  const publicHosts = new Map(contract.services.map(service => [new URL(service.direct).host, service.namespace]));
   for (const key of Object.keys(bindings)) if (!contract.services.some(s => s.namespace === key)) throw new Error(`Unknown gateway namespace: ${key}`);
   for (const service of contract.services) {
     const binding = bindings[service.namespace] || {};
     const origin = new URL(binding.origin || service.direct);
     if (!['http:', 'https:'].includes(origin.protocol) || origin.username || origin.password || origin.search || origin.hash || origin.pathname !== '/') throw new Error('Gateway origins must be plain HTTP(S) origins');
+    const websocketOrigin = binding.websocketOrigin ? new URL(binding.websocketOrigin) : origin;
+    if (!['http:', 'https:'].includes(websocketOrigin.protocol) || websocketOrigin.username || websocketOrigin.password || websocketOrigin.search || websocketOrigin.hash || websocketOrigin.pathname !== '/') throw new Error('WebSocket origins must be plain HTTP(S) origins');
     const basePath = binding.basePath || '';
     if (basePath && (safePath(basePath) !== basePath || basePath.includes('?') || basePath.endsWith('/'))) throw new Error('Invalid gateway basePath');
     const adapterId = binding.adapter || 'identity';
     const adapter = adapterId === 'identity' ? {} : adapters[adapterId];
     if (!adapter) throw new Error(`Unknown gateway adapter: ${adapterId}`);
-    registry.set(service.namespace, { service, origin, basePath, adapter });
+    registry.set(service.namespace, { service, origin, websocketOrigin, basePath, adapter });
   }
-  async function route(ns, path, method, headers = {}, body, scopedCookies = true) {
-    const binding = registry.get(ns);
+  if (appHosts && [...registry.values()].some(binding => !bindings[binding.service.namespace]?.origin || [binding.origin, binding.websocketOrigin].some(origin => publicHosts.has(origin.host) || origin.hostname === 'meta-app.jordanhubbard.net'))) {
+    throw new Error('Application ingress requires explicit private bindings for every service, distinct from public ingress hosts');
+  }
+  function destination(req) {
+    const nativeNamespace = appHosts && publicHosts.get(req.headers.host);
+    if (nativeNamespace) return { ns: nativeNamespace, path: req.url, native: true };
+    const match = /^\/api\/v1\/([^/?]+)(\/[^?]*)?(\?.*)?$/.exec(req.url);
+    return match && { ns: match[1], path: (match[2] || '/') + (match[3] || ''), native: false };
+  }
+  function clientIp(req) {
+    // Only a loopback reverse proxy may provide client addressing. Caddy appends
+    // the actual client after any untrusted values; never trust the first value.
+    const value = String(req.headers['x-forwarded-for'] || '').split(',').at(-1).trim();
+    return appHosts && ['127.0.0.1', '::1', '::ffff:127.0.0.1'].includes(req.socket.remoteAddress) && isIP(value) ? value : undefined;
+  }
+  async function route(ns, path, method, headers = {}, body, scopedCookies = true, address, websocket = false) {
+    let binding = registry.get(ns);
     if (!binding) throw new GatewayError(404, 'unknown_namespace');
+    if (websocket) binding = { ...binding, origin: binding.websocketOrigin };
     safePath(path);
     if (!methods.includes(method)) throw new GatewayError(405, 'unsupported_method');
     const changed = await binding.adapter.request?.({ path, method, headers, body }) || { path, method, headers, body };
     safePath(changed.path);
     const target = new URL(binding.origin.origin + binding.basePath + changed.path);
     const outgoing = cleanHeaders(changed.headers);
+    // Providers see their canonical public host even with private bindings.
+    outgoing.host = new URL(binding.service.direct).host;
+    outgoing['x-forwarded-host'] = outgoing.host;
+    outgoing['x-forwarded-proto'] = 'https';
+    if (address) outgoing['x-forwarded-for'] = address;
     if (scopedCookies) {
       const cookie = inboundCookies(outgoing.cookie, ns);
       delete outgoing.cookie;
@@ -86,24 +112,26 @@ export function createGateway({ bindings = JSON.parse(process.env.AVIATION_GATEW
     if (changed.body !== body) delete outgoing['content-length'];
     return { binding, target, method: changed.method, headers: outgoing, body: changed.body };
   }
-  function responseHeaders(ns, binding, upstream, scopedCookies, target) {
+  function responseHeaders(ns, binding, upstream, scopedCookies, target, native = false) {
     const headers = cleanHeaders(upstream.headers);
+    headers['x-aviation-gateway'] = contract.apiVersion;
+    headers['x-aviation-namespace'] = ns;
     if (scopedCookies && headers['set-cookie']) headers['set-cookie'] = headers['set-cookie'].map(value => outboundCookie(value, ns, binding));
-    if (headers.location) {
+    if (headers.location && !native) {
       const location = new URL(headers.location, target);
-      if (location.origin === binding.origin.origin && (!binding.basePath || location.pathname.startsWith(binding.basePath + '/'))) {
+      if ([binding.origin.origin, binding.service.direct].includes(location.origin) && (!binding.basePath || location.pathname.startsWith(binding.basePath + '/'))) {
         const path = location.pathname.slice(binding.basePath.length) + location.search + location.hash;
         headers.location = `/api/v1/${ns}${binding.adapter.location?.(path) || path}`;
       }
     }
     return headers;
   }
-  async function exchange(ns, path, method, headers, body, signal, scopedCookies = true) {
-    const routed = await route(ns, path, method, headers, body, scopedCookies);
+  async function exchange(ns, path, method, headers, body, signal, scopedCookies = true, native = false, address) {
+    const routed = await route(ns, path, method, headers, body, scopedCookies, address);
     return new Promise((resolve, reject) => {
       const { binding, target } = routed;
       const request = (target.protocol === 'https:' ? httpsRequest : httpRequest)(target, { method: routed.method, headers: routed.headers, signal }, upstream => {
-        try { resolve({ upstream, headers: responseHeaders(ns, binding, upstream, scopedCookies, target), adapter: binding.adapter, request }); }
+        try { resolve({ upstream, headers: responseHeaders(ns, binding, upstream, scopedCookies, target, native), adapter: binding.adapter, request }); }
         catch { upstream.resume(); reject(new GatewayError(502, 'invalid_upstream_headers')); }
       });
       // Whole exchange deadline, including an upstream that trickles forever.
@@ -159,26 +187,25 @@ export function createGateway({ bindings = JSON.parse(process.env.AVIATION_GATEW
   const nodeMcp = toNodeHandler(mcp);
   async function handle(req, res) {
     const pathname = req.url.split('?')[0];
-    if (pathname === '/mcp') {
+    const dest = destination(req);
+    if (!dest?.native && pathname === '/mcp') {
       let host, origin;
       try { host = new URL(`http://${req.headers.host}`).hostname; origin = req.headers.origin && new URL(req.headers.origin); } catch { sendJson(res, 403, { error: { code: 'invalid_origin' } }); return true; }
       if (!allowedHosts.includes(host) || (origin && !contract.services.some(s => s.direct === origin.origin) && !['https://meta-app.jordanhubbard.net', 'http://localhost', 'http://127.0.0.1'].includes(origin.origin))) { sendJson(res, 403, { error: { code: 'origin_not_allowed' } }); return true; }
       await nodeMcp(req, res); return true;
     }
-    if (pathname === '/api/v1/services' || pathname === '/api/v1/openapi.json') {
+    if (!dest?.native && (pathname === '/api/v1/services' || pathname === '/api/v1/openapi.json')) {
       if (!['GET', 'HEAD'].includes(req.method)) sendJson(res, 405, { error: { code: 'method_not_allowed' } });
       else if (req.method === 'HEAD') { res.writeHead(200, { 'content-type': 'application/json' }); res.end(); }
       else sendJson(res, 200, pathname.endsWith('services') ? contract : openapi());
       return true;
     }
-    const match = /^\/api\/v1\/([^/]+)(\/.*)?$/.exec(pathname);
-    if (match) match[2] = (match[2] || '/') + (req.url.includes('?') ? req.url.slice(req.url.indexOf('?')) : '');
-    if (!match) return false;
+    if (!dest) return false;
     const controller = new AbortController();
     const abort = () => { if (!res.writableFinished) controller.abort(); };
     res.once('close', abort);
     try {
-      const result = await exchange(match[1], match[2] || '/', req.method, req.headers, req, controller.signal);
+      const result = await exchange(dest.ns, dest.path, req.method, req.headers, req, controller.signal, !dest.native, dest.native, clientIp(req));
       if (result.adapter.response) {
         let size = 0; const chunks = [];
         for await (const chunk of result.upstream) { size += chunk.length; if (size > MAX_MCP_BYTES) throw new GatewayError(502, 'response_too_large'); chunks.push(chunk); }
@@ -196,5 +223,65 @@ export function createGateway({ bindings = JSON.parse(process.env.AVIATION_GATEW
     }
     return true;
   }
-  return { handle, invoke, close: () => mcp.close() };
+  async function upgrade(req, socket, head) {
+    let request;
+    let responseStarted = false;
+    sockets.add(socket);
+    socket.once('close', () => { sockets.delete(socket); request?.destroy(); });
+    socket.once('error', () => { request?.destroy(); socket.destroy(); });
+    const fail = (status, code) => {
+      if (responseStarted) { socket.destroy(); return; }
+      if (!socket.destroyed) socket.end(`HTTP/1.1 ${status} Gateway Error\r\nConnection: close\r\nContent-Type: application/json\r\n\r\n${JSON.stringify({ error: { code } })}`);
+    };
+    try {
+      const dest = destination(req);
+      if (!dest) throw new GatewayError(404, 'unknown_api_route');
+      if (req.method !== 'GET' || req.headers.upgrade?.toLowerCase() !== 'websocket') throw new GatewayError(400, 'invalid_upgrade');
+      const service = registry.get(dest.ns)?.service;
+      if (!service) throw new GatewayError(404, 'unknown_namespace');
+      if (req.headers.origin && ![service.direct, 'https://meta-app.jordanhubbard.net'].includes(req.headers.origin)) throw new GatewayError(403, 'origin_not_allowed');
+      const routed = await route(dest.ns, dest.path, 'GET', req.headers, undefined, !dest.native, clientIp(req), true);
+      if (socket.destroyed) return;
+      const { binding, target } = routed;
+      request = (target.protocol === 'https:' ? httpsRequest : httpRequest)(target, {
+        method: 'GET', headers: { ...routed.headers, connection: 'Upgrade', upgrade: 'websocket' },
+      });
+      const timer = setTimeout(() => request.destroy(new GatewayError(504, 'upstream_timeout')), timeoutMs);
+      const cancel = () => request.destroy();
+      socket.once('close', cancel);
+      socket.once('error', cancel);
+      request.once('error', error => { clearTimeout(timer); fail(error.status || 502, error instanceof GatewayError ? error.code : 'upstream_unavailable'); });
+      request.once('close', () => clearTimeout(timer));
+      request.once('response', upstream => {
+        const headers = responseHeaders(dest.ns, binding, upstream, !dest.native, target, dest.native);
+        headers.connection = 'close';
+        socket.write(`HTTP/1.1 ${upstream.statusCode} ${upstream.statusMessage}\r\n${Object.entries(headers).flatMap(([name, value]) => (Array.isArray(value) ? value : [value]).map(item => `${name}: ${item}\r\n`)).join('')}\r\n`);
+        responseStarted = true;
+        upstream.once('error', () => socket.destroy());
+        upstream.pipe(socket);
+      });
+      request.once('upgrade', (upstream, peer, upstreamHead) => {
+        clearTimeout(timer);
+        socket.removeListener('close', cancel);
+        socket.removeListener('error', cancel);
+        if (socket.destroyed) { peer.destroy(); return; }
+        try {
+          const headers = responseHeaders(dest.ns, binding, upstream, !dest.native, target, dest.native);
+          headers.connection = 'Upgrade'; headers.upgrade = 'websocket';
+          socket.write(`HTTP/1.1 101 Switching Protocols\r\n${Object.entries(headers).flatMap(([name, value]) => (Array.isArray(value) ? value : [value]).map(item => `${name}: ${item}\r\n`)).join('')}\r\n`);
+          responseStarted = true;
+          for (const connection of [socket, peer]) {
+            sockets.add(connection);
+            connection.once('close', () => { sockets.delete(connection); socket.destroy(); peer.destroy(); });
+            connection.once('error', () => { socket.destroy(); peer.destroy(); });
+          }
+          if (upstreamHead.length) socket.write(upstreamHead);
+          if (head.length) peer.write(head);
+          socket.pipe(peer); peer.pipe(socket);
+        } catch { peer.destroy(); fail(502, 'invalid_upstream_headers'); }
+      });
+      request.end();
+    } catch (error) { request?.destroy(); fail(error.status || 502, error instanceof GatewayError ? error.code : 'upstream_unavailable'); }
+  }
+  return { handle, invoke, upgrade, close: () => { for (const socket of sockets) socket.destroy(); return mcp.close(); } };
 }

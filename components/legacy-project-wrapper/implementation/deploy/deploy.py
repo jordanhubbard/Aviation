@@ -96,10 +96,25 @@ def load_manifest() -> tuple[dict, list[dict]]:
             source, dest = volume.split(":", 1)
             if not re.fullmatch(r"[a-z0-9-]+", source) or not dest.startswith("/") or ".." in dest:
                 raise ValueError(f"unsafe volume for {name}: {volume}")
+        if ('websocket_port' in app) != ('container_websocket_port' in app):
+            raise ValueError('WebSocket publication requires both host and container ports')
+        if 'websocket_port' in app:
+            ws_port = app['websocket_port']
+            if not 1024 <= ws_port <= 65535 or not 1 <= app['container_websocket_port'] <= 65535 or ws_port in ports or ws_port == port:
+                raise ValueError('invalid or duplicate WebSocket port')
+            ports.add(ws_port)
         names.add(name)
         hostnames.add(hostname)
         ports.add(port)
         images.add(registry_image)
+    contract = json.loads((IMPLEMENTATION / 'apps/meta-app/gateway-contract.json').read_text())
+    services = contract['services']
+    if {service['app'] for service in services} != names - {'meta-app'} or len(services) != len(apps) - 1:
+        raise ValueError('gateway registry must cover every non-Meta application exactly once')
+    for service in services:
+        app = next(item for item in apps if item['name'] == service['app'])
+        if service['direct'] != f"https://{app.get('hostname', app['name'])}.{config['domain']}":
+            raise ValueError('gateway application host must match deployment manifest')
     return config, apps
 
 
@@ -160,7 +175,8 @@ def fetch_image(config: dict, app: dict, revision: str) -> str:
 def render(app: dict, revision: str, dest: Path) -> None:
     name = app["name"]
     image = image_name(app, revision)
-    domain = json.loads(MANIFEST.read_text())["domain"]
+    config = json.loads(MANIFEST.read_text())
+    domain = config["domain"]
     hostname = app.get("hostname", name)
     docker_args = [
         "/usr/bin/docker", "run", "--rm", "--name", f"aviation-{name}",
@@ -171,6 +187,24 @@ def render(app: dict, revision: str, dest: Path) -> None:
         "--env", f"AVIATION_APP_ID={name}",
         "--env", f"AVIATION_EXPLAIN_PUBLIC_URL=https://{hostname}.{domain}",
     ]
+    if name == 'meta-app':
+        # Host networking is limited to this ingress process, bound to loopback.
+        # It must reach native and Docker services on their existing loopback ports.
+        publish = docker_args.index('-p')
+        del docker_args[publish:publish + 2]
+        docker_args += ['--network', 'host', '--env', f"PORT={app['port']}",
+                        '--env', 'LISTEN_HOST=127.0.0.1', '--env', 'AVIATION_GATEWAY_APP_HOSTS=1']
+        contract = json.loads((IMPLEMENTATION / 'apps/meta-app/gateway-contract.json').read_text())
+        by_name = {item['name']: item for item in config['apps']}
+        bindings = {service['namespace']: {'origin': f"http://127.0.0.1:{by_name[service['app']]['port']}"}
+                    for service in contract['services']}
+        for service in contract['services']:
+            provider = by_name[service['app']]
+            if 'websocket_port' in provider:
+                bindings[service['namespace']]['websocketOrigin'] = f"http://127.0.0.1:{provider['websocket_port']}"
+        docker_args += ['--env', 'AVIATION_GATEWAY_BINDINGS=' + json.dumps(bindings, separators=(',', ':'))]
+    if 'websocket_port' in app:
+        docker_args += ['-p', f"127.0.0.1:{app['websocket_port']}:{app['container_websocket_port']}"]
     for key, value in app.get("environment", {}).items():
         if not re.fullmatch(r"[A-Z][A-Z0-9_]*", key) or "\n" in value or " " in value:
             raise ValueError(f"unsafe environment for {name}: {key}")
@@ -188,7 +222,7 @@ After=docker.service network-online.target
 [Service]
 Type=simple
 ExecStartPre=-/usr/bin/docker rm -f aviation-{name}
-ExecStart={' '.join(docker_args)}
+ExecStart={shlex.join(docker_args)}
 ExecStop=/usr/bin/docker stop -t 15 aviation-{name}
 Restart=always
 RestartSec=5
@@ -197,7 +231,8 @@ TimeoutStartSec=0
 [Install]
 WantedBy=multi-user.target
 """
-    caddy = f"{hostname}.{domain} {{\n\tencode zstd gzip\n\treverse_proxy 127.0.0.1:{app['port']}\n}}\n"
+    gateway_port = next(item['port'] for item in config['apps'] if item['name'] == 'meta-app')
+    caddy = f"{hostname}.{domain} {{\n\tencode zstd gzip\n\treverse_proxy 127.0.0.1:{gateway_port}\n}}\n"
     (dest / "service.unit").write_text(unit)
     (dest / "site.caddy").write_text(caddy)
     (dest / "volumes.txt").write_text("\n".join(v.split(":", 1)[0] for v in app.get("volumes", [])) + "\n")
@@ -238,6 +273,7 @@ def prepare_remote_image(config: dict, app: dict, revision: str, host: str) -> N
 def deploy(config: dict, app: dict, revision: str, host: str) -> None:
     if app.get("runtime") == "native":
         run("make", "-C", str(IMPLEMENTATION / "apps" / app["name"]), "deploy", f"DEPLOY_HOST={host}")
+        configure_ingress(config, [app], host)
         return
     prepare_remote_image(config, app, revision, host)
     with tempfile.TemporaryDirectory(prefix="aviation-deploy-") as temp:
@@ -247,8 +283,25 @@ def deploy(config: dict, app: dict, revision: str, host: str) -> None:
         run("ssh", host, "mkdir", "-p", remote)
         run("scp", str(stage / "service.unit"), str(stage / "site.caddy"), str(stage / "volumes.txt"), f"{host}:{remote}/")
         with REMOTE_INSTALL.open("rb") as script:
-            subprocess.run(["ssh", host, "bash", "-s", "--", app["name"], str(app["port"]), app["health"], remote],
+            gateway_port = next(item['port'] for item in config['apps'] if item['name'] == 'meta-app')
+            subprocess.run(["ssh", host, "bash", "-s", "--", app["name"], str(app["port"]), app["health"], remote, str(gateway_port)],
                            stdin=script, check=True)
+
+
+def configure_ingress(config: dict, apps: list[dict], host: str) -> None:
+    committed_revision()
+    services = json.loads((IMPLEMENTATION / 'apps/meta-app/gateway-contract.json').read_text())['services']
+    namespaces = {service['app']: service['namespace'] for service in services}
+    payload = {
+        'gateway_port': next(app['port'] for app in config['apps'] if app['name'] == 'meta-app'),
+        'apps': [{'name': app['name'], 'host': f"{app.get('hostname', app['name'])}.{config['domain']}",
+                  'port': app['port'], 'health': app['health'], 'namespace': namespaces[app['name']],
+                  'native': app.get('runtime') == 'native'} for app in apps if app['name'] != 'meta-app'],
+    }
+    helper = (HERE / 'ingress.py').read_text()
+    # Future imports must precede the injected data.
+    script = helper.replace('from __future__ import annotations', 'from __future__ import annotations\nCONFIG = ' + repr(payload))
+    subprocess.run(['ssh', host, 'sudo', '-n', 'python3', '-'], input=script, text=True, check=True)
 
 
 def do_request(token: str, method: str, path: str, data: dict | None = None) -> dict:
@@ -329,7 +382,7 @@ def verify(config: dict, apps: list[dict], host: str) -> None:
 
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("command", choices=("list", "check", "matrix", "build", "dns", "deploy", "verify"))
+    parser.add_argument("command", choices=("list", "check", "matrix", "build", "dns", "deploy", "verify", "ingress"))
     parser.add_argument("--app", default="all")
     parser.add_argument("--ssh-host", default="jkh@146.190.134.110")
     parser.add_argument("--token-file", type=Path, default=Path(os.environ.get("DIGITALOCEAN_TOKEN_FILE", "")))
@@ -351,6 +404,8 @@ def main() -> None:
         register_dns(config, apps, args.token_file)
     elif args.command == "verify":
         verify(config, apps, args.ssh_host)
+    elif args.command == 'ingress':
+        configure_ingress(config, apps, args.ssh_host)
     else:
         revision = committed_revision()
         deployment_apps = (sorted(apps, key=lambda app: app["name"] != "meta-app")

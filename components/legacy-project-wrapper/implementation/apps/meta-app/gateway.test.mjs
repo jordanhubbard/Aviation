@@ -1,10 +1,13 @@
 import test from 'node:test';
+import WebSocket from 'ws';
 import { gzipSync, gunzipSync } from 'node:zlib';
 import { mkdtemp, writeFile, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import assert from 'node:assert/strict';
-import { createServer } from 'node:http';
+import { createServer, request as httpRequest } from 'node:http';
+import { createHash } from 'node:crypto';
+import { connect } from 'node:net';
 import { once } from 'node:events';
 import { Client, StreamableHTTPClientTransport } from '@modelcontextprotocol/client';
 import { createGateway, contract, sendJson } from './gateway.mjs';
@@ -177,4 +180,135 @@ test('client cancellation closes the upstream response stream', async t => {
   let timer;
   try { await Promise.race([upstreamClosed, new Promise((_, reject) => { timer = setTimeout(() => reject(new Error('Upstream stream was not cancelled')), 1000); })]); }
   finally { clearTimeout(timer); }
+});
+
+
+function requestAs(origin, host, path, headers = {}) {
+  return new Promise((resolve, reject) => {
+    const req = httpRequest(new URL(path, origin), { headers: { ...headers, host } }, async res => {
+      const chunks = []; for await (const chunk of res) chunks.push(chunk);
+      resolve({ status: res.statusCode, headers: res.headers, body: Buffer.concat(chunks).toString() });
+    });
+    req.on('error', reject); req.end();
+  });
+}
+
+test('every app host uses its own binding while preserving native sessions, paths and redirects', async t => {
+  const seen = [];
+  const provider = await listen(t, (req, res) => {
+    seen.push({ url: req.url, headers: req.headers });
+    res.writeHead(302, { location: '/login?next=/account', 'set-cookie': 'session=native; Path=/; HttpOnly; SameSite=Lax' });
+    res.end('app login');
+  });
+  const bindings = Object.fromEntries(contract.services.map(service => [service.namespace, { origin: provider }]));
+  const gateway = createGateway({ bindings, appHosts: true }); t.after(() => gateway.close());
+  const edge = await listen(t, (req, res) => gateway.handle(req, res));
+  for (const service of contract.services) {
+    const result = await requestAs(edge, new URL(service.direct).host, '/account?tab=profile', {
+      cookie: 'session=existing; csrf=token', 'x-forwarded-for': '203.0.113.99, 192.0.2.5', 'x-forwarded-host': 'evil.test', 'x-forwarded-proto': 'http',
+    });
+    assert.equal(result.status, 302); assert.equal(result.body, 'app login');
+    assert.equal(result.headers['x-aviation-namespace'], service.namespace);
+    assert.equal(result.headers['x-aviation-gateway'], 'v1');
+    assert.deepEqual(result.headers['set-cookie'], ['session=native; Path=/; HttpOnly; SameSite=Lax']);
+    assert.equal(result.headers.location, '/login?next=/account');
+    const last = seen.at(-1);
+    assert.equal(last.url, '/account?tab=profile'); assert.equal(last.headers.cookie, 'session=existing; csrf=token');
+    assert.equal(last.headers.host, new URL(service.direct).host);
+    assert.equal(last.headers['x-forwarded-host'], new URL(service.direct).host);
+    assert.equal(last.headers['x-forwarded-proto'], 'https');
+    assert.equal(last.headers['x-forwarded-for'], '192.0.2.5');
+  }
+  const versioned = await fetch(edge + '/api/v1/planning/account', { redirect: 'manual', headers: { cookie: 'session=native; aviation_planning_session=scoped; aviation_weather_session=foreign' } });
+  assert.equal(seen.at(-1).headers.cookie, 'session=scoped');
+  assert.match(versioned.headers.get('set-cookie'), /^aviation_planning_session=/);
+  assert.equal(versioned.headers.get('location'), '/api/v1/planning/login?next=/account');
+  await fetch(edge + '/api/v1/planning?root=yes', { redirect: 'manual' });
+  assert.equal(seen.at(-1).url, '/?root=yes');
+  await requestAs(edge, 'flightschool.jordanhubbard.net', '/mcp');
+  assert.equal(seen.at(-1).url, '/mcp'); // Native app routes never become Meta App operations.
+  assert.throws(() => createGateway({ appHosts: true }), /explicit private bindings/);
+  assert.throws(() => createGateway({ appHosts: true, bindings: { ...bindings, planning: { origin: contract.services[0].direct } } }), /explicit private bindings/);
+});
+
+test('WebSocket uses shared bindings, preserves protocol and frames, and closes peers', { timeout: 5000 }, async t => {
+  const connections = new Set();
+  const calls = [];
+  const provider = createServer((_req, res) => { res.writeHead(426); res.end(); });
+  provider.on('upgrade', (req, peer, head) => {
+    connections.add(peer); peer.on('close', () => connections.delete(peer)); peer.on('error', () => {});
+    calls.push(req);
+    const accept = createHash('sha1').update(req.headers['sec-websocket-key'] + '258EAFA5-E914-47DA-95CA-C5AB0DC85B11').digest('base64');
+    peer.write(`HTTP/1.1 101 Switching Protocols\r\nConnection: Upgrade\r\nUpgrade: websocket\r\nSec-WebSocket-Accept: ${accept}\r\nSec-WebSocket-Protocol: telemetry\r\n\r\n`);
+    peer.write(Buffer.from([0x81, 5, ...Buffer.from('ready')]));
+    let buffered = head;
+    const receive = chunk => {
+      buffered = Buffer.concat([buffered, chunk]);
+      if (buffered.length < 6 || buffered.length < 6 + (buffered[1] & 127)) return;
+      const length = buffered[1] & 127;
+      const payload = Buffer.from(buffered.subarray(6, 6 + length));
+      for (let i = 0; i < payload.length; i++) payload[i] ^= buffered[2 + i % 4];
+      peer.write(Buffer.from([0x81, payload.length, ...payload]));
+      buffered = buffered.subarray(6 + length);
+    };
+    peer.on('data', receive);
+    if (head.length) receive(Buffer.alloc(0));
+  });
+  provider.listen(0, '127.0.0.1'); await once(provider, 'listening');
+  t.after(() => { for (const peer of connections) peer.destroy(); provider.close(); });
+  const httpProvider = await listen(t, (_req, res) => { res.end('http-only'); });
+  const bindings = Object.fromEntries(contract.services.map(service => [service.namespace, { origin: httpProvider, websocketOrigin: `http://127.0.0.1:${provider.address().port}`, basePath: '/provider-v2' }]));
+  const gateway = createGateway({ bindings, appHosts: true });
+  t.after(() => gateway.close());
+  const server = createServer((req, res) => gateway.handle(req, res));
+  server.on('upgrade', (req, socket, head) => gateway.upgrade(req, socket, head));
+  server.listen(0, '127.0.0.1'); await once(server, 'listening'); t.after(() => server.close());
+  const client = new WebSocket(`ws://127.0.0.1:${server.address().port}/api/v1/avionics/ws?rate=10`, 'telemetry');
+  const messages = [];
+  client.addEventListener('message', event => messages.push(event.data));
+  await once(client, 'open'); assert.equal(client.protocol, 'telemetry');
+  client.send('control');
+  while (messages.length < 2) await new Promise(resolve => setTimeout(resolve, 10));
+  assert.deepEqual(messages, ['ready', 'control']);
+  assert.equal(calls[0].url, '/provider-v2/ws?rate=10');
+  assert.equal(await (await fetch(`http://127.0.0.1:${server.address().port}/api/v1/avionics/api/health`)).text(), 'http-only');
+  // Send the handshake and first masked frame in one write to exercise upgrade head bytes.
+  const raw = connect(server.address().port, '127.0.0.1'); t.after(() => raw.destroy());
+  raw.on('error', () => {});
+  await once(raw, 'connect');
+  const payload = Buffer.from('first'); const mask = Buffer.from([1, 2, 3, 4]);
+  const frame = Buffer.from([0x81, 0x80 | payload.length, ...mask, ...payload.map((byte, i) => byte ^ mask[i % 4])]);
+  const handshake = Buffer.from('GET /ws/native?rate=20 HTTP/1.1\r\nHost: g1000-simulator.jordanhubbard.net\r\nOrigin: https://g1000-simulator.jordanhubbard.net\r\nConnection: Upgrade\r\nUpgrade: websocket\r\nSec-WebSocket-Key: dGhlIHNhbXBsZSBub25jZQ==\r\nSec-WebSocket-Version: 13\r\nSec-WebSocket-Protocol: telemetry\r\nCookie: session=native\r\n\r\n');
+  let received = Buffer.alloc(0);
+  raw.on('data', chunk => { received = Buffer.concat([received, chunk]); });
+  raw.write(Buffer.concat([handshake, frame]));
+  while (!received.includes(Buffer.from('first'))) await new Promise(resolve => setTimeout(resolve, 10));
+  assert.match(received.toString(), /^HTTP\/1.1 101/);
+  assert.equal(calls[1].url, '/provider-v2/ws/native?rate=20');
+  assert.equal(calls[1].headers.cookie, 'session=native');
+  assert.equal(calls[1].headers.host, 'g1000-simulator.jordanhubbard.net');
+  const closed = once(client, 'close'); await gateway.close(); await closed;
+});
+
+test('WebSocket rejects unknown namespaces, unsafe paths, foreign origins and provider failures', { timeout: 5000 }, async t => {
+  const { origin, calls } = await fixture(t);
+  const gateway = createGateway({ bindings: { avionics: { origin } }, timeoutMs: 40 });
+  t.after(() => gateway.close());
+  const server = createServer(); server.on('upgrade', (req, socket, head) => gateway.upgrade(req, socket, head));
+  server.listen(0, '127.0.0.1'); await once(server, 'listening'); t.after(() => server.close());
+  async function rejected(path, originHeader) {
+    return new Promise((resolve, reject) => {
+      const req = httpRequest({ hostname: '127.0.0.1', port: server.address().port, path,
+        headers: { connection: 'Upgrade', upgrade: 'websocket', ...(originHeader ? { origin: originHeader } : {}) } }, res => {
+        res.resume(); resolve(res.statusCode);
+      });
+      req.on('error', reject); req.end();
+    });
+  }
+  assert.equal(await rejected('/api/v1/unknown/ws'), 404);
+  assert.equal(await rejected('/api/v1/avionics/%252e%252e/private'), 400);
+  assert.equal(await rejected('/api/v1/avionics/ws', 'https://evil.test'), 403);
+  assert.equal(calls.length, 0);
+  assert.equal(await rejected('/api/v1/avionics/echo', 'https://meta-app.jordanhubbard.net'), 200);
+  assert.equal(await rejected('/api/v1/avionics/slow'), 504);
 });

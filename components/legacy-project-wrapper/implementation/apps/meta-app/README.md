@@ -245,4 +245,8 @@ weather/terrain APIs remain under `planning`. Direct service URLs continue worki
 
 See [the gateway contract](gateway.md) for upstream bindings, compatibility
 adapters, caller authentication, cookie isolation, limits and streaming.
+All deployed app hostnames can also use Meta App as their ingress, preserving
+existing URLs and sessions while sharing private provider bindings. Live WebSockets
+use the same routes. See the [central ingress rollout](../../deploy/README.md#central-ingress-rollout)
+for deployment and rollback.
 The gateway does not add data providers or make pending NOTAM access available.

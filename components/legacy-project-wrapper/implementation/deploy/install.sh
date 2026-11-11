@@ -6,6 +6,7 @@ name=${1:?app name required}
 port=${2:?loopback port required}
 health=${3:?health path required}
 stage=${4:?stage path required}
+gateway_port=${5:?gateway port required}
 unit="aviation-${name}.service"
 unit_path="/etc/systemd/system/${unit}"
 site_path="/etc/caddy/aviation-sites/${name}.caddy"
@@ -13,8 +14,20 @@ import_line='import /etc/caddy/aviation-sites/*.caddy'
 
 [[ "$name" =~ ^[a-z0-9]+(-[a-z0-9]+)*$ ]]
 [[ "$port" =~ ^[0-9]+$ ]]
+[[ "$gateway_port" =~ ^[0-9]+$ ]]
 [[ "$health" == /* && "$health" != *$'\n'* ]]
 [[ "$stage" == /tmp/aviation-"$name"-* ]]
+
+# Never replace a working app site with an unready central ingress.
+if [[ "$name" != meta-app ]]; then
+  read -r site_host _ < "$stage/site.caddy"
+  curl --fail --silent --show-error --max-time 10 -D "$stage/gateway-health.headers" -o /dev/null \
+    -H "Host: $site_host" "http://127.0.0.1:${gateway_port}${health}"
+  if ! grep -Eqi $'^x-aviation-gateway: v1\r?$' "$stage/gateway-health.headers"; then
+    echo "Deploy the central Meta App ingress before $name" >&2
+    exit 1
+  fi
+fi
 
 sudo install -d -m 755 /etc/caddy/aviation-sites /etc/aviation
 sudo install -d -m 750 "/var/lib/aviation/$name"

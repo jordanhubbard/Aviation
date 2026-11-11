@@ -1281,3 +1281,29 @@ release-visible outcome to `CHANGELOG.md`; Git preserves prior queue states.
   under its 10 percent disk warning threshold; image history and shared caches
   were preserved. Local qualification used a temporary RAM workspace while the
   source volume lacked build headroom; the RAM workspace was removed afterward.
+
+### [ ] EDGE-002 — Route every deployed app through the central Meta App layer
+
+- **Priority:** P1
+- **Owner:** Meta App gateway and deployment adapters
+- **Direction:** Finish the single API and MCP abstraction and update affected applications.
+- **Conclusion:** Existing HTTP/MCP namespaces are deployed, but app ingress bypasses the registry and WebSockets remain direct. Route declared application hosts through Meta App with private loopback bindings, preserve native sessions and redirects, and support upgrades using the same registry. MAC task task_b925bee300584bcdafe114d9f9b32404 tracks execution.
+- **Depends on:** EDGE-001
+- **Completion prerequisites:** none
+- **Implementation:**
+  - [x] Implement host-bound HTTP and WebSocket ingress with shared namespace routing and fail-closed configuration.
+  - [x] Update every application ingress and Meta App runtime deployment, including native analyzer configuration, without changing application URLs.
+- **Evidence:**
+  - [x] Pass real-provider HTTP, WebSocket, session isolation and MCP parity tests plus deployment configuration controls.
+  - [ ] Pass retained lifecycle qualification and exact review CI; commit and push the implementation.
+  - [ ] Verify hosted rollout and every application through the central layer.
+
+- **Local evidence:** Fourteen Meta App tests pass with actual HTTP providers, a real
+  MCP client, duplex WebSocket frames, protocol negotiation, initial upgrade bytes,
+  distinct HTTP/socket providers, every native app host and both session modes.
+  Six portable deployment tests pass, including all manifest bindings, loopback-only
+  socket publication, namespace preflight, idempotence and rollback after validation
+  or reload failure. Two existing Docker lease controls remain in image-backed CI.
+  The Meta App production build and all four repository architecture inventories pass.
+  The documented `make ci-check` target is absent; the underlying available gates
+  are run explicitly. Hosted cutover and exact-head CI remain pending.
