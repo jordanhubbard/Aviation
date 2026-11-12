@@ -30,6 +30,7 @@ from .routers.airspace import router as airspace_router
 from .routers.terrain import router as terrain_router
 from .routers.issues import router as issues_router
 from .routers.local import router as local_router
+from .routers.ga import router as ga_router
 from fastapi import WebSocket, WebSocketDisconnect
 
 
@@ -45,8 +46,12 @@ def create_app(settings):
     app = FastAPI(
         docs_url=None,
         redoc_url=None,
-        openapi_url=None,
+        openapi_url="/api/openapi.json",
         title='Flight Planner API',
+        servers=[
+            {"url": "https://meta-app.jordanhubbard.net/api/v1/planning", "description": "Stable public API gateway"},
+            {"url": "https://flight-planner.jordanhubbard.net", "description": "Direct planner service"},
+        ],
         version='0.1.0'
     )
 
@@ -74,42 +79,42 @@ def create_app(settings):
                                            for r in flight_recordings)}
 
     # Define REST API endpoints
-    @app.post('/api/control/autopilot/engage')
+    @app.post('/api/control/autopilot/engage', include_in_schema=False)
     async def engage_autopilot():
         # Logic to engage autopilot
         return {'status': 'Autopilot engaged'}
 
-    @app.post('/api/control/autopilot/set-mode')
+    @app.post('/api/control/autopilot/set-mode', include_in_schema=False)
     async def set_autopilot_mode(mode: str):
         # Logic to set autopilot mode
         return {'status': f'Autopilot mode set to {mode}'}
 
-    @app.post('/api/control/heading/set')
+    @app.post('/api/control/heading/set', include_in_schema=False)
     async def set_heading(heading: float):
         # Logic to set heading
         return {'status': f'Heading set to {heading}'}
 
-    @app.post('/api/control/altitude/set')
+    @app.post('/api/control/altitude/set', include_in_schema=False)
     async def set_altitude(altitude: float):
         # Logic to set altitude
         return {'status': f'Altitude set to {altitude}'}
 
-    @app.post('/api/control/flight-plan/load')
+    @app.post('/api/control/flight-plan/load', include_in_schema=False)
     async def load_flight_plan(plan_id: str):
         # Logic to load flight plan
         return {'status': f'Flight plan {plan_id} loaded'}
 
-    @app.get('/api/state/flight')
+    @app.get('/api/state/flight', include_in_schema=False)
     async def get_flight_state():
         # Logic to get flight state
         return {'state': 'Flight state data'}
 
-    @app.get('/api/state/navigation')
+    @app.get('/api/state/navigation', include_in_schema=False)
     async def get_navigation_state():
         # Logic to get navigation state
         return {'state': 'Navigation state data'}
 
-    @app.get('/api/state/systems')
+    @app.get('/api/state/systems', include_in_schema=False)
     async def get_systems_state():
         # Logic to get systems state
         return {'state': 'Systems state data'}
@@ -120,6 +125,7 @@ def create_app(settings):
     app.include_router(settings_router, tags=["settings"])
     app.include_router(explain_router)
     # Core API routers (exposed under /api prefix)
+    app.include_router(ga_router, prefix="/api")
     app.include_router(health_router, prefix="/api", tags=["health"])
     app.include_router(route_router, prefix="/api", tags=["route"])
     app.include_router(plan_router, prefix="/api", tags=["plan"])

@@ -1,3 +1,4 @@
+import { gunzipSync, inflateSync, brotliDecompressSync } from 'node:zlib';
 import { readFileSync } from 'node:fs';
 import { request as httpRequest } from 'node:http';
 import { isIP } from 'node:net';
@@ -180,6 +181,31 @@ export function createGateway({ bindings = JSON.parse(process.env.AVIATION_GATEW
       const value = await invoke(service.namespace, args, ctx.signal);
       return { content: [{ type: 'text', text: JSON.stringify(value) }], structuredContent: value, isError: value.status >= 400 };
     });
+    for (const service of contract.services.filter(s => s.openapi)) {
+      async function describe(signal) {
+        const result = await invoke(service.namespace, { path: service.openapi.path, method: 'GET', headers: { 'accept-encoding': 'identity' } }, signal);
+        if (result.status !== 200) throw new Error(`Service schema unavailable (HTTP ${result.status})`);
+        let bytes = result.bodyEncoding === 'base64' ? Buffer.from(result.body, 'base64') : Buffer.from(result.body);
+        const encoding = result.headers['content-encoding'];
+        if (encoding === 'gzip') bytes = gunzipSync(bytes, { maxOutputLength: MAX_MCP_BYTES });
+        else if (encoding === 'deflate') bytes = inflateSync(bytes, { maxOutputLength: MAX_MCP_BYTES });
+        else if (encoding === 'br') bytes = brotliDecompressSync(bytes, { maxOutputLength: MAX_MCP_BYTES });
+        else if (encoding && encoding !== 'identity') throw new Error('Unsupported service schema encoding');
+        const schema = JSON.parse(bytes.toString('utf8'));
+        if (!schema.openapi || !schema.paths) throw new Error('Invalid service OpenAPI schema');
+        return schema;
+      }
+      server.registerResource(`${service.namespace}-openapi`, service.openapi.resource,
+        { mimeType: 'application/json', description: `Full ${service.namespace} operation paths, parameters and response schemas` },
+        async (uri, ctx) => ({ contents: [{ uri: String(uri), mimeType: 'application/json', text: JSON.stringify(await describe(ctx.signal)) }] }));
+      server.registerTool(service.openapi.describeTool, {
+        description: `Discover the full ${service.namespace} API before calling ${service.mcpTool}. Returns OpenAPI paths and input/output schemas for airports/runways/frequencies/services, weather observations/TAFs/PIREPs/advisories, terrain, geographic maps, aircraft profiles, wind/fuel/density-altitude/weight-balance calculations, navigation logs and route planning. Use operation paths as the request tool path, including /api.`,
+        inputSchema: fromJsonSchema({ type: 'object', properties: {}, additionalProperties: false }),
+      }, async (_args, ctx) => {
+        const schema = await describe(ctx.signal);
+        return { content: [{ type: 'text', text: JSON.stringify(schema) }] };
+      });
+    }
     server.registerResource('services', 'aviation://v1/services', { mimeType: 'application/json', description: 'Versioned service catalog and compatibility policy' }, async uri => ({ contents: [{ uri: String(uri), mimeType: 'application/json', text: JSON.stringify(contract) }] }));
     server.registerResource('openapi', 'aviation://v1/openapi', { mimeType: 'application/json' }, async uri => ({ contents: [{ uri: String(uri), mimeType: 'application/json', text: JSON.stringify(openapi()) }] }));
     return server;

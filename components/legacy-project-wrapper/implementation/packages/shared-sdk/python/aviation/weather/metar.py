@@ -68,7 +68,11 @@ def fetch_metar_raws(stations: Sequence[str]) -> Dict[str, Optional[str]]:
         found: Dict[str, str] = {}
         for line in response.text.splitlines():
             raw = line.strip()
-            code = raw.split(maxsplit=1)[0].upper() if raw else ""
+            tokens = raw.split()
+            # NOAA's current raw product prefixes reports with METAR or SPECI.
+            # Preserve the full report while resolving the actual station token.
+            station_index = 1 if tokens and tokens[0].upper() in {"METAR", "SPECI"} else 0
+            code = tokens[station_index].upper() if len(tokens) > station_index else ""
             if code in result:
                 found[code] = raw
         for station in missing:

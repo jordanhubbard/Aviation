@@ -209,7 +209,7 @@ const WeatherPage: React.FC = () => {
                     <Grid item xs={6}>
                       <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
                         <Cloud sx={{ mr: 1, color: 'primary.main' }} />
-                        <Typography variant="body1">{weatherData.ceiling} ft</Typography>
+                        <Typography variant="body1">{weatherData.ceiling == null ? 'Unknown' : `${weatherData.ceiling} ft`}</Typography>
                       </Box>
                     </Grid>
                   </Grid>

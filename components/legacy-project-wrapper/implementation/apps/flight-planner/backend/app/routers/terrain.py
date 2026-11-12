@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Query
 
 from app.schemas.terrain import (
     TerrainPointResponse,
@@ -23,17 +23,18 @@ def terrain_status() -> dict:
     "/terrain/point",
     response_model=TerrainPointResponse,
     summary="Get terrain elevation at a point",
-    description="Returns elevation in feet for a (lat, lon) using OpenTopography.",
+    description="Returns terrain elevation in feet MSL and actual provider provenance (Open-Meteo or configured OpenTopography with fallback).",
 )
-def terrain_point(lat: float, lon: float, demtype: str = "SRTMGL1") -> TerrainPointResponse:
+def terrain_point(lat: float = Query(ge=-90, le=90, allow_inf_nan=False), lon: float = Query(ge=-180, le=180, allow_inf_nan=False), demtype: str = Query("SRTMGL1", max_length=32, pattern=r"^[A-Za-z0-9_-]+$")) -> TerrainPointResponse:
     try:
-        elev_ft = terrain_service.get_elevation_ft(lat, lon, demtype=demtype)
+        prof, source = terrain_service.profile_with_source([(lat, lon)], demtype=demtype)
+        elev_ft = prof[0][2]
     except terrain_service.TerrainServiceError as e:
         raise HTTPException(status_code=503, detail=str(e))
     except Exception:
         raise HTTPException(status_code=503, detail="Terrain service error")
 
-    return TerrainPointResponse(latitude=lat, longitude=lon, elevation_ft=elev_ft)
+    return TerrainPointResponse(latitude=lat, longitude=lon, elevation_ft=elev_ft, source=source)
 
 
 @router.post(
@@ -56,7 +57,7 @@ def terrain_point(lat: float, lon: float, demtype: str = "SRTMGL1") -> TerrainPo
 )
 def terrain_profile(req: TerrainProfileRequest) -> TerrainProfileResponse:
     try:
-        prof = terrain_service.elevation_profile(req.points, demtype=req.demtype)
+        prof, source = terrain_service.profile_with_source(req.points, demtype=req.demtype)
     except terrain_service.TerrainServiceError as e:
         raise HTTPException(status_code=503, detail=str(e))
     except Exception:
@@ -64,6 +65,7 @@ def terrain_profile(req: TerrainProfileRequest) -> TerrainProfileResponse:
 
     return TerrainProfileResponse(
         demtype=req.demtype,
+        source=source,
         points=[
             TerrainProfilePoint(latitude=lat, longitude=lon, elevation_ft=elev_ft)
             for lat, lon, elev_ft in prof

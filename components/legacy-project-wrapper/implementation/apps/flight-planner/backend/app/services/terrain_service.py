@@ -319,3 +319,27 @@ def elevation_profile(
     for lat, lon in points:
         out.append((lat, lon, get_elevation_ft(lat, lon, demtype=demtype)))
     return out
+
+
+def profile_with_source(points, demtype="SRTMGL1"):
+    """Return samples and the provider that actually supplied this response."""
+    from datetime import datetime, timezone
+
+    provider = _terrain_provider()
+    if provider == "opentopography":
+        try:
+            values = [_get_elevation_m_opentopography(lat, lon, demtype) for lat, lon in points]
+            name = "OpenTopography"
+            url = "https://portal.opentopography.org/API/globaldem"
+            dataset = demtype
+        except TerrainServiceError:
+            values = _fetch_open_meteo_elevations_m(points)
+            name, url, dataset = "Open-Meteo", "https://open-meteo.com/en/docs/elevation-api", "Provider elevation DEM"
+    else:
+        values = _fetch_open_meteo_elevations_m(points)
+        name, url, dataset = "Open-Meteo", "https://open-meteo.com/en/docs/elevation-api", "Provider elevation DEM"
+    samples = [(lat, lon, value * 3.28084 if value is not None else None)
+               for (lat, lon), value in zip(points, values, strict=True)]
+    return samples, {"provider": name, "url": url, "dataset": dataset,
+                     "served_at_utc": datetime.now(timezone.utc).isoformat(),
+                     "elevation_units": "feet MSL", "limitations": "Sampled terrain elevations; not obstacle clearance or a safe altitude determination."}

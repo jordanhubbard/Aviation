@@ -16,6 +16,7 @@
     {"path":"deploy/isolated-native-e2e.mjs","classification":"deployment-test-harness"},
     {"path":"deploy/remote-e2e.mjs","classification":"deployment-test-harness"},
     {"path":"deploy/test_deploy.py","classification":"deployment-test-harness"},
+    {"path": "deploy/verify_ga_mcp.py", "classification": "deployment-test-harness"},
     {"path":"k8s/accident-tracker/deployment.yaml","classification":"dormant-deployment-policy"},
     {"path":"k8s/base/namespace.yaml","classification":"dormant-deployment-policy"},
     {"path":"monitoring/grafana/provisioning/datasources/datasources.yml","classification":"observability-policy"},

@@ -21,6 +21,13 @@ async function fixture(t, options = {}) {
   const origin = await listen(t, async (req, res) => {
     const chunks = []; for await (const chunk of req) chunks.push(chunk);
     const body = Buffer.concat(chunks); calls.push({ url: req.url, method: req.method, headers: req.headers, body });
+    if (req.url === '/api/openapi.json') {
+      if (options.schemaMode === 'unavailable') { sendJson(res, 503, { error: 'provider unavailable' }); return; }
+      if (options.schemaMode === 'html') { res.writeHead(200, { 'content-type': 'text/html' }); res.end('<html>not a schema</html>'); return; }
+      const schema = { openapi: '3.1.0', info: { title: 'Planner', version: '1' }, paths: { '/api/aircraft/{identifier}': { get: { parameters: [{ name: 'identifier', in: 'path', required: true, schema: { type: 'string' } }] } } } };
+      if (options.schemaMode === 'gzip') { res.writeHead(200, { 'content-type': 'application/json', 'content-encoding': 'gzip' }); res.end(gzipSync(JSON.stringify(schema))); return; }
+      sendJson(res, 200, schema); return;
+    }
     if (req.url === '/api/auth-html') { res.writeHead(401, { 'content-type': 'text/html' }); res.end('<html>Authentication required</html>'); return; }
     if (req.url === '/api/login-redirect') { res.writeHead(302, { 'content-type': 'text/html', location: '/login' }); res.end('<html>Sign in</html>'); return; }
     if (req.url === '/api/spa-miss') { res.writeHead(200, { 'content-type': 'text/html' }); res.end('<html>launcher</html>'); return; }
@@ -125,9 +132,9 @@ test('real MCP client discovers matching schemas/resources and invokes same serv
   const client = new Client({ name: 'gateway-conformance', version: '1.0.0' });
   await client.connect(new StreamableHTTPClientTransport(new URL(edge + '/mcp'), { requestInit: { headers: { authorization: 'Bearer gateway-only', cookie: 'meta=private' } } }));
   t.after(() => client.close());
-  const { tools } = await client.listTools(); assert.equal(tools.length, 11);
+  const { tools } = await client.listTools(); assert.equal(tools.length, 12);
   const tool = tools.find(x => x.name === 'v1.planning.request'); assert.deepEqual(tool.inputSchema, contract.requestSchema);
-  const resources = await client.listResources(); assert.equal(resources.resources.length, 2);
+  const resources = await client.listResources(); assert.equal(resources.resources.length, 3);
   const catalog = await client.readResource({ uri: 'aviation://v1/services' }); assert.deepEqual(JSON.parse(catalog.contents[0].text), contract);
   const result = await client.callTool({ name: tool.name, arguments: { path: '/protected' } });
   assert.equal(result.isError, true); assert.equal(result.structuredContent.status, 401); assert.equal(calls.at(-1).headers.authorization, undefined);
@@ -311,4 +318,37 @@ test('WebSocket rejects unknown namespaces, unsafe paths, foreign origins and pr
   assert.equal(calls.length, 0);
   assert.equal(await rejected('/api/v1/avionics/echo', 'https://meta-app.jordanhubbard.net'), 200);
   assert.equal(await rejected('/api/v1/avionics/slow'), 504);
+});
+
+
+test('MCP exposes domain OpenAPI as a resource and discoverable tool, including compressed schemas', async t => {
+  for (const schemaMode of ['plain', 'gzip']) {
+    await t.test(schemaMode, async t => {
+      const { edge } = await fixture(t, { schemaMode });
+      const client = new Client({ name: 'domain-discovery', version: '1.0' });
+      await client.connect(new StreamableHTTPClientTransport(new URL(edge + '/mcp')));
+      t.after(() => client.close());
+      const resource = await client.readResource({ uri: 'aviation://v1/planning/openapi' });
+      const schema = JSON.parse(resource.contents[0].text);
+      assert.ok(schema.paths['/api/aircraft/{identifier}'].get.parameters[0].required);
+      const result = await client.callTool({ name: 'v1.planning.describe', arguments: {} });
+      assert.deepEqual(JSON.parse(result.content[0].text), schema);
+      const viaHttp = await (await fetch(edge + '/api/v1/planning/api/openapi.json')).json();
+      assert.deepEqual(viaHttp, schema);
+    });
+  }
+});
+
+test('MCP domain discovery reports unavailable and invalid schemas as errors', async t => {
+  for (const schemaMode of ['unavailable', 'html']) {
+    await t.test(schemaMode, async t => {
+      const { edge } = await fixture(t, { schemaMode });
+      const client = new Client({ name: 'domain-discovery-error', version: '1.0' });
+      await client.connect(new StreamableHTTPClientTransport(new URL(edge + '/mcp')));
+      t.after(() => client.close());
+      await assert.rejects(client.readResource({ uri: 'aviation://v1/planning/openapi' }));
+      const result = await client.callTool({ name: 'v1.planning.describe', arguments: {} });
+      assert.equal(result.isError, true);
+    });
+  }
 });

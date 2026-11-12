@@ -45,3 +45,14 @@ legacy-tree identity as the corresponding direct Phase 1 baseline stage recorded
 
 - **WHEN** a proven stage is invoked through `litai.harness.mk`
 - **THEN** its exit status and resulting legacy-tree identity match the direct baseline
+
+The retained application API requirements are specified in [General aviation API and MCP](../../docs/architecture/general-aviation-api.md).
+
+### Requirement: Retained GA domain data is discoverable through HTTP and MCP
+
+The retained planner SHALL expose weather, airport details and facilities, terrain,
+GeoJSON mapping, aircraft references, navigation logs and performance/loading
+calculations through typed HTTP operations. Meta App SHALL expose the same operations
+through its MCP request tool and make their full schemas discoverable. Provider
+provenance, unknown values and failures SHALL remain explicit; reference figures and
+caller-supplied POH/loading data SHALL not become invented aircraft-specific results.

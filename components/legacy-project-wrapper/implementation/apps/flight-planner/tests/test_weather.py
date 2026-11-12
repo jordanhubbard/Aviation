@@ -47,6 +47,8 @@ def test_weather_ok(monkeypatch) -> None:
     body = resp.json()
     assert body["airport"] == "AAA"
     assert body["conditions"]
+    assert body["ceiling"] is None
+    assert body["flight_category"] == "UNKNOWN"
     assert body["temperature"] == 72
     assert body["wind_direction"] == 270
     assert body["flight_category"] in {"VFR", "MVFR", "IFR", "LIFR", "UNKNOWN"}

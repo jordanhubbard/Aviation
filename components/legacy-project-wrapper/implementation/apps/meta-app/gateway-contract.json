@@ -1,5 +1,5 @@
 {
-  "version": "1.0.0",
+  "version": "1.1.0",
   "apiVersion": "v1",
   "compatibility": "Public v1 paths and semantics are stable. Upstream moves and version changes require gateway binding/adapter updates and conformance checks. Breaking public changes require a new major namespace. Direct service endpoints remain available.",
   "services": [
@@ -37,7 +37,13 @@
       "mcpTool": "v1.planning.request",
       "direct": "https://flight-planner.jordanhubbard.net",
       "description": "Flight planning, airport/navigation mapping data, terrain, weather and saved plans.",
-      "healthPath": "/api/health"
+      "healthPath": "/api/health",
+      "openapi": {
+        "path": "/api/openapi.json",
+        "http": "/api/v1/planning/api/openapi.json",
+        "resource": "aviation://v1/planning/openapi",
+        "describeTool": "v1.planning.describe"
+      }
     },
     {
       "namespace": "analysis",

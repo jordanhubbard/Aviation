@@ -165,9 +165,15 @@ def weather_for_airport(code: str) -> dict:
         )
         data = openweathermap.to_weather_data(code, payload)
 
+        # Cloud coverage percentage does not measure ceiling height. Never use
+        # the SDK's legacy cloud-cover estimate as an observed flight ceiling.
+        data["ceiling"] = None
+        data["ceiling_source"] = None
+        data["source"] = {"conditions": "OpenWeatherMap", "aviation_observation": None}
         raw = metar.fetch_metar_raw(code.upper())
         if raw:
             data["metar"] = raw
+            data["source"]["aviation_observation"] = "NOAA Aviation Weather Center METAR"
             parsed = metar.parse_metar(raw)
             if parsed.get("temperature_f") is not None:
                 data["temperature"] = parsed["temperature_f"]
@@ -179,6 +185,7 @@ def weather_for_airport(code: str) -> dict:
                 data["visibility"] = round(float(parsed["visibility_sm"]), 1)
             if parsed.get("ceiling_ft") is not None:
                 data["ceiling"] = parsed["ceiling_ft"]
+                data["ceiling_source"] = "METAR"
 
         cat = flight_recommendations.flight_category(
             visibility_sm=(

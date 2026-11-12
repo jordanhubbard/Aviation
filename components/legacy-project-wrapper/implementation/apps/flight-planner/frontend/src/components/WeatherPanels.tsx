@@ -46,7 +46,7 @@ const AirportWeatherCard: React.FC<AirportWeatherCardProps> = ({ airport }) => {
               Wind: {weather.data.wind_speed} kt @ {weather.data.wind_direction}°
             </Typography>
             <Typography variant="body2">Visibility: {weather.data.visibility} sm</Typography>
-            <Typography variant="body2">Ceiling: {weather.data.ceiling} ft</Typography>
+            <Typography variant="body2">Ceiling: {weather.data.ceiling == null ? 'Unknown' : `${weather.data.ceiling} ft`}</Typography>
 
             {weather.data.metar ? (
               <Box sx={{ mt: 1 }}>
