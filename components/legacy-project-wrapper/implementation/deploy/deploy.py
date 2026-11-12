@@ -145,10 +145,13 @@ def registry_image_name(config: dict, app: dict, revision: str) -> str:
 def build(app: dict, revision: str) -> str:
     image = image_name(app, revision)
     print(f"Building {app['name']} from {revision}", flush=True)
+    build_args = (["--build-arg", f"GIT_SHA={revision}", "--build-arg",
+                   "REPO_URL=https://github.com/jordanhubbard/Aviation"]
+                  if app['name'] == 'flight-planner' else [])
     run(
         "docker", "build", "--platform", "linux/amd64", "--label",
         f"org.opencontainers.image.revision={revision}", "-f",
-        f"apps/{app['name']}/Dockerfile", "-t", image, ".", cwd=IMPLEMENTATION,
+        f"apps/{app['name']}/Dockerfile", *build_args, "-t", image, ".", cwd=IMPLEMENTATION,
     )
     return image
 
@@ -367,6 +370,12 @@ def verify(config: dict, apps: list[dict], host: str) -> None:
             )
         if running_revision != revision:
             raise RuntimeError(f"{app['name']} runs {running_revision}, expected {revision}")
+        if app['name'] == 'flight-planner':
+            metadata_url = f"https://{name}.{config['domain']}/api/meta"
+            with urllib.request.urlopen(metadata_url, timeout=10) as response:
+                metadata = json.load(response)
+            if metadata.get('revision') != revision:
+                raise RuntimeError(f"flight-planner application metadata revision {metadata.get('revision')!r}, expected {revision}")
     run("node", str(HERE / "browser-smoke.mjs"), apps[0]["name"] if len(apps) == 1 else "all", cwd=IMPLEMENTATION)
     for app in apps:
         name = app["name"]

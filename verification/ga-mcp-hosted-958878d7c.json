@@ -1,0 +1,306 @@
+{
+  "schema": "aviation/ga-mcp-observation@1",
+  "base_url": "https://meta-app.jordanhubbard.net",
+  "observed_at_utc": "2026-11-12T07:28:22.258959+00:00",
+  "expected_revision": "958878d7c7934c60f668e4d15dee8b9f2a292e9d",
+  "passed": false,
+  "checks": [
+    {
+      "name": "MCP initialize",
+      "passed": true,
+      "bytes": 180,
+      "sha256": "5e077147d8497f82f7b82f0c1fd15f5b5340776ba792a67ed383fdd21847f4ff",
+      "source": null
+    },
+    {
+      "name": "Discover domain schema tool",
+      "passed": true,
+      "bytes": 17008,
+      "sha256": "d7552b350d1c401587629fca6a4e056bed221c8ca411e897495dddad0f09741c",
+      "source": null
+    },
+    {
+      "name": "Discover complete planner operation schemas",
+      "passed": true,
+      "bytes": 97245,
+      "sha256": "a53902edfb9119d4f639ef558bc27b397c17c6040e5700942fbe3cbbdea4f790",
+      "source": null
+    },
+    {
+      "name": "MCP schema resource matches describe tool",
+      "passed": true,
+      "bytes": 97245,
+      "sha256": "a53902edfb9119d4f639ef558bc27b397c17c6040e5700942fbe3cbbdea4f790",
+      "source": null
+    },
+    {
+      "name": "HTTP and MCP schemas match",
+      "passed": true,
+      "bytes": 97375,
+      "sha256": "003634b4a4808e8db90ce9501e08f3654928c7cf70a8d2a73090b9dc26dc5c3d",
+      "source": null
+    },
+    {
+      "name": "Planner exact deployed revision",
+      "passed": false,
+      "error": "Deployed revision mismatch"
+    },
+    {
+      "name": "Airport identity/coordinates",
+      "passed": true,
+      "bytes": 191,
+      "sha256": "3fcf250a76f665399ed90b05441270bdd347c79eef1ab9c784cb340757baaa14",
+      "source": null
+    },
+    {
+      "name": "Nearby airports",
+      "passed": true,
+      "bytes": 1051,
+      "sha256": "8cfa3e6877e3a19f4dcd1fd10a2b05bc3d54c461fe34f4dd96640f5e6c0a2d90",
+      "source": null
+    },
+    {
+      "name": "Airport runways/frequencies",
+      "passed": true,
+      "bytes": 2479,
+      "sha256": "3ebfb04382fd9760721ee412af20679e3cd2d4891fc1b005a831ba9d9936afdc",
+      "source": null
+    },
+    {
+      "name": "Current dated airport fuel/services",
+      "passed": true,
+      "bytes": 931,
+      "sha256": "2ba2b5743545227abe44fe83b35d2cbb7fd5c5380907f55735a6ab222d17a4e6",
+      "source": {
+        "provider": "FAA NASR via US DOT NTAD",
+        "url": "https://services.arcgis.com/xOi1kZaI0eWDREZv/arcgis/rest/services/NTAD_Aviation_Facilities/FeatureServer/0",
+        "retrieved_at_utc": "2026-11-12T07:28:09.816816+00:00",
+        "effective_date": "2026/10/29"
+      }
+    },
+    {
+      "name": "NOAA metar",
+      "passed": true,
+      "bytes": 700,
+      "sha256": "8b841a4eb9509f8fb02eab8aa30679c3715b36e03a6ffbe5be3eeb10cfe2524c",
+      "source": {
+        "provider": "NOAA Aviation Weather Center",
+        "url": "https://aviationweather.gov/api/data/metar",
+        "retrieved_at_utc": "2026-11-12T07:28:10.888791+00:00",
+        "effective_date": null
+      }
+    },
+    {
+      "name": "NOAA taf",
+      "passed": true,
+      "bytes": 2190,
+      "sha256": "3ec31ae810d3d4410be5e6fef8bfe8e2a44939d0230e466f34f5bd227696f095",
+      "source": {
+        "provider": "NOAA Aviation Weather Center",
+        "url": "https://aviationweather.gov/api/data/taf",
+        "retrieved_at_utc": "2026-11-12T07:28:11.131851+00:00",
+        "effective_date": null
+      }
+    },
+    {
+      "name": "NOAA pirep",
+      "passed": true,
+      "bytes": 228,
+      "sha256": "84b65d65cd05437cb1d7e5b4c11a9d5c8efc5484335b6d5189a86bee451e7690",
+      "source": {
+        "provider": "NOAA Aviation Weather Center",
+        "url": "https://aviationweather.gov/api/data/pirep",
+        "retrieved_at_utc": "2026-11-12T07:28:12.042773+00:00",
+        "effective_date": null
+      }
+    },
+    {
+      "name": "NOAA gairmet",
+      "passed": true,
+      "bytes": 40951,
+      "sha256": "2751cbbec204fed20eff7f2e5f80299ecbd68df3dfb3897b438483bdd3002c31",
+      "source": {
+        "provider": "NOAA Aviation Weather Center",
+        "url": "https://aviationweather.gov/api/data/gairmet",
+        "retrieved_at_utc": "2026-11-12T07:28:12.321725+00:00",
+        "effective_date": null
+      }
+    },
+    {
+      "name": "NOAA airsigmet",
+      "passed": true,
+      "bytes": 2703,
+      "sha256": "c57f90350f22fddd7743c3cde28df66800125590919a302e49835800ab6c70db",
+      "source": {
+        "provider": "NOAA Aviation Weather Center",
+        "url": "https://aviationweather.gov/api/data/airsigmet",
+        "retrieved_at_utc": "2026-11-12T07:28:12.744902+00:00",
+        "effective_date": null
+      }
+    },
+    {
+      "name": "Airport forecast",
+      "passed": true,
+      "bytes": 272,
+      "sha256": "485605bfe5f6b517e434fe86decde0d2588e2c4e96d6ba6f84da6e602f05aae3",
+      "source": null
+    },
+    {
+      "name": "Terrain point elevation",
+      "passed": true,
+      "bytes": 383,
+      "sha256": "ca449b538637fcee64f3fd8a04fbbe0bde57b7ed9245a80b626e42c33cf6b651",
+      "source": {
+        "provider": "Open-Meteo",
+        "url": "https://open-meteo.com/en/docs/elevation-api",
+        "dataset": "Provider elevation DEM",
+        "served_at_utc": "2026-11-12T07:28:14.023825+00:00",
+        "elevation_units": "feet MSL",
+        "limitations": "Sampled terrain elevations; not obstacle clearance or a safe altitude determination."
+      }
+    },
+    {
+      "name": "Terrain elevation profile",
+      "passed": true,
+      "bytes": 488,
+      "sha256": "ba96819e76958a42ae0eec7ee279600720403da68d2267007d0996dc47317722",
+      "source": {
+        "provider": "Open-Meteo",
+        "url": "https://open-meteo.com/en/docs/elevation-api",
+        "dataset": "Provider elevation DEM",
+        "served_at_utc": "2026-11-12T07:28:14.866700+00:00",
+        "elevation_units": "feet MSL",
+        "limitations": "Sampled terrain elevations; not obstacle clearance or a safe altitude determination."
+      }
+    },
+    {
+      "name": "Geographic map airports",
+      "passed": true,
+      "bytes": 3764,
+      "sha256": "c0aa9d800799389a94432dda91bcc09176d78c0f5d57cabb74a722faad7625cb",
+      "source": {
+        "provider": "Aviation SDK bundled airport snapshot",
+        "url": null,
+        "retrieved_at_utc": null,
+        "effective_date": null,
+        "freshness": "Bundled snapshot; not live airport status"
+      }
+    },
+    {
+      "name": "Geographic map navaids",
+      "passed": true,
+      "bytes": 1054,
+      "sha256": "ffc8e05cf3cf388b1de04448c6d25254d72569466bf52ba7c5f1341a1ee34c06",
+      "source": {
+        "provider": "NOAA Aviation Weather Center",
+        "url": "https://aviationweather.gov/api/data/navaid",
+        "retrieved_at_utc": "2026-11-12T07:28:15.413416+00:00",
+        "effective_date": null
+      }
+    },
+    {
+      "name": "Geographic map airspace",
+      "passed": true,
+      "bytes": 3300109,
+      "sha256": "f70abea5010d2661e8201da140a74e83dd66dbf0202f761b2b3b422113952997",
+      "source": {
+        "provider": "FAA Aeronautical Information Services",
+        "url": "https://services6.arcgis.com/ssFJjBXIUyZDrSYZ/arcgis/rest/services/Class_Airspace/FeatureServer/0/query",
+        "retrieved_at_utc": "2026-11-12T07:28:16.962280+00:00",
+        "effective_date": null
+      }
+    },
+    {
+      "name": "Aircraft catalog",
+      "passed": true,
+      "bytes": 5406,
+      "sha256": "86c5e2b54a10118bd8ba8bec75cc937792e296835fd5ea5f2c22c760430bdcd2",
+      "source": {
+        "provider": "Aviation SDK qualified bundled snapshot",
+        "url": null,
+        "retrieved_at_utc": null,
+        "effective_date": null,
+        "official_type_lookup": "https://www.icao.int/operational-safety/doc-8643-aircraft-type-designators/search",
+        "profile_references": {
+          "C172": "https://cessna.txtav.com/en/piston/cessna-skyhawk",
+          "C182": "https://cessna.txtav.com/en/piston/cessna-skylane",
+          "SR22": "https://cirrusaircraft.com/aircraft/sr-series/"
+        }
+      }
+    },
+    {
+      "name": "Aircraft operating/reference performance",
+      "passed": true,
+      "bytes": 1280,
+      "sha256": "9469cee563d40a1e21110e76b614ac790ace3f3825ab0eb7355f6b5baf0aca5f",
+      "source": {
+        "provider": "Aviation SDK qualified bundled snapshot",
+        "url": null,
+        "retrieved_at_utc": null,
+        "effective_date": null,
+        "reference_url": "https://cessna.txtav.com/en/piston/cessna-skyhawk"
+      }
+    },
+    {
+      "name": "Wind/fuel/density-altitude calculations",
+      "passed": true,
+      "bytes": 796,
+      "sha256": "ac68b605fc1550d2749a5c770e09b0976208007f5542ee07f6ed53f6ad82c9e5",
+      "source": null
+    },
+    {
+      "name": "Cross-country multi-leg navlog",
+      "passed": true,
+      "bytes": 2395,
+      "sha256": "5ea39c3161870a0a63a6b2afeeec807ba37a0673219ab56524d0e62e7dd4c901",
+      "source": null
+    },
+    {
+      "name": "Terrain-aware route planning",
+      "passed": true,
+      "bytes": 1166,
+      "sha256": "c0d2e38bb286a7f5d59bf3005eb84ba1d7335f6a8c7551f4e197e8d3cf78d696",
+      "source": null
+    },
+    {
+      "name": "Missing aircraft remains explicit 404",
+      "passed": true,
+      "bytes": 58,
+      "sha256": "e9d12b0073e52a95ff28effff8fe71255baf2d6693223e80c047ba39a68649c2",
+      "source": null
+    },
+    {
+      "name": "Invalid terrain input remains 422",
+      "passed": true,
+      "bytes": 153,
+      "sha256": "dcfa7bd4055b09cf00211200e79b9a32383853787459b553b2ddf4ec096cb820",
+      "source": null
+    },
+    {
+      "name": "FAA TFR summaries",
+      "passed": true,
+      "bytes": 12768,
+      "sha256": "25366fc314d902e3560fa3bb79e7464a4f4191b0709bcf4534251a88472fdcfe",
+      "source": {
+        "provider": "FAA temporary flight restrictions",
+        "url": "https://tfr.faa.gov/tfrapi/exportTfrList",
+        "retrieved_at_utc": "2026-11-12T07:28:21.864487+00:00",
+        "effective_date": null
+      }
+    },
+    {
+      "name": "Aircraft-specific weight and balance",
+      "passed": true,
+      "bytes": 436,
+      "sha256": "fe7e76c5e0a1f265fe9b5450728b4ee9f134638becfefe012e56d9f174765194",
+      "source": null
+    },
+    {
+      "name": "POH performance table interpolation",
+      "passed": true,
+      "bytes": 537,
+      "sha256": "6d11a8dcabdc361fd421be9523179c8456fcc45e8ce838fd3d1e8a493a69209c",
+      "source": null
+    }
+  ]
+}

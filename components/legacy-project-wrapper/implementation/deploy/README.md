@@ -201,3 +201,10 @@ single public `/api/v1/services` catalog and `/mcp` endpoint on Meta App. This c
 makes Meta App an availability dependency for all public apps; the private providers
 continue to listen on their original loopback ports. Local standalone app development
 is unchanged. No provider credentials are injected by the central gateway.
+
+Planner image builds must supply `GIT_SHA` and `REPO_URL` as Docker build arguments
+in both CI and the local fallback. Deployment verification checks the planner's
+public `/api/meta` revision as well as the running image label; an empty or stale
+application revision fails before browser traffic. Meta App lifecycle qualification
+compares its public catalog and MCP tool schemas to the current checked-in contract,
+including declared additive discovery tools, rather than a fixed version/count.

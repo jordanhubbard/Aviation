@@ -10,6 +10,7 @@
     {"path":"deploy/browser-smoke.mjs","classification":"deployment-test-harness"},
     {"path":"deploy/deploy.py","classification":"deployment-orchestrator"},
     {"path":"deploy/e2e-fixtures/kmlab-standard.kml.gz","classification":"immutable-test-fixture"},
+    {"path": "deploy/gateway-qualification.mjs", "classification": "deployment-test-harness"},
     {"path":"deploy/ingress.py","classification":"deployment-operator-tool"},
     {"path":"deploy/install.sh","classification":"deployment-operator-tool"},
     {"path":"deploy/isolated-e2e.mjs","classification":"deployment-test-harness"},
