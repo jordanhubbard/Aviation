@@ -27,3 +27,6 @@ may use idiomatic names while preserving these operations and units.
 Adding an optional provider field is backward compatible. Changing units, category
 thresholds, missing-value behavior, normalized field names, warning text, or scoring
 order is a breaking interface change.
+
+Observation acquisition accepts raw reports with optional `METAR` or `SPECI`
+prefixes, matches the following station token, and preserves the complete raw report.

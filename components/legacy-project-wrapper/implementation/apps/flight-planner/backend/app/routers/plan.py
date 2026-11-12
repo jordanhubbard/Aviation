@@ -12,8 +12,8 @@ from pydantic import Field
 from starlette.responses import StreamingResponse
 
 from app.routers import local, route
-from app.schemas.local import LocalPlanRequest
-from app.schemas.route import RouteRequest
+from app.schemas.local import LocalPlanRequest, LocalPlanResponse
+from app.schemas.route import RouteRequest, RouteResponse
 from app.services.planning_runtime import (
     PlanningCancelled,
     PlanningCapacityError,
@@ -40,6 +40,7 @@ PlanRequest = Annotated[Union[PlanRouteRequest, PlanLocalRequest], Field(discrim
 
 @router.post(
     "/plan",
+    response_model=Union[RouteResponse, LocalPlanResponse],
     summary="Plan a flight (route or local) — primary entrypoint",
     description="Unified planning entrypoint. Discriminated by `mode` field: `route` or `local`.",
     include_in_schema=True,
@@ -97,17 +98,6 @@ def initialize_flight(req: PlanRequest) -> Any:
             raise HTTPException(status_code=504, detail=str(e))
 
     return local.local_plan(req)
-
-
-# /plan is the canonical, client-facing alias for /initialize.
-# Tests and the frontend use POST /api/plan with mode=route|local.
-@router.post(
-    "/plan",
-    summary="Plan a flight (route or local)",
-    description="Plans a flight using a discriminated union request body with `mode` set to `route` or `local`. Alias for /initialize.",
-)
-def plan_flight(req: PlanRequest) -> Any:
-    return initialize_flight(req)
 
 
 def _sse(event: str, data: Any) -> bytes:

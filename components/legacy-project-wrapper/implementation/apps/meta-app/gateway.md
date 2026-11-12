@@ -80,3 +80,27 @@ Acceptance uses real local upstream servers and an MCP client, covering routing,
 upstream relocation/version adapters, auth, cookies, redirects, binary bodies,
 streaming, bounded failures, native sessions for every app host, real WebSocket
 frames and schema parity. Hosted checks are read-only.
+
+## General aviation operation discovery
+
+The planning catalog entry also advertises `/api/v1/planning/api/openapi.json`.
+Read MCP resource `aviation://v1/planning/openapi` or call tool
+`v1.planning.describe` with `{}` for the full planner operation schemas. Then call
+`v1.planning.request` using the documented operation's service-relative path,
+including `/api`. This includes aircraft reference profiles, performance and
+loading calculations, cross-country navigation logs, airport runways/frequencies
+and dated facility service codes, terrain, GeoJSON airport/navaid/class-airspace
+layers, NOAA aviation weather products and FAA TFR summaries. Unknown fuel prices,
+FBO hours and provider failures remain explicit; TFR summaries are not a complete
+NOTAM briefing. Generic v1 request tools remain compatible.
+
+Run the read-only domain audit from the repository root:
+
+```sh
+python3 components/legacy-project-wrapper/implementation/deploy/verify_ga_mcp.py \
+  --report _build/ga-mcp-report.json --expected-revision <deployed-git-sha>
+```
+
+The audit checks actual data through MCP, independent calculation examples,
+HTTP/resource/tool schema parity and error statuses. The optional base URL supports
+an isolated local gateway. It never saves flight plans or aircraft records.

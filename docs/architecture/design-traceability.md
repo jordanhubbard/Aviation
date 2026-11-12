@@ -1,6 +1,6 @@
 # Design traceability
 
-<!-- literate-ai:authority-reviewed sha256:5bf8d70b6d7139d93ccb93d0fbf93f1ae0abb708e55707d0246f9330ec4593ed -->
+<!-- literate-ai:authority-reviewed sha256:dc808f67ec9c683d5264c5414bbe2d01cb6c8251f1dfb08364afd08f27f0f409 -->
 
 [Project guide](../README.md) → design traceability
 
@@ -43,3 +43,14 @@ adapters supply actual decision facts and retain their own access policy. Provid
 model selection and fallback remain RCC-owned. SDK tests exercise real local HTTP
 submission/callback behavior; they do not attest native generation or all-app
 deployment acceptance.
+
+General aviation domain APIs are owned by the retained planner application under
+[the GA API contract](general-aviation-api.md). It composes
+`aviation.aircraft`, `aviation.navigation`, and `aviation.weight-balance` rather than
+copying operating figures or calculation formulas. FAA/NOAA/OurAirports requests,
+source dates, bounded caches and GeoJSON responses remain application adapters.
+`aviation.weather` owns optional METAR/SPECI prefix handling. Meta App exposes the
+planner's operation schema through HTTP, an MCP resource and a discovery tool;
+simulator placeholders are excluded from that schema. Domain qualification calls
+real MCP operations and validates payloads and unknown/error behavior, rather than
+using process health as evidence of usable aviation data.

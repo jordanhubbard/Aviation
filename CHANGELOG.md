@@ -2,6 +2,15 @@
 
 ## Unreleased
 
+- General aviation API/MCP: expose sourced airport runways, frequencies and dated
+  fuel/service records; aircraft reference profiles; wind, fuel, density-altitude
+  and weight/balance calculations; multi-leg navigation logs; GeoJSON map layers;
+  NOAA aviation weather products and FAA TFR summaries. Add full operation schemas
+  through HTTP, an MCP resource and `v1.planning.describe`.
+- Weather: accept NOAA METAR/SPECI report prefixes and stop presenting cloud-cover
+  ceiling estimates as observed flight conditions. Validate terrain input bounds
+  and report the actual terrain provider, including fallbacks.
+
 - Repository: use GitHub Issues and PRs for all engineering work and review;
   migrate outstanding records, preserve historical task references, and replace
   the retired tracker contracts, CI gates and runtime reporters with GitHub adapters.

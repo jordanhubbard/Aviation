@@ -12,7 +12,9 @@ class WeatherData(BaseModel):
     wind_speed: float
     wind_direction: int
     visibility: float
-    ceiling: float
+    ceiling: float | None
+    ceiling_source: str | None = None
+    source: dict | None = None
     metar: str
     flight_category: Optional[Literal["VFR", "MVFR", "IFR", "LIFR", "UNKNOWN"]] = None
     recommendation: Optional[str] = None

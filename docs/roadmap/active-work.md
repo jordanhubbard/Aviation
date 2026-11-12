@@ -6,6 +6,8 @@ index, not an independently maintained task list. Use `gh issue` and `gh pr`.
 
 ## Current work and requests
 
+- [#444 — General aviation data and planning over API/MCP](https://github.com/jordanhubbard/Aviation/issues/444)
+
 - [#434 — GitHub tracking migration](https://github.com/jordanhubbard/Aviation/issues/434)
 - [#442 — Native Literate AI rewrite](https://github.com/jordanhubbard/Aviation/issues/442)
 - [#441 — Dependabot security-update follow-up](https://github.com/jordanhubbard/Aviation/issues/441)

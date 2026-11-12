@@ -5,7 +5,7 @@ export interface WeatherData {
   wind_speed: number
   wind_direction: number
   visibility: number
-  ceiling: number
+  ceiling: number | null
   metar: string
 
   flight_category?: 'VFR' | 'MVFR' | 'IFR' | 'LIFR' | 'UNKNOWN' | null

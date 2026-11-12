@@ -1,0 +1,74 @@
+[
+  {
+    "name": "airport",
+    "path": "/api/airports/KPAO",
+    "status": 200,
+    "body": "{\"icao\":\"KPAO\",\"iata\":\"PAO\",\"name\":\"Palo Alto Airport\",\"city\":\"Palo Alto\",\"country\":\"US\",\"latitude\":37.461102,\"longitude\":-122.114998,\"elevation\":4.0,\"type\":\"medium_airport\"}"
+  },
+  {
+    "name": "airport proximity",
+    "path": "/api/airports/search?lat=37.46&lon=-122.11&radius_nm=50&limit=3",
+    "status": 200,
+    "body": "[{\"icao\":\"KPAO\",\"iata\":\"PAO\",\"name\":\"Palo Alto Airport\",\"city\":\"Palo Alto\",\"country\":\"US\",\"latitude\":37.461102,\"longitude\":-122.114998,\"elevation\":4.0,\"type\":\"medium_airport\",\"distance_nm\":0.25},{\"icao\":\"US-2793\",\"iata\":\"\",\"name\":\"Hiller Airfield\",\"city\":\"Menlo Park\",\"country\":\"US\",\"latitude\":37.47847,\"longitude\":-122.14778,\"elevation\":null,\"type\":\"closed\",\"distance_nm\":2.11},{\"icao\":\"US-2773\",\"iata\":\"\",\"name\":\"Ravenswood Substation Helipad\",\"city\":\"Menlo Park\",\"country\":\"US\",\"latitude\":37.49369,\"longitude\":-122.13917,\"elevation\":null,\"type\":\"closed\",\"distance_nm\":2.45}]"
+  },
+  {
+    "name": "current weather",
+    "path": "/api/weather/KPAO",
+    "status": 200,
+    "body": "{\"airport\":\"KPAO\",\"conditions\":\"clear sky\",\"temperature\":60.0,\"wind_speed\":0.0,\"wind_direction\":0,\"visibility\":6.2,\"ceiling\":10000.0,\"metar\":\"\",\"flight_category\":\"VFR\",\"recommendation\":\"VFR conditions. Routine VFR flight should be feasible.\",\"warnings\":[]}"
+  },
+  {
+    "name": "forecast",
+    "path": "/api/weather/KPAO/forecast?days=2",
+    "status": 200,
+    "body": "{\"airport\":\"KPAO\",\"days\":2,\"daily\":[{\"date\":\"2026-11-12\",\"temp_max_f\":73.7,\"temp_min_f\":50.1,\"precipitation_mm\":0.0,\"wind_speed_max_kt\":11.4},{\"date\":\"2026-11-13\",\"temp_max_f\":69.9,\"temp_min_f\":51.5,\"precipitation_mm\":1.5,\"wind_speed_max_kt\":13.2}]}"
+  },
+  {
+    "name": "terrain point",
+    "path": "/api/terrain/point?lat=37.46&lon=-122.11",
+    "status": 200,
+    "body": "{\"latitude\":37.46,\"longitude\":-122.11,\"elevation_ft\":3.28084}"
+  },
+  {
+    "name": "terrain profile",
+    "path": "/api/terrain/profile",
+    "status": 200,
+    "body": "{\"demtype\":\"SRTMGL1\",\"points\":[{\"latitude\":37.46,\"longitude\":-122.11,\"elevation_ft\":3.28084},{\"latitude\":37.75,\"longitude\":-122.42,\"elevation_ft\":95.14436}]}"
+  },
+  {
+    "name": "map GeoJSON",
+    "path": "/api/map/airports?west=-123&south=37&east=-121&north=39",
+    "status": 404,
+    "body": "{\"detail\":\"Not Found\"}"
+  },
+  {
+    "name": "aircraft catalog",
+    "path": "/api/aircraft",
+    "status": 404,
+    "body": "{\"detail\":\"Not Found\"}"
+  },
+  {
+    "name": "performance",
+    "path": "/api/performance",
+    "status": 404,
+    "body": "{\"detail\":\"Not Found\"}"
+  },
+  {
+    "name": "airport services",
+    "path": "/api/airports/KPAO/services",
+    "status": 404,
+    "body": "{\"detail\":\"Not Found\"}"
+  },
+  {
+    "name": "planning",
+    "path": "/api/plan",
+    "status": 200,
+    "body": "{\"planned_at_utc\":\"2026-11-12T05:54:37.441198Z\",\"departure_time_utc\":\"2026-11-12T05:54:37.441198Z\",\"arrival_time_utc\":\"2026-11-12T06:32:37.441198Z\",\"route\":[\"KPAO\",\"KSAC\"],\"distance_nm\":69.7,\"time_hr\":0.63,\"origin_coords\":[37.461102,-122.114998],\"destination_coords\":[38.5125007629,-121.492996216],\"segments\":[{\"start\":[37.461102,-122.114998],\"end\":[38.5125007629,-121.492996216],\"type\":\"climb\",\"vfr_altitude\":5500}],\"legs\":[{\"from_code\":\"KPAO\",\"to_code\":\"KSAC\",\"distance_nm\":69.7,\"groundspeed_kt\":110.0,\"ete_minutes\":38.0,\"depart_time_utc\":\"2026-11-12T05:54:37.441198Z\",\"arrive_time_utc\":\"2026-11-12T06:32:36.919990Z\",\"type\":null,\"vfr_altitude\":null,\"refuel_minutes\":0,\"elapsed_minutes\":38.0,\"fuel_stop\":false}],\"alternates\":null,\"fuel_stops\":null,\"fuel_burn_gph\":null,\"reserve_minutes\":null,\"fuel_required_gal\":null,\"fuel_required_with_reserve_gal\":null,\"wind_speed_kt\":null,\"wind_direction_deg\":null,\"headwind_kt\":null,\"crosswind_kt\":null,\"groundspeed_kt\":null,\"hold_pattern_active\":false,\"hold_waypoint\":null,\"parallel_offset_active\":false,\"parallel_offset_distance_nm\":null}"
+  },
+  {
+    "name": "schema",
+    "path": "/api/openapi.json",
+    "status": 404,
+    "body": "{\"detail\":\"Not Found\"}"
+  }
+]
