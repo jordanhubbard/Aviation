@@ -345,3 +345,31 @@ def test_poh_table_interpolation_endpoints_and_no_extrapolation():
         client.post("/api/performance/table", json={**request, "points": bad_grid}).status_code
         == 422
     )
+
+
+def test_map_cache_evicts_data_by_size_without_changing_results(monkeypatch):
+    monkeypatch.setattr(ga_data, "_MAX_CACHE_WEIGHT", 300)
+    calls = []
+
+    def load(name):
+        calls.append(name)
+        return {"value": name * 40}
+
+    assert ga_data.cached(("A",), 60, lambda: load("A")) == {"value": "A" * 40}
+    assert ga_data.cached(("B",), 60, lambda: load("B")) == {"value": "B" * 40}
+    assert ga_data.cached(("A",), 60, lambda: load("A")) == {"value": "A" * 40}
+    assert calls == ["A", "B", "A"]
+
+
+def test_oversized_provider_response_is_returned_without_retention(monkeypatch):
+    monkeypatch.setattr(ga_data, "_MAX_CACHE_WEIGHT", 10)
+    calls = []
+
+    def load():
+        calls.append(True)
+        return {"value": "geometry"}
+
+    assert ga_data.cached(("large",), 60, load) == {"value": "geometry"}
+    assert ga_data.cached(("large",), 60, load) == {"value": "geometry"}
+    assert len(calls) == 2
+    assert not ga_data._CACHE

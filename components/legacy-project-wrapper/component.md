@@ -56,3 +56,10 @@ calculations through typed HTTP operations. Meta App SHALL expose the same opera
 through its MCP request tool and make their full schemas discoverable. Provider
 provenance, unknown values and failures SHALL remain explicit; reference figures and
 caller-supplied POH/loading data SHALL not become invented aircraft-specific results.
+
+#### Scenario: An LLM discovers and calls a GA domain operation
+
+- **WHEN** an integrating client requests the planner operation schema through MCP
+- **THEN** it receives the typed public HTTP paths and input/output schemas
+- **AND** invoking those paths through MCP returns the same domain data, provenance,
+  missing-value semantics and error status as the corresponding HTTP operation

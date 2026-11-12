@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import csv
 import io
+import json
 import math
 from datetime import datetime, timezone
 from threading import RLock
@@ -16,7 +17,8 @@ OURAIRPORTS = "https://davidmegginson.github.io/ourairports-data/"
 FAA_FACILITIES = "https://services.arcgis.com/xOi1kZaI0eWDREZv/arcgis/rest/services/NTAD_Aviation_Facilities/FeatureServer/0"
 FAA_AIS = "https://services6.arcgis.com/ssFJjBXIUyZDrSYZ/arcgis/rest/services/"
 AWC = "https://aviationweather.gov/api/data/"
-_CACHE: dict[tuple, tuple[float, Any]] = {}
+_CACHE: dict[tuple, tuple[float, Any, int]] = {}
+_MAX_CACHE_WEIGHT = 64 * 1024 * 1024
 _LOCK = RLock()
 
 
@@ -34,10 +36,19 @@ def cached(key: tuple, ttl: int, loader):
         found = _CACHE.get(key)
         if found and found[0] > monotonic():
             return found[1]
+        _CACHE.pop(key, None)
         result = loader()
-        if len(_CACHE) >= 128:
-            _CACHE.clear()
-        _CACHE[key] = (monotonic() + ttl, result)
+        # Large polygon layers must not turn normal map panning into unbounded
+        # retention. Budget serialized bytes with a conservative Python-object
+        # overhead multiplier; oversized responses still work without caching.
+        weight = 4 * len(json.dumps(result, ensure_ascii=False).encode("utf-8"))
+        if weight <= _MAX_CACHE_WEIGHT:
+            while _CACHE and (
+                len(_CACHE) >= 128
+                or sum(entry[2] for entry in _CACHE.values()) + weight > _MAX_CACHE_WEIGHT
+            ):
+                _CACHE.pop(next(iter(_CACHE)))
+            _CACHE[key] = (monotonic() + ttl, result, weight)
         return result
 
 
