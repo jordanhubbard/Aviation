@@ -1,3 +1,4 @@
+import { assertGatewayCatalog, assertGatewayTools } from '../../deploy/gateway-qualification.mjs';
 import test from 'node:test';
 import WebSocket from 'ws';
 import { gzipSync, gunzipSync } from 'node:zlib';
@@ -351,4 +352,24 @@ test('MCP domain discovery reports unavailable and invalid schemas as errors', a
       assert.equal(result.isError, true);
     });
   }
+});
+
+
+test('deployment discovery admits current additive tools and rejects stale catalogs, missing tools and schema drift', async t => {
+  const { edge } = await fixture(t);
+  const client = new Client({ name: 'deployment-contract', version: '1.0' });
+  await client.connect(new StreamableHTTPClientTransport(new URL(edge + '/mcp')));
+  t.after(() => client.close());
+  const { tools } = await client.listTools();
+  const catalog = await (await fetch(edge + '/api/v1/services')).json();
+  assertGatewayCatalog(catalog);
+  assertGatewayTools(tools);
+  assert.throws(() => assertGatewayCatalog({ ...catalog, version: '0.0.0' }));
+  assert.throws(() => assertGatewayTools(tools.filter(tool => tool.name !== 'v1.planning.describe')));
+  const drifted = structuredClone(tools);
+  drifted.find(tool => tool.name === 'v1.planning.request').inputSchema = { type: 'object' };
+  assert.throws(() => assertGatewayTools(drifted));
+  const missingMetadata = structuredClone(catalog);
+  delete missingMetadata.services.find(service => service.namespace === 'planning').openapi;
+  assert.throws(() => assertGatewayCatalog(missingMetadata));
 });

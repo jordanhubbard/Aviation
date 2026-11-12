@@ -32,6 +32,9 @@ ingress_spec.loader.exec_module(ingress)
 class HealthyResponse:
     status = 200
 
+    def read(self):
+        return json.dumps({'revision': 'a' * 40}).encode()
+
     def __enter__(self):
         return self
 
@@ -181,6 +184,33 @@ class VerifyTests(unittest.TestCase):
             with self.assertRaisesRegex(RuntimeError, 'expected'):
                 deployment.verify(config, [apps[0]], 'pilot@example-host')
         self.assertFalse(any(args and args[0] == 'node' for args in calls))
+
+
+    def test_missing_application_revision_stops_even_when_the_image_label_matches(self):
+        config, apps = deployment.load_manifest()
+        app = next(item for item in apps if item['name'] == 'flight-planner')
+        class MissingMetadata(HealthyResponse):
+            def read(self):
+                return b'{"revision":null,"repo_url":null}'
+        calls = []
+        with (patch.object(deployment, 'committed_revision', return_value='a' * 40),
+              patch.object(deployment.socket, 'getaddrinfo', return_value=[
+                  (None, None, None, None, (config['host'], 443))]),
+              patch.object(deployment.urllib.request, 'urlopen', return_value=MissingMetadata()),
+              patch.object(deployment, 'output', return_value='a' * 40),
+              patch.object(deployment, 'run', side_effect=lambda *args, **kw: calls.append(args))):
+            with self.assertRaisesRegex(RuntimeError, 'application metadata revision'):
+                deployment.verify(config, [app], 'pilot@example-host')
+        self.assertFalse(any(args and args[0] == 'node' for args in calls))
+
+    def test_local_planner_build_supplies_runtime_revision_metadata(self):
+        _, apps = deployment.load_manifest()
+        app = next(item for item in apps if item['name'] == 'flight-planner')
+        with patch.object(deployment, 'run') as runner:
+            deployment.build(app, 'b' * 40)
+        argv = runner.call_args.args
+        self.assertIn('GIT_SHA=' + 'b' * 40, argv)
+        self.assertIn('REPO_URL=https://github.com/jordanhubbard/Aviation', argv)
 
 
 @unittest.skipUnless(os.environ.get('AVIATION_E2E_LEASE_TEST_IMAGE'), 'requires the isolated Flight Tracker image')
