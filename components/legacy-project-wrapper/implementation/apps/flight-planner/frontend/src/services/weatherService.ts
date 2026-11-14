@@ -2,12 +2,21 @@ import { apiClient } from './apiClient'
 import type { AxiosRequestConfig } from 'axios'
 import type {
   ForecastResponse,
+  TafResponse,
   RouteWeatherResponse,
   WeatherData,
   WeatherRecommendationsResponse,
 } from '../types'
 
 export const weatherService = {
+  getTaf: async (airport: string): Promise<TafResponse> => {
+    const response = await apiClient.get<TafResponse>('/aviation-weather/taf', {
+      params: { airport },
+      ...({ suppressToast: true } as AxiosRequestConfig),
+    })
+    return response.data
+  },
+
   getWeather: async (
     airport: string,
     opts?: {

@@ -42,3 +42,15 @@ Reject duplicate/incomplete grids and all extrapolation. Preserve caller source
 edition/page/applicability as unverified input authority; infer no wind, runway,
 surface, slope or weight corrections and never describe synthetic test grids as
 published aircraft data.
+
+## Route terminal forecasts
+
+Tracked in GitHub issue #447. Flight Planner route weather cards show TAFs alongside
+METARs for every unique airport in the planned route, including the destination
+when there are more than four airports. TAF queries use the existing typed
+`GET /api/aviation-weather/taf?airport=ICAO` operation (also accessible through MCP),
+independently of current weather and daily forecasts. Preserve complete raw TAF
+text, station, issue time, validity interval and provider/retrieval provenance.
+Display times in UTC and keep missing timestamps unknown. Distinguish loading,
+no reports for the requested station, provider failure and missing raw text. Do not
+substitute a nearby station or general daily forecast as that airport's TAF.
