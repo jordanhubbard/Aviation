@@ -14,6 +14,7 @@ export type {
 } from './flight.types'
 export type {
   WeatherData,
+  TafResponse,
   FlightCategory,
   DepartureWindow,
   WeatherRecommendationsResponse,

@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Flight Planner: show complete TAFs with UTC issue/validity times and NOAA source
+  details alongside METARs for all airports in the planned route.
+
 - General aviation API/MCP: expose sourced airport runways, frequencies and dated
   fuel/service records; aircraft reference profiles; wind, fuel, density-altitude
   and weight/balance calculations; multi-leg navigation logs; GeoJSON map layers;

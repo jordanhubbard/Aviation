@@ -56,3 +56,21 @@ export interface RouteWeatherPoint {
 export interface RouteWeatherResponse {
   points: RouteWeatherPoint[]
 }
+
+export interface TafReport {
+  icaoId?: string
+  rawTAF?: string | null
+  issueTime?: string | null
+  validTimeFrom?: number | null
+  validTimeTo?: number | null
+}
+
+export interface TafResponse {
+  status: 'available' | 'no_reports'
+  reports: TafReport[]
+  source: {
+    provider: string
+    url: string
+    retrieved_at_utc: string
+  }
+}

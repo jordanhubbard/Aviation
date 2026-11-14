@@ -2,6 +2,7 @@ import React from 'react'
 import { Alert, Box, Card, CardContent, Divider, Grid, Typography, Chip } from '@mui/material'
 
 import { useForecast, useWeather } from '../hooks'
+import TafPanel from './TafPanel'
 
 type AirportWeatherCardProps = {
   airport: string
@@ -46,7 +47,9 @@ const AirportWeatherCard: React.FC<AirportWeatherCardProps> = ({ airport }) => {
               Wind: {weather.data.wind_speed} kt @ {weather.data.wind_direction}°
             </Typography>
             <Typography variant="body2">Visibility: {weather.data.visibility} sm</Typography>
-            <Typography variant="body2">Ceiling: {weather.data.ceiling == null ? 'Unknown' : `${weather.data.ceiling} ft`}</Typography>
+            <Typography variant="body2">
+              Ceiling: {weather.data.ceiling == null ? 'Unknown' : `${weather.data.ceiling} ft`}
+            </Typography>
 
             {weather.data.metar ? (
               <Box sx={{ mt: 1 }}>
@@ -63,6 +66,8 @@ const AirportWeatherCard: React.FC<AirportWeatherCardProps> = ({ airport }) => {
             ) : null}
           </Box>
         ) : null}
+
+        <TafPanel airport={airport} />
 
         <Divider sx={{ my: 2 }} />
 
@@ -101,15 +106,12 @@ type Props = {
 }
 
 const WeatherPanels: React.FC<Props> = ({ airports }) => {
-  const unique = Array.from(new Set(airports.filter(Boolean).map((a) => a.toUpperCase()))).slice(
-    0,
-    4,
-  )
+  const unique = Array.from(new Set(airports.filter(Boolean).map((a) => a.toUpperCase())))
 
   return (
     <Box>
       <Typography variant="subtitle2" sx={{ mb: 1 }}>
-        Weather
+        Route weather — METARs and TAFs
       </Typography>
       <Grid container spacing={2}>
         {unique.map((airport) => (
