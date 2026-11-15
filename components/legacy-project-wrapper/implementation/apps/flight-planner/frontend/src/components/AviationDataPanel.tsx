@@ -5,5 +5,5 @@ export default function AviationDataPanel({ airports, validAt }: { airports: str
   return createElement('aviation-data-panel', {
     airports: airports.filter(Boolean).join(' '),
     'valid-at': validAt || '',
-  })
+  }, 'Loading aviation data review…')
 }

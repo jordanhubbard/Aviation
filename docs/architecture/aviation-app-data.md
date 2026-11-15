@@ -14,8 +14,10 @@ of the source APIs in [the source inventory](aviation-data-sources.md).
 | Missions | Each mission brief carries airport codes from its explicit route into a current-data review; users can correct or extend the route before requesting data. Mission objectives and ratings remain authored content. |
 
 Meta App owns and serves `aviation-data.js`, an application presentation custom element
-following the existing hosted feedback asset pattern. The clients load the shared asset
-before use. It uses only the public v1 planning gateway, never credential files or
+following the existing hosted feedback asset pattern. The clients load the shared asset asynchronously. A slow data asset SHALL NOT
+delay the existing application interface or DOMContentLoaded. A loading message
+remains visible until the custom element upgrades, and attribute context set
+before that upgrade SHALL be preserved. It uses only the public v1 planning gateway, never credential files or
 provider endpoints. Ship Meta App before these consumers. The asset is intentionally
 unbundled and backward compatible with the documented `airports`/`valid-at` attributes.
 A failed asset request remains visible to browser deployment checks.
