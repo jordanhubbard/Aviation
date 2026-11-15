@@ -9,6 +9,16 @@ import { toNodeHandler } from '@modelcontextprotocol/node';
 export const contract = JSON.parse(readFileSync(new URL('./gateway-contract.json', import.meta.url)));
 const methods = contract.requestSchema.properties.method.enum;
 const MAX_MCP_BYTES = 4 * 1024 * 1024;
+// Browser presentation is restricted to public aviation reads, never the general request API.
+const aviationDataOrigins = new Set(['flight-planner', 'weather-briefing', 'preflight-check',
+  'aviation-missions-app', 'flightschool'].map(app => `https://${app}.jordanhubbard.net`));
+function aviationDataMethod(dest) {
+  if (!dest || dest.native || dest.ns !== 'planning') return null;
+  const path = dest.path.split('?')[0];
+  if (path === '/api/aviation-weather/route') return 'POST';
+  return /^\/api\/(aviation-weather\/(stations|winds-aloft|cwa)|aviation-data\/(sources|nws\/(alerts|forecast)|faa\/airport-events|openaip\/(airports|airspaces|navaids|reporting-points|hotspots|obstacles)))$/.test(path) ? 'GET' : null;
+}
+
 const hop = new Set(['connection', 'keep-alive', 'proxy-authenticate', 'proxy-authorization', 'proxy-connection', 'te', 'trailer', 'transfer-encoding', 'upgrade', 'host']);
 export class GatewayError extends Error {
   constructor(status, code) { super(code); this.status = status; this.code = code; }
@@ -227,11 +237,33 @@ export function createGateway({ bindings = JSON.parse(process.env.AVIATION_GATEW
       return true;
     }
     if (!dest) return false;
+    const dataMethod = aviationDataMethod(dest);
+    const cors = dataMethod && req.headers.origin && req.headers.origin !== 'https://meta-app.jordanhubbard.net';
+    if (cors) {
+      if (!aviationDataOrigins.has(req.headers.origin)) { sendJson(res, 403, { error: { code: 'origin_not_allowed' } }); return true; }
+      res.setHeader('Access-Control-Allow-Origin', req.headers.origin);
+      res.setHeader('Vary', 'Origin');
+      if (req.method === 'OPTIONS') {
+        const requested = String(req.headers['access-control-request-headers'] || '').toLowerCase().split(',').map(h => h.trim()).filter(Boolean);
+        if (req.headers['access-control-request-method'] !== dataMethod || requested.some(h => h !== 'content-type')) {
+          sendJson(res, 403, { error: { code: 'cors_request_not_allowed' } }); return true;
+        }
+        res.writeHead(204, { 'Access-Control-Allow-Methods': dataMethod, 'Access-Control-Allow-Headers': 'Content-Type' }); res.end(); return true;
+      }
+      if (req.method !== dataMethod) { sendJson(res, 405, { error: { code: 'method_not_allowed' } }); return true; }
+    }
     const controller = new AbortController();
     const abort = () => { if (!res.writableFinished) controller.abort(); };
     res.once('close', abort);
     try {
-      const result = await exchange(dest.ns, dest.path, req.method, req.headers, req, controller.signal, !dest.native, dest.native, clientIp(req));
+      const headers = { ...req.headers };
+      if (cors) { delete headers.cookie; delete headers.authorization; }
+      const result = await exchange(dest.ns, dest.path, req.method, headers, req, controller.signal, !dest.native, dest.native, clientIp(req));
+      if (cors) {
+        for (const key of Object.keys(result.headers)) if (key.startsWith('access-control-')) delete result.headers[key];
+        delete result.headers['set-cookie'];
+        result.headers.vary = [result.headers.vary, 'Origin'].filter(Boolean).join(', ');
+      }
       if (result.adapter.response) {
         let size = 0; const chunks = [];
         for await (const chunk of result.upstream) { size += chunk.length; if (size > MAX_MCP_BYTES) throw new GatewayError(502, 'response_too_large'); chunks.push(chunk); }

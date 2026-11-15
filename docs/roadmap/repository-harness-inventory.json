@@ -7,6 +7,7 @@
   "files": [
     {"path":"deploy/README.md","classification":"repository-documentation"},
     {"path":"deploy/apps.json","classification":"deployment-manifest"},
+    {"path":"deploy/aviation-data-qualification.mjs","classification":"deployment-test-harness"},
     {"path":"deploy/browser-smoke.mjs","classification":"deployment-test-harness"},
     {"path":"deploy/deploy.py","classification":"deployment-orchestrator"},
     {"path":"deploy/e2e-fixtures/kmlab-standard.kml.gz","classification":"immutable-test-fixture"},

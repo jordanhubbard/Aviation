@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Application data review: Flight Planner, Weather Briefing, Preflight Check, Flight School dispatch/booking views and mission briefs now carry route/station context into TAF/METAR corridor reports, modeled winds, NWS alerts/forecasts, FAA NAS events, center advisories and openAIP reference lookup through the public gateway. Source times, missing data, licensing and partial failures remain visible; preflight decisions remain user-controlled (#453).
+
 - Aviation API/MCP: add route-wide TAF/METAR briefings with nearby station discovery,
   spherical route distances, forecast validity selection and explicit partial results.
   Expose registered openAIP reference data, NWS alerts/forecasts, FAA NAS airport

@@ -1202,6 +1202,9 @@ class AviationMissionApp {
                 </div>
             </div>
         `;
+        const aviationData = document.createElement('aviation-data-panel');
+        aviationData.setAttribute('airports', (mission.route || '').match(/\b[A-Z0-9]{4}\b/g)?.join(' ') || '');
+        modal.querySelector('.mission-detail').appendChild(aviationData);
         document.body.appendChild(modal);
         modal.addEventListener('click', (e) => {
             if (e.target === modal) {

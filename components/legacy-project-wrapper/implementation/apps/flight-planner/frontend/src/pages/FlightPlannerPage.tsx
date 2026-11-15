@@ -18,6 +18,7 @@ import toast from 'react-hot-toast'
 import { PageHeader, EmptyState, LoadingState, ResultsSection } from '../components/shared'
 import FlightPlanningForm from '../components/FlightPlanningForm'
 import RouteMap from '../components/RouteMap'
+import AviationDataPanel from '../components/AviationDataPanel'
 import LocalMap from '../components/LocalMap'
 import RouteLegsTable from '../components/RouteLegsTable'
 import ElevationProfile from '../components/ElevationProfile'
@@ -308,6 +309,13 @@ const FlightPlannerPage: React.FC = () => {
                 </Card>
               ) : null}
 
+              {!isRouteStreaming && (
+                <AviationDataPanel
+                  airports={displayedRoutePlan.route}
+                  validAt={displayedRoutePlan.departure_time_utc}
+                />
+              )}
+
               <Grid container spacing={2} alignItems="flex-start" sx={{ mb: 2 }}>
                 <Grid item xs={12} md={4}>
                   <WeatherOverlayControls
@@ -356,6 +364,7 @@ const FlightPlannerPage: React.FC = () => {
             </ResultsSection>
           ) : lastMode === 'local' && localPlan ? (
             <ResultsSection title="Local Results">
+              <AviationDataPanel airports={[localPlan.airport]} />
               <Card sx={{ mb: 2 }}>
                 <CardContent>
                   <Typography variant="subtitle1" gutterBottom>
