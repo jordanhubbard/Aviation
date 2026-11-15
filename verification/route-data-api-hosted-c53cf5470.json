@@ -1,0 +1,537 @@
+{
+  "schema": "aviation/ga-mcp-observation@1",
+  "base_url": "https://meta-app.jordanhubbard.net",
+  "observed_at_utc": "2026-11-15T04:39:48.721909+00:00",
+  "expected_revision": "c53cf54709ccdc4ef97d0ca959d040db86133141",
+  "passed": true,
+  "checks": [
+    {
+      "name": "MCP initialize",
+      "passed": true,
+      "bytes": 180,
+      "sha256": "5e077147d8497f82f7b82f0c1fd15f5b5340776ba792a67ed383fdd21847f4ff",
+      "source": null
+    },
+    {
+      "name": "Discover domain schema tool",
+      "passed": true,
+      "bytes": 17008,
+      "sha256": "d7552b350d1c401587629fca6a4e056bed221c8ca411e897495dddad0f09741c",
+      "source": null
+    },
+    {
+      "name": "Discover complete planner operation schemas",
+      "passed": true,
+      "bytes": 115864,
+      "sha256": "602c981f9cb67ff3916f689ce46096bdb9595259dd601445ec9fec42c63cc096",
+      "source": null
+    },
+    {
+      "name": "MCP schema resource matches describe tool",
+      "passed": true,
+      "bytes": 115864,
+      "sha256": "602c981f9cb67ff3916f689ce46096bdb9595259dd601445ec9fec42c63cc096",
+      "source": null
+    },
+    {
+      "name": "HTTP and MCP schemas match",
+      "passed": true,
+      "bytes": 116018,
+      "sha256": "cd7d4d7b925f5347d2f990ba67ecd5f67c7cf2d1f47544d8e592dc3d0caeb2bc",
+      "source": null
+    },
+    {
+      "name": "Planner exact deployed revision",
+      "passed": true,
+      "bytes": 113,
+      "sha256": "4778b79eec9c59edbefb367ee158ad40dbedcd8307b2de7792ce97c02321256c",
+      "source": null
+    },
+    {
+      "name": "Airport identity/coordinates",
+      "passed": true,
+      "bytes": 191,
+      "sha256": "3fcf250a76f665399ed90b05441270bdd347c79eef1ab9c784cb340757baaa14",
+      "source": null
+    },
+    {
+      "name": "Nearby airports",
+      "passed": true,
+      "bytes": 1051,
+      "sha256": "8cfa3e6877e3a19f4dcd1fd10a2b05bc3d54c461fe34f4dd96640f5e6c0a2d90",
+      "source": null
+    },
+    {
+      "name": "Airport runways/frequencies",
+      "passed": true,
+      "bytes": 2479,
+      "sha256": "068ca3a0e4f1523fc2d1514965d98bbdc9deb0fd60536203b3e47eed347ed21e",
+      "source": null
+    },
+    {
+      "name": "Current dated airport fuel/services",
+      "passed": true,
+      "bytes": 931,
+      "sha256": "0ec37850c9497198f28176d2df5af4045e3c3f884a97980ded6eb8157c72fa1e",
+      "source": {
+        "provider": "FAA NASR via US DOT NTAD",
+        "url": "https://services.arcgis.com/xOi1kZaI0eWDREZv/arcgis/rest/services/NTAD_Aviation_Facilities/FeatureServer/0",
+        "retrieved_at_utc": "2026-11-15T04:39:33.948037+00:00",
+        "effective_date": "2026/10/29"
+      }
+    },
+    {
+      "name": "NOAA metar",
+      "passed": true,
+      "bytes": 781,
+      "sha256": "f5daaa966e07203fd3700ba6b82224c092c7625d00fa28c07fdaa88cf842b53d",
+      "source": {
+        "provider": "NOAA Aviation Weather Center",
+        "url": "https://aviationweather.gov/api/data/metar",
+        "retrieved_at_utc": "2026-11-15T04:39:34.243648+00:00",
+        "effective_date": null
+      }
+    },
+    {
+      "name": "NOAA taf",
+      "passed": true,
+      "bytes": 2773,
+      "sha256": "f21c183b80593ebe524eda41afeca7c26eb1d3eefe904caa34c8a9a5481392e9",
+      "source": {
+        "provider": "NOAA Aviation Weather Center",
+        "url": "https://aviationweather.gov/api/data/taf",
+        "retrieved_at_utc": "2026-11-15T04:39:34.491558+00:00",
+        "effective_date": null
+      }
+    },
+    {
+      "name": "NOAA pirep",
+      "passed": true,
+      "bytes": 228,
+      "sha256": "3fd44f1a5ca7e1f3ba563ce76c21794c557d81c2e6c8f35f44b33414515c57e6",
+      "source": {
+        "provider": "NOAA Aviation Weather Center",
+        "url": "https://aviationweather.gov/api/data/pirep",
+        "retrieved_at_utc": "2026-11-15T04:39:34.748328+00:00",
+        "effective_date": null
+      }
+    },
+    {
+      "name": "NOAA gairmet",
+      "passed": true,
+      "bytes": 62028,
+      "sha256": "76c059cd3cf3e5c8943b431a4b5daee88a6d596c2d7cfcc0fb6fa12ab181a701",
+      "source": {
+        "provider": "NOAA Aviation Weather Center",
+        "url": "https://aviationweather.gov/api/data/gairmet",
+        "retrieved_at_utc": "2026-11-15T04:39:35.121616+00:00",
+        "effective_date": null
+      }
+    },
+    {
+      "name": "NOAA airsigmet",
+      "passed": true,
+      "bytes": 3550,
+      "sha256": "206d84b6c5ed74722e82267c887215a65ff0665ee2f76a84cc38d5163b2e539f",
+      "source": {
+        "provider": "NOAA Aviation Weather Center",
+        "url": "https://aviationweather.gov/api/data/airsigmet",
+        "retrieved_at_utc": "2026-11-15T04:39:35.401051+00:00",
+        "effective_date": null
+      }
+    },
+    {
+      "name": "NOAA cwa",
+      "passed": true,
+      "bytes": 226,
+      "sha256": "289c41fce30aa8000caa1c9b8f47ecd38797564fcc2855bddc78abc54281982c",
+      "source": {
+        "provider": "NOAA Aviation Weather Center",
+        "url": "https://aviationweather.gov/api/data/cwa",
+        "retrieved_at_utc": "2026-11-15T04:39:35.633252+00:00",
+        "effective_date": null
+      }
+    },
+    {
+      "name": "Airport forecast",
+      "passed": true,
+      "bytes": 272,
+      "sha256": "ecb45ef389ad7c21fe8381a4e8b351ac3f9cb044ba22be8ced9b485ad6f718cc",
+      "source": null
+    },
+    {
+      "name": "Terrain point elevation",
+      "passed": true,
+      "bytes": 383,
+      "sha256": "6c755f3fa9f6e4070e5319f1f9c087228067ab7bc8d8aeb7f3c5ce35ba1887eb",
+      "source": {
+        "provider": "Open-Meteo",
+        "url": "https://open-meteo.com/en/docs/elevation-api",
+        "dataset": "Provider elevation DEM",
+        "served_at_utc": "2026-11-15T04:39:36.053391+00:00",
+        "elevation_units": "feet MSL",
+        "limitations": "Sampled terrain elevations; not obstacle clearance or a safe altitude determination."
+      }
+    },
+    {
+      "name": "Terrain elevation profile",
+      "passed": true,
+      "bytes": 488,
+      "sha256": "538fb26e62ab7fffd9d670e9f862d583652a6fb926060d5edb4805e5be5ddc9f",
+      "source": {
+        "provider": "Open-Meteo",
+        "url": "https://open-meteo.com/en/docs/elevation-api",
+        "dataset": "Provider elevation DEM",
+        "served_at_utc": "2026-11-15T04:39:36.248394+00:00",
+        "elevation_units": "feet MSL",
+        "limitations": "Sampled terrain elevations; not obstacle clearance or a safe altitude determination."
+      }
+    },
+    {
+      "name": "Geographic map airports",
+      "passed": true,
+      "bytes": 3764,
+      "sha256": "c0aa9d800799389a94432dda91bcc09176d78c0f5d57cabb74a722faad7625cb",
+      "source": {
+        "provider": "Aviation SDK bundled airport snapshot",
+        "url": null,
+        "retrieved_at_utc": null,
+        "effective_date": null,
+        "freshness": "Bundled snapshot; not live airport status"
+      }
+    },
+    {
+      "name": "Geographic map navaids",
+      "passed": true,
+      "bytes": 1054,
+      "sha256": "951ada8698c7d9fa84f11df9d25b7444a77c4e1052f3c166ff29a34aac91a656",
+      "source": {
+        "provider": "NOAA Aviation Weather Center",
+        "url": "https://aviationweather.gov/api/data/navaid",
+        "retrieved_at_utc": "2026-11-15T04:39:36.628150+00:00",
+        "effective_date": null
+      }
+    },
+    {
+      "name": "Geographic map airspace",
+      "passed": true,
+      "bytes": 3300109,
+      "sha256": "ad4f6710fed005d441cb7ad1993264dc0686dd6abf49f019814d5cf457176721",
+      "source": {
+        "provider": "FAA Aeronautical Information Services",
+        "url": "https://services6.arcgis.com/ssFJjBXIUyZDrSYZ/arcgis/rest/services/Class_Airspace/FeatureServer/0/query",
+        "retrieved_at_utc": "2026-11-15T04:39:38.059561+00:00",
+        "effective_date": null
+      }
+    },
+    {
+      "name": "Aircraft catalog",
+      "passed": true,
+      "bytes": 5406,
+      "sha256": "86c5e2b54a10118bd8ba8bec75cc937792e296835fd5ea5f2c22c760430bdcd2",
+      "source": {
+        "provider": "Aviation SDK qualified bundled snapshot",
+        "url": null,
+        "retrieved_at_utc": null,
+        "effective_date": null,
+        "official_type_lookup": "https://www.icao.int/operational-safety/doc-8643-aircraft-type-designators/search",
+        "profile_references": {
+          "C172": "https://cessna.txtav.com/en/piston/cessna-skyhawk",
+          "C182": "https://cessna.txtav.com/en/piston/cessna-skylane",
+          "SR22": "https://cirrusaircraft.com/aircraft/sr-series/"
+        }
+      }
+    },
+    {
+      "name": "Aircraft operating/reference performance",
+      "passed": true,
+      "bytes": 1280,
+      "sha256": "9469cee563d40a1e21110e76b614ac790ace3f3825ab0eb7355f6b5baf0aca5f",
+      "source": {
+        "provider": "Aviation SDK qualified bundled snapshot",
+        "url": null,
+        "retrieved_at_utc": null,
+        "effective_date": null,
+        "reference_url": "https://cessna.txtav.com/en/piston/cessna-skyhawk"
+      }
+    },
+    {
+      "name": "Wind/fuel/density-altitude calculations",
+      "passed": true,
+      "bytes": 796,
+      "sha256": "ac68b605fc1550d2749a5c770e09b0976208007f5542ee07f6ed53f6ad82c9e5",
+      "source": null
+    },
+    {
+      "name": "Cross-country multi-leg navlog",
+      "passed": true,
+      "bytes": 2395,
+      "sha256": "5ea39c3161870a0a63a6b2afeeec807ba37a0673219ab56524d0e62e7dd4c901",
+      "source": null
+    },
+    {
+      "name": "Terrain-aware route planning",
+      "passed": true,
+      "bytes": 1166,
+      "sha256": "6b959756d0afa174a323ce3eeaa4ae1573438b0a4fded2dfb2e9d72ce3071431",
+      "source": null
+    },
+    {
+      "name": "Missing aircraft remains explicit 404",
+      "passed": true,
+      "bytes": 58,
+      "sha256": "e9d12b0073e52a95ff28effff8fe71255baf2d6693223e80c047ba39a68649c2",
+      "source": null
+    },
+    {
+      "name": "Invalid terrain input remains 422",
+      "passed": true,
+      "bytes": 153,
+      "sha256": "dcfa7bd4055b09cf00211200e79b9a32383853787459b553b2ddf4ec096cb820",
+      "source": null
+    },
+    {
+      "name": "FAA TFR summaries",
+      "passed": true,
+      "bytes": 11089,
+      "sha256": "32bc3785cb02b518d72057ed75dac4c22c707c99458addad1e119c8a84058979",
+      "source": {
+        "provider": "FAA temporary flight restrictions",
+        "url": "https://tfr.faa.gov/tfrapi/exportTfrList",
+        "retrieved_at_utc": "2026-11-15T04:39:40.729820+00:00",
+        "effective_date": null
+      }
+    },
+    {
+      "name": "Aircraft-specific weight and balance",
+      "passed": true,
+      "bytes": 436,
+      "sha256": "fe7e76c5e0a1f265fe9b5450728b4ee9f134638becfefe012e56d9f174765194",
+      "source": null
+    },
+    {
+      "name": "POH performance table interpolation",
+      "passed": true,
+      "bytes": 537,
+      "sha256": "6d11a8dcabdc361fd421be9523179c8456fcc45e8ce838fd3d1e8a493a69209c",
+      "source": null
+    },
+    {
+      "name": "Aviation source readiness and operation catalog",
+      "passed": true,
+      "bytes": 4308,
+      "sha256": "71358eb3b30a2a09deaeda25c44839e0484f66c7bd9e286efc3e92311aa982ed",
+      "source": null
+    },
+    {
+      "name": "Route TAF discovery and batched reports via MCP",
+      "passed": true,
+      "bytes": 34578,
+      "sha256": "e9698ba25e26e2e2ef90ae84b5766e26790e1567aa70f722a42920b504b1b912",
+      "source": {
+        "provider": "NOAA Aviation Weather Center station catalog",
+        "url": "https://aviationweather.gov/data/cache/stations.cache.json.gz",
+        "retrieved_at_utc": "2026-11-15T04:39:41.693509+00:00",
+        "effective_date": null,
+        "freshness": "Daily provider catalog; cached for up to 24 hours",
+        "total_catalog_records": 9960,
+        "excluded_unlocated_count": 373,
+        "unlocated_taf_station_ids": [
+          "MMGA",
+          "OERS",
+          "VEHO",
+          "WAFB"
+        ]
+      }
+    },
+    {
+      "name": "Route HTTP and MCP payload parity",
+      "passed": true,
+      "bytes": 34578,
+      "sha256": "e9698ba25e26e2e2ef90ae84b5766e26790e1567aa70f722a42920b504b1b912",
+      "source": {
+        "provider": "NOAA Aviation Weather Center station catalog",
+        "url": "https://aviationweather.gov/data/cache/stations.cache.json.gz",
+        "retrieved_at_utc": "2026-11-15T04:39:41.693509+00:00",
+        "effective_date": null,
+        "freshness": "Daily provider catalog; cached for up to 24 hours",
+        "total_catalog_records": 9960,
+        "excluded_unlocated_count": 373,
+        "unlocated_taf_station_ids": [
+          "MMGA",
+          "OERS",
+          "VEHO",
+          "WAFB"
+        ]
+      }
+    },
+    {
+      "name": "Nearby TAF station discovery via MCP",
+      "passed": true,
+      "bytes": 2423,
+      "sha256": "3fbe8a780ee6132ac94f9fa4ecefa263ea5a6b71ef605527b38245ad7da9882d",
+      "source": {
+        "provider": "NOAA Aviation Weather Center station catalog",
+        "url": "https://aviationweather.gov/data/cache/stations.cache.json.gz",
+        "retrieved_at_utc": "2026-11-15T04:39:41.693509+00:00",
+        "effective_date": null,
+        "freshness": "Daily provider catalog; cached for up to 24 hours",
+        "total_catalog_records": 9960,
+        "excluded_unlocated_count": 373,
+        "unlocated_taf_station_ids": [
+          "MMGA",
+          "OERS",
+          "VEHO",
+          "WAFB"
+        ]
+      }
+    },
+    {
+      "name": "Invalid route remains 422 through MCP",
+      "passed": true,
+      "bytes": 159,
+      "sha256": "34032f8e1bf9464974d4a5b933dbc532579c96ee5d601a2a81cdc43028511869",
+      "source": null
+    },
+    {
+      "name": "Modeled pressure-level winds via MCP",
+      "passed": true,
+      "bytes": 3822,
+      "sha256": "e57685bdbac0e08e626ccb20498c6021ef8cd450ef77ace1ad226f001de87ab5",
+      "source": {
+        "provider": "Open-Meteo numerical pressure-level forecast",
+        "url": "https://api.open-meteo.com/v1/forecast",
+        "retrieved_at_utc": "2026-11-15T04:39:43.001562+00:00",
+        "effective_date": null,
+        "license": "CC BY 4.0; provider API usage terms apply",
+        "attribution": "Open-Meteo.com and its stated model providers"
+      }
+    },
+    {
+      "name": "NWS active alerts via MCP",
+      "passed": true,
+      "bytes": 421,
+      "sha256": "b8d96d6c6da11764e822fb8aeefde4261537485e86074169eb187c8b70fed94f",
+      "source": {
+        "provider": "NOAA National Weather Service",
+        "url": "https://api.weather.gov/alerts/active",
+        "retrieved_at_utc": "2026-11-15T04:39:43.396289+00:00",
+        "effective_date": null
+      }
+    },
+    {
+      "name": "NWS point forecast via MCP",
+      "passed": true,
+      "bytes": 91769,
+      "sha256": "2918e60e790726026f59200401bad2513b5947e268e8b7fe00f1f2aca2f5d357",
+      "source": {
+        "provider": "NOAA National Weather Service",
+        "url": "https://api.weather.gov/gridpoints/MTR/85,98/forecast/hourly",
+        "retrieved_at_utc": "2026-11-15T04:39:43.645577+00:00",
+        "effective_date": null
+      }
+    },
+    {
+      "name": "FAA NAS airport events via MCP",
+      "passed": true,
+      "bytes": 3586,
+      "sha256": "8a9b16d8c440f6c9af14bae31a957c3c7388f68d9ae4af1d563b74f7731470b9",
+      "source": {
+        "provider": "FAA National Airspace System Status",
+        "url": "https://nasstatus.faa.gov/api/airport-events",
+        "retrieved_at_utc": "2026-11-15T04:39:43.906577+00:00",
+        "effective_date": null
+      }
+    },
+    {
+      "name": "Registered openAIP airports via MCP",
+      "passed": true,
+      "bytes": 1262,
+      "sha256": "c12e4e9cb5f1acd711033e02784f416b3fad0093e358de7bb22a84efaa103938",
+      "source": {
+        "provider": "openAIP",
+        "url": "https://api.core.openaip.net/api/airports",
+        "retrieved_at_utc": "2026-11-15T04:39:44.546415+00:00",
+        "effective_date": null,
+        "attribution": "openAIP \u2014 https://www.openaip.net",
+        "license": "Attribution-NonCommercial 4.0 International (CC BY-NC 4.0)",
+        "license_url": "https://creativecommons.org/licenses/by-nc/4.0/"
+      }
+    },
+    {
+      "name": "Registered openAIP airspaces via MCP",
+      "passed": true,
+      "bytes": 3011,
+      "sha256": "09eb5078a6ce65467a1b8f1beb6029bb9f0a9d2aa1240b6ef57595eaa7a1f495",
+      "source": {
+        "provider": "openAIP",
+        "url": "https://api.core.openaip.net/api/airspaces",
+        "retrieved_at_utc": "2026-11-15T04:39:46.479434+00:00",
+        "effective_date": null,
+        "attribution": "openAIP \u2014 https://www.openaip.net",
+        "license": "Attribution-NonCommercial 4.0 International (CC BY-NC 4.0)",
+        "license_url": "https://creativecommons.org/licenses/by-nc/4.0/"
+      }
+    },
+    {
+      "name": "Registered openAIP navaids via MCP",
+      "passed": true,
+      "bytes": 2367,
+      "sha256": "5c24a9ab568737fbaeffb098f6c72bf9915d41f25c38ec9d3b95693a32bae05b",
+      "source": {
+        "provider": "openAIP",
+        "url": "https://api.core.openaip.net/api/navaids",
+        "retrieved_at_utc": "2026-11-15T04:39:47.229401+00:00",
+        "effective_date": null,
+        "attribution": "openAIP \u2014 https://www.openaip.net",
+        "license": "Attribution-NonCommercial 4.0 International (CC BY-NC 4.0)",
+        "license_url": "https://creativecommons.org/licenses/by-nc/4.0/"
+      }
+    },
+    {
+      "name": "Registered openAIP reporting-points via MCP",
+      "passed": true,
+      "bytes": 1225,
+      "sha256": "1c5f20e8455f6816844c0f1db3546af5b6e01b5a6f83490b70249b9dc614af16",
+      "source": {
+        "provider": "openAIP",
+        "url": "https://api.core.openaip.net/api/reporting-points",
+        "retrieved_at_utc": "2026-11-15T04:39:47.566457+00:00",
+        "effective_date": null,
+        "attribution": "openAIP \u2014 https://www.openaip.net",
+        "license": "Attribution-NonCommercial 4.0 International (CC BY-NC 4.0)",
+        "license_url": "https://creativecommons.org/licenses/by-nc/4.0/"
+      }
+    },
+    {
+      "name": "Registered openAIP hotspots via MCP",
+      "passed": true,
+      "bytes": 1208,
+      "sha256": "8e96787fe25205f0366486e12a9c28405709a1a2f103dc05c1827b684cb3de4d",
+      "source": {
+        "provider": "openAIP",
+        "url": "https://api.core.openaip.net/api/hotspots",
+        "retrieved_at_utc": "2026-11-15T04:39:47.910863+00:00",
+        "effective_date": null,
+        "attribution": "openAIP \u2014 https://www.openaip.net",
+        "license": "Attribution-NonCommercial 4.0 International (CC BY-NC 4.0)",
+        "license_url": "https://creativecommons.org/licenses/by-nc/4.0/"
+      }
+    },
+    {
+      "name": "Registered openAIP obstacles via MCP",
+      "passed": true,
+      "bytes": 1592,
+      "sha256": "6ef7f38f334df5ed0bafd58004162ff8badf82ceb91d8866f4b663ecbca99df9",
+      "source": {
+        "provider": "openAIP",
+        "url": "https://api.core.openaip.net/api/obstacles",
+        "retrieved_at_utc": "2026-11-15T04:39:48.702841+00:00",
+        "effective_date": null,
+        "attribution": "openAIP \u2014 https://www.openaip.net",
+        "license": "Attribution-NonCommercial 4.0 International (CC BY-NC 4.0)",
+        "license_url": "https://creativecommons.org/licenses/by-nc/4.0/"
+      }
+    }
+  ]
+}

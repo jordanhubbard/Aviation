@@ -38,6 +38,16 @@ export function standardE2EFixtures(runId: E2ERunId) {
 /** External responses are inert and carry the same run tag as database fixtures. */
 export function standardE2EMocks(runId: E2ERunId) {
   const tag = <T extends object>(value: T) => tagTestData(runId, value);
+  const taf = (station: string) => tag({
+    status: 'available',
+    reports: [{ icaoId: station,
+      rawTAF: `TAF ${station} 241720Z 2418/2518 28008KT P6SM FEW020\n FM250200 24012KT P6SM BKN030`,
+      issueTime: '2026-10-24T17:20:00Z',
+      validTimeFrom: Date.parse('2026-10-24T18:00:00Z') / 1000,
+      validTimeTo: Date.parse('2026-10-25T18:00:00Z') / 1000 }],
+    source: { provider: 'SDK synthetic TAF fixture', url: `https://example.invalid/e2e/${runId}/taf`,
+      retrieved_at_utc: '2026-10-24T19:53:00Z' },
+  });
   return {
     weather: tag({ station: 'KOAK', metar: 'KOAK 241953Z 28008KT 10SM FEW020 18/10 A3002',
       taf: 'TAF KOAK 241720Z 2418/2518 28008KT P6SM FEW020' }),
@@ -54,6 +64,7 @@ export function standardE2EMocks(runId: E2ERunId) {
       velocity: 40, heading: 270, onGround: false, lastContact: 1_800_000_000, verticalRate: 0 }],
       total: 1, updatedAt: '2026-10-24T19:53:00Z' }),
     planner: tag({
+      tafs: { KOAK: taf('KOAK'), KSFO: taf('KSFO') },
       airport: { icao: 'KOAK', iata: 'OAK', name: `E2E Oakland ${runId}`, city: 'Oakland',
         country: 'US', latitude: 37.721, longitude: -122.221, elevation: 9, type: 'large_airport' },
       weather: { airport: 'KOAK', conditions: 'Clear', temperature: 64, wind_speed: 8,
