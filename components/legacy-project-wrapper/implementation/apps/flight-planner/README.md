@@ -63,7 +63,7 @@ Copy `.env.example` → `.env` and set any API keys you plan to use.
 - `OPENWEATHERMAP_API_KEY`: required for `GET /api/weather/{code}` and the map tile endpoints if you call OpenWeatherMap directly
 - `TERRAIN_PROVIDER`: defaults to `open-meteo`; set to `opentopography` to select the optional OpenTopography provider.
 - `OPENTOPOGRAPHY_API_KEY`: required only when `TERRAIN_PROVIDER=opentopography`.
-- `OPENAIP_API_KEY`: reserved for future airspace integrations
+- `OPENAIP_API_KEY`: server-side access to openAIP airports, airspaces, navaids, reporting points, hotspots and obstacles (CC BY-NC 4.0; attribution required)
 
 ### Frontend
 

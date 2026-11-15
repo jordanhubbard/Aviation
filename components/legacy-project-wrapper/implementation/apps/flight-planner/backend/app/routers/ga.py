@@ -509,7 +509,7 @@ def map_layer(
     summary="Get sourced NOAA METAR/TAF, pilot reports or aviation advisories",
 )
 def aviation_weather(
-    product: Literal["metar", "taf", "pirep", "gairmet", "airsigmet"],
+    product: Literal["metar", "taf", "pirep", "gairmet", "airsigmet", "cwa"],
     airport: str | None = Query(None, pattern=r"^[A-Za-z0-9]{3,4}$"),
     radius_nm: float = Query(100, ge=1, le=500),
     hours: int = Query(3, ge=1, le=24),

@@ -54,3 +54,44 @@ text, station, issue time, validity interval and provider/retrieval provenance.
 Display times in UTC and keep missing timestamps unknown. Distinguish loading,
 no reports for the requested station, provider failure and missing raw text. Do not
 substitute a nearby station or general daily forecast as that airport's TAF.
+
+## Route briefings and source access
+
+Tracked in GitHub issue #449. `POST /api/aviation-weather/route` SHALL accept either
+2–50 airport identifiers or 2–100 WGS84 latitude/longitude points, a 1–100 NM
+corridor and a bounded station limit. Resolve airport coordinates explicitly,
+measure proximity against every minor great-circle leg (including the dateline),
+and reject ambiguous antipodal legs. Discover TAF-capable stations using NOAA's
+daily global station catalog, including airports near the route that are not
+waypoints. Keep requested airports explicit even when they do not issue TAFs.
+Return station coordinates, closest leg, along-route progress, cross-track distance,
+full original NOAA TAFs/forecast periods and optional METARs. Batch station requests;
+report each station/product's no-report and error status separately. Keep actual
+provider timestamps and retrieval provenance. An optional timezone-aware validity
+instant selects overlapping forecast periods and labels out-of-window/unknown
+forecasts without manufacturing future weather. Never silently truncate stations
+or provider results or infer safe conditions from missing data.
+
+`GET /api/aviation-weather/stations` SHALL offer bounded station discovery around a
+point, with optional TAF-only filtering. Existing station weather APIs remain stable.
+`GET /api/aviation-data/sources` SHALL enumerate supported sources, operations,
+coverage, authentication readiness, licensing and limitations without exposing keys.
+New source adapters SHALL expose bounded openAIP airport/airspace/navaid/reporting
+point collections, NWS point alerts and forecasts, FAA NAS airport-event records,
+NOAA center weather advisories, and Open-Meteo modeled pressure-level winds through
+typed HTTP schemas. Preserve the latter's actual pressure levels, UTC times and units;
+never label modeled winds as NOAA FD tables or fixed flight-level observations.
+NOAA retired the legacy wind/temp table service in November 2026.
+All operations SHALL be discoverable and callable through the existing planning
+MCP schema resource, describe tool and request tool, with the same bodies/statuses.
+
+Read credentials through the planner's existing server-side settings/keystore
+boundary. Do not read workstation credential files from application runtime or
+send credentials in URLs. Preserve openAIP attribution and CC BY-NC 4.0 terms;
+reject a changed license until reviewed. Unconfigured authenticated sources fail
+explicitly; provider errors must never fall back to invented or mock records.
+Fixed provider origins, bounded payloads/pages/caches and sanitized errors apply.
+Source discovery reports configuration, not a live availability or safety verdict.
+
+See the [source inventory and access decisions](aviation-data-sources.md) for the
+verified provider contracts, credential coverage and integration boundaries.

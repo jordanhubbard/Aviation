@@ -52,20 +52,32 @@ def cached(key: tuple, ttl: int, loader):
         return result
 
 
-def fetch(url: str, params: dict | None = None, *, csv_data: bool = False):
+def fetch(
+    url: str,
+    params: dict | None = None,
+    *,
+    csv_data: bool = False,
+    raw_bytes: bool = False,
+    headers: dict | None = None,
+):
     try:
         response = httpx.get(
             url,
             params=params,
             timeout=20,
-            follow_redirects=True,
-            headers={"User-Agent": "Aviation-GA-API/1.0 (github.com/jordanhubbard/Aviation)"},
+            follow_redirects=not bool(headers),
+            headers={
+                "User-Agent": "Aviation-GA-API/1.0 (github.com/jordanhubbard/Aviation)",
+                **(headers or {}),
+            },
         )
         response.raise_for_status()
         if len(response.content) > 20 * 1024 * 1024:
             raise DataUnavailable("Provider response exceeds 20 MiB")
         if response.status_code == 204:
             return []
+        if raw_bytes:
+            return response.content
         return response.text if csv_data else response.json()
     except (httpx.HTTPError, ValueError) as exc:
         # Avoid leaking upstream URLs, query credentials, or HTML responses.
