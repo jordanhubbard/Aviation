@@ -23,6 +23,11 @@ def main():
     parser.add_argument("--base-url", default="https://meta-app.jordanhubbard.net")
     parser.add_argument("--report", type=Path, required=True)
     parser.add_argument("--expected-revision")
+    parser.add_argument(
+        "--require-openaip",
+        action="store_true",
+        help="Require configured, working registered openAIP access",
+    )
     args = parser.parse_args()
     base = args.base_url.rstrip("/")
     checks = []
@@ -44,12 +49,17 @@ def main():
             json.dumps(
                 {"jsonrpc": "2.0", "id": 1, "method": method, "params": params or {}}
             ).encode(),
-            {"Content-Type": "application/json", "Accept": "application/json, text/event-stream"},
+            {
+                "Content-Type": "application/json",
+                "Accept": "application/json, text/event-stream",
+            },
         )
         assert status == 200, (method, status)
         text = raw.decode()
         if not text.lstrip().startswith("{"):
-            text = "\n".join(line[6:] for line in text.splitlines() if line.startswith("data: "))
+            text = "\n".join(
+                line[6:] for line in text.splitlines() if line.startswith("data: ")
+            )
         result = json.loads(text)
         assert "error" not in result, result
         return result["result"]
@@ -57,9 +67,15 @@ def main():
     def planning(path, body=None, expected=200):
         call_args = {"path": path, "method": "GET" if body is None else "POST"}
         if body is not None:
-            call_args.update(body=json.dumps(body), headers={"Content-Type": "application/json"})
-        result = rpc("tools/call", {"name": "v1.planning.request", "arguments": call_args})
-        value = result.get("structuredContent") or json.loads(result["content"][0]["text"])
+            call_args.update(
+                body=json.dumps(body), headers={"Content-Type": "application/json"}
+            )
+        result = rpc(
+            "tools/call", {"name": "v1.planning.request", "arguments": call_args}
+        )
+        value = result.get("structuredContent") or json.loads(
+            result["content"][0]["text"]
+        )
         assert value["status"] == expected, (path, value["status"], value["body"][:400])
         assert bool(result.get("isError")) == (expected >= 400)
         raw = (
@@ -105,21 +121,24 @@ def main():
                 "clientInfo": {"name": "aviation-ga-domain-audit", "version": "1.0"},
             },
         ),
-        lambda r: require(r["serverInfo"]["name"] == "aviation-edge", "Unexpected server"),
+        lambda r: require(
+            r["serverInfo"]["name"] == "aviation-edge", "Unexpected server"
+        ),
     )
     check(
         "Discover domain schema tool",
         lambda: rpc("tools/list"),
         lambda r: require(
-            "v1.planning.describe" in {t["name"] for t in r["tools"]}, "Describe tool missing"
+            "v1.planning.describe" in {t["name"] for t in r["tools"]},
+            "Describe tool missing",
         ),
     )
     schema = check(
         "Discover complete planner operation schemas",
         lambda: json.loads(
-            rpc("tools/call", {"name": "v1.planning.describe", "arguments": {}})["content"][0][
-                "text"
-            ]
+            rpc("tools/call", {"name": "v1.planning.describe", "arguments": {}})[
+                "content"
+            ][0]["text"]
         ),
         lambda r: require(
             all(
@@ -133,6 +152,14 @@ def main():
                     "/api/airports/{code}/details",
                     "/api/airports/{code}/services",
                     "/api/aviation-weather/{product}",
+                    "/api/aviation-weather/route",
+                    "/api/aviation-weather/stations",
+                    "/api/aviation-weather/winds-aloft",
+                    "/api/aviation-data/sources",
+                    "/api/aviation-data/openaip/{resource}",
+                    "/api/aviation-data/nws/alerts",
+                    "/api/aviation-data/nws/forecast",
+                    "/api/aviation-data/faa/airport-events",
                     "/api/terrain/profile",
                 ]
             ),
@@ -142,7 +169,9 @@ def main():
     check(
         "MCP schema resource matches describe tool",
         lambda: json.loads(
-            rpc("resources/read", {"uri": "aviation://v1/planning/openapi"})["contents"][0]["text"]
+            rpc("resources/read", {"uri": "aviation://v1/planning/openapi"})[
+                "contents"
+            ][0]["text"]
         ),
         lambda r: require(r == schema, "Resource/tool schema mismatch"),
     )
@@ -163,14 +192,20 @@ def main():
         "Airport identity/coordinates",
         lambda: planning("/api/airports/KPAO"),
         lambda r: require(
-            r["icao"] == "KPAO" and 37 < r["latitude"] < 38 and -123 < r["longitude"] < -122,
+            r["icao"] == "KPAO"
+            and 37 < r["latitude"] < 38
+            and -123 < r["longitude"] < -122,
             "Wrong airport",
         ),
     )
     check(
         "Nearby airports",
-        lambda: planning("/api/airports/search?lat=37.46&lon=-122.11&radius_nm=20&limit=5"),
-        lambda r: require(len(r) > 0 and r[0]["icao"] == "KPAO", "Proximity query failed"),
+        lambda: planning(
+            "/api/airports/search?lat=37.46&lon=-122.11&radius_nm=20&limit=5"
+        ),
+        lambda r: require(
+            len(r) > 0 and r[0]["icao"] == "KPAO", "Proximity query failed"
+        ),
     )
     check(
         "Airport runways/frequencies",
@@ -184,16 +219,20 @@ def main():
 
     def validate_services(r):
         require(
-            r["status"] == "available" and r["record"]["FUEL_TYPES"], "Fuel facility record missing"
+            r["status"] == "available" and r["record"]["FUEL_TYPES"],
+            "Fuel facility record missing",
         )
-        effective = datetime.strptime(r["source"]["effective_date"], "%Y/%m/%d").replace(
-            tzinfo=timezone.utc
-        )
+        effective = datetime.strptime(
+            r["source"]["effective_date"], "%Y/%m/%d"
+        ).replace(tzinfo=timezone.utc)
         require(
             0 <= (datetime.now(timezone.utc) - effective).days <= 90,
             "Facility source date outside 90-day audit window",
         )
-        require(r["fuel_prices"] is None and r["fbo_hours"] is None, "Unknown data misrepresented")
+        require(
+            r["fuel_prices"] is None and r["fbo_hours"] is None,
+            "Unknown data misrepresented",
+        )
 
     check(
         "Current dated airport fuel/services",
@@ -205,15 +244,17 @@ def main():
             "NOAA " + product,
             lambda p=product: planning(f"/api/aviation-weather/{p}?airport=KSFO"),
             lambda r: require(
-                r["status"] == "available" and len(r["reports"]) > 0, "Weather reports missing"
+                r["status"] == "available" and len(r["reports"]) > 0,
+                "Weather reports missing",
             ),
         )
-    for product in ["pirep", "gairmet", "airsigmet"]:
+    for product in ["pirep", "gairmet", "airsigmet", "cwa"]:
         check(
             "NOAA " + product,
             lambda p=product: planning(f"/api/aviation-weather/{p}?airport=KSFO"),
             lambda r: require(
-                r["status"] in {"available", "no_reports"} and isinstance(r["reports"], list),
+                r["status"] in {"available", "no_reports"}
+                and isinstance(r["reports"], list),
                 "Weather product failed",
             ),
         )
@@ -221,7 +262,8 @@ def main():
         "Airport forecast",
         lambda: planning("/api/weather/KSFO/forecast?days=2"),
         lambda r: require(
-            len(r["daily"]) == 2 and r["daily"][0]["temp_max_f"] is not None, "Forecast missing"
+            len(r["daily"]) == 2 and r["daily"][0]["temp_max_f"] is not None,
+            "Forecast missing",
         ),
     )
     check(
@@ -234,7 +276,9 @@ def main():
     )
     check(
         "Terrain elevation profile",
-        lambda: planning("/api/terrain/profile", {"points": [[37.46, -122.11], [37.75, -122.42]]}),
+        lambda: planning(
+            "/api/terrain/profile", {"points": [[37.46, -122.11], [37.75, -122.42]]}
+        ),
         lambda r: require(
             len(r["points"]) == 2
             and all(isinstance(p["elevation_ft"], (int, float)) for p in r["points"]),
@@ -244,16 +288,20 @@ def main():
     for layer in ["airports", "navaids", "airspace"]:
         check(
             "Geographic map " + layer,
-            lambda l=layer: planning(f"/api/map/{l}?west=-122.5&south=37.3&east=-122&north=37.7"),
+            lambda l=layer: planning(
+                f"/api/map/{l}?west=-122.5&south=37.3&east=-122&north=37.7"
+            ),
             lambda r: require(
-                r["type"] == "FeatureCollection" and len(r["features"]) > 0, "Map features missing"
+                r["type"] == "FeatureCollection" and len(r["features"]) > 0,
+                "Map features missing",
             ),
         )
     check(
         "Aircraft catalog",
         lambda: planning("/api/aircraft?q=Cessna"),
         lambda r: require(
-            len(r["aircraft"]) > 0 and len(r["profiles"]) >= 3, "Aircraft catalog missing"
+            len(r["aircraft"]) > 0 and len(r["profiles"]) >= 3,
+            "Aircraft catalog missing",
         ),
     )
     check(
@@ -293,7 +341,11 @@ def main():
         "Cross-country multi-leg navlog",
         lambda: planning(
             "/api/navlog",
-            {"airports": ["KPAO", "KSAC", "KRNO"], "true_airspeed_kt": 110, "fuel_burn_gph": 9},
+            {
+                "airports": ["KPAO", "KSAC", "KRNO"],
+                "true_airspeed_kt": 110,
+                "fuel_burn_gph": 9,
+            },
         ),
         lambda r: require(
             len(r["legs"]) == 2 and r["trip_fuel_gal"] > 0 and r["distance_nm"] > 100,
@@ -317,7 +369,9 @@ def main():
             },
         ),
         lambda r: require(
-            r["route"][0] == "KPAO" and r["route"][-1] == "KSAC" and r["distance_nm"] > 0,
+            r["route"][0] == "KPAO"
+            and r["route"][-1] == "KSAC"
+            and r["distance_nm"] > 0,
             "Route missing",
         ),
     )
@@ -335,7 +389,8 @@ def main():
         "FAA TFR summaries",
         lambda: planning("/api/restrictions/tfr"),
         lambda r: require(
-            isinstance(r["restrictions"], list) and r["source"]["provider"], "TFR list unavailable"
+            isinstance(r["restrictions"], list) and r["source"]["provider"],
+            "TFR list unavailable",
         ),
     )
     check(
@@ -381,7 +436,12 @@ def main():
                 "temperature_c": 10,
                 "points": [
                     {"pressure_altitude_ft": a, "temperature_c": t, "value": v}
-                    for a, t, v in [(0, 0, 1000), (0, 20, 1200), (2000, 0, 1400), (2000, 20, 1600)]
+                    for a, t, v in [
+                        (0, 0, 1000),
+                        (0, 20, 1200),
+                        (2000, 0, 1400),
+                        (2000, 20, 1600),
+                    ]
                 ],
             },
         ),
@@ -390,6 +450,146 @@ def main():
             "Performance table interpolation mismatch",
         ),
     )
+    catalog = check(
+        "Aviation source readiness and operation catalog",
+        lambda: planning("/api/aviation-data/sources"),
+        lambda r: require(
+            {"noaa-awc", "openaip", "nws", "faa-nas", "openweathermap"}.issubset(
+                {s["id"] for s in r["sources"]}
+            ),
+            "Missing source registrations",
+        ),
+    )
+
+    def validate_route(r):
+        require(not r["partial"] and not r["truncated"], "Route briefing incomplete")
+        requested = {a["station_id"] for a in r["resolved_airports"]}
+        require(requested == {"KPAO", "KSAC"}, "Resolved airport identity mismatch")
+        require(
+            any(
+                s["requested_airport"] and s["station_id"] == "KPAO"
+                for s in r["stations"]
+            ),
+            "Missing requested airport",
+        )
+        nearby = [
+            s
+            for s in r["stations"]
+            if not s["requested_airport"] and s["taf"]["status"] == "available"
+        ]
+        require(bool(nearby), "No nearby TAF stations discovered")
+        require(
+            all(s["distance_from_route_nm"] <= r["corridor_nm"] + 1e-6 for s in nearby),
+            "Station outside corridor",
+        )
+        require(
+            all(
+                report.get("rawTAF")
+                and report.get("validTimeFrom")
+                and report.get("validTimeTo")
+                for s in nearby
+                for report in s["taf"]["reports"]
+            ),
+            "Missing original forecast/time information",
+        )
+        require(
+            all(s["metar"] is not None for s in r["stations"]),
+            "Missing METAR product states",
+        )
+
+    route_body = {"airports": ["KPAO", "KSAC"], "corridor_nm": 25, "max_stations": 50}
+    route_value = check(
+        "Route TAF discovery and batched reports via MCP",
+        lambda: planning("/api/aviation-weather/route", route_body),
+        validate_route,
+    )
+    check(
+        "Route HTTP and MCP payload parity",
+        lambda: json.loads(
+            http(
+                "/api/v1/planning/api/aviation-weather/route",
+                json.dumps(route_body).encode(),
+                {"Content-Type": "application/json"},
+            )[2]
+        ),
+        lambda r: require(r == route_value, "HTTP/MCP route response mismatch"),
+    )
+    check(
+        "Nearby TAF station discovery via MCP",
+        lambda: planning(
+            "/api/aviation-weather/stations?lat=37.46&lon=-122.11&radius_nm=50"
+        ),
+        lambda r: require(
+            any(s["station_id"] == "KSFO" for s in r["stations"]),
+            "KSFO station not found",
+        ),
+    )
+    check(
+        "Invalid route remains 422 through MCP",
+        lambda: planning(
+            "/api/aviation-weather/route", {"points": [[91, 0], [0, 0]]}, expected=422
+        ),
+        lambda r: require("detail" in r, "Missing validation details"),
+    )
+    check(
+        "Modeled pressure-level winds via MCP",
+        lambda: planning("/api/aviation-weather/winds-aloft?lat=37.62&lon=-122.38"),
+        lambda r: require(
+            bool(r["data"]["hourly"]["time"])
+            and r["data"]["hourly_units"]["wind_speed_850hPa"] == "kn",
+            "Pressure-level winds unavailable",
+        ),
+    )
+    check(
+        "NWS active alerts via MCP",
+        lambda: planning("/api/aviation-data/nws/alerts?lat=37.62&lon=-122.38"),
+        lambda r: require(
+            r["status"] in {"available", "no_reports"}
+            and isinstance(r["records"], list),
+            "NWS alerts unavailable",
+        ),
+    )
+    check(
+        "NWS point forecast via MCP",
+        lambda: planning("/api/aviation-data/nws/forecast?lat=37.62&lon=-122.38"),
+        lambda r: require(
+            bool(r["data"]["properties"]["periods"]), "NWS forecast missing"
+        ),
+    )
+    check(
+        "FAA NAS airport events via MCP",
+        lambda: planning("/api/aviation-data/faa/airport-events"),
+        lambda r: require(
+            r["status"] in {"available", "no_reports"}
+            and r["source"]["provider"].startswith("FAA"),
+            "FAA events unavailable",
+        ),
+    )
+    openaip_configured = catalog and next(
+        (s["configured"] for s in catalog["sources"] if s["id"] == "openaip"), False
+    )
+    if args.require_openaip or openaip_configured:
+        for resource in [
+            "airports",
+            "airspaces",
+            "navaids",
+            "reporting-points",
+            "hotspots",
+            "obstacles",
+        ]:
+            check(
+                "Registered openAIP " + resource + " via MCP",
+                lambda p=resource: planning(
+                    f"/api/aviation-data/openaip/{p}?country=DE&limit=1"
+                ),
+                lambda r: require(
+                    r["status"] in {"available", "no_reports"}
+                    and "CC BY-NC" in r["source"]["license"]
+                    and "next_page" in r,
+                    "openAIP records/terms/pagination missing",
+                ),
+            )
+
     report = {
         "schema": "aviation/ga-mcp-observation@1",
         "base_url": base,

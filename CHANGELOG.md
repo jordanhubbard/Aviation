@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+- Aviation API/MCP: add route-wide TAF/METAR briefings with nearby station discovery,
+  spherical route distances, forecast validity selection and explicit partial results.
+  Expose registered openAIP reference data, NWS alerts/forecasts, FAA NAS airport
+  events, NOAA center advisories and modeled pressure-level winds, plus a
+  source/readiness catalog.
+
 - Flight Planner: show complete TAFs with UTC issue/validity times and NOAA source
   details alongside METARs for all airports in the planned route.
 

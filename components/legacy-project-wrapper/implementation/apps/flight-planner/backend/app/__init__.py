@@ -31,6 +31,7 @@ from .routers.terrain import router as terrain_router
 from .routers.issues import router as issues_router
 from .routers.local import router as local_router
 from .routers.ga import router as ga_router
+from .routers.aviation_data import router as aviation_data_router
 from fastapi import WebSocket, WebSocketDisconnect
 
 
@@ -125,6 +126,7 @@ def create_app(settings):
     app.include_router(settings_router, tags=["settings"])
     app.include_router(explain_router)
     # Core API routers (exposed under /api prefix)
+    app.include_router(aviation_data_router, prefix="/api")
     app.include_router(ga_router, prefix="/api")
     app.include_router(health_router, prefix="/api", tags=["health"])
     app.include_router(route_router, prefix="/api", tags=["route"])
