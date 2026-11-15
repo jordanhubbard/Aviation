@@ -95,3 +95,10 @@ Source discovery reports configuration, not a live availability or safety verdic
 
 See the [source inventory and access decisions](aviation-data-sources.md) for the
 verified provider contracts, credential coverage and integration boundaries.
+
+The isolated planner lifecycle adapter SHALL admit only the declared station TAF
+requests, supply run-tagged synthetic SDK fixtures, and assert full multiline TAF
+text, UTC issue/validity windows and fixture provenance for both route airports.
+Unexpected requests and foreign station IDs remain failures. These browser mocks
+establish rendering/lifecycle behavior; the separate real-provider HTTP/MCP audit
+establishes public data availability and API parity.

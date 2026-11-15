@@ -822,6 +822,11 @@ if (appId === 'flightschool') {
         let status = 200;
         if (path === '/api/meta') body = run.tag({ repo_url: null, revision: 'e2e' });
         else if (path === '/api/issues/enabled') body = run.tag({ enabled: false, created: false });
+        else if (path === '/api/aviation-weather/taf' && route.request().method() === 'GET') {
+          const station = new URL(route.request().url()).searchParams.get('airport');
+          if (!Object.hasOwn(mocks.tafs, station)) throw new Error(`Unexpected TAF station: ${station}`);
+          body = mocks.tafs[station];
+        }
         else if (path === '/api/airports/search') body = [airport];
         else if (path === '/api/airports/KOAK') body = run.tag(airport);
         else if (path === '/api/procedures') {
@@ -908,6 +913,16 @@ if (appId === 'flightschool') {
             await page.getByText('Route Results', { exact: true }).waitFor();
             await page.getByText('Route: KOAK → KSFO', { exact: true }).waitFor();
             await page.getByText('Groundspeed: 100 kt', { exact: true }).waitFor();
+            for (const station of ['KOAK', 'KSFO']) {
+              const panel = page.getByRole('region', { name: `${station} TAF` });
+              const expected = mocks.tafs[station].reports[0].rawTAF;
+              const text = panel.getByText(expected, { exact: true });
+              await text.waitFor();
+              if (await text.textContent() !== expected) throw new Error(`Incomplete TAF text for ${station}`);
+              await panel.getByText('Station: ' + station + ' · Issued: 2026-10-24 17:20:00 UTC', { exact: true }).waitFor();
+              await panel.getByText('Valid: 2026-10-24 18:00:00 UTC – 2026-10-25 18:00:00 UTC', { exact: true }).waitFor();
+              await panel.getByText(/SDK synthetic TAF fixture/).waitFor();
+            }
           },
         },
         explanationScreen(page, run, explanationApi(), 'Calculated VFR route'),
