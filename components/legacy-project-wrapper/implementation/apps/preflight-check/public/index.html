@@ -25,6 +25,7 @@
     <button type="button" id="calculate">Calculate takeoff and landing</button>
     <div id="results" role="region" aria-label="Loading calculation results" aria-live="polite" tabindex="0"></div>
   </section>
+  <aviation-data-panel></aviation-data-panel>
   <section><h2>Pilot risk review</h2><p>Record your own decision for each PAVE area before departure.</p>
     <div class="grid"><label><input type="checkbox" class="risk" data-risk="pilot"> Pilot: currency, health, and personal minimums checked</label>
     <label><input type="checkbox" class="risk" data-risk="aircraft"> Aircraft: airworthiness and performance checked</label>
@@ -39,4 +40,5 @@
   <section><h2>References</h2><p>Review your aircraft’s current POH/AFM and limitations before use. This calculator uses the entered data and linear envelope interpolation; it does not include aircraft specific performance charts.</p>
     <a href="https://www.faa.gov/regulations_policies/advisory_circulars/index.cfm/go/document.information/documentID/1036892">FAA preflight briefing guidance</a> ·
     <a href="https://www.faa.gov/sites/faa.gov/files/regulations_policies/handbooks_manuals/aviation/FAA-H-8083-1.pdf">FAA Weight &amp; Balance Handbook</a></section>
-</main><script type="module" src="/app.js"></script><script defer data-aviation-app="preflight-check" src="https://meta-app.jordanhubbard.net/feedback-widget.js"></script></body></html>
+</main><script type="module" src="/app.js"></script><script defer data-aviation-app="preflight-check" src="https://meta-app.jordanhubbard.net/feedback-widget.js"></script><script defer src="https://meta-app.jordanhubbard.net/aviation-data.js"></script>
+</body></html>

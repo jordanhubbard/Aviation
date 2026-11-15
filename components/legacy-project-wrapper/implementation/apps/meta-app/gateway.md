@@ -104,3 +104,11 @@ python3 components/legacy-project-wrapper/implementation/deploy/verify_ga_mcp.py
 The audit checks actual data through MCP, independent calculation examples,
 HTTP/resource/tool schema parity and error statuses. The optional base URL supports
 an isolated local gateway. It never saves flight plans or aircraft records.
+
+## Browser aviation data views
+
+The public planning data reads used by `aviation-data.js` admit CORS from the five
+consumer application origins only, as defined in [the application contract](../../../../../docs/architecture/aviation-app-data.md).
+Preflight permits the exact read method and Content-Type header; credentials are
+not forwarded and credentialed CORS is not enabled. This does not expose general
+service mutations, MCP, or WebSockets to cross-origin browser requests.

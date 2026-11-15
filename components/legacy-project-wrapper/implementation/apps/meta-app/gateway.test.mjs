@@ -373,3 +373,46 @@ test('deployment discovery admits current additive tools and rejects stale catal
   delete missingMetadata.services.find(service => service.namespace === 'planning').openapi;
   assert.throws(() => assertGatewayCatalog(missingMetadata));
 });
+
+test('aviation browser CORS scopes origins, read methods and headers without service credentials', async t => {
+  const { edge, calls } = await fixture(t);
+  const path = '/api/v1/planning/api/aviation-weather/route';
+  const origin = 'https://preflight-check.jordanhubbard.net';
+  const preflight = await fetch(edge + path, { method: 'OPTIONS', headers: { origin, 'access-control-request-method': 'POST', 'access-control-request-headers': 'content-type' } });
+  assert.equal(preflight.status, 204); assert.equal(calls.length, 0);
+  assert.equal(preflight.headers.get('access-control-allow-origin'), origin);
+  assert.equal(preflight.headers.get('access-control-allow-methods'), 'POST');
+  assert.equal(preflight.headers.get('access-control-allow-credentials'), null);
+  const response = await fetch(edge + path, { method: 'POST', headers: { origin, 'content-type': 'application/json', authorization: 'Bearer private', cookie: 'aviation_planning_session=private' }, body: '{"airports":["KOAK","KSFO"]}' });
+  assert.equal(response.status, 200); assert.equal(response.headers.get('access-control-allow-origin'), origin);
+  assert.match(response.headers.get('vary'), /Origin/);
+  assert.equal(calls.at(-1).headers.authorization, undefined); assert.equal(calls.at(-1).headers.cookie, undefined);
+  assert.equal(calls.at(-1).body.toString(), '{"airports":["KOAK","KSFO"]}');
+  for (const app of ['flight-planner', 'weather-briefing', 'flightschool', 'aviation-missions-app']) {
+    const get = await fetch(edge + '/api/v1/planning/api/aviation-data/sources', { headers: { origin: `https://${app}.jordanhubbard.net` } });
+    assert.equal(get.headers.get('access-control-allow-origin'), `https://${app}.jordanhubbard.net`);
+  }
+  const sameOrigin = await fetch(edge + path, { method: 'POST', headers: { origin: 'https://meta-app.jordanhubbard.net' }, body: '{}' });
+  assert.equal(sameOrigin.status, 200);
+  const count = calls.length;
+  for (const headers of [
+    { origin: 'https://evil.example', 'access-control-request-method': 'POST' },
+    { origin, 'access-control-request-method': 'DELETE' },
+    { origin, 'access-control-request-method': 'POST', 'access-control-request-headers': 'authorization' },
+  ]) assert.equal((await fetch(edge + path, { method: 'OPTIONS', headers })).status, 403);
+  assert.equal(calls.length, count);
+  const other = await fetch(edge + '/api/v1/planning/api/plan', { method: 'OPTIONS', headers: { origin, 'access-control-request-method': 'POST' } });
+  assert.equal(other.headers.get('access-control-allow-origin'), null);
+});
+
+test('aviation CORS makes upstream and gateway errors readable from admitted app origins', async t => {
+  const server = await listen(t, (_req, res) => { res.writeHead(503, { 'content-type': 'application/json' }); res.end('{"detail":"Provider unavailable"}'); });
+  const gateway = createGateway({ bindings: { planning: { origin: server } } }); t.after(() => gateway.close());
+  const edge = await listen(t, (req, res) => gateway.handle(req, res));
+  const origin = 'https://weather-briefing.jordanhubbard.net';
+  const response = await fetch(edge + '/api/v1/planning/api/aviation-data/nws/alerts', { headers: { origin } });
+  assert.equal(response.status, 503); assert.equal(response.headers.get('access-control-allow-origin'), origin);
+  assert.deepEqual(await response.json(), { detail: 'Provider unavailable' });
+  const wrong = await fetch(edge + '/api/v1/planning/api/aviation-data/sources', { method: 'POST', headers: { origin } });
+  assert.equal(wrong.status, 405); assert.equal(wrong.headers.get('access-control-allow-origin'), origin);
+});

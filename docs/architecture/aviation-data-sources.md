@@ -33,6 +33,8 @@ are not silently enabled without credentials and applicable access terms. No new
 account, purchase or API entitlement is assumed. Additional duplicate weather
 brokers were not needed to expose the official NOAA products already available.
 
+Application users can review these sources in the [planning, weather, preflight and mission workflows](aviation-app-data.md).
+
 ## HTTP and MCP usage
 
 The source catalog is `GET /api/aviation-data/sources`. It names supported

@@ -25,6 +25,7 @@ import { useApiMutation, useSearchHistory, useFavorites, useWeatherRecommendatio
 import { weatherService } from '../services'
 import { validateAirportCode } from '../utils'
 import type { WeatherData } from '../types'
+import AviationDataPanel from '../components/AviationDataPanel'
 
 const WeatherPage: React.FC = () => {
   const [airport, setAirport] = useState('')
@@ -267,6 +268,7 @@ const WeatherPage: React.FC = () => {
           )}
         </Grid>
       </Grid>
+      <AviationDataPanel airports={currentAirport ? [currentAirport] : []} />
     </Box>
   )
 }

@@ -1,6 +1,6 @@
 # Design traceability
 
-<!-- literate-ai:authority-reviewed sha256:1f2a55d35dddabfc4beeb8e7547b0ff151faea1ad084388919de852c593376b1 -->
+<!-- literate-ai:authority-reviewed sha256:c37b8d3a6b276938693fffd7a3fda92780ab05dce322094c75877c37d1992893 -->
 
 [Project guide](../README.md) → design traceability
 
@@ -54,3 +54,9 @@ planner's operation schema through HTTP, an MCP resource and a discovery tool;
 simulator placeholders are excluded from that schema. Domain qualification calls
 real MCP operations and validates payloads and unknown/error behavior, rather than
 using process health as evidence of usable aviation data.
+
+The [application data review contract](aviation-app-data.md) defines the planning,
+weather, preflight, school dispatch and mission consumers. Its shared browser presentation belongs
+to Meta App and uses the public gateway; provider adapters remain in the planner.
+Browser fixtures and cross-application lifecycle assertions are repository harness
+code, not portable SDK contracts or evidence of live provider availability.

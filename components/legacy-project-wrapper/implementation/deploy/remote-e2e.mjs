@@ -7,6 +7,7 @@ import { join } from 'node:path';
 import { gunzipSync } from 'node:zlib';
 import { chromium } from '@playwright/test';
 import { assertGatewayCatalog, assertGatewayTools } from './gateway-qualification.mjs';
+import { installAviationDataFixtures, exerciseAviationDataPanel } from './aviation-data-qualification.mjs';
 import {
   installE2EApiHeaders, runE2EScreens, seedRemoteFixture,
   installE2ENetworkMocks, standardE2EFixtures, standardE2EMocks,
@@ -109,6 +110,9 @@ const installIsolatedFeedbackScript = async page => {
   }
   if (activeRun) await installE2EApiHeaders(page, baseUrl, appId, activeRun);
   latestPage = page;
+  if (isolatedHost && ['flight-planner', 'weather-briefing', 'preflight-check', 'aviation-missions-app', 'flightschool'].includes(appId)) {
+    await installAviationDataFixtures(page, process.env.AVIATION_E2E_RUN_ID);
+  }
   if (feedbackScript) await page.route('https://meta-app.jordanhubbard.net/feedback-widget.js', route =>
     route.fulfill({ status: 200, contentType: 'text/javascript', body: feedbackScript }));
 };
@@ -231,6 +235,11 @@ if (appId === 'flightschool') {
           const body = await page.locator('body').innerText();
           if (/Internal Server Error|Something went wrong|Application Error/i.test(body)) {
             throw new Error(`${path} rendered an error page`);
+          }
+          if (path.startsWith('/flight/check-in/')) {
+            const checked = await page.locator('#weather_conditions_acceptable').isChecked();
+            await exerciseAviationDataPanel(page, run.id);
+            if (await page.locator('#weather_conditions_acceptable').isChecked() !== checked) throw new Error('Data review changed dispatch approval');
           }
           if (errors.length) throw new Error(`${path} browser errors: ${errors.join('; ')}`);
         },
@@ -377,6 +386,7 @@ if (appId === 'flightschool') {
           verify: async () => {
             await page.locator('.modal-overlay').getByRole('heading', { name: mission.title }).waitFor();
             await page.locator('.modal-overlay').getByText('Synthetic mission for remote E2E', { exact: false }).waitFor();
+            await exerciseAviationDataPanel(page, run.id, mission.route.match(/\b[A-Z0-9]{4}\b/g)?.join(' '));
           }, afterVerify: () => page.locator('.modal-close').click() },
         { ...explanationScreen(page, run, explanationApi(), mission.title, async () => {
             await card.getByRole('button', { name: 'BRIEF' }).click();
@@ -913,6 +923,7 @@ if (appId === 'flightschool') {
             await page.getByText('Route Results', { exact: true }).waitFor();
             await page.getByText('Route: KOAK → KSFO', { exact: true }).waitFor();
             await page.getByText('Groundspeed: 100 kt', { exact: true }).waitFor();
+            await exerciseAviationDataPanel(page, run.id, 'KOAK KSFO');
             for (const station of ['KOAK', 'KSFO']) {
               const panel = page.getByRole('region', { name: `${station} TAF` });
               const expected = mocks.tafs[station].reports[0].rawTAF;
@@ -1401,6 +1412,7 @@ if (appId === 'flightschool') {
           visit: () => page.locator('input[name="forecast-day"][value="3"]').check(),
           verify: async () => {
             await page.locator('#briefing-output').getByText('Forecast: 3 days').waitFor();
+            await exerciseAviationDataPanel(page, run.id, 'KOAK');
             if (errors.length) throw new Error(`Browser errors: ${errors.join('; ')}`);
           },
         },
@@ -1594,6 +1606,9 @@ if (appId === 'flightschool') {
           visit: async () => page.getByRole('heading', { name: 'References' }).scrollIntoViewIfNeeded(),
           verify: async () => {
             await page.getByRole('link', { name: 'FAA Weight & Balance Handbook' }).waitFor();
+            const riskBefore = await page.locator('.risk:checked').count();
+            await exerciseAviationDataPanel(page, run.id);
+            if (await page.locator('.risk:checked').count() !== riskBefore) throw new Error('Data loading changed preflight decisions');
             if (errors.length) throw new Error(`Browser errors: ${errors.join('; ')}`);
           },
         },

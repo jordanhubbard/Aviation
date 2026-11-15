@@ -298,6 +298,9 @@ jobs:
       - name: Build every Node workspace consumer
         run: pnpm --recursive --workspace-concurrency=1 --if-present run build
 
+      - name: Install Chromium for aviation data browser acceptance
+        run: pnpm exec playwright install --with-deps chromium
+
       - name: Verify Meta App HTTP and MCP gateway contracts
         run: pnpm --filter @aviation/meta-app test
 
