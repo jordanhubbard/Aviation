@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 import { chromium } from '@playwright/test';
 import { asset, installAviationDataFixtures, exerciseAviationDataPanel } from '../../deploy/aviation-data-qualification.mjs';
 
@@ -106,4 +107,43 @@ test('application aviation data browser acceptance', async t => {
     await panel.getByText(/Enter a two-letter country/).waitFor();
     assert.equal(calls.length, 0);
   });
+  await t.test('a held data asset does not block the real Missions application startup', async () => {
+    const page = await browser.newPage();
+    const base = 'https://aviation-missions-app.jordanhubbard.net';
+    let release;
+    const held = new Promise(resolve => { release = resolve; });
+    await page.route('https://meta-app.jordanhubbard.net/aviation-data.js', async route => {
+      await held;
+      await route.fulfill({ contentType: 'text/javascript', body: asset });
+    });
+    await page.route('https://meta-app.jordanhubbard.net/feedback-widget.js', route => route.fulfill({ contentType: 'text/javascript', body: '' }));
+    await page.route('https://fonts.googleapis.com/**', route => route.fulfill({ contentType: 'text/css', body: '' }));
+    await page.route(base + '/**', async route => {
+      const path = new URL(route.request().url()).pathname;
+      if (path === '/missions') return route.fulfill({ json: { missions: [] } });
+      if (path === '/api/explain/widget.js') return route.fulfill({ contentType: 'text/javascript', body: 'window.AviationExplain={registerContext(){}};' });
+      const files = { '/': 'index.html', '/js/app.js': 'js/app.js', '/css/styles.css': 'css/styles.css', '/css/admin-styles.css': 'css/admin-styles.css' };
+      assert.ok(files[path], 'Unexpected startup request ' + path);
+      await route.fulfill({ contentType: path.endsWith('.js') ? 'text/javascript' : path.endsWith('.css') ? 'text/css' : 'text/html',
+        body: readFileSync(new URL('../aviation-missions-app/frontend/resources/public/' + files[path], import.meta.url), 'utf8') });
+    });
+    try {
+      await page.goto(base, { waitUntil: 'commit' });
+      await page.getByRole('heading', { name: /Aviation Mission Management/ }).waitFor({ timeout: 5000 });
+      assert.equal(await page.evaluate(() => !!customElements.get('aviation-data-panel')), false);
+      await page.evaluate(() => {
+        const panel = document.createElement('aviation-data-panel');
+        panel.textContent = 'Loading aviation data review…';
+        panel.setAttribute('airports', 'KOAK KSFO'); document.body.append(panel);
+      });
+      release();
+      await page.locator('aviation-data-panel').getByRole('button', { name: 'Load aviation data' }).waitFor();
+      assert.equal(await page.locator('aviation-data-panel').getByLabel('Route airports, in order').inputValue(), 'KOAK KSFO');
+    } finally {
+      release();
+      await page.waitForFunction(() => !!customElements.get('aviation-data-panel'), null, { timeout: 5000 }).catch(() => {});
+      await page.close();
+    }
+  });
+
 });

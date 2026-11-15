@@ -239,7 +239,7 @@ async function main() {
               <p class="muted">Detailed METAR information and flight conditions appear here after selecting an airport.</p>
               <pre id="briefing-output">Select an airport or enter a code, then click "Get Briefing" to see detailed weather information.</pre>
             </section>
-            <aviation-data-panel airports="KSFO"></aviation-data-panel>
+            <aviation-data-panel airports="KSFO">Loading aviation data review…</aviation-data-panel>
           </div>
           <script
             src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
@@ -591,7 +591,7 @@ async function main() {
 
             void loadRegion(DEFAULT_REGION_ID);
           </script>
-          <script defer src="https://meta-app.jordanhubbard.net/aviation-data.js"></script>
+          <script async src="https://meta-app.jordanhubbard.net/aviation-data.js"></script>
           <script defer data-aviation-app="weather-briefing" src="https://meta-app.jordanhubbard.net/feedback-widget.js"></script>
           <script type="module">
             import '/api/explain/widget.js';
