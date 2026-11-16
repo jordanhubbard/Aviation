@@ -42,6 +42,39 @@ authorization, or operational recommendation. This is document research, not app
 of aircraft applicability, maintenance work or a flight plan."""
 
 
+ANSWER_SCHEMA = {
+    "type": "object",
+    "properties": {
+        "insufficient_evidence": {"type": "boolean"},
+        "reason": {"type": "string"},
+        "claims": {
+            "type": "array", "maxItems": 12,
+            "items": {
+                "type": "object",
+                "properties": {
+                    "text": {"type": "string", "minLength": 1, "maxLength": 3000},
+                    "citations": {
+                        "type": "array", "minItems": 1, "maxItems": 8,
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "passage_id": {"type": "integer"},
+                                "excerpt_id": {"type": "integer"},
+                            },
+                            "required": ["passage_id", "excerpt_id"],
+                            "additionalProperties": False,
+                        },
+                    },
+                },
+                "required": ["text", "citations"], "additionalProperties": False,
+            },
+        },
+    },
+    "required": ["insufficient_evidence", "reason", "claims"],
+    "additionalProperties": False,
+}
+
+
 class Models:
     def __init__(self, environment=None, *, transport=None, clock=None, sleep=None):
         env = os.environ if environment is None else environment
@@ -55,6 +88,16 @@ class Models:
         self.generation_options = (
             {"chat_template_kwargs": {"enable_thinking": thinking == "true"}} if thinking else {}
         )
+        output_format = env.get("AIRCRAFT_LIBRARY_LLM_RESPONSE_FORMAT", "")
+        if not isinstance(output_format, str) or output_format.strip().lower() not in {
+            "", "json_object", "json_schema"
+        }:
+            raise ValueError("LLM response format must be json_object, json_schema or unset")
+        if output_format.strip().lower() == "json_schema":
+            self.generation_options["response_format"] = {
+                "type": "json_schema",
+                "json_schema": {"name": "aircraft_manual_answer", "strict": True, "schema": ANSWER_SCHEMA},
+            }
         self.embedding_model = env.get("AIRCRAFT_LIBRARY_EMBEDDING_MODEL", "")
         self.embedding_mode = env.get("AIRCRAFT_LIBRARY_EMBEDDING_MODE", "symmetric")
         try:

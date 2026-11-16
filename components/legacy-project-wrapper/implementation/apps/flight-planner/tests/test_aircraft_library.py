@@ -728,6 +728,7 @@ def test_partial_distillation_resumes_verified_batches_and_invalidates_changed_m
         ("model", "different-model"),
         ("generation_options", {"chat_template_kwargs": {"enable_thinking": False}}),
         ("generation_options", {"chat_template_kwargs": {"enable_thinking": True}}),
+        ("generation_options", {"response_format": {"type": "json_schema", "schema": "changed"}}),
     ]:
         store.artifact(document["id"], "distillation", partial)
         changed = Provider()
@@ -1090,3 +1091,80 @@ def test_explicit_chat_template_thinking_is_optional_and_does_not_change_embeddi
 def test_invalid_thinking_configuration_fails_before_provider_access(value):
     with pytest.raises(ValueError, match="LLM enable thinking"):
         Models({"AIRCRAFT_LIBRARY_LLM_ENABLE_THINKING": value})
+
+
+@pytest.mark.parametrize("value", [None, "", "json_object", "json_schema", " JSON_SCHEMA "])
+def test_explicit_schema_mode_is_bounded_and_keeps_embedding_identity(value):
+    requests = []
+
+    def provider(request):
+        requests.append(json.loads(request.content))
+        return httpx.Response(200, json={"choices": [{"finish_reason": "stop", "message": {
+            "content": json.dumps({"insufficient_evidence": True, "reason": "", "claims": []})
+        }}]})
+
+    config = {"AIRCRAFT_LIBRARY_LLM_BASE_URL": "https://models.example/v1",
+              "AIRCRAFT_LIBRARY_LLM_MODEL": "configured-model"}
+    baseline = Models(config)
+    if value is not None:
+        config["AIRCRAFT_LIBRARY_LLM_RESPONSE_FORMAT"] = value
+    models = Models(config, transport=httpx.MockTransport(provider))
+    models.complete([], "Summarize")
+    assert models.embedding_identity == baseline.embedding_identity
+    payload = requests[0]
+    assert payload["model"] == "configured-model" and payload["max_tokens"] == 4096
+    mode = payload["response_format"]
+    if value and value.strip().lower() == "json_schema":
+        assert mode["type"] == "json_schema" and mode["json_schema"]["strict"] is True
+        schema = mode["json_schema"]["schema"]
+        assert set(schema["required"]) == {"insufficient_evidence", "reason", "claims"}
+        assert schema["additionalProperties"] is False
+        claims = schema["properties"]["claims"]
+        assert claims["maxItems"] == 12
+        claim = claims["items"]
+        assert claim["properties"]["text"]["maxLength"] == 3000
+        citations = claim["properties"]["citations"]
+        assert citations["minItems"] == 1 and citations["maxItems"] == 8
+        assert set(citations["items"]["required"]) == {"passage_id", "excerpt_id"}
+        assert models.generation_options["response_format"] == mode
+    else:
+        assert mode == {"type": "json_object"} and models.generation_options == {}
+
+
+@pytest.mark.parametrize("value", [True, 1, "text", "auto", "{invalid}"])
+def test_invalid_output_mode_fails_before_provider_access(value):
+    with pytest.raises(ValueError, match="LLM response format"):
+        Models({"AIRCRAFT_LIBRARY_LLM_RESPONSE_FORMAT": value})
+
+
+@pytest.mark.parametrize("violation", ["claims", "citation", "number", "provider_rejection"])
+def test_schema_mode_never_admits_ignored_schema_or_downgrades(store, violation):
+    document = put(store)
+    answer, passage = provider_answer(store, document)
+    if violation == "claims":
+        answer["claims"] *= 17
+        error = "17 claims"
+    elif violation == "citation":
+        answer["claims"][0]["citations"][0]["quote"] = "Unrelated invented source quotation"
+        error = "citation not present"
+    else:
+        answer["claims"][0]["text"] += " 987654321"
+        error = "numeric values" if violation == "number" else "HTTP 422"
+    requests = []
+
+    def provider(request):
+        requests.append(json.loads(request.content))
+        if violation == "provider_rejection":
+            return httpx.Response(422, json={"error": "Unsupported schema"})
+        return httpx.Response(200, json={"choices": [{"finish_reason": "stop", "message": {
+            "content": json.dumps(answer)
+        }}]})
+
+    models = Models({"AIRCRAFT_LIBRARY_LLM_BASE_URL": "https://models.example/v1",
+                     "AIRCRAFT_LIBRARY_LLM_MODEL": "configured-model",
+                     "AIRCRAFT_LIBRARY_LLM_RESPONSE_FORMAT": "json_schema"},
+                    transport=httpx.MockTransport(provider))
+    with pytest.raises(ModelUnavailable, match=error):
+        verified_completion(models, [passage], "Summarize")
+    assert len(requests) == (1 if violation == "provider_rejection" else 3)
+    assert all(r["response_format"]["type"] == "json_schema" for r in requests)

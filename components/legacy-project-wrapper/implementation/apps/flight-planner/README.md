@@ -259,3 +259,10 @@ failures still preserve resumable partial progress.
 slow model responses. Connect/pool waits are limited to 10 seconds and writes to
 30 seconds. Timeout errors identify their category and configured read limit;
 changing this setting adds no HTTP retries or citation exceptions.
+
+For a compatible provider, explicitly set
+`AIRCRAFT_LIBRARY_LLM_RESPONSE_FORMAT=json_schema` to request the bounded cited-answer
+schema. Unset/empty or `json_object` preserves the existing request. Schema mode
+never bypasses citation/numeric checks or silently downgrades after provider rejection;
+changing the schema invalidates incompatible distillation prefixes, leaving embeddings
+unchanged.

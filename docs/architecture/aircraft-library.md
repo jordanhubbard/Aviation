@@ -39,6 +39,17 @@ other values fail configuration validation. Only this named boolean is forwarded
 without overriding model, prompt, output budget or required JSON format. Explicit
 options participate in the distillation evidence identity so changing generation
 mode cannot resume an incompatible partial prefix. Embedding identity is unchanged.
+Operators may opt into `AIRCRAFT_LIBRARY_LLM_RESPONSE_FORMAT=json_schema` for
+providers supporting strict schema-constrained output; unset/empty or `json_object`
+preserves the default JSON-object request. Other values fail configuration validation.
+The schema requires evidence status, reason and a claims array of at most 12, each
+with bounded text and one to eight passage/excerpt references. Schema generation
+constrains shape only: original-span, numeric and applicability checks still validate
+every response, including when a provider ignores the schema. The exact explicit
+schema participates in the distillation identity; embeddings remain independent.
+Provider rejection is surfaced without silently downgrading the configured mode.
+See the [NVIDIA provider contract](https://docs.api.nvidia.com/nim/reference/nvidia-nemotron-3_5-super-vl-120b-a12b-infer).
+
 A completion ending at its output limit must report truncation distinctly, without
 exposing provider response text, and must never admit even parseable partial JSON.
 All original-span, numeric, applicability and completeness guards remain in force.
