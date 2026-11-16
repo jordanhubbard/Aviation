@@ -448,10 +448,13 @@
           "precedence": "explicit NotamClient option, then environment",
           "missingBehavior": "NOTAM section reports unavailable while weather remains usable",
           "classification": "application-private-credential-adapter",
-          "evidence": [{"path": "apps/weather-briefing/src/service.ts", "contains": ["FAA_NOTAM_API_KEY", "briefing still usable without NOTAMs"]}]
+          "evidence": [
+            {"path": "packages/shared-sdk/src/aviation/notam.ts", "contains": ["opts.apiKey ?? process.env.FAA_NOTAM_API_KEY"]},
+            {"path": "apps/weather-briefing/src/service.ts", "contains": ["new NotamClient(config.notamClientOptions ?? {})", "briefing still usable without NOTAMs"]}
+          ]
         }
       ],
-      "gaps": ["Weather Briefing README still describes an unused weather-briefing keystore key"]
+      "gaps": []
     }
   ]
 }
