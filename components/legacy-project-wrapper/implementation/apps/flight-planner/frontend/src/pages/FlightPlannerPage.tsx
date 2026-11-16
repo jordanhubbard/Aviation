@@ -23,6 +23,7 @@ import LocalMap from '../components/LocalMap'
 import RouteLegsTable from '../components/RouteLegsTable'
 import ElevationProfile from '../components/ElevationProfile'
 import WeatherPanels from '../components/WeatherPanels'
+import RouteAssessmentPanel from '../components/RouteAssessmentPanel'
 import AlternateAirports from '../components/AlternateAirports'
 import RouteWaypointWeatherTable from '../components/RouteWaypointWeatherTable'
 import WeatherOverlayControls, { type WeatherOverlays } from '../components/WeatherOverlayControls'
@@ -348,6 +349,7 @@ const FlightPlannerPage: React.FC = () => {
                 <Card sx={{ mb: 2 }}>
                   <CardContent>
                     <WeatherPanels airports={displayedRoutePlan.route} />
+                    <Box sx={{ mt: 3 }}><RouteAssessmentPanel plan={displayedRoutePlan} /></Box>
                   </CardContent>
                 </Card>
               ) : null}

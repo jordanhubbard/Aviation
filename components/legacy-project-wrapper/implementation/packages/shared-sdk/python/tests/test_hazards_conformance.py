@@ -104,3 +104,30 @@ def test_route_order_and_non_mutation() -> None:
     assert [{"id": item.hazard.id, "legStartIndex": item.leg_start_index} for item in result] == case["expected"]
     assert waypoints == before
     assert hazards == [point_hazard, POLYGON_HAZARD]
+
+
+@pytest.mark.parametrize('vector', CONTRACT['geometryIntervalCases'], ids=lambda v: v['id'])
+def test_geometry_intervals(vector):
+    from aviation.hazards import segment_geometry_intervals
+    import copy
+    original = copy.deepcopy(vector)
+    actual = segment_geometry_intervals(LatLon(**vector['start']), LatLon(**vector['end']), vector['geometry'])
+    assert len(actual) == len(vector['expected'])
+    for got, expected in zip(actual, vector['expected']):
+        assert got == pytest.approx(expected, abs=1e-9)
+    assert vector == original
+
+
+@pytest.mark.parametrize('vector', CONTRACT['invalidGeometryIntervalCases'], ids=lambda v: v['id'])
+def test_invalid_geometry_intervals(vector):
+    from aviation.hazards import segment_geometry_intervals
+    with pytest.raises(HazardValidationError) as raised:
+        segment_geometry_intervals(LatLon(0,0), LatLon(0,1), vector['geometry'])
+    assert raised.value.code == 'hazard-geometry-invalid'
+
+
+@pytest.mark.parametrize('vector', CONTRACT['linearIntervalCases'], ids=lambda v: v['id'])
+def test_linear_intervals(vector):
+    from aviation.hazards import linear_constraint_interval
+    actual = linear_constraint_interval(vector['start'], vector['end'], vector['lower'], vector['upper'])
+    assert actual == (pytest.approx(vector['expected']) if vector['expected'] is not None else None)

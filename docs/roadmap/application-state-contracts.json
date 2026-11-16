@@ -164,6 +164,33 @@
           "classification": "application-private-runtime-state",
           "testOracle": "frontend hook tests absent",
           "evidence": [{"path": "apps/flight-planner/frontend/src/utils/constants.ts", "contains": ["vfr_search_history", "vfr_favorites"]}]
+        },
+        {
+          "id": "route-assessment-snapshots",
+          "medium": "bounded-process-memory",
+          "location": "ga_data shared cache, route-assessment key namespace",
+          "schema": "typed assessment response with original UTC source times and content-identified source geometry",
+          "migration": "ephemeral state is discarded on restart",
+          "backup": "not backed up; source snapshots reacquired on demand",
+          "rollback": "restart compatible code; cached snapshots are not persisted",
+          "classification": "application-private-ephemeral-state",
+          "testOracle": "tests/test_route_assessment.py timed applicability and partial-source coverage",
+          "evidence": [
+            {
+              "path": "apps/flight-planner/backend/app/routers/route_assessment.py",
+              "contains": [
+                "\"route-assessment\"",
+                "return cached("
+              ]
+            },
+            {
+              "path": "apps/flight-planner/backend/app/services/ga_data.py",
+              "contains": [
+                "_MAX_CACHE_WEIGHT",
+                "_CACHE"
+              ]
+            }
+          ]
         }
       ],
       "credentials": [

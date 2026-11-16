@@ -238,3 +238,13 @@ preserves worker status; isolated children reuse `process.execPath`. Node 26.8.1
 reproducibly stalled large Playwright 1.59.1 trace archives; the same Missions
 lifecycle completed under Node 22.23.4. An unavailable LTS runtime fails with an
 actionable error before creating a run lease or browser.
+
+### Connected browser shutdown
+
+The owned-browser helper must close the connected client's contexts/transport before
+requesting graceful shutdown of its owned browser server. Both phases retain bounded
+deadlines; stalled cleanup uses the existing exact-owner kill path and verifies its
+completion. A protocol/cleanup failure remains a failure. Concurrent closes and
+signals share the same cleanup promise. Browser-process exit alone does not establish
+that its streams or descendants have been reaped. Use managed Playwright Chromium for
+qualification; optional system Chrome retains the separate limitations recorded in #479.

@@ -6,6 +6,10 @@ index, not an independently maintained task list. Use `gh issue` and `gh pr`.
 
 ## Current work and requests
 
+- [#497 — Connected browser cleanup before server shutdown](https://github.com/jordanhubbard/Aviation/issues/497)
+
+- [#491 — Route, altitude and time hazard assessment](https://github.com/jordanhubbard/Aviation/issues/491)
+
 - [#484 — Shared pressure-level forecast acquisition](https://github.com/jordanhubbard/Aviation/issues/484)
 
 - [#482 — Shared AWC JSON acquisition](https://github.com/jordanhubbard/Aviation/issues/482)

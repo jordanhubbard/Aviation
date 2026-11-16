@@ -41,6 +41,7 @@
           <label>Forecast validity time (UTC, optional)<input name="valid" type="datetime-local"></label>
           <button type="submit">Load aviation data</button>
         </form>
+        <p><a class="assessment-link" href="https://flight-planner.jordanhubbard.net/route-assessment">Open route hazard assessment</a> <span class="hint">Review timing and altitude before assessing.</span></p>
         <p role="status" class="status">Choose a route or a single airport, then load data.</p>
         <div class="route"></div>
         <div class="point-controls" hidden><label>Weather review point<select name="point"></select></label></div>
@@ -59,6 +60,7 @@
       </section>`;
       this.q('input[name=airports]').value = this.getAttribute('airports') || '';
       this.setTime();
+      this.updateAssessmentLink();
       this.q('form[aria-label="Aviation route review"]').addEventListener('submit', event => { event.preventDefault(); void this.loadRoute(); });
       this.q('input[name=airports]').addEventListener('input', () => this.clearRoute());
       this.q('input[name=valid]').addEventListener('input', () => this.clearRoute());
@@ -82,7 +84,14 @@
       const date = raw ? new Date(raw) : null;
       this.q('input[name=valid]').value = date && Number.isFinite(date.getTime()) ? date.toISOString().slice(0, 16) : '';
     }
+    updateAssessmentLink() {
+      const codes = this.q('input[name=airports]').value.trim().toUpperCase().split(/[\s,;→]+/).filter(Boolean);
+      const url = new URL('https://flight-planner.jordanhubbard.net/route-assessment');
+      if (codes.length >= 2 && codes.length <= 50 && codes.every(code => /^[A-Z0-9]{3,4}$/.test(code))) url.searchParams.set('airports', codes.join(' '));
+      this.q('.assessment-link').href = url.href;
+    }
     clearRoute() {
+      this.updateAssessmentLink();
       this.routeRequest?.abort(); this.pointRequest?.abort(); this.points = [];
       this.q('.route').replaceChildren(); this.q('.environment').replaceChildren();
       this.q('.point-controls').hidden = true;

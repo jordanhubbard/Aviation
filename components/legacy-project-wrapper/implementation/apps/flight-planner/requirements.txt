@@ -24,7 +24,7 @@ requests
 # Route planning / geospatial (from xctry-planner)
 pandas
 geopandas
-shapely
+shapely>=2.0
 
 # Shared SDK (local package)
 -e ../../packages/shared-sdk/python
@@ -44,3 +44,6 @@ pre-commit
 
 # WebSocket client (required by integration_test.py)
 websocket-client
+
+# Route-assessment projection (shared SDK owns interval clipping)
+pyproj

@@ -157,3 +157,26 @@ docker run --rm -p 8000:8000 --env-file .env flight-planner-backend
 ## Screenshots
 
 Coming soon.
+
+## Timed route hazard assessment
+
+Open **Route assessment** at `/route-assessment`, or use the panel below a completed
+route plan. Prepare an airport pair or use the displayed route, explicitly review
+the assumed groundspeed/altitude/departure time, then edit every waypoint's planned
+UTC arrival and altitude in feet MSL for climb/descent or timing changes. Draft
+profiles use constant groundspeed and altitude; they do not model aircraft climb
+performance. Assess the reviewed profile to see centerline/proximity encounters,
+source geometry, sampled terrain clearances and individual source coverage.
+
+Source warnings remain beside the results: full NOTAM access is pending, TFR
+geometry may be absent, schedules or altitude references may need interpretation,
+and provider queries may be truncated/unavailable. No-encounter results do not
+mean safe or cleared. Terrain samples do not bound intervening peaks. A local
+projected corridor uses the disclosed conservative allowance; it is distinct from
+centerline contact. Original source fields and timestamps remain available.
+
+The endpoint uses existing public data providers and terrain configuration; it
+does not require or provision FAA NOTAM credentials. Identical profile snapshots
+are cached for 60 seconds in the bounded shared data cache, and there are two
+concurrent assessment slots per process. Cached times remain original. No background
+polling, persistent route storage or new private provider credentials are added.

@@ -87,3 +87,32 @@ test('SIGTERM during launch awaits and closes that owner with interruption statu
   assert.equal(result.status, 143, result.stderr);
   assert.match(result.stdout, /OWNER_CLOSED/);
 });
+
+test('native connected-client cleanup precedes server close and is shared', async () => {
+  const f = fixture();
+  const connect = f.type.connect;
+  f.type.connect = async (...args) => ({ ...await connect(...args), close: async () => f.events.push('disconnect') });
+  const browser = await launchOwnedBrowser(f.type, {}, f.options);
+  await Promise.all([browser.close(), browser.close()]);
+  assert.equal(f.events.filter(e => e === 'disconnect').length, 1);
+  assert.ok(f.events.indexOf('disconnect') < f.events.indexOf('close'));
+  assert.ok(!f.events.includes('kill'));
+});
+
+test('stalled client disconnect recovers through the same owned kill boundary', async () => {
+  const f = fixture();
+  f.type.connect = async () => ({ close: never });
+  const browser = await launchOwnedBrowser(f.type, {}, f.options);
+  await browser.close();
+  assert.ok(f.events.includes('kill'));
+  assert.ok(f.events.some(e => e.phase === 'client.close' && e.status === 'failed'));
+  assert.equal(f.events.at(-1).status, 'recovered');
+});
+
+test('client disconnect errors kill the owner and remain failures', async () => {
+  const f = fixture();
+  f.type.connect = async () => ({ close: async () => { throw new Error('disconnect failed'); } });
+  const browser = await launchOwnedBrowser(f.type, {}, f.options);
+  await assert.rejects(browser.close(), /disconnect failed/);
+  assert.ok(f.events.includes('kill'));
+});

@@ -15,7 +15,7 @@ const aviationDataOrigins = new Set(['flight-planner', 'weather-briefing', 'pref
 function aviationDataMethod(dest) {
   if (!dest || dest.native || dest.ns !== 'planning') return null;
   const path = dest.path.split('?')[0];
-  if (path === '/api/aviation-weather/route') return 'POST';
+  if (path === '/api/aviation-weather/route' || path === '/api/route-assessment') return 'POST';
   return /^\/api\/(aviation-weather\/(stations|winds-aloft|cwa)|aviation-data\/(sources|nws\/(alerts|forecast)|faa\/airport-events|openaip\/(airports|airspaces|navaids|reporting-points|hotspots|obstacles)))$/.test(path) ? 'GET' : null;
 }
 
