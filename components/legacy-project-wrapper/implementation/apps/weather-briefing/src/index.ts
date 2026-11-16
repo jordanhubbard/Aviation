@@ -79,7 +79,7 @@ async function main() {
             .layout { display: flex; flex-direction: column; gap: 24px; max-width: 1200px; margin: 0 auto; }
             .card { background: #111827; border-radius: 12px; padding: 24px; box-shadow: 0 12px 30px rgba(0,0,0,0.25); }
             .airport-selector-card { position: sticky; top: 16px; z-index: 10; }
-            .weather-map-card { min-height: 520px; }
+            .weather-map-card { position: relative; z-index: 0; min-height: 520px; }
             .row { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
             select, input[type="text"], button { padding: 10px 12px; border-radius: 8px; border: 1px solid #1f2937; background: #0b1224; color: #f8fafc; font-size: 14px; }
             button { background: #2563eb; border-color: #2563eb; cursor: pointer; }
@@ -108,7 +108,7 @@ async function main() {
           <div class="layout">
             <section class="card airport-selector-card">
               <h1>✈️ Aviation Weather Briefing</h1>
-              <p class="muted">Select an airport or enter a custom code, to review METAR observations and TAF forecasts.</p>
+              <p class="muted">Select an airport or enter a custom code to review METAR observations and TAF forecasts.</p>
               <form id="briefing-form" class="row">
                 <label for="station">Airport:</label>
                 <select id="station" name="station">
@@ -148,7 +148,7 @@ async function main() {
             </section>
             <section class="card">
               <h2>Aviation Weather Briefing</h2>
-              <p class="muted">Detailed METAR information and flight conditions appear here after selecting an airport.</p>
+              <p class="muted">METAR observations, TAF forecasts and their source times appear here after selecting an airport.</p>
               <pre id="briefing-output">Select an airport or enter a code, then click "Get Briefing" to see detailed weather information.</pre>
             </section>
             <aviation-data-panel airports="KSFO">Loading aviation data review…</aviation-data-panel>
@@ -282,6 +282,11 @@ async function main() {
                 const briefing = await response.text();
                 if (controller.signal.aborted || station !== getStation()) return;
                 output.textContent = briefing;
+                const selector = document.querySelector('.airport-selector-card');
+                const clearance = getComputedStyle(selector).position === 'sticky'
+                  ? selector.getBoundingClientRect().height + 32 : 16;
+                output.parentElement.style.scrollMarginTop = clearance + 'px';
+                output.parentElement.scrollIntoView({ block: 'start' });
                 briefingStation = station;
                 hasBriefing = true;
               } catch (error) {
@@ -400,7 +405,7 @@ async function main() {
                 const details = document.createElement('details'); details.append(node('summary', label + ': ' + (product?.status || 'unavailable')));
                 if (product?.status !== 'available') details.append(node('p', product?.status === 'no_reports' ? 'No reports available' : 'Provider unavailable'));
                 for (const report of product?.reports || []) {
-                  details.append(node('p', 'Issued ' + utc(report.issueTime ?? report.reportTime ?? report.obsTime)
+                  details.append(node('p', (key === 'taf' ? 'Issued ' : (report.obsTime == null ? 'Report slot ' : 'Observed ')) + utc(key === 'taf' ? report.issueTime : (report.obsTime ?? report.reportTime))
                     + (key === 'taf' ? ' · Valid ' + utc(report.validTimeFrom) + ' → ' + utc(report.validTimeTo) : '')),
                     node('pre', report.rawTAF ?? report.rawOb ?? 'Report text unavailable'));
                 }

@@ -1387,7 +1387,7 @@ if (appId === 'flightschool') {
           verify: async () => {
             await page.getByRole('heading', { name: /Global Weather Map/ }).waitFor();
             await page.locator('#station-list .station-card').first().waitFor();
-            await page.locator('#station-list').getByText('KSFO').waitFor();
+            await page.locator('#station-list').getByRole('heading', { name: 'KSFO', exact: true }).waitFor();
           },
         },
         {

@@ -73,7 +73,7 @@ const reportLines = (product: 'METAR' | 'TAF', data: WeatherReports): string[] =
   product === 'TAF' ? 'TAF forecast:' : 'METAR observation:',
   ...(data.status !== 'available' ? [data.status === 'unavailable' ? 'Provider unavailable' : 'No reports available'] :
     data.reports.flatMap(r => [
-      'Issued ' + utc(r.issueTime ?? r.reportTime ?? r.obsTime)
+      (product === 'TAF' ? 'Issued ' : (r.obsTime == null ? 'Report slot ' : 'Observed ')) + utc(product === 'TAF' ? r.issueTime : (r.obsTime ?? r.reportTime))
         + (product === 'TAF' ? ' · Valid ' + utc(r.validTimeFrom) + ' → ' + utc(r.validTimeTo) : ''),
       String((product === 'TAF' ? r.rawTAF : r.rawOb) ?? 'Report text unavailable'),
     ])),
@@ -121,7 +121,7 @@ export class WeatherBriefingService extends BackgroundService {
       notamLines = this.formatNotamSection(notams);
     } catch {
       // NOTAM fetch failed; briefing still usable without NOTAMs
-      notamLines = ['NOTAMs: unavailable (check FAA_NOTAM_API_KEY configuration)'];
+      notamLines = ['NOTAMs: unavailable. Review official FAA NOTAMs separately.'];
     }
 
     const lines = [

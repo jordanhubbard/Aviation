@@ -5,7 +5,7 @@ const require = createRequire(import.meta.url);
 const { WeatherBriefingService } = require('../dist/service.js');
 const source = { provider: 'Synthetic test provider', url: 'https://example.invalid', retrieved_at_utc: '2026-11-16T00:00:00Z' };
 const product = (name, station = 'KSFO') => ({ status: 'available', source, reports: [{ icaoId: station,
-  ...(name === 'metar' ? { rawOb: `${station} 160000Z 27005KT 10SM FEW020 18/12 A2992`, reportTime: source.retrieved_at_utc } :
+  ...(name === 'metar' ? { rawOb: `${station} 152356Z 27005KT 10SM FEW020 18/12 A2992`, reportTime: source.retrieved_at_utc, obsTime: 1794786960 } :
     { rawTAF: `TAF ${station} 160000Z 1600/1700 P6SM\n FM160600 26008KT BKN030`, issueTime: source.retrieved_at_utc,
       validTimeFrom: 1794787200, validTimeTo: 1794873600 }) }] });
 function fixture(reports = async (name, code) => product(name, code)) {
@@ -22,7 +22,7 @@ test('station/list/text preserve METARs and expose original TAFs, source times a
   assert.ok(Number.isFinite(station.latitude)); assert.ok(station.updatedAt);
   assert.deepEqual(await service.getStationSummaries(['KSFO']), [station]);
   const text = await service.generateBriefing('KSFO', 7);
-  for (const part of ['METAR observation:', 'TAF forecast:', 'Valid 2026-', 'Retrieved 2026-', '\n FM160600', 'does not extend published TAF validity', 'NOTAMs: None active']) assert.ok(text.includes(part), part);
+  for (const part of ['METAR observation:', 'Observed 2026-11-15T23:56:00.000Z', 'TAF forecast:', 'Valid 2026-', 'Retrieved 2026-', '\n FM160600', 'does not extend published TAF validity', 'NOTAMs: None active']) assert.ok(text.includes(part), part);
 });
 test('TAF failure and no-report states preserve METAR; missing METAR preserves TAF', async () => {
   for (const status of ['unavailable', 'no_reports']) {

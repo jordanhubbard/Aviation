@@ -97,9 +97,12 @@ as current. Station metadata comes from the shared airport capability; unknown
 coordinates stay null and are omitted from map markers. Existing map metrics and
 `updatedAt` are returned consistently in list and single-station responses.
 
-Text briefings contain separately labeled METAR observation and TAF forecast
+METAR display time prioritizes `obsTime` over the nominal `reportTime` slot; TAFs
+use `issueTime`, with validity kept separate. Text briefings contain separately labeled METAR observation and TAF forecast
 sections, UTC issue/validity/retrieval times and explicit missing/unavailable text.
 The legacy `days` query remains accepted but cannot extend published TAF validity.
+Completed briefings scroll into view below any sticky selector; map layers cannot
+paint over airport controls.
 The UI removes controls suggesting arbitrary multi-day TAF coverage, renders report
 strings as text, and clears/aborts stale briefing and region requests when selection
 changes. Station cards and map popups consume the same legacy endpoint fields;
