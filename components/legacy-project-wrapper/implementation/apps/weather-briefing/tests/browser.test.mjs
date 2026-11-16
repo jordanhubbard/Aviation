@@ -18,7 +18,7 @@ before(async () => {
     const missing=code==='KSEA'&&taf;
     res.end(JSON.stringify({status:missing?'no_reports':'available',reports:missing?[]:[{icaoId:code,
       ...(taf?{rawTAF:`TAF ${code} 160000Z 1600/1700 P6SM\n FM160600 BKN030 ${hostile}`,issueTime:issued,validTimeFrom:1794787200,validTimeTo:1794873600}
-       :{rawOb:`${code} 160000Z 27005KT 10SM FEW020 18/12 A2992`,reportTime:issued})}],
+       :{rawOb:`${code} 152356Z 27005KT 10SM FEW020 18/12 A2992`,reportTime:issued,obsTime:1794786960})}],
       source:{provider:'Synthetic browser provider',url:'https://example.invalid',retrieved_at_utc:issued}}));
   });
   server.listen(0,'127.0.0.1');await once(server,'listening');
@@ -63,6 +63,9 @@ for(const [name,viewport] of [['desktop',{width:1280,height:900}],['mobile',{wid
  await page.getByRole('button',{name:'Get Briefing'}).click();
  await page.locator('#briefing-output').getByText('TAF forecast:',{exact:false}).waitFor();
  assert.match(await page.locator('#briefing-output').innerText(),/METAR observation:/);
+ assert.match(await page.locator('#briefing-output').innerText(),/Observed 2026-11-15T23:56:00.000Z/);
+ assert.equal(await page.locator('#briefing-output').evaluate(el=>el.getBoundingClientRect().top<innerHeight),true);
+ assert.equal(await page.locator('.airport-selector-card').evaluate(el=>getComputedStyle(el).position!=='sticky'||el.getBoundingClientRect().bottom<document.getElementById('briefing-output').getBoundingClientRect().top),true);
  assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);
  await page.screenshot({path:`/tmp/aviation-legacy-taf-${name}.png`,fullPage:true});
  await page.screenshot({path:`/tmp/aviation-legacy-taf-${name}-viewport.png`});
@@ -70,7 +73,7 @@ for(const [name,viewport] of [['desktop',{width:1280,height:900}],['mobile',{wid
  await page.locator('#station-input').fill('KOAK');await page.locator('#station-input').blur();
  await page.getByRole('button',{name:'Get Briefing'}).click();
  await page.locator('#briefing-output').getByText('Provider unavailable',{exact:false}).waitFor();
- assert.match(await page.locator('#briefing-output').innerText(),/KOAK 160000Z/);
+ assert.match(await page.locator('#briefing-output').innerText(),/KOAK 152356Z/);
 });
 test('changing station/region aborts stale responses and clears prior briefing',async t=>{
  const page=await pageFor(t,{width:1280,height:900});let release;
