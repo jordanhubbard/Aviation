@@ -295,3 +295,62 @@ def test_wrapped_polygon_hole_does_not_become_a_filled_dateline_encounter():
     dense, _ = assessment.route_samples(points)
     hits, unknown, total = assessment.evaluate(dense, [candidate(geometry=geometry)], 0)
     assert not unknown and not hits and total == 0
+
+
+def test_geographic_pruning_matches_unpruned_clipping_and_reduces_off_route_work(monkeypatch):
+    dense, _ = assessment.route_samples(route(4000, 4000))
+    fixtures = [candidate(), candidate(id="hole", geometry={"type": "Polygon", "coordinates": [
+        [[0.1,-1],[0.9,-1],[0.9,1],[0.1,1],[0.1,-1]],
+        [[0.4,-0.5],[0.6,-0.5],[0.6,0.5],[0.4,0.5],[0.4,-0.5]],
+    ]})]
+    fixtures += [candidate(id=f"off-{i}", geometry={"type":"Point", "coordinates":[20+i/100,20]}) for i in range(100)]
+    real_clip, real_tree = assessment.segment_geometry_intervals, assessment.STRtree
+    real_batch = assessment.segments_geometry_intervals
+    calls = []
+    def clip(*args):
+        calls.append(1)
+        return real_clip(*args)
+    def batch_clip(pairs, geometry):
+        calls.extend([1] * len(pairs))
+        return real_batch(pairs, geometry)
+    monkeypatch.setattr(assessment, "segment_geometry_intervals", clip)
+    monkeypatch.setattr(assessment, "segments_geometry_intervals", batch_clip)
+    optimized = assessment.evaluate(dense, fixtures, 0)
+    optimized_calls = len(calls)
+    class AllGeographicSegments:
+        def __init__(self, lines): self.tree, self.count = real_tree(lines), len(lines)
+        def query(self, geometry, **kwargs):
+            return self.tree.query(geometry, **kwargs) if kwargs.get("predicate") else range(self.count)
+    monkeypatch.setattr(assessment, "STRtree", AllGeographicSegments)
+    calls.clear()
+    reference = assessment.evaluate(dense, fixtures, 0)
+    assert optimized == reference
+    assert optimized_calls < len(calls) / 10
+
+
+def test_geographic_pruning_preserves_dateline_and_near_boundary_contacts(monkeypatch):
+    cases = [
+        ([dict(lat=0.,lon=179.5,at="2026-11-16T10:00:00Z",altitude_ft_msl=4000),
+          dict(lat=0.,lon=-179.5,at="2026-11-16T11:00:00Z",altitude_ft_msl=4000)],
+         {"type":"Polygon","coordinates":[[[179.7,-1],[-179.7,-1],[-179.7,1],[179.7,1],[179.7,-1]]]}),
+        (route(4000,4000), {"type":"LineString","coordinates":[[0.5,0.00000000001],[0.5,1]]}),
+    ]
+    real_tree = assessment.STRtree
+    class AllGeographicSegments:
+        def __init__(self, lines): self.tree, self.count = real_tree(lines), len(lines)
+        def query(self, geometry, **kwargs):
+            return self.tree.query(geometry, **kwargs) if kwargs.get("predicate") else range(self.count)
+    for points, geometry in cases:
+        dense, _ = assessment.route_samples(points)
+        item = candidate(geometry=geometry)
+        monkeypatch.setattr(assessment, "STRtree", real_tree)
+        optimized = assessment.evaluate(dense, [item], 0)
+        monkeypatch.setattr(assessment, "STRtree", AllGeographicSegments)
+        assert optimized == assessment.evaluate(dense, [item], 0)
+
+
+def test_geographically_disjoint_malformed_ring_remains_unassessed():
+    dense, _ = assessment.route_samples(route())
+    malformed = candidate(geometry={"type":"Polygon","coordinates":[[[20,20],[21,20],[21,21],[20,21]]]})
+    findings, unknown, _ = assessment.evaluate(dense, [malformed], 0)
+    assert not findings and len(unknown) == 1
