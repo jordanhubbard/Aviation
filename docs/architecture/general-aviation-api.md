@@ -112,3 +112,15 @@ indexing/distillation jobs, full-text search and source-cited questions. Library
 are separate from MCP transport credentials and must be supplied explicitly. Large original
 PDFs use authenticated HTTP upload/download rather than the MCP response-size envelope.
 These private operations are not admitted to the public credential-free cross-app data CORS path.
+
+## FAA charts and current navigation
+
+`/api/charts` provides status, paginated catalogs, chart detail, retained originals,
+checksum-pinned members, PDF previews, georeferencing, map tiles and offline manifests.
+Public reads serve FAA reference material. Refresh and download mutations require an
+operator bearer credential before body parsing. `/api/navigation/{airport}` selects
+the unique current ingested FAA CIFP cycle through the shared navigation SDK and
+preserves original records, special-leg omissions, constraints and unknown values.
+The legacy procedure endpoint uses that same current catalog; missing or ambiguous
+cycles fail explicitly. Binary chart responses use HTTP; gateway/MCP discovery uses
+the planning OpenAPI contract. See [the behavior contract](charts-navigation.md).

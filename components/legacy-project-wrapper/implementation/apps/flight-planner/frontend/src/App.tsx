@@ -18,6 +18,7 @@ const FlightPlannerPage = lazy(() => import('./pages/FlightPlannerPage'))
 const WeatherPage = lazy(() => import('./pages/WeatherPage'))
 const AirportsPage = lazy(() => import('./pages/AirportsPage'))
 const AircraftLibraryPage = lazy(() => import('./pages/AircraftLibraryPage'))
+const ChartsPage = lazy(() => import('./pages/ChartsPage'))
 
 function MissingRoute() {
   const location = useLocation()
@@ -213,6 +214,7 @@ function App() {
                   <Route path="/weather" element={<WeatherPage />} />
                   <Route path="/airports" element={<AirportsPage />} />
                   <Route path="/aircraft-library" element={<AircraftLibraryPage />} />
+                  <Route path="/charts" element={<ChartsPage />} />
                   <Route path="*" element={<MissingRoute />} />
                 </Routes>
               </motion.div>

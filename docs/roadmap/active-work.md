@@ -6,6 +6,8 @@ index, not an independently maintained task list. Use `gh issue` and `gh pr`.
 
 ## Current work and requests
 
+- [#490 — Current aviation charts and navigation cycles](https://github.com/jordanhubbard/Aviation/issues/490)
+
 - [#488 — Aviation capability expansion](https://github.com/jordanhubbard/Aviation/issues/488): [aircraft document RAG #489](https://github.com/jordanhubbard/Aviation/issues/489), [charts #490](https://github.com/jordanhubbard/Aviation/issues/490), [route hazards #491](https://github.com/jordanhubbard/Aviation/issues/491), [filing #492](https://github.com/jordanhubbard/Aviation/issues/492), [offline/cockpit connectivity #493](https://github.com/jordanhubbard/Aviation/issues/493), [performance #494](https://github.com/jordanhubbard/Aviation/issues/494).
 
 - [#484 — Shared pressure-level forecast acquisition](https://github.com/jordanhubbard/Aviation/issues/484)

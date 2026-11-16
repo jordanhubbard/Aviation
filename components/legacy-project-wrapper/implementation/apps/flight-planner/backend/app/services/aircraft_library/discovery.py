@@ -120,7 +120,16 @@ class PublicWeb:
         cached = self.robots.get(origin)
         if cached and cached[0] > time.monotonic():
             return cached[1].can_fetch(AGENT, url)
-        status, _, content = self._request(origin + "/robots.txt", max_bytes=256_000)
+        robots_url = origin + "/robots.txt"
+        for _ in range(6):
+            status, headers, content = self._request(robots_url, max_bytes=256_000)
+            if 300 <= status < 400 and headers.get("location"):
+                robots_url = urljoin(robots_url, headers["location"])
+                validate_url(robots_url)
+                continue
+            break
+        else:
+            raise AcquisitionError("Source robots redirect limit exceeded")
         if status == 404:
             lines = []
         elif status in {401, 403}:
