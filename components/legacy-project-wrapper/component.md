@@ -63,3 +63,34 @@ caller-supplied POH/loading data SHALL not become invented aircraft-specific res
 - **THEN** it receives the typed public HTTP paths and input/output schemas
 - **AND** invoking those paths through MCP returns the same domain data, provenance,
   missing-value semantics and error status as the corresponding HTTP operation
+
+### Requirement: Feedback completion is distinct from cancellation
+
+After an acknowledged successful feedback submission, the shared feedback widget
+SHALL show Close, retain the created issue link and prevent submitting that same
+completed form again. Closing SHALL leave the created issue unchanged. Opening
+feedback again is an explicit new form. In-flight and failed submissions SHALL
+not fabricate success or automatically retry.
+
+#### Scenario: A pilot closes a completed feedback form
+
+- **WHEN** the feedback service acknowledges a created issue
+- **THEN** the dialog exposes Close and no enabled submit action
+- **AND** closing and reopening offers a fresh empty feedback form
+
+### Requirement: Retain private browser-local aircraft planning preferences
+
+Flight Planner SHALL let a user save an aircraft registration with explicit
+cruise speed in knots, fuel burn in US gallons/hour and fuel on board in US
+gallons. Selecting it SHALL populate those flight inputs. Records SHALL persist
+in that browser only, remain distinct from manufacturer/POH reference data, and
+never be written to a shared unauthenticated server. Invalid, corrupt or failed
+storage SHALL not become a successful save or silently erase previous records.
+
+#### Scenario: Reuse saved aircraft planning inputs
+
+- **WHEN** the pilot selects a saved registration after reopening the application
+- **THEN** its three validated planning values populate the form
+- **AND** changes are saved only on an explicit save, with per-flight fuel verification visible
+
+Browser-local aircraft writers SHALL serialize the complete fresh-read, expected-record comparison and write across tabs using an origin-wide writer lock. Unsupported browsers SHALL explain why saving is unavailable while retaining editable flight inputs. Pending saves SHALL protect the submitted form against further edits until completion.

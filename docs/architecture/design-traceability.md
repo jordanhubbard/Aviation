@@ -1,6 +1,6 @@
 # Design traceability
 
-<!-- literate-ai:authority-reviewed sha256:b3cc88ecf6e03b4d3a3b129f8e665af9ad5acec715302ceabcbecbd30e9c9862 -->
+<!-- literate-ai:authority-reviewed sha256:2f2207c3185822d079e685da522723d52c2d667d78ca0204dd0f6de945386d5b -->
 
 [Project guide](../README.md) → design traceability
 
@@ -72,3 +72,8 @@ runtimes before creating leases or fixtures and preserve interruption status
 when delegating. These are retained runtime adapters, outside
 the portable E2E Component. Ingress policy and cold-navigation acceptance are
 documented in `components/legacy-project-wrapper/implementation/deploy/README.md`.
+
+Flight Planner owns private browser-local aircraft planning preferences and their
+cross-window write serialization; those inputs do not replace sourced aircraft
+performance or POH authority. The shared Meta App feedback widget owns submission
+completion, duplicate prevention and draft-preserving retry across applications.

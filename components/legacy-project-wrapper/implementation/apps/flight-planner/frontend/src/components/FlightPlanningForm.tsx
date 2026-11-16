@@ -1,5 +1,6 @@
 import React, { useMemo, useState, useEffect } from 'react'
 import ImportExportUI from './ImportExportUI'
+import SavedAircraftProfiles from './SavedAircraftProfiles'
 import {
   Autocomplete,
   Button,
@@ -181,6 +182,11 @@ const FlightPlanningForm: React.FC<Props> = ({ isLoading, onSubmit }) => {
 
       {mode === 'route' ? (
         <>
+          <Grid item xs={12}>
+            <SavedAircraftProfiles cruiseSpeedKt={speed} fuelBurnGph={fuelBurnGph}
+              fuelOnBoardGal={fuelOnBoardGal} disabled={isLoading}
+              onSelect={aircraft => { setSpeed(aircraft.cruiseSpeedKt); setFuelBurnGph(aircraft.fuelBurnGph); setFuelOnBoardGal(aircraft.fuelOnBoardGal) }} />
+          </Grid>
           <Grid item xs={12} sm={6}>
             <Autocomplete
               freeSolo
