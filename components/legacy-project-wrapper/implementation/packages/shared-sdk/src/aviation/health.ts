@@ -35,7 +35,9 @@ const STATUS_ALIASES: Readonly<Record<string, HealthStatus>> = {
 /** Normalize a canonical health status or supported application alias. */
 export function normalizeHealthStatus(status: unknown): HealthStatus {
   const input = typeof status === 'string' ? status.trim().toLowerCase() : '';
-  const normalized = STATUS_ALIASES[input];
+  const normalized = Object.prototype.hasOwnProperty.call(STATUS_ALIASES, input)
+    ? STATUS_ALIASES[input]
+    : undefined;
   if (!normalized) {
     throw new HealthReportError(
       'health-status-invalid',

@@ -1,6 +1,6 @@
 # Design traceability
 
-<!-- literate-ai:authority-reviewed sha256:4e1d6a06cb8d64047b0507b81c0481f5dec481acd6a2d842f5c71f464ad9939e -->
+<!-- literate-ai:authority-reviewed sha256:d99772059a9ae6bbff317382b6f916b1e7f6688ad7ce1f86652bcddfd4b861a1 -->
 
 [Project guide](../README.md) → design traceability
 
@@ -79,3 +79,10 @@ performance or POH authority. The shared Meta App feedback widget owns submissio
 completion, duplicate prevention and draft-preserving retry across applications.
 
 Dependency automation follows the real retained workspace manifests and shared pnpm lockfile. The remaining service/model suites share Vitest while preserving hermetic provider isolation and signed loopback HTTP assertions; this removes the unsupported Jest/deepmerge development chain without changing production service behavior.
+
+Service-health status aliases and report errors belong to `aviation.service.health`.
+Unknown statuses include JavaScript prototype-property names; alias lookup must
+consult declared entries only. The independently owned and bundled parity vectors
+cover the same 26 cases in TypeScript and Python. The registered native child's
+historical 19-case qualification remains separate until current requalification
+and supported consumer packaging establish replacement authority.
