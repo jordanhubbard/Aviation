@@ -20,6 +20,7 @@ from zipfile import ZipFile, BadZipFile
 
 from bs4 import BeautifulSoup
 from pypdf import PdfReader
+from aviation.nav_data import freshness_status
 
 from .aircraft_library.discovery import PublicWeb, AcquisitionError
 
@@ -77,16 +78,38 @@ def publication_date(text, *, hour=9, minute=1):
 
 
 def lifecycle(start, end, at=None):
-    reference = (
-        datetime.fromisoformat(at.replace("Z", "+00:00")) if at else datetime.now(timezone.utc)
-    )
-    if reference.tzinfo is None:
-        raise ChartError("Chart reference time requires a timezone")
-    if start and reference < datetime.fromisoformat(start):
-        return "future"
-    if end and reference >= datetime.fromisoformat(end):
-        return "expired"
-    return "current" if start and end else "undated"
+    try:
+        state = freshness_status({"source": "FAA", "effective_from": start, "effective_until": end}, at)
+    except ValueError as error:
+        raise ChartError(str(error)) from error
+    return "undated" if state == "current" and not (start and end) else state
+
+
+def catalog_verification(source, at=None):
+    reference = datetime.fromisoformat(at.replace("Z", "+00:00")) if isinstance(at, str) else at or datetime.now(timezone.utc)
+    checked_at = source.get("at") or source.get("retrieved_at")
+    verification = "source-unavailable" if source.get("status") == "unavailable" else "cached-unverified"
+    try:
+        checked = datetime.fromisoformat(checked_at.replace("Z", "+00:00"))
+        if checked.tzinfo is None:
+            raise ValueError("Unqualified source check time")
+        age = (reference - checked).total_seconds()
+        if source.get("status") == "available" and 0 <= age <= 24 * 3600:
+            verification = "verified"
+    except (AttributeError, TypeError, ValueError):
+        checked_at = None
+    return {"verification_state": verification, "source_checked_at": checked_at}
+
+
+def chart_states(record, sources, at=None):
+    edition = "withdrawn" if record.get("withdrawn") else lifecycle(record.get("effective_from"), record.get("effective_to"), at)
+    source = sources.get(record.get("family", "terminal"), {})
+    verification = {key: source[key] for key in ("verification_state", "source_checked_at")} if "verification_state" in source else catalog_verification(source, at)
+    return {
+        "edition_freshness": edition,
+        **verification,
+        "freshness": verification["verification_state"] if edition == "current" and verification["verification_state"] != "verified" else edition,
+    }
 
 
 def asset_id(source, identity):
@@ -472,7 +495,7 @@ class Charts:
                     results.append(failure)
             return {"results": results, "partial": any(r["status"] != "available" for r in results)}
 
-    def status(self):
+    def status(self, at=None):
         with self.connection() as c:
             sources = {
                 r["name"]: json.loads(r["metadata"]) for r in c.execute("SELECT * FROM sources")
@@ -481,10 +504,11 @@ class Charts:
                 json.loads(r["metadata"]) for r in c.execute("SELECT * FROM cycles ORDER BY cycle")
             ]
             count = c.execute("SELECT COUNT(*) FROM catalog").fetchone()[0]
+        sources = {name: {**metadata, **catalog_verification(metadata, at)} for name, metadata in sources.items()}
         return {
             "sources": sources,
             "cycles": [
-                {**r, "freshness": lifecycle(r["effective_from"], r["effective_to"])}
+                {**r, **chart_states(r, sources, at)}
                 for r in cycles
             ],
             "charts": count,
@@ -492,27 +516,25 @@ class Charts:
             "quota_bytes": self.quota,
         }
 
-    def get(self, identifier):
+    def get(self, identifier, *, source_status=None, at=None):
         with self.connection() as c:
             row = c.execute("SELECT metadata FROM catalog WHERE id=?", (identifier,)).fetchone()
             cached = c.execute(
                 "SELECT * FROM receipts WHERE chart_id=? ORDER BY id DESC LIMIT 1", (identifier,)
             ).fetchone()
+            if source_status is None:
+                source_status = {r["name"]: json.loads(r["metadata"]) for r in c.execute("SELECT * FROM sources")}
         if row is None:
             raise ChartError("Chart not found")
         record = json.loads(row["metadata"])
-        record["freshness"] = (
-            "withdrawn"
-            if record.get("withdrawn")
-            else lifecycle(record.get("effective_from"), record.get("effective_to"))
-        )
+        record.update(chart_states(record, source_status, at))
         record["cached"] = (
             {**dict(cached), "members": json.loads(cached["members"])} if cached else None
         )
         record["original_url"] = f"/api/charts/{identifier}/original"
         return record
 
-    def search(self, *, airport=None, query="", family=None, freshness=None, page=1, limit=40):
+    def search(self, *, airport=None, query="", family=None, freshness=None, page=1, limit=40, at=None):
         if not 1 <= page <= 1000 or not 1 <= limit <= 100:
             raise ChartError("Invalid catalog pagination")
         where, args = [], []
@@ -536,21 +558,19 @@ class Charts:
                 args,
             ).fetchall()
 
+            sources = {r["name"]: json.loads(r["metadata"]) for r in c.execute("SELECT * FROM sources")}
+        reference = at or datetime.now(timezone.utc)
+        sources = {name: {**metadata, **catalog_verification(metadata, reference)} for name, metadata in sources.items()}
         def state(row):
-            value = json.loads(row["metadata"])
-            return (
-                "withdrawn"
-                if value.get("withdrawn")
-                else lifecycle(value.get("effective_from"), value.get("effective_to"))
-            )
+            return chart_states(json.loads(row["metadata"]), sources, reference)["freshness"]
 
         ids = [r["id"] for r in rows if not freshness or state(r) == freshness]
         return {
-            "charts": [self.get(i) for i in ids[(page - 1) * limit : page * limit]],
+            "charts": [self.get(i, source_status=sources, at=reference) for i in ids[(page - 1) * limit : page * limit]],
             "total": len(ids),
             "page": page,
             "limit": limit,
-            "source_status": self.status()["sources"],
+            "source_status": sources,
         }
 
     def acquire(self, identifier, *, force=False):

@@ -110,3 +110,55 @@ describe('aviation.hazards Component conformance', () => {
     expect(hazards).toEqual([pointHazard, polygonHazard]);
   });
 });
+
+const intervalVectors = loadConformanceContract<{
+  geometryIntervalCases: Array<{ id: string; start: LatLon; end: LatLon; geometry: unknown; expected: number[][] }>;
+  invalidGeometryIntervalCases: Array<{ id: string; geometry: unknown }>;
+  linearIntervalCases: Array<{ id: string; start: number; end: number; lower: number | null; upper: number | null; expected: number[] | null }>;
+}>('hazards');
+import { segmentGeometryIntervals, segmentsGeometryIntervals, linearConstraintInterval } from '../hazards.js';
+for (const v of intervalVectors.geometryIntervalCases) {
+  it(`clips interval ${v.id}`, () => {
+    const before = structuredClone(v);
+    const actual = segmentGeometryIntervals(v.start, v.end, v.geometry);
+    expect(actual.length).toBe(v.expected.length);
+    actual.forEach((pair, i) => pair.forEach((n, j) => expect(n).toBeCloseTo(v.expected[i][j], 9)));
+    expect(v).toEqual(before);
+  });
+}
+for (const v of intervalVectors.invalidGeometryIntervalCases) {
+  it(`rejects interval geometry ${v.id}`, () => {
+    expect(() => segmentGeometryIntervals({lat:0,lon:0}, {lat:0,lon:1}, v.geometry)).toThrow(HazardValidationError);
+  });
+}
+for (const v of intervalVectors.linearIntervalCases) {
+  it(`clips linear constraint ${v.id}`, () => {
+    const actual = linearConstraintInterval(v.start, v.end, v.lower, v.upper);
+    if (v.expected === null) expect(actual).toBeNull();
+    else { expect(actual).not.toBeNull(); actual!.forEach((n,i) => expect(n).toBeCloseTo(v.expected![i], 9)); }
+  });
+}
+
+const batchVectors = loadConformanceContract<{geometryBatchCases: Array<{id:string; geometry:unknown; segments:Array<[LatLon,LatLon]>; expected:number[][][]}>}>('hazards');
+for (const v of batchVectors.geometryBatchCases) {
+  it(`clips geometry batch ${v.id}`, () => {
+    const before = structuredClone(v);
+    const actual = segmentsGeometryIntervals(v.segments, v.geometry);
+    expect(actual.length).toBe(v.expected.length);
+    actual.forEach((intervals, i) => {
+      expect(intervals.length).toBe(v.expected[i].length);
+      intervals.forEach((pair,j) => pair.forEach((value,k) => expect(value).toBeCloseTo(v.expected[i][j][k],9)));
+    });
+    expect(v).toEqual(before);
+    const changed = structuredClone(v.geometry) as {coordinates:number[][][]};
+    changed.coordinates[0].forEach(p => p[1] += 10);
+    expect(segmentsGeometryIntervals(v.segments, changed)).toEqual(v.segments.map(() => []));
+  });
+}
+it('rejects invalid geometry batches and applies limits even to reused coordinate arrays', () => {
+  for (const segments of [[], Array(1001).fill([{lat:0,lon:0},{lat:0,lon:1}])]) {
+    expect(() => segmentsGeometryIntervals(segments, {type:'Point',coordinates:[0,0]})).toThrow(HazardValidationError);
+  }
+  const ring = [[0,0],[1,0],[1,1],[0,0]];
+  expect(() => segmentsGeometryIntervals([[{lat:0,lon:0},{lat:0,lon:1}]], {type:'MultiPolygon',coordinates:Array(12501).fill([ring])})).toThrow(HazardValidationError);
+});

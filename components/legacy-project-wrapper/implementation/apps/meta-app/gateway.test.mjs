@@ -419,3 +419,33 @@ test('aviation CORS makes upstream and gateway errors readable from admitted app
   const wrong = await fetch(edge + '/api/v1/planning/api/aviation-data/sources', { method: 'POST', headers: { origin } });
   assert.equal(wrong.status, 405); assert.equal(wrong.headers.get('access-control-allow-origin'), origin);
 });
+
+test('route assessment CORS admits only public read-only POST and strips credentials', async t => {
+  const { edge, calls } = await fixture(t);
+  const path = '/api/v1/planning/api/route-assessment';
+  const origin = 'https://preflight-check.jordanhubbard.net';
+  const preflight = await fetch(edge + path, { method: 'OPTIONS', headers: {
+    origin, 'access-control-request-method': 'POST', 'access-control-request-headers': 'content-type',
+  } });
+  assert.equal(preflight.status, 204);
+  assert.equal(calls.length, 0);
+  assert.equal(preflight.headers.get('access-control-allow-origin'), origin);
+  assert.equal(preflight.headers.get('access-control-allow-methods'), 'POST');
+  assert.equal(preflight.headers.get('access-control-allow-credentials'), null);
+  const body = JSON.stringify({ waypoints: [{ lat: 0, lon: 0, altitude_ft_msl: 4500, at: '2026-11-16T10:00:00Z' }, { lat: 0, lon: 1, altitude_ft_msl: 4500, at: '2026-11-16T11:00:00Z' }] });
+  const response = await fetch(edge + path, { method: 'POST', headers: {
+    origin, 'content-type': 'application/json', authorization: 'Bearer private', cookie: 'aviation_planning_session=private',
+  }, body });
+  assert.equal(response.status, 200);
+  assert.equal(response.headers.get('access-control-allow-origin'), origin);
+  assert.equal(calls.at(-1).headers.authorization, undefined);
+  assert.equal(calls.at(-1).headers.cookie, undefined);
+  assert.equal(calls.at(-1).body.toString(), body);
+  const count = calls.length;
+  for (const headers of [
+    { origin: 'https://evil.example', 'access-control-request-method': 'POST' },
+    { origin, 'access-control-request-method': 'GET' },
+    { origin, 'access-control-request-method': 'POST', 'access-control-request-headers': 'authorization' },
+  ]) assert.equal((await fetch(edge + path, { method: 'OPTIONS', headers })).status, 403);
+  assert.equal(calls.length, count);
+});

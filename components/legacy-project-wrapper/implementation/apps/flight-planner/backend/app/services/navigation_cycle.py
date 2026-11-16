@@ -1,7 +1,6 @@
 """FAA fixed-width adapter into the existing shared navigation catalog."""
 
 from collections import defaultdict
-from datetime import datetime, timedelta
 from functools import lru_cache
 import json
 import re
@@ -9,7 +8,7 @@ import re
 from arinc424 import Record
 from aviation.nav_data import NavDataCatalog
 
-from .charts import ChartError, digest, lifecycle
+from .charts import ChartError, digest
 
 
 def coordinate(value):
@@ -160,9 +159,6 @@ def catalog_snapshot(path, source_sha, cycle_json, airport):
                 "usage": "Reference/simulation only. Raw special legs and constraints require interpretation; not certified navigation guidance.",
             }
         )
-    through = (
-        datetime.fromisoformat(cycle["effective_to"]) - timedelta(microseconds=1)
-    ).isoformat()
     catalog = NavDataCatalog(
         {
             "metadata": {
@@ -170,7 +166,7 @@ def catalog_snapshot(path, source_sha, cycle_json, airport):
                 "cycle": cycle["cycle"],
                 "retrieved_at": cycle["retrieved_at"],
                 "effective_from": cycle["effective_from"],
-                "effective_through": through,
+                "effective_until": cycle["effective_to"],
             },
             "navaids": navaids,
             "procedures": procedures,

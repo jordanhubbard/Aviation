@@ -13,6 +13,9 @@ const chart = {
   source: 'FAA d-TPP',
   cycle: '2611',
   freshness: 'current',
+  edition_freshness: 'current',
+  verification_state: 'verified',
+  source_checked_at: '2026-11-16T00:00:00Z',
   effective_from: '2026-10-29T09:01:00Z',
   effective_to: '2026-11-26T09:01:00Z',
   url: 'https://aeronav.faa.gov/diagram.pdf',
@@ -35,7 +38,7 @@ beforeEach(() => {
               total: 1,
               page: 1,
               limit: 30,
-              source_status: { terminal: { status: 'available' } },
+              source_status: { terminal: { status: 'available', verification_state: 'verified' } },
             },
     })),
   )
@@ -90,4 +93,29 @@ it('keeps source failure and missing coverage explicit', async () => {
   fireEvent.click(screen.getByRole('button', { name: 'Find charts' }))
   expect(await screen.findByText(/Previous copies have not been revalidated/)).toBeTruthy()
   expect(screen.getByText('0 matching charts · page 1')).toBeTruthy()
+})
+
+it('shows stale catalog verification even when the edition dates are current', async () => {
+  vi.stubGlobal(
+    'fetch',
+    vi.fn(async () => ({
+      ok: true,
+      json: async () => ({
+        charts: [
+          { ...chart, freshness: 'cached-unverified', verification_state: 'cached-unverified' },
+        ],
+        total: 1,
+        page: 1,
+        limit: 30,
+        source_status: {
+          terminal: { status: 'available', verification_state: 'cached-unverified' },
+        },
+      }),
+    })),
+  )
+  render(<ChartsPage />)
+  fireEvent.click(screen.getByRole('button', { name: 'Find charts' }))
+  expect(await screen.findByText(/terminal: cached-unverified/)).toBeTruthy()
+  expect(screen.getByText(/Edition: current · Catalog: cached-unverified/)).toBeTruthy()
+  expect(screen.getByText('cached-unverified', { exact: true })).toBeTruthy()
 })

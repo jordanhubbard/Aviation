@@ -27,6 +27,9 @@ type Chart = {
   effective_from: string | null
   effective_to: string | null
   freshness: string
+  edition_freshness: string
+  verification_state: string
+  source_checked_at: string | null
   cached: { sha256: string; at: string; members: Member[] } | null
 }
 type Catalog = {
@@ -34,7 +37,16 @@ type Catalog = {
   total: number
   page: number
   limit: number
-  source_status: Record<string, { status: string; at?: string; error?: string }>
+  source_status: Record<
+    string,
+    {
+      status: string
+      at?: string
+      error?: string
+      verification_state?: string
+      source_checked_at?: string | null
+    }
+  >
 }
 type Info = Member & { pages?: number; bounds_wgs84?: number[]; crs?: string; limitation?: string }
 type Procedure = {
@@ -230,13 +242,22 @@ export default function ChartsPage() {
           onChange={(e) => setQuery(e.target.value)}
         />
         <TextField
-          label="Edition state"
+          label="Chart status"
           select
           value={freshness}
           disabled={busy}
           onChange={(e) => setFreshness(e.target.value)}
         >
-          {['current', 'future', 'expired', 'undated', 'withdrawn', ''].map((v) => (
+          {[
+            'current',
+            'future',
+            'expired',
+            'undated',
+            'withdrawn',
+            'cached-unverified',
+            'source-unavailable',
+            '',
+          ].map((v) => (
             <MenuItem key={v} value={v}>
               {v || 'All editions'}
             </MenuItem>
@@ -291,86 +312,6 @@ export default function ChartsPage() {
           </Button>
         </Stack>
       </details>
-      {catalog && (
-        <>
-          {Object.entries(catalog.source_status).map(([name, state]) =>
-            state.status !== 'available' ? (
-              <Alert key={name} severity="warning">
-                {name}: {state.status}. {state.error} Previous copies have not been revalidated.
-              </Alert>
-            ) : null,
-          )}
-          {!Object.keys(catalog.source_status).length && (
-            <Alert severity="info">
-              The source catalog has not been downloaded. An operator can refresh the FAA catalogs
-              above.
-            </Alert>
-          )}
-          <Typography>
-            {catalog.total} matching charts · page {catalog.page}
-          </Typography>
-          <Stack spacing={1}>
-            {catalog.charts.map((c) => (
-              <Card key={c.id}>
-                <CardContent>
-                  <Stack spacing={1}>
-                    <Typography variant="h6">{c.name}</Typography>
-                    <Typography>
-                      {c.airport || c.family} · {c.kind} · {c.format} · cycle {c.cycle}
-                    </Typography>
-                    <Typography variant="body2">
-                      Effective {c.effective_from || 'unknown'} → {c.effective_to || 'unknown'} UTC
-                    </Typography>
-                    <Box>
-                      <Chip
-                        label={c.freshness}
-                        color={c.freshness === 'current' ? 'success' : 'warning'}
-                        size="small"
-                      />
-                    </Box>
-                    <Stack direction="row" gap={1} flexWrap="wrap">
-                      <Button disabled={busy} onClick={() => void action(() => open(c))}>
-                        View chart details
-                      </Button>
-                      <Button href={c.url} target="_blank" rel="noreferrer">
-                        FAA original
-                      </Button>
-                      <Button
-                        disabled={busy || !key || c.freshness === 'withdrawn'}
-                        onClick={() =>
-                          void action(async () => {
-                            const updated = await request<Chart>(`${base}/${c.id}/download`, {
-                              force: false,
-                            })
-                            await open(updated)
-                            await load(catalog.page)
-                          })
-                        }
-                      >
-                        Download for viewing / offline
-                      </Button>
-                    </Stack>
-                  </Stack>
-                </CardContent>
-              </Card>
-            ))}
-          </Stack>
-          <Stack direction="row" spacing={2}>
-            <Button
-              disabled={busy || catalog.page <= 1}
-              onClick={() => void action(() => load(catalog.page - 1))}
-            >
-              Previous charts
-            </Button>
-            <Button
-              disabled={busy || catalog.page * catalog.limit >= catalog.total}
-              onClick={() => void action(() => load(catalog.page + 1))}
-            >
-              Next charts
-            </Button>
-          </Stack>
-        </>
-      )}
       {chart && (
         <Card>
           <CardContent>
@@ -380,6 +321,10 @@ export default function ChartsPage() {
               </Typography>
               <Typography>
                 {chart.source} · cycle {chart.cycle} · {chart.freshness}
+              </Typography>
+              <Typography variant="body2">
+                Edition: {chart.edition_freshness} · Catalog: {chart.verification_state} · Checked{' '}
+                {chart.source_checked_at || 'unknown'}
               </Typography>
               <Typography>
                 Effective {chart.effective_from || 'unknown'} → {chart.effective_to || 'unknown'}{' '}
@@ -540,6 +485,91 @@ export default function ChartsPage() {
             </Stack>
           </CardContent>
         </Card>
+      )}
+      {catalog && (
+        <>
+          {Object.entries(catalog.source_status).map(([name, state]) =>
+            state.status !== 'available' || state.verification_state !== 'verified' ? (
+              <Alert key={name} severity="warning">
+                {name}: {state.verification_state || state.status}. {state.error} Previous copies
+                have not been revalidated.
+              </Alert>
+            ) : null,
+          )}
+          {!Object.keys(catalog.source_status).length && (
+            <Alert severity="info">
+              The source catalog has not been downloaded. An operator can refresh the FAA catalogs
+              above.
+            </Alert>
+          )}
+          <Typography>
+            {catalog.total} matching charts · page {catalog.page}
+          </Typography>
+          <Stack spacing={1}>
+            {catalog.charts.map((c) => (
+              <Card key={c.id}>
+                <CardContent>
+                  <Stack spacing={1}>
+                    <Typography variant="h6">{c.name}</Typography>
+                    <Typography>
+                      {c.airport || c.family} · {c.kind} · {c.format} · cycle {c.cycle}
+                    </Typography>
+                    <Typography variant="body2">
+                      Effective {c.effective_from || 'unknown'} → {c.effective_to || 'unknown'} UTC
+                    </Typography>
+                    <Box>
+                      <Typography variant="caption" component="p">
+                        Edition: {c.edition_freshness} · Catalog: {c.verification_state} · Checked{' '}
+                        {c.source_checked_at || 'unknown'}
+                      </Typography>
+                      <Chip
+                        label={c.freshness}
+                        color={c.freshness === 'current' ? 'success' : 'warning'}
+                        size="small"
+                      />
+                    </Box>
+                    <Stack direction="row" gap={1} flexWrap="wrap">
+                      <Button disabled={busy} onClick={() => void action(() => open(c))}>
+                        View chart details
+                      </Button>
+                      <Button href={c.url} target="_blank" rel="noreferrer">
+                        FAA original
+                      </Button>
+                      <Button
+                        disabled={busy || !key || c.freshness === 'withdrawn'}
+                        onClick={() =>
+                          void action(async () => {
+                            const updated = await request<Chart>(`${base}/${c.id}/download`, {
+                              force: false,
+                            })
+                            await open(updated)
+                            await load(catalog.page)
+                          })
+                        }
+                      >
+                        Download for viewing / offline
+                      </Button>
+                    </Stack>
+                  </Stack>
+                </CardContent>
+              </Card>
+            ))}
+          </Stack>
+          <Stack direction="row" spacing={2}>
+            <Button
+              disabled={busy || catalog.page <= 1}
+              onClick={() => void action(() => load(catalog.page - 1))}
+            >
+              Previous charts
+            </Button>
+            <Button
+              disabled={busy || catalog.page * catalog.limit >= catalog.total}
+              onClick={() => void action(() => load(catalog.page + 1))}
+            >
+              Next charts
+            </Button>
+          </Stack>
+        </>
       )}
     </Stack>
   )

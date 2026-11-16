@@ -202,11 +202,59 @@ more specific terms for further examples. Extraction, model and acquisition fail
 originals and prior provenance. No extracted figure is automatically promoted to an aircraft
 performance dataset or operational approval.
 
+For asymmetric embedding providers such as NVIDIA NeMo Retriever, set
+`AIRCRAFT_LIBRARY_EMBEDDING_MODE=query_passage`. Document indexing then sends
+`input_type=passage`; question retrieval sends `input_type=query`. The default
+`symmetric` omits this extension for OpenAI-compatible providers. Persisted vectors
+are scoped to endpoint, model and mode; re-run each document's embedding job when
+changing these settings or upgrading from the earlier model-name-only index.
+
+Set `AIRCRAFT_LIBRARY_EMBEDDING_BATCH_SIZE` from 1 to 32 (default 32) when the
+provider limits batching. A value of 1 still embeds every passage individually.
+
+## Timed route hazard assessment
+
+Open **Route assessment** at `/route-assessment`, or use the panel below a completed
+route plan. Prepare an airport route or use the displayed route, explicitly review
+the assumed groundspeed/altitude/departure time, then edit every waypoint's planned
+UTC arrival and altitude in feet MSL for climb/descent or timing changes. Draft
+profiles use constant groundspeed and altitude; they do not model aircraft climb
+performance. Assess the reviewed profile to see centerline/proximity encounters,
+source geometry, sampled terrain clearances and individual source coverage.
+
+Source warnings remain beside the results: full NOTAM access is pending, TFR
+geometry may be absent, schedules or altitude references may need interpretation,
+and provider queries may be truncated/unavailable. No-encounter results do not
+mean safe or cleared. Terrain samples do not bound intervening peaks. A local
+projected corridor uses the disclosed conservative allowance; it is distinct from
+centerline contact. Original source fields and timestamps remain available.
+
+The endpoint uses existing public data providers and terrain configuration; it
+does not require or provision FAA NOTAM credentials. Identical profile snapshots
+are cached for 60 seconds in the bounded shared data cache, and there are two
+concurrent assessment slots per process. Cached times remain original. No background
+polling, persistent route storage or new private provider credentials are added.
+
+`AIRCRAFT_LIBRARY_DISTILL_BATCH_CHARS` accepts 2000–18000 (default 18000).
+Use a smaller value for limited provider contexts/token quotas. All readable
+passages are still processed; changing the batch budget invalidates resumable
+progress from incompatible batch identities. Partial or unresolved batches never
+claim complete document distillation.
+
+`AIRCRAFT_LIBRARY_LLM_MIN_INTERVAL_SECONDS` accepts 0–120 (default 0) to pace
+chat-completion starts across the process's questions and background work. Set it
+for the provider's quota alongside the batch budget; a smaller batch can reduce
+token pressure. This does not change the required evidence, and rate-limited
+failures still preserve resumable partial progress.
+
 ## FAA charts and navigation cycles
 
 Open **Charts / Navigation** at `/charts`. Search terminal charts by their published
 ICAO/FAA airport identifier, or choose VFR/IFR and search chart names. Editions retain
 UTC effective/end instants, source links, original SHA-256 and acquisition history.
+Edition dates and catalog verification are displayed separately. A chart is current
+only when its edition is effective and a successful catalog check is at most 24 hours
+old. Failed or stale checks remain visible without removing cached originals.
 PDF previews include paging/zoom; GeoTIFFs use their declared projection for map tiles.
 Only the main chart body inside the FAA neatline is accurately georeferenced.
 

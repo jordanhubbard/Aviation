@@ -76,6 +76,17 @@
     {"id": "current", "metadata": {"source": "x", "effective_from": "2026-10-01T00:00:00Z", "effective_through": "2026-10-31T23:59:59Z"}, "at": "2026-10-30T12:00:00Z", "expected": "current"},
     {"id": "expired", "metadata": {"source": "x", "effective_through": "2026-09-30T23:59:59Z"}, "at": "2026-10-30T12:00:00Z", "expected": "expired"},
     {"id": "future", "metadata": {"source": "x", "effective_from": "2026-11-01T00:00:00Z"}, "at": "2026-10-30T12:00:00Z", "expected": "future"},
-    {"id": "undated", "metadata": {"source": "x"}, "at": "2026-10-30T12:00:00Z", "expected": "undated"}
+    {"id": "undated", "metadata": {"source": "x"}, "at": "2026-10-30T12:00:00Z", "expected": "undated"},
+    {"id": "inclusive-end-retained", "metadata": {"source": "x", "effective_through": "2026-11-26T09:01:00Z"}, "at": "2026-11-26T09:01:00Z", "expected": "current"},
+    {"id": "exclusive-before-end", "metadata": {"source": "x", "effective_from": "2026-10-29T09:01:00Z", "effective_until": "2026-11-26T09:01:00Z"}, "at": "2026-11-26T09:00:59.999Z", "expected": "current"},
+    {"id": "exclusive-at-end", "metadata": {"source": "x", "effective_until": "2026-11-26T09:01:00Z"}, "at": "2026-11-26T09:01:00Z", "expected": "expired"},
+    {"id": "exclusive-after-end", "metadata": {"source": "x", "effective_until": "2026-11-26T09:01:00Z"}, "at": "2026-11-27T00:00:00Z", "expected": "expired"}
+  ],
+  "invalidFreshness": [
+    {"id": "ambiguous-end", "metadata": {"source": "x", "effective_through": "2026-11-26T09:01:00Z", "effective_until": "2026-11-26T09:01:00Z"}},
+    {"id": "empty-exclusive", "metadata": {"source": "x", "effective_from": "2026-11-26T09:01:00Z", "effective_until": "2026-11-26T09:01:00Z"}},
+    {"id": "reversed-exclusive", "metadata": {"source": "x", "effective_from": "2026-12-01T00:00:00Z", "effective_until": "2026-11-26T09:01:00Z"}},
+    {"id": "unqualified-exclusive", "metadata": {"source": "x", "effective_until": "2026-11-26T09:01:00"}},
+    {"id": "unqualified-reference", "metadata": {"source": "x"}, "at": "2026-11-26T09:01:00"}
   ]
 }

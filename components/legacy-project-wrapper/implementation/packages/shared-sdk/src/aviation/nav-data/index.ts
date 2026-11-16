@@ -6,6 +6,7 @@ export type NavDataMetadata = {
   retrieved_at?: string | null;
   effective_from?: string | null;
   effective_through?: string | null;
+  effective_until?: string | null;
 };
 
 export type NavaidRecord = {
@@ -78,6 +79,7 @@ const optionalNumber = (value: unknown, field: string): number | null => {
 };
 
 const parseInstant = (value: string, field: string): number => {
+  if (!/(?:Z|[+-]\d{2}:?\d{2})$/i.test(value)) throw new Error(`${field} must include a timezone`);
   const instant = Date.parse(value);
   if (!Number.isFinite(instant)) throw new Error(`${field} must be an ISO-8601 instant`);
   return instant;
@@ -93,6 +95,13 @@ export function normalizeMetadata(input: Record<string, unknown>): NavDataMetada
     effective_from: optionalString(input.effective_from),
     effective_through: optionalString(input.effective_through),
   };
+  const until = optionalString(input.effective_until);
+  if (until) {
+    metadata.effective_until = until;
+    parseInstant(until, 'effective_until');
+    if (metadata.effective_through) throw new Error('Use either effective_through or effective_until');
+    if (metadata.effective_from && parseInstant(metadata.effective_from, 'effective_from') >= parseInstant(until, 'effective_until')) throw new Error('effective_from must precede effective_until');
+  }
   for (const field of ['retrieved_at', 'effective_from', 'effective_through'] as const) {
     const value = metadata[field];
     if (value) parseInstant(value, field);
@@ -116,7 +125,8 @@ export function freshnessStatus(
   if (!Number.isFinite(reference)) throw new Error('at must be a valid instant');
   if (metadata.effective_from && reference < parseInstant(metadata.effective_from, 'effective_from')) return 'future';
   if (metadata.effective_through && reference > parseInstant(metadata.effective_through, 'effective_through')) return 'expired';
-  if (!metadata.effective_from && !metadata.effective_through) return 'undated';
+  if (metadata.effective_until && reference >= parseInstant(metadata.effective_until, 'effective_until')) return 'expired';
+  if (!metadata.effective_from && !metadata.effective_through && !metadata.effective_until) return 'undated';
   return 'current';
 }
 
@@ -254,6 +264,7 @@ export class NavDataCatalog {
       cycle: this.bundle.metadata.cycle ?? null,
       effective_from: this.bundle.metadata.effective_from ?? null,
       effective_through: this.bundle.metadata.effective_through ?? null,
+      ...(this.bundle.metadata.effective_until ? {effective_until: this.bundle.metadata.effective_until} : {}),
       freshness: freshnessStatus(this.bundle.metadata, at),
     };
   }

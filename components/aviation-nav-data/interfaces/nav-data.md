@@ -31,3 +31,13 @@ breaking interface change.
 Provider adapter additions are backward compatible when they return these existing
 records. A provider package that exports its own catalog, cache, search, distance, or
 procedure-selection semantics is outside this interface.
+
+## Exclusive provider intervals
+
+Optional `effective_until` supplies an exclusive end instant: the record expires
+at or after it. Existing `effective_through` remains inclusive and unchanged.
+Nonempty inclusive and exclusive ends cannot coexist. A supplied start must
+precede an exclusive end; dates require explicit timezones. Normalization and
+catalog status retain `effective_until` when supplied, without adding it to
+legacy metadata. Paired conformance covers exact end boundaries, legacy inclusive
+behavior and invalid or ambiguous intervals.

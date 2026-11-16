@@ -33,7 +33,10 @@ class ChartRecord(BaseModel):
     cycle: str
     effective_from: str | None
     effective_to: str | None
-    freshness: Literal["current", "expired", "future", "undated", "withdrawn"]
+    freshness: Literal["current", "expired", "future", "undated", "withdrawn", "cached-unverified", "source-unavailable"]
+    edition_freshness: Literal["current", "expired", "future", "undated", "withdrawn"]
+    verification_state: Literal["verified", "cached-unverified", "source-unavailable"]
+    source_checked_at: str | None
     source: str
     record: dict[str, Any]
     cached: dict[str, Any] | None
@@ -161,7 +164,7 @@ def install(app, *, store=None):
         airport: str | None = Query(default=None, max_length=4),
         query: str = Query(default="", max_length=100),
         family: Literal["terminal", "vfr", "ifr"] | None = None,
-        freshness: Literal["current", "expired", "future", "undated", "withdrawn"] | None = None,
+        freshness: Literal["current", "expired", "future", "undated", "withdrawn", "cached-unverified", "source-unavailable"] | None = None,
         page: int = Query(default=1, ge=1, le=1000),
         limit: int = Query(default=40, ge=1, le=100),
         current: Charts = Depends(charts),

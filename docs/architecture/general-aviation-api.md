@@ -117,10 +117,35 @@ These private operations are not admitted to the public credential-free cross-ap
 
 `/api/charts` provides status, paginated catalogs, chart detail, retained originals,
 checksum-pinned members, PDF previews, georeferencing, map tiles and offline manifests.
-Public reads serve FAA reference material. Refresh and download mutations require an
+Public reads serve FAA reference material. Chart records expose `edition_freshness`
+separately from `verification_state` and `source_checked_at`. Combined `freshness`
+is current only after a successful catalog check within 24 hours; otherwise a
+calendar-current chart is `cached-unverified` or `source-unavailable`. These
+values are also catalog filters. FAA cycle ends use the SDK exclusive
+`effective_until` instant, while existing inclusive metadata stays compatible. Refresh and download mutations require an
 operator bearer credential before body parsing. `/api/navigation/{airport}` selects
 the unique current ingested FAA CIFP cycle through the shared navigation SDK and
 preserves original records, special-leg omissions, constraints and unknown values.
 The legacy procedure endpoint uses that same current catalog; missing or ambiguous
 cycles fail explicitly. Binary chart responses use HTTP; gateway/MCP discovery uses
 the planning OpenAPI contract. See [the behavior contract](charts-navigation.md).
+## Timed route hazard assessment
+
+`POST /api/route-assessment` accepts 2–50 waypoints with latitude/longitude, planned
+time including timezone, and altitude in feet MSL; corridor proximity and a
+terrain/obstacle clearance margin are explicit. Routes are bounded to 800 NM and
+24 hours; profile interpolation and actual sample spacing are returned. The typed
+response preserves original candidate fields, centerline/proximity encounters,
+entry/exit times and altitudes, source statuses/URLs/retrieval times, geometry,
+uncertainty, truncation and missing coverage. Common SDK interval operations own
+planar geometry and linear time/altitude clipping; source adaptation and projection
+remain planner concerns. Identical profile responses are cached for 60 seconds,
+without relabeling original assessment/source times; concurrency is bounded.
+
+The NOAA complete G-AIRMET cache preserves all published forecast snapshots and
+explicit feet-MSL fields. It does not convert snapshots to invented continuous
+validity periods or variable freezing levels to zero. TFR list identities are
+joined to public geometry; absent geometry and uninterpreted schedules/vertical
+limits stay explicit. FAA DOF queries follow actual nested GeoJSON pagination.
+Neither these sources nor a successful assessment establishes safe/authorized
+flight or full NOTAM coverage. See [the contract](route-hazard-assessment.md).

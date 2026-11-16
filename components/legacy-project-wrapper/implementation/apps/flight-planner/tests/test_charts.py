@@ -14,7 +14,7 @@ import rasterio
 from rasterio.transform import from_bounds, Affine
 
 from app.routers.charts import install
-from app.services.charts import Charts, ChartError, lifecycle, faa_url
+from app.services.charts import Charts, ChartError, lifecycle, faa_url, instant, catalog_verification
 from app.services.chart_render import tile, raster_info
 from app.services.navigation_cycle import current_catalog, navigation, coordinate
 from app.services.aircraft_library.discovery import PublicWeb, AcquisitionError
@@ -51,6 +51,7 @@ def store(tmp_path):
     s = Charts(tmp_path)
     s.web = Web()
     s.replace("terminal", [record()])
+    s.source("terminal", {"status":"available", "at":instant()})
     return s
 
 
@@ -62,6 +63,50 @@ def test_exclusive_rollover_and_unknown_dates():
     assert lifecycle(start, None, start) == "undated"
     with pytest.raises(ChartError):
         lifecycle(start, end, "2026-11-01T00:00:00")
+
+
+@pytest.mark.parametrize("checked,status,expected", [
+    ("2026-11-15T12:00:00Z", "available", "verified"),
+    ("2026-11-15T11:59:59Z", "available", "cached-unverified"),
+    ("2026-11-16T12:00:01Z", "available", "cached-unverified"),
+    ("2026-11-16T11:00:00", "available", "cached-unverified"),
+    (None, "available", "cached-unverified"),
+    ("invalid", "unavailable", "source-unavailable"),
+])
+def test_catalog_check_age_is_independent_of_edition(checked, status, expected):
+    result = catalog_verification({"status": status, "at": checked}, "2026-11-16T12:00:00Z")
+    assert result["verification_state"] == expected
+
+
+def test_failed_catalog_check_relabels_current_charts_without_losing_original(store):
+    at = "2026-11-16T12:00:00Z"
+    store.source("terminal", {"status": "available", "at": at})
+    store.acquire("chart_one")
+    assert store.get("chart_one", at=at)["freshness"] == "current"
+    store.source("terminal", {"status": "unavailable", "at": at, "error": "FAA unavailable"})
+    result = store.search(freshness="source-unavailable", at=at)
+    assert result["total"] == 1
+    chart = result["charts"][0]
+    assert chart["edition_freshness"] == "current"
+    assert chart["source_checked_at"] == at
+    assert store.search(freshness="current", at=at)["total"] == 0
+    assert store.member("chart_one")[0].read_bytes() == b"%PDF-original"
+    store.source("terminal", {"status": "available", "at": "2026-11-14T12:00:00Z"})
+    assert store.get("chart_one", at=at)["freshness"] == "cached-unverified"
+    assert store.get("chart_one", at="2026-11-26T09:01:00Z")["freshness"] == "expired"
+
+
+def test_api_exposes_edition_and_verification_separately(store):
+    row = record()
+    row.update(effective_from="2020-01-01T00:00:00Z", effective_to="2099-01-01T00:00:00Z")
+    store.replace("terminal", [row])
+    store.source("terminal", {"status": "unavailable", "at": instant()})
+    app = FastAPI()
+    install(app, store=store)
+    result = TestClient(app).get("/api/charts/catalog?freshness=source-unavailable").json()
+    assert result["total"] == 1
+    assert result["charts"][0]["verification_state"] == "source-unavailable"
+    assert result["charts"][0]["edition_freshness"] == "current"
 
 
 def test_source_update_preserves_pinned_original_and_rejects_unrecorded_hash(store):
@@ -174,6 +219,10 @@ def test_real_fixed_width_arinc_constraint_and_unknown_preservation(store):
     assert not data["parse_receipt"]["rejected"]
     assert coordinate("N37400000") == pytest.approx(37 + 40 / 60)
     assert coordinate("N37990000") is None
+    assert data["status"]["effective_until"] == cycle["effective_to"]
+    store.source("terminal", {"status": "unavailable", "at": instant()})
+    with pytest.raises(ChartError, match="current FAA"):
+        current_catalog(store, "KSFO")
 
 
 def test_robots_redirect_respects_final_policy_and_bounds():

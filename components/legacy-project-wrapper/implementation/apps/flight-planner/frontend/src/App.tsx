@@ -14,6 +14,7 @@ import { getRuntimeEnv, githubNewIssueUrl } from './utils'
 import { reportFrontendError } from './utils/issueReporting'
 
 // Code splitting with React.lazy for better performance
+const RouteAssessmentPage = lazy(() => import('./pages/RouteAssessmentPage'))
 const FlightPlannerPage = lazy(() => import('./pages/FlightPlannerPage'))
 const WeatherPage = lazy(() => import('./pages/WeatherPage'))
 const AirportsPage = lazy(() => import('./pages/AirportsPage'))
@@ -211,6 +212,7 @@ function App() {
               >
                 <Routes location={location}>
                   <Route path="/" element={<FlightPlannerPage />} />
+                  <Route path="/route-assessment" element={<RouteAssessmentPage />} />
                   <Route path="/weather" element={<WeatherPage />} />
                   <Route path="/airports" element={<AirportsPage />} />
                   <Route path="/aircraft-library" element={<AircraftLibraryPage />} />

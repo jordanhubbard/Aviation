@@ -27,3 +27,12 @@ credentials.
 
 - Changes to this Component, its vectors, either binding, package metadata, or the SDK
   workflow run hazard conformance independently of application tests.
+
+## Requirement: Interval composition agrees
+
+Both bindings run the shared geometry interval and linear constraint vectors.
+Cover holes, multipart shapes, boundaries, collinear lines, zero-length points,
+antimeridian unwrapping, malformed input, climb/descent/constant constraints and
+an advisory becoming active after a leg enters its geometry. No network is used.
+
+`segmentsGeometryIntervals(segments, geometry)` / Python `segments_geometry_intervals` accepts 1–1000 pairs of endpoint coordinates and returns interval lists in matching order, exactly as independent segment operations. One call may reuse validated coordinate sequences for the same longitude unwrap across segments. Reuse is local to that call, never stale across calls or source mutation, and retains each segment's coordinate/node/depth limits. Invalid segment batches fail with `hazard-segments-invalid`; any endpoint or geometry failure rejects the batch. Input objects remain unchanged. Conformance covers repeated/reversed segments and changing dateline anchors, invalid batches and limits.

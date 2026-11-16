@@ -59,3 +59,17 @@ def test_freshness_vectors() -> None:
         assert (
             freshness_status(vector["metadata"], vector["at"]) == vector["expected"]
         ), vector["id"]
+
+
+def test_invalid_freshness_vectors():
+    import pytest
+    for vector in CONTRACT['invalidFreshness']:
+        with pytest.raises(ValueError):
+            freshness_status(vector['metadata'],vector.get('at','2026-11-01T00:00:00Z'))
+
+
+def test_exclusive_end_provenance_retained_without_changing_legacy_status():
+    metadata={'source':'x','effective_until':'2026-11-26T09:01:00Z'}
+    catalog=NavDataCatalog({**CONTRACT['bundle'],'metadata':metadata})
+    assert catalog.status('2026-11-26T09:01:00Z')['effective_until']==metadata['effective_until']
+    assert 'effective_until' not in NavDataCatalog(CONTRACT['bundle']).status()

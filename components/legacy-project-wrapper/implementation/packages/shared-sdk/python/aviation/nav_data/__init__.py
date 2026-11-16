@@ -63,6 +63,14 @@ def normalize_metadata(raw: Mapping[str, Any]) -> dict[str, Any]:
         "effective_from": _optional_string(raw.get("effective_from")),
         "effective_through": _optional_string(raw.get("effective_through")),
     }
+    until = _optional_string(raw.get("effective_until"))
+    if until:
+        metadata["effective_until"] = until
+        _instant(until, "effective_until")
+        if metadata["effective_through"]:
+            raise ValueError("Use either effective_through or effective_until")
+        if metadata["effective_from"] and _instant(metadata["effective_from"], "effective_from") >= _instant(until, "effective_until"):
+            raise ValueError("effective_from must precede effective_until")
     for field in ("retrieved_at", "effective_from", "effective_through"):
         if metadata[field]:
             _instant(metadata[field], field)
@@ -96,7 +104,9 @@ def freshness_status(
         normalized["effective_through"], "effective_through"
     ):
         return "expired"
-    if not normalized["effective_from"] and not normalized["effective_through"]:
+    if normalized.get("effective_until") and reference >= _instant(normalized["effective_until"], "effective_until"):
+        return "expired"
+    if not normalized["effective_from"] and not normalized["effective_through"] and not normalized.get("effective_until"):
         return "undated"
     return "current"
 
@@ -250,6 +260,7 @@ class NavDataCatalog:
             "cycle": metadata["cycle"],
             "effective_from": metadata["effective_from"],
             "effective_through": metadata["effective_through"],
+            **({"effective_until": metadata["effective_until"]} if metadata.get("effective_until") else {}),
             "freshness": freshness_status(metadata, at),
         }
 

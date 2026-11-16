@@ -60,6 +60,9 @@ entrypoints are restored and qualified.
 The [aircraft library contract](architecture/aircraft-library.md) defines original-preserving
 POH/AFM ingestion, source discovery, ICAO/registration associations and cited answers.
 Configuration and use are documented in the retained Flight Planner README.
+The [route hazard assessment contract](architecture/route-hazard-assessment.md) defines
+timed altitude-profile assessment, source coverage and uncertainty semantics.
+
 
 The [charts and navigation contract](architecture/charts-navigation.md) defines FAA
 chart acquisition, original preservation, georeferenced display and current CIFP ingestion.

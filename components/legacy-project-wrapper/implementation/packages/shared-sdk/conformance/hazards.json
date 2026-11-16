@@ -43,5 +43,47 @@
       {"id": "outside", "start": {"lat": 20, "lon": 20}, "end": {"lat": 30, "lon": 30}, "expected": false}
     ]
   },
-  "routeCase": {"waypoints": [{"lat": 5, "lon": -5}, {"lat": 5, "lon": 15}, {"lat": 25, "lon": 25}], "floor": 12000, "ceiling": 12000, "expected": [{"id": "TFR-1", "legStartIndex": 0}, {"id": "SIG-1", "legStartIndex": 0}]}
+  "routeCase": {"waypoints": [{"lat": 5, "lon": -5}, {"lat": 5, "lon": 15}, {"lat": 25, "lon": 25}], "floor": 12000, "ceiling": 12000, "expected": [{"id": "TFR-1", "legStartIndex": 0}, {"id": "SIG-1", "legStartIndex": 0}]},
+  "geometryIntervalCases": [
+    {"id": "small-outside-polygon", "start": {"lat": 0, "lon": -5e-06}, "end": {"lat": 0, "lon": 5e-06}, "geometry": {"type": "Polygon", "coordinates": [[[-2e-06, 3e-06], [2e-06, 3e-06], [2e-06, 4.9999999999999996e-06], [-2e-06, 4.9999999999999996e-06], [-2e-06, 3e-06]]]}, "expected": []},
+    {"id": "small-hole-scale-invariance", "start": {"lat": 0, "lon": -5e-06}, "end": {"lat": 0, "lon": 5e-06}, "geometry": {"type": "Polygon", "coordinates": [[[-2e-06, -1e-06], [2e-06, -1e-06], [2e-06, 1e-06], [-2e-06, 1e-06], [-2e-06, -1e-06]], [[-1e-06, -5e-07], [1e-06, -5e-07], [1e-06, 5e-07], [-1e-06, 5e-07], [-1e-06, -5e-07]]]}, "expected": [[0.3, 0.4], [0.6, 0.7]]},
+    {"id": "crossing", "start": {"lon": -5, "lat": 0}, "end": {"lon": 5, "lat": 0}, "geometry": {"type": "Polygon", "coordinates": [[[-2, -1], [2, -1], [2, 1], [-2, 1], [-2, -1]]]}, "expected": [[0.3, 0.7]]},
+    {"id": "hole-preserved", "start": {"lon": -5, "lat": 0}, "end": {"lon": 5, "lat": 0}, "geometry": {"type": "Polygon", "coordinates": [[[-2, -1], [2, -1], [2, 1], [-2, 1], [-2, -1]], [[-1, -0.5], [1, -0.5], [1, 0.5], [-1, 0.5], [-1, -0.5]]]}, "expected": [[0.3, 0.4], [0.6, 0.7]]},
+    {"id": "entirely-inside-hole", "start": {"lon": -0.5, "lat": 0}, "end": {"lon": 0.5, "lat": 0}, "geometry": {"type": "Polygon", "coordinates": [[[-2, -1], [2, -1], [2, 1], [-2, 1], [-2, -1]], [[-1, -0.5], [1, -0.5], [1, 0.5], [-1, 0.5], [-1, -0.5]]]}, "expected": []},
+    {"id": "boundary-included", "start": {"lon": -5, "lat": 1}, "end": {"lon": 5, "lat": 1}, "geometry": {"type": "Polygon", "coordinates": [[[-2, -1], [2, -1], [2, 1], [-2, 1], [-2, -1]]]}, "expected": [[0.3, 0.7]]},
+    {"id": "hole-boundary-included", "start": {"lon": -5, "lat": 0.5}, "end": {"lon": 5, "lat": 0.5}, "geometry": {"type": "Polygon", "coordinates": [[[-2, -1], [2, -1], [2, 1], [-2, 1], [-2, -1]], [[-1, -0.5], [1, -0.5], [1, 0.5], [-1, 0.5], [-1, -0.5]]]}, "expected": [[0.3, 0.7]]},
+    {"id": "multipart-disjoint", "start": {"lon": -5, "lat": 0}, "end": {"lon": 5, "lat": 0}, "geometry": {"type": "MultiPolygon", "coordinates": [[[[-4, -1], [-3, -1], [-3, 1], [-4, 1], [-4, -1]]], [[[2, -1], [4, -1], [4, 1], [2, 1], [2, -1]]]]}, "expected": [[0.1, 0.2], [0.7, 0.9]]},
+    {"id": "point-contact", "start": {"lon": -5, "lat": 0}, "end": {"lon": 5, "lat": 0}, "geometry": {"type": "Point", "coordinates": [0, 0]}, "expected": [[0.5, 0.5]]},
+    {"id": "off-leg-point", "start": {"lon": -5, "lat": 0}, "end": {"lon": 5, "lat": 0}, "geometry": {"type": "Point", "coordinates": [0, 0.1]}, "expected": []},
+    {"id": "stationary-point", "start": {"lon": 0, "lat": 0}, "end": {"lon": 0, "lat": 0}, "geometry": {"type": "Point", "coordinates": [0, 0]}, "expected": [[0, 1]]},
+    {"id": "collinear-line", "start": {"lon": -5, "lat": 0}, "end": {"lon": 5, "lat": 0}, "geometry": {"type": "LineString", "coordinates": [[-2, 0], [2, 0]]}, "expected": [[0.3, 0.7]]},
+    {"id": "cross-line", "start": {"lon": -5, "lat": 0}, "end": {"lon": 5, "lat": 0}, "geometry": {"type": "LineString", "coordinates": [[0, -2], [0, 2]]}, "expected": [[0.5, 0.5]]},
+    {"id": "dateline-area", "start": {"lon": 178, "lat": 0}, "end": {"lon": -178, "lat": 0}, "geometry": {"type": "Polygon", "coordinates": [[[179, -1], [-179, -1], [-179, 1], [179, 1], [179, -1]]]}, "expected": [[0.25, 0.75]]},
+    {"id": "stationary-outside-line", "start": {"lon": 0, "lat": 0}, "end": {"lon": 0, "lat": 0}, "geometry": {"type": "LineString", "coordinates": [[2, 0], [3, 0]]}, "expected": []},
+    {"id": "collection-merged", "start": {"lon": -5, "lat": 0}, "end": {"lon": 5, "lat": 0}, "geometry": {"type": "GeometryCollection", "geometries": [{"type": "MultiPoint", "coordinates": [[0, 0], [3, 0]]}, {"type": "MultiLineString", "coordinates": [[[-2, 0], [2, 0]]]}]}, "expected": [[0.3, 0.7], [0.8, 0.8]]},
+    {"id": "decimal-closed-ring", "start": {"lon": 0, "lat": 0.2}, "end": {"lon": 1, "lat": 0.2}, "geometry": {"type": "Polygon", "coordinates": [[[0.1, 0.1], [0.3, 0.1], [0.3, 0.3], [0.1, 0.3], [0.1, 0.1]]]}, "expected": [[0.1, 0.3]]}
+  ],
+  "invalidGeometryIntervalCases": [
+    {"id": "ring-not-closed", "geometry": {"type": "Polygon", "coordinates": [[[0, 0], [1, 0], [0, 1]]]}},
+    {"id": "coordinate-invalid", "geometry": {"type": "Point", "coordinates": [0, 91]}},
+    {"id": "unsupported-shape", "geometry": {"type": "Circle", "coordinates": [0, 0]}},
+    {"id": "coordinate-string", "geometry": {"type": "Point", "coordinates": ["0", 0]}}
+  ],
+  "linearIntervalCases": [
+    {"id": "finite-extreme-values", "start": -1e+308, "end": 1e+308, "lower": 0, "upper": null, "expected": [0.5, 1]},
+    {"id": "climb", "start": 1000, "end": 9000, "lower": 3000, "upper": 5000, "expected": [0.25, 0.5]},
+    {"id": "descent", "start": 9000, "end": 1000, "lower": 3000, "upper": 5000, "expected": [0.5, 0.75]},
+    {"id": "constant-inside", "start": 4000, "end": 4000, "lower": 3000, "upper": 5000, "expected": [0, 1]},
+    {"id": "constant-outside", "start": 2000, "end": 2000, "lower": 3000, "upper": 5000, "expected": null},
+    {"id": "single-contact", "start": 0, "end": 100, "lower": 100, "upper": 100, "expected": [1, 1]},
+    {"id": "advisory-activates-inside-leg", "start": 0, "end": 100, "lower": 50, "upper": 80, "expected": [0.5, 0.8]},
+    {"id": "unbounded", "start": 0, "end": 100, "lower": null, "upper": null, "expected": [0, 1]},
+    {"id": "only-lower", "start": 0, "end": 100, "lower": 50, "upper": null, "expected": [0.5, 1]},
+    {"id": "only-upper", "start": 100, "end": 0, "lower": null, "upper": 20, "expected": [0.8, 1]},
+    {"id": "outside", "start": 0, "end": 100, "lower": 200, "upper": 300, "expected": null}
+  ],
+  "geometryBatchCases": [
+    {"id":"repeated-reversed-disjoint","geometry":{"type":"Polygon","coordinates":[[[0.2,-1],[0.8,-1],[0.8,1],[0.2,1],[0.2,-1]]]},"segments":[[{"lat":0,"lon":0},{"lat":0,"lon":1}],[{"lat":0,"lon":1},{"lat":0,"lon":0}],[{"lat":2,"lon":0},{"lat":2,"lon":1}],[{"lat":0,"lon":0},{"lat":0,"lon":1}]],"expected":[[[0.2,0.8]],[[0.2,0.8]],[],[[0.2,0.8]]]},
+    {"id":"changing-dateline-anchors","geometry":{"type":"Polygon","coordinates":[[[179.7,-1],[-179.7,-1],[-179.7,1],[179.7,1],[179.7,-1]]]},"segments":[[{"lat":0,"lon":179.5},{"lat":0,"lon":-179.5}],[{"lat":0,"lon":-179.5},{"lat":0,"lon":179.5}],[{"lat":0,"lon":-179.9},{"lat":0,"lon":-179.6}]],"expected":[[[0.2,0.8]],[[0.2,0.8]],[[0,0.6666666666666666]]]}
+  ]
 }
