@@ -1,3 +1,5 @@
+import { AWC_DATA_URL } from './weather/awc.js';
+
 export interface MetarResponse {
   raw: string;
   station: string;
@@ -26,7 +28,7 @@ export class AviationWeatherClient {
   private fetchFn: typeof fetch;
 
   constructor(opts: WeatherClientOptions = {}) {
-    this.baseUrl = opts.baseUrl ?? 'https://aviationweather.gov/api/data';
+    this.baseUrl = opts.baseUrl ?? AWC_DATA_URL.slice(0, -1);
     this.apiKey = opts.apiKey;
     this.fetchFn = opts.fetchFn ?? fetch;
   }

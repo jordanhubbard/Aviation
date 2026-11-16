@@ -202,6 +202,8 @@ their applications.
 | `packages/shared-sdk/python/aviation/weather/` | retained Python realization | same capability; common cache and provider adapters live here |
 | `apps/weather-briefing/src/service.ts` | application composition | already consumes the TypeScript SDK; retain briefing/NOTAM presentation orchestration |
 | `apps/flight-planner/backend/app/services/metar.py` | compatibility adapter | delegates to the Python SDK; remove when direct SDK imports fit app packaging |
+| `apps/flight-planner/backend/app/services/ga_data.py` AWC JSON reports | compatibility adapter plus generic HTTP/cache/provenance | six-product acquisition delegates to `aviation.weather`; application retains five-minute bounded cache, HTTP transport, status/source envelopes and route batching |
+| `apps/flight-planner/backend/app/services/aviation_sources.py` pressure-level winds | remaining provider ownership gap | Open-Meteo pressure-level acquisition/validation is not yet delegated; existing surface/daily/hourly SDK delegation does not qualify this distinct product |
 | `apps/flight-planner/backend/app/services/open_meteo.py` | compatibility adapter | delegates to the Python SDK; no private provider implementation remains |
 | `apps/flight-planner/backend/app/services/openweathermap.py` | compatibility adapter | delegates to the Python SDK; no private provider implementation remains |
 | `apps/flight-planner/backend/app/services/flight_recommendations.py` | compatibility adapter | delegates classification, warning, and scoring behavior to the Python SDK |

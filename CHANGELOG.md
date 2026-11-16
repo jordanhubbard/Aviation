@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Weather: share fixed-product AWC JSON acquisition across TypeScript and Python; Flight Planner retains complete raw METAR/TAF/advisory reports, provider attribution, bounded cache and explicit partial failures (#482).
+
 - Flight Track Analyzer: reuse the shared shortest-heading separation for wind-leg clustering while retaining sorted greedy selection and measured-flight confidence policy (#442).
 
 - Navigation: share nearest great-circle segment projection across TypeScript and Python and use it for route-weather station matching; preserve route selection and explicitly reject ambiguous antipodal legs (#442).

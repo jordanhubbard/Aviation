@@ -35,6 +35,17 @@ required binding. Acceptance never contacts an external weather provider.
 - **WHEN** a synthetic provider payload is normalized
 - **THEN** units, rounding, airport identity, conditions, and missing METAR agree
 
+## Requirement: AWC JSON acquisition preserves product fidelity
+
+Shared vectors SHALL independently cover all six exact product/parameter plans,
+normalization, forty-station compatibility, unknown/missing keys, invalid products,
+station syntax and numeric boundaries. Invalid requests SHALL invoke no transport.
+Populated, empty and nested/null/unknown-field report vectors SHALL preserve all
+records and ordering. Non-list and non-record responses SHALL fail; transport
+failure SHALL invoke once without retry and expose no transport error detail.
+Application integration SHALL preserve source/status envelopes, full raw TAFs and
+mixed route-batch failures. Existing raw-METAR cache/fallback tests SHALL still pass.
+
 ## Requirement: Common SDK CI runs
 
 ### Scenario: Weather authority or a realization changes

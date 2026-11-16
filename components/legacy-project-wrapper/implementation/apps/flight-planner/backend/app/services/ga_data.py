@@ -13,10 +13,11 @@ from typing import Any
 
 import httpx
 
+from aviation.weather import AWC_DATA_URL as AWC, AWCJSONError, fetch_awc_json_reports
+
 OURAIRPORTS = "https://davidmegginson.github.io/ourairports-data/"
 FAA_FACILITIES = "https://services.arcgis.com/xOi1kZaI0eWDREZv/arcgis/rest/services/NTAD_Aviation_Facilities/FeatureServer/0"
 FAA_AIS = "https://services6.arcgis.com/ssFJjBXIUyZDrSYZ/arcgis/rest/services/"
-AWC = "https://aviationweather.gov/api/data/"
 _CACHE: dict[tuple, tuple[float, Any, int]] = {}
 _MAX_CACHE_WEIGHT = 64 * 1024 * 1024
 _LOCK = RLock()
@@ -213,14 +214,15 @@ def airport_details(airport: dict) -> dict:
 
 def aviation_weather(product: str, params: dict) -> dict:
     def load():
-        url = AWC + product
-        data = fetch(url, {**params, "format": "json"})
-        if not isinstance(data, list):
-            raise DataUnavailable("Invalid NOAA aviation weather response")
+        try:
+            result = fetch_awc_json_reports(product, params, fetch)
+        except AWCJSONError as exc:
+            raise DataUnavailable(str(exc)) from None
+        data = result["reports"]
         return {
             "status": "available" if data else "no_reports",
             "reports": data,
-            "source": source("NOAA Aviation Weather Center", url),
+            "source": source("NOAA Aviation Weather Center", result["url"]),
         }
 
     return cached(("awc", product, tuple(sorted(params.items()))), 300, load)

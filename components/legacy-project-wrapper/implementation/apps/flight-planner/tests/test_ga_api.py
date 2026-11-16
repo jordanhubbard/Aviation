@@ -203,6 +203,80 @@ def test_weather_empty_reports_and_bad_provider_are_distinct(monkeypatch):
     assert client.get("/api/aviation-weather/pirep").status_code == 422
 
 
+@pytest.mark.parametrize(
+    "product", ["metar", "taf", "pirep", "gairmet", "airsigmet", "cwa"]
+)
+def test_shared_awc_acquisition_preserves_products_and_cached_envelopes(
+    monkeypatch, product
+):
+    calls = []
+    records = [
+        {
+            "rawTAF": "TAF KAAA COMPLETE\n TEMPO ORIGINAL",
+            "unknown": {"preserve": [None, False, 42]},
+        }
+    ]
+
+    def fetch(url, params):
+        calls.append((url, params))
+        return records
+
+    monkeypatch.setattr(ga_data, "fetch", fetch)
+    path = f"/api/aviation-weather/{product}?airport=kaaa&radius_nm=12.5&hours=3"
+    first, second = client.get(path), client.get(path)
+    assert first.status_code == 200 and second.status_code == 200
+    assert first.json() == second.json()
+    value = first.json()
+    assert value["status"] == "available" and value["reports"] == records
+    assert value["source"]["provider"] == "NOAA Aviation Weather Center"
+    assert value["source"]["url"] == f"https://aviationweather.gov/api/data/{product}"
+    assert value["source"]["retrieved_at_utc"]
+    query = {"format": "json"}
+    if product in {"metar", "taf"}:
+        query["ids"] = "KAAA"
+    elif product == "pirep":
+        query.update(id="KAAA", distance=12.5, age=3)
+    assert calls == [(value["source"]["url"], query)]
+
+
+def test_awc_transport_204_timeout_and_safe_failure(monkeypatch):
+    calls = []
+
+    def no_content(url, **kwargs):
+        calls.append(kwargs)
+        return httpx.Response(204, request=httpx.Request("GET", url))
+
+    monkeypatch.setattr(ga_data.httpx, "get", no_content)
+    response = client.get("/api/aviation-weather/taf?airport=KAAA")
+    assert response.status_code == 200 and response.json()["status"] == "no_reports"
+    assert len(calls) == 1 and calls[0]["timeout"] == 20
+    assert calls[0]["params"] == {"ids": "KAAA", "format": "json"}
+    ga_data._CACHE.clear()
+
+    def private_failure(*args, **kwargs):
+        raise RuntimeError("private-provider-url?credential=private")
+
+    monkeypatch.setattr(ga_data, "fetch", private_failure)
+    response = client.get("/api/aviation-weather/taf?airport=KAAA")
+    assert response.status_code == 503
+    assert response.json()["detail"] == "AWC JSON reports unavailable"
+
+
+def test_awc_post_download_transport_limit_without_retry(monkeypatch):
+    calls = []
+    content = b" " * (20 * 1024 * 1024 + 1)
+
+    def oversized(url, **kwargs):
+        calls.append(kwargs)
+        return httpx.Response(200, content=content, request=httpx.Request("GET", url))
+
+    monkeypatch.setattr(ga_data.httpx, "get", oversized)
+    response = client.get("/api/aviation-weather/taf?airport=KAAA")
+    assert response.status_code == 503
+    assert response.json()["detail"] == "AWC JSON reports unavailable"
+    assert len(calls) == 1 and calls[0]["timeout"] == 20
+
+
 def test_terrain_inputs_are_bounded():
     assert client.get("/api/terrain/point?lat=91&lon=0").status_code == 422
     for points in ([], [[91, 0]], [[0, 0]] * 501):

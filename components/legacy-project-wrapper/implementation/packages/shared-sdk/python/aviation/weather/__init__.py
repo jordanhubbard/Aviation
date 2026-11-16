@@ -69,8 +69,12 @@ from .open_meteo import (
     sample_points_along_route,
 )
 from .cache import weather_cache
+from .awc import AWC_DATA_URL, AWCJSONError, fetch_awc_json_reports
 
 __all__ = [
+    "AWC_DATA_URL",
+    "AWCJSONError",
+    "fetch_awc_json_reports",
     # Types
     "FlightCategory",
     "FlightCategoryThresholds",

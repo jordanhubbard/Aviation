@@ -10,6 +10,7 @@ from typing import Any, Dict, Optional, Sequence
 import httpx
 
 from .cache import weather_cache
+from .awc import AWC_DATA_URL
 
 _WIND_RE = re.compile(
     r"\b(?P<dir>\d{3}|VRB)(?P<speed>\d{2,3})(?:G(?P<gust>\d{2,3}))?KT\b"
@@ -57,7 +58,7 @@ def fetch_metar_raws(stations: Sequence[str]) -> Dict[str, Optional[str]]:
 
     try:
         response = httpx.get(
-            "https://aviationweather.gov/api/data/metar",
+            AWC_DATA_URL + "metar",
             params={"ids": ",".join(missing), "format": "raw"},
             headers={"User-Agent": "aviation-shared-sdk"},
             timeout=20,

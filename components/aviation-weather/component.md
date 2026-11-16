@@ -1,6 +1,6 @@
 ---
 namespace: aviation
-version: 0.1.0
+version: 0.2.0
 display_name: Aviation weather
 profiles:
   - library
@@ -8,7 +8,7 @@ profiles:
 sample: false
 provides:
   - name: aviation.weather
-    version: 0.1.0
+    version: 0.2.0
     interface:
       uri: interfaces/weather.md
       pin: null
@@ -87,3 +87,22 @@ vectors. Network access and provider credentials SHALL NOT be required by accept
 
 - **WHEN** its normalized output diverges from a shared vector
 - **THEN** common SDK CI fails before an application can mask the regression
+
+### Requirement: AWC JSON products share a fixed acquisition boundary
+
+The common capability SHALL acquire the six existing AWC JSON products through
+the fixed HTTPS Aviation Weather Center data origin and closed parameter rules
+specified in the interface. It SHALL invoke the caller's trusted bounded JSON
+transport exactly once, force JSON format, reject non-list or non-record report
+responses, and preserve every raw report, nested field, null and report order.
+Applications MAY retain generic HTTP transport, bounded cache, retrieval-time
+provenance, route batching and station matching. JSON acquisition SHALL NOT inherit
+the separate raw-METAR stale fallback or silently replace complete TAF/advisory
+products with a parsed METAR summary.
+
+#### Scenario: A route requests full TAF products
+
+- **WHEN** the application requests at most forty provider station IDs
+- **THEN** the common capability validates and acquires the exact JSON product
+- **AND** the application retains full returned forecasts, available/no-reports
+  status, provider attribution and explicit partial failures

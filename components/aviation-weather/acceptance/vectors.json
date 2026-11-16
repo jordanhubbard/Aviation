@@ -27,11 +27,36 @@
     }
   ],
   "categories": [
-    {"id": "vfr", "visibility_sm": 5, "ceiling_ft": 3000, "expected": "VFR"},
-    {"id": "mvfr", "visibility_sm": 4, "ceiling_ft": 2000, "expected": "MVFR"},
-    {"id": "ifr", "visibility_sm": 2, "ceiling_ft": 800, "expected": "IFR"},
-    {"id": "lifr", "visibility_sm": 0.5, "ceiling_ft": 400, "expected": "LIFR"},
-    {"id": "missing", "visibility_sm": null, "ceiling_ft": 5000, "expected": "UNKNOWN"}
+    {
+      "id": "vfr",
+      "visibility_sm": 5,
+      "ceiling_ft": 3000,
+      "expected": "VFR"
+    },
+    {
+      "id": "mvfr",
+      "visibility_sm": 4,
+      "ceiling_ft": 2000,
+      "expected": "MVFR"
+    },
+    {
+      "id": "ifr",
+      "visibility_sm": 2,
+      "ceiling_ft": 800,
+      "expected": "IFR"
+    },
+    {
+      "id": "lifr",
+      "visibility_sm": 0.5,
+      "ceiling_ft": 400,
+      "expected": "LIFR"
+    },
+    {
+      "id": "missing",
+      "visibility_sm": null,
+      "ceiling_ft": 5000,
+      "expected": "UNKNOWN"
+    }
   ],
   "warnings": [
     {
@@ -58,10 +83,29 @@
       "id": "provider-normalization",
       "airport": "kaaa",
       "payload": {
-        "weather": [{"main": "Clear", "description": "clear sky", "id": 800, "icon": "01d"}],
-        "main": {"temp": 65.4, "feels_like": 65, "temp_min": 60, "temp_max": 70, "pressure": 1013, "humidity": 40},
-        "wind": {"speed": 10, "deg": 280},
-        "clouds": {"all": 10},
+        "weather": [
+          {
+            "main": "Clear",
+            "description": "clear sky",
+            "id": 800,
+            "icon": "01d"
+          }
+        ],
+        "main": {
+          "temp": 65.4,
+          "feels_like": 65,
+          "temp_min": 60,
+          "temp_max": 70,
+          "pressure": 1013,
+          "humidity": 40
+        },
+        "wind": {
+          "speed": 10,
+          "deg": 280
+        },
+        "clouds": {
+          "all": 10
+        },
         "visibility": 10000,
         "dt": 0,
         "name": "Alpha"
@@ -76,6 +120,466 @@
         "ceiling": 10000,
         "metar": ""
       }
+    }
+  ],
+  "awcRequests": [
+    {
+      "id": "metar-normalized",
+      "product": "metar",
+      "params": {
+        "ids": " kaaa, KBBB "
+      },
+      "expected": {
+        "url": "https://aviationweather.gov/api/data/metar",
+        "params": {
+          "ids": "KAAA,KBBB",
+          "format": "json"
+        }
+      }
+    },
+    {
+      "id": "taf-complete-product",
+      "product": "taf",
+      "params": {
+        "ids": "KAAA"
+      },
+      "expected": {
+        "url": "https://aviationweather.gov/api/data/taf",
+        "params": {
+          "ids": "KAAA",
+          "format": "json"
+        }
+      }
+    },
+    {
+      "id": "pirep-fractional-radius",
+      "product": "pirep",
+      "params": {
+        "id": " kaaa ",
+        "distance": 12.5,
+        "age": 3
+      },
+      "expected": {
+        "url": "https://aviationweather.gov/api/data/pirep",
+        "params": {
+          "id": "KAAA",
+          "distance": 12.5,
+          "age": 3,
+          "format": "json"
+        }
+      }
+    },
+    {
+      "id": "gairmet-unfiltered",
+      "product": "gairmet",
+      "params": {},
+      "expected": {
+        "url": "https://aviationweather.gov/api/data/gairmet",
+        "params": {
+          "format": "json"
+        }
+      }
+    },
+    {
+      "id": "airsigmet-unfiltered",
+      "product": "airsigmet",
+      "params": {},
+      "expected": {
+        "url": "https://aviationweather.gov/api/data/airsigmet",
+        "params": {
+          "format": "json"
+        }
+      }
+    },
+    {
+      "id": "cwa-unfiltered",
+      "product": "cwa",
+      "params": {},
+      "expected": {
+        "url": "https://aviationweather.gov/api/data/cwa",
+        "params": {
+          "format": "json"
+        }
+      }
+    },
+    {
+      "id": "extended-provider-ids",
+      "product": "metar",
+      "params": {
+        "ids": "12345,a-b_c.d"
+      },
+      "expected": {
+        "url": "https://aviationweather.gov/api/data/metar",
+        "params": {
+          "ids": "12345,A-B_C.D",
+          "format": "json"
+        }
+      }
+    },
+    {
+      "id": "duplicate-order",
+      "product": "taf",
+      "params": {
+        "ids": "KBBB,KAAA,KBBB"
+      },
+      "expected": {
+        "url": "https://aviationweather.gov/api/data/taf",
+        "params": {
+          "ids": "KBBB,KAAA,KBBB",
+          "format": "json"
+        }
+      }
+    },
+    {
+      "id": "pirep-lower-bound",
+      "product": "pirep",
+      "params": {
+        "id": "KAAA",
+        "distance": 1,
+        "age": 1
+      },
+      "expected": {
+        "url": "https://aviationweather.gov/api/data/pirep",
+        "params": {
+          "id": "KAAA",
+          "distance": 1,
+          "age": 1,
+          "format": "json"
+        }
+      }
+    },
+    {
+      "id": "pirep-upper-bound",
+      "product": "pirep",
+      "params": {
+        "id": "KAAA",
+        "distance": 500,
+        "age": 24
+      },
+      "expected": {
+        "url": "https://aviationweather.gov/api/data/pirep",
+        "params": {
+          "id": "KAAA",
+          "distance": 500,
+          "age": 24,
+          "format": "json"
+        }
+      }
+    },
+    {
+      "id": "forty-provider-ids",
+      "product": "taf",
+      "params": {
+        "ids": "K000,K001,K002,K003,K004,K005,K006,K007,K008,K009,K010,K011,K012,K013,K014,K015,K016,K017,K018,K019,K020,K021,K022,K023,K024,K025,K026,K027,K028,K029,K030,K031,K032,K033,K034,K035,K036,K037,K038,K039"
+      },
+      "expected": {
+        "url": "https://aviationweather.gov/api/data/taf",
+        "params": {
+          "ids": "K000,K001,K002,K003,K004,K005,K006,K007,K008,K009,K010,K011,K012,K013,K014,K015,K016,K017,K018,K019,K020,K021,K022,K023,K024,K025,K026,K027,K028,K029,K030,K031,K032,K033,K034,K035,K036,K037,K038,K039",
+          "format": "json"
+        }
+      }
+    },
+    {
+      "id": "ascii-trimming",
+      "product": "metar",
+      "params": {
+        "ids": "\tkaaa\r\n"
+      },
+      "expected": {
+        "url": "https://aviationweather.gov/api/data/metar",
+        "params": {
+          "ids": "KAAA",
+          "format": "json"
+        }
+      }
+    }
+  ],
+  "awcInvalidRequests": [
+    {
+      "id": "unknown-product",
+      "product": "https://elsewhere.invalid",
+      "params": {}
+    },
+    {
+      "id": "path-product",
+      "product": "../metar",
+      "params": {
+        "ids": "KAAA"
+      }
+    },
+    {
+      "id": "case-product",
+      "product": "METAR",
+      "params": {
+        "ids": "KAAA"
+      }
+    },
+    {
+      "id": "missing-ids",
+      "product": "taf",
+      "params": {}
+    },
+    {
+      "id": "format-override",
+      "product": "metar",
+      "params": {
+        "ids": "KAAA",
+        "format": "raw"
+      }
+    },
+    {
+      "id": "empty-id",
+      "product": "taf",
+      "params": {
+        "ids": ""
+      }
+    },
+    {
+      "id": "empty-part",
+      "product": "taf",
+      "params": {
+        "ids": "KAAA,,KBBB"
+      }
+    },
+    {
+      "id": "station-path",
+      "product": "metar",
+      "params": {
+        "ids": "KAAA/extra"
+      }
+    },
+    {
+      "id": "non-ascii-id",
+      "product": "metar",
+      "params": {
+        "ids": "KÄAA"
+      }
+    },
+    {
+      "id": "overlong-id",
+      "product": "taf",
+      "params": {
+        "ids": "KKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKK"
+      }
+    },
+    {
+      "id": "nontext-ids",
+      "product": "metar",
+      "params": {
+        "ids": [
+          "KAAA"
+        ]
+      }
+    },
+    {
+      "id": "forty-one-ids",
+      "product": "metar",
+      "params": {
+        "ids": "KAAA,KAAA,KAAA,KAAA,KAAA,KAAA,KAAA,KAAA,KAAA,KAAA,KAAA,KAAA,KAAA,KAAA,KAAA,KAAA,KAAA,KAAA,KAAA,KAAA,KAAA,KAAA,KAAA,KAAA,KAAA,KAAA,KAAA,KAAA,KAAA,KAAA,KAAA,KAAA,KAAA,KAAA,KAAA,KAAA,KAAA,KAAA,KAAA,KAAA,KAAA"
+      }
+    },
+    {
+      "id": "advisory-extra",
+      "product": "cwa",
+      "params": {
+        "ids": "KAAA"
+      }
+    },
+    {
+      "id": "non-object-params",
+      "product": "gairmet",
+      "params": null
+    },
+    {
+      "id": "pirep-distance-0",
+      "product": "pirep",
+      "params": {
+        "id": "KAAA",
+        "distance": 0,
+        "age": 3
+      }
+    },
+    {
+      "id": "pirep-distance-500.01",
+      "product": "pirep",
+      "params": {
+        "id": "KAAA",
+        "distance": 500.01,
+        "age": 3
+      }
+    },
+    {
+      "id": "pirep-distance-true",
+      "product": "pirep",
+      "params": {
+        "id": "KAAA",
+        "distance": true,
+        "age": 3
+      }
+    },
+    {
+      "id": "pirep-distance-20",
+      "product": "pirep",
+      "params": {
+        "id": "KAAA",
+        "distance": "20",
+        "age": 3
+      }
+    },
+    {
+      "id": "pirep-age-0",
+      "product": "pirep",
+      "params": {
+        "id": "KAAA",
+        "distance": 20,
+        "age": 0
+      }
+    },
+    {
+      "id": "pirep-age-25",
+      "product": "pirep",
+      "params": {
+        "id": "KAAA",
+        "distance": 20,
+        "age": 25
+      }
+    },
+    {
+      "id": "pirep-age-1.5",
+      "product": "pirep",
+      "params": {
+        "id": "KAAA",
+        "distance": 20,
+        "age": 1.5
+      }
+    },
+    {
+      "id": "pirep-age-true",
+      "product": "pirep",
+      "params": {
+        "id": "KAAA",
+        "distance": 20,
+        "age": true
+      }
+    },
+    {
+      "id": "pirep-multiple-ids",
+      "product": "pirep",
+      "params": {
+        "id": "KAAA,KBBB",
+        "distance": 20,
+        "age": 3
+      }
+    },
+    {
+      "id": "pirep-missing-age",
+      "product": "pirep",
+      "params": {
+        "id": "KAAA",
+        "distance": 20
+      }
+    },
+    {
+      "id": "advisory-origin-override",
+      "product": "airsigmet",
+      "params": {
+        "origin": "https://elsewhere.invalid"
+      }
+    },
+    {
+      "id": "unicode-expansion",
+      "product": "metar",
+      "params": {
+        "ids": "kßa"
+      }
+    },
+    {
+      "id": "unicode-bom-not-ascii-space",
+      "product": "taf",
+      "params": {
+        "ids": "﻿KAAA"
+      }
+    },
+    {
+      "id": "request-byte-padding-limit",
+      "product": "taf",
+      "params": {
+        "ids": "                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 KAAA"
+      }
+    },
+    {
+      "id": "pirep-byte-padding-limit",
+      "product": "pirep",
+      "params": {
+        "id": "                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 KAAA",
+        "distance": 20,
+        "age": 3
+      }
+    }
+  ],
+  "awcResponses": [
+    {
+      "id": "empty",
+      "payload": []
+    },
+    {
+      "id": "complete-tafs-and-order",
+      "payload": [
+        {
+          "icaoId": "KBBB",
+          "rawTAF": "TAF KBBB 161100Z 1612/1718 27010KT P6SM BKN030 TEMPO 1618/1622 2SM RA BKN008",
+          "fcsts": [
+            {
+              "timeFrom": 1,
+              "timeTo": 2,
+              "unknown": null
+            }
+          ],
+          "providerExtension": {
+            "retained": [
+              null,
+              false,
+              {
+                "x": "unmodified"
+              }
+            ]
+          }
+        },
+        {
+          "icaoId": "KAAA",
+          "rawTAF": "TAF AMD KAAA 161200Z 1612/1712 00000KT P6SM SKC",
+          "fcsts": []
+        }
+      ]
+    }
+  ],
+  "awcInvalidResponses": [
+    {
+      "id": "object-error",
+      "payload": {
+        "error": "unavailable"
+      }
+    },
+    {
+      "id": "null",
+      "payload": null
+    },
+    {
+      "id": "string",
+      "payload": "reports"
+    },
+    {
+      "id": "nonrecord-row",
+      "payload": [
+        null
+      ]
+    },
+    {
+      "id": "nested-array-row",
+      "payload": [
+        []
+      ]
     }
   ]
 }

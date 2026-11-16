@@ -6,6 +6,7 @@
  */
 
 import { weatherCache } from './cache.js';
+import { AWC_DATA_URL } from './awc.js';
 
 export interface MetarData {
   wind_direction?: number;  // degrees, or null for VRB
@@ -28,7 +29,7 @@ export async function fetchMetarRaw(station: string): Promise<string | null> {
   const cacheKey = `metar:${stationUpper}`;
 
   const fetchFn = async (): Promise<string | null> => {
-    const url = new URL('https://aviationweather.gov/api/data/metar');
+    const url = new URL(AWC_DATA_URL + 'metar');
     url.searchParams.set('ids', stationUpper);
     url.searchParams.set('format', 'raw');
 
@@ -101,7 +102,7 @@ export async function fetchMetarRaws(stations: string[]): Promise<Record<string,
   }
 
   try {
-    const url = new URL('https://aviationweather.gov/api/data/metar');
+    const url = new URL(AWC_DATA_URL + 'metar');
     url.searchParams.set('ids', missing.join(','));
     url.searchParams.set('format', 'raw');
 
