@@ -651,3 +651,73 @@ def test_unresolved_readable_batch_does_not_claim_complete_distillation(store):
             return {"insufficient_evidence": True, "reason": "Cannot establish support", "claims": []}
     result = distill(store, Insufficient(), document["id"])
     assert result["status"] == "partial" and result["unresolved_batches"] == 1
+
+
+@pytest.mark.parametrize("size", ["1999", "18001", "many", "2000.5"])
+def test_invalid_distillation_budget_is_rejected(size):
+    with pytest.raises(ValueError, match="Distillation batch size"):
+        Models({"AIRCRAFT_LIBRARY_DISTILL_BATCH_CHARS": size})
+
+
+def test_small_provider_distillation_budget_still_reviews_every_passage(store):
+    document = store.ingest(manual(*[
+        ("Page %s. " % i) + "Synthetic source evidence. " * 50 for i in range(8)
+    ]), {"icao": "C172"})
+    reviewed = []
+    def provider(request):
+        context = json.loads(json.loads(request.content)["messages"][1]["content"])
+        evidence = context["evidence"]
+        assert sum(len(p["text"]) for p in evidence) <= 2000
+        reviewed.extend(p["passage_id"] for p in evidence)
+        first = evidence[0]
+        answer = {"insufficient_evidence": False, "reason": "", "claims": [{
+            "text": first["text"][:100],
+            "citations": [{"passage_id": first["passage_id"], "quote": first["text"][:100]}],
+        }]}
+        return httpx.Response(200, json={"choices": [{"message": {"content": json.dumps(answer)}}]})
+    models = Models({
+        "AIRCRAFT_LIBRARY_LLM_BASE_URL": "https://models.example/v1",
+        "AIRCRAFT_LIBRARY_LLM_MODEL": "small-context-model",
+        "AIRCRAFT_LIBRARY_DISTILL_BATCH_CHARS": "2000",
+    }, transport=httpx.MockTransport(provider))
+    result = distill(store, models, document["id"])
+    assert result["status"] == "complete" and result["total_batches"] > 1
+    assert reviewed == [p["passage_id"] for p in store.passages([document["id"]])]
+
+
+@pytest.mark.parametrize("interval", ["-1", "121", "nan", "inf", "many"])
+def test_invalid_model_pacing_interval_is_rejected(interval):
+    with pytest.raises(ValueError, match="LLM minimum interval"):
+        Models({"AIRCRAFT_LIBRARY_LLM_MIN_INTERVAL_SECONDS": interval})
+
+
+def test_completion_pacing_includes_failed_requests_without_delaying_embeddings():
+    current, starts, waits = [0.0], [], []
+    def sleep(seconds):
+        waits.append(seconds); current[0] += seconds
+    def provider(request):
+        starts.append((request.url.path, current[0]))
+        if len(starts) == 1: return httpx.Response(429, json={"error":"Limited"})
+        if request.url.path.endswith('/embeddings'):
+            return httpx.Response(200,json={"data":[{"index":0,"embedding":[1.0,0.0]}]})
+        return httpx.Response(200,json={"choices":[{"message":{"content":'{"insufficient_evidence":true,"reason":"","claims":[]}'}}]})
+    models = Models({
+        "AIRCRAFT_LIBRARY_LLM_BASE_URL":"https://models.example/v1",
+        "AIRCRAFT_LIBRARY_LLM_MODEL":"test-model",
+        "AIRCRAFT_LIBRARY_EMBEDDING_MODEL":"embed-model",
+        "AIRCRAFT_LIBRARY_LLM_MIN_INTERVAL_SECONDS":"35",
+    },transport=httpx.MockTransport(provider),clock=lambda:current[0],sleep=sleep)
+    with pytest.raises(ModelUnavailable):models.complete([],"Summarize")
+    assert models.embed(["text"]) == [[1.0,0.0]] and not waits
+    models.complete([],"Summarize")
+    assert starts == [("/v1/chat/completions",0.0),("/v1/embeddings",0.0),("/v1/chat/completions",35.0)]
+    assert waits == [35.0]
+
+
+def test_provider_http_status_is_actionable_without_exposing_response_secrets():
+    models = Models({"AIRCRAFT_LIBRARY_LLM_BASE_URL":"https://models.example/v1"},
+        transport=httpx.MockTransport(lambda request:httpx.Response(429,json={"error":"private-provider-value"})))
+    with pytest.raises(ModelUnavailable) as error:
+        models.post('/chat/completions',{})
+    assert 'HTTP 429' in str(error.value)
+    assert 'private-provider-value' not in str(error.value)

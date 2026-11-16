@@ -234,3 +234,15 @@ does not require or provision FAA NOTAM credentials. Identical profile snapshots
 are cached for 60 seconds in the bounded shared data cache, and there are two
 concurrent assessment slots per process. Cached times remain original. No background
 polling, persistent route storage or new private provider credentials are added.
+
+`AIRCRAFT_LIBRARY_DISTILL_BATCH_CHARS` accepts 2000–18000 (default 18000).
+Use a smaller value for limited provider contexts/token quotas. All readable
+passages are still processed; changing the batch budget invalidates resumable
+progress from incompatible batch identities. Partial or unresolved batches never
+claim complete document distillation.
+
+`AIRCRAFT_LIBRARY_LLM_MIN_INTERVAL_SECONDS` accepts 0–120 (default 0) to pace
+chat-completion starts across the process's questions and background work. Set it
+for the provider's quota alongside the batch budget; a smaller batch can reduce
+token pressure. This does not change the required evidence, and rate-limited
+failures still preserve resumable partial progress.

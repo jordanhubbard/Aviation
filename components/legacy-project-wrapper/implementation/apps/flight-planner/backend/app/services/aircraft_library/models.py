@@ -8,6 +8,8 @@ import math
 import os
 from decimal import Decimal, InvalidOperation
 import re
+import threading
+import time
 from urllib.parse import urlsplit
 
 import httpx
@@ -37,7 +39,7 @@ of aircraft applicability, maintenance work or a flight plan."""
 
 
 class Models:
-    def __init__(self, environment=None, *, transport=None):
+    def __init__(self, environment=None, *, transport=None, clock=None, sleep=None):
         env = os.environ if environment is None else environment
         self.base = env.get("AIRCRAFT_LIBRARY_LLM_BASE_URL", "").rstrip("/")
         self.model = env.get("AIRCRAFT_LIBRARY_LLM_MODEL", "")
@@ -52,6 +54,21 @@ class Models:
             raise ValueError("Embedding batch size must be an integer from 1 to 32") from error
         if not 1 <= self.embedding_batch_size <= 32:
             raise ValueError("Embedding batch size must be an integer from 1 to 32")
+        try:
+            self.distillation_batch_chars = int(env.get("AIRCRAFT_LIBRARY_DISTILL_BATCH_CHARS", "18000"))
+        except (ValueError, TypeError) as error:
+            raise ValueError("Distillation batch size must be an integer from 2000 to 18000") from error
+        if not 2000 <= self.distillation_batch_chars <= 18000:
+            raise ValueError("Distillation batch size must be an integer from 2000 to 18000")
+        try:
+            self.llm_min_interval = float(env.get("AIRCRAFT_LIBRARY_LLM_MIN_INTERVAL_SECONDS", "0"))
+        except (ValueError, TypeError) as error:
+            raise ValueError("LLM minimum interval must be finite and between 0 and 120 seconds") from error
+        if not math.isfinite(self.llm_min_interval) or not 0 <= self.llm_min_interval <= 120:
+            raise ValueError("LLM minimum interval must be finite and between 0 and 120 seconds")
+        self._clock, self._sleep = clock or time.monotonic, sleep or time.sleep
+        self._completion_lock = threading.Lock()
+        self._last_completion = None
         self.embedding_identity = hashlib.sha256(json.dumps(
             [self.base, self.embedding_model, self.embedding_mode], separators=(",", ":")
         ).encode()).hexdigest()
@@ -92,14 +109,28 @@ class Models:
                 if len(response.content) > 8 * 1024 * 1024:
                     raise ValueError("Oversized model response")
                 return response.json()
+        except httpx.HTTPStatusError as error:
+            raise ModelUnavailable(
+                f"Aircraft library model provider failed (HTTP {error.response.status_code})"
+            ) from error
         except (httpx.HTTPError, ValueError) as error:
             raise ModelUnavailable("Aircraft library model provider failed") from error
+
+    def _completion_post(self, payload):
+        if not self.llm_min_interval:
+            return self.post("/chat/completions", payload)
+        with self._completion_lock:
+            if self._last_completion is not None:
+                remaining = self.llm_min_interval - (self._clock() - self._last_completion)
+                if remaining > 0:
+                    self._sleep(remaining)
+            self._last_completion = self._clock()
+            return self.post("/chat/completions", payload)
 
     def complete(self, evidence, question):
         if not self.model:
             raise ModelUnavailable("Configure AIRCRAFT_LIBRARY_LLM_MODEL")
-        result = self.post(
-            "/chat/completions",
+        result = self._completion_post(
             {
                 "model": self.model,
                 "temperature": 0,
@@ -365,7 +396,7 @@ def distill(store: Store, models: Models, identifier: str):
         raise ValueError("Document has no readable pages")
     batches, batch, size = [], [], 0
     for passage in passages:
-        if batch and size + len(passage["text"]) > 18_000:
+        if batch and size + len(passage["text"]) > getattr(models, "distillation_batch_chars", 18_000):
             batches.append(batch)
             batch, size = [], 0
         batch.append({**passage, "metadata": doc["metadata"]})
@@ -373,13 +404,13 @@ def distill(store: Store, models: Models, identifier: str):
     if batch:
         batches.append(batch)
     question = (
-        "Summarize useful factual information actually present in this batch of manual pages. "
-        "Cover any of these topics only where supported: limitations, normal/emergency procedures, "
-        "performance conditions, systems, maintenance/inspection/servicing and supplements. "
-        "You do not need every topic; missing topics do not make supported facts insufficient. "
-        "Preserve all applicability, conditions, qualifiers, footnotes and contradictions. "
-        'Do not claim other pages were reviewed. Return exactly '
-        '{"insufficient_evidence": boolean, "reason": string, "claims": '
+        "Summarize this exact batch of source pages. Extract up to twelve useful factual claims "
+        "covering the text actually supplied. This is a general summary task, not a request for "
+        "a particular procedure or a complete operating manual. Any topic present is relevant. "
+        "If only front matter, revision information or contents are supplied, summarize that "
+        "with citations instead of requiring operational procedures. Retain applicability, "
+        "conditions, units, limits, footnotes and contradictions. Do not claim other pages were reviewed. "
+        'Return exactly {"insufficient_evidence": boolean, "reason": string, "claims": '
         '[{"text": string, "citations": [{"passage_id": integer, "quote": string}]}]}. '
         'Use insufficient_evidence=true and no claims only if there are no supported facts.'
     )

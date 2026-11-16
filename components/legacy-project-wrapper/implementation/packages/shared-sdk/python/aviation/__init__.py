@@ -80,6 +80,7 @@ from .hazards import (
     normalize_hazard_record,
     point_in_polygon,
     segment_geometry_intervals,
+    segments_geometry_intervals,
     linear_constraint_interval,
 )
 from .alerts import (
@@ -179,6 +180,7 @@ __all__ = [
     "normalize_hazard_record",
     "point_in_polygon",
     "segment_geometry_intervals",
+    "segments_geometry_intervals",
     "linear_constraint_interval",
     # Alert lifecycle
     "AlertLifecycleError",

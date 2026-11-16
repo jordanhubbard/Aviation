@@ -429,21 +429,18 @@ export function pointInPolygon(point: LatLon, polygon: LatLon[]): boolean {
 }
 
 function polygonContains(point: LatLon, polygon: LatLon[], onSegment: (p: LatLon, a: LatLon, b: LatLon) => boolean): boolean {
-  for (let i = 0; i < polygon.length; i++) {
-    if (onSegment(point, polygon[i], polygon[(i + 1) % polygon.length])) return true;
+  return polygonLocation(point, polygon, onSegment) >= 0;
+}
+
+function polygonLocation(point: LatLon, polygon: LatLon[], onSegment: (p: LatLon, a: LatLon, b: LatLon) => boolean): number {
+  let inside = false, previous = polygon[polygon.length - 1];
+  for (const current of polygon) {
+    if (point.lat >= Math.min(current.lat, previous.lat) - GEOMETRY_EPSILON && point.lat <= Math.max(current.lat, previous.lat) + GEOMETRY_EPSILON && onSegment(point, previous, current)) return 0;
+    if ((current.lat > point.lat) !== (previous.lat > point.lat) && point.lon <
+      (previous.lon-current.lon)*(point.lat-current.lat)/(previous.lat-current.lat)+current.lon) inside = !inside;
+    previous = current;
   }
-  const { lat, lon } = point;
-  let inside = false;
-  for (let i = 0, j = polygon.length - 1; i < polygon.length; j = i++) {
-    const xi = polygon[i].lon;
-    const yi = polygon[i].lat;
-    const xj = polygon[j].lon;
-    const yj = polygon[j].lat;
-    const intersect =
-      yi > lat !== yj > lat && lon < ((xj - xi) * (lat - yi)) / (yj - yi) + xi;
-    if (intersect) inside = !inside;
-  }
-  return inside;
+  return inside ? 1 : -1;
 }
 
 /** Check whether a hazard's altitude band overlaps with a given altitude range.
@@ -642,11 +639,28 @@ export function linearConstraintInterval(
 }
 
 /** Planar GeoJSON clipping, preserving holes and shortest-longitude unwrapping. */
+type IntervalPointCache = Map<unknown, Map<string, { points: LatLon[]; count: number }>>;
+
+export function segmentsGeometryIntervals(
+  segments: ReadonlyArray<readonly [LatLon, LatLon]>, geometry: unknown,
+): Array<Array<[number, number]>> {
+  if (!Array.isArray(segments) || segments.length < 1 || segments.length > 1000 ||
+      segments.some(pair => !Array.isArray(pair) || pair.length !== 2)) {
+    throw new HazardValidationError('hazard-segments-invalid', 'Use 1 to 1000 endpoint pairs');
+  }
+  const cache: IntervalPointCache = new Map();
+  return segments.map(([start, end]) => clipGeometrySegment(start, end, geometry, cache));
+}
+
 export function segmentGeometryIntervals(
   start: LatLon,
   end: LatLon,
   geometry: unknown,
 ): Array<[number, number]> {
+  return clipGeometrySegment(start, end, geometry, new Map());
+}
+
+function clipGeometrySegment(start: LatLon, end: LatLon, geometry: unknown, pointCache: IntervalPointCache): Array<[number, number]> {
   start = normalizeCoordinate(start);
   end = normalizeCoordinate(end);
   const wrap = (v: number) => (v >= -180 && v < 180 ? v : ((((v + 180) % 360) + 360) % 360) - 180),
@@ -676,6 +690,15 @@ export function segmentGeometryIntervals(
   };
   const points = (raw: unknown, ring = false): LatLon[] => {
     if (!Array.isArray(raw) || !raw.length) throw invalid();
+    const first = position(raw[0]);
+    budget++;
+    const key = `${ring}:${first.lon}`;
+    const cached = pointCache.get(raw)?.get(key);
+    if (cached) {
+      budget -= cached.count;
+      if (budget < 0) throw invalid();
+      return cached.points;
+    }
     const result: LatLon[] = [];
     let near = anchor;
     for (const value of raw) {
@@ -692,6 +715,8 @@ export function segmentGeometryIntervals(
       result.pop();
       if (new Set(result.map((p) => `${p.lat},${p.lon}`)).size < 3) throw invalid();
     } else if (result.length < 2) throw invalid();
+    if (!pointCache.has(raw)) pointCache.set(raw, new Map());
+    pointCache.get(raw)!.set(key, { points: result, count: raw.length });
     return result;
   };
   const onSegment = (p: LatLon, c: LatLon, d: LatLon) => {
@@ -766,11 +791,8 @@ export function segmentGeometryIntervals(
         hi = cuts[i + 1],
         t = (lo + hi) / 2,
         p = { lat: a.lat + (b.lat - a.lat) * t, lon: a.lon + (b.lon - a.lon) * t };
-      if (
-        edges.some(([c, d]) => onSegment(p, c, d)) ||
-        (polygonContains(p, rings[0], onSegment) &&
-          !rings.slice(1).some((h) => polygonContains(p, h, onSegment)))
-      )
+      const locations = rings.map(r => polygonLocation(p, r, onSegment));
+      if (locations.includes(0) || (locations[0] > 0 && locations.slice(1).every(location => location < 0)))
         intervals.push([lo, hi]);
     }
     return intervals;

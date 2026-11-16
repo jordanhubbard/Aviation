@@ -131,3 +131,31 @@ def test_linear_intervals(vector):
     from aviation.hazards import linear_constraint_interval
     actual = linear_constraint_interval(vector['start'], vector['end'], vector['lower'], vector['upper'])
     assert actual == (pytest.approx(vector['expected']) if vector['expected'] is not None else None)
+
+
+@pytest.mark.parametrize('vector', CONTRACT['geometryBatchCases'], ids=lambda v:v['id'])
+def test_geometry_batch_intervals(vector):
+    from aviation.hazards import segments_geometry_intervals
+    import copy
+    before = copy.deepcopy(vector)
+    segments = [[LatLon(**point) for point in pair] for pair in vector['segments']]
+    actual = segments_geometry_intervals(segments, vector['geometry'])
+    for got, expected in zip(actual, vector['expected'], strict=True):
+        assert len(got) == len(expected)
+        for pair, target in zip(got, expected): assert pair == pytest.approx(target, abs=1e-9)
+    assert vector == before
+    changed = copy.deepcopy(vector['geometry'])
+    for point in changed['coordinates'][0]: point[1] += 10
+    assert segments_geometry_intervals(segments, changed) == [[] for _ in segments]
+
+
+def test_invalid_geometry_batch_and_reused_coordinate_limits():
+    from aviation.hazards import segments_geometry_intervals
+    pair = [LatLon(0,0), LatLon(0,1)]
+    for segments in [[], [pair]*1001]:
+        with pytest.raises(HazardValidationError) as error:
+            segments_geometry_intervals(segments, {'type':'Point','coordinates':[0,0]})
+        assert error.value.code == 'hazard-segments-invalid'
+    ring = [[0,0],[1,0],[1,1],[0,0]]
+    with pytest.raises(HazardValidationError):
+        segments_geometry_intervals([pair], {'type':'MultiPolygon','coordinates':[[ring]]*12501})
