@@ -200,6 +200,36 @@ def test_batch_sizes_and_missing_provider_station_id(monkeypatch):
     assert route.batch_reports("taf", ["KAAA"])["KAAA"]["status"] == "unavailable"
 
 
+def test_shared_acquisition_retains_mixed_batch_failures_and_raw_tafs(monkeypatch):
+    calls = []
+
+    def fetch(url, params):
+        calls.append((url, params))
+        ids = params["ids"].split(",")
+        if ids[0] == "0040":
+            raise ga_data.DataUnavailable("Bounded transport failure")
+        return [
+            taf(code, providerExtension={"unchanged": [None, False]}) for code in ids
+        ]
+
+    monkeypatch.setattr(ga_data, "fetch", fetch)
+    result = route.batch_reports("taf", [f"{i:04d}" for i in range(85)])
+    assert len(calls) == 3
+    assert [len(params["ids"].split(",")) for _, params in calls] == [40, 40, 5]
+    assert all(
+        url == "https://aviationweather.gov/api/data/taf" and params["format"] == "json"
+        for url, params in calls
+    )
+    assert result["0000"]["status"] == "available"
+    assert result["0040"]["status"] == "unavailable"
+    assert result["0084"]["status"] == "available"
+    assert result["0084"]["reports"][0]["rawTAF"] == taf("0084")["rawTAF"]
+    assert result["0084"]["reports"][0]["providerExtension"] == {
+        "unchanged": [None, False]
+    }
+    assert result["0040"]["source"].get("retrieved_at_utc") is None
+
+
 def test_validity_concurrent_tempo_and_half_open_window():
     def at(n):
         return datetime.fromtimestamp(n, timezone.utc)

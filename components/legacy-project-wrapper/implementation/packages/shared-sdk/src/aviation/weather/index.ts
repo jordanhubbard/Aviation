@@ -22,6 +22,7 @@
 
 // Cache
 export { WeatherCache, weatherCache } from './cache.js';
+export { AWC_DATA_URL, AWCJSONError, fetchAWCJSONReports, type AWCJSONTransport } from './awc.js';
 
 // METAR
 export {
