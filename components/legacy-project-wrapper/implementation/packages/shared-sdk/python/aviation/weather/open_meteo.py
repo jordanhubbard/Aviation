@@ -7,11 +7,13 @@ Supports current weather, daily forecasts, and hourly forecasts.
 
 from __future__ import annotations
 
-from typing import Any, Dict, List, Tuple
+from typing import Any, Callable, Dict, List, Tuple
 
 import httpx
 
 from .cache import weather_cache
+
+OPEN_METEO_FORECAST_URL = "https://api.open-meteo.com/v1/forecast"
 
 
 class OpenMeteoError(RuntimeError):
@@ -55,7 +57,7 @@ def _get_current_weather_uncached(*, lat: float, lon: float) -> Dict[str, Any]:
 
     try:
         resp = httpx.get(
-            "https://api.open-meteo.com/v1/forecast", params=params, timeout=20
+            OPEN_METEO_FORECAST_URL, params=params, timeout=20
         )
         resp.raise_for_status()
         payload = resp.json()
@@ -130,7 +132,7 @@ def _get_daily_forecast_uncached(
 
     try:
         resp = httpx.get(
-            "https://api.open-meteo.com/v1/forecast", params=params, timeout=20
+            OPEN_METEO_FORECAST_URL, params=params, timeout=20
         )
         resp.raise_for_status()
         payload = resp.json()
@@ -243,7 +245,7 @@ def _get_hourly_forecast_uncached(
 
     try:
         resp = httpx.get(
-            "https://api.open-meteo.com/v1/forecast", params=params, timeout=20
+            OPEN_METEO_FORECAST_URL, params=params, timeout=20
         )
         resp.raise_for_status()
         payload = resp.json()
@@ -332,3 +334,104 @@ def sample_points_along_route(
         True
     """
     return points[:: max(1, interval)]
+
+
+class OpenMeteoPressureError(OpenMeteoError):
+    def __init__(self, kind: str):
+        self.kind = kind
+        super().__init__(
+            "Invalid Open-Meteo pressure-level request"
+            if kind == "request"
+            else "Open-Meteo pressure-level forecast unavailable"
+        )
+
+
+_PRESSURE_LEVELS = (1000, 925, 850, 700, 500, 300, 250, 200)
+_PRESSURE_UNITS = (
+    ("wind_speed", "kn"),
+    ("wind_direction", "°"),
+    ("temperature", "°C"),
+    ("geopotential_height", "m"),
+)
+
+
+def _pressure_numeric(value, lower, upper, integer=False):
+    # Range checks precede conversion, including for arbitrarily large integers.
+    return (
+        isinstance(value, (int, float))
+        and not isinstance(value, bool)
+        and lower <= value <= upper
+        and (not integer or int(value) == value)
+    )
+
+
+def plan_pressure_level_forecast(lat, lon, levels, hours) -> dict:
+    """Pure request planning; integer enum levels are accepted, booleans are not."""
+    if (
+        not _pressure_numeric(lat, -90, 90)
+        or not _pressure_numeric(lon, -180, 180)
+        or not isinstance(levels, (list, tuple))
+        or not 1 <= len(levels) <= 8
+        or not _pressure_numeric(hours, 1, 72, integer=True)
+    ):
+        raise OpenMeteoPressureError("request")
+    normalized = []
+    for level in levels:
+        if (
+            not _pressure_numeric(level, 200, 1000, integer=True)
+            or level not in _PRESSURE_LEVELS
+        ):
+            raise OpenMeteoPressureError("request")
+        if int(level) not in normalized:
+            normalized.append(int(level))
+    variables = [
+        f"{field}_{level}hPa" for level in normalized for field, _ in _PRESSURE_UNITS
+    ]
+    return {
+        "url": OPEN_METEO_FORECAST_URL,
+        "params": {
+            "latitude": lat,
+            "longitude": lon,
+            "hourly": ",".join(variables),
+            "wind_speed_unit": "kn",
+            "temperature_unit": "celsius",
+            "timezone": "UTC",
+            "forecast_hours": int(hours),
+        },
+        "levels_hpa": normalized,
+    }
+
+
+def get_pressure_level_forecast(lat, lon, levels, hours, transport: Callable) -> dict:
+    """Acquire once over trusted bounded HTTP; preserve unmodified provider data."""
+    plan = plan_pressure_level_forecast(lat, lon, levels, hours)
+    if not callable(transport):
+        raise OpenMeteoPressureError("request")
+    failed = False
+    try:
+        value = transport(plan["url"], plan["params"])
+    except Exception:
+        failed = True
+    if failed:
+        raise OpenMeteoPressureError("provider") from None
+    if (
+        not isinstance(value, dict)
+        or not _pressure_numeric(value.get("utc_offset_seconds"), 0, 0)
+        or not isinstance(value.get("hourly"), dict)
+        or not isinstance(value.get("hourly_units"), dict)
+    ):
+        raise OpenMeteoPressureError("response")
+    hourly, units = value["hourly"], value["hourly_units"]
+    times = hourly.get("time")
+    if not isinstance(times, list) or not 1 <= len(times) <= hours:
+        raise OpenMeteoPressureError("response")
+    for level in plan["levels_hpa"]:
+        for field, unit in _PRESSURE_UNITS:
+            variable = f"{field}_{level}hPa"
+            if (
+                not isinstance(hourly.get(variable), list)
+                or len(hourly[variable]) != len(times)
+                or units.get(variable) != unit
+            ):
+                raise OpenMeteoPressureError("response")
+    return {"url": plan["url"], "data": value, "levels_hpa": plan["levels_hpa"]}

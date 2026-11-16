@@ -6,6 +6,9 @@
  */
 
 import { weatherCache } from './cache.js';
+import type { JSONWeatherTransport } from './types.js';
+
+export const OPEN_METEO_FORECAST_URL = 'https://api.open-meteo.com/v1/forecast';
 
 export class OpenMeteoError extends Error {
   constructor(message: string) {
@@ -46,7 +49,7 @@ export async function getCurrentWeather(lat: number, lon: number): Promise<Curre
   const cacheKey = `om:current:${lat.toFixed(3)}:${lon.toFixed(3)}`;
 
   const fetchFn = async (): Promise<CurrentWeather> => {
-    const url = new URL('https://api.open-meteo.com/v1/forecast');
+    const url = new URL(OPEN_METEO_FORECAST_URL);
     url.searchParams.set('latitude', lat.toString());
     url.searchParams.set('longitude', lon.toString());
     url.searchParams.set('current_weather', 'true');
@@ -90,7 +93,7 @@ export async function getDailyForecast(
   const cacheKey = `om:daily:${lat.toFixed(3)}:${lon.toFixed(3)}:${days}`;
 
   const fetchFn = async (): Promise<DailyForecast[]> => {
-    const url = new URL('https://api.open-meteo.com/v1/forecast');
+    const url = new URL(OPEN_METEO_FORECAST_URL);
     url.searchParams.set('latitude', lat.toString());
     url.searchParams.set('longitude', lon.toString());
     url.searchParams.set('daily', 'temperature_2m_max,temperature_2m_min,precipitation_sum,windspeed_10m_max');
@@ -156,7 +159,7 @@ export async function getHourlyForecast(
   const cacheKey = `om:hourly:${lat.toFixed(3)}:${lon.toFixed(3)}:${hours}`;
 
   const fetchFn = async (): Promise<HourlyForecast[]> => {
-    const url = new URL('https://api.open-meteo.com/v1/forecast');
+    const url = new URL(OPEN_METEO_FORECAST_URL);
     url.searchParams.set('latitude', lat.toString());
     url.searchParams.set('longitude', lon.toString());
     url.searchParams.set('hourly', 'visibility,cloudcover,precipitation,windspeed_10m');
@@ -216,4 +219,70 @@ export function samplePointsAlongRoute(
 ): Array<[number, number]> {
   const step = Math.max(1, interval);
   return points.filter((_, i) => i % step === 0);
+}
+
+export class OpenMeteoPressureError extends OpenMeteoError {
+  constructor(readonly kind: 'request' | 'provider' | 'response') {
+    super(kind === 'request' ? 'Invalid Open-Meteo pressure-level request' : 'Open-Meteo pressure-level forecast unavailable');
+    this.name = 'OpenMeteoPressureError';
+  }
+}
+
+const PRESSURE_LEVELS = [1000, 925, 850, 700, 500, 300, 250, 200];
+const PRESSURE_UNITS = [
+  ['wind_speed', 'kn'], ['wind_direction', '°'],
+  ['temperature', '°C'], ['geopotential_height', 'm'],
+] as const;
+export interface PressureLevelForecastPlan {
+  url: string;
+  params: Record<string, string | number>;
+  levels_hpa: number[];
+}
+
+/** Pure planning, including common normalization for application cache keys. */
+export function planPressureLevelForecast(lat: number, lon: number, levels: readonly number[], hours: number): PressureLevelForecastPlan {
+  if (typeof lat !== 'number' || !Number.isFinite(lat) || lat < -90 || lat > 90
+      || typeof lon !== 'number' || !Number.isFinite(lon) || lon < -180 || lon > 180
+      || !Array.isArray(levels) || levels.length < 1 || levels.length > 8
+      || typeof hours !== 'number' || !Number.isInteger(hours) || hours < 1 || hours > 72) throw new OpenMeteoPressureError('request');
+  const normalized: number[] = [];
+  for (const level of levels) {
+    if (typeof level !== 'number' || !Number.isInteger(level) || !PRESSURE_LEVELS.includes(level)) throw new OpenMeteoPressureError('request');
+    if (!normalized.includes(level)) normalized.push(level);
+  }
+  return {
+    url: OPEN_METEO_FORECAST_URL,
+    params: {
+      latitude: lat, longitude: lon,
+      hourly: normalized.flatMap(level => PRESSURE_UNITS.map(([field]) => `${field}_${level}hPa`)).join(','),
+      wind_speed_unit: 'kn', temperature_unit: 'celsius', timezone: 'UTC', forecast_hours: hours,
+    },
+    levels_hpa: normalized,
+  };
+}
+
+function pressureRecord(value: unknown): value is Record<string, unknown> {
+  return value !== null && typeof value === 'object' && !Array.isArray(value)
+    && Object.getPrototypeOf(value) === Object.prototype;
+}
+
+/** Trusted transport owns HTTP/time/byte bounds; data remains an unchanged forecast. */
+export async function getPressureLevelForecast(lat: number, lon: number, levels: readonly number[], hours: number,
+  transport: JSONWeatherTransport): Promise<{ url: string; data: Record<string, unknown>; levels_hpa: number[] }> {
+  const plan = planPressureLevelForecast(lat, lon, levels, hours);
+  if (typeof transport !== 'function') throw new OpenMeteoPressureError('request');
+  let value: unknown;
+  try { value = await transport(plan.url, plan.params); }
+  catch { throw new OpenMeteoPressureError('provider'); }
+  if (!pressureRecord(value) || typeof value.utc_offset_seconds !== 'number' || value.utc_offset_seconds !== 0
+      || !pressureRecord(value.hourly) || !pressureRecord(value.hourly_units)) throw new OpenMeteoPressureError('response');
+  const hourly = value.hourly, units = value.hourly_units, times = hourly.time;
+  if (!Array.isArray(times) || times.length < 1 || times.length > hours) throw new OpenMeteoPressureError('response');
+  for (const level of plan.levels_hpa) {
+    for (const [field, unit] of PRESSURE_UNITS) {
+      const variable = `${field}_${level}hPa`, array = hourly[variable];
+      if (!Array.isArray(array) || array.length !== times.length || units[variable] !== unit) throw new OpenMeteoPressureError('response');
+    }
+  }
+  return { url: plan.url, data: value, levels_hpa: plan.levels_hpa };
 }

@@ -4,6 +4,10 @@ import {
   WeatherCache,
   AWCJSONError,
   fetchAWCJSONReports,
+  OpenMeteoError,
+  OpenMeteoPressureError,
+  planPressureLevelForecast,
+  getPressureLevelForecast,
   flightCategory,
   parseMetar,
   toWeatherData,
@@ -11,6 +15,68 @@ import {
 } from '../weather/index.js';
 
 const contract = loadConformanceContract<any>('weather');
+
+describe('aviation.weather pressure-level forecasts', () => {
+  const validPayload = contract.pressureResponses[0].payload;
+  for (const v of contract.pressureRequests) {
+    it(`plans and acquires pressure request: ${v.id}`, async () => {
+      const calls: unknown[] = [], before = structuredClone(v.levels);
+      expect(planPressureLevelForecast(v.lat, v.lon, v.levels, v.hours)).toEqual(v.expected);
+      const result = await getPressureLevelForecast(v.lat, v.lon, v.levels, v.hours, async (url, params) => {
+        calls.push({ url, params }); return validPayload;
+      });
+      expect(calls).toEqual([{ url: v.expected.url, params: v.expected.params }]);
+      expect(result).toEqual({ url: v.expected.url, data: validPayload, levels_hpa: v.expected.levels_hpa });
+      expect(v.levels).toEqual(before);
+    });
+  }
+  for (const v of contract.pressureInvalidRequests) {
+    it(`rejects invalid pressure input before transport: ${v.id}`, async () => {
+      let calls = 0;
+      expect(() => planPressureLevelForecast(v.lat, v.lon, v.levels, v.hours)).toThrow(OpenMeteoPressureError);
+      await expect(getPressureLevelForecast(v.lat, v.lon, v.levels, v.hours, async () => { calls++; return validPayload; })).rejects.toMatchObject({ kind: 'request' });
+      expect(calls).toBe(0);
+    });
+  }
+  for (const v of contract.pressureResponses) {
+    it(`preserves raw pressure data: ${v.id}`, async () => {
+      const before = structuredClone(v.payload);
+      const result = await getPressureLevelForecast(37, -122, v.levels, v.hours, async () => v.payload);
+      expect(result.data).toEqual(before);
+      expect(v.payload).toEqual(before);
+    });
+  }
+  for (const v of contract.pressureInvalidResponses) {
+    it(`rejects pressure response without retry: ${v.id}`, async () => {
+      let calls = 0;
+      await expect(getPressureLevelForecast(37, -122, v.levels, v.hours, async () => { calls++; return v.payload; })).rejects.toMatchObject({ kind: 'response' });
+      expect(calls).toBe(1);
+    });
+  }
+  it('preserves OpenMeteoError compatibility without retaining provider errors', async () => {
+    let calls = 0;
+    try {
+      await getPressureLevelForecast(37, -122, [850], 1, async () => { calls++; throw new Error('private-url?credential=private'); });
+      throw new Error('expected failure');
+    } catch (error) {
+      expect(error).toBeInstanceOf(OpenMeteoError);
+      expect(error).toMatchObject({ kind: 'provider', message: 'Open-Meteo pressure-level forecast unavailable' });
+      expect((error as Error).cause).toBeUndefined();
+    }
+    expect(calls).toBe(1);
+  });
+  for (const field of ['lat', 'lon', 'hours', 'level']) {
+    for (const value of [NaN, Infinity, -Infinity, Number.MAX_VALUE]) {
+      it(`rejects unbounded pressure ${field} ${value}`, async () => {
+        const input = { lat: 37, lon: -122, hours: 1, levels: [850] };
+        if (field === 'level') input.levels = [value]; else input[field as 'lat' | 'lon' | 'hours'] = value;
+        let calls = 0;
+        await expect(getPressureLevelForecast(input.lat, input.lon, input.levels, input.hours, async () => { calls++; return validPayload; })).rejects.toMatchObject({ kind: 'request' });
+        expect(calls).toBe(0);
+      });
+    }
+  }
+});
 
 describe('aviation.weather AWC JSON acquisition', () => {
   for (const vector of contract.awcRequests) {

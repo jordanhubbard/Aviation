@@ -6,6 +6,8 @@ index, not an independently maintained task list. Use `gh issue` and `gh pr`.
 
 ## Current work and requests
 
+- [#484 — Shared pressure-level forecast acquisition](https://github.com/jordanhubbard/Aviation/issues/484)
+
 - [#482 — Shared AWC JSON acquisition](https://github.com/jordanhubbard/Aviation/issues/482)
 
 - [#453 — Integrate aviation data into application workflows](https://github.com/jordanhubbard/Aviation/issues/453)

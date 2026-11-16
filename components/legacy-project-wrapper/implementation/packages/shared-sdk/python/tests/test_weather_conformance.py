@@ -5,6 +5,10 @@ from __future__ import annotations
 from aviation.weather import (
     AWCJSONError,
     fetch_awc_json_reports,
+    OpenMeteoError,
+    OpenMeteoPressureError,
+    plan_pressure_level_forecast,
+    get_pressure_level_forecast,
     flight_category,
     parse_metar,
     to_weather_data,
@@ -15,6 +19,98 @@ import copy
 import pytest
 
 CONTRACT = load_conformance_contract("weather")
+
+
+@pytest.mark.parametrize("v", CONTRACT["pressureRequests"], ids=lambda v: v["id"])
+def test_pressure_request_and_acquisition(v):
+    args = [v[k] for k in ("lat", "lon", "levels", "hours")]
+    calls = []
+    before = copy.deepcopy(v["levels"])
+    assert plan_pressure_level_forecast(*args) == v["expected"]
+    payload = CONTRACT["pressureResponses"][0]["payload"]
+
+    def transport(url, params):
+        calls.append({"url": url, "params": params})
+        return payload
+
+    result = get_pressure_level_forecast(*args, transport)
+    assert calls == [{"url": v["expected"]["url"], "params": v["expected"]["params"]}]
+    assert result == {
+        "url": v["expected"]["url"],
+        "data": payload,
+        "levels_hpa": v["expected"]["levels_hpa"],
+    }
+    assert v["levels"] == before
+
+
+@pytest.mark.parametrize(
+    "v", CONTRACT["pressureInvalidRequests"], ids=lambda v: v["id"]
+)
+def test_pressure_invalid_input_before_transport(v):
+    args = [v[k] for k in ("lat", "lon", "levels", "hours")]
+
+    def transport(*args):
+        pytest.fail("invalid pressure input reached transport")
+
+    with pytest.raises(OpenMeteoPressureError):
+        plan_pressure_level_forecast(*args)
+    with pytest.raises(OpenMeteoPressureError) as raised:
+        get_pressure_level_forecast(*args, transport)
+    assert raised.value.kind == "request"
+
+
+@pytest.mark.parametrize("v", CONTRACT["pressureResponses"], ids=lambda v: v["id"])
+def test_pressure_raw_response(v):
+    before = copy.deepcopy(v["payload"])
+    result = get_pressure_level_forecast(
+        37, -122, v["levels"], v["hours"], lambda *a: v["payload"]
+    )
+    assert result["data"] == before and v["payload"] == before
+
+
+@pytest.mark.parametrize(
+    "v", CONTRACT["pressureInvalidResponses"], ids=lambda v: v["id"]
+)
+def test_pressure_invalid_response_without_retry(v):
+    calls = []
+
+    def transport(*args):
+        calls.append(args)
+        return v["payload"]
+
+    with pytest.raises(OpenMeteoPressureError) as raised:
+        get_pressure_level_forecast(37, -122, v["levels"], v["hours"], transport)
+    assert raised.value.kind == "response" and len(calls) == 1
+
+
+def test_pressure_provider_errors_are_compatible_and_private():
+    calls = []
+
+    def transport(*args):
+        calls.append(args)
+        raise RuntimeError("private-url?credential=private")
+
+    with pytest.raises(OpenMeteoError) as raised:
+        get_pressure_level_forecast(37, -122, [850], 1, transport)
+    assert raised.value.kind == "provider" and len(calls) == 1
+    assert str(raised.value) == "Open-Meteo pressure-level forecast unavailable"
+    assert raised.value.__cause__ is None and raised.value.__context__ is None
+
+
+@pytest.mark.parametrize("field", ["lat", "lon", "hours", "level"])
+@pytest.mark.parametrize("value", [float("nan"), float("inf"), -float("inf"), 10**400])
+def test_pressure_unbounded_values_before_transport(field, value):
+    values = {"lat": 37, "lon": -122, "levels": [850], "hours": 1}
+    if field == "level":
+        values["levels"] = [value]
+    else:
+        values[field] = value
+
+    def transport(*args):
+        pytest.fail("unbounded pressure request invoked transport")
+
+    with pytest.raises(OpenMeteoPressureError):
+        get_pressure_level_forecast(**values, transport=transport)
 
 
 @pytest.mark.parametrize("vector", CONTRACT["awcRequests"], ids=lambda v: v["id"])

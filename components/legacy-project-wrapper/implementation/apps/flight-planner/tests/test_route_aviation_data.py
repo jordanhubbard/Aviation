@@ -408,6 +408,142 @@ def test_modeled_pressure_level_winds_units_nulls_and_center_advisories(client, 
     assert client.get("/api/aviation-weather/cwa").json()["reports"][0]["rawCWA"] == "ORIGINAL"
 
 
+def pressure_fixture():
+    value = {
+        "utc_offset_seconds": 0,
+        "hourly": {"time": ["2026-11-16T12:00", "2026-11-16T13:00"]},
+        "hourly_units": {},
+        "providerExtension": {"retained": [None, False, {"original": "yes"}]},
+    }
+    for level in [850, 700]:
+        for field, unit, amount in [
+            ("wind_speed", "kn", 12),
+            ("wind_direction", "°", 270),
+            ("temperature", "°C", -5),
+            ("geopotential_height", "m", 1500),
+        ]:
+            variable = f"{field}_{level}hPa"
+            value["hourly"][variable] = [amount, None]
+            value["hourly_units"][variable] = unit
+    return value
+
+
+def test_shared_pressure_planning_preserves_enum_and_cache_equivalence(
+    client, monkeypatch
+):
+    calls, original = [], pressure_fixture()
+
+    def fetch(url, params):
+        calls.append((url, params))
+        return original
+
+    monkeypatch.setattr(ga_data, "fetch", fetch)
+    supplied = [
+        api.PressureLevel.HPA850,
+        api.PressureLevel.HPA700,
+        api.PressureLevel.HPA850,
+    ]
+    first = sources.winds_aloft(37, -122, supplied, 2)
+    second = sources.winds_aloft(37, -122, [850, 700], 2)
+    response = client.get(
+        "/api/aviation-weather/winds-aloft?lat=37&lon=-122&levels_hpa=850&levels_hpa=700&hours=2"
+    )
+    assert response.status_code == 200 and first == second
+    assert response.json()["data"] == original and response.json()["levels_hpa"] == [
+        850,
+        700,
+    ]
+    assert response.json()["source"] == {**first["source"], "effective_date": None}
+    assert first["source"]["license"] == "CC BY 4.0; provider API usage terms apply"
+    assert "not fixed flight altitudes" in first["limitations"]
+    assert all(isinstance(level, api.PressureLevel) for level in supplied)
+    assert len(supplied) == 3 and len(calls) == 1
+    assert calls[0] == (
+        "https://api.open-meteo.com/v1/forecast",
+        {
+            "latitude": 37,
+            "longitude": -122,
+            "hourly": "wind_speed_850hPa,wind_direction_850hPa,temperature_850hPa,geopotential_height_850hPa,wind_speed_700hPa,wind_direction_700hPa,temperature_700hPa,geopotential_height_700hPa",
+            "wind_speed_unit": "kn",
+            "temperature_unit": "celsius",
+            "timezone": "UTC",
+            "forecast_hours": 2,
+        },
+    )
+
+
+@pytest.mark.parametrize(
+    "change",
+    [
+        "wind_speed",
+        "wind_direction",
+        "temperature",
+        "geopotential_height",
+        "boolean-offset",
+        "nonzero-offset",
+        "misaligned",
+    ],
+)
+def test_shared_pressure_invalid_provider_is_unavailable(client, monkeypatch, change):
+    value = pressure_fixture()
+    if change == "boolean-offset":
+        value["utc_offset_seconds"] = False
+    elif change == "nonzero-offset":
+        value["utc_offset_seconds"] = 3600
+    elif change == "misaligned":
+        value["hourly"]["wind_speed_850hPa"] = [12]
+    else:
+        value["hourly_units"][f"{change}_850hPa"] = "unexpected"
+    monkeypatch.setattr(ga_data, "fetch", lambda *args: value)
+    response = client.get(
+        "/api/aviation-weather/winds-aloft?lat=37&lon=-122&levels_hpa=850&hours=2"
+    )
+    assert response.status_code == 503
+    assert response.json()["detail"] == "Open-Meteo pressure-level forecast unavailable"
+
+
+def test_pressure_actual_transport_timeout_and_post_download_limit(client, monkeypatch):
+    calls = []
+
+    def fetch(url, **kwargs):
+        calls.append(kwargs)
+        if len(calls) == 1:
+            return httpx.Response(
+                200, json=pressure_fixture(), request=httpx.Request("GET", url)
+            )
+        return httpx.Response(
+            200,
+            content=b" " * (20 * 1024 * 1024 + 1),
+            request=httpx.Request("GET", url),
+        )
+
+    monkeypatch.setattr(ga_data.httpx, "get", fetch)
+    endpoint = (
+        "/api/aviation-weather/winds-aloft?lat=37&lon=-122&levels_hpa=850&hours=2"
+    )
+    assert client.get(endpoint).status_code == 200
+    ga_data._CACHE.clear()
+    response = client.get(endpoint)
+    assert response.status_code == 503
+    assert response.json()["detail"] == "Open-Meteo pressure-level forecast unavailable"
+    assert len(calls) == 2 and all(call["timeout"] == 20 for call in calls)
+
+
+def test_pressure_expired_cache_failure_never_returns_stale_success(monkeypatch):
+    monkeypatch.setattr(ga_data, "fetch", lambda *args: pressure_fixture())
+    assert sources.winds_aloft(37, -122, [850], 2)["data"] == pressure_fixture()
+    clock = ga_data.monotonic
+    monkeypatch.setattr(ga_data, "monotonic", lambda: clock() + 1900)
+
+    def fail(*args):
+        raise RuntimeError("private-provider-url?credential=private")
+
+    monkeypatch.setattr(ga_data, "fetch", fail)
+    with pytest.raises(ga_data.DataUnavailable) as raised:
+        sources.winds_aloft(37, -122, [850], 2)
+    assert str(raised.value) == "Open-Meteo pressure-level forecast unavailable"
+
+
 def test_source_operations_exist_in_openapi(client):
     catalog = client.get("/api/aviation-data/sources").json()
     schema = client.get("/api/openapi.json").json()

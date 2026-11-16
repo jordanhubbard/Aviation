@@ -581,5 +581,1840 @@
         []
       ]
     }
+  ],
+  "pressureRequests": [
+    {
+      "id": "level-1000",
+      "lat": 37,
+      "lon": -122,
+      "levels": [
+        1000
+      ],
+      "hours": 24,
+      "expected": {
+        "url": "https://api.open-meteo.com/v1/forecast",
+        "params": {
+          "latitude": 37,
+          "longitude": -122,
+          "hourly": "wind_speed_1000hPa,wind_direction_1000hPa,temperature_1000hPa,geopotential_height_1000hPa",
+          "wind_speed_unit": "kn",
+          "temperature_unit": "celsius",
+          "timezone": "UTC",
+          "forecast_hours": 24
+        },
+        "levels_hpa": [
+          1000
+        ]
+      }
+    },
+    {
+      "id": "level-925",
+      "lat": 37,
+      "lon": -122,
+      "levels": [
+        925
+      ],
+      "hours": 24,
+      "expected": {
+        "url": "https://api.open-meteo.com/v1/forecast",
+        "params": {
+          "latitude": 37,
+          "longitude": -122,
+          "hourly": "wind_speed_925hPa,wind_direction_925hPa,temperature_925hPa,geopotential_height_925hPa",
+          "wind_speed_unit": "kn",
+          "temperature_unit": "celsius",
+          "timezone": "UTC",
+          "forecast_hours": 24
+        },
+        "levels_hpa": [
+          925
+        ]
+      }
+    },
+    {
+      "id": "level-850",
+      "lat": 37,
+      "lon": -122,
+      "levels": [
+        850
+      ],
+      "hours": 24,
+      "expected": {
+        "url": "https://api.open-meteo.com/v1/forecast",
+        "params": {
+          "latitude": 37,
+          "longitude": -122,
+          "hourly": "wind_speed_850hPa,wind_direction_850hPa,temperature_850hPa,geopotential_height_850hPa",
+          "wind_speed_unit": "kn",
+          "temperature_unit": "celsius",
+          "timezone": "UTC",
+          "forecast_hours": 24
+        },
+        "levels_hpa": [
+          850
+        ]
+      }
+    },
+    {
+      "id": "level-700",
+      "lat": 37,
+      "lon": -122,
+      "levels": [
+        700
+      ],
+      "hours": 24,
+      "expected": {
+        "url": "https://api.open-meteo.com/v1/forecast",
+        "params": {
+          "latitude": 37,
+          "longitude": -122,
+          "hourly": "wind_speed_700hPa,wind_direction_700hPa,temperature_700hPa,geopotential_height_700hPa",
+          "wind_speed_unit": "kn",
+          "temperature_unit": "celsius",
+          "timezone": "UTC",
+          "forecast_hours": 24
+        },
+        "levels_hpa": [
+          700
+        ]
+      }
+    },
+    {
+      "id": "level-500",
+      "lat": 37,
+      "lon": -122,
+      "levels": [
+        500
+      ],
+      "hours": 24,
+      "expected": {
+        "url": "https://api.open-meteo.com/v1/forecast",
+        "params": {
+          "latitude": 37,
+          "longitude": -122,
+          "hourly": "wind_speed_500hPa,wind_direction_500hPa,temperature_500hPa,geopotential_height_500hPa",
+          "wind_speed_unit": "kn",
+          "temperature_unit": "celsius",
+          "timezone": "UTC",
+          "forecast_hours": 24
+        },
+        "levels_hpa": [
+          500
+        ]
+      }
+    },
+    {
+      "id": "level-300",
+      "lat": 37,
+      "lon": -122,
+      "levels": [
+        300
+      ],
+      "hours": 24,
+      "expected": {
+        "url": "https://api.open-meteo.com/v1/forecast",
+        "params": {
+          "latitude": 37,
+          "longitude": -122,
+          "hourly": "wind_speed_300hPa,wind_direction_300hPa,temperature_300hPa,geopotential_height_300hPa",
+          "wind_speed_unit": "kn",
+          "temperature_unit": "celsius",
+          "timezone": "UTC",
+          "forecast_hours": 24
+        },
+        "levels_hpa": [
+          300
+        ]
+      }
+    },
+    {
+      "id": "level-250",
+      "lat": 37,
+      "lon": -122,
+      "levels": [
+        250
+      ],
+      "hours": 24,
+      "expected": {
+        "url": "https://api.open-meteo.com/v1/forecast",
+        "params": {
+          "latitude": 37,
+          "longitude": -122,
+          "hourly": "wind_speed_250hPa,wind_direction_250hPa,temperature_250hPa,geopotential_height_250hPa",
+          "wind_speed_unit": "kn",
+          "temperature_unit": "celsius",
+          "timezone": "UTC",
+          "forecast_hours": 24
+        },
+        "levels_hpa": [
+          250
+        ]
+      }
+    },
+    {
+      "id": "level-200",
+      "lat": 37,
+      "lon": -122,
+      "levels": [
+        200
+      ],
+      "hours": 24,
+      "expected": {
+        "url": "https://api.open-meteo.com/v1/forecast",
+        "params": {
+          "latitude": 37,
+          "longitude": -122,
+          "hourly": "wind_speed_200hPa,wind_direction_200hPa,temperature_200hPa,geopotential_height_200hPa",
+          "wind_speed_unit": "kn",
+          "temperature_unit": "celsius",
+          "timezone": "UTC",
+          "forecast_hours": 24
+        },
+        "levels_hpa": [
+          200
+        ]
+      }
+    },
+    {
+      "id": "all-levels-upper-bounds",
+      "lat": 90,
+      "lon": 180,
+      "levels": [
+        1000,
+        925,
+        850,
+        700,
+        500,
+        300,
+        250,
+        200
+      ],
+      "hours": 72,
+      "expected": {
+        "url": "https://api.open-meteo.com/v1/forecast",
+        "params": {
+          "latitude": 90,
+          "longitude": 180,
+          "hourly": "wind_speed_1000hPa,wind_direction_1000hPa,temperature_1000hPa,geopotential_height_1000hPa,wind_speed_925hPa,wind_direction_925hPa,temperature_925hPa,geopotential_height_925hPa,wind_speed_850hPa,wind_direction_850hPa,temperature_850hPa,geopotential_height_850hPa,wind_speed_700hPa,wind_direction_700hPa,temperature_700hPa,geopotential_height_700hPa,wind_speed_500hPa,wind_direction_500hPa,temperature_500hPa,geopotential_height_500hPa,wind_speed_300hPa,wind_direction_300hPa,temperature_300hPa,geopotential_height_300hPa,wind_speed_250hPa,wind_direction_250hPa,temperature_250hPa,geopotential_height_250hPa,wind_speed_200hPa,wind_direction_200hPa,temperature_200hPa,geopotential_height_200hPa",
+          "wind_speed_unit": "kn",
+          "temperature_unit": "celsius",
+          "timezone": "UTC",
+          "forecast_hours": 72
+        },
+        "levels_hpa": [
+          1000,
+          925,
+          850,
+          700,
+          500,
+          300,
+          250,
+          200
+        ]
+      }
+    },
+    {
+      "id": "lower-coordinate-hour-bounds",
+      "lat": -90,
+      "lon": -180,
+      "levels": [
+        850
+      ],
+      "hours": 1,
+      "expected": {
+        "url": "https://api.open-meteo.com/v1/forecast",
+        "params": {
+          "latitude": -90,
+          "longitude": -180,
+          "hourly": "wind_speed_850hPa,wind_direction_850hPa,temperature_850hPa,geopotential_height_850hPa",
+          "wind_speed_unit": "kn",
+          "temperature_unit": "celsius",
+          "timezone": "UTC",
+          "forecast_hours": 1
+        },
+        "levels_hpa": [
+          850
+        ]
+      }
+    },
+    {
+      "id": "first-occurrence-order",
+      "lat": 0,
+      "lon": 0,
+      "levels": [
+        700,
+        850,
+        700,
+        500,
+        850
+      ],
+      "hours": 2,
+      "expected": {
+        "url": "https://api.open-meteo.com/v1/forecast",
+        "params": {
+          "latitude": 0,
+          "longitude": 0,
+          "hourly": "wind_speed_700hPa,wind_direction_700hPa,temperature_700hPa,geopotential_height_700hPa,wind_speed_850hPa,wind_direction_850hPa,temperature_850hPa,geopotential_height_850hPa,wind_speed_500hPa,wind_direction_500hPa,temperature_500hPa,geopotential_height_500hPa",
+          "wind_speed_unit": "kn",
+          "temperature_unit": "celsius",
+          "timezone": "UTC",
+          "forecast_hours": 2
+        },
+        "levels_hpa": [
+          700,
+          850,
+          500
+        ]
+      }
+    },
+    {
+      "id": "integral-numbers",
+      "lat": 37.0,
+      "lon": -122.0,
+      "levels": [
+        850.0
+      ],
+      "hours": 2.0,
+      "expected": {
+        "url": "https://api.open-meteo.com/v1/forecast",
+        "params": {
+          "latitude": 37.0,
+          "longitude": -122.0,
+          "hourly": "wind_speed_850hPa,wind_direction_850hPa,temperature_850hPa,geopotential_height_850hPa",
+          "wind_speed_unit": "kn",
+          "temperature_unit": "celsius",
+          "timezone": "UTC",
+          "forecast_hours": 2
+        },
+        "levels_hpa": [
+          850
+        ]
+      }
+    }
+  ],
+  "pressureInvalidRequests": [
+    {
+      "lat": -90.1,
+      "lon": -122,
+      "levels": [
+        850
+      ],
+      "hours": 1,
+      "id": "lat-0"
+    },
+    {
+      "lat": 90.1,
+      "lon": -122,
+      "levels": [
+        850
+      ],
+      "hours": 1,
+      "id": "lat-1"
+    },
+    {
+      "lat": true,
+      "lon": -122,
+      "levels": [
+        850
+      ],
+      "hours": 1,
+      "id": "lat-2"
+    },
+    {
+      "lat": "37",
+      "lon": -122,
+      "levels": [
+        850
+      ],
+      "hours": 1,
+      "id": "lat-3"
+    },
+    {
+      "lat": null,
+      "lon": -122,
+      "levels": [
+        850
+      ],
+      "hours": 1,
+      "id": "lat-4"
+    },
+    {
+      "lat": 37,
+      "lon": -180.1,
+      "levels": [
+        850
+      ],
+      "hours": 1,
+      "id": "lon-5"
+    },
+    {
+      "lat": 37,
+      "lon": 180.1,
+      "levels": [
+        850
+      ],
+      "hours": 1,
+      "id": "lon-6"
+    },
+    {
+      "lat": 37,
+      "lon": false,
+      "levels": [
+        850
+      ],
+      "hours": 1,
+      "id": "lon-7"
+    },
+    {
+      "lat": 37,
+      "lon": "-122",
+      "levels": [
+        850
+      ],
+      "hours": 1,
+      "id": "lon-8"
+    },
+    {
+      "lat": 37,
+      "lon": -122,
+      "levels": [],
+      "hours": 1,
+      "id": "levels-9"
+    },
+    {
+      "lat": 37,
+      "lon": -122,
+      "levels": [
+        850,
+        850,
+        850,
+        850,
+        850,
+        850,
+        850,
+        850,
+        850
+      ],
+      "hours": 1,
+      "id": "levels-10"
+    },
+    {
+      "lat": 37,
+      "lon": -122,
+      "levels": [
+        900
+      ],
+      "hours": 1,
+      "id": "levels-11"
+    },
+    {
+      "lat": 37,
+      "lon": -122,
+      "levels": [
+        true
+      ],
+      "hours": 1,
+      "id": "levels-12"
+    },
+    {
+      "lat": 37,
+      "lon": -122,
+      "levels": [
+        "850"
+      ],
+      "hours": 1,
+      "id": "levels-13"
+    },
+    {
+      "lat": 37,
+      "lon": -122,
+      "levels": [
+        850.5
+      ],
+      "hours": 1,
+      "id": "levels-14"
+    },
+    {
+      "lat": 37,
+      "lon": -122,
+      "levels": [
+        null
+      ],
+      "hours": 1,
+      "id": "levels-15"
+    },
+    {
+      "lat": 37,
+      "lon": -122,
+      "levels": "850",
+      "hours": 1,
+      "id": "levels-16"
+    },
+    {
+      "lat": 37,
+      "lon": -122,
+      "levels": null,
+      "hours": 1,
+      "id": "levels-17"
+    },
+    {
+      "lat": 37,
+      "lon": -122,
+      "levels": [
+        850
+      ],
+      "hours": 0,
+      "id": "hours-18"
+    },
+    {
+      "lat": 37,
+      "lon": -122,
+      "levels": [
+        850
+      ],
+      "hours": 73,
+      "id": "hours-19"
+    },
+    {
+      "lat": 37,
+      "lon": -122,
+      "levels": [
+        850
+      ],
+      "hours": 1.5,
+      "id": "hours-20"
+    },
+    {
+      "lat": 37,
+      "lon": -122,
+      "levels": [
+        850
+      ],
+      "hours": false,
+      "id": "hours-21"
+    },
+    {
+      "lat": 37,
+      "lon": -122,
+      "levels": [
+        850
+      ],
+      "hours": "24",
+      "id": "hours-22"
+    },
+    {
+      "lat": 37,
+      "lon": -122,
+      "levels": [
+        850
+      ],
+      "hours": null,
+      "id": "hours-23"
+    }
+  ],
+  "pressureResponses": [
+    {
+      "id": "all-levels-null-and-unknown",
+      "levels": [
+        1000,
+        925,
+        850,
+        700,
+        500,
+        300,
+        250,
+        200
+      ],
+      "hours": 1,
+      "payload": {
+        "utc_offset_seconds": 0,
+        "latitude": 37.1,
+        "longitude": -122.1,
+        "hourly": {
+          "time": [
+            "2026-11-16T12:00"
+          ],
+          "wind_speed_1000hPa": [
+            null
+          ],
+          "wind_direction_1000hPa": [
+            null
+          ],
+          "temperature_1000hPa": [
+            null
+          ],
+          "geopotential_height_1000hPa": [
+            null
+          ],
+          "wind_speed_925hPa": [
+            null
+          ],
+          "wind_direction_925hPa": [
+            null
+          ],
+          "temperature_925hPa": [
+            null
+          ],
+          "geopotential_height_925hPa": [
+            null
+          ],
+          "wind_speed_850hPa": [
+            null
+          ],
+          "wind_direction_850hPa": [
+            null
+          ],
+          "temperature_850hPa": [
+            null
+          ],
+          "geopotential_height_850hPa": [
+            null
+          ],
+          "wind_speed_700hPa": [
+            null
+          ],
+          "wind_direction_700hPa": [
+            null
+          ],
+          "temperature_700hPa": [
+            null
+          ],
+          "geopotential_height_700hPa": [
+            null
+          ],
+          "wind_speed_500hPa": [
+            null
+          ],
+          "wind_direction_500hPa": [
+            null
+          ],
+          "temperature_500hPa": [
+            null
+          ],
+          "geopotential_height_500hPa": [
+            null
+          ],
+          "wind_speed_300hPa": [
+            null
+          ],
+          "wind_direction_300hPa": [
+            null
+          ],
+          "temperature_300hPa": [
+            null
+          ],
+          "geopotential_height_300hPa": [
+            null
+          ],
+          "wind_speed_250hPa": [
+            null
+          ],
+          "wind_direction_250hPa": [
+            null
+          ],
+          "temperature_250hPa": [
+            null
+          ],
+          "geopotential_height_250hPa": [
+            null
+          ],
+          "wind_speed_200hPa": [
+            null
+          ],
+          "wind_direction_200hPa": [
+            null
+          ],
+          "temperature_200hPa": [
+            null
+          ],
+          "geopotential_height_200hPa": [
+            null
+          ]
+        },
+        "hourly_units": {
+          "wind_speed_1000hPa": "kn",
+          "wind_direction_1000hPa": "°",
+          "temperature_1000hPa": "°C",
+          "geopotential_height_1000hPa": "m",
+          "wind_speed_925hPa": "kn",
+          "wind_direction_925hPa": "°",
+          "temperature_925hPa": "°C",
+          "geopotential_height_925hPa": "m",
+          "wind_speed_850hPa": "kn",
+          "wind_direction_850hPa": "°",
+          "temperature_850hPa": "°C",
+          "geopotential_height_850hPa": "m",
+          "wind_speed_700hPa": "kn",
+          "wind_direction_700hPa": "°",
+          "temperature_700hPa": "°C",
+          "geopotential_height_700hPa": "m",
+          "wind_speed_500hPa": "kn",
+          "wind_direction_500hPa": "°",
+          "temperature_500hPa": "°C",
+          "geopotential_height_500hPa": "m",
+          "wind_speed_300hPa": "kn",
+          "wind_direction_300hPa": "°",
+          "temperature_300hPa": "°C",
+          "geopotential_height_300hPa": "m",
+          "wind_speed_250hPa": "kn",
+          "wind_direction_250hPa": "°",
+          "temperature_250hPa": "°C",
+          "geopotential_height_250hPa": "m",
+          "wind_speed_200hPa": "kn",
+          "wind_direction_200hPa": "°",
+          "temperature_200hPa": "°C",
+          "geopotential_height_200hPa": "m"
+        },
+        "providerExtension": {
+          "preserve": [
+            null,
+            false,
+            {
+              "raw": "original"
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "pressureInvalidResponses": [
+    {
+      "id": "offset-False",
+      "levels": [
+        850,
+        700
+      ],
+      "hours": 1,
+      "payload": {
+        "utc_offset_seconds": false,
+        "latitude": 37.1,
+        "longitude": -122.1,
+        "hourly": {
+          "time": [
+            "2026-11-16T12:00"
+          ],
+          "wind_speed_850hPa": [
+            null
+          ],
+          "wind_direction_850hPa": [
+            null
+          ],
+          "temperature_850hPa": [
+            null
+          ],
+          "geopotential_height_850hPa": [
+            null
+          ],
+          "wind_speed_700hPa": [
+            null
+          ],
+          "wind_direction_700hPa": [
+            null
+          ],
+          "temperature_700hPa": [
+            null
+          ],
+          "geopotential_height_700hPa": [
+            null
+          ]
+        },
+        "hourly_units": {
+          "wind_speed_850hPa": "kn",
+          "wind_direction_850hPa": "°",
+          "temperature_850hPa": "°C",
+          "geopotential_height_850hPa": "m",
+          "wind_speed_700hPa": "kn",
+          "wind_direction_700hPa": "°",
+          "temperature_700hPa": "°C",
+          "geopotential_height_700hPa": "m"
+        },
+        "providerExtension": {
+          "preserve": [
+            null,
+            false,
+            {
+              "raw": "original"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "offset-3600",
+      "levels": [
+        850,
+        700
+      ],
+      "hours": 1,
+      "payload": {
+        "utc_offset_seconds": 3600,
+        "latitude": 37.1,
+        "longitude": -122.1,
+        "hourly": {
+          "time": [
+            "2026-11-16T12:00"
+          ],
+          "wind_speed_850hPa": [
+            null
+          ],
+          "wind_direction_850hPa": [
+            null
+          ],
+          "temperature_850hPa": [
+            null
+          ],
+          "geopotential_height_850hPa": [
+            null
+          ],
+          "wind_speed_700hPa": [
+            null
+          ],
+          "wind_direction_700hPa": [
+            null
+          ],
+          "temperature_700hPa": [
+            null
+          ],
+          "geopotential_height_700hPa": [
+            null
+          ]
+        },
+        "hourly_units": {
+          "wind_speed_850hPa": "kn",
+          "wind_direction_850hPa": "°",
+          "temperature_850hPa": "°C",
+          "geopotential_height_850hPa": "m",
+          "wind_speed_700hPa": "kn",
+          "wind_direction_700hPa": "°",
+          "temperature_700hPa": "°C",
+          "geopotential_height_700hPa": "m"
+        },
+        "providerExtension": {
+          "preserve": [
+            null,
+            false,
+            {
+              "raw": "original"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "offset--3600",
+      "levels": [
+        850,
+        700
+      ],
+      "hours": 1,
+      "payload": {
+        "utc_offset_seconds": -3600,
+        "latitude": 37.1,
+        "longitude": -122.1,
+        "hourly": {
+          "time": [
+            "2026-11-16T12:00"
+          ],
+          "wind_speed_850hPa": [
+            null
+          ],
+          "wind_direction_850hPa": [
+            null
+          ],
+          "temperature_850hPa": [
+            null
+          ],
+          "geopotential_height_850hPa": [
+            null
+          ],
+          "wind_speed_700hPa": [
+            null
+          ],
+          "wind_direction_700hPa": [
+            null
+          ],
+          "temperature_700hPa": [
+            null
+          ],
+          "geopotential_height_700hPa": [
+            null
+          ]
+        },
+        "hourly_units": {
+          "wind_speed_850hPa": "kn",
+          "wind_direction_850hPa": "°",
+          "temperature_850hPa": "°C",
+          "geopotential_height_850hPa": "m",
+          "wind_speed_700hPa": "kn",
+          "wind_direction_700hPa": "°",
+          "temperature_700hPa": "°C",
+          "geopotential_height_700hPa": "m"
+        },
+        "providerExtension": {
+          "preserve": [
+            null,
+            false,
+            {
+              "raw": "original"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "offset-0",
+      "levels": [
+        850,
+        700
+      ],
+      "hours": 1,
+      "payload": {
+        "utc_offset_seconds": "0",
+        "latitude": 37.1,
+        "longitude": -122.1,
+        "hourly": {
+          "time": [
+            "2026-11-16T12:00"
+          ],
+          "wind_speed_850hPa": [
+            null
+          ],
+          "wind_direction_850hPa": [
+            null
+          ],
+          "temperature_850hPa": [
+            null
+          ],
+          "geopotential_height_850hPa": [
+            null
+          ],
+          "wind_speed_700hPa": [
+            null
+          ],
+          "wind_direction_700hPa": [
+            null
+          ],
+          "temperature_700hPa": [
+            null
+          ],
+          "geopotential_height_700hPa": [
+            null
+          ]
+        },
+        "hourly_units": {
+          "wind_speed_850hPa": "kn",
+          "wind_direction_850hPa": "°",
+          "temperature_850hPa": "°C",
+          "geopotential_height_850hPa": "m",
+          "wind_speed_700hPa": "kn",
+          "wind_direction_700hPa": "°",
+          "temperature_700hPa": "°C",
+          "geopotential_height_700hPa": "m"
+        },
+        "providerExtension": {
+          "preserve": [
+            null,
+            false,
+            {
+              "raw": "original"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "offset-None",
+      "levels": [
+        850,
+        700
+      ],
+      "hours": 1,
+      "payload": {
+        "utc_offset_seconds": null,
+        "latitude": 37.1,
+        "longitude": -122.1,
+        "hourly": {
+          "time": [
+            "2026-11-16T12:00"
+          ],
+          "wind_speed_850hPa": [
+            null
+          ],
+          "wind_direction_850hPa": [
+            null
+          ],
+          "temperature_850hPa": [
+            null
+          ],
+          "geopotential_height_850hPa": [
+            null
+          ],
+          "wind_speed_700hPa": [
+            null
+          ],
+          "wind_direction_700hPa": [
+            null
+          ],
+          "temperature_700hPa": [
+            null
+          ],
+          "geopotential_height_700hPa": [
+            null
+          ]
+        },
+        "hourly_units": {
+          "wind_speed_850hPa": "kn",
+          "wind_direction_850hPa": "°",
+          "temperature_850hPa": "°C",
+          "geopotential_height_850hPa": "m",
+          "wind_speed_700hPa": "kn",
+          "wind_direction_700hPa": "°",
+          "temperature_700hPa": "°C",
+          "geopotential_height_700hPa": "m"
+        },
+        "providerExtension": {
+          "preserve": [
+            null,
+            false,
+            {
+              "raw": "original"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "missing-hourly",
+      "levels": [
+        850,
+        700
+      ],
+      "hours": 1,
+      "payload": {
+        "utc_offset_seconds": 0,
+        "latitude": 37.1,
+        "longitude": -122.1,
+        "hourly_units": {
+          "wind_speed_850hPa": "kn",
+          "wind_direction_850hPa": "°",
+          "temperature_850hPa": "°C",
+          "geopotential_height_850hPa": "m",
+          "wind_speed_700hPa": "kn",
+          "wind_direction_700hPa": "°",
+          "temperature_700hPa": "°C",
+          "geopotential_height_700hPa": "m"
+        },
+        "providerExtension": {
+          "preserve": [
+            null,
+            false,
+            {
+              "raw": "original"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "missing-units",
+      "levels": [
+        850,
+        700
+      ],
+      "hours": 1,
+      "payload": {
+        "utc_offset_seconds": 0,
+        "latitude": 37.1,
+        "longitude": -122.1,
+        "hourly": {
+          "time": [
+            "2026-11-16T12:00"
+          ],
+          "wind_speed_850hPa": [
+            null
+          ],
+          "wind_direction_850hPa": [
+            null
+          ],
+          "temperature_850hPa": [
+            null
+          ],
+          "geopotential_height_850hPa": [
+            null
+          ],
+          "wind_speed_700hPa": [
+            null
+          ],
+          "wind_direction_700hPa": [
+            null
+          ],
+          "temperature_700hPa": [
+            null
+          ],
+          "geopotential_height_700hPa": [
+            null
+          ]
+        },
+        "providerExtension": {
+          "preserve": [
+            null,
+            false,
+            {
+              "raw": "original"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "empty-times",
+      "levels": [
+        850,
+        700
+      ],
+      "hours": 1,
+      "payload": {
+        "utc_offset_seconds": 0,
+        "latitude": 37.1,
+        "longitude": -122.1,
+        "hourly": {
+          "time": [],
+          "wind_speed_850hPa": [
+            null
+          ],
+          "wind_direction_850hPa": [
+            null
+          ],
+          "temperature_850hPa": [
+            null
+          ],
+          "geopotential_height_850hPa": [
+            null
+          ],
+          "wind_speed_700hPa": [
+            null
+          ],
+          "wind_direction_700hPa": [
+            null
+          ],
+          "temperature_700hPa": [
+            null
+          ],
+          "geopotential_height_700hPa": [
+            null
+          ]
+        },
+        "hourly_units": {
+          "wind_speed_850hPa": "kn",
+          "wind_direction_850hPa": "°",
+          "temperature_850hPa": "°C",
+          "geopotential_height_850hPa": "m",
+          "wind_speed_700hPa": "kn",
+          "wind_direction_700hPa": "°",
+          "temperature_700hPa": "°C",
+          "geopotential_height_700hPa": "m"
+        },
+        "providerExtension": {
+          "preserve": [
+            null,
+            false,
+            {
+              "raw": "original"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "nonarray-times",
+      "levels": [
+        850,
+        700
+      ],
+      "hours": 1,
+      "payload": {
+        "utc_offset_seconds": 0,
+        "latitude": 37.1,
+        "longitude": -122.1,
+        "hourly": {
+          "time": "original",
+          "wind_speed_850hPa": [
+            null
+          ],
+          "wind_direction_850hPa": [
+            null
+          ],
+          "temperature_850hPa": [
+            null
+          ],
+          "geopotential_height_850hPa": [
+            null
+          ],
+          "wind_speed_700hPa": [
+            null
+          ],
+          "wind_direction_700hPa": [
+            null
+          ],
+          "temperature_700hPa": [
+            null
+          ],
+          "geopotential_height_700hPa": [
+            null
+          ]
+        },
+        "hourly_units": {
+          "wind_speed_850hPa": "kn",
+          "wind_direction_850hPa": "°",
+          "temperature_850hPa": "°C",
+          "geopotential_height_850hPa": "m",
+          "wind_speed_700hPa": "kn",
+          "wind_direction_700hPa": "°",
+          "temperature_700hPa": "°C",
+          "geopotential_height_700hPa": "m"
+        },
+        "providerExtension": {
+          "preserve": [
+            null,
+            false,
+            {
+              "raw": "original"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "missing-array",
+      "levels": [
+        850,
+        700
+      ],
+      "hours": 1,
+      "payload": {
+        "utc_offset_seconds": 0,
+        "latitude": 37.1,
+        "longitude": -122.1,
+        "hourly": {
+          "time": [
+            "2026-11-16T12:00"
+          ],
+          "wind_direction_850hPa": [
+            null
+          ],
+          "temperature_850hPa": [
+            null
+          ],
+          "geopotential_height_850hPa": [
+            null
+          ],
+          "wind_speed_700hPa": [
+            null
+          ],
+          "wind_direction_700hPa": [
+            null
+          ],
+          "temperature_700hPa": [
+            null
+          ],
+          "geopotential_height_700hPa": [
+            null
+          ]
+        },
+        "hourly_units": {
+          "wind_speed_850hPa": "kn",
+          "wind_direction_850hPa": "°",
+          "temperature_850hPa": "°C",
+          "geopotential_height_850hPa": "m",
+          "wind_speed_700hPa": "kn",
+          "wind_direction_700hPa": "°",
+          "temperature_700hPa": "°C",
+          "geopotential_height_700hPa": "m"
+        },
+        "providerExtension": {
+          "preserve": [
+            null,
+            false,
+            {
+              "raw": "original"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "misaligned-array",
+      "levels": [
+        850,
+        700
+      ],
+      "hours": 1,
+      "payload": {
+        "utc_offset_seconds": 0,
+        "latitude": 37.1,
+        "longitude": -122.1,
+        "hourly": {
+          "time": [
+            "2026-11-16T12:00"
+          ],
+          "wind_speed_850hPa": [
+            null,
+            null
+          ],
+          "wind_direction_850hPa": [
+            null
+          ],
+          "temperature_850hPa": [
+            null
+          ],
+          "geopotential_height_850hPa": [
+            null
+          ],
+          "wind_speed_700hPa": [
+            null
+          ],
+          "wind_direction_700hPa": [
+            null
+          ],
+          "temperature_700hPa": [
+            null
+          ],
+          "geopotential_height_700hPa": [
+            null
+          ]
+        },
+        "hourly_units": {
+          "wind_speed_850hPa": "kn",
+          "wind_direction_850hPa": "°",
+          "temperature_850hPa": "°C",
+          "geopotential_height_850hPa": "m",
+          "wind_speed_700hPa": "kn",
+          "wind_direction_700hPa": "°",
+          "temperature_700hPa": "°C",
+          "geopotential_height_700hPa": "m"
+        },
+        "providerExtension": {
+          "preserve": [
+            null,
+            false,
+            {
+              "raw": "original"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "nonarray-variable",
+      "levels": [
+        850,
+        700
+      ],
+      "hours": 1,
+      "payload": {
+        "utc_offset_seconds": 0,
+        "latitude": 37.1,
+        "longitude": -122.1,
+        "hourly": {
+          "time": [
+            "2026-11-16T12:00"
+          ],
+          "wind_speed_850hPa": {
+            "raw": null
+          },
+          "wind_direction_850hPa": [
+            null
+          ],
+          "temperature_850hPa": [
+            null
+          ],
+          "geopotential_height_850hPa": [
+            null
+          ],
+          "wind_speed_700hPa": [
+            null
+          ],
+          "wind_direction_700hPa": [
+            null
+          ],
+          "temperature_700hPa": [
+            null
+          ],
+          "geopotential_height_700hPa": [
+            null
+          ]
+        },
+        "hourly_units": {
+          "wind_speed_850hPa": "kn",
+          "wind_direction_850hPa": "°",
+          "temperature_850hPa": "°C",
+          "geopotential_height_850hPa": "m",
+          "wind_speed_700hPa": "kn",
+          "wind_direction_700hPa": "°",
+          "temperature_700hPa": "°C",
+          "geopotential_height_700hPa": "m"
+        },
+        "providerExtension": {
+          "preserve": [
+            null,
+            false,
+            {
+              "raw": "original"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "missing-unit",
+      "levels": [
+        850,
+        700
+      ],
+      "hours": 1,
+      "payload": {
+        "utc_offset_seconds": 0,
+        "latitude": 37.1,
+        "longitude": -122.1,
+        "hourly": {
+          "time": [
+            "2026-11-16T12:00"
+          ],
+          "wind_speed_850hPa": [
+            null
+          ],
+          "wind_direction_850hPa": [
+            null
+          ],
+          "temperature_850hPa": [
+            null
+          ],
+          "geopotential_height_850hPa": [
+            null
+          ],
+          "wind_speed_700hPa": [
+            null
+          ],
+          "wind_direction_700hPa": [
+            null
+          ],
+          "temperature_700hPa": [
+            null
+          ],
+          "geopotential_height_700hPa": [
+            null
+          ]
+        },
+        "hourly_units": {
+          "wind_speed_850hPa": "kn",
+          "temperature_850hPa": "°C",
+          "geopotential_height_850hPa": "m",
+          "wind_speed_700hPa": "kn",
+          "wind_direction_700hPa": "°",
+          "temperature_700hPa": "°C",
+          "geopotential_height_700hPa": "m"
+        },
+        "providerExtension": {
+          "preserve": [
+            null,
+            false,
+            {
+              "raw": "original"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "unit-drift-wind_speed",
+      "levels": [
+        850,
+        700
+      ],
+      "hours": 1,
+      "payload": {
+        "utc_offset_seconds": 0,
+        "latitude": 37.1,
+        "longitude": -122.1,
+        "hourly": {
+          "time": [
+            "2026-11-16T12:00"
+          ],
+          "wind_speed_850hPa": [
+            null
+          ],
+          "wind_direction_850hPa": [
+            null
+          ],
+          "temperature_850hPa": [
+            null
+          ],
+          "geopotential_height_850hPa": [
+            null
+          ],
+          "wind_speed_700hPa": [
+            null
+          ],
+          "wind_direction_700hPa": [
+            null
+          ],
+          "temperature_700hPa": [
+            null
+          ],
+          "geopotential_height_700hPa": [
+            null
+          ]
+        },
+        "hourly_units": {
+          "wind_speed_850hPa": "unexpected",
+          "wind_direction_850hPa": "°",
+          "temperature_850hPa": "°C",
+          "geopotential_height_850hPa": "m",
+          "wind_speed_700hPa": "kn",
+          "wind_direction_700hPa": "°",
+          "temperature_700hPa": "°C",
+          "geopotential_height_700hPa": "m"
+        },
+        "providerExtension": {
+          "preserve": [
+            null,
+            false,
+            {
+              "raw": "original"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "unit-drift-wind_direction",
+      "levels": [
+        850,
+        700
+      ],
+      "hours": 1,
+      "payload": {
+        "utc_offset_seconds": 0,
+        "latitude": 37.1,
+        "longitude": -122.1,
+        "hourly": {
+          "time": [
+            "2026-11-16T12:00"
+          ],
+          "wind_speed_850hPa": [
+            null
+          ],
+          "wind_direction_850hPa": [
+            null
+          ],
+          "temperature_850hPa": [
+            null
+          ],
+          "geopotential_height_850hPa": [
+            null
+          ],
+          "wind_speed_700hPa": [
+            null
+          ],
+          "wind_direction_700hPa": [
+            null
+          ],
+          "temperature_700hPa": [
+            null
+          ],
+          "geopotential_height_700hPa": [
+            null
+          ]
+        },
+        "hourly_units": {
+          "wind_speed_850hPa": "kn",
+          "wind_direction_850hPa": "unexpected",
+          "temperature_850hPa": "°C",
+          "geopotential_height_850hPa": "m",
+          "wind_speed_700hPa": "kn",
+          "wind_direction_700hPa": "°",
+          "temperature_700hPa": "°C",
+          "geopotential_height_700hPa": "m"
+        },
+        "providerExtension": {
+          "preserve": [
+            null,
+            false,
+            {
+              "raw": "original"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "unit-drift-temperature",
+      "levels": [
+        850,
+        700
+      ],
+      "hours": 1,
+      "payload": {
+        "utc_offset_seconds": 0,
+        "latitude": 37.1,
+        "longitude": -122.1,
+        "hourly": {
+          "time": [
+            "2026-11-16T12:00"
+          ],
+          "wind_speed_850hPa": [
+            null
+          ],
+          "wind_direction_850hPa": [
+            null
+          ],
+          "temperature_850hPa": [
+            null
+          ],
+          "geopotential_height_850hPa": [
+            null
+          ],
+          "wind_speed_700hPa": [
+            null
+          ],
+          "wind_direction_700hPa": [
+            null
+          ],
+          "temperature_700hPa": [
+            null
+          ],
+          "geopotential_height_700hPa": [
+            null
+          ]
+        },
+        "hourly_units": {
+          "wind_speed_850hPa": "kn",
+          "wind_direction_850hPa": "°",
+          "temperature_850hPa": "unexpected",
+          "geopotential_height_850hPa": "m",
+          "wind_speed_700hPa": "kn",
+          "wind_direction_700hPa": "°",
+          "temperature_700hPa": "°C",
+          "geopotential_height_700hPa": "m"
+        },
+        "providerExtension": {
+          "preserve": [
+            null,
+            false,
+            {
+              "raw": "original"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "unit-drift-geopotential_height",
+      "levels": [
+        850,
+        700
+      ],
+      "hours": 1,
+      "payload": {
+        "utc_offset_seconds": 0,
+        "latitude": 37.1,
+        "longitude": -122.1,
+        "hourly": {
+          "time": [
+            "2026-11-16T12:00"
+          ],
+          "wind_speed_850hPa": [
+            null
+          ],
+          "wind_direction_850hPa": [
+            null
+          ],
+          "temperature_850hPa": [
+            null
+          ],
+          "geopotential_height_850hPa": [
+            null
+          ],
+          "wind_speed_700hPa": [
+            null
+          ],
+          "wind_direction_700hPa": [
+            null
+          ],
+          "temperature_700hPa": [
+            null
+          ],
+          "geopotential_height_700hPa": [
+            null
+          ]
+        },
+        "hourly_units": {
+          "wind_speed_850hPa": "kn",
+          "wind_direction_850hPa": "°",
+          "temperature_850hPa": "°C",
+          "geopotential_height_850hPa": "unexpected",
+          "wind_speed_700hPa": "kn",
+          "wind_direction_700hPa": "°",
+          "temperature_700hPa": "°C",
+          "geopotential_height_700hPa": "m"
+        },
+        "providerExtension": {
+          "preserve": [
+            null,
+            false,
+            {
+              "raw": "original"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "later-level-unit-drift",
+      "levels": [
+        850,
+        700
+      ],
+      "hours": 1,
+      "payload": {
+        "utc_offset_seconds": 0,
+        "latitude": 37.1,
+        "longitude": -122.1,
+        "hourly": {
+          "time": [
+            "2026-11-16T12:00"
+          ],
+          "wind_speed_850hPa": [
+            null
+          ],
+          "wind_direction_850hPa": [
+            null
+          ],
+          "temperature_850hPa": [
+            null
+          ],
+          "geopotential_height_850hPa": [
+            null
+          ],
+          "wind_speed_700hPa": [
+            null
+          ],
+          "wind_direction_700hPa": [
+            null
+          ],
+          "temperature_700hPa": [
+            null
+          ],
+          "geopotential_height_700hPa": [
+            null
+          ]
+        },
+        "hourly_units": {
+          "wind_speed_850hPa": "kn",
+          "wind_direction_850hPa": "°",
+          "temperature_850hPa": "°C",
+          "geopotential_height_850hPa": "m",
+          "wind_speed_700hPa": "km/h",
+          "wind_direction_700hPa": "°",
+          "temperature_700hPa": "°C",
+          "geopotential_height_700hPa": "m"
+        },
+        "providerExtension": {
+          "preserve": [
+            null,
+            false,
+            {
+              "raw": "original"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "oversized-times-aligned",
+      "levels": [
+        850,
+        700
+      ],
+      "hours": 1,
+      "payload": {
+        "utc_offset_seconds": 0,
+        "latitude": 37.1,
+        "longitude": -122.1,
+        "hourly": {
+          "time": [
+            "2026-11-16T12:00",
+            "2026-11-16T12:00"
+          ],
+          "wind_speed_850hPa": [
+            null,
+            null
+          ],
+          "wind_direction_850hPa": [
+            null,
+            null
+          ],
+          "temperature_850hPa": [
+            null,
+            null
+          ],
+          "geopotential_height_850hPa": [
+            null,
+            null
+          ],
+          "wind_speed_700hPa": [
+            null,
+            null
+          ],
+          "wind_direction_700hPa": [
+            null,
+            null
+          ],
+          "temperature_700hPa": [
+            null,
+            null
+          ],
+          "geopotential_height_700hPa": [
+            null,
+            null
+          ]
+        },
+        "hourly_units": {
+          "wind_speed_850hPa": "kn",
+          "wind_direction_850hPa": "°",
+          "temperature_850hPa": "°C",
+          "geopotential_height_850hPa": "m",
+          "wind_speed_700hPa": "kn",
+          "wind_direction_700hPa": "°",
+          "temperature_700hPa": "°C",
+          "geopotential_height_700hPa": "m"
+        },
+        "providerExtension": {
+          "preserve": [
+            null,
+            false,
+            {
+              "raw": "original"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "nonobject-response",
+      "levels": [
+        850
+      ],
+      "hours": 1,
+      "payload": []
+    },
+    {
+      "id": "null-response",
+      "levels": [
+        850
+      ],
+      "hours": 1,
+      "payload": null
+    }
   ]
 }

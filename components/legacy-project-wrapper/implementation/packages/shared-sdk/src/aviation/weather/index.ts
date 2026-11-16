@@ -23,6 +23,7 @@
 // Cache
 export { WeatherCache, weatherCache } from './cache.js';
 export { AWC_DATA_URL, AWCJSONError, fetchAWCJSONReports, type AWCJSONTransport } from './awc.js';
+export type { JSONWeatherTransport } from './types.js';
 
 // METAR
 export {
@@ -48,6 +49,11 @@ export {
   getHourlyForecast,
   samplePointsAlongRoute,
   OpenMeteoError,
+  OPEN_METEO_FORECAST_URL,
+  OpenMeteoPressureError,
+  planPressureLevelForecast,
+  getPressureLevelForecast,
+  type PressureLevelForecastPlan,
   type CurrentWeather,
   type DailyForecast,
   type HourlyForecast,

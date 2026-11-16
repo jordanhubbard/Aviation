@@ -1,6 +1,7 @@
 /** Fixed AWC products; the injected JSON transport owns HTTP/time/byte bounds. */
+import type { JSONWeatherTransport } from './types.js';
 export const AWC_DATA_URL = 'https://aviationweather.gov/api/data/';
-export type AWCJSONTransport = (url: string, params: Record<string, string | number>) => Promise<unknown>;
+export type AWCJSONTransport = JSONWeatherTransport;
 
 export class AWCJSONError extends Error {
   constructor(readonly kind: 'request' | 'provider' | 'response') {

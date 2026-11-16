@@ -63,6 +63,10 @@ from .openweathermap import (
 # Open-Meteo
 from .open_meteo import (
     OpenMeteoError,
+    OPEN_METEO_FORECAST_URL,
+    OpenMeteoPressureError,
+    plan_pressure_level_forecast,
+    get_pressure_level_forecast,
     get_current_weather as get_open_meteo_current,
     get_daily_forecast,
     get_hourly_forecast,
@@ -97,6 +101,10 @@ __all__ = [
     "to_weather_data",
     # Open-Meteo
     "OpenMeteoError",
+    "OPEN_METEO_FORECAST_URL",
+    "OpenMeteoPressureError",
+    "plan_pressure_level_forecast",
+    "get_pressure_level_forecast",
     "get_open_meteo_current",
     "get_daily_forecast",
     "get_hourly_forecast",
