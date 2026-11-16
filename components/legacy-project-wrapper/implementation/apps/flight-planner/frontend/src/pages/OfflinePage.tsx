@@ -242,6 +242,31 @@ function JsonSnapshot({ manifest, asset }: { manifest: Manifest; asset: Asset })
         </CardContent>
       </Card>
     )
+  if (data.metadata)
+    return (
+      <Card variant="outlined">
+        <CardContent>
+          <Stack spacing={1}>
+            <Typography variant="h6">Saved flight plan: {String(data.metadata.name)}</Typography>
+            {data.metadata.description && (
+              <Typography>{String(data.metadata.description)}</Typography>
+            )}
+            {data.metadata.aircraft_type && (
+              <Typography>Aircraft: {String(data.metadata.aircraft_type)}</Typography>
+            )}
+            {data.metadata.pilot_name && (
+              <Typography>Pilot: {String(data.metadata.pilot_name)}</Typography>
+            )}
+            {data.notes && (
+              <Box component="p" sx={{ whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}>
+                {String(data.notes)}
+              </Box>
+            )}
+            {details}
+          </Stack>
+        </CardContent>
+      </Card>
+    )
   return (
     <Box>
       <Typography variant="h6">Saved route</Typography>
@@ -304,7 +329,8 @@ function ChartView({ manifest, chart }: { manifest: Manifest; chart: ChartPackag
       <CardContent>
         <Stack spacing={1}>
           <Typography variant="h6">
-            {chart.name}{original ? ` · ${original.label}` : ''} · cycle {chart.cycle}
+            {chart.name}
+            {original ? ` · ${original.label}` : ''} · cycle {chart.cycle}
           </Typography>
           <Typography variant="body2">
             Effective {stamp(chart.effective_from)} through {stamp(chart.effective_until)}{' '}
@@ -581,6 +607,7 @@ export default function OfflinePage() {
                 <TextField
                   select
                   label="Saved route"
+                  helperText="The selected plan’s metadata and notes are included in this browser’s package."
                   value={planId}
                   onChange={(e) => {
                     setPlanId(e.target.value)

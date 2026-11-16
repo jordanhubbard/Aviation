@@ -342,6 +342,10 @@ pages and raster bounds/zoom before downloading. Charts must be acquired through
 the existing chart operator flow first; package preparation cannot use private
 library documents or bypass chart acquisition.
 
+An explicitly selected saved plan retains all serialized flight data, metadata and
+authored notes in the private manifest/browser package. Those bytes never enter
+the public chart object store.
+
 Downloaded packages stay in IndexedDB in that browser. Installation verifies every
 asset before publishing a complete package record, and opening verifies retained
 bytes again. The production build includes a hash-inventoried service worker for

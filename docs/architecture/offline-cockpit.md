@@ -50,7 +50,10 @@ retain `source_sha256`. Source hashes must never be advertised as PNG content ha
 and retrieval times come from the acquisition receipt matching the pinned member,
 not an internal download alias or a later receipt for different bytes.
 Inline route/briefing/reference JSON is bounded and retained only in the response,
-not in the server's public chart object store. Responses are private/no-store.
+not in the server's public chart object store. Selecting an existing saved plan
+retains its complete serialized flight data, metadata and authored notes, rather
+than reconstructing a field subset. This explicit plan export does not include
+application credentials or aircraft-library document payloads. Responses are private/no-store.
 
 Preparation renders at most 128 PDF pages and 512 map tiles in total, uses at most
 128 MiB per package, and admits only one rendering preparation at a time per process.

@@ -186,15 +186,28 @@ def test_corrupt_original_missing_pages_bounds_and_request_concurrency_fail_clos
         offline.tile_rectangle([170, 0, -170, 1], 5)
 
 
-def test_saved_plan_snapshot_omits_private_pilot_and_notes(prepared, monkeypatch):
+def test_selected_saved_plan_round_trips_privately_without_public_storage(prepared, monkeypatch):
     client, store, body = prepared
     from app.schemas.flight_plan import SavedFlightPlan, FlightPlanMetadata, FlightPlanWaypoint
 
     plan = SavedFlightPlan(
         metadata=FlightPlanMetadata(
-            name="Saved route", pilot_name="PRIVATE PILOT", origin="KSFO", destination="KSQL"
+            name="Saved route",
+            description="PRIVATE DESCRIPTION",
+            pilot_name="PRIVATE PILOT",
+            aircraft_type="C172",
+            origin="KSFO",
+            destination="KSQL",
+            created_at="2026-11-15T12:00:00Z",
+            updated_at="2026-11-16T12:00:00Z",
         ),
-        notes="PRIVATE NOTES",
+        notes="PRIVATE NOTES: retain timing and contingency instructions.",
+        route=["KSFO", "KSQL"],
+        distance_nm=15.5,
+        estimated_time_hr=0.25,
+        cruise_altitude_ft=2500,
+        cruise_speed_kt=110,
+        fuel_required_gal=4.5,
         waypoints=[
             FlightPlanWaypoint(name="KSFO", latitude=37.6, longitude=-122.4),
             FlightPlanWaypoint(name="KSQL", latitude=37.5, longitude=-122.3),
@@ -205,7 +218,20 @@ def test_saved_plan_snapshot_omits_private_pilot_and_notes(prepared, monkeypatch
     body["saved_plan_id"] = "saved"
     result = client.post("/api/offline/prepare", json=body)
     assert result.status_code == 200, result.text
-    assert "PRIVATE" not in result.text
+    assert result.headers["cache-control"] == "private, no-store"
+    manifest = result.json()
+    expected = {
+        **plan.model_dump(mode="json"),
+        "saved_plan_id": "saved",
+        "name": plan.metadata.name,
+    }
+    assert manifest["route"] == expected
+    snapshot = next(a for a in manifest["assets"] if a["role"] == "route")
+    assert json.loads(snapshot["inline_text"]) == expected
+    assert snapshot["url"] is None
+    assert not (store.objects / snapshot["sha256"]).exists()
+    assert client.get("/api/offline/assets/" + snapshot["sha256"]).status_code == 404
+    assert manifest["private_documents_included"] is False
     assert not any(b"PRIVATE" in p.read_bytes() for p in store.objects.iterdir())
 
 

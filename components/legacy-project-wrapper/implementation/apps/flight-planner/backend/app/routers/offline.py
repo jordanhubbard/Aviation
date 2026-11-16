@@ -151,18 +151,8 @@ def prepare(body: Prepare, charts):
     now = datetime.now(timezone.utc).isoformat()
     if body.saved_plan_id:
         saved = get_flight_plan(body.saved_plan_id).model_dump(mode="json")
-        # Export the selected route, without pilot details or freeform private notes.
-        route = {
-            k: saved[k]
-            for k in (
-                "waypoints",
-                "route",
-                "distance_nm",
-                "cruise_altitude_ft",
-                "cruise_speed_kt",
-                "fuel_required_gal",
-            )
-        }
+        # Explicitly selected plan data remains inline/private, never a public chart object.
+        route = dict(saved)
         route["saved_plan_id"] = body.saved_plan_id
         route["name"] = saved["metadata"]["name"]
         points = [(w["latitude"], w["longitude"]) for w in saved["waypoints"]]
