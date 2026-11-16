@@ -212,6 +212,14 @@ changing these settings or upgrading from the earlier model-name-only index.
 Set `AIRCRAFT_LIBRARY_EMBEDDING_BATCH_SIZE` from 1 to 32 (default 32) when the
 provider limits batching. A value of 1 still embeds every passage individually.
 
+For models supporting `chat_template_kwargs.enable_thinking`, operators can set
+`AIRCRAFT_LIBRARY_LLM_ENABLE_THINKING=true` or `false` explicitly. Leaving it unset
+omits the provider-specific field. Invalid values fail configuration validation;
+changing a configured mode restarts incompatible partial distillations while
+preserving embedding identity. Truncated responses remain rejected and are reported
+distinctly from other invalid cited-JSON responses. This setting does not change
+source citation, numeric evidence or completeness checks.
+
 ## Timed route hazard assessment
 
 Open **Route assessment** at `/route-assessment`, or use the panel below a completed
@@ -251,6 +259,19 @@ failures still preserve resumable partial progress.
 slow model responses. Connect/pool waits are limited to 10 seconds and writes to
 30 seconds. Timeout errors identify their category and configured read limit;
 changing this setting adds no HTTP retries or citation exceptions.
+
+For a compatible provider, explicitly set
+`AIRCRAFT_LIBRARY_LLM_RESPONSE_FORMAT=json_schema` to request the bounded cited-answer
+schema. Unset/empty or `json_object` preserves the existing request. Schema mode
+never bypasses citation/numeric checks or silently downgrades after provider rejection;
+changing the schema invalidates incompatible distillation prefixes, leaving embeddings
+unchanged.
+
+Compatible providers may use `AIRCRAFT_LIBRARY_LLM_REASONING_EFFORT=none|low|high`
+with `AIRCRAFT_LIBRARY_LLM_MAX_TOKENS` (512–32768, default 4096). Leave the thinking
+flag unset when selecting reasoning effort. Provider token budgets can include
+reasoning; exhausting that budget never admits truncated output. Explicit effort
+and nondefault budget changes invalidate incompatible partial distillations.
 
 ## FAA charts and navigation cycles
 

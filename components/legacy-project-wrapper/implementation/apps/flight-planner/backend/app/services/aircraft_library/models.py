@@ -42,12 +42,78 @@ authorization, or operational recommendation. This is document research, not app
 of aircraft applicability, maintenance work or a flight plan."""
 
 
+ANSWER_SCHEMA = {
+    "type": "object",
+    "properties": {
+        "insufficient_evidence": {"type": "boolean"},
+        "reason": {"type": "string"},
+        "claims": {
+            "type": "array", "maxItems": 12,
+            "items": {
+                "type": "object",
+                "properties": {
+                    "text": {"type": "string", "minLength": 1, "maxLength": 3000},
+                    "citations": {
+                        "type": "array", "minItems": 1, "maxItems": 8,
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "passage_id": {"type": "integer"},
+                                "excerpt_id": {"type": "integer"},
+                            },
+                            "required": ["passage_id", "excerpt_id"],
+                            "additionalProperties": False,
+                        },
+                    },
+                },
+                "required": ["text", "citations"], "additionalProperties": False,
+            },
+        },
+    },
+    "required": ["insufficient_evidence", "reason", "claims"],
+    "additionalProperties": False,
+}
+
+
 class Models:
     def __init__(self, environment=None, *, transport=None, clock=None, sleep=None):
         env = os.environ if environment is None else environment
         self.base = env.get("AIRCRAFT_LIBRARY_LLM_BASE_URL", "").rstrip("/")
         self.model = env.get("AIRCRAFT_LIBRARY_LLM_MODEL", "")
         self.key = env.get("AIRCRAFT_LIBRARY_LLM_API_KEY", "")
+        thinking = env.get("AIRCRAFT_LIBRARY_LLM_ENABLE_THINKING", "")
+        if not isinstance(thinking, str) or thinking.strip().lower() not in {"", "true", "false"}:
+            raise ValueError("LLM enable thinking must be true, false or unset")
+        thinking = thinking.strip().lower()
+        self.generation_options = (
+            {"chat_template_kwargs": {"enable_thinking": thinking == "true"}} if thinking else {}
+        )
+        effort = env.get("AIRCRAFT_LIBRARY_LLM_REASONING_EFFORT", "")
+        if not isinstance(effort, str) or effort.strip().lower() not in {"", "none", "low", "high"}:
+            raise ValueError("LLM reasoning effort must be none, low, high or unset")
+        effort = effort.strip().lower()
+        if effort and thinking:
+            raise ValueError("Configure either LLM reasoning effort or enable thinking, not both")
+        if effort:
+            self.generation_options["reasoning_effort"] = effort
+        budget = env.get("AIRCRAFT_LIBRARY_LLM_MAX_TOKENS", "")
+        if not isinstance(budget, str) or (budget.strip() and not budget.strip().isascii()):
+            raise ValueError("LLM max tokens must be a decimal integer from 512 to 32768")
+        budget = budget.strip() or "4096"
+        if not budget.isdecimal() or len(budget) > 5 or not 512 <= int(budget) <= 32768:
+            raise ValueError("LLM max tokens must be a decimal integer from 512 to 32768")
+        if int(budget) != 4096:
+            self.generation_options["max_tokens"] = int(budget)
+        output_format = env.get("AIRCRAFT_LIBRARY_LLM_RESPONSE_FORMAT", "")
+        if not isinstance(output_format, str) or output_format.strip().lower() not in {
+            "", "json_object", "json_schema"
+        }:
+            raise ValueError("LLM response format must be json_object, json_schema or unset")
+        if output_format.strip().lower() == "json_schema":
+            self.generation_options["response_format"] = {
+                "type": "json_schema",
+                "json_schema": {"name": "aircraft_manual_answer", "strict": True, "schema": ANSWER_SCHEMA},
+            }
         self.embedding_model = env.get("AIRCRAFT_LIBRARY_EMBEDDING_MODEL", "")
         self.embedding_mode = env.get("AIRCRAFT_LIBRARY_EMBEDDING_MODE", "symmetric")
         try:
@@ -173,11 +239,14 @@ class Models:
                         ),
                     },
                 ],
+                **self.generation_options,
             },
         )
         try:
             if result["choices"][0].get("finish_reason") == "length":
-                raise ValueError("Model completion was truncated")
+                raise ModelUnavailable(
+                    "Model required cited JSON answer was truncated at the output budget"
+                )
             content = result["choices"][0]["message"]["content"]
             if not isinstance(content, str) or len(content) > 80_000:
                 raise ValueError("Invalid model content")
@@ -337,8 +406,12 @@ def validate_answer(answer, evidence):
     if not isinstance(answer, dict) or type(answer.get("insufficient_evidence")) is not bool:
         raise ModelUnavailable("Model answer lacks evidence status")
     claims = answer.get("claims")
-    if not isinstance(claims, list) or len(claims) > 12:
-        raise ModelUnavailable("Invalid model claims")
+    if not isinstance(claims, list):
+        raise ModelUnavailable("Model claims must be a JSON array")
+    if len(claims) > 12:
+        raise ModelUnavailable(
+            f"Model returned {len(claims)} claims; return at most 12 supported claims"
+        )
     if answer["insufficient_evidence"]:
         if claims:
             raise ModelUnavailable("Insufficient-evidence answer cannot contain factual claims")
@@ -351,7 +424,7 @@ def validate_answer(answer, evidence):
         raise ModelUnavailable("Answer contains no supported claims")
     by_id = {e["passage_id"]: e for e in evidence}
     clean = []
-    for claim in claims:
+    for claim_number, claim in enumerate(claims, start=1):
         if (
             not isinstance(claim, dict)
             or not isinstance(claim.get("text"), str)
@@ -393,7 +466,8 @@ def validate_answer(answer, evidence):
             supporting.append(quote)
         if not numbers(claim["text"]).issubset(numbers(" ".join(supporting))):
             raise ModelUnavailable(
-                "Model introduced numeric values absent from its quoted evidence"
+                f"Model introduced numeric values absent from its quoted evidence in claim {claim_number}; "
+                "cite excerpts supporting every numeric value in this claim or remove unsupported assertions"
             )
         clean.append({"text": claim["text"], "citations": verified})
     return {
@@ -504,6 +578,11 @@ def distill(store: Store, models: Models, identifier: str):
                 "question": question,
                 "batches": batches,
                 "citation_format": CITATION_FORMAT,
+                **(
+                    {"generation_options": models.generation_options}
+                    if getattr(models, "generation_options", {})
+                    else {}
+                ),
             },
             sort_keys=True,
             separators=(",", ":"),

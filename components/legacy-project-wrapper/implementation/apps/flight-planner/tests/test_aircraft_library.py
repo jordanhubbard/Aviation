@@ -597,7 +597,7 @@ def test_truncated_model_completion_is_not_admitted_even_if_json_parses():
         },
         transport=httpx.MockTransport(provider),
     )
-    with pytest.raises(ModelUnavailable, match="required cited JSON"):
+    with pytest.raises(ModelUnavailable, match="required cited JSON answer was truncated"):
         models.complete([], "Summarize")
 
 
@@ -655,6 +655,35 @@ def test_model_correction_revalidates_evidence_and_stops_at_a_bound(store):
     assert len(failing.prompts) == 3
 
 
+
+def test_claim_limit_feedback_corrects_without_truncating_or_weakening_evidence(store):
+    document = put(store)
+    good, passage = provider_answer(store, document)
+    oversized = {**good, "claims": good["claims"] * 17}
+    assert len(oversized["claims"]) == 17
+    with pytest.raises(ModelUnavailable, match="17 claims; return at most 12"):
+        validate_answer(oversized, [passage])
+    with pytest.raises(ModelUnavailable, match="claims must be a JSON array"):
+        validate_answer({**good, "claims": {}}, [passage])
+    assert len(validate_answer({**good, "claims": good["claims"] * 12}, [passage])["claims"]) == 12
+
+    class Correcting:
+        def __init__(self, correct):
+            self.prompts, self.correct = [], correct
+
+        def complete(self, evidence, question):
+            self.prompts.append(question)
+            return good if self.correct and len(self.prompts) > 1 else oversized
+
+    models = Correcting(True)
+    assert verified_completion(models, [passage], "Summarize")["claims"]
+    assert "17 claims; return at most 12" in models.prompts[1]
+    assert len(oversized["claims"]) == 17
+    failing = Correcting(False)
+    with pytest.raises(ModelUnavailable, match="17 claims; return at most 12"):
+        verified_completion(failing, [passage], "Summarize")
+    assert len(failing.prompts) == 3
+
 def test_partial_distillation_resumes_verified_batches_and_invalidates_changed_model(store):
     document = store.ingest(
         manual(*[("Page %s. " % i) + "Synthetic manual evidence. " * 50 for i in range(24)]),
@@ -694,12 +723,19 @@ def test_partial_distillation_resumes_verified_batches_and_invalidates_changed_m
     assert complete["status"] == "complete" and complete["unresolved_batches"] == 0
     assert resumed.calls[0] == failing.calls[1]
     assert complete["sections"][0] == partial["sections"][0]
-    # An interrupted run from another model must begin at the original evidence.
-    store.artifact(document["id"], "distillation", partial)
-    changed = Provider()
-    changed.model = "different-model"
-    distill(store, changed, document["id"])
-    assert changed.calls[0] == failing.calls[0]
+    # Model or explicitly configured generation-mode changes restart original evidence.
+    for attribute, value in [
+        ("model", "different-model"),
+        ("generation_options", {"reasoning_effort": "low", "max_tokens": 8192}),
+        ("generation_options", {"chat_template_kwargs": {"enable_thinking": False}}),
+        ("generation_options", {"chat_template_kwargs": {"enable_thinking": True}}),
+        ("generation_options", {"response_format": {"type": "json_schema", "schema": "changed"}}),
+    ]:
+        store.artifact(document["id"], "distillation", partial)
+        changed = Provider()
+        setattr(changed, attribute, value)
+        distill(store, changed, document["id"])
+        assert changed.calls[0] == failing.calls[0]
 
 
 def test_unresolved_readable_batch_does_not_claim_complete_distillation(store):
@@ -1000,3 +1036,214 @@ def test_excerpt_format_change_does_not_resume_an_old_partial_prefix(store, monk
     assert result["status"] == "complete"
     assert replacement.calls[0] == failing.calls[0]
     assert len(replacement.calls) == result["total_batches"]
+
+
+@pytest.mark.parametrize(
+    "configured,expected",
+    [(None, None), ("", None), ("true", True), ("false", False), (" FALSE ", False)],
+)
+def test_explicit_chat_template_thinking_is_optional_and_does_not_change_embeddings(
+    configured, expected
+):
+    requests = []
+
+    def provider(request):
+        requests.append(json.loads(request.content))
+        return httpx.Response(
+            200,
+            json={
+                "choices": [
+                    {
+                        "finish_reason": "stop",
+                        "message": {
+                            "content": json.dumps(
+                                {
+                                    "insufficient_evidence": True,
+                                    "reason": "No evidence",
+                                    "claims": [],
+                                }
+                            )
+                        },
+                    }
+                ]
+            },
+        )
+
+    config = {
+        "AIRCRAFT_LIBRARY_LLM_BASE_URL": "https://models.example/v1",
+        "AIRCRAFT_LIBRARY_LLM_MODEL": "test-model",
+    }
+    baseline = Models(config)
+    if configured is not None:
+        config["AIRCRAFT_LIBRARY_LLM_ENABLE_THINKING"] = configured
+    models = Models(config, transport=httpx.MockTransport(provider))
+    assert models.embedding_identity == baseline.embedding_identity
+    models.complete([], "Summarize")
+    payload = requests[0]
+    if expected is None:
+        assert "chat_template_kwargs" not in payload and models.generation_options == {}
+    else:
+        assert payload["chat_template_kwargs"] == {"enable_thinking": expected}
+    assert payload["response_format"] == {"type": "json_object"}
+    assert payload["max_tokens"] == 4096 and payload["model"] == "test-model"
+
+
+@pytest.mark.parametrize("value", [True, False, 1, "yes", "0", "automatic"])
+def test_invalid_thinking_configuration_fails_before_provider_access(value):
+    with pytest.raises(ValueError, match="LLM enable thinking"):
+        Models({"AIRCRAFT_LIBRARY_LLM_ENABLE_THINKING": value})
+
+
+@pytest.mark.parametrize("value", [None, "", "json_object", "json_schema", " JSON_SCHEMA "])
+def test_explicit_schema_mode_is_bounded_and_keeps_embedding_identity(value):
+    requests = []
+
+    def provider(request):
+        requests.append(json.loads(request.content))
+        return httpx.Response(200, json={"choices": [{"finish_reason": "stop", "message": {
+            "content": json.dumps({"insufficient_evidence": True, "reason": "", "claims": []})
+        }}]})
+
+    config = {"AIRCRAFT_LIBRARY_LLM_BASE_URL": "https://models.example/v1",
+              "AIRCRAFT_LIBRARY_LLM_MODEL": "configured-model"}
+    baseline = Models(config)
+    if value is not None:
+        config["AIRCRAFT_LIBRARY_LLM_RESPONSE_FORMAT"] = value
+    models = Models(config, transport=httpx.MockTransport(provider))
+    models.complete([], "Summarize")
+    assert models.embedding_identity == baseline.embedding_identity
+    payload = requests[0]
+    assert payload["model"] == "configured-model" and payload["max_tokens"] == 4096
+    mode = payload["response_format"]
+    if value and value.strip().lower() == "json_schema":
+        assert mode["type"] == "json_schema" and mode["json_schema"]["strict"] is True
+        schema = mode["json_schema"]["schema"]
+        assert set(schema["required"]) == {"insufficient_evidence", "reason", "claims"}
+        assert schema["additionalProperties"] is False
+        claims = schema["properties"]["claims"]
+        assert claims["maxItems"] == 12
+        claim = claims["items"]
+        assert claim["properties"]["text"]["maxLength"] == 3000
+        citations = claim["properties"]["citations"]
+        assert citations["minItems"] == 1 and citations["maxItems"] == 8
+        assert set(citations["items"]["required"]) == {"passage_id", "excerpt_id"}
+        assert models.generation_options["response_format"] == mode
+    else:
+        assert mode == {"type": "json_object"} and models.generation_options == {}
+
+
+@pytest.mark.parametrize("value", [True, 1, "text", "auto", "{invalid}"])
+def test_invalid_output_mode_fails_before_provider_access(value):
+    with pytest.raises(ValueError, match="LLM response format"):
+        Models({"AIRCRAFT_LIBRARY_LLM_RESPONSE_FORMAT": value})
+
+
+@pytest.mark.parametrize("violation", ["claims", "citation", "number", "provider_rejection"])
+def test_schema_mode_never_admits_ignored_schema_or_downgrades(store, violation):
+    document = put(store)
+    answer, passage = provider_answer(store, document)
+    if violation == "claims":
+        answer["claims"] *= 17
+        error = "17 claims"
+    elif violation == "citation":
+        answer["claims"][0]["citations"][0]["quote"] = "Unrelated invented source quotation"
+        error = "citation not present"
+    else:
+        answer["claims"][0]["text"] += " 987654321"
+        error = "numeric values" if violation == "number" else "HTTP 422"
+    requests = []
+
+    def provider(request):
+        requests.append(json.loads(request.content))
+        if violation == "provider_rejection":
+            return httpx.Response(422, json={"error": "Unsupported schema"})
+        return httpx.Response(200, json={"choices": [{"finish_reason": "stop", "message": {
+            "content": json.dumps(answer)
+        }}]})
+
+    models = Models({"AIRCRAFT_LIBRARY_LLM_BASE_URL": "https://models.example/v1",
+                     "AIRCRAFT_LIBRARY_LLM_MODEL": "configured-model",
+                     "AIRCRAFT_LIBRARY_LLM_RESPONSE_FORMAT": "json_schema"},
+                    transport=httpx.MockTransport(provider))
+    with pytest.raises(ModelUnavailable, match=error):
+        verified_completion(models, [passage], "Summarize")
+    assert len(requests) == (1 if violation == "provider_rejection" else 3)
+    assert all(r["response_format"]["type"] == "json_schema" for r in requests)
+
+
+@pytest.mark.parametrize("correct", [True, False])
+def test_numeric_feedback_locates_claim_without_echoing_source_or_relaxing_validation(store, correct):
+    document = put(store)
+    good, passage = provider_answer(store, document)
+    bad = json.loads(json.dumps(good))
+    bad["claims"].append(json.loads(json.dumps(good["claims"][0])))
+    bad["claims"][1]["text"] += " 987654321"
+
+    class Correcting:
+        def __init__(self):
+            self.prompts = []
+
+        def complete(self, evidence, question):
+            self.prompts.append(question)
+            return good if correct and len(self.prompts) > 1 else bad
+
+    models = Correcting()
+    if correct:
+        answer = verified_completion(models, [passage], "Summarize")
+        assert len(answer["claims"]) == 1
+        assert len(models.prompts) == 2
+    else:
+        with pytest.raises(ModelUnavailable, match="quoted evidence in claim 2") as failure:
+            verified_completion(models, [passage], "Summarize")
+        assert "987654321" not in str(failure.value)
+        assert passage["text"] not in str(failure.value)
+        assert len(models.prompts) == 3
+    assert "quoted evidence in claim 2" in models.prompts[1]
+    assert "cite excerpts supporting every numeric value" in models.prompts[1]
+    assert len(bad["claims"]) == 2  # Rejection never silently edits the candidate.
+
+
+@pytest.mark.parametrize("effort,budget,expected", [
+    (None, None, {}), ("", "", {}), ("none", "4096", {"reasoning_effort": "none"}),
+    (" LOW ", "8192", {"reasoning_effort": "low", "max_tokens": 8192}),
+    ("high", "32768", {"reasoning_effort": "high", "max_tokens": 32768}),
+    (None, "512", {"max_tokens": 512}),
+])
+def test_reasoning_and_output_budget_are_explicit_without_changing_embeddings(effort, budget, expected):
+    requests = []
+    def provider(request):
+        requests.append(json.loads(request.content))
+        return httpx.Response(200, json={"choices": [{"finish_reason": "stop", "message": {
+            "content": json.dumps({"insufficient_evidence": True, "reason": "", "claims": []})
+        }}]})
+    config = {"AIRCRAFT_LIBRARY_LLM_BASE_URL": "https://models.example/v1", "AIRCRAFT_LIBRARY_LLM_MODEL": "chosen-model"}
+    original = Models(config)
+    if effort is not None: config["AIRCRAFT_LIBRARY_LLM_REASONING_EFFORT"] = effort
+    if budget is not None: config["AIRCRAFT_LIBRARY_LLM_MAX_TOKENS"] = budget
+    models = Models(config, transport=httpx.MockTransport(provider))
+    assert models.generation_options == expected
+    assert models.embedding_identity == original.embedding_identity
+    models.complete([], "Question")
+    payload = requests[0]
+    assert payload["max_tokens"] == expected.get("max_tokens", 4096)
+    assert payload.get("reasoning_effort") == expected.get("reasoning_effort")
+    assert "chat_template_kwargs" not in payload
+    assert payload["model"] == "chosen-model" and payload["response_format"] == {"type": "json_object"}
+
+
+@pytest.mark.parametrize("setting,value", [
+    ("REASONING_EFFORT", True), ("REASONING_EFFORT", "automatic"),
+    ("MAX_TOKENS", True), ("MAX_TOKENS", 8192), ("MAX_TOKENS", "511"),
+    ("MAX_TOKENS", "32769"), ("MAX_TOKENS", "8192.0"), ("MAX_TOKENS", "-512"),
+    ("MAX_TOKENS", "１２３４"), ("MAX_TOKENS", "1e4"),
+])
+def test_invalid_reasoning_budget_configuration_is_rejected(setting, value):
+    with pytest.raises(ValueError, match="LLM "):
+        Models({"AIRCRAFT_LIBRARY_LLM_" + setting: value})
+
+
+@pytest.mark.parametrize("thinking", ["true", "false"])
+def test_ambiguous_reasoning_configuration_is_rejected(thinking):
+    with pytest.raises(ValueError, match="not both"):
+        Models({"AIRCRAFT_LIBRARY_LLM_ENABLE_THINKING": thinking,
+                "AIRCRAFT_LIBRARY_LLM_REASONING_EFFORT": "low"})
