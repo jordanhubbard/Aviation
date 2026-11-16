@@ -1,6 +1,6 @@
 # Design traceability
 
-<!-- literate-ai:authority-reviewed sha256:2f2207c3185822d079e685da522723d52c2d667d78ca0204dd0f6de945386d5b -->
+<!-- literate-ai:authority-reviewed sha256:75db3d46bc5d06c1343edd16116e827a8b25e6e90fbf2c3841be604ea7f27c90 -->
 
 [Project guide](../README.md) → design traceability
 
@@ -77,3 +77,5 @@ Flight Planner owns private browser-local aircraft planning preferences and thei
 cross-window write serialization; those inputs do not replace sourced aircraft
 performance or POH authority. The shared Meta App feedback widget owns submission
 completion, duplicate prevention and draft-preserving retry across applications.
+
+Dependency automation follows the real retained workspace manifests and shared pnpm lockfile. The remaining service/model suites share Vitest while preserving hermetic provider isolation and signed loopback HTTP assertions; this removes the unsupported Jest/deepmerge development chain without changing production service behavior.

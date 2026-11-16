@@ -17,6 +17,9 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 import { FlightTrackerService } from '../src/service';
+import { createFlightTrackerServer } from '../src/index.ts';
+import { signE2EHeaders, tagTestData } from '@aviation/shared-sdk/e2e';
+import { request } from 'node:http';
 
 // ---------------------------------------------------------------------------
 // Fixture helpers
@@ -668,9 +671,6 @@ describe('FlightTrackerService', () => {
 
 // Real loopback HTTP coverage: browser mocks must not stand in for server mutations.
 describe('isolated tracking HTTP lifecycle', () => {
-  const { createFlightTrackerServer } = require('../src/index.ts');
-  const { signE2EHeaders, tagTestData } = require('@aviation/shared-sdk/e2e');
-  const { request } = require('node:http');
   const runId = 'e2e_' + 'a'.repeat(32);
   const other = 'e2e_' + 'b'.repeat(32);
   const secret = 'test-only-secret-'.repeat(4);

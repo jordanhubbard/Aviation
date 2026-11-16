@@ -184,24 +184,15 @@ test-node:
 	@ran=0; skipped=0; \
 	for pkg in packages/shared-sdk packages/nav-data packages/ai-explainer packages/ui-framework packages/keystore packages/aviation-config \
 	           apps/aviation-accident-tracker/backend apps/aviation-accident-tracker/frontend \
-	           apps/flight-planner/frontend apps/foreflight-dashboard/frontend; do \
+	           apps/flight-planner/frontend apps/foreflight-dashboard/frontend apps/flight-tracker apps/g1000-simulator; do \
 		if $(PNPM) --filter "./$$pkg" exec vitest --version >/dev/null 2>&1; then \
 			echo "  Testing $$pkg..."; \
 			if [ "$$pkg" = "packages/keystore" ]; then test_path=src; else test_path=; fi; \
-			$(PNPM) --filter "./$$pkg" exec vitest run --passWithNoTests $$test_path || exit 1; \
+			if [ "$$pkg" = "apps/flight-tracker" ] || [ "$$pkg" = "apps/g1000-simulator" ]; then no_tests_flag=; else no_tests_flag=--passWithNoTests; fi; \
+			$(PNPM) --filter "./$$pkg" exec vitest run $$no_tests_flag $$test_path || exit 1; \
 			ran=$$((ran + 1)); \
 		elif [ -f "$$pkg/package.json" ]; then \
 			echo "  Skipping $$pkg (vitest unavailable)"; \
-			skipped=$$((skipped + 1)); \
-		fi \
-	done; \
-	for pkg in apps/flight-tracker apps/g1000-simulator; do \
-		if $(PNPM) --filter "./$$pkg" exec jest --version >/dev/null 2>&1; then \
-			echo "  Testing $$pkg..."; \
-			$(PNPM) --filter "./$$pkg" exec jest --passWithNoTests || exit 1; \
-			ran=$$((ran + 1)); \
-		else \
-			echo "  Skipping $$pkg (jest unavailable)"; \
 			skipped=$$((skipped + 1)); \
 		fi \
 	done; \

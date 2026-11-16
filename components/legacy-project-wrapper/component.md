@@ -94,3 +94,19 @@ storage SHALL not become a successful save or silently erase previous records.
 - **AND** changes are saved only on an explicit save, with per-flight fuel verification visible
 
 Browser-local aircraft writers SHALL serialize the complete fresh-read, expected-record comparison and write across tabs using an origin-wide writer lock. Unsupported browsers SHALL explain why saving is unavailable while retaining editable flight inputs. Pending saves SHALL protect the submitted form against further edits until completion.
+
+### Requirement: Maintain a resolvable dependency and test toolchain
+
+Dependency update automation SHALL target the retained workspace's real manifest
+and lockfile paths, including its pnpm workspace and Python application manifests.
+All declared severity scanning SHALL remain enabled. Unsupported automatic security
+updates SHALL be resolved with supported dependency releases or removal of the
+unpatched dependency chain, preserving the affected application test assertions.
+The remaining TypeScript service/model suites SHALL use the common Vitest runner;
+provider/network isolation and signed loopback HTTP lifecycle coverage SHALL remain.
+
+#### Scenario: An obsolete test dependency has no patched release
+
+- **WHEN** a transitive test dependency cannot be securely updated
+- **THEN** its owning runner is replaced with the supported common runner and all
+  existing service/model/HTTP assertions pass without skipped suites

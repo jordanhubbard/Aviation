@@ -95,7 +95,8 @@ Map components are mocked to return simple `<div>` elements with `data-testid` a
 
 ## Per-Package Test Notes
 
-- **`apps/g1000-simulator`**: Uses **Jest** (ts-jest config) with a dedicated `jest.config.js` at the app root; e2e and performance tests are excluded from the default run.
+- **`apps/g1000-simulator`**: Uses **Vitest** with `vitest.config.mts` for the 79 service/model tests; browser E2E and performance tests run separately.
+- **`apps/flight-tracker`**: Uses **Vitest** with ordered provider-isolation setup and 49 tests, including the real signed loopback HTTP lifecycle. Both packages fail if their selected test files disappear.
 - **`packages/flight-dynamics`**: Python tests run inside a virtualenv created automatically: `python3 -m venv .venv && .venv/bin/pip install ...`.
 - **`packages/g1000-avionics-sdk`**: Vitest and pytest evaluate the same AHRS, ADC,
   and GPS Component vectors; G1000 and Flight Planner compatibility tests exercise
