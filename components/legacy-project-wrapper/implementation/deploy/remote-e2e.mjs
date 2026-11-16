@@ -1369,14 +1369,14 @@ if (appId === 'flightschool') {
         await context.close();
       });
       const mocks = standardE2EMocks(run.id);
-      const airport = { ...mocks.weatherStations.stations[0], code: 'KOAK', name: 'Oakland International' };
+      const baseStation = mocks.weatherStations.stations[0];
+      const airport = { ...baseStation, code: 'KOAK', name: 'Oakland International', metar: mocks.weather.metar, taf: mocks.planner.tafs.KOAK,
+        metar_reports: { ...baseStation.metar_reports, reports: [{ icaoId: 'KOAK', rawOb: mocks.weather.metar, reportTime: baseStation.updatedAt }] } };
       await installE2ENetworkMocks(page, baseUrl, run, [
         { path: '/stations?region=us', response: mocks.weatherStations },
         { path: '/station?code=KOAK', response: run.tag({ station: airport }) },
         { path: '/briefing?station=KOAK', response: mocks.weather,
-          textBody: `WEATHER BRIEFING: KOAK\nMETAR: ${mocks.weather.metar}\nSynthetic E2E ${run.id}` },
-        { path: '/briefing?station=KOAK&days=3', response: mocks.weather,
-          textBody: `WEATHER BRIEFING: KOAK\nForecast: 3 days\nSynthetic E2E ${run.id}` },
+          textBody: `WEATHER BRIEFING: KOAK\nMETAR observation: ${mocks.weather.metar}\nTAF forecast: ${mocks.weather.taf}\nSynthetic E2E ${run.id}` },
       ]);
       const errors = [];
       page.on('pageerror', error => errors.push(error.message));
@@ -1413,9 +1413,10 @@ if (appId === 'flightschool') {
         },
         {
           id: 'forecast', dataMode: 'sdk-mock',
-          visit: () => page.locator('input[name="forecast-day"][value="3"]').check(),
+          visit: async () => { await page.locator('#station-list details').filter({ hasText: 'TAF forecast' }).first().locator('summary').click(); },
           verify: async () => {
-            await page.locator('#briefing-output').getByText('Forecast: 3 days').waitFor();
+            await page.locator('#briefing-output').getByText('TAF forecast:', { exact: false }).waitFor();
+            await page.locator('#station-list pre').filter({ hasText: 'TAF KSFO' }).waitFor();
             await exerciseAviationDataPanel(page, run.id, 'KOAK');
             if (errors.length) throw new Error(`Browser errors: ${errors.join('; ')}`);
           },

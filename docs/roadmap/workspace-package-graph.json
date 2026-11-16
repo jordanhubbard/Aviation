@@ -147,7 +147,7 @@
     {"path":"apps/g1000-simulator/backend","name":"@aviation/g1000-simulator-backend","application":"g1000-simulator","workspaceDependencies":["@aviation/ai-explainer","@aviation/keystore","@aviation/shared-sdk","@aviation/ui-framework"],"buildScript":"tsc","testScript":"npm run build"},
     {"path":"apps/g1000-simulator/frontend","name":"g1000-simulator-frontend","application":"g1000-simulator","workspaceDependencies":["@aviation/ai-explainer","@aviation/aviation-config","@aviation/g1000-protocols","@aviation/g1000-rendering","@aviation/shared-sdk"],"buildScript":"vite build","testScript":null},
     {"path":"apps/meta-app","name":"@aviation/meta-app","application":"meta-app","workspaceDependencies":["@aviation/ai-explainer","@aviation/aviation-config","@aviation/ui-framework"],"buildScript":"tsc && vite build","testScript":"node --test *.test.mjs"},
-    {"path":"apps/weather-briefing","name":"@aviation/weather-briefing","application":"weather-briefing","workspaceDependencies":["@aviation/ai-explainer","@aviation/keystore","@aviation/shared-sdk","@aviation/ui-framework"],"buildScript":"tsc","testScript":"npm run build"}
+    {"path":"apps/weather-briefing","name":"@aviation/weather-briefing","application":"weather-briefing","workspaceDependencies":["@aviation/ai-explainer","@aviation/keystore","@aviation/shared-sdk","@aviation/ui-framework"],"buildScript":"tsc","testScript":"npm run build && node --test tests/*.test.mjs"}
   ],
   "applications": [
     {"id":"aviation-accident-tracker","buildAuthorities":["apps/aviation-accident-tracker/Dockerfile","apps/aviation-accident-tracker/Makefile"],"nodePackages":["apps/aviation-accident-tracker/backend","apps/aviation-accident-tracker/frontend"]},
