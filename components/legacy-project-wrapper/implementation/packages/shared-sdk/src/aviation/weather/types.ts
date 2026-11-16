@@ -1,3 +1,5 @@
+export type JSONWeatherTransport = (url: string, params: Record<string, string | number>) => Promise<unknown>;
+
 /**
  * Type definitions for aviation weather services
  * 

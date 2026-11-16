@@ -6,6 +6,12 @@ import hashlib
 import re
 import zlib
 
+from aviation.weather import (
+    OpenMeteoError,
+    get_pressure_level_forecast,
+    plan_pressure_level_forecast,
+)
+
 from app.config import settings
 from app.services import ga_data as data
 
@@ -71,55 +77,23 @@ def reports(product, station_ids):
 
 
 def winds_aloft(lat, lon, levels, hours):
-    levels = tuple(dict.fromkeys(levels))
-    variables = [
-        f"{field}_{level}hPa"
-        for level in levels
-        for field in (
-            "wind_speed",
-            "wind_direction",
-            "temperature",
-            "geopotential_height",
-        )
-    ]
+    try:
+        request = plan_pressure_level_forecast(lat, lon, levels, hours)
+    except OpenMeteoError as exc:
+        raise data.DataUnavailable(str(exc)) from None
+    levels = tuple(request["levels_hpa"])
 
     def load():
-        url = "https://api.open-meteo.com/v1/forecast"
-        value = data.fetch(
-            url,
-            {
-                "latitude": lat,
-                "longitude": lon,
-                "hourly": ",".join(variables),
-                "wind_speed_unit": "kn",
-                "temperature_unit": "celsius",
-                "timezone": "UTC",
-                "forecast_hours": hours,
-            },
-        )
-        hourly = value.get("hourly") if isinstance(value, dict) else None
-        units = value.get("hourly_units") if isinstance(value, dict) else None
-        if (
-            not isinstance(hourly, dict)
-            or not isinstance(units, dict)
-            or not isinstance(hourly.get("time"), list)
-            or not hourly["time"]
-            or len(hourly["time"]) > hours
-            or value.get("utc_offset_seconds") != 0
-            or any(
-                not isinstance(hourly.get(var), list)
-                or len(hourly[var]) != len(hourly["time"])
-                or var not in units
-                for var in variables
-            )
-        ):
-            raise data.DataUnavailable("Invalid Open-Meteo pressure-level forecast response")
+        try:
+            result = get_pressure_level_forecast(lat, lon, levels, hours, data.fetch)
+        except OpenMeteoError as exc:
+            raise data.DataUnavailable(str(exc)) from None
         return {
-            "data": value,
-            "levels_hpa": levels,
+            "data": result["data"],
+            "levels_hpa": result["levels_hpa"],
             "source": data.source(
                 "Open-Meteo numerical pressure-level forecast",
-                url,
+                result["url"],
                 license="CC BY 4.0; provider API usage terms apply",
                 attribution="Open-Meteo.com and its stated model providers",
             ),

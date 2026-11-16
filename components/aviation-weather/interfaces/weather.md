@@ -11,6 +11,7 @@ may use idiomatic names while preserving these operations and units.
 | Normalize provider weather | Convert provider payloads to the common airport-weather shape |
 | Fetch observations | Normalize stations, bound requests, and expose provider failures |
 | Fetch AWC JSON reports | Fixed six-product acquisition through an injected trusted bounded JSON transport; preserve complete raw report records |
+| Fetch pressure-level forecast | Fixed Open-Meteo request planning and acquisition; preserve raw data and validate requested units/array alignment |
 | Fetch forecasts | Validate requested horizons and normalize current/daily/hourly fields |
 | Score departure windows | Deterministically rank forecast windows, best first |
 
@@ -71,3 +72,49 @@ URL/provider/retrieval timestamp and `available`/`no_reports` envelope. Transpor
 schema failure remains HTTP 503/unavailable and never becomes an empty successful
 response. Existing route batching and mixed-success behavior remain application
 policy.
+
+## Open-Meteo pressure-level forecasts
+
+TypeScript `planPressureLevelForecast(lat, lon, levels, hours)` and Python
+`plan_pressure_level_forecast(lat, lon, levels, hours)` return
+`{url, params, levels_hpa}`. The URL is exactly
+`https://api.open-meteo.com/v1/forecast`; no caller-selected origin is accepted.
+`getPressureLevelForecast(lat, lon, levels, hours, transport)` and Python
+`get_pressure_level_forecast(lat, lon, levels, hours, transport)` acquire through
+the same planner and return `{url, data, levels_hpa}`. Acquisition accepts original
+inputs, not a caller-modifiable plan. Planning is pure and supplies normalized
+levels for application-owned cache keys.
+
+Coordinates are finite numbers in latitude [-90, 90] and longitude [-180, 180].
+Supply one to eight numeric integer level entries drawn from
+`[1000, 925, 850, 700, 500, 300, 250, 200]` hPa. Preserve first-occurrence order
+when deduplicating. Python integer enums are supported; booleans are rejected in
+every numeric input. Hours is an integer value in [1, 72].
+
+For each deduplicated level, request variables in this exact order:
+`wind_speed`, `wind_direction`, `temperature`, `geopotential_height`, each suffixed
+`_<level>hPa`, joined by commas. Params also include the input latitude/longitude,
+`wind_speed_unit=kn`, `temperature_unit=celsius`, `timezone=UTC` and
+`forecast_hours=hours`. A common constant supplies the forecast URL to existing
+Open-Meteo methods without changing their other query fields or behavior.
+
+Transport has the same trusted twenty-second, HTTP-error, parsed-JSON and
+20 MiB post-download obligations described above; these are not independent
+streaming bounds. Acquisition invokes it exactly once, with no retry or stale
+fallback. Failures use a generic `OpenMeteoError`-compatible typed error, omitting
+transport details and exception context. Existing methods retain their own
+exception behavior.
+
+Require a provider object with numeric (not boolean) `utc_offset_seconds=0`,
+`hourly` and `hourly_units` objects, and a nonempty hourly time array no longer
+than the requested hours. Every requested variable must have an array of exactly
+that length and the exact corresponding unit `kn`, `°`, `°C` or `m`. Reject
+missing arrays, alignment failures and unit drift, rather than converting or
+relabeling data. Preserve the full original provider object, time strings, nulls,
+unknown fields and units. This does not interpret timestamps or certify source
+weather values, interpolate, convert pressure to flight altitude, or create an
+observed-weather product.
+
+Planner retains its thirty-minute bounded cache keyed by normalized levels,
+source/provider/license/attribution envelope and existing modeled-weather
+limitations. Provider failures remain unavailable/503.

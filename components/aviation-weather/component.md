@@ -1,6 +1,6 @@
 ---
 namespace: aviation
-version: 0.2.0
+version: 0.3.0
 display_name: Aviation weather
 profiles:
   - library
@@ -8,7 +8,7 @@ profiles:
 sample: false
 provides:
   - name: aviation.weather
-    version: 0.2.0
+    version: 0.3.0
     interface:
       uri: interfaces/weather.md
       pin: null
@@ -106,3 +106,21 @@ products with a parsed METAR summary.
 - **THEN** the common capability validates and acquires the exact JSON product
 - **AND** the application retains full returned forecasts, available/no-reports
   status, provider attribution and explicit partial failures
+
+### Requirement: Pressure-level forecasts have one provider owner
+
+The capability SHALL own fixed-origin Open-Meteo pressure-level request planning
+and acquisition, with the exact bounded inputs, variable ordering, units, UTC
+offset and aligned-array rules in the public interface. It SHALL preserve raw
+provider data and first-occurrence level order, reject unit drift and boolean
+numeric impostors, and never convert pressure surfaces into fixed flight
+altitudes or imply observed winds. Applications MAY retain generic transport,
+cache, provenance and presentation. Existing surface/daily/hourly operations and
+their query spellings, defaults and fallback behavior SHALL remain unchanged.
+
+#### Scenario: A pilot requests modeled winds aloft
+
+- **WHEN** the application requests the supported pressure levels and bounded hours
+- **THEN** common weather plans and validates the exact provider product once
+- **AND** the application preserves source units, nulls and modeled-data limitations
+  without substituting observations, interpolation or stale success

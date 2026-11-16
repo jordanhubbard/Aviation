@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Weather: share modeled pressure-level forecast planning and acquisition in both SDK bindings, preserve raw data/cache semantics, and reject unexpected provider units rather than relabeling them (#484).
+
 - Weather: share fixed-product AWC JSON acquisition across TypeScript and Python; Flight Planner retains complete raw METAR/TAF/advisory reports, provider attribution, bounded cache and explicit partial failures (#482).
 
 - Flight Track Analyzer: reuse the shared shortest-heading separation for wind-leg clustering while retaining sorted greedy selection and measured-flight confidence policy (#442).
