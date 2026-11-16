@@ -114,3 +114,23 @@ tolerance.
   SDK workflow changes
 - **THEN** TypeScript, Python, and Go common-SDK jobs run independently and any failed or
   skipped required realization prevents a green workflow
+
+
+## Requirement: Finite route-segment projection agrees
+
+### Scenario: A projection falls inside or outside the segment
+
+- **WHEN** an equatorial point projects onto the arc interior or beyond either end
+- **THEN** all realizations return the declared cross-track/nearest-end distance and
+  clamped progress, including a zero-length segment
+
+### Scenario: A segment crosses the anti-meridian or reaches the pole
+
+- **WHEN** longitude wrap or polar geometry is encountered
+- **THEN** every realization passes the same closed-form spherical vectors
+
+### Scenario: A segment is ambiguous or has invalid coordinates
+
+- **WHEN** endpoints are antipodal within the declared tolerance, or any coordinate
+  is non-finite or outside its domain
+- **THEN** projection fails explicitly, without an arbitrary point or successful NaN

@@ -408,6 +408,183 @@
       "operation": "mach_to_tas",
       "args": [-0.1, 5000],
       "expected_error": "invalid_input"
-    }
+    },
+    {
+      "id": "on-equator-segment_distance_nm",
+      "operation": "segment_distance_nm",
+      "args": [0, 5, 0, 0, 0, 10],
+      "expected": 0.0,
+      "absolute_tolerance": 1e-06
+    },
+    {
+      "id": "on-equator-segment_along_nm",
+      "operation": "segment_along_nm",
+      "args": [0, 5, 0, 0, 0, 10],
+      "expected": 300.2023036630937,
+      "absolute_tolerance": 1e-06
+    },
+    {
+      "id": "north-interior-segment_distance_nm",
+      "operation": "segment_distance_nm",
+      "args": [1, 5, 0, 0, 0, 10],
+      "expected": 60.04046073261873,
+      "absolute_tolerance": 1e-06
+    },
+    {
+      "id": "north-interior-segment_along_nm",
+      "operation": "segment_along_nm",
+      "args": [1, 5, 0, 0, 0, 10],
+      "expected": 300.2023036630937,
+      "absolute_tolerance": 1e-06
+    },
+    {
+      "id": "before-start-segment_distance_nm",
+      "operation": "segment_distance_nm",
+      "args": [0, -2, 0, 0, 0, 10],
+      "expected": 120.08092146523747,
+      "absolute_tolerance": 1e-06
+    },
+    {
+      "id": "before-start-segment_along_nm",
+      "operation": "segment_along_nm",
+      "args": [0, -2, 0, 0, 0, 10],
+      "expected": 0.0,
+      "absolute_tolerance": 1e-06
+    },
+    {
+      "id": "after-end-segment_distance_nm",
+      "operation": "segment_distance_nm",
+      "args": [0, 12, 0, 0, 0, 10],
+      "expected": 120.08092146523747,
+      "absolute_tolerance": 1e-06
+    },
+    {
+      "id": "after-end-segment_along_nm",
+      "operation": "segment_along_nm",
+      "args": [0, 12, 0, 0, 0, 10],
+      "expected": 600.4046073261874,
+      "absolute_tolerance": 1e-06
+    },
+    {
+      "id": "zero-length-segment_distance_nm",
+      "operation": "segment_distance_nm",
+      "args": [0, 2, 0, 0, 0, 0],
+      "expected": 120.08092146523747,
+      "absolute_tolerance": 1e-06
+    },
+    {
+      "id": "zero-length-segment_along_nm",
+      "operation": "segment_along_nm",
+      "args": [0, 2, 0, 0, 0, 0],
+      "expected": 0.0,
+      "absolute_tolerance": 1e-06
+    },
+    {
+      "id": "anti-meridian-segment_distance_nm",
+      "operation": "segment_distance_nm",
+      "args": [1, 180, 0, 170, 0, -170],
+      "expected": 60.04046073261873,
+      "absolute_tolerance": 1e-06
+    },
+    {
+      "id": "anti-meridian-segment_along_nm",
+      "operation": "segment_along_nm",
+      "args": [1, 180, 0, 170, 0, -170],
+      "expected": 600.4046073261874,
+      "absolute_tolerance": 1e-06
+    },
+    {
+      "id": "reversed-segment_distance_nm",
+      "operation": "segment_distance_nm",
+      "args": [1, 5, 0, 10, 0, 0],
+      "expected": 60.04046073261873,
+      "absolute_tolerance": 1e-06
+    },
+    {
+      "id": "reversed-segment_along_nm",
+      "operation": "segment_along_nm",
+      "args": [1, 5, 0, 10, 0, 0],
+      "expected": 300.2023036630937,
+      "absolute_tolerance": 1e-06
+    },
+    {
+      "id": "polar-arc-segment_distance_nm",
+      "operation": "segment_distance_nm",
+      "args": [90, 0, 80, -90, 80, 90],
+      "expected": 0.0,
+      "absolute_tolerance": 1e-06
+    },
+    {
+      "id": "polar-arc-segment_along_nm",
+      "operation": "segment_along_nm",
+      "args": [90, 0, 80, -90, 80, 90],
+      "expected": 600.4046073261874,
+      "absolute_tolerance": 1e-06
+    },
+    {
+      "id": "antipodal-segment_distance_nm",
+      "operation": "segment_distance_nm",
+      "args": [1, 1, 0, 0, 0, 180],
+      "expected_error": "invalid_input"
+    },
+    {
+      "id": "antipodal-segment_along_nm",
+      "operation": "segment_along_nm",
+      "args": [1, 1, 0, 0, 0, 180],
+      "expected_error": "invalid_input"
+    },
+    {
+      "id": "near-antipodal-segment_distance_nm",
+      "operation": "segment_distance_nm",
+      "args": [1, 1, 0, 0, 0, 179.999999],
+      "expected_error": "invalid_input"
+    },
+    {
+      "id": "near-antipodal-segment_along_nm",
+      "operation": "segment_along_nm",
+      "args": [1, 1, 0, 0, 0, 179.999999],
+      "expected_error": "invalid_input"
+    },
+    {
+      "id": "invalid-point-segment_distance_nm",
+      "operation": "segment_distance_nm",
+      "args": [91, 0, 0, 0, 0, 10],
+      "expected_error": "invalid_input"
+    },
+    {
+      "id": "invalid-point-segment_along_nm",
+      "operation": "segment_along_nm",
+      "args": [91, 0, 0, 0, 0, 10],
+      "expected_error": "invalid_input"
+    },
+    {
+      "id": "invalid-start-segment_distance_nm",
+      "operation": "segment_distance_nm",
+      "args": [0, 0, 0, -181, 0, 10],
+      "expected_error": "invalid_input"
+    },
+    {
+      "id": "invalid-start-segment_along_nm",
+      "operation": "segment_along_nm",
+      "args": [0, 0, 0, -181, 0, 10],
+      "expected_error": "invalid_input"
+    },
+    {
+      "id": "invalid-end-segment_distance_nm",
+      "operation": "segment_distance_nm",
+      "args": [0, 0, 0, 0, -91, 10],
+      "expected_error": "invalid_input"
+    },
+    {
+      "id": "invalid-end-segment_along_nm",
+      "operation": "segment_along_nm",
+      "args": [0, 0, 0, 0, -91, 10],
+      "expected_error": "invalid_input"
+    },
+    {"id": "roundoff-antipodal-point-distance", "operation": "distance_nm", "args": [-44.996, 0, 44.996, 180], "expected": 10807.282931871372, "absolute_tolerance": 1e-06},
+    {"id": "start-antipode-segment_distance_nm", "operation": "segment_distance_nm", "args": [44.996, 180, -44.996, 0, -44, 1], "expected": 10733.731018917699, "absolute_tolerance": 1e-06},
+    {"id": "start-antipode-segment_along_nm", "operation": "segment_along_nm", "args": [44.996, 180, -44.996, 0, -44, 1], "expected": 73.5519129536734, "absolute_tolerance": 1e-06},
+    {"id": "end-antipode-segment_distance_nm", "operation": "segment_distance_nm", "args": [44, -179, -44.996, 0, -44, 1], "expected": 10733.731018917699, "absolute_tolerance": 1e-06},
+    {"id": "end-antipode-segment_along_nm", "operation": "segment_along_nm", "args": [44, -179, -44.996, 0, -44, 1], "expected": 0, "absolute_tolerance": 1e-06}
   ]
 }

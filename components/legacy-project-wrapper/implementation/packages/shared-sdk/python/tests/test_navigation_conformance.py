@@ -11,6 +11,10 @@ CONTRACT = load_conformance_contract("navigation")
 
 OPERATIONS = {
     "distance_nm": navigation.distance_nm,
+    "segment_distance_nm": lambda *args: navigation.project_point_to_segment_nm(*args)[
+        0
+    ],
+    "segment_along_nm": lambda *args: navigation.project_point_to_segment_nm(*args)[1],
     "initial_bearing": navigation.initial_bearing,
     "headwind_component": lambda wind_direction, wind_speed, course: navigation.wind_components(
         wind_direction, wind_speed, course
@@ -103,3 +107,15 @@ def test_component_vectors() -> None:
             actual,
             vector["expected"],
         )
+
+
+def test_segment_projection_nonfinite_input():
+    for invalid in (math.nan, math.inf, -math.inf):
+        for index in range(6):
+            args = [1.0, 5.0, 0.0, 0.0, 0.0, 10.0]
+            args[index] = invalid
+            try:
+                navigation.project_point_to_segment_nm(*args)
+            except ValueError:
+                continue
+            raise AssertionError("Nonfinite segment coordinate was accepted")

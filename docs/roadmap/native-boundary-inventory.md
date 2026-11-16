@@ -12,13 +12,13 @@ native Component or prove its acceptance contract is complete.
 
 The pre-adoption revision `f68efb8273508c74fbc3cd710e8f0ae1bc4a8d39` had
 1,409 tracked files. The original first pass preserved those paths and established
-the wrapper baseline. The current retained baseline is main revision
+the wrapper baseline. The historical promoted-contract baseline is main revision
 `48eef19044ef49d4eb88bae731c2d63f2731475a`, with 20 committed parent Component
 locks and 644 retained qualification checks. Its receipt identity is
 `sha256:45699a54c0ce002480725333dbec74c48c029295c245e4d45037a315f3cae261`.
 It maps all 12 application directories and 10 shared package directories.
 The [18-Component evidence matrix](../../verification/qualifications/promoted-components-20261116.json)
-binds every promoted aviation Component's lock and independent oracle bytes to its
+binds every promoted aviation Component's lock and independent oracle bytes at that baseline to its
 realization adapters. Exact-main Common Aviation SDK run
 [43812548093](https://github.com/jordanhubbard/Aviation/actions/runs/43812548093)
 passed TypeScript, Python, JVM and Go jobs for this baseline. This proves the retained
@@ -31,6 +31,11 @@ projection is scoped to that child; the parent SDK and deployed applications sti
 use retained compatibility exports. Consumer qualification and cutover are separate. The
 [native qualification record](../native-service-health-qualification.md) records
 actual results and the upstream importer prerequisite.
+
+The later [route-segment navigation boundary](../navigation-segment-boundary.md)
+adds common segment projection and application delegation. Its own source/lock and
+acceptance evidence must qualify that increment; the earlier matrix does not qualify
+new operations automatically. The full duplication inventory remains open.
 
 ## Application boundaries
 
