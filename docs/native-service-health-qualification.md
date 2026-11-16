@@ -60,8 +60,11 @@ check now enforces that contract without changing valid aliases or error types.
 The independently owned and bundled parity vectors both grow from 19 to 26 cases:
 five direct/padded/case-varied unknown status strings and two report constructions.
 
-The focused JavaScript suite failed six cases before the fix and passes all 27
-checks afterward (26 parity cases plus schema validation). Python passes all 26
+The focused SDK JavaScript suite failed six cases before the fix and passes all 27
+checks afterward (26 parity cases plus schema validation). The independent
+Component-owned retained TypeScript candidate uses the same own-property correction
+and passes the same 27 checks plus its CJS/ESM/declaration build; CI exposed
+its separate copy before merge. Python passes all 26
 parity cases. Both compiled package formats build; actual root and subpath imports
 pass in CJS and ESM with their own exported error-class identity. These observations
 qualify the retained fix only. The registered native child's earlier 19-case
