@@ -18,6 +18,13 @@ def test_track_wind_components_delegate_to_sdk() -> None:
     assert "def _wind_components" not in source
 
 
+def test_wind_leg_separation_delegates_to_sdk() -> None:
+    source = (FLIGHTLAB / "wind.py").read_text()
+    assert "from aviation.navigation import heading_difference" in source
+    assert "heading_difference(k, h)" in source
+    assert "360 - abs(h - k)" not in source
+
+
 def test_reported_wind_components_delegate_to_sdk() -> None:
     source = (FLIGHTLAB / "poh.py").read_text()
     assert "wind_components" in source

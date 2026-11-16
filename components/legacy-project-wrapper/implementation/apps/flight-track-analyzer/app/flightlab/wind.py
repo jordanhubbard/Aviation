@@ -16,6 +16,8 @@ from __future__ import annotations
 import numpy as np
 from scipy.optimize import least_squares
 
+from aviation.navigation import heading_difference
+
 MIN_SAMPLES = 90
 MIN_LEG_S = 60
 
@@ -63,7 +65,7 @@ def _distinct_headings(legs, sep=40.0):
     hs = sorted(np.degrees(np.arctan2(l[0], l[1])) % 360 for l in legs)
     kept = []
     for h in hs:
-        if all(min(abs(h - k), 360 - abs(h - k)) >= sep for k in kept):
+        if all(abs(heading_difference(k, h)) >= sep for k in kept):
             kept.append(h)
     return len(kept)
 

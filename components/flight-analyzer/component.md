@@ -188,3 +188,20 @@ routes fail closed.
 With a Performance reference read delayed, navigate to Flights before releasing
 the response. Both a successful late response and a failed late response must leave
 the Flights view selected and displayed; its uploaded flights remain deletable.
+
+### Requirement: Analyzer heading separation uses common navigation
+
+Flight Track Analyzer SHALL obtain shortest angular separation from
+`aviation.navigation.heading_difference`. It SHALL retain sorted greedy
+representative selection, an inclusive configurable separation threshold, and
+its measured-flight fitting and confidence rules as application policy.
+The shared operation's floating-point normalization is authoritative, including
+threshold-edge rounding; compatibility does not require bit-identical private
+arithmetic at sub-ULP boundaries.
+
+#### Scenario: Wind legs straddle true north
+
+- **WHEN** measured wind legs include headings on either side of zero degrees
+- **THEN** common shortest-turn geometry determines their separation
+- **AND** clustering preserves the analyzer's sorting, threshold and greedy selection
+  behavior for wraparound, opposite and threshold-adjacent headings
