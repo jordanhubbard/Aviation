@@ -405,3 +405,24 @@ Set `AVIATION_OFFLINE_EVIDENCE_DIR` to choose the retained output location. Thes
 runners require the installed Playwright Chromium build; they do not install or
 launch a system browser. Source acquisition/availability and controlled failure
 injection are recorded as separate evidence, and neither proves receiver hardware.
+
+The **Cockpit receiver** page connects explicitly to the operator-run bridge.
+Opening the page makes no receiver requests. Enter the bridge origin and operator
+token, then connect for one snapshot; monitoring every two seconds is opt-in.
+Start/stop controls use the listener's existing source restrictions. Disconnecting
+clears page credentials and telemetry. Reports keep separate sources, receipt age,
+ownship GPS validity, pressure altitude and geometric datum; a failed refresh or
+aging snapshot is shown as last known. Tokens and receiver telemetry are excluded
+from persistent browser storage and general AI explanations. Receiver weather
+products and actual hardware qualification remain incomplete.
+
+`npm run test:cockpit` is a desktop/mobile native-bridge acceptance runner. Set
+`AVIATION_COCKPIT_BASE_URL` to the served frontend, `AVIATION_COCKPIT_BRIDGE_URL`
+to a fresh isolated IPv4 loopback bridge and `AVIATION_COCKPIT_TOKEN` to its operator
+credential; optionally set `AVIATION_COCKPIT_EVIDENCE_DIR`. The bridge must allow
+that frontend origin and use UDP bind/source `127.0.0.1`; start with no UDP listener.
+The runner refuses an already running/populated bridge, explicitly controls its
+listener and sends conformance packets from two local UDP sources. It verifies
+GPS/datum/source separation, stale states, opt-in polling, private disconnection,
+layout and browser errors. This is software integration evidence, not receiver
+hardware evidence. Use an installed managed Chromium through Playwright.

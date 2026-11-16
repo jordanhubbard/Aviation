@@ -73,6 +73,29 @@ caches contain only the build's explicit public HTML/JS/CSS/assets, never API da
 request credentials, user route data or private documents. A failed shell install
 must leave the previous shell usable.
 
+## Cockpit receiver page
+
+The planner exposes a discoverable cockpit page for an explicitly configured local
+bridge URL and operator token. Opening it must not contact a receiver or start
+polling. Connecting reads one snapshot; repeated refresh is a separate opt-in.
+Start/stop buttons operate the already configured listener, never discover devices
+or change source restrictions. Keep credentials only in page memory, clear them
+on disconnect/navigation, omit cookies, reject redirects and bound request time.
+Require HTTPS except for loopback HTTP; explain origin allowlisting and browser
+local-network permission instead of weakening bridge access control.
+
+Display listening/connection/error state, UTC receipt times and report ages.
+A saved snapshot continues aging locally; failed refresh or disconnected telemetry
+must never remain labeled live. Preserve separate receiver sources and session IDs,
+ownship GPS validity, traffic identity/address type and quality/reference fields.
+Pressure altitude and geometric altitude/datum stay explicitly distinct, with
+unknown/invalid values visible. Keep full normalized report details accessible.
+Receiver reports are advisory and incomplete; weather decoding remains unavailable.
+Private receiver telemetry is excluded from general AI explanations and shell caches.
+Desktop/mobile verification must exercise explicit connection, refresh, start/stop,
+opt-in polling, disconnection and stale/invalid/error states, without claiming
+hardware acceptance from loopback test packets.
+
 ## Local receiver bridge
 
 An operator-run local process receives UDP packets from an explicitly configured

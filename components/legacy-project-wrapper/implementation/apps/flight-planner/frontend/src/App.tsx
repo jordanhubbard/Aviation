@@ -21,6 +21,7 @@ const AirportsPage = lazy(() => import('./pages/AirportsPage'))
 const AircraftLibraryPage = lazy(() => import('./pages/AircraftLibraryPage'))
 const ChartsPage = lazy(() => import('./pages/ChartsPage'))
 const OfflinePage = lazy(() => import('./pages/OfflinePage'))
+const CockpitPage = lazy(() => import('./pages/CockpitPage'))
 
 function MissingRoute() {
   const location = useLocation()
@@ -76,7 +77,7 @@ function App() {
     application: 'Flight Planner',
     decision: 'Displayed planning, weather and airport results',
     page: window.location.pathname,
-    displayedFacts: window.location.pathname.startsWith('/aircraft-library') ? 'Private aircraft documents are excluded from general explanations.' : (document.querySelector('main')?.textContent ?? '').slice(0, 3500),
+    displayedFacts: ['/aircraft-library', '/cockpit'].some((path) => window.location.pathname.startsWith(path)) ? 'Private aircraft documents and receiver telemetry are excluded from general explanations.' : (document.querySelector('main')?.textContent ?? '').slice(0, 3500),
   }), 'Explain the displayed aviation information and its limitations using the supplied facts.'), [])
   const [themeMode, setThemeMode] = useState<'light' | 'dark' | 'night' | 'high-contrast'>('light');
 
@@ -221,6 +222,7 @@ function App() {
                   <Route path="/aircraft-library" element={<AircraftLibraryPage />} />
                   <Route path="/charts" element={<ChartsPage />} />
                   <Route path="/offline" element={<OfflinePage />} />
+                  <Route path="/cockpit" element={<CockpitPage />} />
                   <Route path="*" element={<MissingRoute />} />
                 </Routes>
               </motion.div>

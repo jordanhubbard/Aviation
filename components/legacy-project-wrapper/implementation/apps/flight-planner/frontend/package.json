@@ -18,10 +18,12 @@
     "e2e:ui": "playwright test --project=chromium --ui",
     "preview": "vite preview",
     "test:offline": "node e2e/offline-acceptance.mjs",
-    "test:offline-failures": "node e2e/offline-failures.mjs"
+    "test:offline-failures": "node e2e/offline-failures.mjs",
+    "test:cockpit": "node e2e/cockpit-acceptance.mjs"
   },
   "dependencies": {
     "@aviation/ai-explainer": "workspace:*",
+    "@aviation/g1000-avionics-sdk": "workspace:*",
     "@aviation/shared-sdk": "workspace:*",
     "@emotion/react": "^11.11.1",
     "@emotion/styled": "^11.11.0",
