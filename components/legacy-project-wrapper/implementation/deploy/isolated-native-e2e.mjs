@@ -1,10 +1,13 @@
 #!/usr/bin/env node
 /** Exercise the exact deployed KMLab tree through a throwaway remote process. */
+import { ensureBrowserRuntime } from './browser-runtime.mjs';
 import { spawn, spawnSync } from 'node:child_process';
 import { createServer } from 'node:net';
 import { randomBytes } from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 import { createE2ERunId, createE2ELease, e2eHostDeadlineCommand, E2E_MAX_AGE_MS } from '@aviation/shared-sdk/e2e';
+
+await ensureBrowserRuntime();
 
 const appId = process.argv[2];
 if (appId !== 'flight-track-analyzer') throw new Error(`No native E2E runtime for ${appId || '(missing app)'}`);
@@ -68,7 +71,7 @@ try {
   }
   if (!ready) throw new Error(`KMLab isolated process did not become ready: ${remoteOutput}`);
   const result = await new Promise(resolve => {
-    const browserRun = spawn('node', ['deploy/remote-e2e.mjs', appId], {
+    const browserRun = spawn(process.execPath, ['deploy/remote-e2e.mjs', appId], {
       cwd: fileURLToPath(new URL('..', import.meta.url)), stdio: 'inherit',
       env: { ...process.env, AVIATION_E2E_SECRET: secret, AVIATION_E2E_RUN_ID: runId,
         AVIATION_E2E_BASE_URL: `http://127.0.0.1:${localPort}` },

@@ -5,6 +5,28 @@ import { describe, expect, it } from 'vitest';
 import { traceE2EBrowser } from '../tracing.js';
 
 describe('remote E2E trace capture', () => {
+  it('still closes every context and browser when trace capture fails', async () => {
+    const root = mkdtempSync(join(tmpdir(), 'aviation-e2e-trace-'));
+    const events: string[] = [];
+    let next = 0;
+    const browser = {
+      newContext: async () => {
+        const number = ++next;
+        return {
+          tracing: { start: async () => {}, stop: async () => { throw new Error(`trace-${number}`); } },
+          newPage: async () => ({}), close: async () => { events.push(`context-${number}`); },
+        };
+      },
+      close: async () => { events.push('browser'); },
+    };
+    try {
+      const traced = traceE2EBrowser(browser, 'flight-planner', root);
+      await traced.newContext(); await traced.newContext();
+      await expect(traced.close()).rejects.toThrow('E2E browser cleanup failed');
+      expect(events).toEqual(['context-1', 'context-2', 'browser']);
+    } finally { rmSync(root, { recursive: true, force: true }); }
+  });
+
   it('records and closes a context created through newPage', async () => {
     const root = mkdtempSync(join(tmpdir(), 'aviation-e2e-trace-'));
     const events: string[] = [];

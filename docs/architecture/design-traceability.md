@@ -1,6 +1,6 @@
 # Design traceability
 
-<!-- literate-ai:authority-reviewed sha256:46ba8b5ec76cab9b90fc8830daa15c2c961f20efac4c775164cfbb5887925794 -->
+<!-- literate-ai:authority-reviewed sha256:0b7b18fa3e1801d0f3b763238342e36b935fed2e777540d535f117ca8638d731 -->
 
 [Project guide](../README.md) → design traceability
 
@@ -60,3 +60,15 @@ weather, preflight, school dispatch and mission consumers. Its shared browser pr
 to Meta App and uses the public gateway; provider adapters remain in the planner.
 Browser fixtures and cross-application lifecycle assertions are repository harness
 code, not portable SDK contracts or evidence of live provider availability.
+
+Browser deployment qualification owns its launched browser server. After trace,
+context, and run-data cleanup, graceful browser shutdown has a five-second budget;
+a timeout kills only that server's process tree and must await confirmed exit.
+Failed process cleanup fails qualification. Signals retain a nonzero exit and
+close the owned server. Phase timings distinguish trace, context, native process,
+and driver boundaries. The enclosing 180-second isolated-run deadline and lease
+ownership checks remain required. Browser workers select tested Node 22/24 LTS
+runtimes before creating leases or fixtures and preserve interruption status
+when delegating. These are retained runtime adapters, outside
+the portable E2E Component. Ingress policy and cold-navigation acceptance are
+documented in `components/legacy-project-wrapper/implementation/deploy/README.md`.

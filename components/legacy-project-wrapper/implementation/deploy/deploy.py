@@ -235,7 +235,10 @@ TimeoutStartSec=0
 WantedBy=multi-user.target
 """
     gateway_port = next(item['port'] for item in config['apps'] if item['name'] == 'meta-app')
-    caddy = f"{hostname}.{domain} {{\n\tencode zstd gzip\n\treverse_proxy 127.0.0.1:{gateway_port}\n}}\n"
+    # The deployed Caddy's HTTP/3 listener can accept QUIC after reload yet stall
+    # request streams. Clear its advertisement for our hosts; preserve HTTP/2
+    # and avoid changing the protocols of unrelated sites on the shared server.
+    caddy = f"{hostname}.{domain} {{\n\tencode zstd gzip\n\theader Alt-Svc clear\n\treverse_proxy 127.0.0.1:{gateway_port}\n}}\n"
     (dest / "service.unit").write_text(unit)
     (dest / "site.caddy").write_text(caddy)
     (dest / "volumes.txt").write_text("\n".join(v.split(":", 1)[0] for v in app.get("volumes", [])) + "\n")

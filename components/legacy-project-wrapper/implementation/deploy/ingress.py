@@ -37,6 +37,10 @@ def configure(config, *, root=Path('/etc/caddy'), run=subprocess.run, open_url=u
         replaced, count = re.subn(proxy, rf'\g<1>127.0.0.1:{gateway_port}\g<2>', block.group())
         if count != 1:
             raise RuntimeError(f"Unrecognized ingress configuration for {host}")
+        # Keep this policy aligned with freshly rendered app sites. Replace only
+        # our directive, retaining other installed site configuration verbatim.
+        replaced = re.sub(r'(?m)^[ \t]*header Alt-Svc clear[ \t]*\n', '', replaced)
+        replaced = replaced.replace('{', '{\n\theader Alt-Svc clear', 1)
         updated = current[:block.start()] + replaced + current[block.end():]
         changes[site] = (original, updated)
     changed = {path: pair for path, pair in changes.items() if pair[0] != pair[1]}
