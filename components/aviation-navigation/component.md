@@ -1,6 +1,6 @@
 ---
 namespace: aviation
-version: 0.3.0
+version: 0.4.0
 display_name: Aviation navigation
 profiles:
   - library
@@ -8,7 +8,7 @@ profiles:
 sample: false
 provides:
   - name: aviation.navigation
-    version: 0.3.0
+    version: 0.4.0
     interface:
       uri: interfaces/navigation.md
       pin: null
@@ -126,3 +126,31 @@ formulas for these operations.
 
 - **WHEN** a display needs the signed difference between heading and track
 - **THEN** it calls `aviation.navigation` and retains only pixel scaling and styling
+
+
+### Requirement: Route corridor geometry has one common owner
+
+The capability SHALL project a valid WGS-84 point onto the nearest point of a minor
+great-circle segment, returning non-negative distance from the segment and clamped
+along-segment distance in nautical miles. It SHALL use the common spherical nautical
+mile radius. It SHALL select the nearer endpoint outside the segment, prefer the
+start endpoint on an exact tie, and treat a zero-length segment as its start point.
+Segments within 1e-7 radians of antipodal SHALL fail explicitly because the minor
+arc is ambiguous. Applications retain route-leg iteration, station selection and
+route-progress tie policy; they SHALL NOT implement the spherical projection.
+
+#### Scenario: A weather station lies beside an intermediate route leg
+
+- **WHEN** a station is projected inside a valid minor great-circle route leg
+- **THEN** the common capability supplies cross-track distance and along-leg progress
+  while the application selects and orders stations
+
+#### Scenario: A point projects beyond an endpoint or across the anti-meridian
+
+- **WHEN** the nearest point is an endpoint or the segment crosses longitude wrap
+- **THEN** all realizations return the same bounded nearest-point distances
+
+#### Scenario: A route leg does not identify a unique minor arc
+
+- **WHEN** segment endpoints are antipodal within the declared angular tolerance
+- **THEN** every realization rejects the operation instead of choosing an arbitrary arc

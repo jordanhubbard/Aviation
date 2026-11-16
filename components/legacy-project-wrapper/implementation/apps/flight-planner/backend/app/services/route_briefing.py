@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import math
 from datetime import datetime
 
 from aviation import navigation as nav
@@ -14,10 +13,8 @@ def route_legs(points):
     legs, progress = [], 0.0
     for a, b in zip(points, points[1:]):
         length = nav.distance_nm(*a, *b)
-        if length / nav.EARTH_RADIUS_NM >= math.pi - 1e-7:
-            raise ValueError(
-                "Antipodal route leg is ambiguous; add an intermediate waypoint"
-            )
+        # Reject ambiguous minor arcs through the common geometry contract.
+        nav.project_point_to_segment_nm(*a, *a, *b)
         legs.append((a, b, length, nav.initial_bearing(*a, *b), progress))
         progress += length
     return legs, progress
@@ -26,20 +23,7 @@ def route_legs(points):
 def nearest_route(lat, lon, legs):
     best = None
     for index, (a, b, length, bearing, progress) in enumerate(legs):
-        delta = nav.distance_nm(*a, lat, lon) / nav.EARTH_RADIUS_NM
-        theta = math.radians(nav.initial_bearing(*a, lat, lon) - bearing)
-        along = (
-            math.atan2(math.sin(delta) * math.cos(theta), math.cos(delta))
-            * nav.EARTH_RADIUS_NM
-        )
-        if length > 1e-9 and 0 <= along <= length:
-            distance = (
-                abs(math.asin(max(-1.0, min(1.0, math.sin(delta) * math.sin(theta)))))
-                * nav.EARTH_RADIUS_NM
-            )
-        else:
-            start, end = nav.distance_nm(*a, lat, lon), nav.distance_nm(*b, lat, lon)
-            distance, along = (start, 0.0) if start <= end else (end, length)
+        distance, along = nav.project_point_to_segment_nm(lat, lon, *a, *b)
         candidate = (distance, progress + along, index)
         if best is None or candidate < best:
             best = candidate

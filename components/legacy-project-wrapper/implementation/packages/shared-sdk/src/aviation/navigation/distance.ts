@@ -74,7 +74,9 @@ export function haversineDistance(
     Math.cos(phi1) * Math.cos(phi2) *
     Math.sin(deltaLambda / 2) * Math.sin(deltaLambda / 2);
   
-  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  // Clamp roundoff of the internal haversine, after coordinate validation.
+  const boundedA = Math.max(0, Math.min(1, a));
+  const c = 2 * Math.atan2(Math.sqrt(boundedA), Math.sqrt(1 - boundedA));
   
   return R * c;
 }

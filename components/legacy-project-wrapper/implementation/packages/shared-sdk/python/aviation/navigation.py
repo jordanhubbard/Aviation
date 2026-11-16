@@ -97,6 +97,8 @@ def haversine_distance(
         + math.cos(phi1) * math.cos(phi2) * math.sin(delta_lambda / 2) ** 2
     )
 
+    # Valid antipodal coordinates can round this intermediate just above one.
+    a = max(0.0, min(1.0, a))
     c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
 
     return R * c
@@ -224,6 +226,48 @@ def initial_bearing(lat1: float, lon1: float, lat2: float, lon2: float) -> float
 def final_bearing(lat1: float, lon1: float, lat2: float, lon2: float) -> float:
     """Calculate final bearing (back azimuth) at destination."""
     return (initial_bearing(lat2, lon2, lat1, lon1) + 180) % 360
+
+
+def project_point_to_segment_nm(
+    lat: float,
+    lon: float,
+    start_lat: float,
+    start_lon: float,
+    end_lat: float,
+    end_lon: float,
+) -> Tuple[float, float]:
+    """Return (nearest distance, clamped progress) on a minor spherical arc, in NM."""
+    for point in ((lat, lon), (start_lat, start_lon), (end_lat, end_lon)):
+        _validate_coordinate(*point)
+    length = distance_nm(start_lat, start_lon, end_lat, end_lon)
+    if not math.isfinite(length) or length / EARTH_RADIUS_NM >= math.pi - 1e-7:
+        raise ValueError(
+            "Antipodal route leg is ambiguous; add an intermediate waypoint"
+        )
+    start_distance = distance_nm(start_lat, start_lon, lat, lon)
+    delta = start_distance / EARTH_RADIUS_NM
+    theta = math.radians(
+        initial_bearing(start_lat, start_lon, lat, lon)
+        - initial_bearing(start_lat, start_lon, end_lat, end_lon)
+    )
+    along = (
+        math.atan2(math.sin(delta) * math.cos(theta), math.cos(delta)) * EARTH_RADIUS_NM
+    )
+    if length > 1e-9 and 0 <= along <= length:
+        distance = (
+            abs(math.asin(max(-1.0, min(1.0, math.sin(delta) * math.sin(theta)))))
+            * EARTH_RADIUS_NM
+        )
+    else:
+        end_distance = distance_nm(end_lat, end_lon, lat, lon)
+        distance, along = (
+            (start_distance, 0.0)
+            if start_distance <= end_distance
+            else (end_distance, length)
+        )
+    if not math.isfinite(distance) or not math.isfinite(along):
+        raise ValueError("Segment projection has no finite solution")
+    return distance, along
 
 
 def normalize_bearing(bearing: float) -> float:

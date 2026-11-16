@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { loadConformanceContract } from "./conformance-contract.js";
 import {
   distanceNM,
+  projectPointToSegmentNM,
   initialBearing,
   calculateWindComponents,
   calculateWindComponentsFromVector,
@@ -50,6 +51,8 @@ const contract = loadConformanceContract<NavigationVectors>("navigation");
 
 const operations: Record<string, (...args: never[]) => number | string> = {
   distance_nm: distanceNM,
+  segment_distance_nm: ((...args: Parameters<typeof projectPointToSegmentNM>) => projectPointToSegmentNM(...args).distanceFromSegmentNM) as (...args: never[]) => number,
+  segment_along_nm: ((...args: Parameters<typeof projectPointToSegmentNM>) => projectPointToSegmentNM(...args).alongSegmentNM) as (...args: never[]) => number,
   initial_bearing: initialBearing,
   headwind_component: ((
     windDirection: number,
@@ -169,5 +172,16 @@ describe("aviation.navigation Component conformance", () => {
         ).toBeLessThanOrEqual(vector.absolute_tolerance!);
       }
     });
+  }
+});
+
+
+it("rejects every nonfinite segment coordinate", () => {
+  for (const invalid of [NaN, Infinity, -Infinity]) {
+    for (let index = 0; index < 6; index++) {
+      const args: Parameters<typeof projectPointToSegmentNM> = [1, 5, 0, 0, 0, 10];
+      args[index] = invalid;
+      expect(() => projectPointToSegmentNM(...args)).toThrow();
+    }
   }
 });

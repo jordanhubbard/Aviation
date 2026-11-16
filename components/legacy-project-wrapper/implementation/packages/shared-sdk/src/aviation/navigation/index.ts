@@ -36,6 +36,8 @@ export {
   convert,
 } from "./distance.js";
 
+export { projectPointToSegmentNM, type SegmentProjectionNM } from "./segment.js";
+
 // Bearing and heading calculations
 export {
   initialBearing,

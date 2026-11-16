@@ -7,7 +7,7 @@ changing units or conventions.
 | Operation family | Required semantic operations |
 | --- | --- |
 | Coordinates | validate latitude/longitude, normalize longitude, DMS conversion, reversible local tangent-plane projection |
-| Geodesy | great-circle distance, initial/final bearing, midpoint, destination |
+| Geodesy | great-circle distance, initial/final bearing, midpoint, destination, nearest minor great-circle segment projection |
 | Headings | normalize, reciprocal, true/magnetic conversion, shortest signed difference, weighted circular mean, runway designator |
 | Wind | correction angle, corrected heading, ground speed, head/crosswind components from wind-from direction/speed or east/north wind velocity |
 | Time/speed/distance | solve any missing value from the other two; format duration; planning IAS/TAS and ISA Mach conversion |
@@ -18,6 +18,16 @@ changing units or conventions.
 
 - A coordinate is WGS-84 decimal degrees with latitude in `[-90, 90]` and longitude in
   `[-180, 180]` before calculation.
+- Segment projection returns distance from the finite minor great-circle segment and
+  clamped along-segment distance in nautical miles, using radius 3,440.065 NM.
+  Inputs identify the point, start and end in that order, each as latitude/longitude.
+  Zero-length segments select their start; exterior projections select the nearer
+  endpoint, preferring the start on an exact tie. Endpoints separated by at least
+  `pi - 1e-7` radians are ambiguous and rejected. Route-leg selection and corridor
+  widths are application policy. A point antipodal to an endpoint remains valid
+  when the segment itself is unambiguous; internal haversine roundoff must not
+  turn it into an invalid result. All three coordinates use the ordinary WGS-84
+  validation contract; the implementation must reject non-finite results.
 - A bearing or heading result is in `[0, 360)` degrees clockwise from true north.
   A shortest signed heading difference is in `[-180, 180)`, with an exact half-turn
   represented as `-180`. Circular means reject empty, zero-weight, non-finite, or
