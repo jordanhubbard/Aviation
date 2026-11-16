@@ -1,10 +1,13 @@
 #!/usr/bin/env node
 /** Run an exact persistent-app image with a throwaway tagged store, then destroy it. */
+import { ensureBrowserRuntime } from './browser-runtime.mjs';
 import { spawn, spawnSync } from 'node:child_process';
 import { createServer } from 'node:net';
 import { randomBytes } from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 import { createE2ERunId, parseE2ERunId, createE2ELease, classifyE2ELease, e2eNamespaceDeadlineCommand, e2eHostDeadlineCommand, E2E_MAX_AGE_MS } from '@aviation/shared-sdk/e2e';
+
+await ensureBrowserRuntime();
 
 const appId = process.argv[2];
 const runtimes = {
@@ -158,7 +161,7 @@ try {
       await new Promise(resolve => setTimeout(resolve, Math.max(1, lease.expires_at_ms - Date.now()) + 3000));
       throw new Error('Held E2E instance reached its lease deadline');
     }
-    const result = spawnSync('node', ['deploy/remote-e2e.mjs', appId], {
+    const result = spawnSync(process.execPath, ['deploy/remote-e2e.mjs', appId], {
       cwd: fileURLToPath(new URL('..', import.meta.url)), encoding: 'utf8', timeout: 180000,
       env: { ...process.env, AVIATION_E2E_SECRET: secret, AVIATION_E2E_RUN_ID: runId,
         AVIATION_E2E_BASE_URL: `http://127.0.0.1:${localPort}` },

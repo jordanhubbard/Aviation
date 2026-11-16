@@ -188,12 +188,22 @@ python3 components/legacy-project-wrapper/implementation/deploy/deploy.py ingres
 ```
 
 The command first checks every native-host health route through Meta App and verifies
-its namespace header. It then edits only each installed site's loopback proxy target,
-including the native analyzer's legacy inline Caddy block when present. It retains
+its namespace header. It then updates each installed site's loopback proxy target and transport
+advertisement, including the native analyzer's legacy inline Caddy block when present. It retains
 configuration backups under `/etc/caddy/aviation-ingress-*`, validates the complete
 configuration, and reloads Caddy. Validation or reload failure restores the previous
 files and reloads them. Unknown proxy configurations fail before any edits. Repeating
 the command is safe. A normal subsequent app deployment emits the same central route.
+
+Aviation sites send `Alt-Svc: clear`. On the deployed Caddy 2.6.2, a reload can
+leave HTTP/3 accepting QUIC handshakes but never answering script streams. A fresh
+Chrome navigation then stalls module evaluation and deferred controls despite
+healthy application HTTP endpoints. Clear the HTTP/3 advertisement per Aviation
+host, retaining HTTP/2 and HTTP/1.1 and leaving unrelated sites alone. Ingress
+reconciliation applies the same policy to existing sites, with its normal backup
+and rollback. Re-enable HTTP/3 only after a qualified proxy upgrade passes repeated
+first-navigation browser checks immediately after reload. Preserve browser
+readiness assertions and deadlines; a warm retry is not cold-start evidence.
 
 Verify public health responses carry `X-Aviation-Gateway: v1` and the expected
 `X-Aviation-Namespace`. Check native login/forms and live sockets as well as the
@@ -208,3 +218,23 @@ public `/api/meta` revision as well as the running image label; an empty or stal
 application revision fails before browser traffic. Meta App lifecycle qualification
 compares its public catalog and MCP tool schemas to the current checked-in contract,
 including declared additive discovery tools, rather than a fixed version/count.
+
+Browser qualification launches a dedicated Playwright browser server and connects
+its driver explicitly. After contexts and traces close, allow five seconds for
+native graceful shutdown, then kill only that server's owned process tree and
+await exit for up to five seconds. A confirmed forced exit is reported as recovered;
+a failed kill fails the run. SIGINT/SIGTERM/SIGHUP close the same owner and retain
+nonzero interruption status. Structured `aviation/browser-lifecycle@1` records
+include trace, context, process shutdown and connection phase durations. Existing
+screen assertions, fixture residual checks, signed run leases and the 180-second
+isolated controller deadline still apply. Run `node --test deploy/browser-runner.test.mjs`
+for deterministic graceful-stall, kill-failure and connection-failure coverage.
+
+Browser workers require Node 22 or 24 LTS. Entry points reuse a supported current
+runtime or select an installed LTS binary (`node24`, `node22`, or Homebrew's
+versioned installation). Set `AVIATION_E2E_NODE` to select an executable explicitly
+when the current Node is unsupported. Bootstrap forwards interruption signals and
+preserves worker status; isolated children reuse `process.execPath`. Node 26.8.1
+reproducibly stalled large Playwright 1.59.1 trace archives; the same Missions
+lifecycle completed under Node 22.23.4. An unavailable LTS runtime fails with an
+actionable error before creating a run lease or browser.

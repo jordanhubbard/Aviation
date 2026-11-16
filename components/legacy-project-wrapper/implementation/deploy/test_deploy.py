@@ -66,6 +66,7 @@ class VerifyTests(unittest.TestCase):
                 target = Path(directory)
                 deployment.render(app, 'a' * 40, target)
                 self.assertIn(f"reverse_proxy 127.0.0.1:{gateway['port']}", (target / 'site.caddy').read_text())
+                self.assertIn('header Alt-Svc clear', (target / 'site.caddy').read_text())
                 command = next(line.removeprefix('ExecStart=') for line in (target / 'service.unit').read_text().splitlines() if line.startswith('ExecStart='))
                 argv = shlex.split(command)
                 if app['name'] == 'meta-app':
@@ -120,6 +121,8 @@ class VerifyTests(unittest.TestCase):
             self.assertEqual(runner.call_count, 2)
             self.assertIn('reverse_proxy 127.0.0.1:18774', site.read_text())
             self.assertIn('reverse_proxy 127.0.0.1:18774', caddy.read_text())
+            self.assertEqual(site.read_text().count('header Alt-Svc clear'), 1)
+            self.assertEqual(caddy.read_text().count('header Alt-Svc clear'), 1)
             runner.reset_mock()
             def already_ready(request, timeout):
                 return Response('planning' if request.get_header('Host').startswith('planner') else 'analysis')

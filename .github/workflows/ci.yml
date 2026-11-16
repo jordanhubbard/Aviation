@@ -222,6 +222,8 @@ jobs:
         env:
           AVIATION_E2E_LEASE_TEST_IMAGE: aviation-flight-tracker-e2e:lease
         run: python3 -m unittest discover -s deploy -p test_deploy.py
+      - name: Verify bounded browser process ownership and shutdown
+        run: node --test deploy/browser-runner.test.mjs
 
   # Lint and format check
   lint:

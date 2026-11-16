@@ -97,6 +97,9 @@ test('unsafe paths and destinations fail before any upstream request; timeouts b
   assert.throws(() => createGateway({ bindings: { missing: {} } }));
   assert.throws(() => createGateway({ bindings: { planning: { adapter: 'unknown' } } }));
   assert.equal((await fetch(edge + '/api/v1/planning/slow')).status, 504);
+});
+test('MCP rejects oversized responses independently of the short timeout fixture', async t => {
+  const { gateway } = await fixture(t);
   const oversized = await gateway.invoke('planning', { path: '/large' }); assert.equal(oversized.status, 502); assert.match(oversized.body, /response_too_large/);
 });
 test('public v1 stays stable across relocated/versioned upstream and response adaptation', async t => {

@@ -1,11 +1,13 @@
 #!/usr/bin/env node
 // Run against a deployed app or a local production build. AVIATION_E2E_SECRET
 // must match the server; no fixture is created in the production database.
+import { ensureBrowserRuntime } from './browser-runtime.mjs';
 import { existsSync } from 'node:fs';
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { gunzipSync } from 'node:zlib';
 import { chromium } from '@playwright/test';
+import { launchOwnedBrowser } from './browser-runner.mjs';
 import { assertGatewayCatalog, assertGatewayTools } from './gateway-qualification.mjs';
 import { installAviationDataFixtures, exerciseAviationDataPanel } from './aviation-data-qualification.mjs';
 import {
@@ -15,6 +17,8 @@ import {
   createE2ERunId, exerciseE2EFeedback, assertTestDataForRun,
   seedE2EExplanation, exerciseE2EExplanation,
 } from '@aviation/shared-sdk/e2e';
+
+await ensureBrowserRuntime();
 
 const appId = process.argv[2];
 if (!['aviation-accident-tracker', 'aviation-chat', 'preflight-check', 'meta-app',
@@ -154,7 +158,7 @@ const executable = process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH
 
 if (appId === 'flightschool') {
   const existingRunId = parseE2ERunId(process.env.AVIATION_E2E_RUN_ID);
-  const browser = traceE2EBrowser(await chromium.launch({ headless: true, ...(executable ? { executablePath: executable } : {}) }), appId, process.env.AVIATION_E2E_TRACE_DIR);
+  const browser = traceE2EBrowser(await launchOwnedBrowser(chromium, { headless: true, ...(executable ? { executablePath: executable } : {}) }), appId, process.env.AVIATION_E2E_TRACE_DIR);
   try {
     await withApplicationRun(secret, async run => {
       const headers = run.headersFor(appId);
@@ -264,7 +268,7 @@ if (appId === 'flightschool') {
     throw new Error('Missions E2E requires a signed isolated application instance');
   }
   const isolatedRunId = parseE2ERunId(process.env.AVIATION_E2E_RUN_ID);
-  const browser = traceE2EBrowser(await chromium.launch({ headless: true, ...(executable ? { executablePath: executable } : {}) }), appId, process.env.AVIATION_E2E_TRACE_DIR);
+  const browser = traceE2EBrowser(await launchOwnedBrowser(chromium, { headless: true, ...(executable ? { executablePath: executable } : {}) }), appId, process.env.AVIATION_E2E_TRACE_DIR);
   try {
     await withApplicationRun(secret, async run => {
       let adminToken;
@@ -560,7 +564,7 @@ if (appId === 'flightschool') {
 } else if (appId === 'flight-track-analyzer') {
   const isolatedRunId = process.env.AVIATION_E2E_RUN_ID
     ? parseE2ERunId(process.env.AVIATION_E2E_RUN_ID) : undefined;
-  const browser = traceE2EBrowser(await chromium.launch({ headless: true, ...(executable ? { executablePath: executable } : {}) }), appId, process.env.AVIATION_E2E_TRACE_DIR);
+  const browser = traceE2EBrowser(await launchOwnedBrowser(chromium, { headless: true, ...(executable ? { executablePath: executable } : {}) }), appId, process.env.AVIATION_E2E_TRACE_DIR);
   try {
     await withApplicationRun(secret, async run => {
     const kml = gunzipSync(readFileSync(new URL('./e2e-fixtures/kmlab-standard.kml.gz', import.meta.url)));
@@ -754,7 +758,7 @@ if (appId === 'flightschool') {
 } else if (appId === 'flight-planner') {
   const isolatedRunId = process.env.AVIATION_E2E_RUN_ID
     ? parseE2ERunId(process.env.AVIATION_E2E_RUN_ID) : undefined;
-  const browser = traceE2EBrowser(await chromium.launch({ headless: true, ...(executable ? { executablePath: executable } : {}) }), appId, process.env.AVIATION_E2E_TRACE_DIR);
+  const browser = traceE2EBrowser(await launchOwnedBrowser(chromium, { headless: true, ...(executable ? { executablePath: executable } : {}) }), appId, process.env.AVIATION_E2E_TRACE_DIR);
   try {
     await withApplicationRun(secret, async run => {
       if (isolatedRunId) {
@@ -980,7 +984,7 @@ if (appId === 'flightschool') {
   } finally { await browser.close(); }
   console.log(`remote E2E passed: ${appId} (${baseUrl}); browser fixtures removed`);
 } else if (appId === 'foreflight-dashboard') {
-  const browser = traceE2EBrowser(await chromium.launch({ headless: true, ...(executable ? { executablePath: executable } : {}) }), appId, process.env.AVIATION_E2E_TRACE_DIR);
+  const browser = traceE2EBrowser(await launchOwnedBrowser(chromium, { headless: true, ...(executable ? { executablePath: executable } : {}) }), appId, process.env.AVIATION_E2E_TRACE_DIR);
   try {
     await withApplicationRun(secret, async run => {
       const context = await browser.newContext(browserContextOptions);
@@ -1065,7 +1069,7 @@ if (appId === 'flightschool') {
     throw new Error('G1000 settings E2E requires an isolated signed runtime');
   }
   const existingRunId = parseE2ERunId(process.env.AVIATION_E2E_RUN_ID);
-  const browser = traceE2EBrowser(await chromium.launch({ headless: true, ...(executable ? { executablePath: executable } : {}) }), appId, process.env.AVIATION_E2E_TRACE_DIR);
+  const browser = traceE2EBrowser(await launchOwnedBrowser(chromium, { headless: true, ...(executable ? { executablePath: executable } : {}) }), appId, process.env.AVIATION_E2E_TRACE_DIR);
   try {
     await withApplicationRun(secret, async run => {
       const context = await browser.newContext(browserContextOptions);
@@ -1194,7 +1198,7 @@ if (appId === 'flightschool') {
     throw new Error('Flight Tracker E2E requires an isolated signed service instance');
   }
   const existingRunId = parseE2ERunId(process.env.AVIATION_E2E_RUN_ID);
-  const browser = traceE2EBrowser(await chromium.launch({ headless: true, ...(executable ? { executablePath: executable } : {}) }), appId, process.env.AVIATION_E2E_TRACE_DIR);
+  const browser = traceE2EBrowser(await launchOwnedBrowser(chromium, { headless: true, ...(executable ? { executablePath: executable } : {}) }), appId, process.env.AVIATION_E2E_TRACE_DIR);
   try {
     await withApplicationRun(secret, async run => {
       const context = await browser.newContext(browserContextOptions);
@@ -1284,7 +1288,7 @@ if (appId === 'flightschool') {
   console.log(`remote E2E passed: ${appId} (${baseUrl}); real tracked state and SDK fixtures removed`);
 } else if (appId === 'aviation-chat') {
   await withApplicationRun(secret, async run => {
-    const browser = traceE2EBrowser(await chromium.launch({ headless: true,
+    const browser = traceE2EBrowser(await launchOwnedBrowser(chromium, { headless: true,
       ...(executable ? { executablePath: executable } : {}) }), appId, process.env.AVIATION_E2E_TRACE_DIR);
     try {
       const context = await browser.newContext(browserContextOptions);
@@ -1351,7 +1355,7 @@ if (appId === 'flightschool') {
   });
   console.log(`remote E2E passed: ${appId} (${baseUrl}); no persistent fixture created`);
 } else if (appId === 'weather-briefing') {
-  const browser = traceE2EBrowser(await chromium.launch({ headless: true, ...(executable ? { executablePath: executable } : {}) }), appId, process.env.AVIATION_E2E_TRACE_DIR);
+  const browser = traceE2EBrowser(await launchOwnedBrowser(chromium, { headless: true, ...(executable ? { executablePath: executable } : {}) }), appId, process.env.AVIATION_E2E_TRACE_DIR);
   try {
     await withApplicationRun(secret, async run => {
       const context = await browser.newContext(browserContextOptions);
@@ -1425,7 +1429,7 @@ if (appId === 'flightschool') {
   const manifest = JSON.parse(readFileSync(new URL('./apps.json', import.meta.url), 'utf8'));
   const expected = manifest.apps.filter(app => app.launcher_visible !== false)
     .map(app => `https://${app.hostname || app.name}.${manifest.domain}/`);
-  const browser = traceE2EBrowser(await chromium.launch({ headless: true, ...(executable ? { executablePath: executable } : {}) }), appId, process.env.AVIATION_E2E_TRACE_DIR);
+  const browser = traceE2EBrowser(await launchOwnedBrowser(chromium, { headless: true, ...(executable ? { executablePath: executable } : {}) }), appId, process.env.AVIATION_E2E_TRACE_DIR);
   try {
     await withApplicationRun(secret, async run => {
     const context = await browser.newContext(browserContextOptions);
@@ -1497,7 +1501,7 @@ if (appId === 'flightschool') {
   console.log(`remote E2E passed: ${appId} (${baseUrl}); isolated browser closed`);
 } else if (appId === 'preflight-check') {
   if (!isolatedHost || !process.env.AVIATION_E2E_RUN_ID) throw new Error('Preflight E2E requires an isolated signed runtime');
-  const browser = traceE2EBrowser(await chromium.launch({ headless: true, ...(executable ? { executablePath: executable } : {}) }), appId, process.env.AVIATION_E2E_TRACE_DIR);
+  const browser = traceE2EBrowser(await launchOwnedBrowser(chromium, { headless: true, ...(executable ? { executablePath: executable } : {}) }), appId, process.env.AVIATION_E2E_TRACE_DIR);
   try {
     await withApplicationRun(secret, async run => {
       const api = { appId, baseUrl, fetch: async (...args) => {
@@ -1635,7 +1639,7 @@ if (appId === 'flightschool') {
   const api = { appId, baseUrl, fetch };
   const seeded = await seedRemoteFixture(run, api, 'accident', standardE2EFixtures(run.id).accident);
   if (!seeded || typeof seeded !== 'object' || !('id' in seeded)) throw new Error('Seed did not return an event ID');
-  const browser = traceE2EBrowser(await chromium.launch({ headless: true, ...(executable ? { executablePath: executable } : {}) }), appId, process.env.AVIATION_E2E_TRACE_DIR);
+  const browser = traceE2EBrowser(await launchOwnedBrowser(chromium, { headless: true, ...(executable ? { executablePath: executable } : {}) }), appId, process.env.AVIATION_E2E_TRACE_DIR);
   try {
     const page = await browser.newPage(browserContextOptions);
     await installIsolatedFeedbackScript(page);

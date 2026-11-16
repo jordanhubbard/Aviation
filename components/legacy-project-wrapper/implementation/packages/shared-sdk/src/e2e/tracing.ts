@@ -31,19 +31,27 @@ export function traceE2EBrowser<Context extends BrowserContext<Page>, Page>(
     else process.stderr.write(`Retained E2E trace: ${directory}\n`);
   });
   let nextContext = 0;
+  const phase = async (name: string, action: () => Promise<void>) => {
+    const started = performance.now();
+    const report = (status: string) => process.stderr.write(JSON.stringify({
+      schema: 'aviation/browser-lifecycle@1', appId, phase: name, status,
+      elapsedMs: Math.round(performance.now() - started),
+    }) + '\n');
+    report('started');
+    try { await action(); report('completed'); }
+    catch (error) { report('failed'); throw error; }
+  };
   const contexts = new Set<Context>();
   const createContext = async (options?: object): Promise<Context> => {
     const context = await browser.newContext(options);
     const number = ++nextContext;
     await context.tracing.start({ screenshots: true, snapshots: true, sources: true });
     const originalClose = context.close.bind(context);
-    let closed = false;
-    context.close = async () => {
-      if (closed) return;
-      closed = true;
-      try { await context.tracing.stop({ path: join(directory, `context-${number}.zip`) }); }
-      finally { contexts.delete(context); await originalClose(); }
-    };
+    let closing: Promise<void> | undefined;
+    context.close = () => closing ||= (async () => {
+      try { await phase(`context-${number}.trace.stop`, () => context.tracing.stop({ path: join(directory, `context-${number}.zip`) })); }
+      finally { contexts.delete(context); await phase(`context-${number}.close`, originalClose); }
+    })();
     contexts.add(context);
     return context;
   };
@@ -51,8 +59,13 @@ export function traceE2EBrowser<Context extends BrowserContext<Page>, Page>(
     newContext: createContext,
     newPage: async (options?: object) => (await createContext(options)).newPage(),
     close: async () => {
-      for (const context of [...contexts]) await context.close();
-      await browser.close();
+      const errors: unknown[] = [];
+      for (const context of [...contexts]) {
+        try { await context.close(); } catch (error) { errors.push(error); }
+      }
+      try { await phase('browser.close', () => browser.close()); }
+      catch (error) { errors.push(error); }
+      if (errors.length) throw Object.assign(new Error('E2E browser cleanup failed'), { errors });
     },
   };
 }
