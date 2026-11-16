@@ -425,8 +425,12 @@ function segmentsIntersect(a: LatLon, b: LatLon, c: LatLon, d: LatLon): boolean 
 }
 
 export function pointInPolygon(point: LatLon, polygon: LatLon[]): boolean {
+  return polygonContains(point, polygon, pointOnSegment);
+}
+
+function polygonContains(point: LatLon, polygon: LatLon[], onSegment: (p: LatLon, a: LatLon, b: LatLon) => boolean): boolean {
   for (let i = 0; i < polygon.length; i++) {
-    if (pointOnSegment(point, polygon[i], polygon[(i + 1) % polygon.length])) return true;
+    if (onSegment(point, polygon[i], polygon[(i + 1) % polygon.length])) return true;
   }
   const { lat, lon } = point;
   let inside = false;
@@ -598,4 +602,226 @@ export class HazardClient {
     ]);
     return [...sigmets, ...airmets, ...tfrs];
   }
+}
+
+/** Inclusive fractions where a finite linear value satisfies explicit limits. */
+export function linearConstraintInterval(
+  start: number,
+  end: number,
+  lower: number | null,
+  upper: number | null,
+): [number, number] | null {
+  const values = [
+    start,
+    end,
+    ...(lower === null ? [] : [lower]),
+    ...(upper === null ? [] : [upper]),
+  ];
+  if (
+    values.some((v) => typeof v !== 'number' || !Number.isFinite(v)) ||
+    (lower !== null && upper !== null && lower > upper)
+  )
+    throw new HazardValidationError('hazard-constraint-invalid', 'Invalid linear constraint');
+  if (start === end)
+    return (lower === null || start >= lower) && (upper === null || start <= upper) ? [0, 1] : null;
+  let lo = 0,
+    hi = 1;
+  for (const [bound, minimum] of [
+    [lower, true],
+    [upper, false],
+  ] as const) {
+    if (bound === null) continue;
+    const delta = end - start;
+    const t = Number.isFinite(delta)
+      ? (bound - start) / delta
+      : (bound / 2 - start / 2) / (end / 2 - start / 2);
+    if (minimum === end > start) lo = Math.max(lo, t);
+    else hi = Math.min(hi, t);
+  }
+  return lo <= hi ? [lo, hi] : null;
+}
+
+/** Planar GeoJSON clipping, preserving holes and shortest-longitude unwrapping. */
+export function segmentGeometryIntervals(
+  start: LatLon,
+  end: LatLon,
+  geometry: unknown,
+): Array<[number, number]> {
+  start = normalizeCoordinate(start);
+  end = normalizeCoordinate(end);
+  const wrap = (v: number) => (v >= -180 && v < 180 ? v : ((((v + 180) % 360) + 360) % 360) - 180),
+    delta = wrap(end.lon - start.lon);
+  const invalid = () =>
+    new HazardValidationError('hazard-geometry-invalid', 'Invalid or excessive interval geometry');
+  if (Math.abs(delta) === 180) throw invalid();
+  const a = start,
+    b = { lat: end.lat, lon: start.lon + delta },
+    anchor = (a.lon + b.lon) / 2;
+  let budget = 50000,
+    nodeBudget = 50000;
+  const position = (raw: unknown, near = anchor): LatLon => {
+    if (!Array.isArray(raw) || raw.length < 2 || raw.slice(0, 2).some((v) => typeof v !== 'number'))
+      throw invalid();
+    let p: LatLon;
+    try {
+      p = normalizeCoordinate({ lat: raw[1], lon: raw[0] });
+    } catch {
+      throw invalid();
+    }
+    if (--budget < 0) throw invalid();
+    return {
+      lat: p.lat,
+      lon: p.lon - near >= -180 && p.lon - near < 180 ? p.lon : near + wrap(p.lon - near),
+    };
+  };
+  const points = (raw: unknown, ring = false): LatLon[] => {
+    if (!Array.isArray(raw) || !raw.length) throw invalid();
+    const result: LatLon[] = [];
+    let near = anchor;
+    for (const value of raw) {
+      const p = position(value, near);
+      result.push(p);
+      near = p.lon;
+    }
+    if (ring) {
+      if (
+        Math.abs(result[0].lat - result[result.length - 1].lat) > GEOMETRY_EPSILON ||
+        Math.abs(result[0].lon - result[result.length - 1].lon) > GEOMETRY_EPSILON
+      )
+        throw invalid();
+      result.pop();
+      if (new Set(result.map((p) => `${p.lat},${p.lon}`)).size < 3) throw invalid();
+    } else if (result.length < 2) throw invalid();
+    return result;
+  };
+  const onSegment = (p: LatLon, c: LatLon, d: LatLon) => {
+    const length = Math.hypot(d.lon - c.lon, d.lat - c.lat);
+    if (!length)
+      return (
+        Math.abs(p.lon - c.lon) <= GEOMETRY_EPSILON && Math.abs(p.lat - c.lat) <= GEOMETRY_EPSILON
+      );
+    return (
+      Math.abs(orientation(c, d, p)) <= GEOMETRY_EPSILON * length &&
+      p.lon >= Math.min(c.lon, d.lon) - GEOMETRY_EPSILON &&
+      p.lon <= Math.max(c.lon, d.lon) + GEOMETRY_EPSILON &&
+      p.lat >= Math.min(c.lat, d.lat) - GEOMETRY_EPSILON &&
+      p.lat <= Math.max(c.lat, d.lat) + GEOMETRY_EPSILON
+    );
+  };
+  const parameter = (p: LatLon): number | null => {
+    const dx = b.lon - a.lon,
+      dy = b.lat - a.lat,
+      n = dx * dx + dy * dy;
+    if (!n)
+      return Math.abs(p.lon - a.lon) <= GEOMETRY_EPSILON &&
+        Math.abs(p.lat - a.lat) <= GEOMETRY_EPSILON
+        ? 0
+        : null;
+    const t = ((p.lon - a.lon) * dx + (p.lat - a.lat) * dy) / n;
+    return t >= -GEOMETRY_EPSILON && t <= 1 + GEOMETRY_EPSILON && onSegment(p, a, b)
+      ? Math.min(1, Math.max(0, t))
+      : null;
+  };
+  const edge = (c: LatLon, d: LatLon): Array<[number, number]> => {
+    const rx = b.lon - a.lon,
+      ry = b.lat - a.lat,
+      sx = d.lon - c.lon,
+      sy = d.lat - c.lat,
+      den = rx * sy - ry * sx;
+    if (Math.abs(den) <= 1e-14 * Math.hypot(rx, ry) * Math.hypot(sx, sy)) {
+      if (
+        Math.abs(orientation(a, b, c)) > GEOMETRY_EPSILON * Math.hypot(rx, ry) ||
+        Math.abs(orientation(a, b, d)) > GEOMETRY_EPSILON * Math.hypot(rx, ry)
+      )
+        return [];
+      if (!rx && !ry) return onSegment(a, c, d) ? [[0, 1]] : [];
+      const n = rx * rx + ry * ry,
+        ts = [c, d].map((p) => ((p.lon - a.lon) * rx + (p.lat - a.lat) * ry) / n);
+      const lo = Math.max(0, Math.min(...ts)),
+        hi = Math.min(1, Math.max(...ts));
+      return lo <= hi ? [[lo, hi]] : [];
+    }
+    const qx = c.lon - a.lon,
+      qy = c.lat - a.lat,
+      t = (qx * sy - qy * sx) / den,
+      u = (qx * ry - qy * rx) / den;
+    return t >= -GEOMETRY_EPSILON &&
+      t <= 1 + GEOMETRY_EPSILON &&
+      u >= -GEOMETRY_EPSILON &&
+      u <= 1 + GEOMETRY_EPSILON
+      ? [[Math.min(1, Math.max(0, t)), Math.min(1, Math.max(0, t))]]
+      : [];
+  };
+  const ringEdges = (ring: LatLon[]): Array<[LatLon, LatLon]> =>
+    ring.map((p, i) => [p, ring[(i + 1) % ring.length]]);
+  const polygon = (raw: unknown): Array<[number, number]> => {
+    if (!Array.isArray(raw) || !raw.length) throw invalid();
+    const rings = raw.map((r) => points(r, true)),
+      edges = rings.flatMap(ringEdges),
+      contacts = edges.flatMap(([c, d]) => edge(c, d));
+    const cuts = [...new Set([0, 1, ...contacts.flat()])].sort((x, y) => x - y),
+      intervals = [...contacts];
+    for (let i = 0; i < cuts.length - 1; i++) {
+      const lo = cuts[i],
+        hi = cuts[i + 1],
+        t = (lo + hi) / 2,
+        p = { lat: a.lat + (b.lat - a.lat) * t, lon: a.lon + (b.lon - a.lon) * t };
+      if (
+        edges.some(([c, d]) => onSegment(p, c, d)) ||
+        (polygonContains(p, rings[0], onSegment) &&
+          !rings.slice(1).some((h) => polygonContains(p, h, onSegment)))
+      )
+        intervals.push([lo, hi]);
+    }
+    return intervals;
+  };
+  const visit = (value: unknown, depth = 0): Array<[number, number]> => {
+    if (
+      --nodeBudget < 0 ||
+      depth > 16 ||
+      !value ||
+      typeof value !== 'object' ||
+      Array.isArray(value)
+    )
+      throw invalid();
+    const v = value as Record<string, unknown>,
+      kind = v.type,
+      raw = v.coordinates;
+    if (kind === 'Point') {
+      const t = parameter(position(raw));
+      return t === null ? [] : [sameCoordinate(a, b) ? [0, 1] : [t, t]];
+    }
+    if (kind === 'LineString') {
+      const line = points(raw);
+      return line.slice(0, -1).flatMap((p, i) => edge(p, line[i + 1]));
+    }
+    if (kind === 'Polygon') return polygon(raw);
+    const subtype =
+      typeof kind === 'string'
+        ? (
+            {
+              MultiPoint: 'Point',
+              MultiLineString: 'LineString',
+              MultiPolygon: 'Polygon',
+            } as Record<string, string>
+          )[kind]
+        : undefined;
+    if (subtype) {
+      if (!Array.isArray(raw)) throw invalid();
+      return raw.flatMap((item) => visit({ type: subtype, coordinates: item }, depth + 1));
+    }
+    if (kind === 'GeometryCollection') {
+      if (!Array.isArray(v.geometries)) throw invalid();
+      return v.geometries.flatMap((item) => visit(item, depth + 1));
+    }
+    throw invalid();
+  };
+  const intervals = visit(geometry).sort((x, y) => x[0] - y[0] || x[1] - y[1]),
+    result: Array<[number, number]> = [];
+  for (const [lo, hi] of intervals) {
+    if (result.length && lo <= result[result.length - 1][1] + GEOMETRY_EPSILON)
+      result[result.length - 1][1] = Math.max(result[result.length - 1][1], hi);
+    else result.push([lo, hi]);
+  }
+  return result;
 }

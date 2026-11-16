@@ -54,3 +54,6 @@ entrypoints are restored and qualified.
 
 - [Legacy project lift-and-shift decision](decisions/0001-legacy-project-lift-and-shift.md)
 
+
+The [route hazard assessment contract](architecture/route-hazard-assessment.md) defines
+timed altitude-profile assessment, source coverage and uncertainty semantics.

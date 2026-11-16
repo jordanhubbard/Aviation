@@ -39,6 +39,22 @@ test('application aviation data browser acceptance', async t => {
     await panel.getByRole('button', { name: 'Previous page' }).click();
     await panel.getByRole('heading', { name: /Page 1/ }).waitFor();
   });
+  await t.test('assessment handoff retains intermediate airports and follows changing context without fetching', async t => {
+    const { panel, calls } = await setup(t);
+    const link = panel.getByRole('link', { name: 'Open route hazard assessment' });
+    assert.equal(new URL(await link.getAttribute('href')).searchParams.get('airports'), 'KOAK KSFO');
+    await panel.evaluate(node => node.setAttribute('airports', 'KOAK KSFO KSJC'));
+    assert.equal(new URL(await link.getAttribute('href')).searchParams.get('airports'), 'KOAK KSFO KSJC');
+    for (const value of ['KJFK', 'KOAK https://evil.example']) {
+      await panel.getByLabel('Route airports, in order').fill(value);
+      assert.equal(await link.getAttribute('href'), 'https://flight-planner.jordanhubbard.net/route-assessment');
+    }
+    await panel.evaluate(node => node.setAttribute('airports', Array(51).fill('KOAK').join(' ')));
+    assert.equal(await link.getAttribute('href'), 'https://flight-planner.jordanhubbard.net/route-assessment');
+    await panel.getByLabel('Route airports, in order').fill('ksfo,koak;ksjc');
+    assert.equal(new URL(await link.getAttribute('href')).searchParams.get('airports'), 'KSFO KOAK KSJC');
+    assert.equal(calls.length, 0);
+  });
   await t.test('single airport, UTC validity selection and mobile layout', async t => {
     const { page, panel, calls } = await setup(t, {}, { width: 390, height: 844 });
     await panel.evaluate(node => { node.setAttribute('airports', 'SFO'); node.setAttribute('valid-at', '2026-11-14T13:00:00+01:00'); });

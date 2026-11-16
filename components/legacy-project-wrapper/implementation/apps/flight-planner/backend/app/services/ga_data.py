@@ -7,8 +7,9 @@ import io
 import json
 import math
 import zlib
+from concurrent.futures import Future
 from datetime import datetime, timezone
-from threading import RLock
+from threading import RLock, get_ident
 from time import monotonic
 from typing import Any
 
@@ -22,6 +23,7 @@ FAA_AIS = "https://services6.arcgis.com/ssFJjBXIUyZDrSYZ/arcgis/rest/services/"
 _CACHE: dict[tuple, tuple[float, Any, int]] = {}
 _MAX_CACHE_WEIGHT = 64 * 1024 * 1024
 _LOCK = RLock()
+_INFLIGHT: dict[tuple, tuple[int, Future]] = {}
 
 
 class DataUnavailable(RuntimeError):
@@ -33,25 +35,41 @@ def now() -> str:
 
 
 def cached(key: tuple, ttl: int, loader):
-    # A bounded cache; never label stale data as a newly fetched result.
+    # Never hold the global cache lock while running network/composite loaders.
+    # Concurrent misses for the same key share one result or failure.
     with _LOCK:
         found = _CACHE.get(key)
         if found and found[0] > monotonic():
             return found[1]
         _CACHE.pop(key, None)
+        pending = _INFLIGHT.get(key)
+        if pending and pending[0] == get_ident():
+            raise DataUnavailable("Recursive source cache key")
+        owner = pending is None
+        if owner:
+            pending = (get_ident(), Future())
+            _INFLIGHT[key] = pending
+    if not owner:
+        return pending[1].result()
+    try:
         result = loader()
-        # Large polygon layers must not turn normal map panning into unbounded
-        # retention. Budget serialized bytes with a conservative Python-object
-        # overhead multiplier; oversized responses still work without caching.
         weight = 4 * len(json.dumps(result, ensure_ascii=False).encode("utf-8"))
-        if weight <= _MAX_CACHE_WEIGHT:
-            while _CACHE and (
-                len(_CACHE) >= 128
-                or sum(entry[2] for entry in _CACHE.values()) + weight > _MAX_CACHE_WEIGHT
-            ):
-                _CACHE.pop(next(iter(_CACHE)))
-            _CACHE[key] = (monotonic() + ttl, result, weight)
+        with _LOCK:
+            if weight <= _MAX_CACHE_WEIGHT:
+                while _CACHE and (
+                    len(_CACHE) >= 128
+                    or sum(entry[2] for entry in _CACHE.values()) + weight > _MAX_CACHE_WEIGHT
+                ):
+                    _CACHE.pop(next(iter(_CACHE)))
+                _CACHE[key] = (monotonic() + ttl, result, weight)
+        pending[1].set_result(result)
         return result
+    except BaseException as error:
+        pending[1].set_exception(error)
+        raise
+    finally:
+        with _LOCK:
+            _INFLIGHT.pop(key, None)
 
 
 def fetch(

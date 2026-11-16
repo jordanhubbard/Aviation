@@ -110,3 +110,31 @@ describe('aviation.hazards Component conformance', () => {
     expect(hazards).toEqual([pointHazard, polygonHazard]);
   });
 });
+
+const intervalVectors = loadConformanceContract<{
+  geometryIntervalCases: Array<{ id: string; start: LatLon; end: LatLon; geometry: unknown; expected: number[][] }>;
+  invalidGeometryIntervalCases: Array<{ id: string; geometry: unknown }>;
+  linearIntervalCases: Array<{ id: string; start: number; end: number; lower: number | null; upper: number | null; expected: number[] | null }>;
+}>('hazards');
+import { segmentGeometryIntervals, linearConstraintInterval } from '../hazards.js';
+for (const v of intervalVectors.geometryIntervalCases) {
+  it(`clips interval ${v.id}`, () => {
+    const before = structuredClone(v);
+    const actual = segmentGeometryIntervals(v.start, v.end, v.geometry);
+    expect(actual.length).toBe(v.expected.length);
+    actual.forEach((pair, i) => pair.forEach((n, j) => expect(n).toBeCloseTo(v.expected[i][j], 9)));
+    expect(v).toEqual(before);
+  });
+}
+for (const v of intervalVectors.invalidGeometryIntervalCases) {
+  it(`rejects interval geometry ${v.id}`, () => {
+    expect(() => segmentGeometryIntervals({lat:0,lon:0}, {lat:0,lon:1}, v.geometry)).toThrow(HazardValidationError);
+  });
+}
+for (const v of intervalVectors.linearIntervalCases) {
+  it(`clips linear constraint ${v.id}`, () => {
+    const actual = linearConstraintInterval(v.start, v.end, v.lower, v.upper);
+    if (v.expected === null) expect(actual).toBeNull();
+    else { expect(actual).not.toBeNull(); actual!.forEach((n,i) => expect(n).toBeCloseTo(v.expected![i], 9)); }
+  });
+}

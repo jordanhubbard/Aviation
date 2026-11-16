@@ -27,3 +27,10 @@ credentials.
 
 - Changes to this Component, its vectors, either binding, package metadata, or the SDK
   workflow run hazard conformance independently of application tests.
+
+## Requirement: Interval composition agrees
+
+Both bindings run the shared geometry interval and linear constraint vectors.
+Cover holes, multipart shapes, boundaries, collinear lines, zero-length points,
+antimeridian unwrapping, malformed input, climb/descent/constant constraints and
+an advisory becoming active after a leg enters its geometry. No network is used.
