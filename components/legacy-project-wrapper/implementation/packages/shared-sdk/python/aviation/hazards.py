@@ -220,18 +220,23 @@ def point_in_polygon(point: LatLon, polygon: Sequence[LatLon]) -> bool:
 
 
 def _polygon_contains(point: LatLon, polygon: Sequence[LatLon], on_segment) -> bool:
-    for index, start in enumerate(polygon):
-        if on_segment(point, start, polygon[(index + 1) % len(polygon)]):
-            return True
+    return _polygon_location(point, polygon, on_segment) >= 0
+
+
+def _polygon_location(point: LatLon, polygon: Sequence[LatLon], on_segment) -> int:
+    """Return outside (-1), boundary (0) or inside (1) in one ring scan."""
     inside = False
     previous = polygon[-1]
     for current in polygon:
+        if (min(current.lat, previous.lat) - _EPSILON <= point.lat <= max(current.lat, previous.lat) + _EPSILON
+            and on_segment(point, previous, current)):
+            return 0
         if (current.lat > point.lat) != (previous.lat > point.lat) and point.lon < (
             previous.lon - current.lon
         ) * (point.lat - current.lat) / (previous.lat - current.lat) + current.lon:
             inside = not inside
         previous = current
-    return inside
+    return 1 if inside else -1
 
 
 def hazard_intersects_leg(
@@ -314,9 +319,23 @@ def linear_constraint_interval(
     return [lo, hi] if lo <= hi else None
 
 
+def segments_geometry_intervals(segments, geometry):
+    """Clip a bounded batch, reusing only call-local validated coordinate sequences."""
+    if not isinstance(segments, (list, tuple)) or not 1 <= len(segments) <= 1000 or any(
+        not isinstance(pair, (list, tuple)) or len(pair) != 2 for pair in segments
+    ):
+        raise HazardValidationError("hazard-segments-invalid", "Use 1 to 1000 endpoint pairs")
+    cache = {}
+    return [_segment_geometry_intervals(start, end, geometry, cache) for start, end in segments]
+
+
 def segment_geometry_intervals(
     start: LatLon, end: LatLon, geometry: Mapping[str, Any]
 ) -> list[list[float]]:
+    return _segment_geometry_intervals(start, end, geometry, {})
+
+
+def _segment_geometry_intervals(start, end, geometry, point_cache):
     """Planar GeoJSON clipping, preserving holes and shortest-longitude unwrapping."""
     if any(
         isinstance(v, bool) or not isinstance(v, (int, float))
@@ -359,6 +378,16 @@ def segment_geometry_intervals(
     def points(raw, ring=False):
         if not isinstance(raw, (list, tuple)) or not raw:
             raise invalid()
+        # The first coordinate determines the sequence's longitude unwrap.
+        first = position(raw[0])
+        budget[0] += 1
+        key = (id(raw), ring, first.lon)
+        if key in point_cache:
+            result, count = point_cache[key]
+            budget[0] -= count
+            if budget[0] < 0:
+                raise invalid()
+            return result
         result, near = [], anchor
         for value in raw:
             p = position(value, near)
@@ -375,6 +404,7 @@ def segment_geometry_intervals(
                 raise invalid()
         elif len(result) < 2:
             raise invalid()
+        point_cache[key] = (result, len(raw))
         return result
 
     def on_segment(p, c, d):
@@ -436,13 +466,8 @@ def segment_geometry_intervals(
         for lo, hi in zip(cuts, cuts[1:]):
             t = (lo + hi) / 2
             p = LatLon(a.lat + (b.lat - a.lat) * t, a.lon + (b.lon - a.lon) * t)
-            boundary = any(
-                on_segment(p, c, d) for ring in rings for c, d in zip(ring, ring[1:] + ring[:1])
-            )
-            if boundary or (
-                _polygon_contains(p, rings[0], on_segment)
-                and not any(_polygon_contains(p, hole, on_segment) for hole in rings[1:])
-            ):
+            locations = [_polygon_location(p, ring, on_segment) for ring in rings]
+            if 0 in locations or (locations[0] > 0 and all(location < 0 for location in locations[1:])):
                 intervals.append([lo, hi])
         return intervals
 

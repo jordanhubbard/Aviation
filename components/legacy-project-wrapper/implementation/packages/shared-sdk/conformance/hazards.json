@@ -81,5 +81,9 @@
     {"id": "only-lower", "start": 0, "end": 100, "lower": 50, "upper": null, "expected": [0.5, 1]},
     {"id": "only-upper", "start": 100, "end": 0, "lower": null, "upper": 20, "expected": [0.8, 1]},
     {"id": "outside", "start": 0, "end": 100, "lower": 200, "upper": 300, "expected": null}
+  ],
+  "geometryBatchCases": [
+    {"id":"repeated-reversed-disjoint","geometry":{"type":"Polygon","coordinates":[[[0.2,-1],[0.8,-1],[0.8,1],[0.2,1],[0.2,-1]]]},"segments":[[{"lat":0,"lon":0},{"lat":0,"lon":1}],[{"lat":0,"lon":1},{"lat":0,"lon":0}],[{"lat":2,"lon":0},{"lat":2,"lon":1}],[{"lat":0,"lon":0},{"lat":0,"lon":1}]],"expected":[[[0.2,0.8]],[[0.2,0.8]],[],[[0.2,0.8]]]},
+    {"id":"changing-dateline-anchors","geometry":{"type":"Polygon","coordinates":[[[179.7,-1],[-179.7,-1],[-179.7,1],[179.7,1],[179.7,-1]]]},"segments":[[{"lat":0,"lon":179.5},{"lat":0,"lon":-179.5}],[{"lat":0,"lon":-179.5},{"lat":0,"lon":179.5}],[{"lat":0,"lon":-179.9},{"lat":0,"lon":-179.6}]],"expected":[[[0.2,0.8]],[[0.2,0.8]],[[0,0.6666666666666666]]]}
   ]
 }

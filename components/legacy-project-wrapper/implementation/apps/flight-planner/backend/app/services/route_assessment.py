@@ -9,12 +9,12 @@ import json
 import hashlib
 
 from aviation import navigation as nav
-from aviation.hazards import LatLon, segment_geometry_intervals, linear_constraint_interval
+from aviation.hazards import LatLon, segment_geometry_intervals, segments_geometry_intervals, linear_constraint_interval
 from pyproj import CRS, Transformer
 from pyproj.exceptions import ProjError
 from shapely.errors import ShapelyError
-from shapely.geometry import LineString, shape, mapping
-from shapely import segmentize
+from shapely.geometry import LineString, shape, mapping, box
+from shapely import segmentize, get_coordinates
 from shapely.ops import transform
 from shapely.strtree import STRtree
 
@@ -327,7 +327,19 @@ def evaluate(dense, candidates, corridor_nm, *, limit=250):
         for a, b in zip(dense, dense[1:])
     ]
     index = STRtree(lines)
+    geographic_lines = []
+    for a, b in zip(dense, dense[1:]):
+        x = center[1] + nav.normalize_longitude(a["lon"] - center[1])
+        y = center[1] + nav.normalize_longitude(b["lon"] - center[1])
+        geographic_lines.append(
+            box(-1e9, min(a["lat"], b["lat"]), 1e9, max(a["lat"], b["lat"]))
+            if abs(x - y) >= 180
+            else LineString([(x, a["lat"]), (y, b["lat"])])
+        )
+    geographic_index = STRtree(geographic_lines)
     findings, unassessed, total = [], [], 0
+    route_floor = min(p["altitude_ft_msl"] for p in dense)
+    route_ceiling = max(p["altitude_ft_msl"] for p in dense)
     for candidate in candidates:
         try:
             if candidate["geometry"] is None:
@@ -341,6 +353,28 @@ def evaluate(dense, candidates, corridor_nm, *, limit=250):
             )
             if normalized.is_empty or not normalized.is_valid:
                 raise ValueError("Source geometry is empty or invalid")
+            # Validate all source coordinates/rings once even if geographically
+            # disjoint. Keep malformed sources explicit rather than pruning them.
+            first = segment_geometry_intervals(
+                LatLon(dense[0]["lat"], dense[0]["lon"]),
+                LatLon(dense[1]["lat"], dense[1]["lon"]), candidate["geometry"],
+            )
+            if linear_constraint_interval(route_floor, route_ceiling, candidate["floor"], candidate["ceiling"]) is None:
+                continue
+            if candidate["window"] and candidate["kind"] != "gairmet" and linear_constraint_interval(
+                dense[0]["at"], dense[-1]["at"], *candidate["window"]
+            ) is None:
+                continue
+            min_x, min_y, max_x, max_y = normalized.bounds
+            coordinates = get_coordinates(normalized)
+            if any(abs(b - a) >= 180 for a, b in zip(coordinates[:-1, 0], coordinates[1:, 0])):
+                min_x, max_x = -1e9, 1e9
+            # Bounding boxes only: no projected or polygon-interior predicate.
+            # This allowance exceeds the SDK's coordinate/edge roundoff tolerance.
+            padding = 1e-6
+            central_segments = set(int(i) for i in geographic_index.query(
+                box(min_x - padding, min_y - padding, max_x + padding, max_y + padding)
+            ))
             projected = transform(forward, segmentize(normalized, 0.1))
             if not all(math.isfinite(v) for v in projected.bounds):
                 raise ValueError("Source geometry cannot be projected for this route")
@@ -362,17 +396,26 @@ def evaluate(dense, candidates, corridor_nm, *, limit=250):
                 if corridor_nm
                 else set()
             )
-            # Projected straight edges are not a sound rejection oracle for
-            # WGS84 source polygons. Evaluate every centerline segment exactly.
-            for segment_index in range(len(lines)):
+            def clip_segments(indices, geometry):
+                ordered = sorted(indices)
+                if not ordered:
+                    return {}
+                pairs = [(LatLon(dense[i]["lat"], dense[i]["lon"]),
+                          LatLon(dense[i + 1]["lat"], dense[i + 1]["lon"])) for i in ordered]
+                return dict(zip(ordered, segments_geometry_intervals(pairs, geometry), strict=True))
+
+            central_results = clip_segments(central_segments - {0}, candidate["geometry"])
+            if 0 in central_segments:
+                central_results[0] = first
+            proximity_results = clip_segments(proximity_segments, proximity_geo) if proximity_geo else {}
+            # Projection is used only for the explicitly estimated corridor.
+            # Every admitted centerline segment still uses exact SDK clipping.
+            for segment_index in sorted(central_segments | proximity_segments):
                 a, b = dense[segment_index], dense[segment_index + 1]
-                start, end = LatLon(a["lat"], a["lon"]), LatLon(b["lat"], b["lon"])
-                central = segment_geometry_intervals(start, end, candidate["geometry"])
+                central = central_results.get(segment_index, [])
                 modes = [("centerline", central)]
-                if proximity_geo and segment_index in proximity_segments:
-                    modes.append(
-                        ("proximity", segment_geometry_intervals(start, end, proximity_geo))
-                    )
+                if segment_index in proximity_results:
+                    modes.append(("proximity", proximity_results[segment_index]))
                 for mode, intervals in modes:
                     for lo, hi in intervals:
                         notes = list(candidate["notes"])

@@ -102,3 +102,5 @@ The existing canonical hazard operations retain their current behavior.
 - **WHEN** a planar leg enters a polygon, passes through a hole, and satisfies an altitude constraint during only part of the leg
 - **THEN** geometry clipping returns the disjoint filled-area intervals with boundary contacts
 - **AND** linear clipping returns the altitude-valid interval for composition without relabeling the hole as hazardous area
+
+`segmentsGeometryIntervals(segments, geometry)` / Python `segments_geometry_intervals` accepts 1–1000 pairs of endpoint coordinates and returns interval lists in matching order, exactly as independent segment operations. One call may reuse validated coordinate sequences for the same longitude unwrap across segments. Reuse is local to that call, never stale across calls or source mutation, and retains each segment's coordinate/node/depth limits. Invalid segment batches fail with `hazard-segments-invalid`; any endpoint or geometry failure rejects the batch. Input objects remain unchanged. Conformance covers repeated/reversed segments and changing dateline anchors, invalid batches and limits.

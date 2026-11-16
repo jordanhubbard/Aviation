@@ -62,3 +62,5 @@ provider time interpretation occurs here. Time can be supplied as numeric epoch 
 
 Python exposes `segment_geometry_intervals` and `linear_constraint_interval` with
 the same semantics and list-of-pairs / optional-pair JSON representation.
+
+`segmentsGeometryIntervals(segments, geometry)` / Python `segments_geometry_intervals` accepts 1–1000 pairs of endpoint coordinates and returns interval lists in matching order, exactly as independent segment operations. One call may reuse validated coordinate sequences for the same longitude unwrap across segments. Reuse is local to that call, never stale across calls or source mutation, and retains each segment's coordinate/node/depth limits. Invalid segment batches fail with `hazard-segments-invalid`; any endpoint or geometry failure rejects the batch. Input objects remain unchanged. Conformance covers repeated/reversed segments and changing dateline anchors, invalid batches and limits.
