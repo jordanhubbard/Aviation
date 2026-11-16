@@ -49,3 +49,37 @@ configuration investigation proceeds. The production SDK exports, parent retaine
 realizations, deployments and retained-wrapper authority remain unchanged. Closing
 #442 still requires supported importer qualification, compatibility cutover, complete
 application duplication analysis, deployment parity and wrapper-retirement evidence.
+
+
+## Prototype-name conformance correction
+
+Independent review found that the retained TypeScript alias table accepted inherited
+object properties such as `constructor` and `__proto__`. The existing public contract
+already requires unknown statuses to raise `health-status-invalid`. An own-property
+check now enforces that contract without changing valid aliases or error types.
+The independently owned and bundled parity vectors both grow from 19 to 26 cases:
+five direct/padded/case-varied unknown status strings and two report constructions.
+
+The focused SDK JavaScript suite failed six cases before the fix and passes all 27
+checks afterward (26 parity cases plus schema validation). The independent
+Component-owned retained TypeScript candidate uses the same own-property correction
+and passes the same 27 checks plus its CJS/ESM/declaration build; CI exposed
+its separate copy before merge. Python passes all 26
+parity cases. Both compiled package formats build; actual root and subpath imports
+pass in CJS and ESM with their own exported error-class identity. These observations
+qualify the retained fix only. The registered native child's earlier 19-case
+qualification and source baseline remain historical and unchanged. Requalification
+against the expanded oracle is required before any native cutover.
+
+The generic JavaScript importer fixes have merged upstream through
+[PR 451](https://github.com/jordanhubbard/literate-ai/pull/451), after full exact-head
+Windows/macOS/Linux and installed-wheel CI passed. Exact-main qualification and
+supported downstream lifecycle adoption remain pending. Private consumer authoring
+now explicitly prepares the updated JavaScript Flavor policy, both dependency edges
+and all 26 cases; preparation is not consumer acceptance.
+
+The production TypeScript npm SDK needs a separate packaging boundary tracked by
+[literate-ai#452](https://github.com/jordanhubbard/literate-ai/issues/452). The generic
+JavaScript tree importer does not establish npm SDK composition, declaration
+packaging, or retained SDK replacement. No generated provider source is copied into
+the retained SDK to bypass that boundary.

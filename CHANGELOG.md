@@ -3,6 +3,7 @@
 ## Unreleased
 
 - Aircraft document research: add a private POH/AFM/maintenance PDF library with original retention, page indexes/OCR, ICAO and registration associations, public-source acquisition, configured search/model adapters and source-cited questions. Generated distillations remain separate from planning performance data (#489).
+- Common service health: reject inherited JavaScript object names as statuses, preserving declared aliases and shared TypeScript/Python error contracts (#442).
 
 - Common weather: share complete AWC station-catalog validation across TypeScript and Python, including explicit unknown-location accounting. Planner retains bounded gzip decoding, its cache and existing discovery/source responses (#486).
 
