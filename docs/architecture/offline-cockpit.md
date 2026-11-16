@@ -38,6 +38,38 @@ derived-asset hashes and their original-source identity, rather than treating a
 server-rendered preview as the unmodified original. Never cache authenticated
 API responses or request headers in the application-shell service worker.
 
+### Package preparation and storage contract
+
+`POST /api/offline/prepare` accepts either 2–20 airport identifiers or an existing
+saved-plan ID, plus at most four already-acquired chart members. It returns a typed
+manifest with a new immutable package ID, optional previous revision ID, route,
+source briefing, airport references, chart metadata and asset descriptors. Preparing
+a package never files a flight plan or downloads an uncached chart. Original
+chart assets use pinned member URLs; derived PNGs have their own byte hashes and
+retain `source_sha256`. Source hashes must never be advertised as PNG content hashes. Provider source URLs
+and retrieval times come from the acquisition receipt matching the pinned member,
+not an internal download alias or a later receipt for different bytes.
+Inline route/briefing/reference JSON is bounded and retained only in the response,
+not in the server's public chart object store. Responses are private/no-store.
+
+Preparation renders at most 128 PDF pages and 512 map tiles in total, uses at most
+128 MiB per package, and admits only one rendering preparation at a time per process.
+Raster coverage is explicitly full-chart bounds or a declared route-area WGS84
+rectangle at a selected zoom; antimeridian rectangles are rejected rather than
+silently dropping coverage. The browser displays actual bounds, zoom and byte count
+before installation. Downloads use only enumerated same-origin public chart/asset
+URLs, omit credentials and reject redirects. Private library URLs are never admitted.
+
+Browser packages use IndexedDB and a cross-window writer lock. Limit storage to
+512 MiB and 32 complete packages. Download and verify assets before publishing a
+complete package record; interrupted installs never appear complete. Serialize
+install/delete across windows, check quota before and during installation, and
+remove abandoned unreferenced assets on the next writer operation. Verify manifest
+identity and all retained bytes whenever opening a package. Service-worker shell
+caches contain only the build's explicit public HTML/JS/CSS/assets, never API data,
+request credentials, user route data or private documents. A failed shell install
+must leave the previous shell usable.
+
 ## Local receiver bridge
 
 An operator-run local process receives UDP packets from an explicitly configured

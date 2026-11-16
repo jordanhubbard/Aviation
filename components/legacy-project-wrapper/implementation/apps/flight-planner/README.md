@@ -332,3 +332,72 @@ credentials explicitly in service request headers; the gateway does not store
 them. `AVIATION_COCKPIT_BRIDGE_ORIGIN`, `AVIATION_COCKPIT_GATEWAY_BIND` and
 `AVIATION_COCKPIT_GATEWAY_PORT` configure this explicitly launched profile.
 The normal hosted gateway keeps its existing service list.
+
+## Offline flight packages
+
+Open **Offline packages**, or use **Prepare offline flight package** on a planned
+route. Select airport codes or an existing saved route, and choose already acquired
+chart members. Prepare the package to review its exact byte count, selected PDF
+pages and raster bounds/zoom before downloading. Charts must be acquired through
+the existing chart operator flow first; package preparation cannot use private
+library documents or bypass chart acquisition.
+
+Downloaded packages stay in IndexedDB in that browser. Installation verifies every
+asset before publishing a complete package record, and opening verifies retained
+bytes again. The production build includes a hash-inventoried service worker for
+reopening `/offline` after a browser restart without a connection. API responses,
+credentials and private aircraft documents are excluded from the shell cache.
+HTTPS or localhost, IndexedDB, Web Crypto, service workers and browser writer locks
+are required. Development-mode Vite does not generate the production shell.
+
+PDF originals and selected page images remain available; GeoTIFF packages include
+the original and their declared tiles. Requested bounds and actual tile-grid
+extent are separate. Tiles outside the declared zoom/coverage are unavailable.
+Station METARs/TAFs retain original text, observation/issue/validity times, provider
+retrieval times, missing-report and partial-coverage states. Airport references
+retain the suite catalog snapshot with explicitly unknown source revision.
+Opening offline does not refresh any source or establish current chart/weather
+coverage. Stale/expired/future and unverified source states remain visible.
+
+Limits are 128 MiB per package, 512 MiB/32 complete packages per browser, four chart
+members, 128 PDF previews and 512 raster tiles. The browser reports storage estimates
+and download progress; cancellation, interrupted installs and failed integrity/quota
+checks cannot publish a partial package. A refreshed revision keeps selected chart
+editions and creates a new package ID; select replacement members to change editions.
+The old package remains until explicitly deleted. Browser data clearing or eviction
+can remove saved material, so verify it before relying on it disconnected.
+
+`POST /api/offline/prepare` exposes the typed manifest over native HTTP and the
+normal planning gateway/MCP discovery. Rendered PNG transfer uses
+`GET /api/offline/assets/{sha256}`; original members keep their hash-pinned chart
+URLs. PNG content hashes identify PNG bytes, with original-source identity retained
+separately. Provider URLs and retrieval times remain bound to the matching
+acquisition receipt even after a forced refresh changes the current original.
+Inline route/airport/weather snapshots are returned privately and never
+written into the public chart object store. The object store's existing disk quota
+and reserve apply to derived chart bytes as well as originals.
+
+Repeatable browser acceptance lives in `frontend/e2e/offline-acceptance.mjs` and
+`offline-failures.mjs`. Use an isolated running production build with the FAA KSFO
+airport diagram and San Francisco TAC already acquired. From `frontend`, run:
+
+```bash
+AVIATION_OFFLINE_BASE_URL=http://127.0.0.1:8769 npm run test:offline
+```
+
+The runner prints its evidence directory and writes screenshots, accessible page
+structure, source manifests and desktop/mobile restart results. It creates new,
+isolated browser profiles and retains them for diagnosis. It never files or saves
+a flight plan. For controlled corruption/quota/cancellation/concurrency tests,
+reuse its `desktop-manifest.json`:
+
+```bash
+AVIATION_OFFLINE_BASE_URL=http://127.0.0.1:8769 \
+AVIATION_OFFLINE_FIXTURE_MANIFEST=/path/to/evidence/desktop-manifest.json \
+  npm run test:offline-failures
+```
+
+Set `AVIATION_OFFLINE_EVIDENCE_DIR` to choose the retained output location. These
+runners require the installed Playwright Chromium build; they do not install or
+launch a system browser. Source acquisition/availability and controlled failure
+injection are recorded as separate evidence, and neither proves receiver hardware.

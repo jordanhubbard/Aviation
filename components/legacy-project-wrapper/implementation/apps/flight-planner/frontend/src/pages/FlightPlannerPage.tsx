@@ -193,6 +193,7 @@ const FlightPlannerPage: React.FC = () => {
             </Paper>
           ) : lastMode === 'route' && displayedRoutePlan ? (
             <ResultsSection title="Route Results">
+              <Button href={`/offline?route=${encodeURIComponent(displayedRoutePlan.route.join(','))}`}>Prepare offline flight package</Button>
               {isRouteStreaming ? (
                 <Paper sx={{ p: 2, mb: 2 }}>
                   <Typography variant="subtitle2" sx={{ mb: 1 }}>

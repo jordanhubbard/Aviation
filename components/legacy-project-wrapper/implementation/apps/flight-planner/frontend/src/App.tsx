@@ -20,6 +20,7 @@ const WeatherPage = lazy(() => import('./pages/WeatherPage'))
 const AirportsPage = lazy(() => import('./pages/AirportsPage'))
 const AircraftLibraryPage = lazy(() => import('./pages/AircraftLibraryPage'))
 const ChartsPage = lazy(() => import('./pages/ChartsPage'))
+const OfflinePage = lazy(() => import('./pages/OfflinePage'))
 
 function MissingRoute() {
   const location = useLocation()
@@ -125,6 +126,8 @@ function App() {
       return
     }
 
+    if (!navigator.onLine) return
+
     void fetch('/api/meta')
       .then(async (r) => {
         if (!r.ok) return null
@@ -217,6 +220,7 @@ function App() {
                   <Route path="/airports" element={<AirportsPage />} />
                   <Route path="/aircraft-library" element={<AircraftLibraryPage />} />
                   <Route path="/charts" element={<ChartsPage />} />
+                  <Route path="/offline" element={<OfflinePage />} />
                   <Route path="*" element={<MissingRoute />} />
                 </Routes>
               </motion.div>
