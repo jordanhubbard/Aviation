@@ -72,3 +72,38 @@ run identity. It verifies selected route/station context and that preflight deci
 not change. Provider credentials and production stores are untouched by these fixtures.
 Production acceptance separately exercises the deployed shared asset and real gateway
 requests, checks exact image revisions, and reruns the API/MCP provider audit.
+
+## Legacy Weather Briefing contract
+
+Issue #459 owns additive parity for `/station?code=ICAO`, `/stations?region=ID`,
+and `/briefing?station=ICAO`. The existing JSON wrappers, station `code`, `category`,
+`metar` string/null, recommendation and warnings remain compatible. Each JSON station
+also carries `taf` and `metar_reports` envelopes using the unified API's
+`status` (`available`, `no_reports`, `unavailable`), original `reports` and `source`
+(provider, URL and UTC retrieval timestamp). `partial` identifies provider failure;
+no report is distinct from provider failure. TAF issue and validity times and full
+raw text are preserved. Category and recommendations are derived only from METAR
+observations, never inferred from a TAF or an absent report.
+
+Weather Briefing delegates report acquisition to the stable planning aviation-weather
+API, configured by `AVIATION_WEATHER_API_BASE_URL` and defaulting to its public v1
+gateway. It does not introduce a second NOAA adapter or forward client credentials.
+Each product fails independently within five seconds. Region acquisition uses at
+most six concurrent station jobs, coalesces concurrent requests for the same station,
+and keeps at most 256 station cache entries: available results for one minute
+(failed results for 15 seconds). Missing
+METARs never suppress available TAFs; refresh failures never relabel cached reports
+as current. Station metadata comes from the shared airport capability; unknown
+coordinates stay null and are omitted from map markers. Existing map metrics and
+`updatedAt` are returned consistently in list and single-station responses.
+
+Text briefings contain separately labeled METAR observation and TAF forecast
+sections, UTC issue/validity/retrieval times and explicit missing/unavailable text.
+The legacy `days` query remains accepted but cannot extend published TAF validity.
+The UI removes controls suggesting arbitrary multi-day TAF coverage, renders report
+strings as text, and clears/aborts stale briefing and region requests when selection
+changes. Station cards and map popups consume the same legacy endpoint fields;
+the separate route-review panel remains a route/source exploration tool. HTTP and
+MCP middleware preserve these additive fields and text unchanged. Tests exercise
+real legacy handlers through both middleware transports plus desktop/mobile UI,
+including missing products, failures, hostile report text and stale selections.

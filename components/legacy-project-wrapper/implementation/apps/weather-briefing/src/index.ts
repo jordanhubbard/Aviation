@@ -6,6 +6,7 @@ import {
   installNodeProcessErrorReporting,
 } from "@aviation/shared-sdk";
 import { WeatherBriefingService } from "./service";
+import { handleWeatherApi } from "./api";
 import { defaultRegionId, getRegion, regions } from "./regions";
 
 const githubIssueCreator = new GitHubIssueCreator({
@@ -38,23 +39,6 @@ async function main() {
   await service.start();
 
   const port = Number(process.env.PORT ?? "3003");
-  const allowedForecastDays = new Set([1, 3, 5, 7]);
-  const parseForecastDays = (value: string | null): number => {
-    if (!value) {
-      return 0;
-    }
-
-    const parsed = value
-      .split(",")
-      .map((part) => Number(part.trim()))
-      .filter((day) => allowedForecastDays.has(day));
-
-    if (parsed.length === 0) {
-      return 0;
-    }
-
-    return Math.min(7, Math.max(...parsed));
-  };
   const regionOptionsHtml = regions
     .map((region) => {
       const selected = region.id === defaultRegionId ? " selected" : "";
@@ -73,79 +57,13 @@ async function main() {
       return;
     }
 
-    if (requestUrl.pathname === "/briefing") {
-      const station = requestUrl.searchParams.get("station") ?? "KSFO";
-      const forecastDays = parseForecastDays(
-        requestUrl.searchParams.get("days"),
-      );
-      try {
-        const briefing = await service.generateBriefing(station, forecastDays);
-        res.writeHead(200, { "Content-Type": "text/plain; charset=utf-8" });
-        res.end(briefing);
-      } catch (error) {
-        const message =
-          error instanceof Error ? error.message : "Unexpected error";
-        res.writeHead(500, { "Content-Type": "text/plain; charset=utf-8" });
-        res.end(`Failed to generate briefing: ${message}`);
-      }
-      return;
-    }
-
-    if (requestUrl.pathname === "/stations") {
-      const regionId = requestUrl.searchParams.get("region") ?? defaultRegionId;
-      const region = getRegion(regionId);
-      try {
-        const stations = await service.getStationSummaries(region.stations);
-        res.writeHead(200, {
-          "Content-Type": "application/json; charset=utf-8",
-        });
-        res.end(JSON.stringify({ region: region.id, stations }));
-      } catch (error) {
-        const message =
-          error instanceof Error ? error.message : "Unexpected error";
-        res.writeHead(500, {
-          "Content-Type": "application/json; charset=utf-8",
-        });
-        res.end(JSON.stringify({ error: "stations_failed", message }));
-      }
-      return;
-    }
-
-    if (requestUrl.pathname === "/station") {
-      const code = requestUrl.searchParams.get("code") ?? "";
-      try {
-        const station = await service.getStationSnapshot(code);
-        if (!station) {
-          res.writeHead(404, {
-            "Content-Type": "application/json; charset=utf-8",
-          });
-          res.end(
-            JSON.stringify({
-              error: "station_not_found",
-              message: "Station not found.",
-            }),
-          );
-          return;
-        }
-        res.writeHead(200, {
-          "Content-Type": "application/json; charset=utf-8",
-        });
-        res.end(JSON.stringify({ station }));
-      } catch (error) {
-        const message =
-          error instanceof Error ? error.message : "Unexpected error";
-        res.writeHead(500, {
-          "Content-Type": "application/json; charset=utf-8",
-        });
-        res.end(JSON.stringify({ error: "station_failed", message }));
-      }
-      return;
-    }
+    if (await handleWeatherApi(req, res, service)) return;
 
     res.writeHead(200, { "Content-Type": "text/html; charset=utf-8" });
     res.end(`
       <html>
         <head>
+          <meta name="viewport" content="width=device-width, initial-scale=1" />
           <title>Aviation Weather Briefing</title>
           <link
             rel="stylesheet"
@@ -154,7 +72,7 @@ async function main() {
             crossorigin=""
           />
           <style>
-            body { font-family: Arial, sans-serif; margin: 32px; background: #0f172a; color: #f8fafc; }
+            body { overflow-wrap: anywhere; font-family: Arial, sans-serif; margin: 32px; background: #0f172a; color: #f8fafc; }
             h1, h2 { margin-bottom: 8px; }
             code { background: #1e293b; padding: 4px 8px; border-radius: 6px; }
             a { color: #60a5fa; }
@@ -166,7 +84,7 @@ async function main() {
             select, input[type="text"], button { padding: 10px 12px; border-radius: 8px; border: 1px solid #1f2937; background: #0b1224; color: #f8fafc; font-size: 14px; }
             button { background: #2563eb; border-color: #2563eb; cursor: pointer; }
             button:disabled { background: #1f2937; border-color: #1f2937; cursor: not-allowed; }
-            pre { background: #0b1224; border-radius: 12px; padding: 16px; white-space: pre-wrap; margin-top: 16px; }
+            pre { overflow-wrap: anywhere; min-width: 0; background: #0b1224; border-radius: 12px; padding: 16px; white-space: pre-wrap; margin-top: 16px; }
             .muted { color: #94a3b8; }
             .forecast { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; margin-top: 12px; }
             .forecast label { display: flex; align-items: center; gap: 6px; font-size: 14px; }
@@ -190,7 +108,7 @@ async function main() {
           <div class="layout">
             <section class="card airport-selector-card">
               <h1>✈️ Aviation Weather Briefing</h1>
-              <p class="muted">Select an airport or enter a custom code, then choose a forecast range.</p>
+              <p class="muted">Select an airport or enter a custom code, to review METAR observations and TAF forecasts.</p>
               <form id="briefing-form" class="row">
                 <label for="station">Airport:</label>
                 <select id="station" name="station">
@@ -208,13 +126,7 @@ async function main() {
                 <input id="station-input" name="station-input" type="text" placeholder="Enter ICAO/IATA (e.g., KPAO)" />
                 <button type="submit" id="submit-btn">Get Briefing</button>
               </form>
-              <div class="forecast">
-                <span class="muted">Forecast days:</span>
-                <label><input type="radio" name="forecast-day" value="1" />1 day</label>
-                <label><input type="radio" name="forecast-day" value="3" />3 days</label>
-                <label><input type="radio" name="forecast-day" value="5" />5 days</label>
-                <label><input type="radio" name="forecast-day" value="7" />7 days</label>
-              </div>
+              <p class="muted">TAF forecasts cover only their published UTC validity period; they are distinct from METAR observations.</p>
               <p class="muted">Other endpoints: <code>/health</code>, <code>/briefing?station=KSFO</code>, and <code>/stations?region=us</code></p>
             </section>
             <section class="card weather-map-card">
@@ -267,7 +179,7 @@ async function main() {
             const CUSTOM_STATIONS_KEY = 'weather-briefing.customStations';
 
             const normalizeStation = (value) => value.trim().toUpperCase();
-            const isValidStationCode = (value) => /^[A-Z]{3,4}$/.test(value);
+            const isValidStationCode = (value) => /^[A-Z0-9]{3,4}$/.test(value);
 
             const builtInStations = new Set(Array.from(stationSelect.options).map((option) => option.value));
             const customStations = new Set();
@@ -321,13 +233,6 @@ async function main() {
               }
             };
 
-            const getSelectedDay = () => {
-              const selection = document.querySelector('input[name="forecast-day"]:checked');
-              if (!selection) return null;
-              const value = Number(selection.value);
-              return Number.isNaN(value) ? null : value;
-            };
-
             const getStation = () => stationSelect.value;
 
             const applyStationSelection = (code) => {
@@ -336,6 +241,7 @@ async function main() {
                 return null;
               }
               ensureStationOption(normalized);
+              clearBriefing();
               stationSelect.value = normalized;
               stationInput.value = normalized;
               document.querySelector('aviation-data-panel').setAttribute('airports', normalized);
@@ -349,32 +255,40 @@ async function main() {
 
             let hasBriefing = false;
             let briefingStation = null;
+            let briefingRequest;
+            let regionRequest;
+            let selectionRequest = 0;
+            const clearBriefing = () => {
+              briefingRequest?.abort(); hasBriefing = false; briefingStation = null;
+              output.textContent = 'Selection changed. Get a briefing for this airport.';
+              submitBtn.disabled = false;
+            };
 
             const requestBriefing = async () => {
               const station = getStation();
-              const selectedDay = getSelectedDay();
               const params = new URLSearchParams();
               params.set('station', station);
-              if (selectedDay) {
-                params.set('days', String(selectedDay));
-              }
+              briefingRequest?.abort();
+              const controller = briefingRequest = new AbortController();
               output.textContent = 'Loading briefing for ' + station + '...';
               submitBtn.disabled = true;
 
               try {
-                const response = await fetch('/briefing?' + params.toString());
+                const response = await fetch('/briefing?' + params.toString(), { signal: controller.signal });
                 if (!response.ok) {
                   const message = await response.text();
                   throw new Error(message || ('Request failed with status ' + response.status));
                 }
                 const briefing = await response.text();
+                if (controller.signal.aborted || station !== getStation()) return;
                 output.textContent = briefing;
                 briefingStation = station;
                 hasBriefing = true;
               } catch (error) {
+                if (controller.signal.aborted) return;
                 output.textContent = 'Failed to fetch briefing: ' + (error?.message ?? 'Unknown error');
               } finally {
-                submitBtn.disabled = false;
+                if (!controller.signal.aborted) submitBtn.disabled = false;
               }
             };
 
@@ -411,7 +325,7 @@ async function main() {
 
             const highlightStation = (station) => {
               highlightLayer.clearLayers();
-              if (!station) {
+              if (!station || !located(station)) {
                 return;
               }
               const marker = L.circleMarker([station.latitude, station.longitude], {
@@ -426,7 +340,7 @@ async function main() {
 
             const focusOnStation = (code, stations = currentStations) => {
               const station = stations.find((entry) => entry.code === code);
-              if (!station) {
+              if (!station || !located(station)) {
                 return false;
               }
               highlightStation(station);
@@ -448,6 +362,7 @@ async function main() {
             };
 
             const updateMapForStation = async (code) => {
+              const token = ++selectionRequest;
               const normalized = normalizeStation(code);
               if (!isValidStationCode(normalized)) {
                 return;
@@ -461,94 +376,87 @@ async function main() {
                 return;
               }
               const snapshot = await fetchStationSnapshot(normalized);
-              if (snapshot) {
+              if (snapshot && located(snapshot) && token === selectionRequest) {
                 highlightStation(snapshot);
                 map.setView([snapshot.latitude, snapshot.longitude], 6);
               }
             };
 
-            const renderStationList = (stations) => {
-              if (!stations.length) {
-                stationList.innerHTML = '<p class="muted">No stations available for this region.</p>';
-                return;
-              }
-
-              stationList.innerHTML = stations
-                .map((station) => {
-                  const color = CATEGORY_COLORS[station.category] || CATEGORY_COLORS.UNKNOWN;
-                  const badgeStyle = 'background:' + color + ';';
-                return [
-                  '<div class="station-card">',
-                  '  <div class="station-meta">',
-                  '    <h3>' + station.code + '</h3>',
-                  '    <span class="station-badge" style="' + badgeStyle + '">' + station.category + '</span>',
-                  '  </div>',
-                  '  <p>' + station.name + '</p>',
-                  '  <p>Wind: ' + formatWind(station) + '</p>',
-                  '  <p>Visibility: ' + formatValue(station.visibility_sm, ' SM') + '</p>',
-                  '  <p>Ceiling: ' + formatValue(station.ceiling_ft, ' ft') + '</p>',
-                  '  <p>Temp: ' + formatValue(station.temperature_f, '°F') + '</p>',
-                  '  <div class="station-updated">Updated ' + station.updatedAt.split('T')[1].slice(0, 5) + 'Z</div>',
-                  '</div>',
-                ].join('');
-                })
-                .join('');
+            const utc = value => {
+              if (value === null || value === undefined || value === '') return 'Unknown';
+              const date = new Date(typeof value === 'number' ? value * 1000 : value);
+              return Number.isFinite(date.getTime()) ? date.toISOString() : 'Unknown';
             };
-
-            const renderMarkers = (stations) => {
+            const node = (tag, text) => { const el = document.createElement(tag); el.textContent = text; return el; };
+            const stationContent = station => {
+              const card = node('div', ''); card.className = 'station-card';
+              card.append(node('h3', station.code), node('p', station.name || station.code),
+                node('p', 'METAR category: ' + station.category), node('p', 'Wind: ' + formatWind(station)),
+                node('p', 'Visibility: ' + formatValue(station.visibility_sm, ' SM')),
+                node('p', 'Ceiling: ' + formatValue(station.ceiling_ft, ' ft')),
+                node('p', 'Temp: ' + formatValue(station.temperature_f, '°F')));
+              for (const [key, label] of [['metar_reports', 'METAR observation'], ['taf', 'TAF forecast']]) {
+                const product = station[key];
+                const details = document.createElement('details'); details.append(node('summary', label + ': ' + (product?.status || 'unavailable')));
+                if (product?.status !== 'available') details.append(node('p', product?.status === 'no_reports' ? 'No reports available' : 'Provider unavailable'));
+                for (const report of product?.reports || []) {
+                  details.append(node('p', 'Issued ' + utc(report.issueTime ?? report.reportTime ?? report.obsTime)
+                    + (key === 'taf' ? ' · Valid ' + utc(report.validTimeFrom) + ' → ' + utc(report.validTimeTo) : '')),
+                    node('pre', report.rawTAF ?? report.rawOb ?? 'Report text unavailable'));
+                }
+                details.append(node('p', 'Source: ' + (product?.source?.provider || 'Unknown') + ' · Retrieved ' + utc(product?.source?.retrieved_at_utc)));
+                card.append(details);
+              }
+              if (station.partial) card.append(node('p', 'Partial weather: a provider is unavailable.'));
+              card.append(node('p', 'Updated ' + utc(station.updatedAt)));
+              return card;
+            };
+            const located = station => Number.isFinite(station.latitude) && Number.isFinite(station.longitude);
+            const renderStationList = stations => {
+              stationList.replaceChildren(...(stations.length ? stations.map(stationContent) : [node('p', 'No stations available for this region.')]));
+            };
+            const renderMarkers = stations => {
               markersLayer.clearLayers();
-              stations.forEach((station) => {
+              stations.filter(located).forEach(station => {
                 const color = CATEGORY_COLORS[station.category] || CATEGORY_COLORS.UNKNOWN;
                 const marker = L.circleMarker([station.latitude, station.longitude], {
-                  radius: 7,
-                  color,
-                  fillColor: color,
-                  fillOpacity: 0.85,
-                  weight: 2,
+                  radius: 7, color, fillColor: color, fillOpacity: 0.85, weight: 2,
                 });
-
-                const popupContent = [
-                  '<div>',
-                  '  <strong>' + station.code + '</strong> - ' + station.name + '<br />',
-                  '  Category: ' + station.category + '<br />',
-                  '  Wind: ' + formatWind(station) + '<br />',
-                  '  Visibility: ' + formatValue(station.visibility_sm, ' SM') + '<br />',
-                  '  Ceiling: ' + formatValue(station.ceiling_ft, ' ft'),
-                  '</div>',
-                ].join('');
-
-                marker.bindPopup(popupContent);
-                marker.on('click', () => {
-                  applyStationSelection(station.code);
-                  void requestBriefing();
-                });
+                marker.bindPopup(stationContent(station));
+                marker.on('click', () => { applyStationSelection(station.code); void requestBriefing(); });
                 marker.addTo(markersLayer);
               });
             };
 
             const loadRegion = async (regionId, focusStationCode = null) => {
+              regionRequest?.abort(); ++selectionRequest;
+              const selectedAtStart = getStation();
+              currentStations = []; markersLayer.clearLayers(); highlightLayer.clearLayers();
+              const controller = regionRequest = new AbortController();
               const region = REGION_CONFIGS.find((entry) => entry.id === regionId) || REGION_CONFIGS[0];
               regionSelect.value = region.id;
               stationList.innerHTML = '<p class="muted">Loading region weather...</p>';
               try {
-                const response = await fetch('/stations?region=' + region.id);
+                const response = await fetch('/stations?region=' + region.id, { signal: controller.signal });
                 if (!response.ok) {
                   throw new Error('Request failed with status ' + response.status);
                 }
                 const payload = await response.json();
+                if (controller.signal.aborted) return;
                 const stations = payload.stations || [];
                 currentStations = stations;
                 renderMarkers(stations);
                 renderStationList(stations);
-                if (focusStationCode && focusOnStation(focusStationCode, stations)) {
+                if (focusOnStation(getStation(), stations)) {
                   return;
                 }
+                if (getStation() !== selectedAtStart) return;
                 highlightStation(null);
                 if (region.bounds) {
                   map.fitBounds(region.bounds, { padding: [24, 24] });
                 }
               } catch (error) {
-                stationList.innerHTML = '<p class="muted">Failed to load region data.</p>';
+                if (!controller.signal.aborted) stationList.replaceChildren(node('p', 'Failed to load region data.'));
               }
             };
 
@@ -561,13 +469,6 @@ async function main() {
                 stationInput.value = stationSelect.value;
               }
               await requestBriefing();
-            });
-
-            Array.from(document.querySelectorAll('input[name="forecast-day"]')).forEach((input) => {
-              input.addEventListener('change', () => {
-                if (!hasBriefing) return;
-                void requestBriefing();
-              });
             });
 
             regionSelect.addEventListener('change', () => {
@@ -599,11 +500,11 @@ async function main() {
               const station = stationInput.value.trim().toUpperCase() || stationSelect.value;
               return {
               application: 'Weather Briefing', decision: 'Selected station weather category and briefing',
-              selectedStation: station, briefingStation, forecastDay: getSelectedDay(), region: regionSelect.value,
+              selectedStation: station, briefingStation, region: regionSelect.value,
               category: currentStations.find(entry => entry.code === station)?.category,
               completedBriefing: hasBriefing && !submitBtn.disabled, displayedBriefing: output.textContent.slice(0, 3500),
               };
-            }, 'Explain the selected weather category and briefing hazards using only these observations.');
+            }, 'Explain the selected weather category and briefing hazards using only the displayed observations and forecasts, preserving their separate issue/validity times.');
           </script>
         </body>
       </html>

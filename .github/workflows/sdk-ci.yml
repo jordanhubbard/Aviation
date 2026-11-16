@@ -6,6 +6,7 @@ on:
     branches: [main]
     paths:
       - 'components/aviation-*/**'
+      - 'components/legacy-project-wrapper/implementation/apps/weather-briefing/**'
       - 'components/legacy-project-wrapper/implementation/packages/**'
       - 'components/legacy-project-wrapper/implementation/pnpm-lock.yaml'
       - 'components/legacy-project-wrapper/implementation/go.mod'
@@ -17,6 +18,7 @@ on:
     branches: [main]
     paths:
       - 'components/aviation-*/**'
+      - 'components/legacy-project-wrapper/implementation/apps/weather-briefing/**'
       - 'components/legacy-project-wrapper/implementation/packages/**'
       - 'components/legacy-project-wrapper/implementation/pnpm-lock.yaml'
       - 'components/legacy-project-wrapper/implementation/go.mod'
@@ -61,6 +63,7 @@ jobs:
           --filter @aviation/g1000-rendering...
           --filter @aviation/ui-framework...
           --filter @aviation/meta-app...
+          --filter @aviation/weather-briefing...
           --filter g1000-simulator-frontend...
           --filter @aviation/g1000-simulator-backend...
       - name: Build common SDK packages
@@ -75,6 +78,7 @@ jobs:
           pnpm --filter @aviation/g1000-rendering run build
           pnpm --filter @aviation/ui-framework run build
           pnpm --filter @aviation/meta-app run build
+          pnpm --filter @aviation/weather-briefing run build
           pnpm --filter g1000-simulator-frontend run build
       - name: Verify the legacy TypeScript SDK root consumer
         run: pnpm --filter @aviation/g1000-simulator-backend run test
@@ -98,6 +102,7 @@ jobs:
           pnpm --filter @aviation/g1000-rendering run test
           pnpm --filter @aviation/ui-framework run test
           pnpm --filter @aviation/meta-app run test
+          pnpm --filter @aviation/weather-briefing run test
 
   python:
     name: Python shared SDK

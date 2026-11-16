@@ -105,7 +105,7 @@
       "http": "/api/v1/weather",
       "mcpTool": "v1.weather.request",
       "direct": "https://weather-briefing.jordanhubbard.net",
-      "description": "Weather station lookup, METAR/TAF and briefing APIs.",
+      "description": "Legacy weather briefings and station/list responses with METAR observations, TAF forecasts, UTC validity, source metadata and independent product availability.",
       "healthPath": "/health"
     }
   ],
