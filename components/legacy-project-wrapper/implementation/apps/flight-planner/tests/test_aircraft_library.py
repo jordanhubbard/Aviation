@@ -1168,3 +1168,35 @@ def test_schema_mode_never_admits_ignored_schema_or_downgrades(store, violation)
         verified_completion(models, [passage], "Summarize")
     assert len(requests) == (1 if violation == "provider_rejection" else 3)
     assert all(r["response_format"]["type"] == "json_schema" for r in requests)
+
+
+@pytest.mark.parametrize("correct", [True, False])
+def test_numeric_feedback_locates_claim_without_echoing_source_or_relaxing_validation(store, correct):
+    document = put(store)
+    good, passage = provider_answer(store, document)
+    bad = json.loads(json.dumps(good))
+    bad["claims"].append(json.loads(json.dumps(good["claims"][0])))
+    bad["claims"][1]["text"] += " 987654321"
+
+    class Correcting:
+        def __init__(self):
+            self.prompts = []
+
+        def complete(self, evidence, question):
+            self.prompts.append(question)
+            return good if correct and len(self.prompts) > 1 else bad
+
+    models = Correcting()
+    if correct:
+        answer = verified_completion(models, [passage], "Summarize")
+        assert len(answer["claims"]) == 1
+        assert len(models.prompts) == 2
+    else:
+        with pytest.raises(ModelUnavailable, match="quoted evidence in claim 2") as failure:
+            verified_completion(models, [passage], "Summarize")
+        assert "987654321" not in str(failure.value)
+        assert passage["text"] not in str(failure.value)
+        assert len(models.prompts) == 3
+    assert "quoted evidence in claim 2" in models.prompts[1]
+    assert "cite excerpts supporting every numeric value" in models.prompts[1]
+    assert len(bad["claims"]) == 2  # Rejection never silently edits the candidate.

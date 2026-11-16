@@ -408,7 +408,7 @@ def validate_answer(answer, evidence):
         raise ModelUnavailable("Answer contains no supported claims")
     by_id = {e["passage_id"]: e for e in evidence}
     clean = []
-    for claim in claims:
+    for claim_number, claim in enumerate(claims, start=1):
         if (
             not isinstance(claim, dict)
             or not isinstance(claim.get("text"), str)
@@ -450,7 +450,8 @@ def validate_answer(answer, evidence):
             supporting.append(quote)
         if not numbers(claim["text"]).issubset(numbers(" ".join(supporting))):
             raise ModelUnavailable(
-                "Model introduced numeric values absent from its quoted evidence"
+                f"Model introduced numeric values absent from its quoted evidence in claim {claim_number}; "
+                "cite excerpts supporting every numeric value in this claim or remove unsupported assertions"
             )
         clean.append({"text": claim["text"], "citations": verified})
     return {
