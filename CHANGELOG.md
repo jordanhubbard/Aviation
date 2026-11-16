@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Common weather: share complete AWC station-catalog validation across TypeScript and Python, including explicit unknown-location accounting. Planner retains bounded gzip decoding, its cache and existing discovery/source responses (#486).
+
 - Weather: share modeled pressure-level forecast planning and acquisition in both SDK bindings, preserve raw data/cache semantics, and reject unexpected provider units rather than relabeling them (#484).
 
 - Weather: share fixed-product AWC JSON acquisition across TypeScript and Python; Flight Planner retains complete raw METAR/TAF/advisory reports, provider attribution, bounded cache and explicit partial failures (#482).

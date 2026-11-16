@@ -2416,5 +2416,1492 @@
       "hours": 1,
       "payload": null
     }
+  ],
+  "stationCatalogs": [
+    {
+      "id": "raw-order",
+      "payload": [
+        {
+          "id": "Ab_1.-",
+          "icaoId": "KAAA",
+          "siteType": [
+            "METAR",
+            "TAF",
+            "unknown"
+          ],
+          "lat": 0,
+          "lon": 0,
+          "unknown": {
+            "raw": [
+              null,
+              false
+            ]
+          }
+        },
+        {
+          "id": "second",
+          "icaoId": null,
+          "siteType": [
+            "METAR",
+            "TAF",
+            "unknown"
+          ],
+          "lat": 90,
+          "lon": -180,
+          "unknown": {
+            "raw": [
+              null,
+              false
+            ]
+          }
+        },
+        {
+          "id": "second",
+          "icaoId": "",
+          "siteType": [
+            "METAR",
+            "TAF",
+            "unknown"
+          ],
+          "lat": -90,
+          "lon": 180,
+          "unknown": {
+            "raw": [
+              null,
+              false
+            ]
+          }
+        }
+      ],
+      "expected": {
+        "stations": [
+          {
+            "id": "Ab_1.-",
+            "icaoId": "KAAA",
+            "siteType": [
+              "METAR",
+              "TAF",
+              "unknown"
+            ],
+            "lat": 0,
+            "lon": 0,
+            "unknown": {
+              "raw": [
+                null,
+                false
+              ]
+            }
+          },
+          {
+            "id": "second",
+            "icaoId": null,
+            "siteType": [
+              "METAR",
+              "TAF",
+              "unknown"
+            ],
+            "lat": 90,
+            "lon": -180,
+            "unknown": {
+              "raw": [
+                null,
+                false
+              ]
+            }
+          },
+          {
+            "id": "second",
+            "icaoId": "",
+            "siteType": [
+              "METAR",
+              "TAF",
+              "unknown"
+            ],
+            "lat": -90,
+            "lon": 180,
+            "unknown": {
+              "raw": [
+                null,
+                false
+              ]
+            }
+          }
+        ],
+        "total_catalog_records": 3,
+        "excluded_unlocated_count": 0,
+        "unlocated_taf_station_ids": []
+      }
+    },
+    {
+      "id": "sentinel-edges",
+      "payload": [
+        {
+          "id": "Ab_1.-",
+          "icaoId": "KAAA",
+          "siteType": [
+            "METAR",
+            "TAF",
+            "unknown"
+          ],
+          "lat": -99,
+          "lon": -99,
+          "unknown": {
+            "raw": [
+              null,
+              false
+            ]
+          }
+        },
+        {
+          "id": "Ab_1.-",
+          "icaoId": "KAAA",
+          "siteType": [
+            "METAR",
+            "TAF",
+            "unknown"
+          ],
+          "lat": -99.9999,
+          "lon": -99.5,
+          "unknown": {
+            "raw": [
+              null,
+              false
+            ]
+          }
+        },
+        {
+          "id": "Ab_1.-",
+          "icaoId": "KAAA",
+          "siteType": [
+            "METAR",
+            "TAF",
+            "unknown"
+          ],
+          "lat": 0,
+          "lon": -99,
+          "unknown": {
+            "raw": [
+              null,
+              false
+            ]
+          }
+        }
+      ],
+      "expected": {
+        "stations": [
+          {
+            "id": "Ab_1.-",
+            "icaoId": "KAAA",
+            "siteType": [
+              "METAR",
+              "TAF",
+              "unknown"
+            ],
+            "lat": 0,
+            "lon": -99,
+            "unknown": {
+              "raw": [
+                null,
+                false
+              ]
+            }
+          }
+        ],
+        "total_catalog_records": 3,
+        "excluded_unlocated_count": 2,
+        "unlocated_taf_station_ids": [
+          "KAAA",
+          "KAAA"
+        ]
+      }
+    },
+    {
+      "id": "sentinel-identity",
+      "payload": [
+        {
+          "id": "Ab_1.-",
+          "icaoId": null,
+          "siteType": [
+            "METAR",
+            "TAF",
+            "unknown"
+          ],
+          "lat": -99,
+          "lon": -99,
+          "unknown": {
+            "raw": [
+              null,
+              false
+            ]
+          }
+        },
+        {
+          "id": "Ab_1.-",
+          "icaoId": "",
+          "siteType": [
+            "METAR",
+            "TAF",
+            "unknown"
+          ],
+          "lat": -99,
+          "lon": -99,
+          "unknown": {
+            "raw": [
+              null,
+              false
+            ]
+          }
+        },
+        {
+          "id": "Ab_1.-",
+          "icaoId": "KAAA",
+          "siteType": [
+            "taf"
+          ],
+          "lat": -99,
+          "lon": -99,
+          "unknown": {
+            "raw": [
+              null,
+              false
+            ]
+          }
+        },
+        {
+          "id": "Ab_1.-",
+          "icaoId": "KAAA",
+          "siteType": [
+            "METAR",
+            "TAF",
+            "unknown"
+          ],
+          "lat": -99,
+          "lon": -99,
+          "unknown": {
+            "raw": [
+              null,
+              false
+            ]
+          }
+        },
+        {
+          "id": "Ab_1.-",
+          "icaoId": "KAAA",
+          "siteType": [
+            "METAR",
+            "TAF",
+            "unknown"
+          ],
+          "lat": -99,
+          "lon": -99,
+          "unknown": {
+            "raw": [
+              null,
+              false
+            ]
+          }
+        }
+      ],
+      "expected": {
+        "stations": [],
+        "total_catalog_records": 5,
+        "excluded_unlocated_count": 5,
+        "unlocated_taf_station_ids": [
+          "KAAA",
+          "KAAA"
+        ]
+      }
+    },
+    {
+      "id": "missing-icao",
+      "payload": [
+        {
+          "id": "Ab_1.-",
+          "siteType": [
+            "METAR",
+            "TAF",
+            "unknown"
+          ],
+          "lat": 0,
+          "lon": 0,
+          "unknown": {
+            "raw": [
+              null,
+              false
+            ]
+          }
+        }
+      ],
+      "expected": {
+        "stations": [
+          {
+            "id": "Ab_1.-",
+            "siteType": [
+              "METAR",
+              "TAF",
+              "unknown"
+            ],
+            "lat": 0,
+            "lon": 0,
+            "unknown": {
+              "raw": [
+                null,
+                false
+              ]
+            }
+          }
+        ],
+        "total_catalog_records": 1,
+        "excluded_unlocated_count": 0,
+        "unlocated_taf_station_ids": []
+      }
+    },
+    {
+      "id": "unknown-site-types",
+      "payload": [
+        {
+          "id": "Ab_1.-",
+          "icaoId": "KAAA",
+          "siteType": [
+            "",
+            "UNKNOWN",
+            "TAF",
+            "TAF"
+          ],
+          "lat": 0,
+          "lon": 0,
+          "unknown": {
+            "raw": [
+              null,
+              false
+            ]
+          }
+        }
+      ],
+      "expected": {
+        "stations": [
+          {
+            "id": "Ab_1.-",
+            "icaoId": "KAAA",
+            "siteType": [
+              "",
+              "UNKNOWN",
+              "TAF",
+              "TAF"
+            ],
+            "lat": 0,
+            "lon": 0,
+            "unknown": {
+              "raw": [
+                null,
+                false
+              ]
+            }
+          }
+        ],
+        "total_catalog_records": 1,
+        "excluded_unlocated_count": 0,
+        "unlocated_taf_station_ids": []
+      }
+    }
+  ],
+  "stationInvalidCatalogs": [
+    {
+      "id": "empty",
+      "payload": []
+    },
+    {
+      "id": "null",
+      "payload": null
+    },
+    {
+      "id": "object",
+      "payload": {}
+    },
+    {
+      "id": "nonrecord",
+      "payload": [
+        null
+      ]
+    },
+    {
+      "id": "array-row",
+      "payload": [
+        []
+      ]
+    },
+    {
+      "id": "missing-id",
+      "payload": [
+        {
+          "icaoId": "KAAA",
+          "siteType": [
+            "METAR",
+            "TAF",
+            "unknown"
+          ],
+          "lat": 0,
+          "lon": 0,
+          "unknown": {
+            "raw": [
+              null,
+              false
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "missing-siteType",
+      "payload": [
+        {
+          "id": "Ab_1.-",
+          "icaoId": "KAAA",
+          "lat": 0,
+          "lon": 0,
+          "unknown": {
+            "raw": [
+              null,
+              false
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "missing-lat",
+      "payload": [
+        {
+          "id": "Ab_1.-",
+          "icaoId": "KAAA",
+          "siteType": [
+            "METAR",
+            "TAF",
+            "unknown"
+          ],
+          "lon": 0,
+          "unknown": {
+            "raw": [
+              null,
+              false
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "missing-lon",
+      "payload": [
+        {
+          "id": "Ab_1.-",
+          "icaoId": "KAAA",
+          "siteType": [
+            "METAR",
+            "TAF",
+            "unknown"
+          ],
+          "lat": 0,
+          "unknown": {
+            "raw": [
+              null,
+              false
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "id-0",
+      "payload": [
+        {
+          "id": "",
+          "icaoId": "KAAA",
+          "siteType": [
+            "METAR",
+            "TAF",
+            "unknown"
+          ],
+          "lat": 0,
+          "lon": 0,
+          "unknown": {
+            "raw": [
+              null,
+              false
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "id-1",
+      "payload": [
+        {
+          "id": " bad",
+          "icaoId": "KAAA",
+          "siteType": [
+            "METAR",
+            "TAF",
+            "unknown"
+          ],
+          "lat": 0,
+          "lon": 0,
+          "unknown": {
+            "raw": [
+              null,
+              false
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "id-2",
+      "payload": [
+        {
+          "id": "bad\n",
+          "icaoId": "KAAA",
+          "siteType": [
+            "METAR",
+            "TAF",
+            "unknown"
+          ],
+          "lat": 0,
+          "lon": 0,
+          "unknown": {
+            "raw": [
+              null,
+              false
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "id-3",
+      "payload": [
+        {
+          "id": "_bad",
+          "icaoId": "KAAA",
+          "siteType": [
+            "METAR",
+            "TAF",
+            "unknown"
+          ],
+          "lat": 0,
+          "lon": 0,
+          "unknown": {
+            "raw": [
+              null,
+              false
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "id-4",
+      "payload": [
+        {
+          "id": "é",
+          "icaoId": "KAAA",
+          "siteType": [
+            "METAR",
+            "TAF",
+            "unknown"
+          ],
+          "lat": 0,
+          "lon": 0,
+          "unknown": {
+            "raw": [
+              null,
+              false
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "id-5",
+      "payload": [
+        {
+          "id": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+          "icaoId": "KAAA",
+          "siteType": [
+            "METAR",
+            "TAF",
+            "unknown"
+          ],
+          "lat": 0,
+          "lon": 0,
+          "unknown": {
+            "raw": [
+              null,
+              false
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "id-6",
+      "payload": [
+        {
+          "id": null,
+          "icaoId": "KAAA",
+          "siteType": [
+            "METAR",
+            "TAF",
+            "unknown"
+          ],
+          "lat": 0,
+          "lon": 0,
+          "unknown": {
+            "raw": [
+              null,
+              false
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "id-7",
+      "payload": [
+        {
+          "id": false,
+          "icaoId": "KAAA",
+          "siteType": [
+            "METAR",
+            "TAF",
+            "unknown"
+          ],
+          "lat": 0,
+          "lon": 0,
+          "unknown": {
+            "raw": [
+              null,
+              false
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "id-8",
+      "payload": [
+        {
+          "id": 5,
+          "icaoId": "KAAA",
+          "siteType": [
+            "METAR",
+            "TAF",
+            "unknown"
+          ],
+          "lat": 0,
+          "lon": 0,
+          "unknown": {
+            "raw": [
+              null,
+              false
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "icaoId-0",
+      "payload": [
+        {
+          "id": "Ab_1.-",
+          "icaoId": "bad!",
+          "siteType": [
+            "METAR",
+            "TAF",
+            "unknown"
+          ],
+          "lat": 0,
+          "lon": 0,
+          "unknown": {
+            "raw": [
+              null,
+              false
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "icaoId-1",
+      "payload": [
+        {
+          "id": "Ab_1.-",
+          "icaoId": "é",
+          "siteType": [
+            "METAR",
+            "TAF",
+            "unknown"
+          ],
+          "lat": 0,
+          "lon": 0,
+          "unknown": {
+            "raw": [
+              null,
+              false
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "icaoId-2",
+      "payload": [
+        {
+          "id": "Ab_1.-",
+          "icaoId": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+          "siteType": [
+            "METAR",
+            "TAF",
+            "unknown"
+          ],
+          "lat": 0,
+          "lon": 0,
+          "unknown": {
+            "raw": [
+              null,
+              false
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "icaoId-3",
+      "payload": [
+        {
+          "id": "Ab_1.-",
+          "icaoId": false,
+          "siteType": [
+            "METAR",
+            "TAF",
+            "unknown"
+          ],
+          "lat": 0,
+          "lon": 0,
+          "unknown": {
+            "raw": [
+              null,
+              false
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "icaoId-4",
+      "payload": [
+        {
+          "id": "Ab_1.-",
+          "icaoId": 5,
+          "siteType": [
+            "METAR",
+            "TAF",
+            "unknown"
+          ],
+          "lat": 0,
+          "lon": 0,
+          "unknown": {
+            "raw": [
+              null,
+              false
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "lat-0",
+      "payload": [
+        {
+          "id": "Ab_1.-",
+          "icaoId": "KAAA",
+          "siteType": [
+            "METAR",
+            "TAF",
+            "unknown"
+          ],
+          "lat": true,
+          "lon": 0,
+          "unknown": {
+            "raw": [
+              null,
+              false
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "lat-1",
+      "payload": [
+        {
+          "id": "Ab_1.-",
+          "icaoId": "KAAA",
+          "siteType": [
+            "METAR",
+            "TAF",
+            "unknown"
+          ],
+          "lat": "0",
+          "lon": 0,
+          "unknown": {
+            "raw": [
+              null,
+              false
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "lat-2",
+      "payload": [
+        {
+          "id": "Ab_1.-",
+          "icaoId": "KAAA",
+          "siteType": [
+            "METAR",
+            "TAF",
+            "unknown"
+          ],
+          "lat": null,
+          "lon": 0,
+          "unknown": {
+            "raw": [
+              null,
+              false
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "lat-3",
+      "payload": [
+        {
+          "id": "Ab_1.-",
+          "icaoId": "KAAA",
+          "siteType": [
+            "METAR",
+            "TAF",
+            "unknown"
+          ],
+          "lat": 90.01,
+          "lon": 0,
+          "unknown": {
+            "raw": [
+              null,
+              false
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "lat-4",
+      "payload": [
+        {
+          "id": "Ab_1.-",
+          "icaoId": "KAAA",
+          "siteType": [
+            "METAR",
+            "TAF",
+            "unknown"
+          ],
+          "lat": -90.01,
+          "lon": 0,
+          "unknown": {
+            "raw": [
+              null,
+              false
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "lat-5",
+      "payload": [
+        {
+          "id": "Ab_1.-",
+          "icaoId": "KAAA",
+          "siteType": [
+            "METAR",
+            "TAF",
+            "unknown"
+          ],
+          "lat": -100,
+          "lon": 0,
+          "unknown": {
+            "raw": [
+              null,
+              false
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "lat-6",
+      "payload": [
+        {
+          "id": "Ab_1.-",
+          "icaoId": "KAAA",
+          "siteType": [
+            "METAR",
+            "TAF",
+            "unknown"
+          ],
+          "lat": -99.5,
+          "lon": 0,
+          "unknown": {
+            "raw": [
+              null,
+              false
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "lon-0",
+      "payload": [
+        {
+          "id": "Ab_1.-",
+          "icaoId": "KAAA",
+          "siteType": [
+            "METAR",
+            "TAF",
+            "unknown"
+          ],
+          "lat": 0,
+          "lon": false,
+          "unknown": {
+            "raw": [
+              null,
+              false
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "lon-1",
+      "payload": [
+        {
+          "id": "Ab_1.-",
+          "icaoId": "KAAA",
+          "siteType": [
+            "METAR",
+            "TAF",
+            "unknown"
+          ],
+          "lat": 0,
+          "lon": "0",
+          "unknown": {
+            "raw": [
+              null,
+              false
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "lon-2",
+      "payload": [
+        {
+          "id": "Ab_1.-",
+          "icaoId": "KAAA",
+          "siteType": [
+            "METAR",
+            "TAF",
+            "unknown"
+          ],
+          "lat": 0,
+          "lon": null,
+          "unknown": {
+            "raw": [
+              null,
+              false
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "lon-3",
+      "payload": [
+        {
+          "id": "Ab_1.-",
+          "icaoId": "KAAA",
+          "siteType": [
+            "METAR",
+            "TAF",
+            "unknown"
+          ],
+          "lat": 0,
+          "lon": 180.01,
+          "unknown": {
+            "raw": [
+              null,
+              false
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "lon-4",
+      "payload": [
+        {
+          "id": "Ab_1.-",
+          "icaoId": "KAAA",
+          "siteType": [
+            "METAR",
+            "TAF",
+            "unknown"
+          ],
+          "lat": 0,
+          "lon": -180.01,
+          "unknown": {
+            "raw": [
+              null,
+              false
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "siteType-0",
+      "payload": [
+        {
+          "id": "Ab_1.-",
+          "icaoId": "KAAA",
+          "siteType": null,
+          "lat": 0,
+          "lon": 0,
+          "unknown": {
+            "raw": [
+              null,
+              false
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "siteType-1",
+      "payload": [
+        {
+          "id": "Ab_1.-",
+          "icaoId": "KAAA",
+          "siteType": "TAF",
+          "lat": 0,
+          "lon": 0,
+          "unknown": {
+            "raw": [
+              null,
+              false
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "siteType-2",
+      "payload": [
+        {
+          "id": "Ab_1.-",
+          "icaoId": "KAAA",
+          "siteType": [
+            null
+          ],
+          "lat": 0,
+          "lon": 0,
+          "unknown": {
+            "raw": [
+              null,
+              false
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "siteType-3",
+      "payload": [
+        {
+          "id": "Ab_1.-",
+          "icaoId": "KAAA",
+          "siteType": [
+            1
+          ],
+          "lat": 0,
+          "lon": 0,
+          "unknown": {
+            "raw": [
+              null,
+              false
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "siteType-4",
+      "payload": [
+        {
+          "id": "Ab_1.-",
+          "icaoId": "KAAA",
+          "siteType": [
+            false
+          ],
+          "lat": 0,
+          "lon": 0,
+          "unknown": {
+            "raw": [
+              null,
+              false
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "sentinel-lower-lat",
+      "payload": [
+        {
+          "id": "Ab_1.-",
+          "icaoId": "KAAA",
+          "siteType": [
+            "METAR",
+            "TAF",
+            "unknown"
+          ],
+          "lat": -100,
+          "lon": -99,
+          "unknown": {
+            "raw": [
+              null,
+              false
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "sentinel-lower-lon",
+      "payload": [
+        {
+          "id": "Ab_1.-",
+          "icaoId": "KAAA",
+          "siteType": [
+            "METAR",
+            "TAF",
+            "unknown"
+          ],
+          "lat": -99,
+          "lon": -100,
+          "unknown": {
+            "raw": [
+              null,
+              false
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "sentinel-bad-metadata",
+      "payload": [
+        {
+          "id": "Ab_1.-",
+          "icaoId": "KAAA",
+          "siteType": [
+            null
+          ],
+          "lat": -99,
+          "lon": -99,
+          "unknown": {
+            "raw": [
+              null,
+              false
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "whole-list",
+      "payload": [
+        {
+          "id": "Ab_1.-",
+          "icaoId": "KAAA",
+          "siteType": [
+            "METAR",
+            "TAF",
+            "unknown"
+          ],
+          "lat": 0,
+          "lon": 0,
+          "unknown": {
+            "raw": [
+              null,
+              false
+            ]
+          }
+        },
+        {
+          "id": "bad!",
+          "icaoId": "KAAA",
+          "siteType": [
+            "METAR",
+            "TAF",
+            "unknown"
+          ],
+          "lat": 0,
+          "lon": 0,
+          "unknown": {
+            "raw": [
+              null,
+              false
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "id-actual-newline",
+      "payload": [
+        {
+          "id": "bad\n",
+          "icaoId": "KAAA",
+          "siteType": [
+            "METAR",
+            "TAF",
+            "unknown"
+          ],
+          "lat": 0,
+          "lon": 0,
+          "unknown": {
+            "raw": [
+              null,
+              false
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "id-actual-carriage",
+      "payload": [
+        {
+          "id": "bad\r",
+          "icaoId": "KAAA",
+          "siteType": [
+            "METAR",
+            "TAF",
+            "unknown"
+          ],
+          "lat": 0,
+          "lon": 0,
+          "unknown": {
+            "raw": [
+              null,
+              false
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "id-actual-space",
+      "payload": [
+        {
+          "id": "bad ",
+          "icaoId": "KAAA",
+          "siteType": [
+            "METAR",
+            "TAF",
+            "unknown"
+          ],
+          "lat": 0,
+          "lon": 0,
+          "unknown": {
+            "raw": [
+              null,
+              false
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "id-actual-tab",
+      "payload": [
+        {
+          "id": "bad\t",
+          "icaoId": "KAAA",
+          "siteType": [
+            "METAR",
+            "TAF",
+            "unknown"
+          ],
+          "lat": 0,
+          "lon": 0,
+          "unknown": {
+            "raw": [
+              null,
+              false
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "icaoId-actual-newline",
+      "payload": [
+        {
+          "id": "Ab_1.-",
+          "icaoId": "bad\n",
+          "siteType": [
+            "METAR",
+            "TAF",
+            "unknown"
+          ],
+          "lat": 0,
+          "lon": 0,
+          "unknown": {
+            "raw": [
+              null,
+              false
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "icaoId-actual-carriage",
+      "payload": [
+        {
+          "id": "Ab_1.-",
+          "icaoId": "bad\r",
+          "siteType": [
+            "METAR",
+            "TAF",
+            "unknown"
+          ],
+          "lat": 0,
+          "lon": 0,
+          "unknown": {
+            "raw": [
+              null,
+              false
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "icaoId-actual-space",
+      "payload": [
+        {
+          "id": "Ab_1.-",
+          "icaoId": "bad ",
+          "siteType": [
+            "METAR",
+            "TAF",
+            "unknown"
+          ],
+          "lat": 0,
+          "lon": 0,
+          "unknown": {
+            "raw": [
+              null,
+              false
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "icaoId-actual-tab",
+      "payload": [
+        {
+          "id": "Ab_1.-",
+          "icaoId": "bad\t",
+          "siteType": [
+            "METAR",
+            "TAF",
+            "unknown"
+          ],
+          "lat": 0,
+          "lon": 0,
+          "unknown": {
+            "raw": [
+              null,
+              false
+            ]
+          }
+        }
+      ]
+    }
+  ],
+  "stationCatalogBounds": [
+    {
+      "id": "maximum",
+      "row": {
+        "id": "Ab_1.-",
+        "icaoId": "KAAA",
+        "siteType": [
+          "METAR",
+          "TAF",
+          "unknown"
+        ],
+        "lat": 0,
+        "lon": 0,
+        "unknown": {
+          "raw": [
+            null,
+            false
+          ]
+        }
+      },
+      "count": 50000,
+      "valid": true
+    },
+    {
+      "id": "over-maximum",
+      "row": {
+        "id": "Ab_1.-",
+        "icaoId": "KAAA",
+        "siteType": [
+          "METAR",
+          "TAF",
+          "unknown"
+        ],
+        "lat": 0,
+        "lon": 0,
+        "unknown": {
+          "raw": [
+            null,
+            false
+          ]
+        }
+      },
+      "count": 50001,
+      "valid": false
+    }
   ]
 }

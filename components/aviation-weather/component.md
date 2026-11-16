@@ -1,6 +1,6 @@
 ---
 namespace: aviation
-version: 0.3.0
+version: 0.4.0
 display_name: Aviation weather
 profiles:
   - library
@@ -8,7 +8,7 @@ profiles:
 sample: false
 provides:
   - name: aviation.weather
-    version: 0.3.0
+    version: 0.4.0
     interface:
       uri: interfaces/weather.md
       pin: null
@@ -124,3 +124,17 @@ their query spellings, defaults and fallback behavior SHALL remain unchanged.
 - **THEN** common weather plans and validates the exact provider product once
 - **AND** the application preserves source units, nulls and modeled-data limitations
   without substituting observations, interpolation or stale success
+
+### Requirement: Station discovery shares a complete provider catalog
+
+Common weather SHALL acquire and interpret the fixed AWC gzip/JSON station catalog
+through a trusted bounded transport. It SHALL validate the whole catalog before
+returning located raw rows and explicit unlocated accounting, using the numeric,
+identifier and paired-sentinel rules in the public interface. Applications retain
+generic decompression, cache, provenance and route/station selection.
+
+#### Scenario: A catalog contains stations with unknown coordinates
+
+- **WHEN** both coordinates satisfy the documented provider sentinel
+- **THEN** common weather excludes that row from geometry and counts it explicitly
+- **AND** preserves its nonempty TAF ICAO identity without inventing a location

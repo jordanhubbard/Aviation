@@ -6,7 +6,8 @@ import re
 from collections.abc import Callable
 from typing import Any
 
-AWC_DATA_URL = "https://aviationweather.gov/api/data/"
+AWC_ORIGIN = "https://aviationweather.gov"
+AWC_DATA_URL = AWC_ORIGIN + "/api/data/"
 
 
 class AWCJSONError(RuntimeError):

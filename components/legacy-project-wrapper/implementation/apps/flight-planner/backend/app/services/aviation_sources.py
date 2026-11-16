@@ -4,9 +4,11 @@ from __future__ import annotations
 
 import hashlib
 import re
-import zlib
 
 from aviation.weather import (
+    AWC_STATION_CATALOG_URL,
+    AWCStationCatalogError,
+    fetch_awc_station_catalog,
     OpenMeteoError,
     get_pressure_level_forecast,
     plan_pressure_level_forecast,
@@ -15,7 +17,7 @@ from aviation.weather import (
 from app.config import settings
 from app.services import ga_data as data
 
-STATIONS = "https://aviationweather.gov/data/cache/stations.cache.json.gz"
+STATIONS = AWC_STATION_CATALOG_URL
 OPENAIP = "https://api.core.openaip.net/api/"
 NWS = "https://api.weather.gov/"
 FAA_EVENTS = "https://nasstatus.faa.gov/api/airport-events"
@@ -25,48 +27,20 @@ LICENSE_URL = "https://creativecommons.org/licenses/by-nc/4.0/"
 
 def station_catalog():
     def load():
-        import json
-
-        blob = data.fetch(STATIONS, raw_bytes=True)
         try:
-            decoder = zlib.decompressobj(16 + zlib.MAX_WBITS)
-            raw = decoder.decompress(blob, 16 * 1024 * 1024 + 1)
-            if len(raw) > 16 * 1024 * 1024 or not decoder.eof or decoder.unused_data:
-                raise ValueError("Invalid or oversized station cache")
-            stations = json.loads(raw)
-            if not isinstance(stations, list) or not stations or len(stations) > 50000:
-                raise ValueError("Invalid station cache")
-            # Do not quietly omit malformed rows and claim full discovery.
-            located, unlocated_taf = [], []
-            unlocated_count = 0
-            for station in stations:
-                if (
-                    not isinstance(station, dict)
-                    or not isinstance(station.get("id"), str)
-                    or not isinstance(station.get("icaoId"), (str, type(None)))
-                    or not isinstance(station.get("siteType"), list)
-                    or any(not isinstance(product, str) for product in station["siteType"])
-                ):
-                    raise ValueError("Invalid station metadata")
-                lat, lon = data.number(station.get("lat")), data.number(station.get("lon"))
-                if lat is not None and lon is not None and -100 < lat <= -99 and -100 < lon <= -99:
-                    unlocated_count += 1
-                    if "TAF" in station["siteType"] and station.get("icaoId"):
-                        unlocated_taf.append(station["icaoId"])
-                    continue
-                if lat is None or lon is None or not -90 <= lat <= 90 or not -180 <= lon <= 180:
-                    raise ValueError("Invalid station coordinates")
-                located.append(station)
-            return located, data.source(
-                "NOAA Aviation Weather Center station catalog",
-                STATIONS,
-                freshness="Daily provider catalog; cached for up to 24 hours",
-                total_catalog_records=len(stations),
-                excluded_unlocated_count=unlocated_count,
-                unlocated_taf_station_ids=unlocated_taf,
+            result = fetch_awc_station_catalog(
+                lambda url, params: data.fetch(url, params, gzip_json=True)
             )
-        except (ValueError, TypeError, zlib.error) as exc:
-            raise data.DataUnavailable("Invalid NOAA station catalog") from exc
+        except AWCStationCatalogError as exc:
+            raise data.DataUnavailable(str(exc)) from None
+        return result["stations"], data.source(
+            "NOAA Aviation Weather Center station catalog",
+            result["url"],
+            freshness="Daily provider catalog; cached for up to 24 hours",
+            total_catalog_records=result["total_catalog_records"],
+            excluded_unlocated_count=result["excluded_unlocated_count"],
+            unlocated_taf_station_ids=result["unlocated_taf_station_ids"],
+        )
 
     return data.cached(("awc-station-catalog",), 86400, load)
 

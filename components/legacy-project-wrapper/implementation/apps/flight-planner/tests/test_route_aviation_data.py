@@ -258,11 +258,16 @@ def test_station_discovery_filter_and_limit(client, providers):
 def test_gzip_catalog_validation_cache_and_expansion_limit(monkeypatch):
     rows, calls = [station("KAAA", 0, 0)], []
 
-    def fetch(*a, **kw):
+    def get(url, **kw):
         calls.append(1)
-        return gzip.compress(json.dumps(rows).encode())
+        assert url == sources.STATIONS and kw["timeout"] == 20
+        return httpx.Response(
+            200,
+            content=gzip.compress(json.dumps(rows).encode()),
+            request=httpx.Request("GET", url),
+        )
 
-    monkeypatch.setattr(ga_data, "fetch", fetch)
+    monkeypatch.setattr(ga_data.httpx, "get", get)
     assert sources.station_catalog()[0] == rows
     sources.station_catalog()
     assert len(calls) == 1
@@ -272,7 +277,13 @@ def test_gzip_catalog_validation_cache_and_expansion_limit(monkeypatch):
         sources.station_catalog()
     ga_data._CACHE.clear()
     monkeypatch.setattr(
-        ga_data, "fetch", lambda *a, **k: gzip.compress(b" " * (16 * 1024 * 1024 + 1))
+        ga_data.httpx,
+        "get",
+        lambda url, **kw: httpx.Response(
+            200,
+            content=gzip.compress(b" " * (16 * 1024 * 1024 + 1)),
+            request=httpx.Request("GET", url),
+        ),
     )
     with pytest.raises(ga_data.DataUnavailable):
         sources.station_catalog()
@@ -643,7 +654,15 @@ def test_noaa_unknown_coordinate_sentinel_is_reported_not_used(monkeypatch):
         station("KUNK", -99.99, -99.99),
         station("KUN2", -99.999, -99.999),
     ]
-    monkeypatch.setattr(ga_data, "fetch", lambda *a, **k: gzip.compress(json.dumps(rows).encode()))
+    monkeypatch.setattr(
+        ga_data.httpx,
+        "get",
+        lambda url, **kw: httpx.Response(
+            200,
+            content=gzip.compress(json.dumps(rows).encode()),
+            request=httpx.Request("GET", url),
+        ),
+    )
     located, source = sources.station_catalog()
     assert [s["icaoId"] for s in located] == ["KAAA"]
     assert source["excluded_unlocated_count"] == 2
@@ -659,3 +678,81 @@ def test_route_exposes_catalog_discovery_limitation(client, providers, monkeypat
     value = client.post("/api/aviation-weather/route", json={"points": [[0, 0], [0, 4]]}).json()
     assert value["discovery_limited"] is True
     assert value["source"]["unlocated_taf_station_ids"] == ["KUNK"]
+
+
+@pytest.mark.parametrize("fault", ["truncated", "crc", "trailing", "concatenated", "oversized-compressed", "malformed-json", "empty-204"])
+def test_station_gzip_transport_rejects_incomplete_or_oversized_stream(
+    monkeypatch, fault
+):
+    blob = gzip.compress(json.dumps([station("KAAA", 0, 0)]).encode())
+    if fault == "truncated":
+        blob = blob[:-1]
+    if fault == "crc":
+        blob = blob[:-8] + bytes([blob[-8] ^ 1]) + blob[-7:]
+    if fault == "trailing":
+        blob += b"trailing"
+    if fault == "concatenated":
+        blob += gzip.compress(b"[]")
+    if fault == "oversized-compressed":
+        blob = b"x" * (20 * 1024 * 1024 + 1)
+    if fault == "malformed-json":
+        blob = gzip.compress(b"not JSON")
+    if fault == "empty-204":
+        blob = b""
+    calls = []
+
+    def get(url, **kwargs):
+        calls.append(kwargs)
+        return httpx.Response(
+            204 if fault == "empty-204" else 200,
+            content=blob,
+            request=httpx.Request("GET", url),
+        )
+
+    monkeypatch.setattr(ga_data.httpx, "get", get)
+    with pytest.raises(ga_data.DataUnavailable):
+        sources.station_catalog()
+    assert len(calls) == 1 and calls[0]["timeout"] == 20
+    assert ("awc-station-catalog",) not in ga_data._CACHE
+
+
+def test_station_catalog_expired_cache_does_not_mask_transport_failure(monkeypatch):
+    def get(url, **kwargs):
+        return httpx.Response(
+            200,
+            content=gzip.compress(json.dumps([station("KAAA", 0, 0)]).encode()),
+            request=httpx.Request("GET", url),
+        )
+
+    monkeypatch.setattr(ga_data.httpx, "get", get)
+    rows, source = sources.station_catalog()
+    assert rows == [station("KAAA", 0, 0)]
+    assert source["url"] == sources.STATIONS and source["total_catalog_records"] == 1
+    assert source["retrieved_at_utc"] and source["excluded_unlocated_count"] == 0
+    assert source["unlocated_taf_station_ids"] == []
+    key = ("awc-station-catalog",)
+    _, value, weight = ga_data._CACHE[key]
+    ga_data._CACHE[key] = (0, value, weight)
+
+    def fail(url, **kwargs):
+        raise httpx.TimeoutException("private upstream")
+
+    monkeypatch.setattr(ga_data.httpx, "get", fail)
+    with pytest.raises(
+        ga_data.DataUnavailable, match="AWC station catalog unavailable"
+    ):
+        sources.station_catalog()
+    assert key not in ga_data._CACHE
+
+
+def test_generic_gzip_json_accepts_exact_expansion_ceiling(monkeypatch):
+    raw = b"[" + b" " * (16 * 1024 * 1024 - 2) + b"]"
+    blob = gzip.compress(raw)
+    monkeypatch.setattr(
+        ga_data.httpx,
+        "get",
+        lambda url, **kw: httpx.Response(
+            200, content=blob, request=httpx.Request("GET", url)
+        ),
+    )
+    assert ga_data.fetch(sources.STATIONS, gzip_json=True) == []

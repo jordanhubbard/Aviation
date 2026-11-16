@@ -64,3 +64,14 @@ equivalence/envelopes and exercise existing timeout/post-download byte bounds.
 - **WHEN** this Component, its vectors, a binding, package metadata, or the SDK workflow
   changes
 - **THEN** the TypeScript and Python conformance adapters run independently
+
+## Requirement: Station catalogs are complete and portable
+
+Both bindings SHALL execute shared independent synthetic vectors for raw row
+fidelity/order, all sentinel edges, unlocated TAF identities, whole-catalog
+failures, numeric/identifier drift and 50,000/50,001 row boundaries. Supplemental
+checks reject nonfinite and huge numeric values. Acquisition tests assert the
+fixed URL and one-call failure behavior without private context. Real application
+transport tests cover gzip CRC/truncation/trailing/concatenated rejection, both
+byte ceilings, timeout, cache/source compatibility and route discovery. Existing
+weather operations remain compatible; no live provider is needed by acceptance.

@@ -22,7 +22,7 @@
 
 // Cache
 export { WeatherCache, weatherCache } from './cache.js';
-export { AWC_DATA_URL, AWCJSONError, fetchAWCJSONReports, type AWCJSONTransport } from './awc.js';
+export { AWC_ORIGIN, AWC_DATA_URL, AWCJSONError, fetchAWCJSONReports, type AWCJSONTransport } from './awc.js';
 export type { JSONWeatherTransport } from './types.js';
 
 // METAR
@@ -76,3 +76,5 @@ export {
   type DepartureWindow,
   type HourlyData,
 } from './flight-category.js';
+
+export { AWC_STATION_CATALOG_URL, AWCStationCatalogError, interpretAWCStationCatalog, fetchAWCStationCatalog, type AWCStationCatalog } from './station-catalog.js';

@@ -2,6 +2,10 @@ import { describe, expect, it } from 'vitest';
 import { loadConformanceContract } from './conformance-contract.js';
 import {
   WeatherCache,
+  AWC_STATION_CATALOG_URL,
+  AWCStationCatalogError,
+  interpretAWCStationCatalog,
+  fetchAWCStationCatalog,
   AWCJSONError,
   fetchAWCJSONReports,
   OpenMeteoError,
@@ -197,5 +201,52 @@ describe('aviation.weather Component conformance', () => {
       true,
     );
     expect(result).toEqual({ observation: 'last-good' });
+  });
+});
+
+
+describe('aviation.weather station catalogs', () => {
+  for (const v of contract.stationCatalogs) {
+    it(`catalog fidelity and acquisition: ${v.id}`, async () => {
+      const before = structuredClone(v.payload), calls: unknown[] = [];
+      expect(interpretAWCStationCatalog(v.payload)).toEqual(v.expected);
+      expect(await fetchAWCStationCatalog(async (url, params) => { calls.push({ url, params }); return v.payload; }))
+        .toEqual({ url: AWC_STATION_CATALOG_URL, ...v.expected });
+      expect(calls).toEqual([{ url: 'https://aviationweather.gov/data/cache/stations.cache.json.gz', params: {} }]);
+      expect(v.payload).toEqual(before);
+    });
+  }
+  for (const v of contract.stationInvalidCatalogs) {
+    it(`rejects whole catalog: ${v.id}`, async () => {
+      expect(() => interpretAWCStationCatalog(v.payload)).toThrow(AWCStationCatalogError);
+      let calls = 0;
+      await expect(fetchAWCStationCatalog(async () => { calls++; return v.payload; })).rejects.toMatchObject({ kind: 'response' });
+      expect(calls).toBe(1);
+    });
+  }
+  for (const v of contract.stationCatalogBounds) {
+    it(`catalog row bound: ${v.id}`, () => {
+      const payload = Array.from({ length: v.count }, () => v.row);
+      if (v.valid) expect(interpretAWCStationCatalog(payload)).toMatchObject({ total_catalog_records: 50000, stations: payload });
+      else expect(() => interpretAWCStationCatalog(payload)).toThrow(AWCStationCatalogError);
+    });
+  }
+  for (const field of ['lat', 'lon']) for (const value of [NaN, Infinity, -Infinity, Number.MAX_VALUE]) {
+    it(`rejects nonfinite catalog ${field} ${value}`, () => {
+      expect(() => interpretAWCStationCatalog([{ ...contract.stationCatalogs[0].payload[0], [field]: value }])).toThrow(AWCStationCatalogError);
+    });
+  }
+  it('rejects invalid transport and suppresses private provider details without retries', async () => {
+    await expect(fetchAWCStationCatalog(null as any)).rejects.toMatchObject({ kind: 'request' });
+    let calls = 0;
+    try {
+      await fetchAWCStationCatalog(async () => { calls++; throw new Error('private-token'); });
+      throw new Error('expected failure');
+    } catch (error) {
+      expect(error).toBeInstanceOf(AWCStationCatalogError);
+      expect(error).toMatchObject({ kind: 'provider', message: 'AWC station catalog unavailable' });
+      expect((error as Error).cause).toBeUndefined();
+    }
+    expect(calls).toBe(1);
   });
 });
