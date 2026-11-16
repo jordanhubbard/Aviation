@@ -3,6 +3,7 @@
 ## Unreleased
 
 - Dependency automation: remove an unused captured virtualenv freeze with an unreachable sandbox path that blocked Python updates; retain the actual requirements and project manifests as authority (#441).
+- Native service-health: rebind the registered child to the released Standard toolchain and refresh two-clean-run regenerative qualification, retaining prior authority history. Record current evidence for all 18 promoted retained Components; importer cutover and wrapper retirement remain open.
 
 - Dependency security: remove the unpatched Jest/deepmerge test chain by moving the remaining 128 service/model tests to Vitest, update affected transitive packages, and point Dependabot at actual retained workspace manifests (#441).
 

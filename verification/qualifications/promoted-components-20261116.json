@@ -1,0 +1,251 @@
+{
+  "baseline_commit": "48eef19044ef49d4eb88bae731c2d63f2731475a",
+  "components": [
+    {
+      "component": "components/aviation-ai-explanation",
+      "contracts": [
+        "components/aviation-ai-explanation/acceptance/explanation.md"
+      ],
+      "lock_sha256": "5949dbc367ef307cc260fd0cab8daa0bcd9438d600ce9d4ad33c8def0f799ab1",
+      "oracle": "components/aviation-ai-explanation/acceptance/vectors.json",
+      "oracle_sha256": "09ee78ed02cf5236d077f1d225eed25eaa0dd7999b46836e6ad975f24790c2af",
+      "realization_adapters": [
+        "components/legacy-project-wrapper/implementation/packages/ai-explainer/tests/protocol.test.ts",
+        "components/legacy-project-wrapper/implementation/packages/shared-sdk/python/tests/test_explanation.py",
+        "components/legacy-project-wrapper/implementation/packages/shared-sdk/clojure/test/aviation/explanation_test.clj"
+      ]
+    },
+    {
+      "component": "components/aviation-aircraft",
+      "contracts": [
+        "components/aviation-aircraft/acceptance/aircraft.md"
+      ],
+      "lock_sha256": "49a4e52860dda97f2d3cd64082459b420ce235676aee1ac34c3f447a14bac87e",
+      "oracle": "components/aviation-aircraft/acceptance/vectors.json",
+      "oracle_sha256": "fb3087bb45248b8890479e285e1fc702f68b9c41dbeae590b54c9103c92e4820",
+      "realization_adapters": [
+        "components/legacy-project-wrapper/implementation/packages/shared-sdk/src/aviation/__tests__/aircraft-conformance.test.ts",
+        "components/legacy-project-wrapper/implementation/packages/shared-sdk/python/tests/test_aircraft_conformance.py"
+      ]
+    },
+    {
+      "component": "components/aviation-airports",
+      "contracts": [
+        "components/aviation-airports/acceptance/airports.md"
+      ],
+      "lock_sha256": "3b2fbb70548d3b43b0438be2f2998852bdc8bcdec268d2f8feaac5cdc41c7318",
+      "oracle": "components/aviation-airports/acceptance/vectors.json",
+      "oracle_sha256": "68405399e119da9c9d122429bba9ac6a6a00784890e70984aa4757d3d37fd5f0",
+      "realization_adapters": [
+        "components/legacy-project-wrapper/implementation/packages/shared-sdk/src/aviation/__tests__/airports-conformance.test.ts",
+        "components/legacy-project-wrapper/implementation/packages/shared-sdk/python/tests/test_airports_conformance.py"
+      ]
+    },
+    {
+      "component": "components/aviation-alerts",
+      "contracts": [
+        "components/aviation-alerts/acceptance/alerts.md"
+      ],
+      "lock_sha256": "19c5cd3730e0b4843ed40354509912807e7616c91f8d1e8c4f5b5bd28966edb9",
+      "oracle": "components/aviation-alerts/acceptance/vectors.json",
+      "oracle_sha256": "0ab80c2af6fa08051789f481f804723be7dba5209ac3ca361fac63518ea1b6eb",
+      "realization_adapters": [
+        "components/legacy-project-wrapper/implementation/packages/shared-sdk/src/aviation/__tests__/alerts-conformance.test.ts",
+        "components/legacy-project-wrapper/implementation/packages/shared-sdk/python/tests/test_alerts_conformance.py"
+      ]
+    },
+    {
+      "component": "components/aviation-avionics",
+      "contracts": [
+        "components/aviation-avionics/acceptance/avionics.md"
+      ],
+      "lock_sha256": "4be312bb0edd43e87e846aa7dfd36b0b7c1d214f2bbb92409f7b0f69c1a8ad86",
+      "oracle": "components/aviation-avionics/acceptance/vectors.json",
+      "oracle_sha256": "00cab65ca8e401c0079f43df450fec56e47860c57ae1779cfbda81f81389b1a6",
+      "realization_adapters": [
+        "components/legacy-project-wrapper/implementation/packages/g1000-protocols/src/__tests__/component-conformance.test.ts",
+        "components/legacy-project-wrapper/implementation/packages/g1000-rendering/src/__tests__/component-conformance.test.ts",
+        "components/legacy-project-wrapper/implementation/packages/g1000-avionics-sdk/src/__tests__/component-conformance.test.ts",
+        "components/legacy-project-wrapper/implementation/packages/g1000-avionics-sdk/python/tests/test_component_conformance.py"
+      ]
+    },
+    {
+      "component": "components/aviation-configuration",
+      "contracts": [
+        "components/aviation-configuration/acceptance/configuration.md"
+      ],
+      "lock_sha256": "3c4835ce013ea884b84fe7b1dfe12816064dccb166f47b1ec3e10dd3b50f58f9",
+      "oracle": "components/aviation-configuration/acceptance/vectors.json",
+      "oracle_sha256": "c274a65991316f020188765ccee3711b7b646a517eb6d7153e2a33a517549ffe",
+      "realization_adapters": [
+        "components/legacy-project-wrapper/implementation/packages/aviation-config/tests/configuration-conformance.test.ts",
+        "components/legacy-project-wrapper/implementation/packages/aviation-config/python/tests/test_configuration_conformance.py"
+      ]
+    },
+    {
+      "component": "components/aviation-flight-dynamics",
+      "contracts": [
+        "components/aviation-flight-dynamics/acceptance/flight-dynamics.md"
+      ],
+      "lock_sha256": "1a7c1df202593cef6ed40905ab1b8470de725be2a3d75ba8f92aaf41b96f5776",
+      "oracle": "components/aviation-flight-dynamics/acceptance/vectors.json",
+      "oracle_sha256": "cf1f1b15d3cd020ec86444fb9292e78e1722ace0ac50007398a25a8d0c62c9b9",
+      "realization_adapters": [
+        "components/legacy-project-wrapper/implementation/packages/shared-sdk/src/aviation/__tests__/flight-dynamics-conformance.test.ts",
+        "components/legacy-project-wrapper/implementation/packages/flight-dynamics/tests/test_component_conformance.py"
+      ]
+    },
+    {
+      "component": "components/aviation-hazards",
+      "contracts": [
+        "components/aviation-hazards/acceptance/hazards.md"
+      ],
+      "lock_sha256": "c2f5ddb90e0baba1e6514c97c47a7486a0c43e8f5f760e29eb50197767906c0b",
+      "oracle": "components/aviation-hazards/acceptance/vectors.json",
+      "oracle_sha256": "16c101ef5076ae22fd5cc957e500f21a30e473df0e84828aef0110ae5d5e6817",
+      "realization_adapters": [
+        "components/legacy-project-wrapper/implementation/packages/shared-sdk/src/aviation/__tests__/hazards-conformance.test.ts",
+        "components/legacy-project-wrapper/implementation/packages/shared-sdk/python/tests/test_hazards_conformance.py"
+      ]
+    },
+    {
+      "component": "components/aviation-logbook",
+      "contracts": [
+        "components/aviation-logbook/acceptance/logbook.md"
+      ],
+      "lock_sha256": "565b05ed0db2b78f1ee599c7934c99a9d6c90bc776d379c73e53764b1ae61c7b",
+      "oracle": "components/aviation-logbook/acceptance/vectors.json",
+      "oracle_sha256": "67c03ba6514e2aa6d98b136ddea5d76d6140552f11ea345aed378f42ab04a2b8",
+      "realization_adapters": [
+        "components/legacy-project-wrapper/implementation/packages/shared-sdk/src/aviation/__tests__/logbook-conformance.test.ts",
+        "components/legacy-project-wrapper/implementation/packages/shared-sdk/python/tests/test_logbook_conformance.py"
+      ]
+    },
+    {
+      "component": "components/aviation-nav-data",
+      "contracts": [
+        "components/aviation-nav-data/acceptance/nav-data.md"
+      ],
+      "lock_sha256": "9227dea7fe570f2cc6c233943ebd0f6d21b528944607d5476cab4c0faf64dc3a",
+      "oracle": "components/aviation-nav-data/acceptance/vectors.json",
+      "oracle_sha256": "a363f7164fca7857b82fdc2074386b5a599a4227c16c4a41d04af7ea41b66458",
+      "realization_adapters": [
+        "components/legacy-project-wrapper/implementation/packages/shared-sdk/src/aviation/__tests__/nav-data-conformance.test.ts",
+        "components/legacy-project-wrapper/implementation/packages/shared-sdk/python/tests/test_nav_data_conformance.py",
+        "components/legacy-project-wrapper/implementation/packages/nav-data/src/__tests__/provider-conformance.test.ts"
+      ],
+      "supplemental_oracles": [
+        {
+          "path": "components/aviation-nav-data/acceptance/provider-adapters.json",
+          "sha256": "9789b76824ea94f91344ec43c95cd60687dbbbe9f484965fe8a07814786b95ec"
+        }
+      ]
+    },
+    {
+      "component": "components/aviation-navigation",
+      "contracts": [
+        "components/aviation-navigation/acceptance/navigation.md"
+      ],
+      "lock_sha256": "32625ef887ad8cc0bdd3c8dd8bf49e619ecab7ac9e41b420151f3f50c7812792",
+      "oracle": "components/aviation-navigation/acceptance/vectors.json",
+      "oracle_sha256": "1e5c03830eab72ae968123e7b2467e5bbc095ac7c2561a410f91259e2e3d51ef",
+      "realization_adapters": [
+        "components/legacy-project-wrapper/implementation/packages/shared-sdk/src/aviation/__tests__/navigation-conformance.test.ts",
+        "components/legacy-project-wrapper/implementation/packages/shared-sdk/python/tests/test_navigation_conformance.py"
+      ]
+    },
+    {
+      "component": "components/aviation-notam",
+      "contracts": [
+        "components/aviation-notam/acceptance/notam.md"
+      ],
+      "lock_sha256": "ae5e985b5d1ce57fbf0770d9fb93587b8d40dc7e3429ae1aea7d8c9cd1be3a65",
+      "oracle": "components/aviation-notam/acceptance/vectors.json",
+      "oracle_sha256": "7aee4e69af04b4969cc2ebc2c757c0bfbb9a3b7f12919fb6a61e2b7bb41ec56f",
+      "realization_adapters": [
+        "components/legacy-project-wrapper/implementation/packages/shared-sdk/src/aviation/__tests__/notam-conformance.test.ts",
+        "components/legacy-project-wrapper/implementation/packages/shared-sdk/python/tests/test_notam_conformance.py"
+      ]
+    },
+    {
+      "component": "components/aviation-service-health",
+      "contracts": [
+        "components/aviation-service-health/acceptance/health.md"
+      ],
+      "lock_sha256": "83e792577ca2f00a0e3cf79cc241b494a201f574a1ec2491317e37579eeda6b9",
+      "oracle": "components/aviation-service-health/acceptance/vectors.json",
+      "oracle_sha256": "be63e83fe5a519c0d0fd251b5990ff1e0a8adf2f63ed067e3e468acd7299a62f",
+      "realization_adapters": [
+        "components/legacy-project-wrapper/implementation/packages/shared-sdk/src/aviation/__tests__/service-health-conformance.test.ts",
+        "components/legacy-project-wrapper/implementation/packages/shared-sdk/python/tests/test_service_health_conformance.py"
+      ]
+    },
+    {
+      "component": "components/aviation-service-lifecycle",
+      "contracts": [
+        "components/aviation-service-lifecycle/acceptance/lifecycle.md"
+      ],
+      "lock_sha256": "d94d7d33ecf5ae8c90910b097f9f9678b1f93b077fa320d2b623a37a25d03924",
+      "oracle": "components/aviation-service-lifecycle/acceptance/vectors.json",
+      "oracle_sha256": "ef4c63882703af31998087b04d4823fa0f22692f0564d84a5c8897a1ba1f2eb3",
+      "realization_adapters": [
+        "components/legacy-project-wrapper/implementation/packages/shared-sdk/src/aviation/__tests__/service-lifecycle-conformance.test.ts",
+        "components/legacy-project-wrapper/implementation/packages/shared-sdk/python/tests/test_service_lifecycle_conformance.py"
+      ]
+    },
+    {
+      "component": "components/aviation-testing-e2e",
+      "contracts": [
+        "components/aviation-testing-e2e/acceptance/e2e.md"
+      ],
+      "lock_sha256": "6a788f5d20c6f4fe52c41152889e7745136e4922c30ac021b33ab5d6ec1a74ef",
+      "oracle": "components/aviation-testing-e2e/acceptance/vectors.json",
+      "oracle_sha256": "bf56c80788e7cd08708d717c1fc793f40627cb5a875aa7896d1fb5cb0f6c4e5f",
+      "realization_adapters": [
+        "components/legacy-project-wrapper/implementation/packages/shared-sdk/src/aviation/__tests__/testing-e2e-conformance.test.ts",
+        "components/legacy-project-wrapper/implementation/packages/shared-sdk/python/tests/test_testing_e2e_conformance.py"
+      ]
+    },
+    {
+      "component": "components/aviation-ui-panes",
+      "contracts": [
+        "components/aviation-ui-panes/acceptance/panes.md"
+      ],
+      "lock_sha256": "240a5d45c81cffc776a3aa122af6fd22a708905cfd98f8bc9ec6912e0daf9c24",
+      "oracle": "components/aviation-ui-panes/acceptance/vectors.json",
+      "oracle_sha256": "9879af5ad9856ced44b6375fa12ec6a7f93af175329b7834207c06e5319703d0",
+      "realization_adapters": [
+        "components/legacy-project-wrapper/implementation/packages/ui-framework/src/multi-tab/__tests__/panes-conformance.test.ts"
+      ]
+    },
+    {
+      "component": "components/aviation-weather",
+      "contracts": [
+        "components/aviation-weather/acceptance/weather.md"
+      ],
+      "lock_sha256": "d0407e7089463785e1ccf594ac306923b9b6ae3876a244ecb3e0efc0bad0caa6",
+      "oracle": "components/aviation-weather/acceptance/vectors.json",
+      "oracle_sha256": "c59ea3a9c51d79e5d27271c484907d48d11ff02dd0238bb92e808c8b9ef34d5c",
+      "realization_adapters": [
+        "components/legacy-project-wrapper/implementation/packages/shared-sdk/src/aviation/__tests__/weather-conformance.test.ts",
+        "components/legacy-project-wrapper/implementation/packages/shared-sdk/python/tests/test_weather_conformance.py"
+      ]
+    },
+    {
+      "component": "components/aviation-weight-balance",
+      "contracts": [
+        "components/aviation-weight-balance/acceptance/weight-balance.md"
+      ],
+      "lock_sha256": "907f5a23b1365452f291de67cfba770a8be729e0c6ace2f96f64b890f5c04617",
+      "oracle": "components/aviation-weight-balance/acceptance/vectors.json",
+      "oracle_sha256": "81a159d79685275cc2b5d9d90b6ba96bd8a2f8c5cfcead2cc5f68f64a1d56264",
+      "realization_adapters": [
+        "components/legacy-project-wrapper/implementation/packages/shared-sdk/src/aviation/__tests__/weight-balance-conformance.test.ts",
+        "components/legacy-project-wrapper/implementation/packages/shared-sdk/python/tests/test_weight_balance_conformance.py"
+      ]
+    }
+  ],
+  "schema": "aviation/promoted-component-evidence@1",
+  "scope": "Retained realizations and independent conformance; no native generation or wrapper retirement claim",
+  "sdk_workflow_run": 43812548093
+}
