@@ -127,6 +127,8 @@ def create_app(settings):
     app.include_router(explain_router)
     # Core API routers (exposed under /api prefix)
     app.include_router(aviation_data_router, prefix="/api")
+    from .routers.aircraft_library import install as install_aircraft_library
+    install_aircraft_library(app)
     app.include_router(ga_router, prefix="/api")
     app.include_router(health_router, prefix="/api", tags=["health"])
     app.include_router(route_router, prefix="/api", tags=["route"])
@@ -225,6 +227,7 @@ def create_app(settings):
         @app.get("/", include_in_schema=False)
         @app.get("/weather", include_in_schema=False)
         @app.get("/airports", include_in_schema=False)
+        @app.get("/aircraft-library", include_in_schema=False)
         def frontend_page() -> FileResponse:
             return FileResponse(static_root / "index.html")
 

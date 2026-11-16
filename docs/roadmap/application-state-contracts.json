@@ -149,8 +149,21 @@
           "classification": "application-private-runtime-state",
           "testOracle": "tests/test_flight_plan_router.py and backend recording tests",
           "evidence": [
-            {"path": "apps/flight-planner/backend/app/services/flight_plan_service.py", "contains": ["flight_plans.json", "recent_flight_plans.json", "save_flight_plans"]},
-            {"path": "apps/flight-planner/backend/app/services/flight_recording_service.py", "contains": ["flight_recordings.json", "save_flight_recordings"]}
+            {
+              "path": "apps/flight-planner/backend/app/services/flight_plan_service.py",
+              "contains": [
+                "flight_plans.json",
+                "recent_flight_plans.json",
+                "save_flight_plans"
+              ]
+            },
+            {
+              "path": "apps/flight-planner/backend/app/services/flight_recording_service.py",
+              "contains": [
+                "flight_recordings.json",
+                "save_flight_recordings"
+              ]
+            }
           ]
         },
         {
@@ -163,7 +176,37 @@
           "rollback": "clear the affected keys",
           "classification": "application-private-runtime-state",
           "testOracle": "frontend hook tests absent",
-          "evidence": [{"path": "apps/flight-planner/frontend/src/utils/constants.ts", "contains": ["vfr_search_history", "vfr_favorites"]}]
+          "evidence": [
+            {
+              "path": "apps/flight-planner/frontend/src/utils/constants.ts",
+              "contains": [
+                "vfr_search_history",
+                "vfr_favorites"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "aircraft-library",
+          "medium": "sqlite-and-original-pdfs",
+          "location": "AIRCRAFT_LIBRARY_DIR, default /app/data/aircraft-library",
+          "schema": "SQLite user_version=1; SHA-256 originals and page-aware indexes",
+          "migration": "idempotent schema initialization and additive worker ownership migration",
+          "backup": "stop the service and copy the complete private library directory, or use a consistent SQLite backup with originals",
+          "rollback": "restore the complete private directory at a compatible schema version",
+          "classification": "application-private-runtime-state",
+          "testOracle": "tests/test_aircraft_library.py original/persistence/association/queue acceptance",
+          "evidence": [
+            {
+              "path": "apps/flight-planner/backend/app/services/aircraft_library/store.py",
+              "contains": [
+                "PRAGMA user_version=1",
+                "originals",
+                "metadata_history",
+                "CREATE TABLE IF NOT EXISTS jobs"
+              ]
+            }
+          ]
         }
       ],
       "credentials": [
@@ -171,24 +214,86 @@
           "id": "provider-apis",
           "provider": "environment-and-keystore",
           "namespace": "flight-planner",
-          "keys": ["OPENWEATHERMAP_API_KEY", "OPENWEATHER_API_KEY", "OPENTOPOGRAPHY_API_KEY", "OPENAIP_API_KEY"],
+          "keys": [
+            "OPENWEATHERMAP_API_KEY",
+            "OPENWEATHER_API_KEY",
+            "OPENTOPOGRAPHY_API_KEY",
+            "OPENAIP_API_KEY"
+          ],
           "precedence": "Pydantic environment aliases, then flight-planner keystore",
           "missingBehavior": "provider features fail or report unavailable",
           "classification": "application-private-credential-adapter",
-          "evidence": [{"path": "apps/flight-planner/backend/app/config.py", "contains": ["load_from_keystore", "OPENWEATHERMAP_API_KEY", "OPENAIP_API_KEY"]}]
+          "evidence": [
+            {
+              "path": "apps/flight-planner/backend/app/config.py",
+              "contains": [
+                "load_from_keystore",
+                "OPENWEATHERMAP_API_KEY",
+                "OPENAIP_API_KEY"
+              ]
+            }
+          ]
         },
         {
           "id": "weather-tile-client-key",
           "provider": "public-browser-runtime-config",
           "namespace": "flight-planner-frontend",
-          "keys": ["VITE_OPENWEATHERMAP_API_KEY"],
+          "keys": [
+            "VITE_OPENWEATHERMAP_API_KEY"
+          ],
           "precedence": "container-generated browser runtime configuration",
           "missingBehavior": "weather tile overlay is disabled",
           "classification": "application-public-client-configuration",
-          "evidence": [{"path": "apps/flight-planner/frontend/src/components/WeatherOverlayControls.tsx", "contains": ["VITE_OPENWEATHERMAP_API_KEY", "require"]}]
+          "evidence": [
+            {
+              "path": "apps/flight-planner/frontend/src/components/WeatherOverlayControls.tsx",
+              "contains": [
+                "VITE_OPENWEATHERMAP_API_KEY",
+                "require"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "private-aircraft-library",
+          "provider": "operator-environment",
+          "namespace": "aircraft-library",
+          "keys": [
+            "AIRCRAFT_LIBRARY_TOKEN",
+            "AIRCRAFT_LIBRARY_LLM_API_KEY",
+            "AIRCRAFT_LIBRARY_BRAVE_SEARCH_KEY"
+          ],
+          "precedence": "explicit server environment; UI supplies its library bearer credential only in request headers",
+          "missingBehavior": "private routes unavailable without a 32-character library credential; unconfigured generation/search remains explicitly unavailable while authenticated original/page search works",
+          "classification": "application-private-credential-adapter",
+          "evidence": [
+            {
+              "path": "apps/flight-planner/backend/app/routers/aircraft_library.py",
+              "contains": [
+                "AIRCRAFT_LIBRARY_TOKEN",
+                "compare_digest"
+              ]
+            },
+            {
+              "path": "apps/flight-planner/backend/app/services/aircraft_library/models.py",
+              "contains": [
+                "AIRCRAFT_LIBRARY_LLM_API_KEY"
+              ]
+            },
+            {
+              "path": "apps/flight-planner/backend/app/services/aircraft_library/discovery.py",
+              "contains": [
+                "AIRCRAFT_LIBRARY_BRAVE_SEARCH_KEY"
+              ]
+            }
+          ]
         }
       ],
-      "gaps": ["JSON stores have no schema version, atomic write, backup, or rollback", "Browser preference hooks have no direct tests", "The tile API key is intentionally browser-visible and must not be treated as a secret"]
+      "gaps": [
+        "JSON stores have no schema version, atomic write, backup, or rollback",
+        "Browser preference hooks have no direct tests",
+        "The tile API key is intentionally browser-visible and must not be treated as a secret"
+      ]
     },
     {
       "id": "flight-track-analyzer",

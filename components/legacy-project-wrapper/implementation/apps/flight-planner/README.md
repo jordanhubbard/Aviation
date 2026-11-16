@@ -157,3 +157,47 @@ docker run --rm -p 8000:8000 --env-file .env flight-planner-backend
 ## Screenshots
 
 Coming soon.
+
+## Private aircraft manual library
+
+Open **Aircraft library** in the navigation or `/aircraft-library`. Upload one or more
+POH, AFM, PIM, maintenance or supplement PDFs, with an ICAO type and optional registrations.
+The library retains original bytes, every acquisition, extracted physical/printed pages,
+and extraction completeness. General references and another registration's aircraft-specific
+documents remain separate in search. Metadata and associations can be corrected explicitly
+without replacing originals; changes invalidate previous generated distillations.
+
+Configure a separate private library access key of at least 32 characters in
+`AIRCRAFT_LIBRARY_TOKEN`. Unconfigured routes return unavailable and never become public.
+The UI holds this key in page memory only; API clients send `Authorization: Bearer ...`.
+Do not put access or provider keys in URLs. `AIRCRAFT_LIBRARY_DIR` defaults to
+`/app/data/aircraft-library`; back up this whole private directory (including SQLite and
+originals) consistently while stopped (or use a consistent SQLite backup), and retain the service's persistent data mount across deployments.
+
+Text search and extractive section indexes work without a model. To enable generation, set
+`AIRCRAFT_LIBRARY_LLM_BASE_URL` to an OpenAI-compatible API base,
+`AIRCRAFT_LIBRARY_LLM_MODEL` to an explicit model and, when required,
+`AIRCRAFT_LIBRARY_LLM_API_KEY`. `AIRCRAFT_LIBRARY_EMBEDDING_MODEL` independently enables
+semantic vectors at the same endpoint. Provider keys stay server-side. Retrieved page
+excerpts are sent to the configured model when requesting answers/distillations; embedding
+requests send indexed passages. The service labels the configured model and validates returned
+page citations, exact quotes and numeric values against quoted evidence. This validation
+is not proof that a generated interpretation or aircraft applicability is correct.
+
+Automated discovery uses `AIRCRAFT_LIBRARY_BRAVE_SEARCH_KEY`, or a SearXNG JSON
+`AIRCRAFT_LIBRARY_SEARCH_URL` such as an operator-run `/search` endpoint. It runs multiple
+type/model/manual queries and seeks multiple examples with per-source failures and provenance.
+Without search configuration, supplied public PDF or manual-library URLs can still be acquired.
+Robots restrictions, access controls and paywalls are not bypassed. Discovered examples have
+unverified identity, kind, variant and applicability until reviewed; they are not silently
+stamped with the requested variant/revision. Copyright/license status remains explicit and
+originals stay private. Tesseract (included in the application image) and PDFium provide OCR
+for scanned pages. Missing/unreadable pages and encrypted/malformed originals stay visible.
+
+Uploads/acquisitions create persistent jobs. Use **Refresh jobs and documents** to inspect
+progress; interrupted jobs can resume after their five-minute process lease expires. Individual
+PDF extraction has a ten-minute deadline and Linux subprocess resource limits. Each upload is
+limited to 100 MiB and 1,500 pages. Discovery batches support up to 200 examples; repeat with
+more specific terms for further examples. Extraction, model and acquisition failures retain
+originals and prior provenance. No extracted figure is automatically promoted to an aircraft
+performance dataset or operational approval.

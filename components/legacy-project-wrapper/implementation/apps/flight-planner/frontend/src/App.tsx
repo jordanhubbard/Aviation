@@ -17,6 +17,7 @@ import { reportFrontendError } from './utils/issueReporting'
 const FlightPlannerPage = lazy(() => import('./pages/FlightPlannerPage'))
 const WeatherPage = lazy(() => import('./pages/WeatherPage'))
 const AirportsPage = lazy(() => import('./pages/AirportsPage'))
+const AircraftLibraryPage = lazy(() => import('./pages/AircraftLibraryPage'))
 
 function MissingRoute() {
   const location = useLocation()
@@ -72,7 +73,7 @@ function App() {
     application: 'Flight Planner',
     decision: 'Displayed planning, weather and airport results',
     page: window.location.pathname,
-    displayedFacts: (document.querySelector('main')?.textContent ?? '').slice(0, 3500),
+    displayedFacts: window.location.pathname.startsWith('/aircraft-library') ? 'Private aircraft documents are excluded from general explanations.' : (document.querySelector('main')?.textContent ?? '').slice(0, 3500),
   }), 'Explain the displayed aviation information and its limitations using the supplied facts.'), [])
   const [themeMode, setThemeMode] = useState<'light' | 'dark' | 'night' | 'high-contrast'>('light');
 
@@ -211,6 +212,7 @@ function App() {
                   <Route path="/" element={<FlightPlannerPage />} />
                   <Route path="/weather" element={<WeatherPage />} />
                   <Route path="/airports" element={<AirportsPage />} />
+                  <Route path="/aircraft-library" element={<AircraftLibraryPage />} />
                   <Route path="*" element={<MissingRoute />} />
                 </Routes>
               </motion.div>

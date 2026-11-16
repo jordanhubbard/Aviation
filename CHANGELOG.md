@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Aircraft document research: add a private POH/AFM/maintenance PDF library with original retention, page indexes/OCR, ICAO and registration associations, public-source acquisition, configured search/model adapters and source-cited questions. Generated distillations remain separate from planning performance data (#489).
+
 - Common weather: share complete AWC station-catalog validation across TypeScript and Python, including explicit unknown-location accounting. Planner retains bounded gzip decoding, its cache and existing discovery/source responses (#486).
 
 - Weather: share modeled pressure-level forecast planning and acquisition in both SDK bindings, preserve raw data/cache semantics, and reject unexpected provider units rather than relabeling them (#484).
