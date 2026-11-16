@@ -93,15 +93,32 @@ describe('GDL90 independent conformance', () => {
 
 
 it('resolves geometry with explicit profile provenance without converting or mutating values', () => {
-  const decode = (id: string) => new Gdl90Decoder().push(Uint8Array.from(Buffer.from(vectors.reports.find((row: {id: string}) => row.id === id).frame_hex, 'hex'))).messages[0];
-  const vector = vectors.reports.find((row: {expected: {kind: string}}) => row.expected.kind === 'geometric_altitude');
-  const report = new Gdl90Decoder().push(Uint8Array.from(Buffer.from(vector.frame_hex, 'hex'))).messages[0];
-  const original = {...report};
-  expect(resolveGeometricAltitude(report, decode('extension-id-msl-serial64'))).toEqual({...original, datum: 'MSL', datum_source: 'foreflight_device_id'});
-  expect(resolveGeometricAltitude(report, decode('extension-id-ellipsoid-utf8'))).toEqual({...original, datum_source: 'foreflight_device_id'});
+  const decode = (id: string) =>
+    new Gdl90Decoder().push(
+      Uint8Array.from(Buffer.from(
+        vectors.reports.find((row: { id: string }) => row.id === id).frame_hex,
+        'hex',
+      )),
+    ).messages[0];
+  const vector = vectors.reports.find(
+    (row: { expected: { kind?: string } }) =>
+      row.expected.kind === 'geometric_altitude',
+  );
+  const report = new Gdl90Decoder().push(
+    Uint8Array.from(Buffer.from(vector.frame_hex, 'hex')),
+  ).messages[0];
+  const original = { ...report };
+  expect(resolveGeometricAltitude(report, decode('extension-id-msl-serial64')))
+    .toEqual({ ...original, datum: 'MSL', datum_source: 'foreflight_device_id' });
+  expect(resolveGeometricAltitude(report, decode('extension-id-ellipsoid-utf8')))
+    .toEqual({ ...original, datum_source: 'foreflight_device_id' });
   expect(resolveGeometricAltitude(report)).toEqual(original);
-  expect(resolveGeometricAltitude(report, null, true)).toEqual({...original, datum: null, datum_source: 'unknown_receiver_profile'});
+  expect(resolveGeometricAltitude(report, null, true)).toEqual({
+    ...original, datum: null, datum_source: 'unknown_receiver_profile',
+  });
   expect(report).toEqual(original);
-  expect(() => resolveGeometricAltitude(decode('published-traffic-section-3.5.2'))).toThrow('geometric-altitude');
-  expect(() => resolveGeometricAltitude(report, decode('extension-id-unknown-version'))).toThrow('supported device-ID');
+  expect(() => resolveGeometricAltitude(decode('published-traffic-section-3.5.2')))
+    .toThrow('geometric-altitude');
+  expect(() => resolveGeometricAltitude(report, decode('extension-id-unknown-version')))
+    .toThrow('supported device-ID');
 });
