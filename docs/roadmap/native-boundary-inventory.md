@@ -12,13 +12,25 @@ native Component or prove its acceptance contract is complete.
 
 The pre-adoption revision `f68efb8273508c74fbc3cd710e8f0ae1bc4a8d39` had
 1,409 tracked files. The original first pass preserved those paths and established
-the wrapper baseline. The current audit baseline is bound to main revision
-`ce9f99311b8186f73ea351ba7c563979b79fd20f`, 19 committed Component locks, and
-retained receipt
-`sha256:0ff585a751f37e419550eebc1b284bfb240f98e2da5e4ee86750078c2effac3f`
-with 591 admitted tests. It maps all 12 application directories and 10 shared
-package directories. That receipt proves retained lifecycle parity; it does not by
-itself prove native regeneration or authorize retiring the wrapper.
+the wrapper baseline. The current retained baseline is main revision
+`48eef19044ef49d4eb88bae731c2d63f2731475a`, with 20 committed parent Component
+locks and 644 retained qualification checks. Its receipt identity is
+`sha256:45699a54c0ce002480725333dbec74c48c029295c245e4d45037a315f3cae261`.
+It maps all 12 application directories and 10 shared package directories.
+The [18-Component evidence matrix](../../verification/qualifications/promoted-components-20261116.json)
+binds every promoted aviation Component's lock and independent oracle bytes to its
+realization adapters. Exact-main Common Aviation SDK run
+[43812548093](https://github.com/jordanhubbard/Aviation/actions/runs/43812548093)
+passed TypeScript, Python, JVM and Go jobs for this baseline. This proves the retained
+contracts and tested realizations at that revision; it does not establish native
+regeneration or authorize retiring the wrapper.
+
+The separately registered native service-health child has fresh Standard rebuild
+and two-clean-run regenerative recertification evidence. Its release-authority
+projection is scoped to that child; the parent SDK and deployed applications still
+use retained compatibility exports. Consumer qualification and cutover are separate. The
+[native qualification record](../native-service-health-qualification.md) records
+actual results and the upstream importer prerequisite.
 
 ## Application boundaries
 
@@ -60,7 +72,7 @@ current human description.
 | Aviation Config — `packages/aviation-config` | `packages/aviation-config/package.json`; `packages/aviation-config/src/` | 14 package-owned conformance tests under `packages/aviation-config/tests/`; now required by Common Aviation SDK CI |
 | Flight Dynamics — `packages/flight-dynamics` | `packages/flight-dynamics/package.json`; `packages/flight-dynamics/README.md`; `packages/flight-dynamics/requirements.txt` | Component-owned conformance vectors, package physics/model tests, and retained API tests |
 | G1000 Avionics SDK — `packages/g1000-avionics-sdk` | `packages/g1000-avionics-sdk/package.json`; `packages/g1000-avionics-sdk/README.md`; Python package under `packages/g1000-avionics-sdk/python/` | Component-owned cross-language AHRS/ADC/GPS vectors and invalid-input tests |
-| G1000 Protocols — `packages/g1000-protocols` | `packages/g1000-protocols/package.json`; `packages/g1000-protocols/README.md`; Go package under `packages/g1000-protocols/` | Component-owned telemetry/command/flight-plan conformance vectors and TypeScript package tests; Go remains provisional |
+| G1000 Protocols — `packages/g1000-protocols` | `packages/g1000-protocols/package.json`; `packages/g1000-protocols/README.md`; Go package under `packages/g1000-protocols/` | Component-owned telemetry/command/flight-plan conformance vectors and TypeScript package tests; the Go protocol packages compile in the SDK job but have no package-owned conformance tests; their behavioral qualification remains provisional |
 | G1000 Rendering — `packages/g1000-rendering` | `packages/g1000-rendering/package.json`; `packages/g1000-rendering/README.md` | Component-owned layout/pipeline/primitive conformance vectors and TypeScript package tests |
 | Keystore — `packages/keystore` | `packages/keystore/package.json`; `packages/keystore/README.md`; Python package under `packages/keystore/python/` | `packages/keystore/src/keystore.test.ts`; `packages/keystore/src/cli.test.ts` |
 | Navigation Data providers — `packages/nav-data` | `packages/nav-data/package.json`; `packages/nav-data/src/ingestion/` | Component-owned synthetic provider vectors and package tests |
@@ -246,7 +258,7 @@ Unqualified radio behavior remains outside this boundary.
 | `apps/g1000-simulator/frontend/src/types/telemetry.ts` | compatibility re-export | contains no private schema; re-exports the common protocol types |
 | `apps/g1000-simulator/frontend/src/stores/flightStore.ts` | application state adapter | delegates full-snapshot classification; retains merge policy and Zustand state |
 | `apps/g1000-simulator/frontend/src/hooks/useTelemetrySocket.ts` | application transport adapter | delegates snapshot/delta validation; retains URL, reconnect, ping, and invalid-session policy |
-| `packages/g1000-avionics-sdk/` | retained cross-language realization | AHRS/ADC/GPS are qualified by Component vectors; radio models remain absent pending a separate contract |
+| `packages/g1000-avionics-sdk/` | retained cross-language realization | AHRS/ADC/GPS, ADF/DME, marker/audio, transponder and radio transitions are covered by current Component vectors; simulator station state remains application policy |
 
 ### Seventh selected boundary: aviation avionics sensor models
 
@@ -318,9 +330,10 @@ not production approval, so these remain app-owned remediation work.
 
 Continue at file-level granularity: name public inputs and outputs, schema versions,
 persistent state, test oracle, runtime target, and dependencies for each retained
-package and cross-cutting asset. Classify the workspace build and package graph next.
+package and cross-cutting asset. The workspace package graph is classified; complete
+a function-level audit of application-owned algorithms next.
 Accident Tracker feed/demo data, application persistence and credentials, airports,
 and airspace now have explicit boundaries. The project remains at the `retained`
 conversion stage;
-19 Component locks and the current receipt are evidence for the migrated boundaries,
+20 parent Component locks and the current receipt are evidence for the migrated boundaries,
 not authority to retire unclassified retained source.
