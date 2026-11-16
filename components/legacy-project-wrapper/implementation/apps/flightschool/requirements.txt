@@ -15,7 +15,7 @@ Flask-SQLAlchemy==3.1.1
 Flask-WTF==1.2.2
 gunicorn>=23.0.0,<25
 email-validator>=2.3.0
-Werkzeug>=3.1.8
+Werkzeug>=3.1.9
 
 # The shared aviation SDK (@aviation/shared-sdk python package) is installed
 # separately: the Dockerfile pip-installs it from /packages, and local runs
