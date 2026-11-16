@@ -42,6 +42,28 @@ The public surface is defined by `interfaces/avionics.md`. TypeScript realizatio
 pass `acceptance/avionics.md` against `acceptance/vectors.json` without network access
 or a browser.
 
+GDL90 realizations additionally pass `acceptance/gdl90.json` in both bindings.
+Python host schemas reuse the frozen decoded-report records exported by this
+Component while leaving socket ownership, authentication and freshness to hosts.
+
+### Requirement: Cockpit datalink bytes converge on one portable decoder
+
+GDL90 framing, FCS validation and standard heartbeat, ownship, traffic and
+geometric-altitude decoding SHALL belong to this Component in both TypeScript and
+Python. Applications SHALL retain UDP and browser transport ownership while
+delegating byte interpretation here. Both bindings SHALL agree on published
+independent vectors, bounded incremental framing, invalid-value handling and
+explicit unsupported reports. A decoded report SHALL NOT imply a live connection,
+valid ownship fix, complete traffic coverage or current weather.
+
+#### Scenario: Published and invalid datalink frames are ingested
+
+- **WHEN** either binding receives the published framing/traffic vectors or the
+  declared unavailable, saturated, reserved and malformed variants
+- **THEN** the JSON-compatible reports and errors match `acceptance/gdl90.json`,
+  bounded incremental recovery preserves later valid frames, and invalid or
+  saturated values cannot become exact usable measurements
+
 ### Requirement: Applications share avionics wire contracts
 
 Applications SHALL import telemetry, command, and flight-plan records and validators

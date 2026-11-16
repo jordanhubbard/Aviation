@@ -247,6 +247,11 @@ for the provider's quota alongside the batch budget; a smaller batch can reduce
 token pressure. This does not change the required evidence, and rate-limited
 failures still preserve resumable partial progress.
 
+`AIRCRAFT_LIBRARY_MODEL_READ_TIMEOUT_SECONDS` accepts 10–600 (default 120) for
+slow model responses. Connect/pool waits are limited to 10 seconds and writes to
+30 seconds. Timeout errors identify their category and configured read limit;
+changing this setting adds no HTTP retries or citation exceptions.
+
 ## FAA charts and navigation cycles
 
 Open **Charts / Navigation** at `/charts`. Search terminal charts by their published
@@ -276,3 +281,54 @@ distribution readme determines cycle identity, since individual records retain o
 amendment dates. The shared SDK owns catalog queries and freshness. Raw special legs,
 continuations and constraints remain available; common legs are an incomplete reference,
 not a flyable guidance model. The legacy procedure endpoint no longer defaults to samples.
+
+## Local cockpit receiver bridge
+
+The operator-run bridge accepts source-filtered GDL90 UDP and exposes typed,
+authenticated status, telemetry and listener controls. It starts no UDP socket
+when imported or during ordinary planner startup. Use the planner Python
+environment with its declared dependencies. From the retained implementation root:
+
+```bash
+export AVIATION_COCKPIT_TOKEN="$(python -c 'import secrets; print(secrets.token_urlsafe(32))')"
+PYTHONPATH=packages/g1000-avionics-sdk/python:packages/shared-sdk/python:apps/flight-planner/backend \
+  python -m app.cockpit_bridge --source 192.168.10.1 \
+  --allow-origin https://flight-planner.jordanhubbard.net
+```
+
+The receiver IP above is an example: configure the actual sender address or CIDR
+with repeatable `--source` arguments. UDP binds to `0.0.0.0:4000`, while HTTP binds
+to `127.0.0.1:18190` by default. `--udp-bind`, `--udp-port`, `--http-bind` and
+`--http-port` change those addresses. Non-loopback browser access needs an
+explicit reachable binding, trusted TLS via `--tls-cert`/`--tls-key`, and the exact
+browser origin in `--allow-origin`. A desktop browser may also require TLS for
+its local connection. Keep the token in environment/page memory, outside URLs,
+command-line arguments and persistent browser storage.
+
+Authenticated `POST /api/cockpit/start` explicitly opens the configured UDP
+listener; `POST /api/cockpit/stop` releases it. CLI `--start` explicitly requests
+start on launch. `GET /api/cockpit/status` and `/api/cockpit/state` require the same
+bearer token. OpenAPI is at `/api/openapi.json`. A listening socket and a recent
+receiver report are separate states; GPS requires fresh source-specific validity.
+Traffic/ownship ages, unknown values, saturation bounds and pressure/geometric
+altitude references remain visible. Weather decoding is currently unavailable;
+capabilities expose that limitation rather than labelling raw bytes as weather.
+No compatibility with a physical receiver is established by loopback tests.
+
+Report ages include observed suspend gaps and never decrease after a clock
+correction. Only newly received reports can restore freshness. Clock disagreements
+over one second increment the `clock_discontinuities` diagnostic counter.
+
+Optional local HTTP/MCP access reuses the Meta gateway engine:
+
+```bash
+node apps/meta-app/cockpit-gateway.mjs
+```
+
+It binds `127.0.0.1:18191`, publishes only the cockpit service at
+`/api/v1/cockpit`, and exposes `/mcp`, `v1.cockpit.request`,
+`v1.cockpit.describe` and `aviation://v1/cockpit/openapi`. Callers pass bridge
+credentials explicitly in service request headers; the gateway does not store
+them. `AVIATION_COCKPIT_BRIDGE_ORIGIN`, `AVIATION_COCKPIT_GATEWAY_BIND` and
+`AVIATION_COCKPIT_GATEWAY_PORT` configure this explicitly launched profile.
+The normal hosted gateway keeps its existing service list.

@@ -20,6 +20,13 @@ Search multiple ICAO/model/manual queries and collect multiple examples, keeping
 
 ## Access and lifecycle
 
+Operators may configure model response read timeouts from 10 to 600 seconds,
+defaulting to 120 seconds; connection and pool acquisition remain bounded at
+10 seconds and writes at 30 seconds. A transport timeout identifies its safe
+exception category and configured read limit without including endpoint secrets,
+request contents or provider response bodies. This does not add HTTP retries or
+weaken citation validation. Worker leases continue to heartbeat during inference.
+
 All document data and search/LLM operations require the operator's library bearer credential. Missing configuration disables private routes instead of opening them publicly. The UI shell exposes no private content before authentication and keeps credentials out of URLs and persistent browser storage. Separate original file download from rendered text; original downloads use attachment/nosniff and private no-store. UI report strings use text rendering. Browser selection changes discard stale data.
 
 Test deterministic PDFs, duplicate bytes/acquisitions, persistence, wrong-type/tail isolation, malformed/encrypted/scanned pages, partial extraction, citation validation, absent evidence, conflicting metadata, provider failures, SSRF redirects/addresses, authentication and desktop/mobile flows. Real PDF extraction/rendering and configured LLM/provider acceptance are separate from fixture tests. Full completion requires current authority/receipt/CI plus exact-image deployment and live HTTP/MCP/UI checks; no fixture proves live model or provider access.

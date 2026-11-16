@@ -1,5 +1,12 @@
 # Aviation avionics acceptance contract
 
+GDL90 conformance SHALL load [gdl90.json](gdl90.json), using independent framing/FCS and traffic examples from
+the published Public ICD, alongside malformed, escaped, concatenated, partial and
+oversized input. Both bindings must agree on decoded fields, null sentinels,
+unsupported-message reporting and bounded recovery. Protocol fixtures prove byte
+interpretation only; actual UDP transport and receiver hardware require separate
+integration evidence under #493.
+
 An independent oracle loads `vectors.json` and evaluates protocol, rendering,
 AHRS/ADC/GPS device cases, and ADF/DME receiver cases against the common packages.
 Acceptance does not open a network connection, browser, simulator process, or physical

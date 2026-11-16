@@ -46,6 +46,12 @@ class Models:
         self.key = env.get("AIRCRAFT_LIBRARY_LLM_API_KEY", "")
         self.embedding_model = env.get("AIRCRAFT_LIBRARY_EMBEDDING_MODEL", "")
         self.embedding_mode = env.get("AIRCRAFT_LIBRARY_EMBEDDING_MODE", "symmetric")
+        try:
+            self.read_timeout = float(env.get("AIRCRAFT_LIBRARY_MODEL_READ_TIMEOUT_SECONDS", "120"))
+        except (ValueError, TypeError) as error:
+            raise ValueError("Model read timeout must be finite and between 10 and 600 seconds") from error
+        if not math.isfinite(self.read_timeout) or not 10 <= self.read_timeout <= 600:
+            raise ValueError("Model read timeout must be finite and between 10 and 600 seconds")
         if self.embedding_mode not in {"symmetric", "query_passage"}:
             raise ValueError("Embedding mode must be symmetric or query_passage")
         try:
@@ -102,7 +108,9 @@ class Models:
         headers = {"Authorization": "Bearer " + self.key} if self.key else {}
         try:
             with httpx.Client(
-                transport=self.transport, timeout=120, follow_redirects=False, trust_env=False
+                transport=self.transport,
+                timeout=httpx.Timeout(self.read_timeout, connect=10, write=30, pool=10),
+                follow_redirects=False, trust_env=False
             ) as client:
                 response = client.post(self.base + path, headers=headers, json=payload)
                 response.raise_for_status()
@@ -112,6 +120,11 @@ class Models:
         except httpx.HTTPStatusError as error:
             raise ModelUnavailable(
                 f"Aircraft library model provider failed (HTTP {error.response.status_code})"
+            ) from error
+        except httpx.TimeoutException as error:
+            raise ModelUnavailable(
+                f"Aircraft library model provider timed out ({type(error).__name__}; "
+                f"configured read limit {self.read_timeout:g} seconds)"
             ) from error
         except (httpx.HTTPError, ValueError) as error:
             raise ModelUnavailable("Aircraft library model provider failed") from error

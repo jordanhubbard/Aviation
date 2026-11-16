@@ -1,5 +1,41 @@
 # `aviation.avionics` interface
 
+## GDL90 input
+
+`Gdl90Decoder.push(bytes)` incrementally validates framed/escaped datalink bytes
+and returns `{messages, errors}`. `finish()` discards and reports an incomplete
+pending frame. Python uses `Gdl90Decoder.push(bytes)` and `finish()` with the same
+JSON-compatible result fields. No operation opens a socket or reads a clock.
+Reject input chunks larger than 65,535 bytes, bound pending frame storage to 4,096
+decoded bytes and emit at most 256 messages and 32 errors per call, with explicit
+overflow indicators.
+Recover at the next frame boundary after corrupt input; an invalid FCS never
+produces a usable report. Retain complete standard message IDs and report an
+unsupported ID explicitly rather than silently interpreting it as another type.
+
+Reports preserve protocol identity, original data bytes and their declared units.
+Heartbeat reports retain GPS/UTC validity and seconds since midnight. Ownship and
+traffic retain participant address plus address type, coordinates, pressure
+altitude in feet, speed in knots, vertical speed in feet per minute, angle reference,
+NIC/NACp, alert status, airborne/extrapolated state, emitter category, callsign and
+emergency code. Geometric altitude remains separate with its datum and vertical
+quality/warning. Protocol invalid/unavailable sentinels become null with validity
+metadata, never zero. Transport receipt time and per-receiver freshness are the
+host bridge's responsibility.
+
+Saturated speeds are bounds, not exact velocities. A horizontal saturation report
+has null `horizontal_speed_kt` and `horizontal_speed_at_least_kt=4094`. Vertical
+saturation has null `vertical_speed_fpm` and a signed `vertical_speed_bound_fpm`
+of 32576 for a greater-than bound or -32576 for a less-than bound; the saturation
+flags remain explicit. Reserved vertical encodings have no numeric velocity or
+bound. Geometric altitude and its vertical quality must never relabel pressure
+altitude or infer an MSL datum without the applicable extension declaration.
+
+Python exposes framework-independent frozen `HeartbeatReport`, `TrafficReport`,
+`GeometricAltitudeReport` and `UnsupportedReport` dataclasses as the `Gdl90Report`
+union. Host HTTP schemas reuse these records rather than declaring another decoded
+telemetry schema. Decoder results remain JSON-compatible dictionaries.
+
 ## Protocol records
 
 - `TelemetrySnapshot` carries position, attitude, air-data, GPS, ADF, DME,

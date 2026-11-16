@@ -66,3 +66,6 @@ timed altitude-profile assessment, source coverage and uncertainty semantics.
 
 The [charts and navigation contract](architecture/charts-navigation.md) defines FAA
 chart acquisition, original preservation, georeferenced display and current CIFP ingestion.
+
+The [offline and cockpit contract](architecture/offline-cockpit.md) defines durable
+flight packages, disconnected operation and the local GDL90 receiver bridge.

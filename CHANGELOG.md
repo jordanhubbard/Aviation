@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Cockpit connectivity: add shared GDL90 decoding and independent conformance vectors, plus an explicitly started, source-filtered local UDP bridge with typed HTTP/MCP controls, per-sender validity/age and bounded history. Offline packages and physical-receiver qualification remain in progress (#493).
+
 - Charts and navigation: add sourced FAA terminal, VFR/IFR chart catalogs, retained originals, PDF previews, projected map tiles and real CIFP navigation records. Show edition dates separately from catalog verification, preserve cached files after source failures, and share exclusive cycle boundaries through both navigation SDK bindings (#490).
 
 - Aircraft document research: add a private POH/AFM/maintenance PDF library with original retention, page indexes/OCR, ICAO and registration associations, public-source acquisition, configured search/model adapters and source-cited questions. Generated distillations remain separate from planning performance data (#489).
