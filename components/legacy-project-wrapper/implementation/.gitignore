@@ -87,3 +87,6 @@ temp/
 
 # Throwaway venv created by `make audit-python`
 .venv-audit/
+
+# Disposable virtualenv snapshots contain host-local editable paths.
+.venv-lockfile.txt

@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Dependency automation: remove an unused captured virtualenv freeze with an unreachable sandbox path that blocked Python updates; retain the actual requirements and project manifests as authority (#441).
+
 - Dependency security: remove the unpatched Jest/deepmerge test chain by moving the remaining 128 service/model tests to Vitest, update affected transitive packages, and point Dependabot at actual retained workspace manifests (#441).
 
 - Flight Planner: save browser-local aircraft registrations and reusable cruise/fuel planning values with explicit units, protected concurrent edits and visible persistence failures (#422). Shared feedback dialogs show Close after a successful issue submission and prevent duplicate submissions (#423).

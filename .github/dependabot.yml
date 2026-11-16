@@ -14,6 +14,7 @@ updates:
         dependency-type: development
     labels: [dependencies, npm]
 
+  # Python authority is requirements/pyproject, never a local virtualenv freeze.
   - package-ecosystem: pip
     directories:
       - /components/legacy-project-wrapper/implementation/apps/flight-planner
