@@ -597,7 +597,7 @@ def test_truncated_model_completion_is_not_admitted_even_if_json_parses():
         },
         transport=httpx.MockTransport(provider),
     )
-    with pytest.raises(ModelUnavailable, match="required cited JSON"):
+    with pytest.raises(ModelUnavailable, match="required cited JSON answer was truncated"):
         models.complete([], "Summarize")
 
 
@@ -655,6 +655,35 @@ def test_model_correction_revalidates_evidence_and_stops_at_a_bound(store):
     assert len(failing.prompts) == 3
 
 
+
+def test_claim_limit_feedback_corrects_without_truncating_or_weakening_evidence(store):
+    document = put(store)
+    good, passage = provider_answer(store, document)
+    oversized = {**good, "claims": good["claims"] * 17}
+    assert len(oversized["claims"]) == 17
+    with pytest.raises(ModelUnavailable, match="17 claims; return at most 12"):
+        validate_answer(oversized, [passage])
+    with pytest.raises(ModelUnavailable, match="claims must be a JSON array"):
+        validate_answer({**good, "claims": {}}, [passage])
+    assert len(validate_answer({**good, "claims": good["claims"] * 12}, [passage])["claims"]) == 12
+
+    class Correcting:
+        def __init__(self, correct):
+            self.prompts, self.correct = [], correct
+
+        def complete(self, evidence, question):
+            self.prompts.append(question)
+            return good if self.correct and len(self.prompts) > 1 else oversized
+
+    models = Correcting(True)
+    assert verified_completion(models, [passage], "Summarize")["claims"]
+    assert "17 claims; return at most 12" in models.prompts[1]
+    assert len(oversized["claims"]) == 17
+    failing = Correcting(False)
+    with pytest.raises(ModelUnavailable, match="17 claims; return at most 12"):
+        verified_completion(failing, [passage], "Summarize")
+    assert len(failing.prompts) == 3
+
 def test_partial_distillation_resumes_verified_batches_and_invalidates_changed_model(store):
     document = store.ingest(
         manual(*[("Page %s. " % i) + "Synthetic manual evidence. " * 50 for i in range(24)]),
@@ -694,12 +723,17 @@ def test_partial_distillation_resumes_verified_batches_and_invalidates_changed_m
     assert complete["status"] == "complete" and complete["unresolved_batches"] == 0
     assert resumed.calls[0] == failing.calls[1]
     assert complete["sections"][0] == partial["sections"][0]
-    # An interrupted run from another model must begin at the original evidence.
-    store.artifact(document["id"], "distillation", partial)
-    changed = Provider()
-    changed.model = "different-model"
-    distill(store, changed, document["id"])
-    assert changed.calls[0] == failing.calls[0]
+    # Model or explicitly configured generation-mode changes restart original evidence.
+    for attribute, value in [
+        ("model", "different-model"),
+        ("generation_options", {"chat_template_kwargs": {"enable_thinking": False}}),
+        ("generation_options", {"chat_template_kwargs": {"enable_thinking": True}}),
+    ]:
+        store.artifact(document["id"], "distillation", partial)
+        changed = Provider()
+        setattr(changed, attribute, value)
+        distill(store, changed, document["id"])
+        assert changed.calls[0] == failing.calls[0]
 
 
 def test_unresolved_readable_batch_does_not_claim_complete_distillation(store):
@@ -1000,3 +1034,59 @@ def test_excerpt_format_change_does_not_resume_an_old_partial_prefix(store, monk
     assert result["status"] == "complete"
     assert replacement.calls[0] == failing.calls[0]
     assert len(replacement.calls) == result["total_batches"]
+
+
+@pytest.mark.parametrize(
+    "configured,expected",
+    [(None, None), ("", None), ("true", True), ("false", False), (" FALSE ", False)],
+)
+def test_explicit_chat_template_thinking_is_optional_and_does_not_change_embeddings(
+    configured, expected
+):
+    requests = []
+
+    def provider(request):
+        requests.append(json.loads(request.content))
+        return httpx.Response(
+            200,
+            json={
+                "choices": [
+                    {
+                        "finish_reason": "stop",
+                        "message": {
+                            "content": json.dumps(
+                                {
+                                    "insufficient_evidence": True,
+                                    "reason": "No evidence",
+                                    "claims": [],
+                                }
+                            )
+                        },
+                    }
+                ]
+            },
+        )
+
+    config = {
+        "AIRCRAFT_LIBRARY_LLM_BASE_URL": "https://models.example/v1",
+        "AIRCRAFT_LIBRARY_LLM_MODEL": "test-model",
+    }
+    baseline = Models(config)
+    if configured is not None:
+        config["AIRCRAFT_LIBRARY_LLM_ENABLE_THINKING"] = configured
+    models = Models(config, transport=httpx.MockTransport(provider))
+    assert models.embedding_identity == baseline.embedding_identity
+    models.complete([], "Summarize")
+    payload = requests[0]
+    if expected is None:
+        assert "chat_template_kwargs" not in payload and models.generation_options == {}
+    else:
+        assert payload["chat_template_kwargs"] == {"enable_thinking": expected}
+    assert payload["response_format"] == {"type": "json_object"}
+    assert payload["max_tokens"] == 4096 and payload["model"] == "test-model"
+
+
+@pytest.mark.parametrize("value", [True, False, 1, "yes", "0", "automatic"])
+def test_invalid_thinking_configuration_fails_before_provider_access(value):
+    with pytest.raises(ValueError, match="LLM enable thinking"):
+        Models({"AIRCRAFT_LIBRARY_LLM_ENABLE_THINKING": value})

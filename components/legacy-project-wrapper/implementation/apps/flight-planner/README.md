@@ -212,6 +212,14 @@ changing these settings or upgrading from the earlier model-name-only index.
 Set `AIRCRAFT_LIBRARY_EMBEDDING_BATCH_SIZE` from 1 to 32 (default 32) when the
 provider limits batching. A value of 1 still embeds every passage individually.
 
+For models supporting `chat_template_kwargs.enable_thinking`, operators can set
+`AIRCRAFT_LIBRARY_LLM_ENABLE_THINKING=true` or `false` explicitly. Leaving it unset
+omits the provider-specific field. Invalid values fail configuration validation;
+changing a configured mode restarts incompatible partial distillations while
+preserving embedding identity. Truncated responses remain rejected and are reported
+distinctly from other invalid cited-JSON responses. This setting does not change
+source citation, numeric evidence or completeness checks.
+
 ## Timed route hazard assessment
 
 Open **Route assessment** at `/route-assessment`, or use the panel below a completed

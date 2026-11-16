@@ -48,6 +48,13 @@ class Models:
         self.base = env.get("AIRCRAFT_LIBRARY_LLM_BASE_URL", "").rstrip("/")
         self.model = env.get("AIRCRAFT_LIBRARY_LLM_MODEL", "")
         self.key = env.get("AIRCRAFT_LIBRARY_LLM_API_KEY", "")
+        thinking = env.get("AIRCRAFT_LIBRARY_LLM_ENABLE_THINKING", "")
+        if not isinstance(thinking, str) or thinking.strip().lower() not in {"", "true", "false"}:
+            raise ValueError("LLM enable thinking must be true, false or unset")
+        thinking = thinking.strip().lower()
+        self.generation_options = (
+            {"chat_template_kwargs": {"enable_thinking": thinking == "true"}} if thinking else {}
+        )
         self.embedding_model = env.get("AIRCRAFT_LIBRARY_EMBEDDING_MODEL", "")
         self.embedding_mode = env.get("AIRCRAFT_LIBRARY_EMBEDDING_MODE", "symmetric")
         try:
@@ -173,11 +180,14 @@ class Models:
                         ),
                     },
                 ],
+                **self.generation_options,
             },
         )
         try:
             if result["choices"][0].get("finish_reason") == "length":
-                raise ValueError("Model completion was truncated")
+                raise ModelUnavailable(
+                    "Model required cited JSON answer was truncated at the output budget"
+                )
             content = result["choices"][0]["message"]["content"]
             if not isinstance(content, str) or len(content) > 80_000:
                 raise ValueError("Invalid model content")
@@ -337,8 +347,12 @@ def validate_answer(answer, evidence):
     if not isinstance(answer, dict) or type(answer.get("insufficient_evidence")) is not bool:
         raise ModelUnavailable("Model answer lacks evidence status")
     claims = answer.get("claims")
-    if not isinstance(claims, list) or len(claims) > 12:
-        raise ModelUnavailable("Invalid model claims")
+    if not isinstance(claims, list):
+        raise ModelUnavailable("Model claims must be a JSON array")
+    if len(claims) > 12:
+        raise ModelUnavailable(
+            f"Model returned {len(claims)} claims; return at most 12 supported claims"
+        )
     if answer["insufficient_evidence"]:
         if claims:
             raise ModelUnavailable("Insufficient-evidence answer cannot contain factual claims")
@@ -504,6 +518,11 @@ def distill(store: Store, models: Models, identifier: str):
                 "question": question,
                 "batches": batches,
                 "citation_format": CITATION_FORMAT,
+                **(
+                    {"generation_options": models.generation_options}
+                    if getattr(models, "generation_options", {})
+                    else {}
+                ),
             },
             sort_keys=True,
             separators=(",", ":"),
