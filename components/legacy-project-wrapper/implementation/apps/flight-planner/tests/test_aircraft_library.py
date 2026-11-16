@@ -721,3 +721,25 @@ def test_provider_http_status_is_actionable_without_exposing_response_secrets():
         models.post('/chat/completions',{})
     assert 'HTTP 429' in str(error.value)
     assert 'private-provider-value' not in str(error.value)
+
+
+@pytest.mark.parametrize("timeout", ["9", "601", "nan", "inf", "slow"])
+def test_invalid_model_read_timeout_is_rejected(timeout):
+    with pytest.raises(ValueError, match="Model read timeout"):
+        Models({"AIRCRAFT_LIBRARY_MODEL_READ_TIMEOUT_SECONDS": timeout})
+
+
+@pytest.mark.parametrize("configured,expected", [(None, 120), ("600", 600)])
+def test_model_timeout_controls_read_budget_and_redacts_transport_error(configured, expected):
+    def provider(request):
+        assert request.extensions["timeout"] == {"connect": 10, "read": expected, "write": 30, "pool": 10}
+        raise httpx.ReadTimeout("private-provider-value", request=request)
+    config = {"AIRCRAFT_LIBRARY_LLM_BASE_URL": "https://models.example/v1"}
+    if configured is not None:
+        config["AIRCRAFT_LIBRARY_MODEL_READ_TIMEOUT_SECONDS"] = configured
+    models = Models(config, transport=httpx.MockTransport(provider))
+    with pytest.raises(ModelUnavailable) as error:
+        models.post("/chat/completions", {})
+    assert "ReadTimeout" in str(error.value)
+    assert f"read limit {expected} seconds" in str(error.value)
+    assert "private-provider-value" not in str(error.value)

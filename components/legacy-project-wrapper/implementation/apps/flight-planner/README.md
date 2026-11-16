@@ -246,3 +246,8 @@ chat-completion starts across the process's questions and background work. Set i
 for the provider's quota alongside the batch budget; a smaller batch can reduce
 token pressure. This does not change the required evidence, and rate-limited
 failures still preserve resumable partial progress.
+
+`AIRCRAFT_LIBRARY_MODEL_READ_TIMEOUT_SECONDS` accepts 10–600 (default 120) for
+slow model responses. Connect/pool waits are limited to 10 seconds and writes to
+30 seconds. Timeout errors identify their category and configured read limit;
+changing this setting adds no HTTP retries or citation exceptions.
