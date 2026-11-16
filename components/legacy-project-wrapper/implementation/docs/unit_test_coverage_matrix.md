@@ -8,7 +8,8 @@ This document outlines the unit test coverage matrix for core modules in the Avi
 |---------------|-----------|--------------|
 | `apps/aviation-accident-tracker/frontend` | Vitest + @testing-library/react | 62 (10 files) |
 | `apps/aviation-accident-tracker/backend` | Vitest | 34 (5 files) |
-| `apps/g1000-simulator` | Jest (ts-jest) | 68 |
+| `apps/g1000-simulator` | Vitest | 79 (4 files) |
+| `apps/flight-tracker` | Vitest | 49 (1 file, including loopback HTTP) |
 | `packages/shared-sdk` | Vitest | 162 |
 | `packages/ui-framework` | Vitest | 36 |
 | `packages/ai-explainer` | Vitest | 11 |

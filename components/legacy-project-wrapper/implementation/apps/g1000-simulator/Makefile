@@ -15,9 +15,9 @@ dev-up:
 	cd backend && uvicorn main:app --host 0.0.0.0 --port 8000 &
 	pnpm run dev &
 
-# Run JS/TS unit tests via jest.
+# Run JS/TS service/model tests via the common Vitest runner.
 test:
-	node node_modules/.bin/jest --passWithNoTests
+	pnpm test
 
 # Run Python backend tests following the flight-planner pattern.
 COMPOSE := $(shell docker compose version >/dev/null 2>&1 && echo "docker compose" || echo "docker-compose")

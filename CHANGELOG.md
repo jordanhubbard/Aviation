@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Dependency security: remove the unpatched Jest/deepmerge test chain by moving the remaining 128 service/model tests to Vitest, update affected transitive packages, and point Dependabot at actual retained workspace manifests (#441).
+
 - Flight Planner: save browser-local aircraft registrations and reusable cruise/fuel planning values with explicit units, protected concurrent edits and visible persistence failures (#422). Shared feedback dialogs show Close after a successful issue submission and prevent duplicate submissions (#423).
 
 - Legacy weather station, regional and text briefing endpoints include TAF forecasts alongside METAR observations, explicit per-product availability and UTC source/validity times. Weather cards, map popups and middleware share the same payloads; obsolete multi-day forecast controls are removed and stale selections no longer overwrite current results (#459).

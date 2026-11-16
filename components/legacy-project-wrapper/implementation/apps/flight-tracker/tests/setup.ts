@@ -1,12 +1,4 @@
-/**
- * Jest test environment setup for flight-tracker.
- *
- * Loaded via jest.config.js setupFiles BEFORE the test framework is installed.
- * Do NOT use jest/describe/beforeEach here — those are unavailable at this stage.
- *
- * - Disables all real network calls (METAR, OpenSky) so tests are fully hermetic.
- * - Stubs global.fetch so the service never actually hits the network.
- */
+/** Test environment policy, installed before importing application modules. */
 
 // Disable the shared-sdk METAR fetch so no real HTTP is made to aviationweather.gov
 process.env.DISABLE_METAR_FETCH = '1';

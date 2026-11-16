@@ -1,3 +1,4 @@
+import { vi } from 'vitest'
 /**
  * Unit tests for AlertManager.
  *
@@ -17,7 +18,7 @@ import type { SocketStatus } from '../../frontend/src/hooks/useTelemetrySocket'
 // ---------------------------------------------------------------------------
 // Mock formatNumber so tests are not coupled to the formatter implementation.
 // ---------------------------------------------------------------------------
-jest.mock('../../frontend/src/displays/PFD/formatters', () => ({
+vi.mock('../../frontend/src/displays/PFD/formatters', () => ({
   formatNumber: (value: number | null | undefined, suffix: string) =>
     value !== null && value !== undefined ? `${value}${suffix}` : '---',
 }))
