@@ -266,3 +266,9 @@ schema. Unset/empty or `json_object` preserves the existing request. Schema mode
 never bypasses citation/numeric checks or silently downgrades after provider rejection;
 changing the schema invalidates incompatible distillation prefixes, leaving embeddings
 unchanged.
+
+Compatible providers may use `AIRCRAFT_LIBRARY_LLM_REASONING_EFFORT=none|low|high`
+with `AIRCRAFT_LIBRARY_LLM_MAX_TOKENS` (512–32768, default 4096). Leave the thinking
+flag unset when selecting reasoning effort. Provider token budgets can include
+reasoning; exhausting that budget never admits truncated output. Explicit effort
+and nondefault budget changes invalidate incompatible partial distillations.

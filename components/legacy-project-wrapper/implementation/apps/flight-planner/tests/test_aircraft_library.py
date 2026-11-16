@@ -726,6 +726,7 @@ def test_partial_distillation_resumes_verified_batches_and_invalidates_changed_m
     # Model or explicitly configured generation-mode changes restart original evidence.
     for attribute, value in [
         ("model", "different-model"),
+        ("generation_options", {"reasoning_effort": "low", "max_tokens": 8192}),
         ("generation_options", {"chat_template_kwargs": {"enable_thinking": False}}),
         ("generation_options", {"chat_template_kwargs": {"enable_thinking": True}}),
         ("generation_options", {"response_format": {"type": "json_schema", "schema": "changed"}}),
@@ -1200,3 +1201,49 @@ def test_numeric_feedback_locates_claim_without_echoing_source_or_relaxing_valid
     assert "quoted evidence in claim 2" in models.prompts[1]
     assert "cite excerpts supporting every numeric value" in models.prompts[1]
     assert len(bad["claims"]) == 2  # Rejection never silently edits the candidate.
+
+
+@pytest.mark.parametrize("effort,budget,expected", [
+    (None, None, {}), ("", "", {}), ("none", "4096", {"reasoning_effort": "none"}),
+    (" LOW ", "8192", {"reasoning_effort": "low", "max_tokens": 8192}),
+    ("high", "32768", {"reasoning_effort": "high", "max_tokens": 32768}),
+    (None, "512", {"max_tokens": 512}),
+])
+def test_reasoning_and_output_budget_are_explicit_without_changing_embeddings(effort, budget, expected):
+    requests = []
+    def provider(request):
+        requests.append(json.loads(request.content))
+        return httpx.Response(200, json={"choices": [{"finish_reason": "stop", "message": {
+            "content": json.dumps({"insufficient_evidence": True, "reason": "", "claims": []})
+        }}]})
+    config = {"AIRCRAFT_LIBRARY_LLM_BASE_URL": "https://models.example/v1", "AIRCRAFT_LIBRARY_LLM_MODEL": "chosen-model"}
+    original = Models(config)
+    if effort is not None: config["AIRCRAFT_LIBRARY_LLM_REASONING_EFFORT"] = effort
+    if budget is not None: config["AIRCRAFT_LIBRARY_LLM_MAX_TOKENS"] = budget
+    models = Models(config, transport=httpx.MockTransport(provider))
+    assert models.generation_options == expected
+    assert models.embedding_identity == original.embedding_identity
+    models.complete([], "Question")
+    payload = requests[0]
+    assert payload["max_tokens"] == expected.get("max_tokens", 4096)
+    assert payload.get("reasoning_effort") == expected.get("reasoning_effort")
+    assert "chat_template_kwargs" not in payload
+    assert payload["model"] == "chosen-model" and payload["response_format"] == {"type": "json_object"}
+
+
+@pytest.mark.parametrize("setting,value", [
+    ("REASONING_EFFORT", True), ("REASONING_EFFORT", "automatic"),
+    ("MAX_TOKENS", True), ("MAX_TOKENS", 8192), ("MAX_TOKENS", "511"),
+    ("MAX_TOKENS", "32769"), ("MAX_TOKENS", "8192.0"), ("MAX_TOKENS", "-512"),
+    ("MAX_TOKENS", "１２３４"), ("MAX_TOKENS", "1e4"),
+])
+def test_invalid_reasoning_budget_configuration_is_rejected(setting, value):
+    with pytest.raises(ValueError, match="LLM "):
+        Models({"AIRCRAFT_LIBRARY_LLM_" + setting: value})
+
+
+@pytest.mark.parametrize("thinking", ["true", "false"])
+def test_ambiguous_reasoning_configuration_is_rejected(thinking):
+    with pytest.raises(ValueError, match="not both"):
+        Models({"AIRCRAFT_LIBRARY_LLM_ENABLE_THINKING": thinking,
+                "AIRCRAFT_LIBRARY_LLM_REASONING_EFFORT": "low"})

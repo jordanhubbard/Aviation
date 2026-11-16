@@ -50,6 +50,15 @@ schema participates in the distillation identity; embeddings remain independent.
 Provider rejection is surfaced without silently downgrading the configured mode.
 See the [NVIDIA provider contract](https://docs.api.nvidia.com/nim/reference/nvidia-nemotron-3_5-super-vl-120b-a12b-infer).
 
+Operators may set `AIRCRAFT_LIBRARY_LLM_REASONING_EFFORT=none`, `low` or `high`
+for a compatible provider, or leave it unset/empty to omit the field. Explicit
+thinking and reasoning-effort settings are mutually exclusive to avoid ambiguous
+provider behavior. `AIRCRAFT_LIBRARY_LLM_MAX_TOKENS` is a decimal integer from 512
+to 32768 (default/unset/empty 4096); it bounds total completion output, including
+reasoning for providers sharing that budget. Nondefault token budgets and explicit
+reasoning effort participate in the distillation identity and never change embeddings.
+Unsupported options fail at the provider without a silent mode or budget fallback.
+
 A completion ending at its output limit must report truncation distinctly, without
 exposing provider response text, and must never admit even parseable partial JSON.
 All original-span, numeric, applicability and completeness guards remain in force.

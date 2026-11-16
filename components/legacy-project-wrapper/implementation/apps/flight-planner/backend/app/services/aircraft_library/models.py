@@ -88,6 +88,22 @@ class Models:
         self.generation_options = (
             {"chat_template_kwargs": {"enable_thinking": thinking == "true"}} if thinking else {}
         )
+        effort = env.get("AIRCRAFT_LIBRARY_LLM_REASONING_EFFORT", "")
+        if not isinstance(effort, str) or effort.strip().lower() not in {"", "none", "low", "high"}:
+            raise ValueError("LLM reasoning effort must be none, low, high or unset")
+        effort = effort.strip().lower()
+        if effort and thinking:
+            raise ValueError("Configure either LLM reasoning effort or enable thinking, not both")
+        if effort:
+            self.generation_options["reasoning_effort"] = effort
+        budget = env.get("AIRCRAFT_LIBRARY_LLM_MAX_TOKENS", "")
+        if not isinstance(budget, str) or (budget.strip() and not budget.strip().isascii()):
+            raise ValueError("LLM max tokens must be a decimal integer from 512 to 32768")
+        budget = budget.strip() or "4096"
+        if not budget.isdecimal() or len(budget) > 5 or not 512 <= int(budget) <= 32768:
+            raise ValueError("LLM max tokens must be a decimal integer from 512 to 32768")
+        if int(budget) != 4096:
+            self.generation_options["max_tokens"] = int(budget)
         output_format = env.get("AIRCRAFT_LIBRARY_LLM_RESPONSE_FORMAT", "")
         if not isinstance(output_format, str) or output_format.strip().lower() not in {
             "", "json_object", "json_schema"
