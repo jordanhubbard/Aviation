@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Cockpit receiver profiles: decode ForeFlight device identity and altitude-datum declarations in both SDKs; scope interpretation to the sender/session, preserve unknown datum after gaps, and keep pressure altitude distinct (#493).
+
 - Cockpit connectivity: add shared GDL90 decoding and independent conformance vectors, plus an explicitly started, source-filtered local UDP bridge with typed HTTP/MCP controls, per-sender validity/age and bounded history. Offline packages and physical-receiver qualification remain in progress (#493).
 
 - Charts and navigation: add sourced FAA terminal, VFR/IFR chart catalogs, retained originals, PDF previews, projected map tiles and real CIFP navigation records. Show edition dates separately from catalog verification, preserve cached files after source failures, and share exclusive cycle boundaries through both navigation SDK bindings (#490).

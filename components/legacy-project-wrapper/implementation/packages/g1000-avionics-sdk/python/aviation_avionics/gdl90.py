@@ -80,13 +80,61 @@ def _report(data: bytes) -> dict:
             kind="geometric_altitude",
             geometric_altitude_ft=int.from_bytes(data[1:3], "big", signed=True) * 5,
             datum="WGS84_ellipsoid",
+            datum_source="gdl90_standard",
             vertical_warning=bool(quality & 0x8000),
             vertical_figure_of_merit_m=None if vfom == 0x7FFF else vfom,
             vertical_figure_of_merit_lower_bound=vfom == 0x7FFE,
         )
+    elif identifier == 0x65 and len(data) > 1 and data[1] == 0:
+        if len(data) < 3 or (data[2] == 1 and len(data) != 39):
+            raise ValueError("invalid-message-length")
+        if data[2] != 1:
+            result.update(kind="unsupported", supported=False)
+        else:
+            mask = int.from_bytes(data[35:39], "big")
+            result.update(
+                kind="device_id",
+                version=1,
+                serial_number_hex=(
+                    None if data[3:11] == b"\xff" * 8 else data[3:11].hex().upper()
+                ),
+                device_name=data[11:19]
+                .decode("utf-8", errors="replace")
+                .rstrip("\x00 "),
+                device_long_name=data[19:35]
+                .decode("utf-8", errors="replace")
+                .rstrip("\x00 "),
+                capabilities_mask=mask,
+                geometric_altitude_datum="MSL" if mask & 1 else "WGS84_ellipsoid",
+                internet_policy=("unrestricted", "expensive", "disallowed", None)[
+                    (mask >> 1) & 3
+                ],
+                reserved_capabilities_mask=mask & 0xFFFFFFF8,
+            )
+    elif identifier == 0x65 and len(data) == 1:
+        raise ValueError("invalid-message-length")
     else:
         result.update(kind="unsupported", supported=False)
     return result
+
+
+def resolve_geometric_altitude(
+    report: dict, device_id: dict | None = None, *, profile_unknown=False
+) -> dict:
+    """Resolve supplied receiver context without mutating input or converting altitude."""
+    if report.get("kind") != "geometric_altitude":
+        raise ValueError("Expected a geometric-altitude report")
+    if device_id is not None and (
+        device_id.get("kind") != "device_id" or device_id.get("version") != 1
+    ):
+        raise ValueError("Expected a supported device-ID report")
+    if profile_unknown:
+        datum, source = None, "unknown_receiver_profile"
+    elif device_id is not None:
+        datum, source = device_id["geometric_altitude_datum"], "foreflight_device_id"
+    else:
+        datum, source = "WGS84_ellipsoid", "gdl90_standard"
+    return dict(report, datum=datum, datum_source=source)
 
 
 class Gdl90Decoder:

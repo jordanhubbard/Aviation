@@ -5,11 +5,12 @@ from pathlib import Path
 
 import pytest
 
-from aviation_avionics.gdl90 import Gdl90Decoder
+from aviation_avionics.gdl90 import Gdl90Decoder, resolve_geometric_altitude
 from aviation_avionics.gdl90_reports import (
     HeartbeatReport,
     TrafficReport,
     GeometricAltitudeReport,
+    DeviceIdReport,
     UnsupportedReport,
 )
 
@@ -40,6 +41,7 @@ def test_published_protocol_fields_and_all_input_boundaries(vector):
             "traffic": TrafficReport,
             "ownship": TrafficReport,
             "geometric_altitude": GeometricAltitudeReport,
+            "device_id": DeviceIdReport,
             "unsupported": UnsupportedReport,
         }[reports[0]["kind"]]
         record_type(**reports[0])
@@ -92,3 +94,33 @@ def test_per_call_input_output_and_error_limits():
     with pytest.raises(ValueError, match="65535"):
         decoder.push(b"a" * 65536)
     assert len(decoder.push(HEARTBEAT)["messages"]) == 1
+
+
+def test_geometric_datum_resolution_is_explicit_pure_and_pressure_safe():
+    def decode(identifier):
+        vector = next(row for row in VECTORS["reports"] if row["id"] == identifier)
+        return Gdl90Decoder().push(bytes.fromhex(vector["frame_hex"]))["messages"][0]
+
+    # Use the authority's geometric-altitude vector rather than an encoder under test.
+    vector = next(
+        row
+        for row in VECTORS["reports"]
+        if row["expected"].get("kind") == "geometric_altitude"
+    )
+    report = Gdl90Decoder().push(bytes.fromhex(vector["frame_hex"]))["messages"][0]
+    original = dict(report)
+    msl = resolve_geometric_altitude(report, decode("extension-id-msl-serial64"))
+    assert msl == dict(original, datum="MSL", datum_source="foreflight_device_id")
+    ellipsoid = resolve_geometric_altitude(
+        report, decode("extension-id-ellipsoid-utf8")
+    )
+    assert ellipsoid == dict(original, datum_source="foreflight_device_id")
+    assert resolve_geometric_altitude(report) == original
+    assert resolve_geometric_altitude(report, profile_unknown=True) == dict(
+        original, datum=None, datum_source="unknown_receiver_profile"
+    )
+    assert report == original
+    with pytest.raises(ValueError, match="geometric-altitude"):
+        resolve_geometric_altitude(decode("published-traffic-section-3.5.2"))
+    with pytest.raises(ValueError, match="supported device-ID"):
+        resolve_geometric_altitude(report, decode("extension-id-unknown-version"))

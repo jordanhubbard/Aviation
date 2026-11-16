@@ -63,7 +63,8 @@ sequences, message sizes, IDs and FCS before using payloads. Recover after malfo
 frames without unbounded buffers. A datagram can carry multiple frames; unsupported
 message IDs remain explicit and never masquerade as valid traffic or weather.
 
-Support heartbeat, ownship, traffic and geometric-altitude reports. Preserve address
+Support heartbeat, ownship, traffic, geometric-altitude and ForeFlight version-1
+device-ID reports. Preserve address
 type alongside participant address, alert status, NIC/NACp, track/heading reference,
 airborne state and extrapolation. Invalid altitude/speed/vertical-rate sentinels are
 unknown, not zero. Pressure altitude, ellipsoid height and an extension-declared MSL
@@ -86,7 +87,7 @@ Bound admitted datagrams to 200 per second with a burst of 100 and 1 MiB per
 second with a burst of 256 KiB, eight sender
 endpoints, 500 traffic tracks and 128 diagnostic reports. Source rejection occurs
 before decoding. Each sender retains its own heartbeat, ownship and geometric
-altitude; values from different senders must never be fused. A recent known report
+altitude and device ID; values from different senders must never be fused. A recent known telemetry report
 establishes a receiver connection for five seconds; an unknown CRC-valid message
 alone does not. Ownship requires a fresh heartbeat's valid GPS indication as well
 as a usable ownship position before `gps_fix_valid` can be true. Missing heartbeat
@@ -94,6 +95,22 @@ validity is unknown. Traffic becomes stale after 15 seconds and is removed after
 60 seconds; individual report receipt times remain visible. Restarting a listener
 clears the previous session's telemetry. Stopping retains last-known values with
 `live=false`, and subsequent stray callbacks cannot revive the stopped session.
+A device ID retains the lossless 64-bit serial, names, declared datum and internet
+policy; reserved bits remain visible. It does not establish a telemetry connection
+or refresh older measurements. Apply its declared datum only to subsequent
+same-sender geometry through the shared resolver; never convert pressure altitude
+or relabel a prior geometric measurement. The standard raw decoder uses WGS84
+ellipsoid. Once an identified sender has an observed gap beyond five seconds,
+new geometry has unknown datum until a new supported ID arrives. Continuous
+telemetry preserves the profile without requiring an undocumented ID interval.
+An unknown ID version invalidates the active profile; an unknown subtype remains
+unsupported. A changed known serial clears that endpoint's previous fix and tracks
+before accepting new measurements. Restart discards all declarations. Sender state
+exposes `device_profile_valid` (null for a standard sender with no observed ID,
+false for an uncertain profile). Device-ID envelope ages may exceed five seconds
+while the profile remains valid through continuous telemetry; the validity field
+is the applicability indicator.
+
 Weather decoding capabilities and missing products remain explicit while the
 supported-product implementation is incomplete.
 

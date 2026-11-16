@@ -32,7 +32,7 @@ bound. Geometric altitude and its vertical quality must never relabel pressure
 altitude or infer an MSL datum without the applicable extension declaration.
 
 Python exposes framework-independent frozen `HeartbeatReport`, `TrafficReport`,
-`GeometricAltitudeReport` and `UnsupportedReport` dataclasses as the `Gdl90Report`
+`GeometricAltitudeReport`, `DeviceIdReport` and `UnsupportedReport` dataclasses as the `Gdl90Report`
 union. Host HTTP schemas reuse these records rather than declaring another decoded
 telemetry schema. Decoder results remain JSON-compatible dictionaries.
 
@@ -119,3 +119,32 @@ I/O. They SHALL supply navigation-station data explicitly rather than embedding 
 provider or operational database in the receiver model. Marker-site catalogs, audio
 playback, COM transmission, simulator stepping, and physical transponder I/O likewise
 remain application inputs or host responsibilities.
+
+## Receiver extension profile
+
+[ForeFlight extended GDL90 specification](https://foreflight.com/connect/spec/)
+defines the 39-byte big-endian version-1 device ID, message 0x65/sub-ID 0.
+`device_id` reports expose `version`, `serial_number_hex` (uppercase 16-digit
+string or null), `device_name`, `device_long_name`, `capabilities_mask`,
+`geometric_altitude_datum` (`MSL` or `WGS84_ellipsoid`), `internet_policy`
+(`unrestricted`, `expensive`, `disallowed` or null for reserved), and
+`reserved_capabilities_mask`. Strings trim trailing NUL/space padding only;
+malformed UTF-8 uses replacement characters. Unknown version/subtype is
+unsupported and never establishes a usable profile; a truncated known ID fails
+length validation.
+
+`resolveGeometricAltitude(report, deviceId?, profileUnknown?)` and Python
+`resolve_geometric_altitude(report, device_id=None, *, profile_unknown=False)`
+return a copy with unchanged measurement/quality and explicit `datum_source`:
+`gdl90_standard`, `foreflight_device_id`, or `unknown_receiver_profile`.
+Datum is nullable when uncertain. The decoder's raw geometric report has
+`datum_source=gdl90_standard`; this interpretation is separate from pressure
+altitude and does not compute a geoid correction. Resolvers reject other report
+kinds and unsupported device declarations.
+
+Hosts scope device declarations to each sender and receiver session. A previously
+identified receiver that has an observed telemetry gap beyond the connection
+freshness window requires a new ID before resolving new geometry; an unsupported
+ID version also invalidates the active profile. ID messages cannot refresh
+telemetry age or create a telemetry connection. A later ID never retroactively
+changes the datum or age of already received geometry. Restart clears profiles.

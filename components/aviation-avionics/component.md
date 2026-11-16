@@ -64,6 +64,27 @@ valid ownship fix, complete traffic coverage or current weather.
   bounded incremental recovery preserves later valid frames, and invalid or
   saturated values cannot become exact usable measurements
 
+### Requirement: Receiver declarations preserve geometric altitude datum
+
+Both bindings SHALL decode version-1 ForeFlight device-ID messages (0x65,
+sub-ID 0), preserving the full 64-bit serial as hexadecimal or null for the
+all-ones sentinel, UTF-8 device names, capability mask, altitude datum and
+internet policy. Unknown extension versions/subtypes SHALL remain unsupported.
+A pure shared resolver SHALL apply a supplied same-receiver declaration to a
+geometric-altitude report, preserve the measured value and quality, and expose
+unknown datum when the host declares the receiver profile uncertain. Decoding
+alone SHALL retain the standard WGS84 ellipsoid default. Pressure altitude SHALL
+never be converted or relabeled by this operation.
+
+#### Scenario: Receiver declares MSL geometric altitude
+
+- **WHEN** a valid version-1 device ID declares capability bit 0 and its
+  geometric-altitude report is resolved with that declaration
+- **THEN** both bindings return MSL with explicit extension provenance, unchanged
+  altitude/quality, and identical lossless serial and capability metadata
+- **AND** unknown profile state yields null datum rather than an inferred MSL or
+  ellipsoid reference
+
 ### Requirement: Applications share avionics wire contracts
 
 Applications SHALL import telemetry, command, and flight-plan records and validators

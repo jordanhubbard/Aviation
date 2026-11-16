@@ -11,9 +11,16 @@ import pytest
 from app.cockpit_bridge import create_bridge_app
 from app.services.cockpit_bridge import ReceiverBridge, ReceiverSettings, ReceiverState
 
-VECTORS = json.loads((Path(__file__).parents[3] / "conformance/aviation-gdl90.json").read_text())
+VECTORS = json.loads(
+    (Path(__file__).parents[3] / "conformance/aviation-gdl90.json").read_text()
+)
 HEARTBEAT = bytes.fromhex(VECTORS["reports"][0]["frame_hex"])
 TRAFFIC = bytes.fromhex(VECTORS["reports"][1]["payload_hex"])
+DEVICE_ID = bytes.fromhex(
+    next(row for row in VECTORS["reports"] if row["id"] == "extension-id-msl-serial64")[
+        "frame_hex"
+    ]
+)
 TOKEN = "fixture-operator-token-" + "x" * 32
 
 
@@ -169,18 +176,24 @@ def test_http_auth_origin_schema_and_body_ordering():
             },
         )
         assert response.status_code == 200
-        assert response.headers["access-control-allow-origin"] == "https://planner.example"
+        assert (
+            response.headers["access-control-allow-origin"] == "https://planner.example"
+        )
         response = client.get("/api/cockpit/state", headers=headers)
         assert response.status_code == 200 and response.json()["receivers"] == []
         assert response.headers["cache-control"] == "private, no-store"
         schema = client.get("/api/openapi.json").json()
         assert TOKEN not in json.dumps(schema)
         assert (
-            schema["components"]["schemas"]["ReportEnvelope"]["properties"]["received_at"]["format"]
+            schema["components"]["schemas"]["ReportEnvelope"]["properties"][
+                "received_at"
+            ]["format"]
             == "date-time"
         )
         assert (
-            schema["components"]["schemas"]["BridgeSnapshot"]["properties"]["traffic"]["maxItems"]
+            schema["components"]["schemas"]["BridgeSnapshot"]["properties"]["traffic"][
+                "maxItems"
+            ]
             == 500
         )
         assert "503" in schema["paths"]["/api/cockpit/start"]["post"]["responses"]
@@ -196,7 +209,11 @@ def test_http_auth_origin_schema_and_body_ordering():
         port = bridge.state.bound_port
         with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as sender:
             sender.sendto(
-                HEARTBEAT + OWNSHIP + frame(TRAFFIC) + frame(bytes.fromhex("0bff38ffff")),
+                DEVICE_ID
+                + HEARTBEAT
+                + OWNSHIP
+                + frame(TRAFFIC)
+                + frame(bytes.fromhex("0bff38ffff")),
                 ("127.0.0.1", port),
             )
         for _ in range(100):
@@ -206,9 +223,17 @@ def test_http_auth_origin_schema_and_body_ordering():
         assert snapshot["traffic"][0]["report"]["pressure_altitude_ft"] == 5000
         assert snapshot["receivers"][0]["ownship"]["gps_fix_valid"] is True
         assert (
-            snapshot["receivers"][0]["geometric_altitude"]["report"]["datum"] == "WGS84_ellipsoid"
+            snapshot["receivers"][0]["geometric_altitude"]["report"]["datum"] == "MSL"
         )
-        assert client.post("/api/cockpit/stop", headers=headers).json()["listening"] is False
+        assert snapshot["receivers"][0]["device_profile_valid"] is True
+        assert (
+            snapshot["receivers"][0]["device_id"]["report"]["serial_number_hex"]
+            == "FEDCBA9876543210"
+        )
+        assert (
+            client.post("/api/cockpit/stop", headers=headers).json()["listening"]
+            is False
+        )
     assert bridge.transport is None
 
 
@@ -236,7 +261,10 @@ def test_byte_rate_limit_and_immutable_snapshot_view():
     state.ingest(HEARTBEAT, ("127.0.0.1", 1000))
     snapshot = state.snapshot()
     snapshot["receivers"][0]["heartbeat"]["report"]["gps_position_valid"] = False
-    assert state.snapshot()["receivers"][0]["heartbeat"]["report"]["gps_position_valid"] is True
+    assert (
+        state.snapshot()["receivers"][0]["heartbeat"]["report"]["gps_position_valid"]
+        is True
+    )
 
 
 def test_suspend_and_clock_corrections_cannot_rejuvenate_reports():
@@ -359,7 +387,11 @@ def test_actual_udp_concurrent_start_stop_rebind_and_late_callback():
             OSError("private-provider-value"),
             "Cannot bind the configured receiver UDP listener",
         ),
-        ("stop", TimeoutError("private-provider-value"), "Receiver UDP shutdown has not completed"),
+        (
+            "stop",
+            TimeoutError("private-provider-value"),
+            "Receiver UDP shutdown has not completed",
+        ),
     ],
 )
 def test_control_failure_is_actionable_without_exposing_socket_details(
@@ -380,3 +412,115 @@ def test_control_failure_is_actionable_without_exposing_socket_details(
             assert response.status_code == 503
             assert response.json() == {"detail": detail}
             assert "private-provider-value" not in response.text
+
+
+def test_device_profile_is_sender_scoped_and_does_not_relabel_old_geometry():
+    state = receiver()
+    state.listening(4000)
+    a, b = ("127.0.0.1", 1000), ("127.0.0.1", 2000)
+    geo = frame(bytes.fromhex("0bff38ffff"))
+    state.ingest(geo, a)
+    original = state.snapshot()["receivers"][0]["geometric_altitude"]
+    state.ingest(DEVICE_ID, a)
+    assert state.snapshot()["receivers"][0]["geometric_altitude"] == original
+    state.ingest(geo + OWNSHIP, a)
+    state.ingest(geo, b)
+    snapshot = state.snapshot()
+    assert snapshot["receivers"][0]["geometric_altitude"]["report"]["datum"] == "MSL"
+    assert (
+        snapshot["receivers"][1]["geometric_altitude"]["report"]["datum"]
+        == "WGS84_ellipsoid"
+    )
+    assert snapshot["receivers"][0]["ownship"]["report"]["pressure_altitude_ft"] == 5000
+    assert snapshot["receivers"][1]["device_profile_valid"] is None
+
+
+def test_profile_survives_continuous_telemetry_but_requires_new_id_after_gap():
+    clock = Clock()
+    state = receiver(clock=clock)
+    state.listening(4000)
+    source = ("127.0.0.1", 1000)
+    geo = frame(bytes.fromhex("0bff38ffff"))
+    state.ingest(DEVICE_ID, source)
+    assert not state.snapshot()["connected"]
+    for _ in range(20):
+        clock.value += 4
+        state.ingest(HEARTBEAT, source)
+    state.ingest(geo, source)
+    original = state.snapshot()["receivers"][0]["geometric_altitude"]
+    assert original["report"]["datum"] == "MSL"
+    clock.value += 6
+    state.ingest(HEARTBEAT, source)
+    snapshot = state.snapshot()["receivers"][0]
+    assert snapshot["device_profile_valid"] is False
+    assert snapshot["geometric_altitude"]["report"] == original["report"]
+    assert snapshot["geometric_altitude"]["age_seconds"] == 6
+    state.ingest(geo, source)
+    assert (
+        state.snapshot()["receivers"][0]["geometric_altitude"]["report"]["datum"]
+        is None
+    )
+    clock.value += 1
+    state.ingest(DEVICE_ID, source)
+    assert state.snapshot()["receivers"][0]["geometric_altitude"]["age_seconds"] == 1
+    assert (
+        state.snapshot()["receivers"][0]["geometric_altitude"]["report"]["datum"]
+        is None
+    )
+    state.ingest(geo, source)
+    assert (
+        state.snapshot()["receivers"][0]["geometric_altitude"]["report"]["datum"]
+        == "MSL"
+    )
+    state.stopped()
+    state.listening(4001)
+    state.ingest(geo, source)
+    assert (
+        state.snapshot()["receivers"][0]["geometric_altitude"]["report"]["datum"]
+        == "WGS84_ellipsoid"
+    )
+
+
+def test_unknown_id_invalidates_profile_without_claiming_connection_or_refreshing_geometry():
+    clock = Clock()
+    state = receiver(clock=clock)
+    state.listening(4000)
+    source = ("127.0.0.1", 1000)
+    geo = frame(bytes.fromhex("0bff38ffff"))
+    state.ingest(DEVICE_ID + geo, source)
+    clock.value += 6
+    state.ingest(frame(bytes.fromhex("650002")), source)
+    snapshot = state.snapshot()
+    assert not snapshot["connected"]
+    assert snapshot["receivers"][0]["geometric_altitude"]["age_seconds"] == 6
+    state.ingest(HEARTBEAT + geo, source)
+    report = state.snapshot()["receivers"][0]["geometric_altitude"]["report"]
+    assert (
+        report["datum"] is None and report["datum_source"] == "unknown_receiver_profile"
+    )
+    state.stopped()
+    state.listening(4001)
+    state.ingest(frame(bytes.fromhex("650002")), source)
+    assert not state.snapshot()["connected"]
+    assert state.snapshot()["receivers"][0]["device_profile_valid"] is False
+
+
+def test_changed_receiver_serial_does_not_inherit_another_devices_gps_validity_or_tracks():
+    state = receiver()
+    state.listening(4000)
+    source = ("127.0.0.1", 1000)
+    state.ingest(DEVICE_ID + HEARTBEAT + OWNSHIP + frame(TRAFFIC), source)
+    payload = bytearray.fromhex(
+        next(
+            row
+            for row in VECTORS["reports"]
+            if row["id"] == "extension-id-msl-serial64"
+        )["payload_hex"]
+    )
+    payload[3:11] = bytes.fromhex("1234567890ABCDEF")
+    state.ingest(frame(payload), source)
+    snapshot = state.snapshot()
+    assert not snapshot["connected"] and not snapshot["traffic"]
+    assert snapshot["receivers"][0]["ownship"] is None
+    state.ingest(OWNSHIP, source)
+    assert state.snapshot()["receivers"][0]["ownship"]["gps_fix_valid"] is None

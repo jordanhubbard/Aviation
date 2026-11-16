@@ -10,7 +10,7 @@ import ipaddress
 import threading
 import time
 
-from aviation_avionics.gdl90 import Gdl90Decoder
+from aviation_avionics.gdl90 import Gdl90Decoder, resolve_geometric_altitude
 
 
 @dataclass(frozen=True)
@@ -28,13 +28,17 @@ class ReceiverSettings:
         ):
             raise ValueError("UDP port must be between 0 and 65535")
         if not self.allowed_sources:
-            raise ValueError("Configure at least one receiver source address or network")
+            raise ValueError(
+                "Configure at least one receiver source address or network"
+            )
         for source in self.allowed_sources:
             ipaddress.ip_network(source, strict=False)
 
 
 class ReceiverState:
-    def __init__(self, settings: ReceiverSettings, *, clock=time.monotonic, wall_clock=time.time):
+    def __init__(
+        self, settings: ReceiverSettings, *, clock=time.monotonic, wall_clock=time.time
+    ):
         self.settings, self.clock, self.wall_clock = settings, clock, wall_clock
         self.networks = tuple(
             ipaddress.ip_network(n, strict=False) for n in settings.allowed_sources
@@ -64,14 +68,20 @@ class ReceiverState:
             self.tokens, self.token_time = 100.0, self.clock()
             self.byte_tokens = 256 * 1024.0
             self.elapsed_time = 0.0
-            self.observed_monotonic, self.observed_wall = self.token_time, self.wall_clock()
+            self.observed_monotonic, self.observed_wall = (
+                self.token_time,
+                self.wall_clock(),
+            )
 
     def stopped(self):
         with self.lock:
             self.running, self.bound_port = False, None
 
     def _observe_time(self, at, wall):
-        monotonic_delta, wall_delta = at - self.observed_monotonic, wall - self.observed_wall
+        monotonic_delta, wall_delta = (
+            at - self.observed_monotonic,
+            wall - self.observed_wall,
+        )
         if abs(monotonic_delta - wall_delta) > 1:
             self.counters["clock_discontinuities"] += 1
         self.elapsed_time += max(0, monotonic_delta, wall_delta)
@@ -83,7 +93,17 @@ class ReceiverState:
         row["age_floor"] = max(row["age_floor"], elapsed_time - row["elapsed_at"], 0)
         return row["age_floor"]
 
+    def _expire_profiles(self, elapsed_time):
+        for sender in self.senders.values():
+            if (
+                sender.get("profile_active")
+                and elapsed_time - sender["profile_activity_at"] > 5
+            ):
+                sender["profile_active"] = False
+                sender["profile_unknown"] = True
+
     def _expire(self, elapsed_time):
+        self._expire_profiles(elapsed_time)
         for key, envelope in list(self.tracks.items()):
             if self._age(envelope, elapsed_time) > 60:
                 del self.tracks[key]
@@ -107,7 +127,9 @@ class ReceiverState:
             elapsed_time = self._observe_time(at, wall)
             elapsed = max(0, at - self.token_time)
             self.tokens = min(100.0, self.tokens + elapsed * 200)
-            self.byte_tokens = min(256 * 1024.0, self.byte_tokens + elapsed * 1024 * 1024)
+            self.byte_tokens = min(
+                256 * 1024.0, self.byte_tokens + elapsed * 1024 * 1024
+            )
             self.token_time = at
             if self.tokens < 1:
                 self.counters["rate_limited_datagrams"] += 1
@@ -121,7 +143,9 @@ class ReceiverState:
                 return
             self.byte_tokens -= len(data)
             sender_id = (
-                f"[{source}]:{address[1]}" if source.version == 6 else f"{source}:{address[1]}"
+                f"[{source}]:{address[1]}"
+                if source.version == 6
+                else f"{source}:{address[1]}"
             )
             self._expire(elapsed_time)
             if sender_id not in self.senders and len(self.senders) >= 8:
@@ -145,9 +169,53 @@ class ReceiverState:
                 self.recent.append(envelope)
                 kind = report["kind"]
                 if kind == "unsupported":
+                    if report["message_id"] == 0x65 and report[
+                        "payload_hex"
+                    ].startswith("6500"):
+                        sender = self.senders.setdefault(
+                            sender_id, {"last_known": None}
+                        )
+                        sender["profile_active"] = False
+                        sender["profile_unknown"] = True
                     self.counters["unsupported_reports"] += 1
                     continue
                 sender = self.senders.setdefault(sender_id, {"last_known": None})
+                if kind == "device_id":
+                    previous = sender.get("device_id")
+                    previous_serial = (
+                        previous["report"]["serial_number_hex"] if previous else None
+                    )
+                    if (
+                        previous_serial is not None
+                        and report["serial_number_hex"] is not None
+                        and previous_serial != report["serial_number_hex"]
+                    ):
+                        for field in ("heartbeat", "ownship", "geometric_altitude"):
+                            sender.pop(field, None)
+                        sender["last_known"] = None
+                        for key in list(self.tracks):
+                            if key[0] == sender_id:
+                                del self.tracks[key]
+                    sender.update(
+                        device_id=envelope,
+                        profile_active=True,
+                        profile_unknown=False,
+                        profile_activity_at=elapsed_time,
+                    )
+                    continue
+                if kind == "geometric_altitude":
+                    active_id = (
+                        sender.get("device_id")
+                        if sender.get("profile_active")
+                        else None
+                    )
+                    envelope["report"] = resolve_geometric_altitude(
+                        report,
+                        active_id["report"] if active_id else None,
+                        profile_unknown=sender.get("profile_unknown", False),
+                    )
+                if sender.get("profile_active"):
+                    sender["profile_activity_at"] = elapsed_time
                 sender["last_known"] = envelope
                 if kind in {"heartbeat", "ownship", "geometric_altitude"}:
                     sender[kind] = envelope
@@ -202,9 +270,17 @@ class ReceiverState:
                         "connected": self.running
                         and last is not None
                         and self._age(last, elapsed_time) <= 5,
+                        "device_id": envelope(sender.get("device_id")),
+                        "device_profile_valid": (
+                            (not sender.get("profile_unknown", False))
+                            if sender.get("device_id") or sender.get("profile_unknown")
+                            else None
+                        ),
                         "heartbeat": heartbeat,
                         "ownship": ownship,
-                        "geometric_altitude": envelope(sender.get("geometric_altitude")),
+                        "geometric_altitude": envelope(
+                            sender.get("geometric_altitude")
+                        ),
                     }
                 )
             result = {
@@ -221,6 +297,7 @@ class ReceiverState:
                     "ownship": True,
                     "traffic": True,
                     "geometric_altitude": True,
+                    "device_id": True,
                     "weather_decoding": False,
                 },
                 "limitations": [
@@ -232,7 +309,9 @@ class ReceiverState:
             if include_reports:
                 result.update(
                     receivers=receivers,
-                    traffic=[envelope(row, stale_after=15) for row in self.tracks.values()],
+                    traffic=[
+                        envelope(row, stale_after=15) for row in self.tracks.values()
+                    ],
                     recent_reports=[envelope(row) for row in self.recent],
                 )
             return result

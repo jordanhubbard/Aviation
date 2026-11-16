@@ -203,6 +203,90 @@
         "vertical_speed_fpm": 64,
         "angle_reference": "true_track"
       }
+    },
+    {
+      "id": "extension-id-msl-serial64",
+      "payload_hex": "650001fedcba987654321052580000000000005265636569766572000000000000000000000001",
+      "frame_hex": "7e650001fedcba98765432105258000000000000526563656976657200000000000000000000000133b47e",
+      "expected": {
+        "kind": "device_id",
+        "message_id": 101,
+        "version": 1,
+        "serial_number_hex": "FEDCBA9876543210",
+        "device_name": "RX",
+        "device_long_name": "Receiver",
+        "capabilities_mask": 1,
+        "reserved_capabilities_mask": 0,
+        "geometric_altitude_datum": "MSL",
+        "internet_policy": "unrestricted"
+      }
+    },
+    {
+      "id": "extension-id-ellipsoid-utf8",
+      "payload_hex": "650001ffffffffffffffff2052c3a90000000052c3a96365707465757200000000000000000002",
+      "frame_hex": "7e650001ffffffffffffffff2052c3a90000000052c3a963657074657572000000000000000000028eda7e",
+      "expected": {
+        "kind": "device_id",
+        "message_id": 101,
+        "version": 1,
+        "serial_number_hex": null,
+        "device_name": " Ré",
+        "device_long_name": "Récepteur",
+        "geometric_altitude_datum": "WGS84_ellipsoid",
+        "internet_policy": "expensive",
+        "capabilities_mask": 2,
+        "reserved_capabilities_mask": 0
+      }
+    },
+    {
+      "id": "extension-id-reserved-policy",
+      "payload_hex": "6500010000000000000000ff00200000000000efbbbf424f4d0000000000000000000080000007",
+      "frame_hex": "7e6500010000000000000000ff00200000000000efbbbf424f4d0000000000000000000080000007bf507e",
+      "expected": {
+        "kind": "device_id",
+        "message_id": 101,
+        "version": 1,
+        "serial_number_hex": "0000000000000000",
+        "device_name": "�",
+        "device_long_name": "﻿BOM",
+        "geometric_altitude_datum": "MSL",
+        "internet_policy": null,
+        "capabilities_mask": 2147483655,
+        "reserved_capabilities_mask": 2147483648
+      }
+    },
+    {
+      "id": "extension-id-disallowed",
+      "payload_hex": "65000100000000000000004e657400000000004e6574776f726b00000000000000000000000004",
+      "frame_hex": "7e65000100000000000000004e657400000000004e6574776f726b0000000000000000000000000480127e",
+      "expected": {
+        "kind": "device_id",
+        "message_id": 101,
+        "version": 1,
+        "serial_number_hex": "0000000000000000",
+        "internet_policy": "disallowed",
+        "geometric_altitude_datum": "WGS84_ellipsoid"
+      }
+    },
+    {
+      "id": "extension-id-unknown-version",
+      "payload_hex": "650002",
+      "frame_hex": "7e650002013c7e",
+      "expected": {
+        "kind": "unsupported",
+        "supported": false,
+        "message_id": 101
+      }
+    },
+    {
+      "id": "extension-unknown-subtype",
+      "payload_hex": "657f01",
+      "frame_hex": "7e657f0102437e",
+      "expected": {
+        "kind": "unsupported",
+        "supported": false,
+        "message_id": 101
+      }
     }
   ],
   "invalid_frames": [
@@ -225,6 +309,31 @@
       "id": "empty-payload",
       "frame_hex": "7e00007e",
       "error": "short-frame"
+    },
+    {
+      "id": "extension-missing-subtype",
+      "frame_hex": "7e6565007e",
+      "error": "invalid-message-length"
+    },
+    {
+      "id": "extension-id-missing-version",
+      "frame_hex": "7e650000657e",
+      "error": "invalid-message-length"
+    },
+    {
+      "id": "extension-id-truncated",
+      "frame_hex": "7e650001fedcba98765432105258000000000000526563656976657200000000000000000000009a757e",
+      "error": "invalid-message-length"
+    },
+    {
+      "id": "extension-id-extra-byte",
+      "frame_hex": "7e650001fedcba987654321052580000000000005265636569766572000000000000000000000001005fd47e",
+      "error": "invalid-message-length"
     }
-  ]
+  ],
+  "extension_source": {
+    "url": "https://foreflight.com/connect/spec/",
+    "section": "ID Message; 39-byte version-1 layout",
+    "fixture_provenance": "Synthetic boundary inputs using published field layout; independent bit-serial FCS checked against published standard heartbeat"
+  }
 }

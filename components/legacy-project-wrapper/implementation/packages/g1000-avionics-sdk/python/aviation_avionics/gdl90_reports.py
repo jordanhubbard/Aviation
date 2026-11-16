@@ -52,10 +52,26 @@ class TrafficReport(ReportHeader):
 class GeometricAltitudeReport(ReportHeader):
     kind: Literal["geometric_altitude"]
     geometric_altitude_ft: int
-    datum: Literal["WGS84_ellipsoid"]
+    datum: Literal["WGS84_ellipsoid", "MSL"] | None
+    datum_source: Literal[
+        "gdl90_standard", "foreflight_device_id", "unknown_receiver_profile"
+    ]
     vertical_warning: bool
     vertical_figure_of_merit_m: int | None
     vertical_figure_of_merit_lower_bound: bool
+
+
+@dataclass(frozen=True)
+class DeviceIdReport(ReportHeader):
+    kind: Literal["device_id"]
+    version: Literal[1]
+    serial_number_hex: str | None
+    device_name: str
+    device_long_name: str
+    capabilities_mask: int
+    geometric_altitude_datum: Literal["WGS84_ellipsoid", "MSL"]
+    internet_policy: Literal["unrestricted", "expensive", "disallowed"] | None
+    reserved_capabilities_mask: int
 
 
 @dataclass(frozen=True)
@@ -65,5 +81,9 @@ class UnsupportedReport(ReportHeader):
 
 
 Gdl90Report = (
-    HeartbeatReport | TrafficReport | GeometricAltitudeReport | UnsupportedReport
+    HeartbeatReport
+    | TrafficReport
+    | GeometricAltitudeReport
+    | DeviceIdReport
+    | UnsupportedReport
 )

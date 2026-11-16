@@ -39,10 +39,25 @@ export type Gdl90Message = Base &
     | {
         kind: 'geometric_altitude';
         geometric_altitude_ft: number;
-        datum: 'WGS84_ellipsoid';
+        datum: 'WGS84_ellipsoid' | 'MSL' | null;
+        datum_source:
+          | 'gdl90_standard'
+          | 'foreflight_device_id'
+          | 'unknown_receiver_profile';
         vertical_warning: boolean;
         vertical_figure_of_merit_m: number | null;
         vertical_figure_of_merit_lower_bound: boolean;
+      }
+    | {
+        kind: 'device_id';
+        version: 1;
+        serial_number_hex: string | null;
+        device_name: string;
+        device_long_name: string;
+        capabilities_mask: number;
+        geometric_altitude_datum: 'WGS84_ellipsoid' | 'MSL';
+        internet_policy: 'unrestricted' | 'expensive' | 'disallowed' | null;
+        reserved_capabilities_mask: number;
       }
     | { kind: 'unsupported'; supported: false }
   );
@@ -146,12 +161,66 @@ function report(data: Uint8Array): Gdl90Message {
       kind: 'geometric_altitude',
       geometric_altitude_ft: signed(data, 1, 2) * 5,
       datum: 'WGS84_ellipsoid',
+      datum_source: 'gdl90_standard',
       vertical_warning: Boolean(quality & 0x8000),
       vertical_figure_of_merit_m: vfom === 0x7fff ? null : vfom,
       vertical_figure_of_merit_lower_bound: vfom === 0x7ffe,
     };
   }
+  if (identifier === 0x65) {
+    if (
+      data.length < 2 ||
+      (data[1] === 0 &&
+        (data.length < 3 || (data[2] === 1 && data.length !== 39)))
+    )
+      throw new Error('invalid-message-length');
+    if (data[1] === 0 && data[2] === 1) {
+      const mask =
+        (data[35] * 2 ** 24 + (data[36] << 16) + (data[37] << 8) + data[38]) >>> 0;
+      const serial = data.slice(3, 11);
+      const name = (start: number, end: number) =>
+        new TextDecoder('utf-8', { ignoreBOM: true })
+          .decode(data.slice(start, end))
+          .replace(/[\0 ]+$/g, '');
+      return {
+        ...base,
+        kind: 'device_id',
+        version: 1,
+        serial_number_hex: serial.every((b) => b === 255)
+          ? null
+          : hex(serial).toUpperCase(),
+        device_name: name(11, 19),
+        device_long_name: name(19, 35),
+        capabilities_mask: mask,
+        geometric_altitude_datum: mask & 1 ? 'MSL' : 'WGS84_ellipsoid',
+        internet_policy: (['unrestricted', 'expensive', 'disallowed', null] as const)[
+          (mask >>> 1) & 3
+        ],
+        reserved_capabilities_mask: (mask & 0xfffffff8) >>> 0,
+      };
+    }
+  }
   return { ...base, kind: 'unsupported', supported: false };
+}
+
+export function resolveGeometricAltitude(
+  report: Gdl90Message,
+  deviceId?: Gdl90Message | null,
+  profileUnknown = false,
+): Extract<Gdl90Message, { kind: 'geometric_altitude' }> {
+  if (report.kind !== 'geometric_altitude')
+    throw new Error('Expected a geometric-altitude report');
+  if (deviceId != null && (deviceId.kind !== 'device_id' || deviceId.version !== 1))
+    throw new Error('Expected a supported device-ID report');
+  if (profileUnknown)
+    return { ...report, datum: null, datum_source: 'unknown_receiver_profile' };
+  if (deviceId?.kind === 'device_id')
+    return {
+      ...report,
+      datum: deviceId.geometric_altitude_datum,
+      datum_source: 'foreflight_device_id',
+    };
+  return { ...report, datum: 'WGS84_ellipsoid', datum_source: 'gdl90_standard' };
 }
 
 export class Gdl90Decoder {

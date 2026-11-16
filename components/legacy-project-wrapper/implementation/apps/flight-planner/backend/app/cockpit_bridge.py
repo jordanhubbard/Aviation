@@ -33,6 +33,8 @@ class ReportEnvelope(BaseModel):
 class SenderState(BaseModel):
     source_id: str
     connected: bool
+    device_id: ReportEnvelope | None
+    device_profile_valid: bool | None
     heartbeat: ReportEnvelope | None
     ownship: ReportEnvelope | None
     geometric_altitude: ReportEnvelope | None
@@ -43,6 +45,7 @@ class Capabilities(BaseModel):
     ownship: bool
     traffic: bool
     geometric_altitude: bool
+    device_id: bool
     weather_decoding: bool
 
 

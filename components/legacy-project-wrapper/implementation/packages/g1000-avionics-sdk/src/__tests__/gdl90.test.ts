@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
-import { Gdl90Decoder } from '../gdl90';
+import { Gdl90Decoder, resolveGeometricAltitude } from '../gdl90';
 
 const vectors = JSON.parse(
   readFileSync(
@@ -89,4 +89,19 @@ describe('GDL90 independent conformance', () => {
     expect(() => decoder.push(new Uint8Array(65536))).toThrow('65535');
     expect(decoder.push(heartbeat).messages).toHaveLength(1);
   });
+});
+
+
+it('resolves geometry with explicit profile provenance without converting or mutating values', () => {
+  const decode = (id: string) => new Gdl90Decoder().push(Uint8Array.from(Buffer.from(vectors.reports.find((row: {id: string}) => row.id === id).frame_hex, 'hex'))).messages[0];
+  const vector = vectors.reports.find((row: {expected: {kind: string}}) => row.expected.kind === 'geometric_altitude');
+  const report = new Gdl90Decoder().push(Uint8Array.from(Buffer.from(vector.frame_hex, 'hex'))).messages[0];
+  const original = {...report};
+  expect(resolveGeometricAltitude(report, decode('extension-id-msl-serial64'))).toEqual({...original, datum: 'MSL', datum_source: 'foreflight_device_id'});
+  expect(resolveGeometricAltitude(report, decode('extension-id-ellipsoid-utf8'))).toEqual({...original, datum_source: 'foreflight_device_id'});
+  expect(resolveGeometricAltitude(report)).toEqual(original);
+  expect(resolveGeometricAltitude(report, null, true)).toEqual({...original, datum: null, datum_source: 'unknown_receiver_profile'});
+  expect(report).toEqual(original);
+  expect(() => resolveGeometricAltitude(decode('published-traffic-section-3.5.2'))).toThrow('geometric-altitude');
+  expect(() => resolveGeometricAltitude(report, decode('extension-id-unknown-version'))).toThrow('supported device-ID');
 });

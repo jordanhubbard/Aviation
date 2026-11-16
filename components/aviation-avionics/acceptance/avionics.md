@@ -119,3 +119,18 @@ avionics device.
 - **WHEN** this Component, vectors, protocol/rendering package, simulator adapter, or
   SDK workflow changes
 - **THEN** avionics conformance runs independently of application tests
+
+## Requirement: Receiver extensions preserve altitude meaning
+
+### Scenario: Device metadata and unknown versions are received
+
+- **WHEN** both bindings decode the declared extension vectors at every split
+- **THEN** full-width serials, UTF-8 names, datum/policy/reserved bits and unknown
+  version/subtype behavior agree with the published layout
+- **AND** malformed known lengths fail without a usable report
+
+### Scenario: A host resolves geometry with a receiver profile
+
+- **WHEN** either binding uses an MSL, ellipsoid, absent or uncertain profile
+- **THEN** resolved values and provenance agree, the input remains unchanged and
+  pressure-altitude reports cannot be passed as geometry
