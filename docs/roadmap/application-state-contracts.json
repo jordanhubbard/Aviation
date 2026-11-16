@@ -10,8 +10,22 @@
     "python": "packages/keystore/python/keystore.py",
     "contract": "Service-scoped encrypted store lookup, then optional environment fallback; required lookup fails when both are absent.",
     "evidence": [
-      {"path": "packages/keystore/src/loader.ts", "contains": ["class SecretLoader", "fallbackToEnv", "getRequired"]},
-      {"path": "packages/keystore/python/keystore.py", "contains": ["class SecretLoader", "fallback_to_env", "get_required"]}
+      {
+        "path": "packages/keystore/src/loader.ts",
+        "contains": [
+          "class SecretLoader",
+          "fallbackToEnv",
+          "getRequired"
+        ]
+      },
+      {
+        "path": "packages/keystore/python/keystore.py",
+        "contains": [
+          "class SecretLoader",
+          "fallback_to_env",
+          "get_required"
+        ]
+      }
     ]
   },
   "applications": [
@@ -29,8 +43,20 @@
           "classification": "application-private-runtime-state",
           "testOracle": "backend/tests/fuzzy-matching.test.ts, backend/tests/integration/ingestion.test.ts and backend/tests/media-persistence.test.ts",
           "evidence": [
-            {"path": "apps/aviation-accident-tracker/backend/src/config.ts", "contains": ["DATABASE_PATH", "data/events.db"]},
-            {"path": "apps/aviation-accident-tracker/backend/src/db/repository.ts", "contains": ["class EventRepository", "schema.sql"]}
+            {
+              "path": "apps/aviation-accident-tracker/backend/src/config.ts",
+              "contains": [
+                "DATABASE_PATH",
+                "data/events.db"
+              ]
+            },
+            {
+              "path": "apps/aviation-accident-tracker/backend/src/db/repository.ts",
+              "contains": [
+                "class EventRepository",
+                "schema.sql"
+              ]
+            }
           ]
         },
         {
@@ -43,7 +69,15 @@
           "rollback": "discard cache",
           "classification": "application-private-ephemeral-state",
           "testOracle": "backend cache tests",
-          "evidence": [{"path": "apps/aviation-accident-tracker/backend/src/cache.ts", "contains": ["REDIS_URL", "Map"]}]
+          "evidence": [
+            {
+              "path": "apps/aviation-accident-tracker/backend/src/cache.ts",
+              "contains": [
+                "REDIS_URL",
+                "Map"
+              ]
+            }
+          ]
         }
       ],
       "credentials": [
@@ -51,14 +85,27 @@
           "id": "admin-api",
           "provider": "environment",
           "namespace": "aviation-accident-tracker",
-          "keys": ["ADMIN_TOKEN"],
+          "keys": [
+            "ADMIN_TOKEN"
+          ],
           "precedence": "environment, then hard-coded development default",
           "missingBehavior": "accepts the known default admin-secret-token",
           "classification": "application-private-credential-adapter",
-          "evidence": [{"path": "apps/aviation-accident-tracker/backend/src/middleware/auth.ts", "contains": ["ADMIN_TOKEN", "admin-secret-token"]}]
+          "evidence": [
+            {
+              "path": "apps/aviation-accident-tracker/backend/src/middleware/auth.ts",
+              "contains": [
+                "ADMIN_TOKEN",
+                "admin-secret-token"
+              ]
+            }
+          ]
         }
       ],
-      "gaps": ["ADMIN_TOKEN fails open to a known value", "No versioned database migration, backup, or tested restore contract"]
+      "gaps": [
+        "ADMIN_TOKEN fails open to a known value",
+        "No versioned database migration, backup, or tested restore contract"
+      ]
     },
     {
       "id": "aviation-chat",
@@ -73,7 +120,15 @@
           "rollback": "restart clears state",
           "classification": "application-private-ephemeral-state",
           "testOracle": "application tests",
-          "evidence": [{"path": "apps/aviation-chat/README.md", "contains": ["Conversation history is kept in memory", "No persistence across restarts"]}]
+          "evidence": [
+            {
+              "path": "apps/aviation-chat/README.md",
+              "contains": [
+                "Conversation history is kept in memory",
+                "No persistence across restarts"
+              ]
+            }
+          ]
         }
       ],
       "credentials": [
@@ -81,11 +136,24 @@
           "id": "openclaw",
           "provider": "environment-and-keystore",
           "namespace": "aviation-chat",
-          "keys": ["OPENCLAW_API_KEY", "OPENCLAW_GATEWAY_TOKEN", "OPENCLAW_GATEWAY_PASSWORD"],
+          "keys": [
+            "OPENCLAW_API_KEY",
+            "OPENCLAW_GATEWAY_TOKEN",
+            "OPENCLAW_GATEWAY_PASSWORD"
+          ],
           "precedence": "environment aliases, then aviation-chat keystore aliases",
           "missingBehavior": "chat endpoint returns 503",
           "classification": "application-private-credential-adapter",
-          "evidence": [{"path": "apps/aviation-chat/src/index.ts", "contains": ["createSecretLoader('aviation-chat')", "function resolveApiKey", "return 503"]}]
+          "evidence": [
+            {
+              "path": "apps/aviation-chat/src/index.ts",
+              "contains": [
+                "createSecretLoader('aviation-chat')",
+                "function resolveApiKey",
+                "return 503"
+              ]
+            }
+          ]
         }
       ],
       "gaps": []
@@ -104,8 +172,21 @@
           "classification": "application-private-runtime-state",
           "testOracle": "backend Clojure tests",
           "evidence": [
-            {"path": "apps/aviation-missions-app/backend/src/aviation_missions/db.clj", "contains": ["get-database-url", "DATABASE_URL", "CREATE TABLE IF NOT EXISTS missions"]},
-            {"path": "apps/aviation-missions-app/scripts/backup-database.sh", "contains": ["aviation-missions.mv.db", "To restore this backup"]}
+            {
+              "path": "apps/aviation-missions-app/backend/src/aviation_missions/db.clj",
+              "contains": [
+                "get-database-url",
+                "DATABASE_URL",
+                "CREATE TABLE IF NOT EXISTS missions"
+              ]
+            },
+            {
+              "path": "apps/aviation-missions-app/scripts/backup-database.sh",
+              "contains": [
+                "aviation-missions.mv.db",
+                "To restore this backup"
+              ]
+            }
           ]
         },
         {
@@ -118,7 +199,16 @@
           "rollback": "restore JSON and reseed only under operator control",
           "classification": "application-private-runtime-state",
           "testOracle": "backend missions storage tests",
-          "evidence": [{"path": "apps/aviation-missions-app/backend/src/aviation_missions/missions_storage.clj", "contains": ["MISSIONS_JSON_PATH", ":version \"1.0\"", "persist-missions-json!"]}]
+          "evidence": [
+            {
+              "path": "apps/aviation-missions-app/backend/src/aviation_missions/missions_storage.clj",
+              "contains": [
+                "MISSIONS_JSON_PATH",
+                ":version \"1.0\"",
+                "persist-missions-json!"
+              ]
+            }
+          ]
         }
       ],
       "credentials": [
@@ -126,14 +216,27 @@
           "id": "admin-login",
           "provider": "environment",
           "namespace": "aviation-missions",
-          "keys": ["ADMIN_PASSWORD"],
+          "keys": [
+            "ADMIN_PASSWORD"
+          ],
           "precedence": "environment, then hard-coded development default",
           "missingBehavior": "accepts aviation123",
           "classification": "application-private-credential-adapter",
-          "evidence": [{"path": "apps/aviation-missions-app/backend/src/aviation_missions/handlers.clj", "contains": ["ADMIN_PASSWORD", "aviation123"]}]
+          "evidence": [
+            {
+              "path": "apps/aviation-missions-app/backend/src/aviation_missions/handlers.clj",
+              "contains": [
+                "ADMIN_PASSWORD",
+                "aviation123"
+              ]
+            }
+          ]
         }
       ],
-      "gaps": ["ADMIN_PASSWORD fails open to a known value", "H2 and missions.json are dual authorities without an atomic snapshot contract"]
+      "gaps": [
+        "ADMIN_PASSWORD fails open to a known value",
+        "H2 and missions.json are dual authorities without an atomic snapshot contract"
+      ]
     },
     {
       "id": "flight-planner",
@@ -182,6 +285,33 @@
               "contains": [
                 "vfr_search_history",
                 "vfr_favorites"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "route-assessment-snapshots",
+          "medium": "bounded-process-memory",
+          "location": "ga_data shared cache, route-assessment key namespace",
+          "schema": "typed assessment response with original UTC source times and content-identified source geometry",
+          "migration": "ephemeral state is discarded on restart",
+          "backup": "not backed up; source snapshots reacquired on demand",
+          "rollback": "restart compatible code; cached snapshots are not persisted",
+          "classification": "application-private-ephemeral-state",
+          "testOracle": "tests/test_route_assessment.py timed applicability and partial-source coverage",
+          "evidence": [
+            {
+              "path": "apps/flight-planner/backend/app/routers/route_assessment.py",
+              "contains": [
+                "\"route-assessment\"",
+                "return cached("
+              ]
+            },
+            {
+              "path": "apps/flight-planner/backend/app/services/ga_data.py",
+              "contains": [
+                "_MAX_CACHE_WEIGHT",
+                "_CACHE"
               ]
             }
           ]
@@ -308,7 +438,16 @@
           "rollback": "restore SQLite, WAL files, and raw KML as one set",
           "classification": "application-private-runtime-state",
           "testOracle": "app/tests/test_store.py and app/tests/test_e2e.py",
-          "evidence": [{"path": "apps/flight-track-analyzer/app/flightlab/store.py", "contains": ["kmlab.sqlite3", "schema_version", "journal_mode=WAL"]}]
+          "evidence": [
+            {
+              "path": "apps/flight-track-analyzer/app/flightlab/store.py",
+              "contains": [
+                "kmlab.sqlite3",
+                "schema_version",
+                "journal_mode=WAL"
+              ]
+            }
+          ]
         },
         {
           "id": "last-tail",
@@ -320,7 +459,15 @@
           "rollback": "clear the key",
           "classification": "application-private-runtime-state",
           "testOracle": "browser E2E coverage",
-          "evidence": [{"path": "apps/flight-track-analyzer/app/static/app.js", "contains": ["kmlab.tail", "localStorage.setItem"]}]
+          "evidence": [
+            {
+              "path": "apps/flight-track-analyzer/app/static/app.js",
+              "contains": [
+                "kmlab.tail",
+                "localStorage.setItem"
+              ]
+            }
+          ]
         }
       ],
       "credentials": [
@@ -328,14 +475,27 @@
           "id": "optional-llm",
           "provider": "environment",
           "namespace": "flight-track-analyzer",
-          "keys": ["ANTHROPIC_API_KEY", "KMLAB_LLM_API_KEY"],
+          "keys": [
+            "ANTHROPIC_API_KEY",
+            "KMLAB_LLM_API_KEY"
+          ],
           "precedence": "KMLAB_LLM_BASE_URL mode, otherwise Anthropic environment key",
           "missingBehavior": "LLM capability is disabled",
           "classification": "application-private-credential-adapter",
-          "evidence": [{"path": "apps/flight-track-analyzer/app/flightlab/llm.py", "contains": ["KMLAB_LLM_API_KEY", "ANTHROPIC_API_KEY"]}]
+          "evidence": [
+            {
+              "path": "apps/flight-track-analyzer/app/flightlab/llm.py",
+              "contains": [
+                "KMLAB_LLM_API_KEY",
+                "ANTHROPIC_API_KEY"
+              ]
+            }
+          ]
         }
       ],
-      "gaps": ["No automated backup/restore oracle for the SQLite plus raw-file consistency boundary"]
+      "gaps": [
+        "No automated backup/restore oracle for the SQLite plus raw-file consistency boundary"
+      ]
     },
     {
       "id": "flight-tracker",
@@ -350,7 +510,16 @@
           "rollback": "restart clears state",
           "classification": "application-private-ephemeral-state",
           "testOracle": "tests/service.test.ts",
-          "evidence": [{"path": "apps/flight-tracker/src/service.ts", "contains": ["trackedFlights: Map", "liveFlights: Map", "trackedAircraft: Map"]}]
+          "evidence": [
+            {
+              "path": "apps/flight-tracker/src/service.ts",
+              "contains": [
+                "trackedFlights: Map",
+                "liveFlights: Map",
+                "trackedAircraft: Map"
+              ]
+            }
+          ]
         }
       ],
       "credentials": [
@@ -358,11 +527,26 @@
           "id": "flight-providers",
           "provider": "keystore-and-environment",
           "namespace": "flight-tracker",
-          "keys": ["FLIGHT_API_KEY", "FLIGHTAWARE_API_KEY", "AVIATIONSTACK_API_KEY", "OPENSKY_USERNAME", "OPENSKY_PASSWORD"],
+          "keys": [
+            "FLIGHT_API_KEY",
+            "FLIGHTAWARE_API_KEY",
+            "AVIATIONSTACK_API_KEY",
+            "OPENSKY_USERNAME",
+            "OPENSKY_PASSWORD"
+          ],
           "precedence": "flight-tracker keystore, then environment for OpenSky",
           "missingBehavior": "demo or anonymous-provider mode",
           "classification": "application-private-credential-adapter",
-          "evidence": [{"path": "apps/flight-tracker/src/service.ts", "contains": ["createSecretLoader('flight-tracker')", "OPENSKY_USERNAME", "OPENSKY_PASSWORD"]}]
+          "evidence": [
+            {
+              "path": "apps/flight-tracker/src/service.ts",
+              "contains": [
+                "createSecretLoader('flight-tracker')",
+                "OPENSKY_USERNAME",
+                "OPENSKY_PASSWORD"
+              ]
+            }
+          ]
         }
       ],
       "gaps": []
@@ -381,8 +565,20 @@
           "classification": "application-private-runtime-state",
           "testOracle": "tests with in-memory SQLite and scripts/check_db_schema.py",
           "evidence": [
-            {"path": "apps/flightschool/config.py", "contains": ["SQLALCHEMY_DATABASE_URI", "sqlite:///flightschool.db"]},
-            {"path": "apps/flightschool/app/__init__.py", "contains": ["Migrate", "migrate.init_app"]}
+            {
+              "path": "apps/flightschool/config.py",
+              "contains": [
+                "SQLALCHEMY_DATABASE_URI",
+                "sqlite:///flightschool.db"
+              ]
+            },
+            {
+              "path": "apps/flightschool/app/__init__.py",
+              "contains": [
+                "Migrate",
+                "migrate.init_app"
+              ]
+            }
           ]
         }
       ],
@@ -391,14 +587,30 @@
           "id": "application-and-integrations",
           "provider": "keystore-and-environment",
           "namespace": "flightschool",
-          "keys": ["SECRET_KEY", "WTF_CSRF_SECRET_KEY", "MAIL_PASSWORD", "GOOGLE_CLIENT_SECRET"],
+          "keys": [
+            "SECRET_KEY",
+            "WTF_CSRF_SECRET_KEY",
+            "MAIL_PASSWORD",
+            "GOOGLE_CLIENT_SECRET"
+          ],
           "precedence": "flightschool keystore, then environment fallback",
           "missingBehavior": "SECRET_KEY and CSRF key use known development defaults; integrations are disabled",
           "classification": "application-private-credential-adapter",
-          "evidence": [{"path": "apps/flightschool/app_secrets.py", "contains": ["create_secret_loader('flightschool')", "default='dev'", "default='csrf-key'"]}]
+          "evidence": [
+            {
+              "path": "apps/flightschool/app_secrets.py",
+              "contains": [
+                "create_secret_loader('flightschool')",
+                "default='dev'",
+                "default='csrf-key'"
+              ]
+            }
+          ]
         }
       ],
-      "gaps": ["Production configuration does not fail closed when SECRET_KEY or CSRF key is absent"]
+      "gaps": [
+        "Production configuration does not fail closed when SECRET_KEY or CSRF key is absent"
+      ]
     },
     {
       "id": "foreflight-dashboard",
@@ -413,7 +625,15 @@
           "rollback": "restart and discard temporary files",
           "classification": "application-private-ephemeral-state",
           "testOracle": "application pytest suite",
-          "evidence": [{"path": "apps/foreflight-dashboard/src/main.py", "contains": ["tempfile", "no persistence"]}]
+          "evidence": [
+            {
+              "path": "apps/foreflight-dashboard/src/main.py",
+              "contains": [
+                "tempfile",
+                "no persistence"
+              ]
+            }
+          ]
         },
         {
           "id": "dormant-account-models",
@@ -425,7 +645,15 @@
           "rollback": "not applicable until activated",
           "classification": "dormant-retained-source",
           "testOracle": "none for live routing",
-          "evidence": [{"path": "apps/foreflight-dashboard/src/core/database.py", "contains": ["sqlite:///./data/app.db", "class User"]}]
+          "evidence": [
+            {
+              "path": "apps/foreflight-dashboard/src/core/database.py",
+              "contains": [
+                "sqlite:///./data/app.db",
+                "class User"
+              ]
+            }
+          ]
         }
       ],
       "credentials": [
@@ -433,14 +661,31 @@
           "id": "optional-provider-config",
           "provider": "keystore-and-environment",
           "namespace": "foreflight-dashboard",
-          "keys": ["FOREFLIGHT_API_KEY", "FOREFLIGHT_API_SECRET", "SECRET_KEY", "REDIS_URL", "SENTRY_DSN"],
+          "keys": [
+            "FOREFLIGHT_API_KEY",
+            "FOREFLIGHT_API_SECRET",
+            "SECRET_KEY",
+            "REDIS_URL",
+            "SENTRY_DSN"
+          ],
           "precedence": "foreflight-dashboard keystore, then environment",
           "missingBehavior": "live stateless CSV flow remains available",
           "classification": "application-private-credential-adapter",
-          "evidence": [{"path": "apps/foreflight-dashboard/src/core/secrets.py", "contains": ["create_secret_loader('foreflight-dashboard')", "FOREFLIGHT_API_SECRET", "SENTRY_DSN"]}]
+          "evidence": [
+            {
+              "path": "apps/foreflight-dashboard/src/core/secrets.py",
+              "contains": [
+                "create_secret_loader('foreflight-dashboard')",
+                "FOREFLIGHT_API_SECRET",
+                "SENTRY_DSN"
+              ]
+            }
+          ]
         }
       ],
-      "gaps": ["Retained database/auth modules and API description contradict the live stateless application boundary"]
+      "gaps": [
+        "Retained database/auth modules and API description contradict the live stateless application boundary"
+      ]
     },
     {
       "id": "g1000-simulator",
@@ -456,9 +701,28 @@
           "classification": "application-private-runtime-state",
           "testOracle": "frontend store tests",
           "evidence": [
-            {"path": "apps/g1000-simulator/frontend/src/stores/uiStore.ts", "contains": ["g1000", "theme", "localStorage"]},
-            {"path": "apps/g1000-simulator/frontend/src/stores/keymapStore.ts", "contains": ["KEYMAP_STORAGE_ID", "localStorage"]},
-            {"path": "apps/g1000-simulator/frontend/src/stores/cursorStore.ts", "contains": ["CALIBRATION_STORAGE_ID", "localStorage"]}
+            {
+              "path": "apps/g1000-simulator/frontend/src/stores/uiStore.ts",
+              "contains": [
+                "g1000",
+                "theme",
+                "localStorage"
+              ]
+            },
+            {
+              "path": "apps/g1000-simulator/frontend/src/stores/keymapStore.ts",
+              "contains": [
+                "KEYMAP_STORAGE_ID",
+                "localStorage"
+              ]
+            },
+            {
+              "path": "apps/g1000-simulator/frontend/src/stores/cursorStore.ts",
+              "contains": [
+                "CALIBRATION_STORAGE_ID",
+                "localStorage"
+              ]
+            }
           ]
         }
       ],
@@ -467,14 +731,27 @@
           "id": "stream-api",
           "provider": "keystore-and-environment",
           "namespace": "g1000-simulator",
-          "keys": ["G1000_STREAM_API_KEY", "G1000_SIMULATOR_API_KEY"],
+          "keys": [
+            "G1000_STREAM_API_KEY",
+            "G1000_SIMULATOR_API_KEY"
+          ],
           "precedence": "g1000-simulator keystore, then environment",
           "missingBehavior": "stream authentication is optional",
           "classification": "application-private-credential-adapter",
-          "evidence": [{"path": "apps/g1000-simulator/backend/src/service.ts", "contains": ["createSecretLoader('g1000-simulator')", "G1000_STREAM_API_KEY"]}]
+          "evidence": [
+            {
+              "path": "apps/g1000-simulator/backend/src/service.ts",
+              "contains": [
+                "createSecretLoader('g1000-simulator')",
+                "G1000_STREAM_API_KEY"
+              ]
+            }
+          ]
         }
       ],
-      "gaps": ["RecentFlightPlans uses a separate legacy frontend path and unversioned key"]
+      "gaps": [
+        "RecentFlightPlans uses a separate legacy frontend path and unversioned key"
+      ]
     },
     {
       "id": "meta-app",
@@ -489,7 +766,15 @@
           "rollback": "restart clears limits",
           "classification": "application-private-ephemeral-state",
           "testOracle": "server.test.mjs",
-          "evidence": [{"path": "apps/meta-app/server.mjs", "contains": ["const requests = new Map", "recent.length >= 5"]}]
+          "evidence": [
+            {
+              "path": "apps/meta-app/server.mjs",
+              "contains": [
+                "const requests = new Map",
+                "recent.length >= 5"
+              ]
+            }
+          ]
         }
       ],
       "credentials": [
@@ -497,14 +782,26 @@
           "id": "github-feedback",
           "provider": "environment",
           "namespace": "meta-app",
-          "keys": ["GITHUB_ISSUES_TOKEN"],
+          "keys": [
+            "GITHUB_ISSUES_TOKEN"
+          ],
           "precedence": "environment only",
           "missingBehavior": "feedback submission reports not configured",
           "classification": "application-private-credential-adapter",
-          "evidence": [{"path": "apps/meta-app/server.mjs", "contains": ["GITHUB_ISSUES_TOKEN", "not configured"]}]
+          "evidence": [
+            {
+              "path": "apps/meta-app/server.mjs",
+              "contains": [
+                "GITHUB_ISSUES_TOKEN",
+                "not configured"
+              ]
+            }
+          ]
         }
       ],
-      "gaps": ["Rate limits are per-process and reset on restart or horizontal scaling"]
+      "gaps": [
+        "Rate limits are per-process and reset on restart or horizontal scaling"
+      ]
     },
     {
       "id": "preflight-check",
@@ -519,7 +816,16 @@
           "rollback": "clear the affected keys",
           "classification": "application-private-runtime-state",
           "testOracle": "browser application tests",
-          "evidence": [{"path": "apps/preflight-check/public/app.js", "contains": ["aviation-preflight-profile-v1", "aviation-preflight-risk-v1", "localStorage"]}]
+          "evidence": [
+            {
+              "path": "apps/preflight-check/public/app.js",
+              "contains": [
+                "aviation-preflight-profile-v1",
+                "aviation-preflight-risk-v1",
+                "localStorage"
+              ]
+            }
+          ]
         }
       ],
       "credentials": [],
@@ -539,8 +845,20 @@
           "classification": "application-private-runtime-state",
           "testOracle": "application tests",
           "evidence": [
-            {"path": "apps/weather-briefing/src/index.ts", "contains": ["weather-briefing.customStations", "localStorage"]},
-            {"path": "apps/weather-briefing/src/service.ts", "contains": ["airportCache: Map", "airportCache.clear"]}
+            {
+              "path": "apps/weather-briefing/src/index.ts",
+              "contains": [
+                "weather-briefing.customStations",
+                "localStorage"
+              ]
+            },
+            {
+              "path": "apps/weather-briefing/src/service.ts",
+              "contains": [
+                "airportCache: Map",
+                "airportCache.clear"
+              ]
+            }
           ]
         }
       ],
@@ -549,13 +867,26 @@
           "id": "faa-notam",
           "provider": "environment-through-sdk-adapter",
           "namespace": "weather-briefing",
-          "keys": ["FAA_NOTAM_API_KEY"],
+          "keys": [
+            "FAA_NOTAM_API_KEY"
+          ],
           "precedence": "explicit NotamClient option, then environment",
           "missingBehavior": "NOTAM section reports unavailable while weather remains usable",
           "classification": "application-private-credential-adapter",
           "evidence": [
-            {"path": "packages/shared-sdk/src/aviation/notam.ts", "contains": ["opts.apiKey ?? process.env.FAA_NOTAM_API_KEY"]},
-            {"path": "apps/weather-briefing/src/service.ts", "contains": ["new NotamClient(config.notamClientOptions ?? {})", "briefing still usable without NOTAMs"]}
+            {
+              "path": "packages/shared-sdk/src/aviation/notam.ts",
+              "contains": [
+                "opts.apiKey ?? process.env.FAA_NOTAM_API_KEY"
+              ]
+            },
+            {
+              "path": "apps/weather-briefing/src/service.ts",
+              "contains": [
+                "new NotamClient(config.notamClientOptions ?? {})",
+                "briefing still usable without NOTAMs"
+              ]
+            }
           ]
         }
       ],

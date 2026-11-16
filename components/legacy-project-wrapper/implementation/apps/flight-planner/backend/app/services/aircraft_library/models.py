@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import hashlib
 import math
 import os
 from decimal import Decimal, InvalidOperation
@@ -42,6 +43,18 @@ class Models:
         self.model = env.get("AIRCRAFT_LIBRARY_LLM_MODEL", "")
         self.key = env.get("AIRCRAFT_LIBRARY_LLM_API_KEY", "")
         self.embedding_model = env.get("AIRCRAFT_LIBRARY_EMBEDDING_MODEL", "")
+        self.embedding_mode = env.get("AIRCRAFT_LIBRARY_EMBEDDING_MODE", "symmetric")
+        if self.embedding_mode not in {"symmetric", "query_passage"}:
+            raise ValueError("Embedding mode must be symmetric or query_passage")
+        try:
+            self.embedding_batch_size = int(env.get("AIRCRAFT_LIBRARY_EMBEDDING_BATCH_SIZE", "32"))
+        except (ValueError, TypeError) as error:
+            raise ValueError("Embedding batch size must be an integer from 1 to 32") from error
+        if not 1 <= self.embedding_batch_size <= 32:
+            raise ValueError("Embedding batch size must be an integer from 1 to 32")
+        self.embedding_identity = hashlib.sha256(json.dumps(
+            [self.base, self.embedding_model, self.embedding_mode], separators=(",", ":")
+        ).encode()).hexdigest()
         self.transport = transport
         if self.base:
             url = urlsplit(self.base)
@@ -62,6 +75,8 @@ class Models:
             "model": self.model or None,
             "embeddings": bool(self.base and self.embedding_model),
             "embedding_model": self.embedding_model or None,
+            "embedding_mode": self.embedding_mode,
+            "embedding_identity": self.embedding_identity if self.embedding_model else None,
         }
 
     def post(self, path, payload):
@@ -88,6 +103,7 @@ class Models:
             {
                 "model": self.model,
                 "temperature": 0,
+                "max_tokens": 4096,
                 "response_format": {"type": "json_object"},
                 "messages": [
                     {"role": "system", "content": SYSTEM},
@@ -99,6 +115,8 @@ class Models:
             },
         )
         try:
+            if result["choices"][0].get("finish_reason") == "length":
+                raise ValueError("Model completion was truncated")
             content = result["choices"][0]["message"]["content"]
             if not isinstance(content, str) or len(content) > 80_000:
                 raise ValueError("Invalid model content")
@@ -106,10 +124,15 @@ class Models:
         except (KeyError, IndexError, TypeError, ValueError) as error:
             raise ModelUnavailable("Model did not return the required cited JSON answer") from error
 
-    def embed(self, texts: list[str]):
+    def embed(self, texts: list[str], *, input_type="passage"):
         if not self.embedding_model:
             raise ModelUnavailable("Embedding model is not configured")
-        result = self.post("/embeddings", {"model": self.embedding_model, "input": texts})
+        if input_type not in {"query", "passage"}:
+            raise ValueError("Embedding input type must be query or passage")
+        payload = {"model": self.embedding_model, "input": texts}
+        if self.embedding_mode == "query_passage":
+            payload["input_type"] = input_type
+        result = self.post("/embeddings", payload)
         try:
             data = sorted(result["data"], key=lambda d: d["index"])
             if [row["index"] for row in data] != list(range(len(texts))):
@@ -130,19 +153,19 @@ class Models:
 def index_vectors(store: Store, identifiers: list[str], models: Models):
     passages = store.passages(identifiers)
     count = 0
-    for offset in range(0, len(passages), 32):
-        batch = passages[offset : offset + 32]
+    for offset in range(0, len(passages), models.embedding_batch_size):
+        batch = passages[offset : offset + models.embedding_batch_size]
         vectors = models.embed([row["text"] for row in batch])
         with store.connection() as connection:
             connection.executemany(
                 "INSERT OR REPLACE INTO vectors VALUES (?,?,?)",
                 [
-                    (row["passage_id"], models.embedding_model, json.dumps(vector))
+                    (row["passage_id"], models.embedding_identity, json.dumps(vector))
                     for row, vector in zip(batch, vectors)
                 ],
             )
         count += len(batch)
-    return {"passages": count, "model": models.embedding_model}
+    return {"passages": count, "model": models.embedding_model, "embedding_identity": models.embedding_identity}
 
 
 def cosine(a, b):
@@ -158,13 +181,13 @@ def retrieve(store: Store, models: Models, code: str, question: str, *, limit=12
     semantic = []
     if models.capabilities()["embeddings"]:
         try:
-            query = models.embed([question])[0]
+            query = models.embed([question], input_type="query")[0]
             allowed = store.select(code, **filters)
             rows = store.passages(allowed)
             by_id = {r["passage_id"]: r for r in rows}
             with store.connection() as connection:
                 vectors = connection.execute(
-                    "SELECT passage_id,vector FROM vectors WHERE model=?", (models.embedding_model,)
+                    "SELECT passage_id,vector FROM vectors WHERE model=?", (models.embedding_identity,)
                 ).fetchall()
             for row in vectors:
                 if row["passage_id"] in by_id:
@@ -195,6 +218,21 @@ def numbers(text):
         except InvalidOperation:
             pass
     return values
+
+
+def original_quote(text, quote):
+    """Resolve whitespace-only PDF layout differences to an exact original span."""
+    if not isinstance(quote, str) or not 8 <= len(quote) <= 1200:
+        return None
+    if quote in text:
+        return quote
+    tokens = quote.split()
+    if not tokens:
+        return None
+    match = re.search(r"\s+".join(re.escape(token) for token in tokens), text)
+    if match is None or not 8 <= len(match.group()) <= 1200:
+        return None
+    return match.group()
 
 
 def validate_answer(answer, evidence):
@@ -230,13 +268,8 @@ def validate_answer(answer, evidence):
             if not isinstance(citation, dict) or type(citation.get("passage_id")) is not int:
                 raise ModelUnavailable("Invalid model citation")
             source = by_id.get(citation["passage_id"])
-            quote = citation.get("quote")
-            if (
-                source is None
-                or not isinstance(quote, str)
-                or not 8 <= len(quote) <= 1200
-                or quote not in source["text"]
-            ):
+            quote = original_quote(source["text"], citation.get("quote")) if source else None
+            if quote is None:
                 raise ModelUnavailable("Model returned a citation not present in the source")
             verified.append(
                 {
@@ -260,6 +293,25 @@ def validate_answer(answer, evidence):
         "reason": str(answer.get("reason", ""))[:2000],
         "claims": clean,
     }
+
+
+def verified_completion(models, evidence, question):
+    prompt = question
+    for attempt in range(3):
+        candidate = models.complete(evidence, prompt)
+        try:
+            return validate_answer(candidate, evidence)
+        except ModelUnavailable as error:
+            if attempt == 2:
+                raise
+            prompt = (
+                question + "\nCorrect the rejected candidate below using only the same evidence. "
+                "Copy each quotation from ONE contiguous span in its cited passage. "
+                "Do not skip intervening text or join disjoint lines; use separate citations. "
+                "Preserve conditions, punctuation and numbers. Every claim still needs support. "
+                "Return the required JSON schema. Correction attempt " + str(attempt + 1) + ".\n"
+                + json.dumps({"validation_failure": str(error), "rejected_candidate": candidate})
+            )
 
 
 def ask(store: Store, models: Models, code: str, question: str, **filters):
@@ -320,29 +372,42 @@ def distill(store: Store, models: Models, identifier: str):
         size += len(passage["text"])
     if batch:
         batches.append(batch)
-    summaries = []
-    store.artifact(
-        identifier,
-        "distillation",
-        {
-            "kind": "llm_distillation",
-            "model": models.model,
-            "generated_at": now(),
-            "status": "partial",
-            "completed_batches": 0,
-            "total_batches": len(batches),
-            "document_extraction": doc["extraction"],
-            "sections": [],
-        },
-        expected_metadata=doc["metadata"],
+    question = (
+        "Summarize useful factual information actually present in this batch of manual pages. "
+        "Cover any of these topics only where supported: limitations, normal/emergency procedures, "
+        "performance conditions, systems, maintenance/inspection/servicing and supplements. "
+        "You do not need every topic; missing topics do not make supported facts insufficient. "
+        "Preserve all applicability, conditions, qualifiers, footnotes and contradictions. "
+        'Do not claim other pages were reviewed. Return exactly '
+        '{"insufficient_evidence": boolean, "reason": string, "claims": '
+        '[{"text": string, "citations": [{"passage_id": integer, "quote": string}]}]}. '
+        'Use insufficient_evidence=true and no claims only if there are no supported facts.'
     )
-    for batch in batches:
-        question = (
-            "Distill this portion of the manual: identify limitations, normal/emergency procedures, "
-            "performance conditions, systems, maintenance/inspection/servicing and supplements where present. "
-            "Preserve applicability and contradictions. Do not claim other pages were reviewed."
-        )
-        result = validate_answer(models.complete(batch, question), batch)
+    fingerprint = hashlib.sha256(json.dumps({
+        "provider": getattr(models, "base", ""), "model": models.model,
+        "system": SYSTEM, "question": question, "batches": batches,
+    }, sort_keys=True, separators=(",", ":")).encode()).hexdigest()
+    summaries = []
+    existing = doc["artifacts"].get("distillation", {})
+    if existing.get("status") == "partial" and existing.get("evidence_identity") == fingerprint:
+        for saved, batch in zip(existing.get("sections", []), batches):
+            try:
+                verified = validate_answer(saved, batch)
+                if verified["insufficient_evidence"]:
+                    break
+                summaries.append({"pages": sorted({p["page"] for p in batch}), **verified})
+            except ModelUnavailable:
+                break
+    value = {
+        "kind": "llm_distillation", "model": models.model, "generated_at": now(),
+        "status": "partial", "completed_batches": len(summaries),
+        "total_batches": len(batches), "document_extraction": doc["extraction"],
+        "evidence_identity": fingerprint, "sections": summaries,
+        "unresolved_batches": len(batches) - len(summaries),
+    }
+    store.artifact(identifier, "distillation", value, expected_metadata=doc["metadata"])
+    for batch in batches[len(summaries):]:
+        result = verified_completion(models, batch, question)
         summaries.append({"pages": sorted({p["page"] for p in batch}), **result})
         # Admit each completed batch durably; a provider failure cannot fabricate full coverage.
         value = {
@@ -352,9 +417,12 @@ def distill(store: Store, models: Models, identifier: str):
             "status": (
                 "complete"
                 if len(summaries) == len(batches) and doc["status"] == "indexed"
+                and not any(section["insufficient_evidence"] for section in summaries)
                 else "partial"
             ),
             "completed_batches": len(summaries),
+            "evidence_identity": fingerprint,
+            "unresolved_batches": sum(section["insufficient_evidence"] for section in summaries) + len(batches) - len(summaries),
             "total_batches": len(batches),
             "document_extraction": doc["extraction"],
             "sections": summaries,

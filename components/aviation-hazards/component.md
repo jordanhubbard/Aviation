@@ -81,3 +81,24 @@ Component inputs. No application behavior is invented merely to create a consume
 - **WHEN** an AWC adapter receives a valid provider response
 - **THEN** it translates the response into the provider-neutral record
 - **AND** HTTP and provider-envelope behavior remain outside this Component
+
+### Requirement: Planar geometry intervals and linear constraint clipping
+
+The additive operations `segmentGeometryIntervals` and `linearConstraintInterval`
+SHALL expose exact parameter intervals along a bounded planar leg. GeoJSON polygon
+holes, multipart shapes, point/line contacts and antimeridian longitude unwrapping
+SHALL be preserved. Boundary contacts SHALL be included; intervals SHALL be sorted,
+merged and clipped to [0,1]. Unsupported or malformed inputs SHALL fail closed.
+Linear constraint clipping SHALL support increasing, decreasing and constant values,
+including a contact at a single parameter, with explicit unbounded limits.
+
+These operations SHALL NOT infer provider validity, vertical references, geodesic
+route construction, buffered-corridor projection or operational safety. Consumers
+compose geometry intervals with independently known linear time/altitude intervals.
+The existing canonical hazard operations retain their current behavior.
+
+#### Scenario: A climbing route crosses a polygon with a hole
+
+- **WHEN** a planar leg enters a polygon, passes through a hole, and satisfies an altitude constraint during only part of the leg
+- **THEN** geometry clipping returns the disjoint filled-area intervals with boundary contacts
+- **AND** linear clipping returns the altitude-valid interval for composition without relabeling the hole as hazardous area

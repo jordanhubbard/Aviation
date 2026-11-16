@@ -201,3 +201,36 @@ limited to 100 MiB and 1,500 pages. Discovery batches support up to 200 examples
 more specific terms for further examples. Extraction, model and acquisition failures retain
 originals and prior provenance. No extracted figure is automatically promoted to an aircraft
 performance dataset or operational approval.
+
+For asymmetric embedding providers such as NVIDIA NeMo Retriever, set
+`AIRCRAFT_LIBRARY_EMBEDDING_MODE=query_passage`. Document indexing then sends
+`input_type=passage`; question retrieval sends `input_type=query`. The default
+`symmetric` omits this extension for OpenAI-compatible providers. Persisted vectors
+are scoped to endpoint, model and mode; re-run each document's embedding job when
+changing these settings or upgrading from the earlier model-name-only index.
+
+Set `AIRCRAFT_LIBRARY_EMBEDDING_BATCH_SIZE` from 1 to 32 (default 32) when the
+provider limits batching. A value of 1 still embeds every passage individually.
+
+## Timed route hazard assessment
+
+Open **Route assessment** at `/route-assessment`, or use the panel below a completed
+route plan. Prepare an airport route or use the displayed route, explicitly review
+the assumed groundspeed/altitude/departure time, then edit every waypoint's planned
+UTC arrival and altitude in feet MSL for climb/descent or timing changes. Draft
+profiles use constant groundspeed and altitude; they do not model aircraft climb
+performance. Assess the reviewed profile to see centerline/proximity encounters,
+source geometry, sampled terrain clearances and individual source coverage.
+
+Source warnings remain beside the results: full NOTAM access is pending, TFR
+geometry may be absent, schedules or altitude references may need interpretation,
+and provider queries may be truncated/unavailable. No-encounter results do not
+mean safe or cleared. Terrain samples do not bound intervening peaks. A local
+projected corridor uses the disclosed conservative allowance; it is distinct from
+centerline contact. Original source fields and timestamps remain available.
+
+The endpoint uses existing public data providers and terrain configuration; it
+does not require or provision FAA NOTAM credentials. Identical profile snapshots
+are cached for 60 seconds in the bounded shared data cache, and there are two
+concurrent assessment slots per process. Cached times remain original. No background
+polling, persistent route storage or new private provider credentials are added.

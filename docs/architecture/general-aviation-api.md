@@ -112,3 +112,23 @@ indexing/distillation jobs, full-text search and source-cited questions. Library
 are separate from MCP transport credentials and must be supplied explicitly. Large original
 PDFs use authenticated HTTP upload/download rather than the MCP response-size envelope.
 These private operations are not admitted to the public credential-free cross-app data CORS path.
+## Timed route hazard assessment
+
+`POST /api/route-assessment` accepts 2–50 waypoints with latitude/longitude, planned
+time including timezone, and altitude in feet MSL; corridor proximity and a
+terrain/obstacle clearance margin are explicit. Routes are bounded to 800 NM and
+24 hours; profile interpolation and actual sample spacing are returned. The typed
+response preserves original candidate fields, centerline/proximity encounters,
+entry/exit times and altitudes, source statuses/URLs/retrieval times, geometry,
+uncertainty, truncation and missing coverage. Common SDK interval operations own
+planar geometry and linear time/altitude clipping; source adaptation and projection
+remain planner concerns. Identical profile responses are cached for 60 seconds,
+without relabeling original assessment/source times; concurrency is bounded.
+
+The NOAA complete G-AIRMET cache preserves all published forecast snapshots and
+explicit feet-MSL fields. It does not convert snapshots to invented continuous
+validity periods or variable freezing levels to zero. TFR list identities are
+joined to public geometry; absent geometry and uninterpreted schedules/vertical
+limits stay explicit. FAA DOF queries follow actual nested GeoJSON pagination.
+Neither these sources nor a successful assessment establishes safe/authorized
+flight or full NOTAM coverage. See [the contract](route-hazard-assessment.md).

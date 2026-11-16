@@ -26,9 +26,11 @@ export async function launchOwnedBrowser(browserType, options = {}, {
   let server;
   let launching;
   let closing;
+  let disconnectClient;
   const close = () => closing ||= (async () => {
     try {
       const owned = server || await launching;
+      if (disconnectClient) await timed('client.close', disconnectClient, graceMs);
       await timed('server.close', () => owned.close(), graceMs);
     } catch (error) {
       // BrowserServer.kill targets only this launch's process tree, never a
@@ -57,6 +59,7 @@ export async function launchOwnedBrowser(browserType, options = {}, {
     server = await launching;
     server.process?.()?.once('exit', (code, signal) => report({ phase: 'process.exit', status: 'completed', code, signal }));
     const browser = await timed('connect', () => browserType.connect(server.wsEndpoint(), { timeout: 30_000 }), 32_000);
+    disconnectClient = typeof browser.close === 'function' ? browser.close.bind(browser) : undefined;
     browser.close = close;
     return browser;
   } catch (error) {
