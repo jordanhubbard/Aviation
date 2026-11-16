@@ -73,9 +73,13 @@ from .open_meteo import (
     sample_points_along_route,
 )
 from .cache import weather_cache
-from .awc import AWC_DATA_URL, AWCJSONError, fetch_awc_json_reports
+from .awc import AWC_ORIGIN, AWC_DATA_URL, AWCJSONError, fetch_awc_json_reports
+
+from .station_catalog import (AWC_STATION_CATALOG_URL, AWCStationCatalogError, interpret_awc_station_catalog, fetch_awc_station_catalog)
 
 __all__ = [
+    "AWC_ORIGIN", "AWC_STATION_CATALOG_URL", "AWCStationCatalogError",
+    "interpret_awc_station_catalog", "fetch_awc_station_catalog",
     "AWC_DATA_URL",
     "AWCJSONError",
     "fetch_awc_json_reports",

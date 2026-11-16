@@ -4,6 +4,10 @@ from __future__ import annotations
 
 from aviation.weather import (
     AWCJSONError,
+    AWC_STATION_CATALOG_URL,
+    AWCStationCatalogError,
+    interpret_awc_station_catalog,
+    fetch_awc_station_catalog,
     fetch_awc_json_reports,
     OpenMeteoError,
     OpenMeteoPressureError,
@@ -230,3 +234,75 @@ def test_openweathermap_vectors() -> None:
     for vector in CONTRACT["openweathermap"]:
         actual = to_weather_data(vector["airport"], vector["payload"])
         assert actual == vector["expected"], vector["id"]
+
+
+@pytest.mark.parametrize("v", CONTRACT["stationCatalogs"], ids=lambda v: v["id"])
+def test_station_catalog_fidelity(v):
+    before, calls = copy.deepcopy(v["payload"]), []
+    assert interpret_awc_station_catalog(v["payload"]) == v["expected"]
+
+    def transport(url, params):
+        calls.append((url, params))
+        return v["payload"]
+
+    assert fetch_awc_station_catalog(transport) == {
+        "url": AWC_STATION_CATALOG_URL,
+        **v["expected"],
+    }
+    assert calls == [
+        ("https://aviationweather.gov/data/cache/stations.cache.json.gz", {})
+    ]
+    assert v["payload"] == before
+
+
+@pytest.mark.parametrize("v", CONTRACT["stationInvalidCatalogs"], ids=lambda v: v["id"])
+def test_station_catalog_rejects_whole_payload(v):
+    with pytest.raises(AWCStationCatalogError):
+        interpret_awc_station_catalog(v["payload"])
+    calls = []
+
+    def transport(url, params):
+        calls.append(url)
+        return v["payload"]
+
+    with pytest.raises(AWCStationCatalogError) as error:
+        fetch_awc_station_catalog(transport)
+    assert error.value.kind == "response" and len(calls) == 1
+
+
+@pytest.mark.parametrize("v", CONTRACT["stationCatalogBounds"], ids=lambda v: v["id"])
+def test_station_catalog_row_bound(v):
+    payload = [v["row"]] * v["count"]
+    if v["valid"]:
+        result = interpret_awc_station_catalog(payload)
+        assert (
+            result["stations"] == payload and result["total_catalog_records"] == 50000
+        )
+    else:
+        with pytest.raises(AWCStationCatalogError):
+            interpret_awc_station_catalog(payload)
+
+
+@pytest.mark.parametrize("field", ["lat", "lon"])
+@pytest.mark.parametrize("value", [float("nan"), float("inf"), -float("inf"), 10**1000])
+def test_station_catalog_unbounded_coordinates(field, value):
+    row = {**CONTRACT["stationCatalogs"][0]["payload"][0], field: value}
+    with pytest.raises(AWCStationCatalogError):
+        interpret_awc_station_catalog([row])
+
+
+def test_station_catalog_transport_failure():
+    with pytest.raises(AWCStationCatalogError) as error:
+        fetch_awc_station_catalog(None)
+    assert error.value.kind == "request"
+    calls = []
+
+    def transport(url, params):
+        calls.append(url)
+        raise RuntimeError("private-token")
+
+    with pytest.raises(AWCStationCatalogError) as error:
+        fetch_awc_station_catalog(transport)
+    assert len(calls) == 1 and error.value.kind == "provider"
+    assert str(error.value) == "AWC station catalog unavailable"
+    assert error.value.__context__ is None and error.value.__cause__ is None

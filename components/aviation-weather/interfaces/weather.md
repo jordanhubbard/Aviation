@@ -118,3 +118,46 @@ observed-weather product.
 Planner retains its thirty-minute bounded cache keyed by normalized levels,
 source/provider/license/attribution envelope and existing modeled-weather
 limitations. Provider failures remain unavailable/503.
+
+## AWC station catalog
+
+TypeScript `interpretAWCStationCatalog(payload)` and Python
+`interpret_awc_station_catalog(payload)` are pure and return
+`{stations, total_catalog_records, excluded_unlocated_count,
+unlocated_taf_station_ids}`. Require a nonempty JSON list of at most 50,000
+object rows. Validate every row before returning; any malformed row invalidates
+the entire catalog, including rows excluded for sentinel coordinates.
+
+`id` is an unchanged, nonempty ASCII identifier matching
+`[A-Za-z0-9][A-Za-z0-9_.-]{0,79}`. `icaoId` may be absent, null or empty;
+otherwise it follows the same syntax unchanged. `siteType` is an array of strings;
+unknown strings and duplicates are preserved. Coordinates must be finite numeric
+values, excluding booleans and numeric strings. Both coordinates together in
+`(-100, -99]` mark an unlocated row. Otherwise latitude must be in [-90,90]
+and longitude in [-180,180]. Preserve located rows, order, duplicates, nested
+unknown fields and nulls exactly. Count every excluded row; collect its nonempty
+ICAO identity if `siteType` contains exact `TAF`, preserving order and duplicates.
+No normalization, inference, deduplication or partial success is permitted.
+This deliberately rejects the prior application's boolean/string coordinate
+coercion and malformed identifiers.
+
+`fetchAWCStationCatalog(transport)` (asynchronous) and Python
+`fetch_awc_station_catalog(transport)` (synchronous) invoke transport exactly
+once with `(AWC_STATION_CATALOG_URL, {})`, interpret its parsed result and add
+`url` to the result. The fixed URL is
+`https://aviationweather.gov/data/cache/stations.cache.json.gz`; one shared AWC
+origin supplies this and the existing data API URL. No credentials, arbitrary
+origins, retries, cache or stale fallback are added. A distinct generic
+`AWCStationCatalogError` classifies request/provider/response failures without
+retaining private transport details or Python exception context.
+
+The injected transport is explicitly trusted to enforce a twenty-second request
+timeout, HTTP success, the existing 20 MiB post-download compressed response
+bound and a 16 MiB decompressed ceiling. It must require a complete single gzip
+stream with valid CRC and reject truncation, trailing bytes and concatenated
+streams before JSON parsing. These callback obligations are not independent SDK
+bounds or a streaming-download memory cap. Browser-consumed SDK modules import
+no Node gzip facilities. Planner's generic transport implements decompression;
+its compatibility adapter retains the 24-hour bounded cache, existing source
+URL/timestamp/count fields and located-row tuple. Discovery and route selection
+stay application policy; failures remain unavailable/503 without stale success.

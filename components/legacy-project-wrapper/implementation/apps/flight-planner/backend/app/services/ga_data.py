@@ -6,6 +6,7 @@ import csv
 import io
 import json
 import math
+import zlib
 from datetime import datetime, timezone
 from threading import RLock
 from time import monotonic
@@ -59,6 +60,7 @@ def fetch(
     *,
     csv_data: bool = False,
     raw_bytes: bool = False,
+    gzip_json: bool = False,
     headers: dict | None = None,
 ):
     try:
@@ -75,12 +77,18 @@ def fetch(
         response.raise_for_status()
         if len(response.content) > 20 * 1024 * 1024:
             raise DataUnavailable("Provider response exceeds 20 MiB")
+        if gzip_json:
+            decoder = zlib.decompressobj(16 + zlib.MAX_WBITS)
+            raw = decoder.decompress(response.content, 16 * 1024 * 1024 + 1)
+            if len(raw) > 16 * 1024 * 1024 or not decoder.eof or decoder.unused_data:
+                raise DataUnavailable("Invalid or oversized compressed JSON")
+            return json.loads(raw)
         if response.status_code == 204:
             return []
         if raw_bytes:
             return response.content
         return response.text if csv_data else response.json()
-    except (httpx.HTTPError, ValueError) as exc:
+    except (httpx.HTTPError, ValueError, zlib.error) as exc:
         # Avoid leaking upstream URLs, query credentials, or HTML responses.
         status = getattr(getattr(exc, "response", None), "status_code", None)
         raise DataUnavailable(
