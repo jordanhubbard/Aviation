@@ -399,6 +399,12 @@ def numbers(text):
     # Normalize comparison text only: PDF leaders are layout, not a decimal
     # continuation. Keep the source quotation and the complete signed token.
     text = re.sub(r"\.{3,}(?=-?\d)", " ", text.replace("\N{MINUS SIGN}", "-"))
+    text = re.sub(
+        r"(?<![\w.,])-?\d{1,3}(?:[ \t]*,\d{3})+(?:\.\d+)?"
+        r"(?!\w|[.,]\d|[ \t]*,[ \t]*\d)",
+        lambda match: re.sub(r"[ \t]+", "", match[0]),
+        text,
+    )
     # Superscript footnotes can flatten to "d20 second delay". Only split
     # a line-leading definition with a matching numeric suffix reference in
     # this same quote; general identifiers must not supply numeric evidence.

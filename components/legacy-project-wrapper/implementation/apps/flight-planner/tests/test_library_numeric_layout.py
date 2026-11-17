@@ -174,3 +174,63 @@ def test_sr22_electrical_delays_keep_exact_source_and_signed_limits():
     value["claims"][0]["text"] += " Another delay is 40 seconds."
     with pytest.raises(ModelUnavailable, match="numeric values"):
         validate_answer(value, [source(text)])
+
+
+@pytest.mark.parametrize("original,expected", [
+    ("Altitude 1      ,000 ft", "1000"),
+    ("Altitude 12 ,345 ft", "12345"),
+    ("Altitude 123 \t,456 ,789.25 ft", "123456789.25"),
+    ("Altitude -1 ,000.5 ft", "-1000.5"),
+    ("Altitude −1 ,000.5 ft", "-1000.5"),
+    ("Altitude.....-1 ,000 ft", "-1000"),
+    ("Altitude 1 ,000.", "1000"),
+    ("Altitude 1 ,000, then descend.", "1000"),
+])
+def test_grouping_spaces_keep_complete_signed_numeric_token(original, expected):
+    assert numbers(original) == {Decimal(expected)}
+    value = answer(f"The altitude is {expected} ft.")
+    result = validate_answer(value, [source(original)])
+    assert result["claims"][0]["citations"][0]["quote"] == original
+
+
+@pytest.mark.parametrize("original,unsupported", [
+    ("Altitude 1\n,000 ft", "1000"),
+    ("Altitude 1,\n000 ft", "1000"),
+    ("Altitude 1 000 ft", "1000"),
+    ("Altitude 1 ,00 ft", "100"),
+    ("Altitude 1 ,0000 ft", "10000"),
+    ("Altitude 1 ,000 ,00 ft", "1000"),
+    ("Altitude 1234 ,567 ft", "1234567"),
+    ("Instrument G1 ,000 ft", "1000"),
+    ("Instrument A1.2 ,000 ft", "2000"),
+    ("Instrument 1 ,000part", "1000"),
+    ("Altitude 1 ,000.5.2 ft", "1000.5"),
+    ("Altitude -1 ,000 ft", "1000"),
+    ("Altitude 1 ,000 ft", "1"),
+    ("Altitude 1, 000 ft", "1000"),
+    ("Altitude 1 , 000 ft", "1000"),
+])
+def test_grouping_spaces_do_not_join_malformed_values_or_grant_components(original, unsupported):
+    assert Decimal(unsupported) not in numbers(original)
+    with pytest.raises(ModelUnavailable, match="numeric values"):
+        validate_answer(answer(f"The value is {unsupported}."), [source(original)])
+
+
+def test_grouping_spaces_do_not_join_separate_citations():
+    evidence = [source("Altitude 1 "), source(",000 ft above the reference.")]
+    evidence[1]["passage_id"] = 2
+    value = answer("The altitude is 1000 ft.")
+    value["claims"][0]["citations"].append({"passage_id": 2, "excerpt_id": 0})
+    with pytest.raises(ModelUnavailable, match="numeric values"):
+        validate_answer(value, evidence)
+
+
+def test_comma_space_lists_and_ratio_examples_remain_separate_values():
+    text = "Calibration pairs are 50/50, 100/100, 150/150."
+    assert numbers(text) == {Decimal(50), Decimal(100), Decimal(150)}
+    assert numbers("Altitude choices are 100, 200, 300 ft.") == {
+        Decimal(100), Decimal(200), Decimal(300)
+    }
+    assert validate_answer(answer(text), [source(text)])["claims"]
+    with pytest.raises(ModelUnavailable, match="numeric values"):
+        validate_answer(answer("The value is 50100."), [source(text)])
