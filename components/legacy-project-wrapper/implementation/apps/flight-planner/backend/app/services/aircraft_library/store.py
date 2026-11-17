@@ -74,6 +74,10 @@ def metadata(value: dict) -> dict:
     return result
 
 
+class BlankReviewConflict(ValueError):
+    """A page review no longer matches the source/extraction or an active owner."""
+
+
 class LeaseLost(RuntimeError):
     """A reclaimed worker must not publish work into its successor's run."""
 
@@ -128,6 +132,12 @@ class Store:
                     revision_id TEXT NOT NULL, value TEXT NOT NULL,
                     archived_at TEXT NOT NULL, reason TEXT NOT NULL,
                     PRIMARY KEY(document_id, revision_id)
+                );
+                CREATE TABLE IF NOT EXISTS blank_page_reviews (
+                    document_id TEXT NOT NULL REFERENCES documents(id),
+                    review_id TEXT NOT NULL, value TEXT NOT NULL,
+                    integrity_sha256 TEXT NOT NULL, recorded_at TEXT NOT NULL,
+                    PRIMARY KEY(document_id, review_id)
                 );
                 CREATE TABLE IF NOT EXISTS vectors (
                     passage_id INTEGER NOT NULL, model TEXT NOT NULL, vector TEXT NOT NULL,
@@ -396,6 +406,26 @@ class Store:
                 "SELECT * FROM pages WHERE document_id=? AND page=?", (identifier, number)
             ).fetchone()
             return dict(row) if row else None
+
+    def blank_pages(self, identifier, *, limit=100, offset=0):
+        from .blank_pages import candidates
+
+        return candidates(self, identifier, limit=limit, offset=offset)
+
+    def review_blank_pages(self, identifier, values):
+        from .blank_pages import review
+
+        return review(self, identifier, values)
+
+    def blank_page_reviews(self, identifier, *, limit=20, offset=0):
+        from .blank_pages import reviews
+
+        return reviews(self, identifier, limit=limit, offset=offset)
+
+    def blank_page_review(self, identifier, review_id):
+        from .blank_pages import detail
+
+        return detail(self, identifier, review_id)
 
     def distill_index(self, identifier: str):
         """An honest extractive section index, also available without an LLM."""

@@ -61,6 +61,20 @@ def manual(*pages):
     return stream.getvalue()
 
 
+def unreadable_manual(*text_pages):
+    """A real PDF graphic with no text, distinct from a verified empty page."""
+    writer = PdfWriter()
+    for page in PdfReader(BytesIO(manual(*text_pages))).pages:
+        writer.add_page(page)
+    page = writer.add_blank_page(width=612, height=792)
+    content = DecodedStreamObject()
+    content.set_data(b"0 g 100 100 50 50 re f")
+    page[NameObject("/Contents")] = writer._add_object(content)
+    output = BytesIO()
+    writer.write(output)
+    return output.getvalue()
+
+
 @pytest.fixture
 def store(tmp_path):
     return Store(tmp_path / "library")
@@ -136,11 +150,7 @@ def test_invalid_input_and_encrypted_original_retained(store):
 
 
 def test_missing_text_is_partial_and_never_safe_by_absence(store):
-    writer = PdfWriter()
-    writer.add_blank_page(width=612, height=792)
-    output = BytesIO()
-    writer.write(output)
-    document = store.ingest(output.getvalue(), {"icao": "C172"}, extract=False)
+    document = store.ingest(unreadable_manual(), {"icao": "C172"}, extract=False)
     result = store.index(document["id"], ocr=False)
     assert result["status"] == "partial"
     assert result["extraction"]["incomplete_pages"] == [1]
@@ -201,7 +211,7 @@ def test_real_http_model_contract_and_verified_page_citations(store):
 @pytest.mark.parametrize("embedding_fails", [False, True])
 def test_partial_extraction_warning_does_not_change_actual_retrieval_mode(store, embedding_fails):
     document = store.ingest(
-        manual("Performance: takeoff ground roll 900 feet at 2500 lb.", ""),
+        unreadable_manual("Performance: takeoff ground roll 900 feet at 2500 lb."),
         {"icao": "C172"},
         extract=False,
     )
