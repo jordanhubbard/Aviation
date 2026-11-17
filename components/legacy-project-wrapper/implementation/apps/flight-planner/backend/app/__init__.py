@@ -33,6 +33,7 @@ from .routers.local import router as local_router
 from .routers.ga import router as ga_router
 from .routers.aviation_data import router as aviation_data_router
 from .routers.route_assessment import router as route_assessment_router
+from .routers.notams import install as install_notams
 from fastapi import WebSocket, WebSocketDisconnect
 
 
@@ -130,6 +131,7 @@ def create_app(settings):
     app.include_router(aviation_data_router, prefix="/api")
     app.include_router(route_assessment_router, prefix="/api")
     app.include_router(ga_router, prefix="/api")
+    install_notams(app)
     app.include_router(health_router, prefix="/api", tags=["health"])
     app.include_router(route_router, prefix="/api", tags=["route"])
     app.include_router(plan_router, prefix="/api", tags=["plan"])
@@ -226,6 +228,7 @@ def create_app(settings):
     if (static_root / "index.html").is_file():
         @app.get("/", include_in_schema=False)
         @app.get("/weather", include_in_schema=False)
+        @app.get("/notams", include_in_schema=False)
         @app.get("/route-assessment", include_in_schema=False)
         @app.get("/airports", include_in_schema=False)
         def frontend_page() -> FileResponse:

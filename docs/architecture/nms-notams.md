@@ -89,3 +89,63 @@ in command arguments. Merely importing the worker or starting the web applicatio
 does not contact FAA. SIGTERM/SIGINT interrupt an in-flight main-thread read,
 release its reservation without advancing coverage and close the client. Idle
 waits are interruptible; unchanged status is not repeatedly logged.
+
+## Read API and consumer contract
+
+Expose GET `/api/notams/capabilities`, GET `/api/notams?airport=KPAO,KSFO`
+and GET `/api/notams/detail?id=<source-id>`, each with explicit operation IDs and
+typed OpenAPI responses for HTTP/MCP discovery. The web process reads the shared
+cache and never reads FAA credentials, starts synchronization, or calls FAA.
+Environment and cache-directory selection match the worker; an absent/invalid
+selection or unavailable/corrupt cache returns explicit unavailable state without
+creating a new feed or presenting an empty successful briefing.
+
+List queries require 1–100 source location identifiers, 2–8 ASCII alphanumeric
+characters each, and use stable bounded pagination. Expand only location/ICAO
+pairs actually present in source records, never by adding or removing country
+prefixes. Return requested and matched identifiers and warn that unmatched source
+aliases, international coverage and en-route geometry are not a complete briefing.
+A fresh complete snapshot with zero matches is `no_reports`, meaning no matching
+cached records, never a claim that no applicable NOTAM exists. Retain partial,
+stale and unavailable distinctions; every response exposes the environment and
+non-production warning. Missing source text, start/end/type and permanent expiry
+remain explicit. Dates are UTC strings or null, not fake bounds for permanence.
+
+List responses contain at most 100 notices with a 2,000-character display excerpt,
+full text length, an explicit truncation flag and a same-service detail link.
+Detail returns the unmodified full text and original GeoJSON feature, bounded to
+16 MiB; oversized/unavailable detail fails explicitly. Never print temporary
+content tokens, upstream bodies or credentials in error responses. Responses use
+no-store so CDN/browser caching cannot hide locally evaluated expiry/freshness.
+
+The common TypeScript SDK supplies a typed cached-report client. Weather Briefing
+uses reports, source status, complete pagination, full notice text and warnings;
+no client has FAA credentials or calls the old direct key-as-secret path. Existing
+strict portable NOTAM normalization remains unchanged. Compatibility array helpers
+may only project complete, current production reports that fit that strict shape;
+otherwise they fail explicitly and direct callers to the richer report API. No
+incomplete/permanent notice is silently discarded and no network failure triggers
+sample data. Explicitly named sample generators remain test/development tools.
+
+Pagination and detail carry a snapshot identity derived from the environment and
+committed full/delta watermarks. Source alias matching, counts and page selection
+read one transaction. Clients must reject mixed snapshots or changing totals,
+and pin the snapshot for subsequent pages/details; a mismatch returns HTTP 409
+and requires an explicit reload rather than publishing a silently mixed briefing.
+
+## NOTAM workspace
+
+Flight Planner provides a responsive NOTAM page with explicit location submission,
+cache status, source timestamps, aliases and conspicuous non-production warnings.
+It shows every loaded report's activity and missing-field states, original text
+previews and full-source detail/download actions. Input changes/unmount abort
+requests and prevent late responses from restoring the wrong airport. Source
+freshness ages locally without network polling. Source data is rendered as text.
+The existing Weather Briefing UI/HTTP text endpoint uses the same SDK report
+contract and preserves status, original full text, schedules and coverage warnings.
+
+Web cache connections use SQLite read-only mode and never initialize or migrate
+the store. The worker owns schema updates and can mount the same cache for writes
+while the web service mounts it read-only, without any FAA credentials. Notices
+show the original source number/series/year when supplied, retaining the opaque
+source ID for audit/download identity. Missing source references remain unknown.

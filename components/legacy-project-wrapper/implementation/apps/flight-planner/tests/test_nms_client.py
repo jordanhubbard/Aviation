@@ -121,6 +121,8 @@ def test_auth_redirects_never_receive_credentials(status):
     [
         {"status": "Failure", "data": {"geojson": []}},
         {"status": "Success", "errors": [{"message": SECRET}], "data": {"geojson": []}},
+        {"status": "Success", "errors": {}, "data": {"geojson": []}},
+        {"status": "Success", "errors": None, "data": {"geojson": []}},
         {"status": "Success", "data": []},
         [],
     ],

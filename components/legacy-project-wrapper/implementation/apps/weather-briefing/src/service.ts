@@ -8,6 +8,7 @@ import {
   sortNotamsBySeverity,
   formatNotamText,
   type NOTAM,
+  type NotamBriefing,
   type NotamClientOptions,
   BackgroundService,
   findAirport,
@@ -31,7 +32,7 @@ interface AirportConditions extends WeatherStation { icao: string; lastUpdated: 
 export interface WeatherBriefingServiceConfig {
   name?: string; enabled?: boolean; autoStart?: boolean;
   notamClientOptions?: NotamClientOptions;
-  notamClient?: Pick<NotamClient, 'fetchByIcao'>;
+  notamClient?: Pick<NotamClient, 'fetchByIcao'> & Partial<Pick<NotamClient, 'fetchReportsByIcao'>>;
   reports?: (product: 'metar' | 'taf', station: string) => Promise<WeatherReports>;
 }
 const api = () => {
@@ -82,7 +83,7 @@ const reportLines = (product: 'METAR' | 'TAF', data: WeatherReports): string[] =
 
 export class WeatherBriefingService extends BackgroundService {
   private airportCache: Map<string, AirportConditions> = new Map();
-  private notamClient: Pick<NotamClient, 'fetchByIcao'>;
+  private notamClient: Pick<NotamClient, 'fetchByIcao'> & Partial<Pick<NotamClient, 'fetchReportsByIcao'>>;
   private reports: NonNullable<WeatherBriefingServiceConfig['reports']>;
   private pending = new Map<string, Promise<void>>();
 
@@ -117,8 +118,11 @@ export class WeatherBriefingService extends BackgroundService {
     let notamLines: string[] = [];
     try {
       if (process.env.AVIATION_E2E_OFFLINE === 'true') throw new Error('Offline qualification');
-      const notams = await this.notamClient.fetchByIcao(station);
-      notamLines = this.formatNotamSection(notams);
+      if (this.notamClient.fetchReportsByIcao) {
+        notamLines = this.formatNotamReports(await this.notamClient.fetchReportsByIcao(station));
+      } else {
+        notamLines = this.formatNotamSection(await this.notamClient.fetchByIcao(station));
+      }
     } catch {
       // NOTAM fetch failed; briefing still usable without NOTAMs
       notamLines = ['NOTAMs: unavailable. Review official FAA NOTAMs separately.'];
@@ -139,13 +143,36 @@ export class WeatherBriefingService extends BackgroundService {
     return lines.join('\n');
   }
 
+  private formatNotamReports(report: NotamBriefing): string[] {
+    return [
+      `NOTAMs: ${report.status} · ${report.total} matching cached source records`,
+      `Source: ${report.source.provider} · Environment: ${report.environment ?? 'not configured'}`,
+      ...(!report.production_data ? [report.environment && report.environment !== 'production' ? 'NON-PRODUCTION DATA: may include test NOTAMs.' : 'Production NOTAM data is unavailable.'] : []),
+      `Synchronized: ${report.synchronized_at ?? 'Unknown'} · Complete snapshot: ${report.complete_snapshot ? 'yes' : 'no'}`,
+      ...(!report.fully_loaded ? ['The NOTAM source is unavailable or was not fully loaded.'] : []),
+      ...(report.error ? [`Source error: ${report.error}`] : []),
+      ...report.warnings.map(w => 'Coverage warning: ' + w),
+      ...report.notams.flatMap(n => [
+        `${n.number ? `NOTAM ${n.number}` : 'NOTAM source notice'} · ${n.icao_location ?? n.location} · ${n.activity.replace(/_/g, ' ')} · ${n.severity ? `text hint: ${n.severity}` : 'no text hint'}`,
+        `Source ID: ${n.id}${n.series ? ` · Series ${n.series}` : ''}${n.year ? ` · Year ${n.year}` : ''}`,
+        `Effective: ${n.effective_start_utc ?? 'Unknown'} → ${n.permanent ? 'PERM' : (n.effective_end_utc ?? 'Unknown')}${n.estimated ? ' (estimated)' : ''}`,
+        ...(n.cancelled_at_utc ? ['Cancellation: ' + n.cancelled_at_utc] : []),
+        ...(n.schedule ? ['Schedule: ' + n.schedule] : []),
+        ...(n.missing_fields.length ? ['Source fields missing: ' + n.missing_fields.join(', ')] : []),
+        n.text ?? 'Source text unavailable',
+        ...(n.text_truncated ? ['Text is a preview; inspect the source detail before relying on it.'] : []),
+        'Last modified: ' + n.last_updated_utc,
+      ]),
+    ];
+  }
+
   /** Format an array of NOTAMs as human-readable briefing lines. */
   private formatNotamSection(notams: NOTAM[]): string[] {
     if (notams.length === 0) {
-      return ['NOTAMs: None active'];
+      return ['NOTAMs: No matching supplied records; source coverage was not provided.'];
     }
     const sorted = sortNotamsBySeverity(notams);
-    const header = `NOTAMs (${sorted.length} active):`;
+    const header = `NOTAMs (${sorted.length} supplied records):`;
     const items = sorted.map(
       (n) => `  [${n.severity.toUpperCase()}] ${formatNotamText(n.text)} (${n.category ?? 'General'})`
     );

@@ -175,6 +175,7 @@ class NMSClient:
             if (
                 not isinstance(value, dict)
                 or value.get("status") != "Success"
+                or not isinstance(value.get("errors", []), list)
                 or value.get("errors")
                 or not isinstance(value.get("data"), dict)
             ):
@@ -263,7 +264,11 @@ def decode_features(raw):
                 raise ValueError()
         value = json.loads(raw, parse_constant=reject_constant)
         if isinstance(value, dict) and "status" in value:
-            if value.get("status") != "Success" or value.get("errors"):
+            if (
+                value.get("status") != "Success"
+                or not isinstance(value.get("errors", []), list)
+                or value.get("errors")
+            ):
                 raise ValueError()
             if set(value["data"]) != {"geojson"}:
                 raise ValueError()

@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+- FAA NMS: add a separately owned ingestion worker, durable shared cache and
+  source-preserving read API. Flight Planner's NOTAM workspace, the shared SDK
+  and Weather Briefing retain source text, timing, incomplete coverage and
+  staging warnings through HTTP/MCP. Staging is verified; production access and
+  hosted acceptance remain pending (#503).
+
 - Common service health: reject inherited JavaScript object names as statuses, preserving declared aliases and shared TypeScript/Python error contracts (#442).
 
 - Common weather: share complete AWC station-catalog validation across TypeScript and Python, including explicit unknown-location accounting. Planner retains bounded gzip decoding, its cache and existing discovery/source responses (#486).

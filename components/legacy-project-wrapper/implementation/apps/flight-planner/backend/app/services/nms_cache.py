@@ -114,13 +114,22 @@ def activity(record, now):
 
 
 class NMSCache:
-    def __init__(self, root, environment, *, clock=time.time):
+    def __init__(self, root, environment, *, clock=time.time, read_only=False):
         if environment not in ORIGINS:
             raise ValueError("Select an explicit NMS environment")
         self.root = Path(root)
-        self.root.mkdir(parents=True, exist_ok=True, mode=0o700)
         self.path = self.root / "notams.sqlite3"
-        self.environment, self.clock = environment, clock
+        self.environment, self.clock, self.read_only = environment, clock, read_only
+        if read_only:
+            with self.connection() as db:
+                if db.execute("PRAGMA user_version").fetchone()[0] != 1:
+                    raise ValueError("Unsupported NMS cache schema")
+                row = db.execute("SELECT value FROM state WHERE id=1").fetchone()
+                state = json.loads(row[0]) if row else None
+                if not isinstance(state, dict) or state.get("environment") != environment:
+                    raise ValueError("NMS cache metadata or environment is invalid")
+            return
+        self.root.mkdir(parents=True, exist_ok=True, mode=0o700)
         with self.connection() as db:
             version = db.execute("PRAGMA user_version").fetchone()[0]
             if version not in (0, 1):
@@ -165,9 +174,13 @@ class NMSCache:
 
     @contextmanager
     def connection(self):
-        db = sqlite3.connect(self.path, timeout=10)
+        db = (
+            sqlite3.connect(self.path.resolve().as_uri() + "?mode=ro", uri=True, timeout=10)
+            if self.read_only
+            else sqlite3.connect(self.path, timeout=10)
+        )
         try:
-            db.execute("BEGIN IMMEDIATE")
+            db.execute("BEGIN" if self.read_only else "BEGIN IMMEDIATE")
             yield db
             db.commit()
         except BaseException:
@@ -426,25 +439,36 @@ class NMSCache:
         ):
             raise ValueError("Provide bounded airport/location identifiers")
         want, now = {v.upper() for v in locations}, self.clock()
-        clauses, parameters = [], []
-        if want:
-            placeholders = ",".join("?" for _ in want)
-            clauses.append(
-                f"(json_extract(value,'$.location') IN ({placeholders}) OR json_extract(value,'$.icao_location') IN ({placeholders}))"
-            )
-            parameters.extend([*sorted(want), *sorted(want)])
-        if not include_inactive:
-            clauses.extend(
-                [
-                    "(json_extract(value,'$.type') IS NULL OR json_extract(value,'$.type') != 'C')",
-                    "(json_extract(value,'$.cancelled_at') IS NULL OR json_extract(value,'$.cancelled_at') > ?)",
-                    "(json_extract(value,'$.effective_end') IS NULL OR json_extract(value,'$.effective_end') > ?)",
-                ]
-            )
-            parameters.extend([now, now])
-        where = " WHERE " + " AND ".join(clauses) if clauses else ""
+        requested = sorted(want)
         with self.connection() as db:
             s = self._state(db)
+            if want:
+                placeholders = ",".join("?" for _ in want)
+                pairs = db.execute(
+                    f"SELECT DISTINCT json_extract(value,'$.location'), json_extract(value,'$.icao_location') FROM current WHERE json_extract(value,'$.location') IN ({placeholders}) OR json_extract(value,'$.icao_location') IN ({placeholders})",
+                    [*sorted(want), *sorted(want)],
+                ).fetchall()
+                for pair in pairs:
+                    want.update(v for v in pair if v)
+                if len(want) > 400:
+                    raise NMSUnavailable("NMS source location aliases are too ambiguous")
+            clauses, parameters = [], []
+            if want:
+                placeholders = ",".join("?" for _ in want)
+                clauses.append(
+                    f"(json_extract(value,'$.location') IN ({placeholders}) OR json_extract(value,'$.icao_location') IN ({placeholders}))"
+                )
+                parameters.extend([*sorted(want), *sorted(want)])
+            if not include_inactive:
+                clauses.extend(
+                    [
+                        "(json_extract(value,'$.type') IS NULL OR json_extract(value,'$.type') != 'C')",
+                        "(json_extract(value,'$.cancelled_at') IS NULL OR json_extract(value,'$.cancelled_at') > ?)",
+                        "(json_extract(value,'$.effective_end') IS NULL OR json_extract(value,'$.effective_end') > ?)",
+                    ]
+                )
+                parameters.extend([now, now])
+            where = " WHERE " + " AND ".join(clauses) if clauses else ""
             total, incomplete = db.execute(
                 "SELECT COUNT(*), COALESCE(SUM(CASE WHEN json_extract(value,'$.type') IS NULL OR json_extract(value,'$.type') NOT IN ('N','R','C') OR json_extract(value,'$.effective_start') IS NULL OR json_extract(value,'$.text') IS NULL OR (json_extract(value,'$.effective_end') IS NULL AND json_extract(value,'$.permanent')=0) THEN 1 ELSE 0 END),0) FROM current"
                 + where,
@@ -468,6 +492,9 @@ class NMSCache:
                 if s["published"] is not None
                 else "unavailable"
             ),
+            snapshot_id=self._snapshot(s),
+            requested_locations=requested,
+            matched_locations=sorted(want),
             incomplete_records=incomplete,
             environment=self.environment,
             production_data=self.environment == "production",
@@ -492,3 +519,23 @@ class NMSCache:
             limit=limit,
             notams=found,
         )
+
+    def _snapshot(self, state):
+        if state["published"] is None:
+            return None
+        return hashlib.sha256(
+            json.dumps([self.environment, state["published"], state["watermark"]]).encode()
+        ).hexdigest()
+
+    def detail(self, identifier):
+        if not isinstance(identifier, str) or not 1 <= len(identifier) <= 128:
+            raise ValueError("Invalid NMS notice identity")
+        with self.connection() as db:
+            state = self._state(db)
+            value = db.execute("SELECT value FROM current WHERE id=?", (identifier,)).fetchone()
+        if not value:
+            return None
+        row = normalize(json.loads(value[0])["feature"])
+        row["activity"] = activity(row, self.clock())
+        row["snapshot_id"] = self._snapshot(state)
+        return row
