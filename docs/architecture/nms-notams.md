@@ -141,6 +141,11 @@ It shows every loaded report's activity and missing-field states, original text
 previews and full-source detail/download actions. Input changes/unmount abort
 requests and prevent late responses from restoring the wrong airport. Source
 freshness ages locally without network polling. Source data is rendered as text.
+Only in-flight operations are aborted. Completed request ownership is released so
+later input changes or unmount do not abort a response the browser already consumed.
+Client body limits still cancel incomplete streams. Readers consumed to EOF are
+released without cancellation, so completed browser responses are not reported as
+aborted by response-stream cleanup.
 The existing Weather Briefing UI/HTTP text endpoint uses the same SDK report
 contract and preserves status, original full text, schedules and coverage warnings.
 

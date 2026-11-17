@@ -11,6 +11,10 @@
   worker install/start/stop/status commands with separate private credentials.
   Leaf worker imports defer web-router initialization so the read-only worker
   filesystem does not need unrelated flight-plan storage.
+  The NOTAM workspace releases completed fetch controllers, preventing canceled
+  request failures when a pilot changes location after reading a source notice.
+  Bounded SDK reads cancel incomplete streams and release completed readers
+  without canceling successful browser fetches.
 
 - Common service health: reject inherited JavaScript object names as statuses, preserving declared aliases and shared TypeScript/Python error contracts (#442).
 

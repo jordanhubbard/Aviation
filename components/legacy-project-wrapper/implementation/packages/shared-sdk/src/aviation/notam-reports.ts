@@ -240,10 +240,14 @@ async function json(response: Response, limit: number): Promise<unknown> {
   const chunks: string[] = [];
   let size = 0;
   const decoder = new TextDecoder("utf-8", { fatal: true });
+  let completed = false;
   try {
     for (;;) {
       const { done, value } = await reader.read();
-      if (done) break;
+      if (done) {
+        completed = true;
+        break;
+      }
       size += value.byteLength;
       if (size > limit)
         throw new Error("NOTAM service response exceeds the client limit");
@@ -252,7 +256,7 @@ async function json(response: Response, limit: number): Promise<unknown> {
     chunks.push(decoder.decode());
     return JSON.parse(chunks.join(""));
   } finally {
-    await reader.cancel().catch(() => undefined);
+    if (!completed) await reader.cancel().catch(() => undefined);
     reader.releaseLock();
   }
 }

@@ -168,12 +168,42 @@ describe("cached NMS report client", () => {
     expect(fetchFn).toHaveBeenCalledTimes(1);
   });
   it("bounds malformed or excessively large responses without source-body errors", async () => {
+    let cancelled = false;
     const client = new NotamReportsClient({
-      fetchFn: async () => new Response("X".repeat(2 * 1024 * 1024 + 1)),
+      fetchFn: async () =>
+        new Response(
+          new ReadableStream({
+            start(controller) {
+              controller.enqueue(new Uint8Array(2 * 1024 * 1024 + 1));
+            },
+            cancel() {
+              cancelled = true;
+            },
+          }),
+        ),
     });
     await expect(client.fetch(["KSFO"])).rejects.toThrow(
       "exceeds the client limit",
     );
+    expect(cancelled).toBe(true);
+  });
+  it("releases fully consumed response readers without cancelling a completed browser fetch", async () => {
+    const cancel = vi.spyOn(ReadableStreamDefaultReader.prototype, "cancel");
+    const release = vi.spyOn(
+      ReadableStreamDefaultReader.prototype,
+      "releaseLock",
+    );
+    try {
+      const client = new NotamReportsClient({
+        fetchFn: async () => response(nmsPage([])),
+      });
+      await client.fetch(["KSFO"]);
+      expect(cancel).not.toHaveBeenCalled();
+      expect(release).toHaveBeenCalledTimes(1);
+    } finally {
+      cancel.mockRestore();
+      release.mockRestore();
+    }
   });
   it("does not present a production success flag for staging", () => {
     expect(() =>

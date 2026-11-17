@@ -82,11 +82,13 @@ it('only reads when asked and renders original text, staging, missing fields and
 })
 it('clears old results when the airport changes and ignores a late response', async () => {
   let finish!: (value: Response) => void
+  let pendingSignal!: AbortSignal
   vi.stubGlobal(
     'fetch',
     vi.fn(
-      () =>
+      (_url: string, options?: RequestInit) =>
         new Promise<Response>((resolve) => {
+          pendingSignal = options!.signal!
           finish = resolve
         }),
     ),
@@ -98,11 +100,54 @@ it('clears old results when the airport changes and ignores a late response', as
   fireEvent.change(screen.getByLabelText('Airports / source locations'), {
     target: { value: 'KSFO' },
   })
+  expect(pendingSignal.aborted).toBe(true)
   await act(async () => {
     finish(new Response(JSON.stringify(page())))
   })
   expect(screen.queryByText(/Non-production NOTAM data/)).toBeNull()
   expect(screen.queryByText('<script>Source text</script>')).toBeNull()
+})
+it('releases completed list and detail requests before later navigation cancels active work', async () => {
+  const signals: AbortSignal[] = []
+  vi.stubGlobal(
+    'fetch',
+    vi.fn(async (url: string, options?: RequestInit) => {
+      signals.push(options!.signal!)
+      return new Response(
+        JSON.stringify(
+          String(url).includes('/detail?')
+            ? {
+                status: 'partial',
+                environment: 'staging',
+                production_data: false,
+                snapshot_id: 'a'.repeat(64),
+                source: page().source,
+                notice: page().notams[0],
+                source_feature: {
+                  type: 'Feature',
+                  properties: { coreNOTAMData: { notam: { id: 'NMS_TEST' } } },
+                },
+                warnings: [],
+              }
+            : page(),
+        ),
+      )
+    }),
+  )
+  const view = render(<NotamsPage />)
+  await read()
+  expect(signals[0].aborted).toBe(false)
+  await act(async () => {
+    fireEvent.click(screen.getByRole('button', { name: 'Source details' }))
+  })
+  expect(signals).toHaveLength(2)
+  expect(signals[0].aborted).toBe(false)
+  fireEvent.change(screen.getByLabelText('Airports / source locations'), {
+    target: { value: 'KSFO' },
+  })
+  expect(signals[1].aborted).toBe(false)
+  view.unmount()
+  expect(signals.every((signal) => !signal.aborted)).toBe(true)
 })
 it('locally ages freshness without network polling', async () => {
   vi.useFakeTimers()

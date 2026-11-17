@@ -76,7 +76,10 @@ export default function NotamsPage() {
       if (request.current === controller && !controller.signal.aborted)
         setError(e instanceof Error ? e.message : 'NOTAM request failed')
     } finally {
-      if (request.current === controller) setBusy(false)
+      if (request.current === controller) {
+        request.current = null
+        setBusy(false)
+      }
     }
   }
   async function read(notice: NotamNotice) {
@@ -98,7 +101,10 @@ export default function NotamsPage() {
         setError(e instanceof Error ? e.message : 'Source detail failed')
       }
     } finally {
-      if (request.current === controller) setBusy(false)
+      if (request.current === controller) {
+        request.current = null
+        setBusy(false)
+      }
     }
   }
   function download() {
