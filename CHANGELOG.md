@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Aircraft library: recognize PDF dotted leaders during numeric evidence checks, retaining exact quotations and negative signs so valid cited figures do not stall distillation.
+
 - Aircraft library: distinguish strictly rendered blank pages from unreadable content and support explicit, audited blank-scan review without replacing originals, passages, embeddings or saved summaries.
 
 - Synchronize shared aviation-data panels and source discovery with cache-backed FAA NMS status, snapshot-pinned notices and source detail.
