@@ -11,6 +11,8 @@ import json
 import os
 import signal
 import sys
+import math
+import hashlib
 
 from pypdf import PdfReader
 
@@ -46,15 +48,22 @@ def extract(data: bytes, *, ocr: bool = True) -> dict:
         if not 0 < count <= MAX_PAGES:
             raise PDFError(f"PDF must contain 1 to {MAX_PAGES} pages")
         labels = reader.page_labels
-        pages, total = [], 0
+        pages, total, blanks = [], 0, []
+        digest = hashlib.sha256(data).hexdigest()
         for number, page in enumerate(reader.pages, 1):
             error, method = None, "text"
             try:
                 text = page.extract_text(extraction_mode="layout") or ""
             except Exception:
                 text, error = "", "PDF text extraction failed"
+            # Verify only truly empty pages, before OCR. A failed render is unknown.
+            if not text.strip() and error is None:
+                verification = pure_white_page(data, number, source_page=page)
+                if verification is not None:
+                    method, text = "blank", ""
+                    blanks.append({"page": number, "source_sha256": digest, **verification})
             # Sparse pages may be title pages; record exactly what was recovered.
-            if len(text.strip()) < 30 and ocr:
+            if method != "blank" and len(text.strip()) < 30 and ocr:
                 try:
                     recovered = ocr_page(data, number)
                     if len(recovered.strip()) > len(text.strip()):
@@ -78,8 +87,9 @@ def extract(data: bytes, *, ocr: bool = True) -> dict:
                     "page": number,
                     "label": str(labels[number - 1]),
                     "text": text,
-                    "method": method if text.strip() else "missing",
-                    "error": error or (None if text.strip() else "No readable text"),
+                    "method": method if text.strip() or method == "blank" else "missing",
+                    "error": error
+                    or (None if text.strip() or method == "blank" else "No readable text"),
                 }
             )
         missing = [p["page"] for p in pages if p["error"] or p["method"] == "missing"]
@@ -88,6 +98,7 @@ def extract(data: bytes, *, ocr: bool = True) -> dict:
             "pages": pages,
             "page_count": count,
             "incomplete_pages": missing,
+            "blank_pages": blanks,
             "extractor": "pypdf-layout+pdfium-tesseract",
             "encryption": encryption,
             "characters": total,
@@ -96,6 +107,59 @@ def extract(data: bytes, *, ocr: bool = True) -> dict:
         raise
     except Exception as error:
         raise PDFError("Malformed or unsupported PDF") from error
+
+
+def pure_white_page(data: bytes, number: int, *, source_page=None) -> dict | None:
+    """A bounded exact-white render; never a low-ink or failed-OCR heuristic."""
+    try:
+        import pypdfium2 as pdfium
+
+        source = (
+            source_page if source_page is not None else PdfReader(BytesIO(data)).pages[number - 1]
+        )
+        contents = source.get_contents()
+        # A renderer may ignore malformed operators or quantize faint content.
+        # Never infer blankness from such a nonempty source stream.
+        if source.get("/Annots") or (contents is not None and contents.get_data().strip()):
+            return None
+        with pdfium.PdfDocument(data) as document:
+            page = document[number - 1]
+            try:
+                # Raster quantization can erase extremely faint objects. Restrict
+                # automatic classification to structurally empty pages as well.
+                # White images/scans still require explicit original-page review.
+                if (
+                    pdfium.raw.FPDFPage_CountObjects(page) != 0
+                    or pdfium.raw.FPDFPage_GetAnnotCount(page) != 0
+                ):
+                    return None
+                width, height = page.get_size()
+                if not all(math.isfinite(v) and v > 0 for v in (width, height)):
+                    return None
+                scale = min(2.5, (12_000_000 / (width * height)) ** 0.5)
+                if scale < 1:
+                    return None
+                bitmap = page.render(scale=scale, fill_color=(255, 255, 255, 255))
+                try:
+                    image = bitmap.to_pil().convert("RGB")
+                    if image.width * image.height > 12_000_000:
+                        return None
+                    if not all(lo == hi == 255 for lo, hi in image.getextrema()):
+                        return None
+                    return {
+                        "kind": "rendered_pure_white",
+                        "renderer": "pdfium",
+                        "scale": scale,
+                        "width": image.width,
+                        "height": image.height,
+                    }
+                finally:
+                    bitmap.close()
+            finally:
+                page.close()
+    except Exception:
+        # Optional renderer absence and all malformed/render-failure paths stay unknown.
+        return None
 
 
 def ocr_page(data: bytes, number: int) -> str:

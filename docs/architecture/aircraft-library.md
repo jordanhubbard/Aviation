@@ -180,3 +180,51 @@ The library UI offers explicit history loading and inspection for each document,
 shows the retained metadata and original identity alongside page-cited claims,
 and labels the record historical. History responses and private tokens remain in
 memory, clear on type/tail/key changes, and cannot reappear from a stale request.
+
+## Verified blank pages
+
+Empty extracted text remains unknown unless its blank state is verified. During
+new extraction a successful full-page PDFium render may establish a pure-white
+page only when the decoded source content streams are empty, it has no PDF
+content objects or annotations, and every RGB channel of every rendered pixel is exactly white, at
+least one pixel per PDF point and at most 12 million pixels. Preserve the physical
+page and printed label, use method `blank`, retain the renderer/classification
+provenance and contribute no passage or invented text. Non-white marks, sparse
+or faint text, graphics, oversized pages, rendering errors and failed OCR cannot
+automatically become blank. Original bytes remain immutable. Even visually white embedded images require explicit
+review; raster quantization must not silently erase extremely faint source objects.
+
+Existing scanned blank backs require explicit operator review. Authenticated,
+private/no-store `GET /api/aircraft-library/documents/{document_id}/blank-pages`
+returns bounded candidate/verified pages, original SHA, current extraction
+status and identity. Unprocessed/failed sources are explicitly unknown; zero
+candidates never establishes completed extraction. Readable text or indexed passages cannot be dismissed as blank.
+`POST .../blank-pages` accepts 1–100 distinct selected physical page numbers,
+expected original SHA and extraction identity, a named reviewer and an explicit
+attestation that the original pages were inspected and contain neither text nor
+graphics. No implicit selection, automatic review, background OCR, embedding or
+model call occurs. Unknown pages outside the selection remain incomplete.
+
+Validate the retained original bytes, compare-and-swap the source/extraction
+identity, reject queued/running work on the document, and admit the review,
+immutable audit record, old distillation context and updated blank page states
+in one lease-fenced transaction. Reject stale identities and active work with
+409; reject invalid selections and missing attestation rather than partially
+applying them. Preserve all readable page text, passage IDs, vectors and current
+summary sections. A blank-only review can make extraction complete; it does not
+relabel or declare an existing LLM summary complete. Only a subsequent explicit
+same-evidence distillation may resume its validated prefix.
+
+`GET .../blank-page-reviews` and `GET .../blank-page-reviews/{review_id}` expose
+bounded immutable review history and integrity-checked detail with before/after
+extraction identities, original identity, reviewed pages and reviewer/attestation.
+Reindexing retains audit records but never carries a manual blank classification
+into a new extraction implicitly. Historical summaries retain their earlier
+extraction context.
+
+The private library UI explicitly loads candidate pages and reviews, offers the
+retained original download, and requires individual page choices, reviewer and
+an unchecked attestation before saving. Render returned blank/unknown states and
+provenance, show the saved audit identity and keep unknowns visible. Clear review
+choices and stale requests on document/type/tail/key changes. No credentials,
+originals or review payloads enter persistent browser storage.

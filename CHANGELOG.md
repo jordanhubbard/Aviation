@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Aircraft library: distinguish strictly rendered blank pages from unreadable content and support explicit, audited blank-scan review without replacing originals, passages, embeddings or saved summaries.
+
 - Synchronize shared aviation-data panels and source discovery with cache-backed FAA NMS status, snapshot-pinned notices and source detail.
 
 

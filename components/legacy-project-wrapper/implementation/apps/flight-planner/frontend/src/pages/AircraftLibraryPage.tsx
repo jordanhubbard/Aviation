@@ -1,3 +1,4 @@
+import BlankPageReview from '../components/BlankPageReview'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import {
   Alert,
@@ -810,6 +811,17 @@ export default function AircraftLibraryPage() {
                         </Button>
                       ))}
                     </Stack>
+                    <BlankPageReview
+                      documentId={doc.id}
+                      sourceSha256={doc.sha256}
+                      locked={
+                        busy ||
+                        jobs.some((job) => activeJob(job) && job.subject?.document_id === doc.id)
+                      }
+                      request={request}
+                      download={() => download(doc)}
+                      onReviewed={refresh}
+                    />
                     <details>
                       <summary>Source history and applicability</summary>
                       <Typography variant="body2">

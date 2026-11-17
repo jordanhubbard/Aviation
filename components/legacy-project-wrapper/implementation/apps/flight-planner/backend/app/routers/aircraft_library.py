@@ -5,18 +5,20 @@ from __future__ import annotations
 from contextlib import asynccontextmanager
 import os
 import secrets
-from typing import Any, Literal
+from typing import Annotated, Any, Literal
 
 from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, Request, UploadFile
 from fastapi.responses import FileResponse
+from fastapi.exceptions import RequestValidationError
+from fastapi.exception_handlers import request_validation_exception_handler
 from fastapi.routing import APIRoute
 from fastapi.security import HTTPBearer
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, StrictBool
 from starlette.concurrency import run_in_threadpool
 
 from ..services.aircraft_library import pdf
 from ..services.aircraft_library.models import Models, ModelUnavailable, ask
-from ..services.aircraft_library.store import Store, metadata
+from ..services.aircraft_library.store import BlankReviewConflict, Store, metadata
 from ..services.aircraft_library.worker import Worker
 from ..services.aircraft_library.discovery import Search, validate_url
 
@@ -26,15 +28,21 @@ class PrivateRoute(APIRoute):
         handler = super().get_route_handler()
 
         async def guarded(request: Request):
+            private_headers = {
+                "Cache-Control": "private, no-store",
+                "X-Content-Type-Options": "nosniff",
+            }
             expected = os.environ.get("AIRCRAFT_LIBRARY_TOKEN", "")
             if len(expected) < 32:
-                raise HTTPException(503, "Aircraft library access is not configured")
+                raise HTTPException(
+                    503, "Aircraft library access is not configured", headers=private_headers
+                )
             supplied = request.headers.get("authorization", "")
             if not secrets.compare_digest(supplied.encode(), ("Bearer " + expected).encode()):
                 raise HTTPException(
                     401,
                     "Aircraft library credential required",
-                    headers={"WWW-Authenticate": "Bearer"},
+                    headers={**private_headers, "WWW-Authenticate": "Bearer"},
                 )
             limit = (
                 pdf.MAX_PDF_BYTES + 1_000_000
@@ -44,16 +52,23 @@ class PrivateRoute(APIRoute):
             body = bytearray()
             async for chunk in request.stream():
                 if len(body) + len(chunk) > limit:
-                    raise HTTPException(413, "Aircraft library request is too large")
+                    raise HTTPException(
+                        413, "Aircraft library request is too large", headers=private_headers
+                    )
                 body.extend(chunk)
             # Authenticate and bound the body before multipart parsing/spooling.
             request._body = bytes(body)
             try:
                 response = await handler(request)
+            except RequestValidationError as error:
+                response = await request_validation_exception_handler(request, error)
             except ValueError as error:
-                raise HTTPException(422, str(error)) from error
+                raise HTTPException(422, str(error), headers=private_headers) from error
             except ModelUnavailable as error:
-                raise HTTPException(503, str(error)) from error
+                raise HTTPException(503, str(error), headers=private_headers) from error
+            except HTTPException as error:
+                error.headers = {**(error.headers or {}), **private_headers}
+                raise
             response.headers["Cache-Control"] = "private, no-store"
             response.headers["X-Content-Type-Options"] = "nosniff"
             return response
@@ -101,6 +116,19 @@ class AcquisitionSource(BaseModel):
     provenance: dict[str, Any]
 
 
+class BlankVerification(BaseModel):
+    page: int
+    kind: Literal["rendered_pure_white", "operator_attested"]
+    source_sha256: str
+    renderer: str | None = None
+    scale: float | None = None
+    width: int | None = None
+    height: int | None = None
+    review_id: str | None = None
+    reviewer: str | None = None
+    recorded_at: str | None = None
+
+
 class Extraction(BaseModel):
     status: Literal["indexed", "partial"]
     page_count: int
@@ -108,6 +136,69 @@ class Extraction(BaseModel):
     extractor: str
     characters: int
     encryption: str | None = None
+    blank_pages: list[BlankVerification] = Field(default_factory=list)
+
+
+class BlankPageCandidate(BaseModel):
+    page: int
+    label: str
+    method: Literal["text", "ocr", "missing", "blank"]
+    error: str | None
+    reviewable: bool
+    verification: BlankVerification | None
+
+
+class BlankPageList(BaseModel):
+    extraction_status: Literal["stored", "indexed", "partial", "failed"]
+    document_id: str
+    source_sha256: str
+    index_identity: str
+    page_count: int
+    items: list[BlankPageCandidate]
+    total: int
+    limit: int
+    offset: int
+    next_offset: int | None
+
+
+class BlankReviewRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    expected_sha256: str = Field(pattern=r"^[a-f0-9]{64}$")
+    expected_index_identity: str = Field(pattern=r"^[a-f0-9]{64}$")
+    pages: list[Annotated[int, Field(strict=True, ge=1, le=pdf.MAX_PAGES)]] = Field(
+        min_length=1, max_length=100
+    )
+    reviewer: str = Field(min_length=1, max_length=200)
+    attest_no_text_or_graphics: StrictBool
+
+
+class BlankReviewSummary(BaseModel):
+    review_id: str
+    pages: list[int]
+    reviewer: str
+    recorded_at: str
+    integrity_sha256: str
+
+
+class BlankReviewRecord(BlankReviewSummary):
+    document_id: str
+    source_sha256: str
+    source_metadata: DocumentMetadata
+    before_index_identity: str
+    after_index_identity: str
+    page_labels: dict[str, str]
+    attest_no_text_or_graphics: Literal[True]
+    extraction_before: Extraction
+    extraction_after: Extraction
+
+
+class BlankReviewList(BaseModel):
+    document_id: str
+    items: list[BlankReviewSummary]
+    total: int
+    limit: int
+    offset: int
+    next_offset: int | None
 
 
 class DocumentRecord(BaseModel):
@@ -168,7 +259,7 @@ class DocumentPage(BaseModel):
     page: int
     label: str
     text: str
-    method: Literal["text", "ocr", "missing"]
+    method: Literal["text", "ocr", "missing", "blank"]
     error: str | None
 
 
@@ -348,6 +439,48 @@ def install(app, *, store=None, models=None, worker_enabled=True):
     @router.get("/documents/{document_id}", response_model=DocumentRecord)
     def document(document_id: str, current: Store = Depends(library)):
         return required(current, document_id)
+
+    @router.get("/documents/{document_id}/blank-pages", response_model=BlankPageList)
+    def blank_pages(
+        document_id: str,
+        limit: int = Query(100, ge=1, le=100),
+        offset: int = Query(0, ge=0, le=1_000_000),
+        current: Store = Depends(library),
+    ):
+        if current.get(document_id) is None:
+            raise HTTPException(404, "Document not found")
+        return current.blank_pages(document_id, limit=limit, offset=offset)
+
+    @router.post("/documents/{document_id}/blank-pages", response_model=BlankReviewRecord)
+    def review_blank_pages(
+        document_id: str, value: BlankReviewRequest, current: Store = Depends(library)
+    ):
+        if current.get(document_id) is None:
+            raise HTTPException(404, "Document not found")
+        try:
+            return current.review_blank_pages(document_id, value.model_dump())
+        except BlankReviewConflict as error:
+            raise HTTPException(409, str(error)) from error
+
+    @router.get("/documents/{document_id}/blank-page-reviews", response_model=BlankReviewList)
+    def blank_page_reviews(
+        document_id: str,
+        limit: int = Query(20, ge=1, le=100),
+        offset: int = Query(0, ge=0, le=1_000_000),
+        current: Store = Depends(library),
+    ):
+        if current.get(document_id) is None:
+            raise HTTPException(404, "Document not found")
+        return current.blank_page_reviews(document_id, limit=limit, offset=offset)
+
+    @router.get(
+        "/documents/{document_id}/blank-page-reviews/{review_id}", response_model=BlankReviewRecord
+    )
+    def blank_page_review(document_id: str, review_id: str, current: Store = Depends(library)):
+        value = current.blank_page_review(document_id, review_id)
+        if value is None:
+            raise HTTPException(404, "Blank-page review not found")
+        return value
 
     @router.get(
         "/documents/{document_id}/distillations",

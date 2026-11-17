@@ -321,11 +321,11 @@
           "medium": "sqlite-and-original-pdfs",
           "location": "AIRCRAFT_LIBRARY_DIR, default /app/data/aircraft-library",
           "schema": "SQLite user_version=1; SHA-256 originals and page-aware indexes",
-          "migration": "idempotent schema initialization and additive worker ownership / immutable distillation history tables; originals, vectors and existing artifacts retained",
+          "migration": "idempotent schema initialization and additive worker ownership / immutable distillation history tables; originals, vectors and existing artifacts retained; additive immutable blank-page reviews; original bytes, passages, vectors and current summaries retained",
           "backup": "stop the service and copy the complete private library directory, or use a consistent SQLite backup with originals",
           "rollback": "restore the complete private directory at a compatible schema version",
           "classification": "application-private-runtime-state",
-          "testOracle": "tests/test_aircraft_library.py original/persistence/association/queue acceptance; tests/test_distillation_history.py generation, invalidation, rollback, lease and API acceptance",
+          "testOracle": "tests/test_aircraft_library.py original/persistence/association/queue acceptance; tests/test_distillation_history.py generation, invalidation, rollback, lease and API acceptance; tests/test_aircraft_library_blank_pages.py source/extraction CAS, original integrity, atomic audit rollback and lease fencing",
           "evidence": [
             {
               "path": "apps/flight-planner/backend/app/services/aircraft_library/store.py",
@@ -334,7 +334,8 @@
                 "originals",
                 "metadata_history",
                 "CREATE TABLE IF NOT EXISTS jobs",
-                "CREATE TABLE IF NOT EXISTS distillation_history"
+                "CREATE TABLE IF NOT EXISTS distillation_history",
+                "CREATE TABLE IF NOT EXISTS blank_page_reviews"
               ]
             }
           ]
@@ -477,6 +478,28 @@
                 "setHistorical(null)",
                 "data-aviation-private",
                 "loadHistory"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "aircraft-library-blank-review",
+          "medium": "browser-process-memory",
+          "location": "BlankPageReview candidate pages, explicit selections, attestation and audit detail",
+          "schema": "source/extraction-bound typed bounded page and immutable review records",
+          "migration": "clear choices and pending results on document/source changes; parent clears on ICAO, registration and token changes",
+          "backup": "none; explicitly reload authenticated candidates and durable audit history",
+          "rollback": "reload or close the private view; no review state in browser storage",
+          "classification": "application-private-ephemeral-state",
+          "testOracle": "BlankPageReview.test.tsx explicit review, attestation, active work, stale mutation/pagination, history and delayed scope change",
+          "evidence": [
+            {
+              "path": "apps/flight-planner/frontend/src/components/BlankPageReview.tsx",
+              "contains": [
+                "setPreview(null)",
+                "setSelected([])",
+                "attest_no_text_or_graphics",
+                "data-aviation-private"
               ]
             }
           ]
