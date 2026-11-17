@@ -376,6 +376,9 @@ def retrieve(store: Store, models: Models, code: str, question: str, *, limit=12
 
 
 def numbers(text):
+    # Normalize comparison text only: PDF leaders are layout, not a decimal
+    # continuation. Keep the source quotation and the complete signed token.
+    text = re.sub(r"\.{3,}(?=-?\d)", " ", text.replace("\N{MINUS SIGN}", "-"))
     values = set()
     for number in re.findall(r"(?<![\w.])-?\d[\d,]*(?:\.\d+)?", text):
         try:
