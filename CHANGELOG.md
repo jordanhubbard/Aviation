@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Explanation tests: bind owned HTTP fixtures to the IPv4 loopback used by Supertest,
+  preserving authentication assertions and closing connections/listeners after failure (#507).
+
 - Flight Planner: serve offline-package and cockpit workspaces on cold direct
   loads and reloads from the packaged application (#493).
 

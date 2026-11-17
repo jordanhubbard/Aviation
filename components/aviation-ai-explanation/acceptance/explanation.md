@@ -10,6 +10,10 @@ Execute every case in [vectors.json](vectors.json) independently of a live model
    results, timestamps and optional model identities without exposing input values.
 4. Use a real local HTTP RCC fixture to verify authenticated submission, 202 handling
    and callback completion, including a callback arriving before queue acceptance.
+   Bind owned HTTP fixtures explicitly to the same loopback address used by their
+   clients; wildcard IPv6 listeners cannot establish IPv4 fixture ownership on
+   platforms that allow separate listeners at one port. Close owned listeners and
+   connections after both successful and failed assertions.
 5. Prove request access-token isolation, duplicate callback rejection, timeout,
    bounded capacity, submission failure and removal of all owned state on shutdown.
 6. Exercise the shared browser UI with explanations and follow-ups at desktop and
