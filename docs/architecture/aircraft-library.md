@@ -78,6 +78,10 @@ partial distillation. Private diagnostics include the cited signed numeric value
 so PDF hyphen/spacing differences can be corrected with faithful source forms or
 additional supporting excerpts. Negative measurements never gain absolute-value
 equivalence. Public errors never expose source text or numeric diagnostics.
+Physical PDF page ordinals stay in verified citation metadata; correction removes
+duplicate metadata-only page-locator wording from factual claims while preserving
+the actual document facts and their source references. Metadata page numbers never
+become support for otherwise uncited numeric assertions.
 
 Operators may configure model response read timeouts from 10 to 600 seconds,
 defaulting to 120 seconds; connection and pool acquisition remain bounded at

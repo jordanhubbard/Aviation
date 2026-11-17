@@ -551,6 +551,9 @@ def verified_completion(models, evidence, question):
                     "look like a signed number. Preserve exact original identifier punctuation and spacing, "
                     "or add separate supporting excerpts showing the compact form. Never change a negative "
                     "measurement into a positive one or invent an absolute-value equivalence. "
+                    "Physical PDF page ordinals are provenance locators already carried by verified "
+                    "citations, not facts printed in excerpts. Remove metadata-only page-locator wording "
+                    "from factual claims while retaining actual source facts, conditions and references. "
                     "Do not weaken or omit a supported fact merely to avoid selecting its supporting excerpt. "
                 )
                 feedback = {"validation_failure": str(error), "rejected_claims": failures}

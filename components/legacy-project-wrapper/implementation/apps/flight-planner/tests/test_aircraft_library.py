@@ -1292,6 +1292,32 @@ def test_correction_cannot_drop_or_replace_accepted_claims_to_complete_distillat
     assert len(bad["claims"]) == 2
 
 
+@pytest.mark.parametrize("correct", [True, False])
+def test_pdf_page_locator_stays_in_citation_instead_of_supporting_a_factual_number(store, correct):
+    document = put(store)
+    good, passage = provider_answer(store, document)
+    bad = json.loads(json.dumps(good))
+    bad["claims"][0]["text"] = f"PDF page {passage['page']}: " + good["claims"][0]["text"]
+    class Locating:
+        def __init__(self): self.prompts = []
+        def complete(self, evidence, question):
+            self.prompts.append(question)
+            if len(self.prompts) > 1:
+                assert 'metadata-only page-locator wording' in question
+                return good if correct else bad
+            return bad
+    model = Locating()
+    if correct:
+        answer = verified_completion(model, [passage], "Summarize")
+        assert answer["claims"][0]["text"] == good["claims"][0]["text"]
+        assert answer["claims"][0]["citations"][0]["page"] == passage["page"]
+        assert len(model.prompts) == 2
+    else:
+        with pytest.raises(ModelUnavailable, match="numeric values"):
+            verified_completion(model, [passage], "Summarize")
+        assert len(model.prompts) == 3
+
+
 @pytest.mark.parametrize("effort,budget,expected", [
     (None, None, {}), ("", "", {}), ("none", "4096", {"reasoning_effort": "none"}),
     (" LOW ", "8192", {"reasoning_effort": "low", "max_tokens": 8192}),
