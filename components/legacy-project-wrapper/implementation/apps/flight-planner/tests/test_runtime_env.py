@@ -56,3 +56,49 @@ def test_build_metadata_exposes_only_explicit_public_fields(monkeypatch, client)
     monkeypatch.delenv("REPO_URL")
     monkeypatch.delenv("GIT_SHA")
     assert client.get("/api/meta").json() == {"repo_url": None, "revision": None}
+
+
+def test_packaged_workspaces_support_cold_links_without_hiding_api_or_asset_errors(
+    monkeypatch, tmp_path
+):
+    backend = tmp_path / "backend"
+    static = backend / "static"
+    (static / "assets").mkdir(parents=True)
+    shell = "<html><body>Packaged planner shell</body></html>"
+    (static / "index.html").write_text(shell)
+    (static / "assets" / "probe.txt").write_text("static asset")
+    monkeypatch.setattr(application, "__file__", str(backend / "app" / "__init__.py"))
+    monkeypatch.delenv("AIRCRAFT_LIBRARY_TOKEN", raising=False)
+    with TestClient(application.create_app(settings)) as hosted:
+        for path in (
+            "/",
+            "/weather",
+            "/airports",
+            "/aircraft-library",
+            "/charts",
+            "/notams",
+            "/route-assessment",
+            "/offline",
+            "/cockpit",
+        ):
+            response = hosted.get(path)
+            assert response.status_code == 200, path
+            assert response.headers["content-type"].startswith("text/html"), path
+            assert response.text == shell, path
+        assert hosted.get("/assets/probe.txt").text == "static asset"
+        for path in ("/api/not-an-endpoint", "/assets/missing.js", "/unknown-workspace"):
+            response = hosted.get(path)
+            assert response.status_code == 404, path
+            assert response.text != shell, path
+        schema = hosted.get("/api/openapi.json").json()
+        assert "/offline" not in schema["paths"]
+        assert "/cockpit" not in schema["paths"]
+
+
+def test_api_only_factory_does_not_claim_missing_frontend_artifacts(monkeypatch, tmp_path):
+    monkeypatch.setattr(application, "__file__", str(tmp_path / "backend" / "app" / "__init__.py"))
+    monkeypatch.delenv("AIRCRAFT_LIBRARY_TOKEN", raising=False)
+    with TestClient(application.create_app(settings)) as hosted:
+        assert hosted.get("/api/health").status_code == 200
+        assert hosted.get("/offline").status_code == 404
+        assert hosted.get("/cockpit").status_code == 404
