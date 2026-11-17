@@ -13,8 +13,8 @@
   filesystem does not need unrelated flight-plan storage.
   The NOTAM workspace releases completed fetch controllers, preventing canceled
   request failures when a pilot changes location after reading a source notice.
-  Bounded SDK reads cancel incomplete streams and release completed readers
-  without canceling successful browser fetches.
+  Bounded SDK reads count bytes before consuming a native response clone, and
+  cancel both branches on incomplete reads to preserve browser request completion.
 
 - Common service health: reject inherited JavaScript object names as statuses, preserving declared aliases and shared TypeScript/Python error contracts (#442).
 

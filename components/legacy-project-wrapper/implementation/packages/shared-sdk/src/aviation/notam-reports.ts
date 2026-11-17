@@ -235,11 +235,12 @@ async function json(response: Response, limit: number): Promise<unknown> {
     throw new Error("NOTAM snapshot changed; reload the reports");
   if (!response.ok)
     throw new Error(`NOTAM service unavailable (HTTP ${response.status})`);
+  // Count before buffering the native response clone. Consuming only a manual
+  // reader can leave a completed Chromium fetch reported as aborted.
+  const buffered = response.clone();
   const reader = response.body?.getReader();
   if (!reader) fail();
-  const chunks: string[] = [];
   let size = 0;
-  const decoder = new TextDecoder("utf-8", { fatal: true });
   let completed = false;
   try {
     for (;;) {
@@ -251,12 +252,12 @@ async function json(response: Response, limit: number): Promise<unknown> {
       size += value.byteLength;
       if (size > limit)
         throw new Error("NOTAM service response exceeds the client limit");
-      chunks.push(decoder.decode(value, { stream: true }));
     }
-    chunks.push(decoder.decode());
-    return JSON.parse(chunks.join(""));
+    const bytes = await buffered.arrayBuffer();
+    return JSON.parse(new TextDecoder("utf-8", { fatal: true }).decode(bytes));
   } finally {
-    if (!completed) await reader.cancel().catch(() => undefined);
+    if (!completed)
+      await Promise.allSettled([reader.cancel(), buffered.body?.cancel()]);
     reader.releaseLock();
   }
 }

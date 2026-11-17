@@ -205,6 +205,26 @@ describe("cached NMS report client", () => {
       release.mockRestore();
     }
   });
+  it("preserves Unicode split across response chunks and rejects invalid UTF-8", async () => {
+    const row = nmsNotice({ text: "RWY fermé — 雨" });
+    const bytes = new TextEncoder().encode(JSON.stringify(nmsPage([row])));
+    const client = new NotamReportsClient({
+      fetchFn: async () =>
+        new Response(
+          new ReadableStream({
+            start(controller) {
+              for (const byte of bytes) controller.enqueue(Uint8Array.of(byte));
+              controller.close();
+            },
+          }),
+        ),
+    });
+    expect((await client.fetch(["KSFO"])).notams[0].text).toBe(row.text);
+    const invalid = new NotamReportsClient({
+      fetchFn: async () => new Response(Uint8Array.of(0xff)),
+    });
+    await expect(invalid.fetch(["KSFO"])).rejects.toThrow();
+  });
   it("does not present a production success flag for staging", () => {
     expect(() =>
       validateNotamPage(nmsPage([], { environment: "staging" })),
