@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Aircraft library: constrain structured correction responses to the required replacement count while retaining full evidence validation and per-request schema isolation.
+
 - Aircraft library: preserve complete signed thousands values when PDF extraction inserts horizontal spaces before grouping commas, without joining comma-space lists or rewriting source quotations.
 
 - Aircraft library: recognize attached footnote delay values when the same cited excerpt contains their matching numeric reference, preserving exact quotes and signed limits.

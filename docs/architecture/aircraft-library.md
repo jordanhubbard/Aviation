@@ -49,6 +49,16 @@ document extraction adds a coverage warning without relabeling successful hybrid
 retrieval as full-text fallback. Embedding failures or absent matching vectors
 still report full-text fallback with their own warning.
 
+When a structured JSON-schema provider corrects rejected claim positions, its
+request schema requires exactly that many replacement claims and false
+insufficient-evidence status, matching the existing replacement protocol. Use a
+private per-request schema copy: initial answers, configured generation identity,
+shared schema and concurrent requests remain unchanged. Plain JSON providers and
+custom providers implementing only the two-argument completion protocol retain
+the existing prompt-based correction path. Provider noncompliance still fails
+the exact replacement-count check; every replacement and retained claim must pass
+the complete source and numeric validator within the same correction budget.
+
 Model evidence supplies deterministic indexed contiguous excerpts, each at most
 1,007 characters, covering the complete original passage without dropping text.
 The `indexed-excerpts-v2` provider format omits the top-level physical PDF `page`

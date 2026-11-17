@@ -3,7 +3,9 @@
 from __future__ import annotations
 
 import json
+import copy
 import hashlib
+import inspect
 import math
 import os
 from decimal import Decimal, InvalidOperation
@@ -258,9 +260,33 @@ class Models:
             self._last_completion = self._clock()
             return self.post("/chat/completions", payload)
 
-    def complete(self, evidence, question):
+    def complete_replacements(self, evidence, question, count):
+        if type(count) is not int or not 1 <= count <= 12:
+            raise ValueError("Correction requires one to twelve replacement claims")
+        # Legacy completion adapters accept only two arguments. Inspect before
+        # invoking them; catching TypeError afterward could duplicate a request.
+        try:
+            inspect.signature(self.complete).bind(evidence, question, replacement_count=count)
+        except (TypeError, ValueError):
+            return self.complete(evidence, question)
+        return self.complete(evidence, question, replacement_count=count)
+
+    def complete(self, evidence, question, *, replacement_count=None):
         if not self.model:
             raise ModelUnavailable("Configure AIRCRAFT_LIBRARY_LLM_MODEL")
+        if replacement_count is not None and (
+            type(replacement_count) is not int or not 1 <= replacement_count <= 12
+        ):
+            raise ValueError("Correction requires one to twelve replacement claims")
+        options = self.generation_options
+        if (
+            replacement_count is not None
+            and options.get("response_format", {}).get("type") == "json_schema"
+        ):
+            options = copy.deepcopy(options)
+            properties = options["response_format"]["json_schema"]["schema"]["properties"]
+            properties["claims"].update(minItems=replacement_count, maxItems=replacement_count)
+            properties["insufficient_evidence"]["enum"] = [False]
         result = self._completion_post(
             {
                 "model": self.model,
@@ -276,7 +302,7 @@ class Models:
                         ),
                     },
                 ],
-                **self.generation_options,
+                **options,
             },
         )
         try:
@@ -689,7 +715,11 @@ def verified_completion(models, evidence, question, *, max_attempts=3, trace_con
     repair_base, repair_positions = None, None
     for attempt in range(max_attempts):
         try:
-            response = models.complete(evidence, prompt)
+            replacements = getattr(models, "complete_replacements", None)
+            if repair_positions is not None and callable(replacements):
+                response = replacements(evidence, prompt, len(repair_positions))
+            else:
+                response = models.complete(evidence, prompt)
         except ModelTruncated as error:
             _trace_rejection(
                 models,
