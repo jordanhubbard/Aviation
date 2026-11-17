@@ -92,10 +92,15 @@ def load_manifest() -> tuple[dict, list[dict]]:
             raise ValueError(f"invalid memory limit for {name}")
         if not (IMPLEMENTATION / "apps" / name / "Dockerfile").is_file():
             raise ValueError(f"missing Dockerfile for {name}")
-        for volume in app.get("volumes", []):
+        volumes = app.get("volumes", []) + app.get("readonly_volumes", [])
+        destinations = set()
+        for volume in volumes:
             source, dest = volume.split(":", 1)
             if not re.fullmatch(r"[a-z0-9-]+", source) or not dest.startswith("/") or ".." in dest:
                 raise ValueError(f"unsafe volume for {name}: {volume}")
+            if dest in destinations:
+                raise ValueError(f"duplicate mount destination for {name}: {dest}")
+            destinations.add(dest)
         if ('websocket_port' in app) != ('container_websocket_port' in app):
             raise ValueError('WebSocket publication requires both host and container ports')
         if 'websocket_port' in app:
@@ -216,6 +221,9 @@ def render(app: dict, revision: str, dest: Path) -> None:
     for volume in app.get("volumes", []):
         source, target = volume.split(":", 1)
         docker_args += ["--mount", f"type=bind,src=/var/lib/aviation/{name}/{source},dst={target}"]
+    for volume in app.get("readonly_volumes", []):
+        source, target = volume.split(":", 1)
+        docker_args += ["--mount", f"type=bind,src=/var/lib/aviation/{name}/{source},dst={target},readonly"]
     docker_args.append(image)
     unit = f"""[Unit]
 Description=Aviation {name}
@@ -241,7 +249,139 @@ WantedBy=multi-user.target
     caddy = f"{hostname}.{domain} {{\n\tencode zstd gzip\n\theader Alt-Svc clear\n\treverse_proxy 127.0.0.1:{gateway_port}\n}}\n"
     (dest / "service.unit").write_text(unit)
     (dest / "site.caddy").write_text(caddy)
-    (dest / "volumes.txt").write_text("\n".join(v.split(":", 1)[0] for v in app.get("volumes", [])) + "\n")
+    volumes = app.get("volumes", []) + app.get("readonly_volumes", [])
+    (dest / "volumes.txt").write_text("\n".join(sorted({v.split(":", 1)[0] for v in volumes})) + "\n")
+
+
+def nms_unit_name(environment: str) -> str:
+    if environment not in {"production", "staging", "fit"}:
+        raise ValueError("select an explicit NMS environment")
+    return f"aviation-nms-worker-{environment}"
+
+
+def render_nms_worker(environment: str, revision: str) -> str:
+    name = nms_unit_name(environment)
+    if not re.fullmatch(r"[a-f0-9]{40}", revision):
+        raise ValueError("NMS worker requires an immutable Git revision")
+    args = [
+        "/usr/bin/docker", "run", "--rm", "--name", name,
+        "--pull", "never", "--memory", "2048m", "--memory-swap", "4096m",
+        "--cap-drop", "ALL", "--security-opt", "no-new-privileges",
+        "--read-only", "--tmpfs", "/tmp:rw,noexec,nosuid,size=32m",
+        "--env-file", f"/etc/aviation/nms-{environment}.env",
+        "--env", f"FAA_NMS_ENVIRONMENT={environment}",
+        "--env", "FAA_NMS_CACHE_DIR=/app/nms",
+        "--mount", f"type=bind,src=/var/lib/aviation/flight-planner/nms/{environment},dst=/app/nms",
+        "--entrypoint", "/opt/venv/bin/python",
+        image_name({"name": "flight-planner"}, revision),
+        "-m", "app.services.nms_worker",
+    ]
+    return f"""[Unit]
+Description=Aviation NMS {environment} ingestion worker
+Requires=docker.service
+After=docker.service network-online.target
+StartLimitIntervalSec=300
+StartLimitBurst=3
+
+[Service]
+Type=simple
+ExecStartPre=/usr/bin/test -s /etc/aviation/nms-{environment}.env
+ExecStartPre=-/usr/bin/docker rm -f {name}
+ExecStart={shlex.join(args)}
+ExecStop=/usr/bin/docker stop -t 15 {name}
+Restart=on-failure
+RestartSec=15
+TimeoutStartSec=0
+TimeoutStopSec=30
+
+[Install]
+WantedBy=multi-user.target
+"""
+
+
+def nms_host_script(action: str, environment: str, unit: str = "") -> str:
+    """Root-only operator script; never embeds or prints credential values."""
+    name = nms_unit_name(environment)
+    if action not in {"install", "start", "stop", "status"}:
+        raise ValueError("invalid NMS worker action")
+    # Values are data literals in Python, not interpolated shell fragments.
+    return f"""import os,stat,subprocess,tempfile
+from pathlib import Path
+action={action!r}
+name={name!r}
+environment={environment!r}
+unit={unit!r}
+def run(*argv):
+    return subprocess.run(argv,check=True)
+target=Path('/etc/systemd/system')/(name+'.service')
+if action=='install':
+    if not unit:
+        raise RuntimeError('Missing worker unit')
+    state=subprocess.run(['systemctl','is-active',name],capture_output=True,text=True).stdout.strip()
+    if state not in {{'inactive','failed','unknown'}}:
+        raise RuntimeError('Stop the owned worker before replacing its unit')
+    root=Path('/var/lib/aviation/flight-planner/nms')
+    cache=root/environment
+    for path in [root.parent,root,cache]:
+        if path.is_symlink():
+            raise RuntimeError('NMS cache directories must not be symlinks')
+        path.mkdir(parents=True,exist_ok=True,mode=0o700)
+    cache.chmod(0o700)
+    if target.is_symlink():
+        raise RuntimeError('Preserve unexpected worker unit symlink')
+    previous=target.read_bytes() if target.exists() else None
+    previous_mode=target.stat().st_mode & 0o777 if previous is not None else None
+    def replace(data,mode=0o644):
+        fd,temp=tempfile.mkstemp(prefix='.'+name,dir=target.parent)
+        try:
+            with os.fdopen(fd,'wb') as stream:
+                stream.write(data);stream.flush();os.fsync(stream.fileno())
+            os.chmod(temp,mode)
+            os.replace(temp,target)
+        finally:
+            if os.path.exists(temp):os.unlink(temp)
+    try:
+        replace(unit.encode())
+        run('systemctl','daemon-reload')
+    except BaseException:
+        if previous is None:target.unlink(missing_ok=True)
+        else:replace(previous,previous_mode)
+        subprocess.run(['systemctl','daemon-reload'])
+        raise
+    print('Installed '+name+'; no worker was started or newly enabled')
+elif action=='start':
+    path=Path('/etc/aviation')/('nms-'+environment+'.env')
+    metadata=path.lstat()
+    if not stat.S_ISREG(metadata.st_mode) or metadata.st_uid!=0 or stat.S_IMODE(metadata.st_mode)!=0o600:
+        raise RuntimeError('Worker credential file must be a root-owned regular file with mode 0600')
+    values={{}}
+    for line in path.read_text().splitlines():
+        if not line.strip() or line.lstrip().startswith('#'):continue
+        key,separator,value=line.partition('=')
+        if not separator or key not in {{'FAA_NMS_CLIENT_ID','FAA_NMS_CLIENT_SECRET'}} or key in values or not value or any(c.isspace() or ord(c)<32 for c in value) or value[0] in {{chr(34),chr(39)}}:
+            raise RuntimeError('Invalid worker credential file; use only the two unquoted credential assignments')
+        values[key]=value
+    if set(values)!={{'FAA_NMS_CLIENT_ID','FAA_NMS_CLIENT_SECRET'}}:
+        raise RuntimeError('Both distinct FAA worker credentials are required')
+    run('systemctl','enable','--now',name)
+    run('systemctl','is-active',name)
+elif action=='stop':
+    run('systemctl','disable','--now',name)
+else:
+    run('systemctl','show',name,'--property=LoadState,ActiveState,SubState,UnitFileState,FragmentPath')
+"""
+
+
+def nms_worker(config: dict, apps: list[dict], action: str, environment: str, host: str) -> None:
+    nms_unit_name(environment)
+    unit = ""
+    if action == "install":
+        revision = committed_revision()
+        app = next(item for item in apps if item["name"] == "flight-planner")
+        prepare_remote_image(config, app, revision, host)
+        unit = render_nms_worker(environment, revision)
+    script = nms_host_script(action, environment, unit)
+    subprocess.run(["ssh", host, "sudo", "-n", "python3", "-"], input=script, text=True, check=True)
 
 
 def ship_image(host: str, image: str) -> None:
@@ -394,14 +534,20 @@ def verify(config: dict, apps: list[dict], host: str) -> None:
 
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("command", choices=("list", "check", "matrix", "build", "dns", "deploy", "verify", "ingress"))
+    parser.add_argument("command", choices=("list", "check", "matrix", "build", "dns", "deploy", "verify", "ingress",
+                                          "nms-worker-install", "nms-worker-start", "nms-worker-stop", "nms-worker-status"))
     parser.add_argument("--app", default="all")
+    parser.add_argument("--environment", choices=("production", "staging", "fit"))
     parser.add_argument("--ssh-host", default="jkh@146.190.134.110")
     parser.add_argument("--token-file", type=Path, default=Path(os.environ.get("DIGITALOCEAN_TOKEN_FILE", "")))
     args = parser.parse_args()
     config, all_apps = load_manifest()
     apps = selected(all_apps, args.app)
-    if args.command == "list":
+    if args.command.startswith('nms-worker-'):
+        if not args.environment or args.app not in {'all', 'flight-planner'}:
+            parser.error('NMS worker commands require --environment and apply only to Flight Planner')
+        nms_worker(config, all_apps, args.command.removeprefix('nms-worker-'), args.environment, args.ssh_host)
+    elif args.command == "list":
         for app in apps:
             print(f"{app['name']:28} {app.get('hostname', app['name'])}.{config['domain']:20} {app['port']} {app['health']}")
     elif args.command == "check":

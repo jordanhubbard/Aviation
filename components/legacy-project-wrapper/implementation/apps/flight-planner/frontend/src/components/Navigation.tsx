@@ -60,6 +60,7 @@ const Navigation: React.FC = () => {
         aria-label="Navigation tabs"
       >
         <Tab label="Aircraft library" value="/aircraft-library" aria-label="Aircraft document library" />
+        <Tab label="NOTAMs" value="/notams" />
         <Tab label="Route assessment" value="/route-assessment" />
         <Tab
           icon={<Flight />}

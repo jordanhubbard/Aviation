@@ -1,14 +1,5 @@
-/**
- * NOTAM (Notice to Airmen) Integration
- *
- * Real client for the FAA NOTAM Search API (api.faa.gov/notams).
- * API key is loaded from the @aviation/keystore (service='faa', key='notam_api_key')
- * or from the FAA_NOTAM_API_KEY environment variable.
- *
- * FAA API docs: https://api.faa.gov/s/article/NOTAM-Search-Service-API-Key-Request
- *
- * @module @aviation/shared-sdk/aviation/notam
- */
+/** Portable NOTAM helpers and compatibility access to the cached NMS service. */
+import { NotamReportsClient, type NotamBriefing } from './notam-reports.js';
 
 export interface NOTAM {
   id: string;
@@ -163,83 +154,39 @@ export interface FaaNotamApiItem {
 
 /** Options for NotamClient constructor */
 export interface NotamClientOptions {
-  /** FAA NOTAM API base URL (overridable for testing) */
+  /** Cached Aviation NOTAM service URL (never the FAA origin). */
   baseUrl?: string;
-  /** FAA API key. Falls back to FAA_NOTAM_API_KEY env var. */
+  /** @deprecated Ignored. FAA credentials belong only to the server worker. */
   apiKey?: string;
   /** Injected fetch function (defaults to global fetch) */
   fetchFn?: typeof fetch;
 }
 
-/**
- * Client for the FAA NOTAM Search API.
- *
- * Usage:
- *   const client = new NotamClient({ apiKey: process.env.FAA_NOTAM_API_KEY });
- *   const notams = await client.fetchByIcao('KSFO');
+/** Compatibility client for the cached Aviation NOTAM service.
+ * Use fetchReportsByIcao to preserve permanent/unknown/source-status semantics.
+ * API keys are ignored; only the worker authenticates directly to FAA.
  */
 export class NotamClient {
-  private baseUrl: string;
-  private apiKey: string;
-  private fetchFn: typeof fetch;
-
-  constructor(opts: NotamClientOptions = {}) {
-    this.baseUrl = opts.baseUrl ?? 'https://external-api.faa.gov/notamapi/v1/notams';
-    this.apiKey = opts.apiKey ?? process.env.FAA_NOTAM_API_KEY ?? '';
-    this.fetchFn = opts.fetchFn ?? fetch;
+  private readonly reports: NotamReportsClient;
+  constructor(options: NotamClientOptions = {}) { this.reports = new NotamReportsClient(options); }
+  async fetchReportsByIcao(icao: string): Promise<NotamBriefing> { return this.reports.fetch([icao]); }
+  async fetchByIcao(icao: string, radiusNm = 0): Promise<NOTAM[]> {
+    if (radiusNm !== 0) throw new Error('Cached NOTAM location matching does not establish radius coverage');
+    return this.project(await this.fetchReportsByIcao(icao));
   }
-
-  /**
-   * Fetch NOTAMs for a single ICAO location code.
-   * Returns an empty array (not an error) when no NOTAMs are found.
-   * Throws on HTTP errors so callers can decide how to handle them.
-   */
-  async fetchByIcao(icao: string, radiusNm: number = 0): Promise<NOTAM[]> {
-    const params = new URLSearchParams({
-      icaoLocation: icao.toUpperCase(),
-      ...(radiusNm > 0 ? { radius: String(Math.round(radiusNm)) } : {}),
-      pageSize: '100',
-      pageNum: '1',
+  async fetchForRoute(icaos: string[]): Promise<NOTAM[]> { return this.project(await this.reports.fetch(icaos)); }
+  private project(reports: NotamBriefing): NOTAM[] {
+    if (!reports.production_data || !reports.complete_snapshot || !['available', 'no_reports'].includes(reports.status))
+      throw new Error('Current complete production NOTAM reports required; use fetchReportsByIcao for explicit source status');
+    return reports.notams.map(row => {
+      if (!row.type || !row.text || !row.icao_location || !row.effective_start_utc || !row.effective_end_utc || row.permanent || row.missing_fields.length)
+        throw new Error('NOTAM source cannot fit the legacy dated shape; use fetchReportsByIcao');
+      return normalizeNotamRecord({ id: row.id, type: row.type, location: row.icao_location,
+        facilityType: 'UNKNOWN', classification: row.classification, text: row.text,
+        effectiveStart: row.effective_start_utc, effectiveEnd: row.effective_end_utc });
     });
-
-    const url = `${this.baseUrl}?${params.toString()}`;
-    const res = await this.fetchFn(url, {
-      headers: {
-        client_id: this.apiKey,
-        client_secret: this.apiKey,
-        Accept: 'application/json',
-      },
-    });
-
-    if (!res.ok) {
-      throw new Error(`FAA NOTAM API error: HTTP ${res.status} for ${icao}`);
-    }
-
-    const json = (await res.json()) as { items?: FaaNotamApiItem[] };
-    return (json.items ?? []).map((item) => parseNotamItem(item));
-  }
-
-  /**
-   * Fetch NOTAMs for multiple ICAO codes (e.g., all airports on a route).
-   * Results are de-duplicated by NOTAM id.
-   */
-  async fetchForRoute(icaos: string[]): Promise<NOTAM[]> {
-    const results = await Promise.all(icaos.map((icao) => this.fetchByIcao(icao)));
-    const seen = new Set<string>();
-    const merged: NOTAM[] = [];
-    for (const batch of results) {
-      for (const notam of batch) {
-        if (!seen.has(notam.id)) {
-          seen.add(notam.id);
-          merged.push(notam);
-        }
-      }
-    }
-    return merged;
   }
 }
-
-// ─── Parsing helpers ─────────────────────────────────────────────────────────
 
 /**
  * Parse a raw FAA NOTAM API item into our canonical NOTAM shape.
@@ -498,38 +445,10 @@ export async function fetchMockNotams(icao: string): Promise<NOTAM[]> {
   return mockNotams;
 }
 
-/**
- * Fetch NOTAMs via the real FAA NOTAM Search API.
- *
- * If no API key is configured the call is attempted anyway (the FAA API may
- * allow unauthenticated requests up to a rate limit).  Configure the key via:
- *   - FAA_NOTAM_API_KEY environment variable, OR
- *   - @aviation/keystore  service='faa'  key='notam_api_key'
- *
- * Falls back to mock data when the API call fails and no key is present, so
- * development without credentials still works.
- */
-export async function fetchNotams(
-  params: NotamSearchParams,
-  opts: NotamClientOptions = {}
-): Promise<NOTAM[]> {
-  const client = new NotamClient(opts);
-
-  if (params.icao) {
-    try {
-      return await client.fetchByIcao(params.icao, params.radius);
-    } catch (err) {
-      // No API key in dev environment: fall back to mock data with a warning
-      if (!opts.apiKey && !process.env.FAA_NOTAM_API_KEY) {
-        console.warn(
-          `[NOTAM] FAA API call failed (no key configured) — using mock data for ${params.icao}. ` +
-            'Set FAA_NOTAM_API_KEY to enable live data.'
-        );
-        return fetchMockNotams(params.icao);
-      }
-      throw err;
-    }
-  }
-
-  return [];
+/** Compatibility helper. Failures remain unavailable; samples require an explicit call. */
+export async function fetchNotams(params: NotamSearchParams, opts: NotamClientOptions = {}): Promise<NOTAM[]> {
+  if (params.latitude !== undefined || params.longitude !== undefined || params.startDate || params.endDate)
+    throw new Error('Location matching does not establish geographic or time-window NOTAM coverage');
+  if (!params.icao) return [];
+  return new NotamClient(opts).fetchByIcao(params.icao, params.radius);
 }

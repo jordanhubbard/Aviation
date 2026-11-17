@@ -3,37 +3,6 @@ import json
 import os
 from pathlib import Path
 
-from fastapi import FastAPI, Request
-from fastapi.responses import FileResponse, JSONResponse, Response
-from aviation.e2e import verify_e2e_headers
-from .e2e import RUN_ID as E2E_RUN_ID, SECRET as E2E_SECRET
-from fastapi.staticfiles import StaticFiles
-from .routers.flight_plan import router as flight_plan_router
-from .services.alert_manager import AlertManager
-from .services.websocket_protocol import WebSocketProtocol, MessageType
-from .services.flight_recording_service import router as flight_recording_router
-from .services.hardware_integration import HardwareIntegrationService
-from .services.envelope_protection import EnvelopeProtection
-from .services.gps_simulation import GPSSimulationService, GPSState
-from .services.telemetry_recording import TelemetryRecordingService, TelemetrySnapshot
-from .services.telemetry_streaming_hub import TelemetryStreamingHub
-from .services.approaches import ApproachProcedure, ApproachType, ApproachCategory, Waypoint, MissedApproachAction
-from .routes.alerts import router as alerts_router
-from .routers.settings import router as settings_router
-from .routers.explain import router as explain_router
-from .routers.health import router as health_router
-from .routers.route import router as route_router
-from .routers.plan import router as plan_router
-from .routers.weather import router as weather_router
-from .routers.airports import router as airports_router
-from .routers.airspace import router as airspace_router
-from .routers.terrain import router as terrain_router
-from .routers.issues import router as issues_router
-from .routers.local import router as local_router
-from .routers.ga import router as ga_router
-from .routers.aviation_data import router as aviation_data_router
-from .routers.route_assessment import router as route_assessment_router
-from fastapi import WebSocket, WebSocketDisconnect
 
 
 def create_app(settings):
@@ -45,6 +14,40 @@ def create_app(settings):
     Returns:
         Configured FastAPI application instance
     """
+    # Leaf service entrypoints must not boot unrelated web storage or routers.
+    from fastapi import FastAPI, Request
+    from fastapi.responses import FileResponse, JSONResponse, Response
+    from aviation.e2e import verify_e2e_headers
+    from .e2e import RUN_ID as E2E_RUN_ID, SECRET as E2E_SECRET
+    from fastapi.staticfiles import StaticFiles
+    from .routers.flight_plan import router as flight_plan_router
+    from .services.alert_manager import AlertManager
+    from .services.websocket_protocol import WebSocketProtocol, MessageType
+    from .services.flight_recording_service import router as flight_recording_router
+    from .services.hardware_integration import HardwareIntegrationService
+    from .services.envelope_protection import EnvelopeProtection
+    from .services.gps_simulation import GPSSimulationService, GPSState
+    from .services.telemetry_recording import TelemetryRecordingService, TelemetrySnapshot
+    from .services.telemetry_streaming_hub import TelemetryStreamingHub
+    from .services.approaches import ApproachProcedure, ApproachType, ApproachCategory, Waypoint, MissedApproachAction
+    from .routes.alerts import router as alerts_router
+    from .routers.settings import router as settings_router
+    from .routers.explain import router as explain_router
+    from .routers.health import router as health_router
+    from .routers.route import router as route_router
+    from .routers.plan import router as plan_router
+    from .routers.weather import router as weather_router
+    from .routers.airports import router as airports_router
+    from .routers.airspace import router as airspace_router
+    from .routers.terrain import router as terrain_router
+    from .routers.issues import router as issues_router
+    from .routers.local import router as local_router
+    from .routers.ga import router as ga_router
+    from .routers.aviation_data import router as aviation_data_router
+    from .routers.route_assessment import router as route_assessment_router
+    from .routers.notams import install as install_notams
+    from fastapi import WebSocket, WebSocketDisconnect
+
     app = FastAPI(
         docs_url=None,
         redoc_url=None,
@@ -132,6 +135,7 @@ def create_app(settings):
     install_aircraft_library(app)
     app.include_router(route_assessment_router, prefix="/api")
     app.include_router(ga_router, prefix="/api")
+    install_notams(app)
     app.include_router(health_router, prefix="/api", tags=["health"])
     app.include_router(route_router, prefix="/api", tags=["route"])
     app.include_router(plan_router, prefix="/api", tags=["plan"])
@@ -228,6 +232,7 @@ def create_app(settings):
     if (static_root / "index.html").is_file():
         @app.get("/", include_in_schema=False)
         @app.get("/weather", include_in_schema=False)
+        @app.get("/notams", include_in_schema=False)
         @app.get("/route-assessment", include_in_schema=False)
         @app.get("/airports", include_in_schema=False)
         @app.get("/aircraft-library", include_in_schema=False)

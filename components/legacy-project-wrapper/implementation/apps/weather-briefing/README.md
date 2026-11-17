@@ -87,3 +87,15 @@ stale selections and desktop/mobile rendering. Browser tests isolate third-party
 map/CDN behavior; deployment lifecycle tests use the real map assets and signed
 run fixtures. CI installs Chromium; local verification can set
 `PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH` to an existing browser.
+
+
+### NOTAM source
+
+Briefings now use the shared cached NMS report client, not direct FAA key/secret
+headers. `AVIATION_NOTAM_API_BASE_URL` overrides the cached service URL (default:
+`https://meta-app.jordanhubbard.net/api/v1/planning/api/notams`). The weather service
+needs no FAA credential. Original notice text, source synchronization/environment,
+permanence, schedules, missing fields and stale/partial/unavailable states remain
+visible in the existing `/briefing` text/UI and gateway HTTP/MCP output. No failure
+falls back to sample NOTAMs. Non-production feeds are explicitly labeled; exact
+location reports do not establish complete route or international coverage.
