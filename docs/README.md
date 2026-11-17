@@ -55,6 +55,11 @@ entrypoints are restored and qualified.
 - [Legacy project lift-and-shift decision](decisions/0001-legacy-project-lift-and-shift.md)
 
 
+## Aircraft document research
+
+The [aircraft library contract](architecture/aircraft-library.md) defines original-preserving
+POH/AFM ingestion, source discovery, ICAO/registration associations and cited answers.
+Configuration and use are documented in the retained Flight Planner README.
 The [route hazard assessment contract](architecture/route-hazard-assessment.md) defines
 timed altitude-profile assessment, source coverage and uncertainty semantics.
 

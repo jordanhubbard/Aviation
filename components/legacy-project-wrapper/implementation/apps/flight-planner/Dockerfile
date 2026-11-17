@@ -66,6 +66,7 @@ RUN apt-get update \
         libgeos-dev \
         libstdc++6 \
         libatomic1 \
+        tesseract-ocr \
     && rm -rf /var/lib/apt/lists/*
 
 ENV PATH="/opt/venv/bin:$PATH"

@@ -2,6 +2,19 @@
 
 ## Unreleased
 
+- Aircraft-library answers can correct a rejected citation once against the same
+  evidence, retaining strict source/numeric checks and failing explicitly after
+  two completions; distillation retains its three-call bound (#489).
+
+- Aircraft library: preserve the actual hybrid retrieval mode when a retrieved
+  document has incomplete extraction; keep its independent coverage warning (#489).
+
+- Aircraft library: correct rejected model claims with focused citation feedback
+  while preserving accepted claims. Revalidate the combined answer, retain the
+  three-call bound, and reject corrections that silently drop failed assertions
+  instead of claiming complete POH/AFM distillation (#489).
+
+- Aircraft document research: add a private POH/AFM/maintenance PDF library with original retention, page indexes/OCR, ICAO and registration associations, public-source acquisition, configured search/model adapters and source-cited questions. Generated distillations remain separate from planning performance data (#489).
 - FAA NMS: add a separately owned ingestion worker, durable shared cache and
   source-preserving read API. Flight Planner's NOTAM workspace, the shared SDK
   and Weather Briefing retain source text, timing, incomplete coverage and

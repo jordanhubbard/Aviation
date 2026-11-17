@@ -103,6 +103,15 @@ Unexpected requests and foreign station IDs remain failures. These browser mocks
 establish rendering/lifecycle behavior; the separate real-provider HTTP/MCP audit
 establishes public data availability and API parity.
 
+## Private aircraft document library
+
+The planner hosts the [aircraft document knowledge service](aircraft-library.md) at
+`/api/aircraft-library`. Its typed authenticated operations cover original PDF upload,
+metadata/tail associations, document/page retrieval, source acquisition/discovery, durable
+indexing/distillation jobs, full-text search and source-cited questions. Library credentials
+are separate from MCP transport credentials and must be supplied explicitly. Large original
+PDFs use authenticated HTTP upload/download rather than the MCP response-size envelope.
+These private operations are not admitted to the public credential-free cross-app data CORS path.
 ## Timed route hazard assessment
 
 `POST /api/route-assessment` accepts 2–50 waypoints with latitude/longitude, planned

@@ -7,6 +7,10 @@ pydantic-settings
 # HTTP client / async
 httpx
 aiofiles
+python-multipart
+pypdf[crypto]
+pypdfium2
+Pillow
 
 # Middleware
 slowapi
