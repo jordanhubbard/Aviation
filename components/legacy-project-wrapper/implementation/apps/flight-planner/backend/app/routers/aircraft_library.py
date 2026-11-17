@@ -11,7 +11,7 @@ from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, Reques
 from fastapi.responses import FileResponse
 from fastapi.routing import APIRoute
 from fastapi.security import HTTPBearer
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 from starlette.concurrency import run_in_threadpool
 
 from ..services.aircraft_library import pdf
@@ -214,6 +214,50 @@ class Answer(BaseModel):
     applicability: str | None = None
 
 
+class DistillationSection(BaseModel):
+    model_config = ConfigDict(extra="allow")
+    pages: list[int]
+    insufficient_evidence: bool
+    reason: str
+    claims: list[Claim]
+
+
+class DistillationSnapshot(BaseModel):
+    model_config = ConfigDict(extra="allow")
+    status: str
+    sections: list[DistillationSection]
+    model: str | None = None
+    evidence_identity: str | None = None
+
+
+class DistillationRevisionSummary(BaseModel):
+    revision_id: str
+    archived_at: str
+    reason: str
+    model: str | None
+    status: str | None
+    completed_batches: int | None
+    source_sha256: str
+
+
+class DistillationHistory(BaseModel):
+    items: list[DistillationRevisionSummary]
+    next_offset: int | None
+
+
+class HistoricalDistillation(BaseModel):
+    document_id: str
+    revision_id: str
+    archived_at: str
+    reason: str
+    source_sha256: str
+    source_metadata: DocumentMetadata
+    index_identity: str
+    artifact: DistillationSnapshot
+    historical: Literal[True]
+    eligible_for_resume: Literal[False]
+
+
 def install(app, *, store=None, models=None, worker_enabled=True):
     state = {"store": store, "models": models, "worker": None}
 
@@ -304,6 +348,35 @@ def install(app, *, store=None, models=None, worker_enabled=True):
     @router.get("/documents/{document_id}", response_model=DocumentRecord)
     def document(document_id: str, current: Store = Depends(library)):
         return required(current, document_id)
+
+    @router.get(
+        "/documents/{document_id}/distillations",
+        response_model=DistillationHistory,
+        operation_id="aircraft_library_distillation_history",
+    )
+    def distillation_history(
+        document_id: str,
+        limit: int = Query(default=20, ge=1, le=100),
+        offset: int = Query(default=0, ge=0, le=1_000_000),
+        current: Store = Depends(library),
+    ):
+        required(current, document_id)
+        return current.distillations(document_id, limit=limit, offset=offset)
+
+    @router.get(
+        "/documents/{document_id}/distillations/{revision_id}",
+        response_model=HistoricalDistillation,
+        response_model_exclude_unset=True,
+        operation_id="aircraft_library_historical_distillation",
+    )
+    def historical_distillation(
+        document_id: str, revision_id: str, current: Store = Depends(library)
+    ):
+        required(current, document_id)
+        value = current.historical_distillation(document_id, revision_id)
+        if value is None:
+            raise HTTPException(404, "Historical distillation not found")
+        return value
 
     @router.put("/documents/{document_id}/metadata", response_model=DocumentRecord)
     def document_metadata(

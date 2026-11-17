@@ -70,6 +70,25 @@ type Job = {
   has_result: boolean
   subject: { document_id: string | null; icao: string; title: string } | null
 }
+type DistillationRevision = {
+  revision_id: string
+  archived_at: string
+  reason: string
+  model: string | null
+  status: string | null
+  completed_batches: number | null
+  source_sha256: string
+}
+type HistoryPage = { items: DistillationRevision[]; next_offset: number | null }
+type HistoricalDistillation = {
+  document_id: string
+  revision_id: string
+  source_sha256: string
+  source_metadata: Metadata
+  historical: true
+  eligible_for_resume: false
+  artifact: { status: string; sections: (Answer & { pages: number[] })[] }
+}
 type Capabilities = {
   search: { configured: boolean; provider: string | null }
   llm: boolean
@@ -121,6 +140,8 @@ export default function AircraftLibraryPage() {
   const [files, setFiles] = useState<File[]>([])
   const [urls, setUrls] = useState('')
   const [documents, setDocuments] = useState<Document[]>([])
+  const [histories, setHistories] = useState<Record<string, HistoryPage>>({})
+  const [historical, setHistorical] = useState<HistoricalDistillation | null>(null)
   const [jobs, setJobs] = useState<Job[]>([])
   const [jobsRead, setJobsRead] = useState(false)
   const [jobNextOffset, setJobNextOffset] = useState<number | null>(null)
@@ -151,6 +172,8 @@ export default function AircraftLibraryPage() {
     setBusy(false)
     setError('')
     setDocuments([])
+    setHistories({})
+    setHistorical(null)
     setAnswer(null)
     setPassages([])
     setPage(null)
@@ -231,6 +254,52 @@ export default function AircraftLibraryPage() {
       documents: Document[]
     }
     if (current === generation.current) setDocuments(result.documents)
+  }
+  async function loadHistory(id: string, offset = 0) {
+    const current = generation.current
+    const value = (await request(
+      `/documents/${id}/distillations?limit=20&offset=${offset}`,
+    )) as HistoryPage
+    if (
+      !Array.isArray(value.items) ||
+      !value.items.every((item) => /^[a-f0-9]{64}$/.test(item.revision_id)) ||
+      !(
+        value.next_offset === null ||
+        (Number.isInteger(value.next_offset) && value.next_offset > offset)
+      )
+    )
+      throw new Error('Invalid distillation history response')
+    if (current === generation.current)
+      setHistories((previous) => ({
+        ...previous,
+        [id]: {
+          ...value,
+          items: offset
+            ? [
+                ...new Map(
+                  [...(previous[id]?.items ?? []), ...value.items].map((item) => [
+                    item.revision_id,
+                    item,
+                  ]),
+                ).values(),
+              ]
+            : value.items,
+        },
+      }))
+  }
+  async function inspectHistory(id: string, revision: string) {
+    const current = generation.current
+    const value = (await request(
+      `/documents/${id}/distillations/${revision}`,
+    )) as HistoricalDistillation
+    if (
+      value.document_id !== id ||
+      value.revision_id !== revision ||
+      value.historical !== true ||
+      value.eligible_for_resume !== false
+    )
+      throw new Error('Invalid historical distillation response')
+    if (current === generation.current) setHistorical(value)
   }
   function addJob(job: Job) {
     setJobs((previous) => [job, ...previous.filter((j) => j.id !== job.id)])
@@ -327,7 +396,7 @@ export default function AircraftLibraryPage() {
     const result = (await request(`/documents/${id}/pages/${number}`)) as NonNullable<typeof page>
     if (current === generation.current) setPage(result)
   }
-  function claims(value: Answer) {
+  function claims(value: Answer, historicalQuotes = false) {
     return (
       <Stack spacing={2}>
         {value.insufficient_evidence && (
@@ -345,12 +414,15 @@ export default function AircraftLibraryPage() {
                   Source {citation.document_id.slice(-8)}, PDF page {citation.page} (label{' '}
                   {citation.label})
                 </Button>
-                <Typography
-                  variant="body2"
-                  sx={{ whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}
-                >
-                  {citation.quote}
-                </Typography>
+                <Box component={historicalQuotes ? 'details' : 'div'}>
+                  {historicalQuotes && <summary>Retained source quotation</summary>}
+                  <Typography
+                    variant="body2"
+                    sx={{ whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}
+                  >
+                    {citation.quote}
+                  </Typography>
+                </Box>
                 {citation.method === 'ocr' && <Chip size="small" label="OCR — check original" />}
               </Box>
             ))}
@@ -367,7 +439,7 @@ export default function AircraftLibraryPage() {
   }
 
   return (
-    <Stack spacing={3} sx={{ overflowWrap: 'anywhere' }}>
+    <Stack data-aviation-private spacing={3} sx={{ overflowWrap: 'anywhere' }}>
       <Box>
         <Typography variant="h4" component="h2">
           Aircraft document library
@@ -790,6 +862,79 @@ export default function AircraftLibraryPage() {
                         ))}
                       </details>
                     )}
+                    <Box>
+                      <Button disabled={busy} onClick={() => void act(() => loadHistory(doc.id))}>
+                        Load summary history for {doc.metadata.title || doc.icao}
+                      </Button>
+                      {histories[doc.id] && (
+                        <Stack spacing={1}>
+                          {histories[doc.id].items.length === 0 && (
+                            <Typography>No historical distillations.</Typography>
+                          )}
+                          {histories[doc.id].items.map((item) => (
+                            <Box key={item.revision_id}>
+                              <Typography variant="body2">
+                                {item.archived_at} · {item.status ?? 'unknown'} ·{' '}
+                                {item.completed_batches ?? 'unknown'} batches ·{' '}
+                                {item.model ?? 'unknown model'}
+                              </Typography>
+                              <Button
+                                disabled={busy}
+                                onClick={() =>
+                                  void act(() => inspectHistory(doc.id, item.revision_id))
+                                }
+                              >
+                                Inspect historical summary {item.revision_id.slice(0, 12)}
+                              </Button>
+                            </Box>
+                          ))}
+                          {histories[doc.id].next_offset !== null && (
+                            <Button
+                              disabled={busy}
+                              onClick={() =>
+                                void act(() => loadHistory(doc.id, histories[doc.id].next_offset!))
+                              }
+                            >
+                              Load older summaries
+                            </Button>
+                          )}
+                        </Stack>
+                      )}
+                      {historical?.document_id === doc.id && (
+                        <Stack
+                          data-history-revision={historical.revision_id}
+                          spacing={2}
+                          sx={{ my: 2 }}
+                        >
+                          <Alert severity="warning">
+                            Historical summary. Its source metadata and extraction may differ from
+                            the current document. It is ineligible for current-generation resume and
+                            does not establish current applicability. Page links open the current
+                            extraction; retained quotations below are historical.
+                          </Alert>
+                          <Typography>
+                            Retained source: {historical.source_metadata.title} ·{' '}
+                            {historical.source_metadata.variant || 'unknown variant'} ·{' '}
+                            {historical.source_metadata.revision || 'unknown revision'}
+                          </Typography>
+                          <Typography variant="caption">
+                            Original SHA-256: {historical.source_sha256}
+                          </Typography>
+                          {historical.artifact.sections.map((section, i) => (
+                            <details key={i}>
+                              <summary>
+                                Historical PDF pages {section.pages.join(', ')} (
+                                {section.claims.length} claims)
+                              </summary>
+                              {claims(section, true)}
+                            </details>
+                          ))}
+                          <Button onClick={() => setHistorical(null)}>
+                            Close historical summary
+                          </Button>
+                        </Stack>
+                      )}
+                    </Box>
                   </Stack>
                 </CardContent>
               </Card>

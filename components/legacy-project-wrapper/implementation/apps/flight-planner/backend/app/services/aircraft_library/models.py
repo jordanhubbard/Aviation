@@ -758,6 +758,7 @@ def distill(store: Store, models: Models, identifier: str):
             "kind": "llm_distillation",
             "model": models.model,
             "generated_at": now(),
+            "generation_options": getattr(models, "generation_options", {}),
             "status": (
                 "complete"
                 if len(summaries) == len(batches)

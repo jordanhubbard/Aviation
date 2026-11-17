@@ -321,11 +321,11 @@
           "medium": "sqlite-and-original-pdfs",
           "location": "AIRCRAFT_LIBRARY_DIR, default /app/data/aircraft-library",
           "schema": "SQLite user_version=1; SHA-256 originals and page-aware indexes",
-          "migration": "idempotent schema initialization and additive worker ownership migration",
+          "migration": "idempotent schema initialization and additive worker ownership / immutable distillation history tables; originals, vectors and existing artifacts retained",
           "backup": "stop the service and copy the complete private library directory, or use a consistent SQLite backup with originals",
           "rollback": "restore the complete private directory at a compatible schema version",
           "classification": "application-private-runtime-state",
-          "testOracle": "tests/test_aircraft_library.py original/persistence/association/queue acceptance",
+          "testOracle": "tests/test_aircraft_library.py original/persistence/association/queue acceptance; tests/test_distillation_history.py generation, invalidation, rollback, lease and API acceptance",
           "evidence": [
             {
               "path": "apps/flight-planner/backend/app/services/aircraft_library/store.py",
@@ -333,7 +333,8 @@
                 "PRAGMA user_version=1",
                 "originals",
                 "metadata_history",
-                "CREATE TABLE IF NOT EXISTS jobs"
+                "CREATE TABLE IF NOT EXISTS jobs",
+                "CREATE TABLE IF NOT EXISTS distillation_history"
               ]
             }
           ]
@@ -454,6 +455,28 @@
                 "this.session = null",
                 "this.operatorContext",
                 "performance-reference-apply"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "aircraft-library-history-view",
+          "medium": "browser-process-memory",
+          "location": "AircraftLibraryPage history list and selected historical summary",
+          "schema": "typed bounded private history pages and explicit historical record",
+          "migration": "clear and abort pending reads on ICAO, registration, token change or unmount",
+          "backup": "none; explicitly reload authenticated history from the durable library",
+          "rollback": "close the view or reload the page; no private history or tokens in browser storage",
+          "classification": "application-private-ephemeral-state",
+          "testOracle": "AircraftLibraryPage.test.tsx explicit history loading, safe rendering, lock, pagination and delayed scope change",
+          "evidence": [
+            {
+              "path": "apps/flight-planner/frontend/src/pages/AircraftLibraryPage.tsx",
+              "contains": [
+                "setHistories({})",
+                "setHistorical(null)",
+                "data-aviation-private",
+                "loadHistory"
               ]
             }
           ]

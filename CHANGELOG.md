@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Preserve and inspect historical manual distillations when model generation, source metadata or extraction changes; successful append checkpoints retain their existing progress.
+
+
 - Aircraft performance: add original-pinned, explicitly reviewed table datasets
   and a private workspace for source inspection, draft import, review, exact
   scenario inputs and cited numerical results. Preserve correction coverage and
