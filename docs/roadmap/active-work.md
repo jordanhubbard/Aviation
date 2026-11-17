@@ -11,6 +11,8 @@ index, not an independently maintained task list. Use `gh issue` and `gh pr`.
 - [#490 — Current aviation charts and navigation cycles](https://github.com/jordanhubbard/Aviation/issues/490)
 
 - [#488 — Aviation capability expansion](https://github.com/jordanhubbard/Aviation/issues/488): [aircraft document RAG #489](https://github.com/jordanhubbard/Aviation/issues/489), [charts #490](https://github.com/jordanhubbard/Aviation/issues/490), [route hazards #491](https://github.com/jordanhubbard/Aviation/issues/491), [filing #492](https://github.com/jordanhubbard/Aviation/issues/492), [offline/cockpit connectivity #493](https://github.com/jordanhubbard/Aviation/issues/493), [performance #494](https://github.com/jordanhubbard/Aviation/issues/494).
+- [#503 — Authorized FAA NMS feed, cache and application integration](https://github.com/jordanhubbard/Aviation/issues/503)
+
 - [#497 — Connected browser cleanup before server shutdown](https://github.com/jordanhubbard/Aviation/issues/497)
 
 - [#491 — Route, altitude and time hazard assessment](https://github.com/jordanhubbard/Aviation/issues/491)

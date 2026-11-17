@@ -76,3 +76,31 @@ boundaries, malformed grids, unit/applicability mismatches, missing inputs, sour
 and metadata drift, persistence and HTTP/MCP parity. Deterministic synthetic cases
 prove arithmetic/failure handling; actual original-manual examples are separately
 required before full acceptance, followed by exact-head CI, review and deployment.
+
+## Performance workspace
+
+Flight Planner exposes an authenticated performance workspace with explicit ICAO
+and optional registration filtering, paginated dataset selection and visible
+draft/reviewed/stale/retired status. Selecting a dataset shows its exact variant,
+revision, configuration, original hash, review identity and all table conditions.
+Calculation inputs are explicit: display the source's fixed values as editable
+conditions and leave grid-axis inputs blank until entered. Changing a filter,
+credential, dataset, table or condition clears the previous result and aborts or
+ignores in-flight work. A failed request cannot leave a successful result visible.
+
+Each result shows its conditions, units, base value, applied correction steps,
+weighted source rows and exact physical-page quotations, warnings and research
+limitations. Original PDFs require an authenticated download; never put tokens in
+URLs. Tokens, source text, datasets and calculations remain in memory and outside
+general AI context, saved plans, public caches and offline exports. No automatic
+requests or polling occur before the user connects.
+Private source and result content remains excluded while its outgoing view is
+still rendered during navigation to another workspace.
+
+Operators may import a bounded transcribed dataset JSON file as a draft, inspect
+its source/table/condition/correction evidence and explicitly attest review using
+the current content hash. Import never implies review. Retirement requires a
+reason. Calculation is enabled only for a reviewed usable dataset and requires
+all axis and fixed-condition inputs; the backend remains the authority for source
+integrity, exact applicability and correction coverage. Broader app handoffs and
+an assisted manual transcription editor remain separate acceptance work.

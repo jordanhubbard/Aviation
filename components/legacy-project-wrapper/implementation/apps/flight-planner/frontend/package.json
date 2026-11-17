@@ -19,7 +19,8 @@
     "preview": "vite preview",
     "test:offline": "node e2e/offline-acceptance.mjs",
     "test:offline-failures": "node e2e/offline-failures.mjs",
-    "test:cockpit": "node e2e/cockpit-acceptance.mjs"
+    "test:cockpit": "node e2e/cockpit-acceptance.mjs",
+    "test:notams": "node e2e/notams-acceptance.mjs"
   },
   "dependencies": {
     "@aviation/ai-explainer": "workspace:*",

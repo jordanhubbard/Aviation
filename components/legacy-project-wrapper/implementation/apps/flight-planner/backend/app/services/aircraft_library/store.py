@@ -11,9 +11,12 @@ from pathlib import Path
 import re
 import sqlite3
 import tempfile
+import threading
 import uuid
 
 from . import pdf
+
+_UNSET = object()
 
 
 def now():
@@ -71,6 +74,10 @@ def metadata(value: dict) -> dict:
     return result
 
 
+class LeaseLost(RuntimeError):
+    """A reclaimed worker must not publish work into its successor's run."""
+
+
 class Store:
     def __init__(self, root: str | Path):
         self.root = Path(root)
@@ -78,6 +85,7 @@ class Store:
         self.objects = self.root / "originals"
         self.objects.mkdir(exist_ok=True, mode=0o700)
         self.db = self.root / "library.sqlite3"
+        self._scope = threading.local()
         with self.connection() as connection:
             version = connection.execute("PRAGMA user_version").fetchone()[0]
             if version not in {0, 1}:
@@ -124,6 +132,9 @@ class Store:
                     request TEXT NOT NULL, result TEXT, error TEXT,
                     created_at TEXT NOT NULL, updated_at TEXT NOT NULL, worker TEXT
                 );
+                CREATE TABLE IF NOT EXISTS job_checkpoints (
+                    job_id TEXT PRIMARY KEY REFERENCES jobs(id), value TEXT NOT NULL
+                );
                 PRAGMA user_version=1;
             """)
             if "worker" not in {r[1] for r in connection.execute("PRAGMA table_info(jobs)")}:
@@ -137,9 +148,58 @@ class Store:
         connection.execute("PRAGMA foreign_keys=ON")
         try:
             with connection:
+                self._check_lease(connection)
                 yield connection
+                # A write transaction holds SQLite's writer lock through this check.
+                # A lease reclaimed during extraction/inference rolls back the write.
+                self._check_lease(connection)
         finally:
             connection.close()
+
+    def _check_lease(self, connection):
+        lease = getattr(self._scope, "lease", None)
+        if lease:
+            row = connection.execute(
+                "SELECT state,worker FROM jobs WHERE id=?", (lease[0],)
+            ).fetchone()
+            if row is None or row["state"] != "running" or row["worker"] != lease[1]:
+                raise LeaseLost("Library job lease was reclaimed")
+
+    @contextmanager
+    def job_scope(self, identifier, owner):
+        previous = getattr(self._scope, "lease", None)
+        self._scope.lease = (identifier, owner)
+        try:
+            yield
+        finally:
+            self._scope.lease = previous
+
+    def checkpoint(self, identifier, value=None, *, connection=None):
+        if connection is None:
+            with self.connection() as connection:
+                return self.checkpoint(identifier, value, connection=connection)
+        if value is not None:
+            connection.execute(
+                "INSERT OR REPLACE INTO job_checkpoints VALUES (?,?)",
+                (identifier, json.dumps(value)),
+            )
+        row = connection.execute(
+            "SELECT value FROM job_checkpoints WHERE job_id=?", (identifier,)
+        ).fetchone()
+        return json.loads(row[0]) if row else {}
+
+    def index_identity(self, identifier, *, connection=None):
+        if connection is None:
+            with self.connection() as connection:
+                return self.index_identity(identifier, connection=connection)
+        document = connection.execute(
+            "SELECT sha256,metadata,status,extraction FROM documents WHERE id=?", (identifier,)
+        ).fetchone()
+        passages = connection.execute(
+            "SELECT rowid,* FROM passages WHERE document_id=? ORDER BY rowid", (identifier,)
+        ).fetchall()
+        value = [list(document) if document else None, [list(p) for p in passages]]
+        return hashlib.sha256(json.dumps(value, separators=(",", ":")).encode()).hexdigest()
 
     def ingest(
         self,
@@ -272,7 +332,7 @@ class Store:
             )
         return self.get(identifier)
 
-    def index(self, identifier: str, *, ocr=True):
+    def index(self, identifier: str, *, ocr=True, checkpoint_job=None):
         original = self.original(identifier)
         if original is None:
             raise ValueError("Document not found")
@@ -305,6 +365,12 @@ class Store:
                     "UPDATE documents SET status=?,extraction=?,error=NULL WHERE id=?",
                     (result["status"], json.dumps(info), identifier),
                 )
+                if checkpoint_job:
+                    self.checkpoint(
+                        checkpoint_job,
+                        {"index_identity": self.index_identity(identifier, connection=connection)},
+                        connection=connection,
+                    )
             self.distill_index(identifier)
         except pdf.PDFError as error:
             with self.connection() as connection:
@@ -361,9 +427,30 @@ class Store:
         self.artifact(identifier, "section_index", value)
         return value
 
-    def artifact(self, identifier: str, kind: str, value: dict, *, expected_metadata=None):
+    def artifact(
+        self,
+        identifier: str,
+        kind: str,
+        value: dict,
+        *,
+        expected_metadata=None,
+        expected_index_identity=None,
+        expected_previous=_UNSET,
+    ):
         with self.connection() as connection:
             connection.execute("BEGIN IMMEDIATE")
+            if (
+                expected_index_identity is not None
+                and self.index_identity(identifier, connection=connection)
+                != expected_index_identity
+            ):
+                raise ValueError("Document extraction changed during generation; retry")
+            if expected_previous is not _UNSET:
+                previous = connection.execute(
+                    "SELECT value FROM artifacts WHERE document_id=? AND kind=?", (identifier, kind)
+                ).fetchone()
+                if (json.loads(previous[0]) if previous else None) != expected_previous:
+                    raise ValueError("Document artifact changed during recovery; retry")
             if expected_metadata is not None:
                 row = connection.execute(
                     "SELECT metadata FROM documents WHERE id=?", (identifier,)
@@ -407,11 +494,74 @@ class Store:
     def create_job(self, kind: str, request: dict):
         identifier = "job_" + uuid.uuid4().hex
         with self.connection() as connection:
-            connection.execute(
-                "INSERT INTO jobs VALUES (?,?,'queued',?,NULL,NULL,?,?,NULL)",
-                (identifier, kind, json.dumps(request), now(), now()),
-            )
+            connection.execute("BEGIN IMMEDIATE")
+            existing = None
+            if kind in {"index", "embed", "distill"} and set(request) == {"document_id"}:
+                existing = connection.execute(
+                    "SELECT id FROM jobs WHERE kind=? AND state IN ('queued','running') "
+                    "AND json_extract(request,'$.document_id')=? ORDER BY created_at LIMIT 1",
+                    (kind, request["document_id"]),
+                ).fetchone()
+            if existing:
+                identifier = existing["id"]
+            else:
+                connection.execute(
+                    "INSERT INTO jobs VALUES (?,?,'queued',?,NULL,NULL,?,?,NULL)",
+                    (identifier, kind, json.dumps(request), now(), now()),
+                )
         return self.job(identifier)
+
+    @staticmethod
+    def _job_subject(connection, request):
+        identifier = request.get("document_id")
+        if identifier:
+            row = connection.execute(
+                "SELECT icao,metadata FROM documents WHERE id=?", (identifier,)
+            ).fetchone()
+            if row:
+                meta = json.loads(row["metadata"])
+                return {
+                    "document_id": identifier,
+                    "icao": row["icao"],
+                    "title": meta["title"] or meta["model"] or "Untitled manual",
+                }
+        meta = request.get("metadata")
+        if isinstance(meta, dict) and meta.get("icao"):
+            return {
+                "document_id": None,
+                "icao": meta["icao"],
+                "title": meta.get("title") or "Public manual acquisition",
+            }
+        return None
+
+    def jobs(self, limit=20, offset=0):
+        if type(limit) is not int or not 1 <= limit <= 100:
+            raise ValueError("List between 1 and 100 library jobs")
+        if type(offset) is not int or not 0 <= offset <= 1_000_000:
+            raise ValueError("Library job offset is out of range")
+        with self.connection() as connection:
+            connection.execute("BEGIN")
+            total = connection.execute("SELECT COUNT(*) FROM jobs").fetchone()[0]
+            rows = connection.execute(
+                "SELECT id,kind,state,request,error,created_at,updated_at, "
+                "CASE WHEN result IS NULL OR json_type(result)='null' THEN 0 ELSE 1 END AS has_result "
+                "FROM jobs ORDER BY CASE state WHEN 'running' THEN 0 WHEN 'queued' THEN 1 ELSE 2 END, "
+                "CASE WHEN state IN ('queued','running') THEN created_at END, updated_at DESC LIMIT ? OFFSET ?",
+                (limit, offset),
+            ).fetchall()
+            results = []
+            for row in rows:
+                value = dict(row)
+                value["subject"] = self._job_subject(connection, json.loads(value.pop("request")))
+                value["has_result"] = bool(value["has_result"])
+                results.append(value)
+        return {
+            "jobs": results,
+            "total": total,
+            "limit": limit,
+            "offset": offset,
+            "next_offset": offset + len(results) if offset + len(results) < total else None,
+        }
 
     def claim_job(self, owner: str):
         from datetime import timedelta
@@ -450,16 +600,23 @@ class Store:
     def job(self, identifier: str):
         with self.connection() as connection:
             row = connection.execute("SELECT * FROM jobs WHERE id=?", (identifier,)).fetchone()
-        if row is None:
-            return None
-        result = dict(row)
-        for key in ("request", "result"):
-            result[key] = json.loads(result[key]) if result[key] else None
+            if row is None:
+                return None
+            result = dict(row)
+            for key in ("request", "result"):
+                result[key] = json.loads(result[key]) if result[key] else None
+            result["subject"] = self._job_subject(connection, result["request"])
+            result["has_result"] = result["result"] is not None
         return result
 
-    def finish_job(self, identifier: str, result: dict | None = None, error: str | None = None):
+    def finish_job(
+        self, identifier: str, result: dict | None = None, error: str | None = None, *, owner=None
+    ):
         with self.connection() as connection:
-            connection.execute(
-                "UPDATE jobs SET state=?,result=?,error=?,updated_at=? WHERE id=?",
-                ("failed" if error else "completed", json.dumps(result), error, now(), identifier),
+            cursor = connection.execute(
+                "UPDATE jobs SET state=?,result=?,error=?,updated_at=? WHERE id=?"
+                + (" AND worker=? AND state='running'" if owner is not None else ""),
+                ("failed" if error else "completed", json.dumps(result), error, now(), identifier)
+                + ((owner,) if owner is not None else ()),
             )
+            return cursor.rowcount == 1

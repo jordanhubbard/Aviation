@@ -56,3 +56,19 @@ def test_build_metadata_exposes_only_explicit_public_fields(monkeypatch, client)
     monkeypatch.delenv("REPO_URL")
     monkeypatch.delenv("GIT_SHA")
     assert client.get("/api/meta").json() == {"repo_url": None, "revision": None}
+
+
+def test_packaged_research_workspaces_serve_the_real_static_layout(monkeypatch, tmp_path):
+    static = tmp_path / "backend" / "static"
+    static.mkdir(parents=True)
+    shell = "<html>Packaged research workspace</html>"
+    (static / "index.html").write_text(shell)
+    monkeypatch.setattr(application, "__file__", str(tmp_path / "backend" / "app" / "__init__.py"))
+    monkeypatch.delenv("AIRCRAFT_LIBRARY_TOKEN", raising=False)
+    with TestClient(application.create_app(settings)) as hosted:
+        for path in ("/aircraft-performance", "/offline", "/cockpit"):
+            response = hosted.get(path)
+            assert response.status_code == 200, path
+            assert response.headers["content-type"].startswith("text/html"), path
+            assert response.text == shell
+        assert hosted.get("/api/not-a-service").status_code == 404

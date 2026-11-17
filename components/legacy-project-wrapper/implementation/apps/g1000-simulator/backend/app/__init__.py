@@ -10,9 +10,10 @@ from aviation.explanation import create_explanation_router
 
 from app.config import Settings
 from app.routers import health, settings, telemetry
+from app.routers.navigation import build_navigation_router
 
 
-def create_app(config: Settings) -> FastAPI:
+def create_app(config: Settings, *, navigation_service=None) -> FastAPI:
     """Application factory that wires up middleware and routers."""
     app = FastAPI(
         title=config.app_name,
@@ -31,11 +32,13 @@ def create_app(config: Settings) -> FastAPI:
     app.include_router(health.router, prefix=config.api_prefix)
     app.include_router(settings.build_settings_router())
     app.include_router(telemetry.router)
+    app.include_router(build_navigation_router(navigation_service))
     app.include_router(create_explanation_router('g1000-simulator'))
 
     static_root = Path(__file__).resolve().parents[1] / "static"
     if (static_root / "index.html").is_file():
         @app.get("/settings", include_in_schema=False)
+        @app.get("/procedures", include_in_schema=False)
         def settings_page() -> FileResponse:
             return FileResponse(static_root / "index.html")
 

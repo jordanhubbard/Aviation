@@ -322,6 +322,12 @@ jobs:
           package_json_file: components/legacy-project-wrapper/implementation/package.json
       - name: Test the real settings backend and simulator
         run: make test-g1000-python
+      - name: Install procedure browser test dependencies
+        run: pnpm install --frozen-lockfile --filter g1000-simulator-frontend...
+      - name: Check the shipped procedure browser
+        run: |
+          pnpm --filter g1000-simulator-frontend run type-check:procedures
+          pnpm --filter g1000-simulator-frontend run test:procedures
 
   # Performance Regression Checks
   performance-regression:

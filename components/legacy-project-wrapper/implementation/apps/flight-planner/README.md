@@ -273,6 +273,33 @@ flag unset when selecting reasoning effort. Provider token budgets can include
 reasoning; exhausting that budget never admits truncated output. Explicit effort
 and nondefault budget changes invalidate incompatible partial distillations.
 
+### Cached FAA NMS NOTAMs
+
+The `/notams` workspace and typed `/api/notams` endpoints read one shared cache,
+without FAA credentials or per-browser upstream calls. `/api/notams/capabilities`
+reports the selected environment; `/api/notams?airport=KPAO,KSFO` returns bounded
+source previews and `/api/notams/detail?id=<source-id>` returns the full notice
+and source GeoJSON. Preserve snapshot identities for pages/details; HTTP 409 means
+reload. `no_reports` means no matching cached source records, not a complete route
+briefing. Staging/FIT data may contain test notices; source status, missing fields,
+schedules, permanence and age remain visible. Text severity hints are advisory.
+
+The separate worker runs `python -m app.services.nms_worker` with explicit
+`FAA_NMS_ENVIRONMENT`, `FAA_NMS_CLIENT_ID` and `FAA_NMS_CLIENT_SECRET` in its private
+environment/keystore. `--once` performs at most one cadence-reserved operation.
+Set `FAA_NMS_CACHE_DIR` to the shared persistent directory. The web process needs
+only the environment selection and cache path and supports a read-only mount;
+it must not receive FAA credentials. The worker owns schema/ingestion writes.
+See [the NMS contract](../../../../../docs/architecture/nms-notams.md).
+
+Build the frontend and run its committed browser acceptance against an actual
+configured cache using `pnpm --filter flight-planner-frontend run test:notams
+<application-origin> <absolute-evidence-directory>` from the implementation root.
+It verifies desktop/mobile source reads, original GeoJSON download, visible
+non-production status, source invalidation, local input errors, qualified empty
+results, accessibility structure and document overflow. It intercepts no provider
+responses and needs no FAA credential. Browser dependencies must already exist.
+
 ## FAA charts and navigation cycles
 
 Open **Charts / Navigation** at `/charts`. Search terminal charts by their published

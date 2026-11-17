@@ -6,6 +6,17 @@ const number = id => Number($(id).value);
 const savedKey = 'aviation-preflight-profile-v1';
 const riskKey = 'aviation-preflight-risk-v1';
 
+$('chartAirport').addEventListener('input', () => {
+  const airport = $('chartAirport').value.trim().toUpperCase();
+  const valid = /^[A-Z0-9]{3,4}$/.test(airport);
+  for (const [id, base] of [['airportCharts', 'https://flight-planner.jordanhubbard.net/charts'], ['airportProcedures', 'https://g1000-simulator.jordanhubbard.net/procedures']]) {
+    $(id).setAttribute('aria-disabled', String(!valid));
+    if (valid) $(id).href = base + '?airport=' + encodeURIComponent(airport);
+    else $(id).removeAttribute('href');
+  }
+  $('chartAirportStatus').textContent = valid ? 'References will use ' + airport + ' as published. Verify source coverage after opening.' : 'Enter the three- or four-character identifier published by the source.';
+});
+
 function addStation(name = '', arm = '', weight = '') {
   const row = document.createElement('div');
   row.className = 'row station';

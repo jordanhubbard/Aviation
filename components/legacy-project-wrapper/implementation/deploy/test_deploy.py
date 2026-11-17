@@ -5,6 +5,7 @@ import json
 import os
 import queue
 import secrets
+import stat
 import threading
 import time
 import urllib.request
@@ -43,6 +44,142 @@ class HealthyResponse:
 
 
 class VerifyTests(unittest.TestCase):
+    def test_planner_mounts_worker_cache_read_only_without_worker_credentials(self):
+        _, apps = deployment.load_manifest()
+        planner = next(app for app in apps if app['name'] == 'flight-planner')
+        with tempfile.TemporaryDirectory() as directory:
+            target = Path(directory)
+            deployment.render(planner, 'a' * 40, target)
+            unit = (target / 'service.unit').read_text()
+            self.assertIn('src=/var/lib/aviation/flight-planner/nms,dst=/app/nms,readonly', unit)
+            self.assertIn('src=/var/lib/aviation/flight-planner/data,dst=/app/data', unit)
+            self.assertNotIn('FAA_NMS_CLIENT_', unit)
+            self.assertNotIn('nms-production.env', unit)
+            self.assertEqual((target / 'volumes.txt').read_text().splitlines(), ['data', 'nms'])
+
+    def test_nms_worker_uses_one_private_environment_cache_and_same_revision_image(self):
+        for environment in ['production', 'staging', 'fit']:
+            unit = deployment.render_nms_worker(environment, 'a' * 40)
+            command = next(line.removeprefix('ExecStart=') for line in unit.splitlines()
+                           if line.startswith('ExecStart='))
+            args = shlex.split(command)
+            self.assertIn('aviation/flight-planner:' + 'a' * 12, args)
+            self.assertEqual(args[-2:], ['-m', 'app.services.nms_worker'])
+            self.assertEqual(args[args.index('--entrypoint') + 1], '/opt/venv/bin/python')
+            self.assertIn(f'/etc/aviation/nms-{environment}.env', args)
+            self.assertIn(f'FAA_NMS_ENVIRONMENT={environment}', args)
+            self.assertIn(f'type=bind,src=/var/lib/aviation/flight-planner/nms/{environment},dst=/app/nms', args)
+            self.assertEqual(args.count('--mount'), 1)
+            self.assertIn('--read-only', args)
+            self.assertIn('--tmpfs', args)
+            self.assertNotIn('-p', args)
+            self.assertNotIn('--network', args)
+            self.assertNotIn('FAA_NMS_CLIENT_ID=', unit)
+            self.assertNotIn('FAA_NMS_CLIENT_SECRET=', unit)
+            self.assertIn(f'ExecStop=/usr/bin/docker stop -t 15 aviation-nms-worker-{environment}', unit)
+        for environment in ['', '../production', 'prod']:
+            with self.assertRaises(ValueError):
+                deployment.render_nms_worker(environment, 'a' * 40)
+        with self.assertRaises(ValueError):
+            deployment.render_nms_worker('production', 'main')
+
+    def execute_nms_host_script(self, root, action, runner):
+        script = deployment.nms_host_script(action, 'staging', 'new unit\n')
+        for absolute in ['/etc/systemd/system', '/etc/aviation', '/var/lib/aviation/flight-planner/nms']:
+            script = script.replace(repr(absolute), repr(str(root / absolute.lstrip('/'))))
+        with patch('subprocess.run', side_effect=runner):
+            exec(compile(script, '<nms-host-acceptance>', 'exec'), {})
+
+    def test_nms_install_preserves_cache_and_does_not_start_or_enable_worker(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            units = root / 'etc/systemd/system'
+            units.mkdir(parents=True)
+            cache = root / 'var/lib/aviation/flight-planner/nms/staging'
+            cache.mkdir(parents=True)
+            (cache / 'notams.sqlite3').write_bytes(b'reserved request and original receipts')
+            calls = []
+            def runner(args, **kwargs):
+                calls.append(list(args))
+                return subprocess.CompletedProcess(args, 3 if 'is-active' in args else 0, stdout='inactive\n')
+            self.execute_nms_host_script(root, 'install', runner)
+            self.assertEqual((units / 'aviation-nms-worker-staging.service').read_text(), 'new unit\n')
+            self.assertEqual((cache / 'notams.sqlite3').read_bytes(), b'reserved request and original receipts')
+            self.assertEqual(stat.S_IMODE(cache.stat().st_mode), 0o700)
+            self.assertEqual(calls, [['systemctl', 'is-active', 'aviation-nms-worker-staging'], ['systemctl', 'daemon-reload']])
+            self.assertFalse((root / 'etc/aviation/nms-staging.env').exists())
+
+    def test_nms_unit_reload_failure_restores_prior_unit_and_cache(self):
+        for previous in [None, 'old unit\n']:
+            with self.subTest(previous=previous), tempfile.TemporaryDirectory() as directory:
+                root = Path(directory)
+                units = root / 'etc/systemd/system'
+                units.mkdir(parents=True)
+                target = units / 'aviation-nms-worker-staging.service'
+                if previous is not None:
+                    target.write_text(previous)
+                    target.chmod(0o600)
+                reloads = []
+                def runner(args, **kwargs):
+                    if 'is-active' in args:
+                        return subprocess.CompletedProcess(args, 3, stdout='inactive\n')
+                    reloads.append(args)
+                    if len(reloads) == 1:
+                        raise subprocess.CalledProcessError(1, args)
+                    return subprocess.CompletedProcess(args, 0)
+                with self.assertRaises(subprocess.CalledProcessError):
+                    self.execute_nms_host_script(root, 'install', runner)
+                self.assertEqual(target.read_text() if target.exists() else None, previous)
+                if previous is not None:
+                    self.assertEqual(stat.S_IMODE(target.stat().st_mode), 0o600)
+                self.assertEqual(len(reloads), 2)
+                self.assertTrue((root / 'var/lib/aviation/flight-planner/nms/staging').is_dir())
+
+    def test_nms_install_refuses_active_or_transitioning_unit_before_changes(self):
+        for state in ['active', 'activating', 'deactivating', 'reloading', '']:
+            with self.subTest(state=state), tempfile.TemporaryDirectory() as directory:
+                root = Path(directory)
+                with self.assertRaisesRegex(RuntimeError, 'Stop the owned worker'):
+                    self.execute_nms_host_script(root, 'install', lambda *args, **kwargs:
+                        subprocess.CompletedProcess(args, 0, stdout=state + '\n'))
+                self.assertEqual(list(root.iterdir()), [])
+
+    def test_nms_start_requires_private_complete_credential_file_without_echoing_it(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            path = root / 'etc/aviation/nms-staging.env'
+            path.parent.mkdir(parents=True)
+            cases = [
+                ('FAA_NMS_CLIENT_ID=private-value\n', 0o600),
+                ('FAA_NMS_CLIENT_ID=private-value\nFAA_NMS_CLIENT_SECRET=private-secret\nEXTRA=bad\n', 0o600),
+                ('FAA_NMS_CLIENT_ID=private-value\nFAA_NMS_CLIENT_SECRET=private-secret\n', 0o644),
+                ('FAA_NMS_CLIENT_ID=private-value\nFAA_NMS_CLIENT_SECRET="private-secret"\n', 0o600),
+                ('FAA_NMS_CLIENT_ID=private-value\nFAA_NMS_CLIENT_ID=other\nFAA_NMS_CLIENT_SECRET=private-secret\n', 0o600),
+            ]
+            original_lstat = type(path).lstat
+            def root_owned(p, *args, **kwargs):
+                info = original_lstat(p, *args, **kwargs)
+                if p == path:
+                    values = list(info); values[4] = 0
+                    return os.stat_result(values)
+                return info
+            for contents, mode in cases:
+                path.write_text(contents); path.chmod(mode)
+                runner = unittest.mock.Mock()
+                with patch.object(type(path), 'lstat', root_owned):
+                    with self.assertRaises(RuntimeError) as caught:
+                        self.execute_nms_host_script(root, 'start', runner)
+                self.assertNotIn('private-value', str(caught.exception))
+                self.assertNotIn('private-secret', str(caught.exception))
+                runner.assert_not_called()
+            path.write_text('FAA_NMS_CLIENT_ID=private-value\nFAA_NMS_CLIENT_SECRET=private-secret\n')
+            path.chmod(0o600)
+            calls = []
+            with patch.object(type(path), 'lstat', root_owned):
+                self.execute_nms_host_script(root, 'start', lambda args, **kwargs: calls.append(list(args)))
+            self.assertEqual(calls, [['systemctl', 'enable', '--now', 'aviation-nms-worker-staging'],
+                                     ['systemctl', 'is-active', 'aviation-nms-worker-staging']])
+
     def test_explanation_callback_origin_matches_the_rendered_public_site(self):
         _, apps = deployment.load_manifest()
         for app in apps:

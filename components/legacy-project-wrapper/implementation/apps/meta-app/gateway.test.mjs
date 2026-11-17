@@ -22,10 +22,10 @@ async function fixture(t, options = {}) {
   const origin = await listen(t, async (req, res) => {
     const chunks = []; for await (const chunk of req) chunks.push(chunk);
     const body = Buffer.concat(chunks); calls.push({ url: req.url, method: req.method, headers: req.headers, body });
-    if (req.url === '/api/openapi.json') {
+    if (req.url === '/api/openapi.json' || req.url === '/openapi.json') {
       if (options.schemaMode === 'unavailable') { sendJson(res, 503, { error: 'provider unavailable' }); return; }
       if (options.schemaMode === 'html') { res.writeHead(200, { 'content-type': 'text/html' }); res.end('<html>not a schema</html>'); return; }
-      const schema = { openapi: '3.1.0', info: { title: 'Planner', version: '1' }, paths: { '/api/aircraft/{identifier}': { get: { parameters: [{ name: 'identifier', in: 'path', required: true, schema: { type: 'string' } }] } } } };
+      const schema = { openapi: '3.1.0', info: { title: req.url === '/openapi.json' ? 'Avionics' : 'Planner', version: '1' }, paths: { [req.url === '/openapi.json' ? '/api/navigation/{airport}' : '/api/aircraft/{identifier}']: { get: { parameters: [{ name: req.url === '/openapi.json' ? 'airport' : 'identifier', in: 'path', required: true, schema: { type: 'string' } }] } } } };
       if (options.schemaMode === 'gzip') { res.writeHead(200, { 'content-type': 'application/json', 'content-encoding': 'gzip' }); res.end(gzipSync(JSON.stringify(schema))); return; }
       sendJson(res, 200, schema); return;
     }
@@ -44,7 +44,7 @@ async function fixture(t, options = {}) {
     if (req.url === '/new/v2/items') { sendJson(res, 200, { renamed: req.method === 'POST' ? JSON.parse(body).newField : 42 }); return; }
     sendJson(res, 200, { path: req.url, method: req.method, body: body.toString(), auth: req.headers.authorization || null, cookie: req.headers.cookie || null });
   });
-  const gateway = createGateway({ bindings: { planning: { origin }, weather: { origin } }, ...options });
+  const gateway = createGateway({ bindings: { planning: { origin }, weather: { origin }, avionics: { origin } }, ...options });
   t.after(() => gateway.close());
   const edge = await listen(t, async (req, res) => {
     if (!(await gateway.handle(req, res))) sendJson(res, 404, { error: { code: 'unknown_api_route' } });
@@ -136,9 +136,9 @@ test('real MCP client discovers matching schemas/resources and invokes same serv
   const client = new Client({ name: 'gateway-conformance', version: '1.0.0' });
   await client.connect(new StreamableHTTPClientTransport(new URL(edge + '/mcp'), { requestInit: { headers: { authorization: 'Bearer gateway-only', cookie: 'meta=private' } } }));
   t.after(() => client.close());
-  const { tools } = await client.listTools(); assert.equal(tools.length, 12);
+  const { tools } = await client.listTools(); assert.equal(tools.length, 13);
   const tool = tools.find(x => x.name === 'v1.planning.request'); assert.deepEqual(tool.inputSchema, contract.requestSchema);
-  const resources = await client.listResources(); assert.equal(resources.resources.length, 3);
+  const resources = await client.listResources(); assert.equal(resources.resources.length, 4);
   const catalog = await client.readResource({ uri: 'aviation://v1/services' }); assert.deepEqual(JSON.parse(catalog.contents[0].text), contract);
   const result = await client.callTool({ name: tool.name, arguments: { path: '/protected' } });
   assert.equal(result.isError, true); assert.equal(result.structuredContent.status, 401); assert.equal(calls.at(-1).headers.authorization, undefined);
@@ -332,13 +332,17 @@ test('MCP exposes domain OpenAPI as a resource and discoverable tool, including 
       const client = new Client({ name: 'domain-discovery', version: '1.0' });
       await client.connect(new StreamableHTTPClientTransport(new URL(edge + '/mcp')));
       t.after(() => client.close());
-      const resource = await client.readResource({ uri: 'aviation://v1/planning/openapi' });
-      const schema = JSON.parse(resource.contents[0].text);
-      assert.ok(schema.paths['/api/aircraft/{identifier}'].get.parameters[0].required);
-      const result = await client.callTool({ name: 'v1.planning.describe', arguments: {} });
-      assert.deepEqual(JSON.parse(result.content[0].text), schema);
-      const viaHttp = await (await fetch(edge + '/api/v1/planning/api/openapi.json')).json();
-      assert.deepEqual(viaHttp, schema);
+      for (const namespace of ['planning', 'avionics']) {
+        const service = contract.services.find(value => value.namespace === namespace);
+        const resource = await client.readResource({ uri: service.openapi.resource });
+        const schema = JSON.parse(resource.contents[0].text);
+        const operation = namespace === 'planning' ? '/api/aircraft/{identifier}' : '/api/navigation/{airport}';
+        assert.ok(schema.paths[operation].get.parameters[0].required);
+        const result = await client.callTool({ name: service.openapi.describeTool, arguments: {} });
+        assert.deepEqual(JSON.parse(result.content[0].text), schema);
+        const viaHttp = await (await fetch(edge + service.openapi.http)).json();
+        assert.deepEqual(viaHttp, schema);
+      }
     });
   }
 });
@@ -350,9 +354,12 @@ test('MCP domain discovery reports unavailable and invalid schemas as errors', a
       const client = new Client({ name: 'domain-discovery-error', version: '1.0' });
       await client.connect(new StreamableHTTPClientTransport(new URL(edge + '/mcp')));
       t.after(() => client.close());
-      await assert.rejects(client.readResource({ uri: 'aviation://v1/planning/openapi' }));
-      const result = await client.callTool({ name: 'v1.planning.describe', arguments: {} });
-      assert.equal(result.isError, true);
+      for (const namespace of ['planning', 'avionics']) {
+        const service = contract.services.find(value => value.namespace === namespace);
+        await assert.rejects(client.readResource({ uri: service.openapi.resource }));
+        const result = await client.callTool({ name: service.openapi.describeTool, arguments: {} });
+        assert.equal(result.isError, true);
+      }
     });
   }
 });
@@ -369,6 +376,7 @@ test('deployment discovery admits current additive tools and rejects stale catal
   assertGatewayTools(tools);
   assert.throws(() => assertGatewayCatalog({ ...catalog, version: '0.0.0' }));
   assert.throws(() => assertGatewayTools(tools.filter(tool => tool.name !== 'v1.planning.describe')));
+  assert.throws(() => assertGatewayTools(tools.filter(tool => tool.name !== 'v1.avionics.describe')));
   const drifted = structuredClone(tools);
   drifted.find(tool => tool.name === 'v1.planning.request').inputSchema = { type: 'object' };
   assert.throws(() => assertGatewayTools(drifted));

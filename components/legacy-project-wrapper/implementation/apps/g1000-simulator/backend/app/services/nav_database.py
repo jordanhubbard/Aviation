@@ -5,7 +5,7 @@ from __future__ import annotations
 from typing import Any
 
 from aviation.airports import AirportDatabase
-from aviation.nav_data import NavDataCatalog, sample_nav_data_catalog
+from aviation.nav_data import NavDataCatalog
 
 
 def _airport_dict(airport: dict[str, Any]) -> dict[str, Any]:
@@ -37,30 +37,39 @@ class NavigationDatabaseService:
         catalog: NavDataCatalog | None = None,
         airports: AirportDatabase | None = None,
     ) -> None:
-        self.catalog = catalog or sample_nav_data_catalog()
+        self.catalog = catalog
         self.airports = airports or AirportDatabase()
 
-    def search(self, query: str) -> dict[str, list[dict[str, Any]]]:
+    def search(self, query: str) -> dict[str, Any]:
         airport_matches = [
             _airport_dict(airport) for airport in self.airports.search(query, limit=20)
         ]
-        navaid_matches = [dict(record) for record in self.catalog.search_navaids(query)]
-        return {"airports": airport_matches, "navaids": navaid_matches}
+        navaid_matches = (
+            [dict(record) for record in self.catalog.search_navaids(query)]
+            if self.catalog is not None
+            else []
+        )
+        return {
+            "airports": airport_matches,
+            "navaids": navaid_matches,
+            "navigation_status": "injected-catalog" if self.catalog is not None else "unavailable",
+            "note": "Use /api/navigation/{airport} for verified current FAA procedures.",
+        }
 
     def get_procedures(self, airport_code: str) -> dict[str, Any]:
+        if self.catalog is None:
+            raise ValueError(
+                "No sourced navigation catalog was injected; use the shared navigation service"
+            )
         airport = self.airports.get_airport_coordinates(airport_code)
         records = self.catalog.procedures_for_airport(airport_code)
         return {
             "airport": _airport_dict(airport) if airport else None,
             "sids": [
-                _procedure_dict(record)
-                for record in records
-                if record["procedure_type"] == "SID"
+                _procedure_dict(record) for record in records if record["procedure_type"] == "SID"
             ],
             "stars": [
-                _procedure_dict(record)
-                for record in records
-                if record["procedure_type"] == "STAR"
+                _procedure_dict(record) for record in records if record["procedure_type"] == "STAR"
             ],
             "approaches": [
                 _procedure_dict(record)

@@ -3,7 +3,8 @@
  *
  * All tests use injected mock fetch functions — no live network calls needed.
  */
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect } from 'vitest';
+import { nmsNotice, nmsPage } from './notam-reports.fixtures.js';
 import {
   NotamClient,
   parseNotamItem,
@@ -290,130 +291,54 @@ describe('formatNotamText', () => {
 
 // ─── NotamClient ─────────────────────────────────────────────────────────────
 
-describe('NotamClient', () => {
-  const sampleApiResponse = {
-    items: [
-      makeFaaItem({ id: 'A0001/24', location: 'KSFO', plainLanguage: 'RWY 28R CLSD' }),
-      makeFaaItem({ id: 'A0002/24', location: 'KSFO', plainLanguage: 'OBST CRANE ERECTED' }),
-    ],
-  };
-
-  it('calls the FAA NOTAM API with correct URL and headers', async () => {
+describe('NotamClient compatibility against the cached service', () => {
+  it('sends no FAA key or browser credentials and uses a source-scoped query', async () => {
     const calls: Array<{ url: string; init?: RequestInit }> = [];
-    const mockFetch = async (url: string | URL | Request, init?: RequestInit) => {
-      calls.push({ url: String(url), init });
-      return { ok: true, json: async () => sampleApiResponse } as Response;
-    };
-
-    const client = new NotamClient({ apiKey: 'test-key', fetchFn: mockFetch as unknown as typeof fetch });
-    await client.fetchByIcao('KSFO');
-
-    expect(calls).toHaveLength(1);
-    expect(calls[0].url).toContain('icaoLocation=KSFO');
-    expect(calls[0].init?.headers).toMatchObject({ client_id: 'test-key' });
+    const client = new NotamClient({ apiKey: 'must-not-be-forwarded', fetchFn: async (url, init) => {
+      calls.push({ url: String(url), init }); return new Response(JSON.stringify(nmsPage()));
+    } });
+    const rows = await client.fetchByIcao('KSFO');
+    expect(rows[0].id).toBe('A0001/26'); expect(rows[0].severity).toBe('critical');
+    expect(calls).toHaveLength(1); expect(calls[0].url).toContain('airport=KSFO');
+    expect(calls[0].init?.headers).toEqual({ Accept: 'application/json' });
+    expect(calls[0].init?.credentials).toBe('omit'); expect(calls[0].init?.redirect).toBe('error');
+    expect(JSON.stringify(calls)).not.toContain('must-not-be-forwarded');
   });
-
-  it('returns parsed NOTAMs from a successful API response', async () => {
-    const mockFetch = async () =>
-      ({ ok: true, json: async () => sampleApiResponse }) as Response;
-
-    const client = new NotamClient({ apiKey: 'key', fetchFn: mockFetch as unknown as typeof fetch });
-    const notams = await client.fetchByIcao('KSFO');
-
-    expect(notams).toHaveLength(2);
-    expect(notams[0].id).toBe('A0001/24');
-    expect(notams[0].severity).toBe('critical'); // RWY CLSD
-    expect(notams[1].severity).toBe('high');     // OBST CRANE
+  it('rejects malformed envelopes instead of claiming an empty result', async () => {
+    const client = new NotamClient({ fetchFn: async () => new Response('{}') });
+    await expect(client.fetchByIcao('KSFO')).rejects.toThrow('invalid');
   });
-
-  it('throws on non-2xx HTTP status', async () => {
-    const mockFetch = async () =>
-      ({ ok: false, status: 403 }) as Response;
-
-    const client = new NotamClient({ apiKey: 'bad-key', fetchFn: mockFetch as unknown as typeof fetch });
-    await expect(client.fetchByIcao('KSFO')).rejects.toThrow('HTTP 403');
+  it('returns an empty array only for an explicit current production no-reports response', async () => {
+    const client = new NotamClient({ fetchFn: async () => new Response(JSON.stringify(nmsPage([]))) });
+    expect(await client.fetchByIcao('KSFO')).toEqual([]);
   });
-
-  it('returns empty array when API returns no items', async () => {
-    const mockFetch = async () =>
-      ({ ok: true, json: async () => ({}) }) as Response;
-
-    const client = new NotamClient({ fetchFn: mockFetch as unknown as typeof fetch });
-    const notams = await client.fetchByIcao('KSFO');
-    expect(notams).toHaveLength(0);
+  it('fetches a route in one cached-service query', async () => {
+    let count = 0;
+    const client = new NotamClient({ fetchFn: async () => { count++; return new Response(JSON.stringify(nmsPage([nmsNotice({ id: 'shared' })], { requested_locations: ['KOAK', 'KSFO'] }))); } });
+    expect(await client.fetchForRoute(['KSFO', 'KOAK'])).toHaveLength(1); expect(count).toBe(1);
   });
-
-  it('fetchForRoute de-duplicates by id across airports', async () => {
-    let callCount = 0;
-    const mockFetch = async (url: string | URL | Request) => {
-      callCount++;
-      // Both airports return the same NOTAM id
-      return { ok: true, json: async () => ({ items: [makeFaaItem({ id: 'SHARED-001' })] }) } as Response;
-    };
-
-    const client = new NotamClient({ fetchFn: mockFetch as unknown as typeof fetch });
-    const notams = await client.fetchForRoute(['KSFO', 'KOAK']);
-
-    expect(callCount).toBe(2);
-    expect(notams).toHaveLength(1); // de-duplicated
+  it('does not imply unsupported radius coverage', async () => {
+    await expect(new NotamClient().fetchByIcao('KSFO', 50)).rejects.toThrow('radius coverage');
   });
-
-  it('appends radius param when radiusNm > 0', async () => {
-    const calls: string[] = [];
-    const mockFetch = async (url: string | URL | Request) => {
-      calls.push(String(url));
-      return { ok: true, json: async () => ({}) } as Response;
-    };
-
-    const client = new NotamClient({ fetchFn: mockFetch as unknown as typeof fetch });
-    await client.fetchByIcao('KSFO', 50);
-
-    expect(calls[0]).toContain('radius=50');
+  it.each(['stale', 'partial', 'unavailable'] as const)('does not project %s reports into a complete legacy array', async status => {
+    const client = new NotamClient({ fetchFn: async () => new Response(JSON.stringify(nmsPage([], { status }))) });
+    await expect(client.fetchByIcao('KSFO')).rejects.toThrow('production NOTAM reports required');
+  });
+  it('preserves permanent reports in the rich API and refuses a fake legacy expiry', async () => {
+    const page = nmsPage([nmsNotice({ permanent: true, effective_end_utc: null })]);
+    const client = new NotamClient({ fetchFn: async () => new Response(JSON.stringify(page)) });
+    expect((await client.fetchReportsByIcao('KSFO')).notams[0].permanent).toBe(true);
+    await expect(client.fetchByIcao('KSFO')).rejects.toThrow('legacy dated shape');
   });
 });
 
-// ─── fetchNotams (convenience wrapper) ───────────────────────────────────────
-
-describe('fetchNotams', () => {
-  it('calls NotamClient.fetchByIcao when icao param is provided', async () => {
-    const mockFetch = async () =>
-      ({ ok: true, json: async () => ({ items: [makeFaaItem()] }) }) as Response;
-
-    const notams = await fetchNotams({ icao: 'KSFO' }, { fetchFn: mockFetch as unknown as typeof fetch });
-    expect(notams).toHaveLength(1);
+describe('fetchNotams compatibility', () => {
+  it('uses the cached production source for an ICAO request', async () => {
+    expect(await fetchNotams({ icao: 'KSFO' }, { fetchFn: async () => new Response(JSON.stringify(nmsPage())) })).toHaveLength(1);
   });
-
-  it('returns empty array when no icao provided', async () => {
-    const notams = await fetchNotams({});
-    expect(notams).toEqual([]);
-  });
-
-  it('falls back to mock data when API fails and no key is configured', async () => {
-    const mockFetch = async () => ({ ok: false, status: 401 }) as Response;
-
-    // Temporarily clear env key
-    const saved = process.env.FAA_NOTAM_API_KEY;
-    delete process.env.FAA_NOTAM_API_KEY;
-
-    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
-    const notams = await fetchNotams(
-      { icao: 'KSFO' },
-      { fetchFn: mockFetch as unknown as typeof fetch, apiKey: '' }
-    );
-
-    expect(notams.length).toBeGreaterThan(0); // mock data returned
-    expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining('FAA API call failed'));
-
-    warnSpy.mockRestore();
-    if (saved !== undefined) process.env.FAA_NOTAM_API_KEY = saved;
-  });
-
-  it('rethrows when API fails and a key is configured', async () => {
-    const mockFetch = async () => ({ ok: false, status: 403 }) as Response;
-
-    await expect(
-      fetchNotams({ icao: 'KSFO' }, { apiKey: 'real-key', fetchFn: mockFetch as unknown as typeof fetch })
-    ).rejects.toThrow('HTTP 403');
+  it('makes no request for empty input', async () => { expect(await fetchNotams({})).toEqual([]); });
+  it.each(['', 'configured-key'])('never falls back to sample data after failure (key=%s)', async apiKey => {
+    await expect(fetchNotams({ icao: 'KSFO' }, { apiKey, fetchFn: async () => new Response('', { status: 503 }) })).rejects.toThrow('HTTP 503');
   });
 });
 
