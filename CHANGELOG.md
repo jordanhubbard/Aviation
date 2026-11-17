@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Flight Planner: serve offline-package and cockpit workspaces on cold direct
+  loads and reloads from the packaged application (#493).
+
 - Offline flight packages: prepare sourced route/airport/METAR/TAF snapshots and hash-pinned FAA PDF/GeoTIFF assets; retain verified browser packages with explicit coverage, revision, expiry, cancellation and deletion controls, including reopening after a browser restart without a network (#493).
 
 - Cockpit receiver profiles: decode ForeFlight device identity and altitude-datum declarations in both SDKs; scope interpretation to the sender/session, preserve unknown datum after gaps, and keep pressure altitude distinct (#493).

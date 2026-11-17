@@ -239,6 +239,8 @@ def create_app(settings):
         @app.get("/airports", include_in_schema=False)
         @app.get("/aircraft-library", include_in_schema=False)
         @app.get("/charts", include_in_schema=False)
+        @app.get("/offline", include_in_schema=False)
+        @app.get("/cockpit", include_in_schema=False)
         def frontend_page() -> FileResponse:
             return FileResponse(static_root / "index.html")
 
