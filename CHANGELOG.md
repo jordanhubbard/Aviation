@@ -2,7 +2,7 @@
 
 ## Unreleased
 
-- Aircraft library: compare matching printed reference codes independently of PDF spacing without granting their components as measurement evidence.
+- Aircraft library: compare matching printed reference codes independently of PDF spacing; the fallback removes the same references from claim and quote comparisons so their signed components cannot support separate measurements.
 
 - Aircraft library: constrain structured correction responses to the required replacement count while retaining full evidence validation and per-request schema isolation.
 

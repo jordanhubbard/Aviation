@@ -121,6 +121,9 @@ Only horizontal spacing and label case/abbreviations are equivalent; preserve
 hyphens and all digits, including leading zeros. Match references separately in
 each quoted span, never metadata, uncited neighbors or combined partial quotes.
 The same number used outside matching references still requires numeric support.
+For this fallback, mask those same matched references in both the claim and its
+quotes before recomputing numeric support. Reference components in a quote cannot
+support a separate scalar elsewhere in the claim, including a negative scalar.
 This comparison-only disambiguation leaves ordinary numeric parsing, negative
 measurements, original claim/quote text, model evidence and generation identity
 unchanged. Existing passing claims retain their validation behavior.

@@ -432,8 +432,8 @@ _PRINTED_REFERENCE = re.compile(
 )
 
 
-def _without_cited_references(text, quotes):
-    """Mask equivalent printed references in temporary comparison text only."""
+def _unsupported_outside_cited_references(text, quotes):
+    """Compare numbers with the same matched references masked on both sides."""
 
     def identity(match):
         if match["service"] is not None:
@@ -445,9 +445,14 @@ def _without_cited_references(text, quotes):
     supported = {
         identity(match) for quote in quotes for match in _PRINTED_REFERENCE.finditer(quote)
     }
-    return _PRINTED_REFERENCE.sub(
-        lambda match: " " if identity(match) in supported else match[0], text
-    )
+    matched = supported & {identity(match) for match in _PRINTED_REFERENCE.finditer(text)}
+
+    def mask(value):
+        return _PRINTED_REFERENCE.sub(
+            lambda match: " " if identity(match) in matched else match[0], value
+        )
+
+    return numbers(mask(text)) - set().union(*(numbers(mask(quote)) for quote in quotes))
 
 
 def numbers(text):
@@ -594,11 +599,9 @@ def validate_answer(answer, evidence):
         cited_numbers = set().union(*(numbers(quote) for quote in supporting))
         unsupported = numbers(claim["text"]) - cited_numbers
         if unsupported:
-            # A matched printed reference is not a negative measurement. Any
-            # occurrence outside matching references must still be supported.
-            unsupported.intersection_update(
-                numbers(_without_cited_references(claim["text"], supporting))
-            )
+            # Matched reference components cannot supply numeric support for
+            # a separate scalar in this fallback, regardless of its sign.
+            unsupported = _unsupported_outside_cited_references(claim["text"], supporting)
         if unsupported:
             raise ModelUnavailable(
                 f"Model introduced numeric values absent from its quoted evidence in claim {claim_number}; "

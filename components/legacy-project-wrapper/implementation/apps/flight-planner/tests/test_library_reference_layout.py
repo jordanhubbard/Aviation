@@ -76,6 +76,37 @@ def test_service_identifier_does_not_grant_its_magnitude_as_a_scalar():
         validate_answer(answer(good + " Its temperature limit is 78 C."), [source(original)])
 
 
+@pytest.mark.parametrize(
+    "original,reference,scalar",
+    [
+        ("See Figure 7 -3 for location.", "See Figure 7-3.", "7"),
+        ("See Figure 7 -3 for location.", "See Figure 7-3.", "-3"),
+        ("See SL -00078 for information.", "See SL-00078.", "-78"),
+        ("See SB 13 -03-21 for information.", "See SB 13-03-21.", "13"),
+    ],
+)
+def test_reference_fallback_requires_independent_scalar_evidence(original, reference, scalar):
+    claim = f"{reference} Temperature is {scalar} C."
+    with pytest.raises(ModelUnavailable, match="numeric values"):
+        validate_answer(answer(claim), [source(original)])
+
+    # The identical scalar is accepted when separately stated in exact evidence.
+    stated = f"{original} Temperature is {scalar} C."
+    result = validate_answer(answer(claim), [source(stated)])
+    assert result["claims"][0]["text"] == claim
+    assert result["claims"][0]["citations"][0]["quote"] == stated
+
+
+def test_reference_fallback_accepts_scalar_in_another_exact_quote():
+    original = "See SL -00078 for information. Temperature is −78 C."
+    value = answer("See SL-00078. Temperature is -78 C.")
+    value["claims"][0]["citations"] = [
+        {"passage_id": 1, "quote": "See SL -00078 for information."},
+        {"passage_id": 1, "quote": "Temperature is −78 C."},
+    ]
+    assert validate_answer(value, [source(original)])["claims"]
+
+
 def test_matching_reference_does_not_hide_a_different_uncited_reference_component():
     original = "See Figure 7 -3 and Section 8 -3 for location."
     value = answer("See Figure 7-3 and Table 8-3 for location.")
