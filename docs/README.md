@@ -57,3 +57,5 @@ entrypoints are restored and qualified.
 
 The [route hazard assessment contract](architecture/route-hazard-assessment.md) defines
 timed altitude-profile assessment, source coverage and uncertainty semantics.
+
+- [FAA NMS NOTAM integration](architecture/nms-notams.md): authorized provider contract, cadence, shared cache and consumer acceptance.
