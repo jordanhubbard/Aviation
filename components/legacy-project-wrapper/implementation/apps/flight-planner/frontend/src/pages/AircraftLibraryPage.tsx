@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import {
   Alert,
   Box,
@@ -140,10 +140,13 @@ export default function AircraftLibraryPage() {
   const [busy, setBusy] = useState(false)
   const generation = useRef(0)
   const requests = useRef(new Set<AbortController>())
+  const invalidateScope = useCallback(() => {
+    generation.current++
+  }, [])
 
   useEffect(() => {
     const ownedRequests = requests.current
-    generation.current++
+    invalidateScope()
     ownedRequests.forEach((c) => c.abort())
     setBusy(false)
     setError('')
@@ -152,11 +155,11 @@ export default function AircraftLibraryPage() {
     setPassages([])
     setPage(null)
     return () => {
-      generation.current++
+      invalidateScope()
       ownedRequests.forEach((c) => c.abort())
       ownedRequests.clear()
     }
-  }, [code, registration, token])
+  }, [code, registration, token, invalidateScope])
 
   async function request(
     path: string,
