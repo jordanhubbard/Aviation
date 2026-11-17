@@ -123,6 +123,12 @@ class Store:
                     value TEXT NOT NULL, created_at TEXT NOT NULL,
                     PRIMARY KEY(document_id, kind)
                 );
+                CREATE TABLE IF NOT EXISTS distillation_history (
+                    document_id TEXT NOT NULL REFERENCES documents(id),
+                    revision_id TEXT NOT NULL, value TEXT NOT NULL,
+                    archived_at TEXT NOT NULL, reason TEXT NOT NULL,
+                    PRIMARY KEY(document_id, revision_id)
+                );
                 CREATE TABLE IF NOT EXISTS vectors (
                     passage_id INTEGER NOT NULL, model TEXT NOT NULL, vector TEXT NOT NULL,
                     PRIMARY KEY(passage_id, model)
@@ -313,11 +319,13 @@ class Store:
     def update_metadata(self, identifier: str, values: dict):
         values = metadata(values)
         with self.connection() as connection:
+            connection.execute("BEGIN IMMEDIATE")
             row = connection.execute(
                 "SELECT metadata FROM documents WHERE id=?", (identifier,)
             ).fetchone()
             if row is None:
                 raise ValueError("Document not found")
+            self._archive_distillation(connection, identifier, "source_metadata_changed")
             connection.execute(
                 "INSERT INTO metadata_history(document_id,metadata,recorded_at) VALUES (?,?,?)",
                 (identifier, row["metadata"], now()),
@@ -339,6 +347,8 @@ class Store:
         try:
             result = pdf.extract_file(original, ocr=ocr)
             with self.connection() as connection:
+                connection.execute("BEGIN IMMEDIATE")
+                self._archive_distillation(connection, identifier, "source_reindexed")
                 connection.execute(
                     "DELETE FROM vectors WHERE passage_id IN (SELECT rowid FROM passages WHERE document_id=?)",
                     (identifier,),
@@ -459,10 +469,92 @@ class Store:
                     raise ValueError(
                         "Document metadata changed during generation; retry with current applicability"
                     )
+            if kind == "distillation":
+                previous = connection.execute(
+                    "SELECT value FROM artifacts WHERE document_id=? AND kind=?", (identifier, kind)
+                ).fetchone()
+                if previous:
+                    old = json.loads(previous[0])
+                    old_sections = old.get("sections", [])
+                    if old.get("evidence_identity") != value.get("evidence_identity"):
+                        self._archive_distillation(connection, identifier, "generation_changed")
+                    elif value.get("sections", [])[: len(old_sections)] != old_sections:
+                        self._archive_distillation(
+                            connection, identifier, "accepted_prefix_changed"
+                        )
             connection.execute(
                 "INSERT OR REPLACE INTO artifacts VALUES (?,?,?,?)",
                 (identifier, kind, json.dumps(value), now()),
             )
+
+    def _archive_distillation(self, connection, identifier, reason):
+        previous = connection.execute(
+            "SELECT value FROM artifacts WHERE document_id=? AND kind='distillation'",
+            (identifier,),
+        ).fetchone()
+        if previous is None:
+            return
+        document = connection.execute(
+            "SELECT sha256,metadata FROM documents WHERE id=?", (identifier,)
+        ).fetchone()
+        snapshot = {
+            "document_id": identifier,
+            "source_sha256": document["sha256"],
+            "source_metadata": json.loads(document["metadata"]),
+            "index_identity": self.index_identity(identifier, connection=connection),
+            "artifact": json.loads(previous["value"]),
+        }
+        encoded = json.dumps(snapshot, sort_keys=True, separators=(",", ":"), allow_nan=False)
+        revision = hashlib.sha256(encoded.encode()).hexdigest()
+        connection.execute(
+            "INSERT OR IGNORE INTO distillation_history VALUES (?,?,?,?,?)",
+            (identifier, revision, encoded, now(), reason),
+        )
+
+    def distillations(self, identifier, *, limit=20, offset=0):
+        if (
+            type(limit) is not int
+            or type(offset) is not int
+            or not 1 <= limit <= 100
+            or not 0 <= offset <= 1_000_000
+        ):
+            raise ValueError("Invalid history pagination")
+        with self.connection() as connection:
+            rows = connection.execute(
+                "SELECT revision_id,archived_at,reason,"
+                "json_extract(value,'$.artifact.model') AS model,"
+                "json_extract(value,'$.artifact.status') AS status,"
+                "json_array_length(value,'$.artifact.sections') AS completed_batches,"
+                "json_extract(value,'$.source_sha256') AS source_sha256 "
+                "FROM distillation_history WHERE document_id=? "
+                "ORDER BY archived_at DESC,revision_id LIMIT ? OFFSET ?",
+                (identifier, limit + 1, offset),
+            ).fetchall()
+        return {
+            "items": [dict(row) for row in rows[:limit]],
+            "next_offset": offset + limit if len(rows) > limit else None,
+        }
+
+    def historical_distillation(self, identifier, revision):
+        if not re.fullmatch(r"[a-f0-9]{64}", revision):
+            return None
+        with self.connection() as connection:
+            row = connection.execute(
+                "SELECT * FROM distillation_history WHERE document_id=? AND revision_id=?",
+                (identifier, revision),
+            ).fetchone()
+        if row is None:
+            return None
+        if hashlib.sha256(row["value"].encode()).hexdigest() != revision:
+            raise ValueError("Historical distillation integrity check failed")
+        return {
+            **json.loads(row["value"]),
+            "revision_id": row["revision_id"],
+            "archived_at": row["archived_at"],
+            "reason": row["reason"],
+            "historical": True,
+            "eligible_for_resume": False,
+        }
 
     def search(self, code: str, query: str, *, limit=12, **filters):
         identifiers = self.select(code, **filters)

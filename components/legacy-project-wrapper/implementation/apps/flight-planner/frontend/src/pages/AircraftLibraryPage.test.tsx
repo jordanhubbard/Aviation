@@ -25,9 +25,53 @@ const document = {
 }
 let seen: { path: string; init?: RequestInit }[]
 let askResponse: (() => Promise<unknown>) | undefined
+let historyResponse: (() => Promise<unknown>) | undefined
+const revision = 'a'.repeat(64)
+const historicalSummary = {
+  revision_id: revision,
+  archived_at: '2026-11-17T00:00:00Z',
+  reason: 'generation_changed',
+  model: 'older-model',
+  status: 'partial',
+  completed_batches: 1,
+  source_sha256: document.sha256,
+}
+const historicalRecord = {
+  document_id: document.id,
+  revision_id: revision,
+  source_sha256: document.sha256,
+  source_metadata: { ...document.metadata, revision: 'retained edition' },
+  historical: true,
+  eligible_for_resume: false,
+  artifact: {
+    status: 'partial',
+    sections: [
+      {
+        pages: [1],
+        insufficient_evidence: false,
+        reason: '',
+        claims: [
+          {
+            text: 'Retained source claim.',
+            citations: [
+              {
+                document_id: document.id,
+                page: 1,
+                label: '1',
+                quote: '<script>historical quote</script>',
+                method: 'text',
+              },
+            ],
+          },
+        ],
+      },
+    ],
+  },
+}
 beforeEach(() => {
   seen = []
   askResponse = undefined
+  historyResponse = undefined
   vi.stubGlobal(
     'fetch',
     vi.fn(async (path: string, init?: RequestInit) => {
@@ -45,6 +89,11 @@ beforeEach(() => {
       else if (path.includes('/documents?')) body = { documents: [document] }
       else if (path.includes('/jobs?'))
         body = { jobs: [], next_offset: null, total: 0, offset: 0, limit: 20 }
+      else if (path.includes('/distillations?'))
+        body = historyResponse
+          ? await historyResponse()
+          : { items: [historicalSummary], next_offset: null }
+      else if (path.endsWith('/distillations/' + revision)) body = historicalRecord
       else if (path.endsWith('/pages/1'))
         body = {
           document_id: 'doc_test',
@@ -178,4 +227,75 @@ it('sends PDF bytes with explicit ICAO and tail associations', async () => {
     tails: ['N123AB', 'N456CD'],
   })
   expect((form.get('file') as File).name).toBe('manual.pdf')
+})
+
+it('loads historical summaries only explicitly, retains old source context and clears private history on lock', async () => {
+  await open()
+  expect(seen.some((r) => r.path.includes('/distillations'))).toBe(false)
+  fireEvent.click(
+    screen.getByRole('button', { name: 'Load summary history for ' + document.metadata.title }),
+  )
+  fireEvent.click(
+    await screen.findByRole('button', {
+      name: 'Inspect historical summary ' + revision.slice(0, 12),
+    }),
+  )
+  await screen.findByText('Retained source claim.')
+  expect(screen.getByText(/Historical summary\. Its source metadata/)).toBeInTheDocument()
+  expect(screen.getByText(/retained edition/)).toBeInTheDocument()
+  expect(screen.getByText('<script>historical quote</script>')).toBeInTheDocument()
+  expect(window.document.querySelector('script')).toBeNull()
+  expect(
+    screen.getByText('Retained source claim.').closest('[data-aviation-private]'),
+  ).not.toBeNull()
+  expect(JSON.stringify({ ...localStorage })).not.toContain('historical quote')
+  fireEvent.click(screen.getByRole('button', { name: 'Lock library' }))
+  await waitFor(() => expect(screen.queryByText('Retained source claim.')).toBeNull())
+})
+
+it('rejects a delayed history response after the private library scope changes', async () => {
+  await open()
+  let resolve!: (value: unknown) => void
+  historyResponse = () =>
+    new Promise((r) => {
+      resolve = r
+    })
+  fireEvent.click(
+    screen.getByRole('button', { name: 'Load summary history for ' + document.metadata.title }),
+  )
+  await waitFor(() => expect(resolve).toBeTypeOf('function'))
+  fireEvent.change(screen.getByLabelText('Library access key'), {
+    target: { value: 'different-private-key' },
+  })
+  resolve({ items: [historicalSummary], next_offset: null })
+  await waitFor(() =>
+    expect(
+      screen.queryByRole('button', { name: 'Inspect historical summary ' + revision.slice(0, 12) }),
+    ).toBeNull(),
+  )
+})
+
+it('paginates summary history explicitly and reports malformed history without inventing records', async () => {
+  await open()
+  historyResponse = async () => ({ items: [historicalSummary], next_offset: 20 })
+  fireEvent.click(
+    screen.getByRole('button', { name: 'Load summary history for ' + document.metadata.title }),
+  )
+  const older = await screen.findByRole('button', { name: 'Load older summaries' })
+  historyResponse = async () => ({ items: [], next_offset: null })
+  fireEvent.click(older)
+  await waitFor(() =>
+    expect(seen.some((r) => r.path.endsWith('/distillations?limit=20&offset=20'))).toBe(true),
+  )
+  await waitFor(() =>
+    expect(screen.queryByRole('button', { name: 'Load older summaries' })).toBeNull(),
+  )
+  expect(
+    screen.getAllByRole('button', { name: 'Inspect historical summary ' + revision.slice(0, 12) }),
+  ).toHaveLength(1)
+  historyResponse = async () => ({ items: [{ revision_id: '../invalid' }], next_offset: null })
+  fireEvent.click(
+    screen.getByRole('button', { name: 'Load summary history for ' + document.metadata.title }),
+  )
+  await screen.findByText('Invalid distillation history response')
 })

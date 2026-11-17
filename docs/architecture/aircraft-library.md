@@ -150,3 +150,33 @@ weaken citation validation. Worker leases continue to heartbeat during inference
 All document data and search/LLM operations require the operator's library bearer credential. Missing configuration disables private routes instead of opening them publicly. The UI shell exposes no private content before authentication and keeps credentials out of URLs and persistent browser storage. Separate original file download from rendered text; original downloads use attachment/nosniff and private no-store. UI report strings use text rendering. Browser selection changes discard stale data.
 
 Test deterministic PDFs, duplicate bytes/acquisitions, persistence, wrong-type/tail isolation, malformed/encrypted/scanned pages, partial extraction, citation validation, absent evidence, conflicting metadata, provider failures, SSRF redirects/addresses, authentication and desktop/mobile flows. Real PDF extraction/rendering and configured LLM/provider acceptance are separate from fixture tests. Full completion requires current authority/receipt/CI plus exact-image deployment and live HTTP/MCP/UI checks; no fixture proves live model or provider access.
+
+## Historical distillations
+
+Changing generation settings changes the evidence identity; an earlier summary
+must never be relabelled as output from that new generation. Before replacing a
+distillation with another generation, reducing or changing its admitted prefix,
+editing source applicability, or replacing its extraction, atomically preserve
+the previous artifact with the original SHA, source metadata and extraction
+identity. Append-only checkpoints within one generation do not create redundant
+historical copies. Identical historical payloads deduplicate by SHA-256; detail
+reads verify that identity and reject corrupted history. Archive
+and replacement/invalidation share the lease-fenced SQLite transaction, including
+recovery compare-and-swap checks. Existing version-1 stores gain the additive
+history table without rewriting originals, vectors or prior artifacts. New
+distillation artifacts retain their configured generation options; older records
+are not retroactively assigned a profile.
+
+Authenticated, private/no-store `GET /api/aircraft-library/documents/{document_id}/distillations`
+returns bounded history summaries (`limit` 1–100, default 20, `offset` 0–1000000)
+and `next_offset`; `GET .../distillations/{revision_id}` returns one immutable
+historical record with its retained source context and summary. Both operations
+have typed HTTP/MCP schemas. Historical records are explicitly ineligible for
+current-generation resume or automatic retrieval; citations identify the retained
+original but do not assert that current extraction, metadata or applicability
+still match. There is no restore mutation or model call on either read.
+
+The library UI offers explicit history loading and inspection for each document,
+shows the retained metadata and original identity alongside page-cited claims,
+and labels the record historical. History responses and private tokens remain in
+memory, clear on type/tail/key changes, and cannot reappear from a stale request.
