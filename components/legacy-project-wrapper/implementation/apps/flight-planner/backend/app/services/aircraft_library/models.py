@@ -505,10 +505,12 @@ def _rejected_claims(candidate, evidence):
     return failures or None
 
 
-def verified_completion(models, evidence, question):
+def verified_completion(models, evidence, question, *, max_attempts=3):
+    if type(max_attempts) is not int or not 1 <= max_attempts <= 3:
+        raise ValueError("Citation correction requires one to three completion attempts")
     prompt = question
     repair_base, repair_positions = None, None
-    for attempt in range(3):
+    for attempt in range(max_attempts):
         response = models.complete(evidence, prompt)
         correction_error = None
         if repair_positions is not None:
@@ -534,7 +536,7 @@ def verified_completion(models, evidence, question):
                 raise correction_error
             return validate_answer(candidate, evidence)
         except ModelUnavailable as error:
-            if attempt == 2:
+            if attempt + 1 == max_attempts:
                 raise
             failures = _rejected_claims(candidate, evidence)
             if failures:
@@ -588,7 +590,7 @@ def ask(store: Store, models: Models, code: str, question: str, **filters):
         }
     documents = {row["document_id"]: store.get(row["document_id"]) for row in evidence}
     context = [{**row, "metadata": documents[row["document_id"]]["metadata"]} for row in evidence]
-    answer = validate_answer(models.complete(context, question), evidence)
+    answer = verified_completion(models, context, question, max_attempts=2)
     if any(
         store.get(key)["metadata"] != document["metadata"] for key, document in documents.items()
     ):

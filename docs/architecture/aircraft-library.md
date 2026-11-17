@@ -10,6 +10,12 @@ Every page retains physical PDF page number, printed page label when available, 
 
 ## Retrieval, distillation and answers
 
+Interactive answers may correct a rejected citation/schema/numeric candidate once,
+for at most two model completions against the same evidence. Distillation keeps
+its existing three-completion limit per batch. Both paths retain valid claims,
+revalidate every replacement, reject dropped claims, and fail explicitly when
+the correction budget is exhausted. Provider HTTP failures are not retried.
+
 Answer metadata reports the retrieval strategy actually used. An incomplete
 document extraction adds a coverage warning without relabeling successful hybrid
 retrieval as full-text fallback. Embedding failures or absent matching vectors

@@ -243,6 +243,50 @@ def test_partial_extraction_warning_does_not_change_actual_retrieval_mode(store,
     assert answer["claims"][0]["citations"][0]["document_id"] == document["id"]
 
 
+@pytest.mark.parametrize("correct", [False, True])
+def test_interactive_answer_repairs_citations_once_without_relaxing_evidence(store, correct):
+    document = put(store)
+    valid, _ = provider_answer(store, document)
+    invalid = json.loads(json.dumps(valid))
+    invalid["claims"][0]["text"] = "Takeoff requires 7777 feet."
+
+    class CandidateModels(Models):
+        calls = 0
+
+        def complete(self, evidence, question):
+            self.calls += 1
+            if self.calls == 2:
+                assert "rejected_claims" in question
+                assert "7777" in question
+            return valid if correct and self.calls == 2 else invalid
+
+    models = CandidateModels({"AIRCRAFT_LIBRARY_LLM_MODEL": "test-model"})
+    if correct:
+        answer = ask(store, models, "C172", "takeoff ground roll")
+        assert answer["claims"][0]["text"] == valid["claims"][0]["text"]
+        assert answer["claims"][0]["citations"][0]["document_id"] == document["id"]
+    else:
+        with pytest.raises(ModelUnavailable, match="numeric values"):
+            ask(store, models, "C172", "takeoff ground roll")
+    assert models.calls == 2
+
+
+def test_interactive_answer_does_not_retry_a_provider_failure(store):
+    put(store)
+
+    class UnavailableModels(Models):
+        calls = 0
+
+        def complete(self, evidence, question):
+            self.calls += 1
+            raise ModelUnavailable("Model provider unavailable (HTTP 503)")
+
+    models = UnavailableModels({"AIRCRAFT_LIBRARY_LLM_MODEL": "test-model"})
+    with pytest.raises(ModelUnavailable, match="HTTP 503"):
+        ask(store, models, "C172", "takeoff ground roll")
+    assert models.calls == 1
+
+
 def test_invented_quotes_sources_and_numbers_are_rejected(store):
     document = put(store)
     value, passage = provider_answer(store, document)

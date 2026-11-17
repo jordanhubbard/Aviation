@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Aircraft-library answers can correct a rejected citation once against the same
+  evidence, retaining strict source/numeric checks and failing explicitly after
+  two completions; distillation retains its three-call bound (#489).
+
 - Aircraft library: preserve the actual hybrid retrieval mode when a retrieved
   document has incomplete extraction; keep its independent coverage warning (#489).
 
