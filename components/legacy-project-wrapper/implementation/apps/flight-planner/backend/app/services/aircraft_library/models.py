@@ -421,27 +421,52 @@ def retrieve(store: Store, models: Models, code: str, question: str, *, limit=12
     return [passages[key] for key in selected], warnings
 
 
+_PRINTED_REFERENCE = re.compile(
+    r"(?<![\w-])(?:"
+    r"(?P<service>(?:SL|SB)[ \t]*-[ \t]*\d+(?:[ \t]*-[ \t]*\d+)*"
+    r"|SB[ \t]*\d+(?:[ \t]*-[ \t]*\d+)+)"
+    r"|(?P<kind>Figure|Fig\.|Table|Section|Sec\.)[ \t]*"
+    r"(?P<identifier>\d+(?:[ \t]*-[ \t]*\d+)+)"
+    r")(?![\w-]|\.\d)",
+    re.IGNORECASE,
+)
+
+
+def _without_cited_references(text, quotes):
+    """Mask equivalent printed references in temporary comparison text only."""
+
+    def identity(match):
+        if match["service"] is not None:
+            return "service", re.sub(r"[ \t]+", "", match["service"]).upper()
+        kind = match["kind"].lower().rstrip(".")
+        kind = {"fig": "figure", "sec": "section"}.get(kind, kind)
+        return kind, re.sub(r"[ \t]+", "", match["identifier"])
+
+    supported = {
+        identity(match) for quote in quotes for match in _PRINTED_REFERENCE.finditer(quote)
+    }
+    return _PRINTED_REFERENCE.sub(
+        lambda match: " " if identity(match) in supported else match[0], text
+    )
+
+
 def numbers(text):
     # Normalize comparison text only: PDF leaders are layout, not a decimal
     # continuation. Keep the source quotation and the complete signed token.
     text = re.sub(r"\.{3,}(?=-?\d)", " ", text.replace("\N{MINUS SIGN}", "-"))
     text = re.sub(
-        r"(?<![\w.,])-?\d{1,3}(?:[ \t]*,\d{3})+(?:\.\d+)?"
-        r"(?!\w|[.,]\d|[ \t]*,[ \t]*\d)",
+        r"(?<![\w.,])-?\d{1,3}(?:[ \t]*,\d{3})+(?:\.\d+)?" r"(?!\w|[.,]\d|[ \t]*,[ \t]*\d)",
         lambda match: re.sub(r"[ \t]+", "", match[0]),
         text,
     )
     # Superscript footnotes can flatten to "d20 second delay". Only split
     # a line-leading definition with a matching numeric suffix reference in
     # this same quote; general identifiers must not supply numeric evidence.
-    references = set(re.findall(
-        r"(?<![\w.])-?\d[\d,]*(?:\.\d+)?([a-z])(?=\s|$|[.,;:)])", text
-    ))
+    references = set(re.findall(r"(?<![\w.])-?\d[\d,]*(?:\.\d+)?([a-z])(?=\s|$|[.,;:)])", text))
     text = re.sub(
         r"(?m)^([ \t]*)([a-z])(-?\d[\d,]*(?:\.\d+)?)([ \t]+seconds?[ \t]+delay\b)",
         lambda match: (
-            match[1] + match[2] + " " + match[3] + match[4]
-            if match[2] in references else match[0]
+            match[1] + match[2] + " " + match[3] + match[4] if match[2] in references else match[0]
         ),
         text,
     )
@@ -494,9 +519,7 @@ def model_evidence(evidence):
         # PDF locators belong to verified citations, not factual model evidence.
         # A label may simply repeat the physical ordinal; retain printed numbers
         # in the unchanged source excerpts instead.
-        row = {
-            key: value for key, value in source.items() if key not in {"text", "page", "label"}
-        }
+        row = {key: value for key, value in source.items() if key not in {"text", "page", "label"}}
         row["excerpts"] = [
             {"excerpt_id": index, "text": text} for index, text in enumerate(excerpts)
         ]
@@ -570,6 +593,12 @@ def validate_answer(answer, evidence):
             supporting.append(quote)
         cited_numbers = set().union(*(numbers(quote) for quote in supporting))
         unsupported = numbers(claim["text"]) - cited_numbers
+        if unsupported:
+            # A matched printed reference is not a negative measurement. Any
+            # occurrence outside matching references must still be supported.
+            unsupported.intersection_update(
+                numbers(_without_cited_references(claim["text"], supporting))
+            )
         if unsupported:
             raise ModelUnavailable(
                 f"Model introduced numeric values absent from its quoted evidence in claim {claim_number}; "

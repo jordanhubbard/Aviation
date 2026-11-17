@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Aircraft library: compare matching printed reference codes independently of PDF spacing without granting their components as measurement evidence.
+
 - Aircraft library: constrain structured correction responses to the required replacement count while retaining full evidence validation and per-request schema isolation.
 
 - Aircraft library: preserve complete signed thousands values when PDF extraction inserts horizontal spaces before grouping commas, without joining comma-space lists or rewriting source quotations.
