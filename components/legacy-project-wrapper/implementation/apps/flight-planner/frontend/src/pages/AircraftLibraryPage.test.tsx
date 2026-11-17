@@ -43,6 +43,8 @@ beforeEach(() => {
           search: { configured: false, provider: null },
         }
       else if (path.includes('/documents?')) body = { documents: [document] }
+      else if (path.includes('/jobs?'))
+        body = { jobs: [], next_offset: null, total: 0, offset: 0, limit: 20 }
       else if (path.endsWith('/pages/1'))
         body = {
           document_id: 'doc_test',
@@ -76,7 +78,19 @@ beforeEach(() => {
                 },
               ],
             }
-      else body = { job: { id: 'job_one', state: 'queued', kind: 'index' } }
+      else
+        body = {
+          job: {
+            id: 'job_one',
+            state: 'queued',
+            kind: 'index',
+            subject: null,
+            has_result: false,
+            result: null,
+            error: null,
+            updated_at: '2026-11-17T00:00:00Z',
+          },
+        }
       return { ok: true, json: async () => body }
     }),
   )
@@ -94,6 +108,9 @@ async function open() {
   })
   fireEvent.click(screen.getByRole('button', { name: 'Open library' }))
   await screen.findByText(document.metadata.title)
+  await waitFor(() =>
+    expect(screen.getByRole('button', { name: 'Load documents' })).not.toBeDisabled(),
+  )
 }
 
 it('keeps private access in headers, renders metadata as text and disables unconfigured discovery', async () => {
@@ -138,6 +155,7 @@ it('discards an answer when the question changes during the request', async () =
   fireEvent.click(screen.getByRole('button', { name: 'Ask with citations' }))
   await waitFor(() => expect(resolve).toBeDefined())
   fireEvent.change(input, { target: { value: 'New question' } })
+  expect(screen.getByRole('button', { name: 'Ask with citations' })).not.toBeDisabled()
   resolve({ insufficient_evidence: true, reason: 'Old answer must not appear', claims: [] })
   await waitFor(() => expect(screen.queryByRole('status')).toBeNull())
   expect(screen.queryByText(/Old answer must not appear/)).toBeNull()
@@ -152,7 +170,7 @@ it('sends PDF bytes with explicit ICAO and tail associations', async () => {
     target: { files: [new File(['%PDF-example'], 'manual.pdf', { type: 'application/pdf' })] },
   })
   fireEvent.click(screen.getByRole('button', { name: 'Upload 1 PDF' }))
-  await screen.findByText(/index: queued/)
+  await screen.findByText(/Process manual: queued/)
   const upload = seen.find((r) => r.path.endsWith('/documents') && r.init?.method === 'POST')!
   const form = upload.init!.body as FormData
   expect(JSON.parse(String(form.get('metadata_json')))).toMatchObject({

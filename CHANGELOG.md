@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Aircraft library: restore durable processing jobs on reopen, paginate lightweight
+  summaries, load detailed results explicitly and reuse repeated active document
+  operations. Keep refresh user-controlled and clear private state on lock (#489).
+
 - Aircraft-library answers can correct a rejected citation once against the same
   evidence, retaining strict source/numeric checks and failing explicitly after
   two completions; distillation retains its three-call bound (#489).

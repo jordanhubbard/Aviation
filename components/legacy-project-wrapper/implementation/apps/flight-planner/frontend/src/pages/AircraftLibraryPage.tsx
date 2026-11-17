@@ -60,7 +60,16 @@ type Document = {
     distillation?: { status: string; sections: (Answer & { pages: number[] })[] }
   }
 }
-type Job = { id: string; state: string; kind: string; error: string | null; result: unknown }
+type Job = {
+  id: string
+  state: string
+  kind: string
+  error: string | null
+  updated_at: string
+  result?: unknown
+  has_result: boolean
+  subject: { document_id: string | null; icao: string; title: string } | null
+}
 type Capabilities = {
   search: { configured: boolean; provider: string | null }
   llm: boolean
@@ -70,6 +79,26 @@ type Capabilities = {
   types: { icao: string; documents: number }[]
 }
 const base = '/api/aircraft-library'
+const jobKinds = new Map<string, string>([
+  ['index', 'Process manual'],
+  ['embed', 'Build semantic index'],
+  ['distill', 'Distill manual'],
+  ['discover', 'Find web examples'],
+  ['acquire', 'Acquire manuals'],
+])
+const activeJob = (job: Job) => job.state === 'queued' || job.state === 'running'
+const validJob = (job: Job) =>
+  typeof job?.id === 'string' &&
+  typeof job.kind === 'string' &&
+  ['queued', 'running', 'completed', 'failed'].includes(job.state) &&
+  typeof job.updated_at === 'string' &&
+  typeof job.has_result === 'boolean' &&
+  (job.error === null || typeof job.error === 'string') &&
+  (job.subject === null ||
+    (typeof job.subject === 'object' &&
+      typeof job.subject.icao === 'string' &&
+      typeof job.subject.title === 'string' &&
+      (job.subject.document_id === null || typeof job.subject.document_id === 'string')))
 const initial = {
   title: '',
   kind: 'POH',
@@ -93,6 +122,8 @@ export default function AircraftLibraryPage() {
   const [urls, setUrls] = useState('')
   const [documents, setDocuments] = useState<Document[]>([])
   const [jobs, setJobs] = useState<Job[]>([])
+  const [jobsRead, setJobsRead] = useState(false)
+  const [jobNextOffset, setJobNextOffset] = useState<number | null>(null)
   const [question, setQuestion] = useState('')
   const [answer, setAnswer] = useState<Answer | null>(null)
   const [passages, setPassages] = useState<{ document_id: string; page: number; text: string }[]>(
@@ -114,11 +145,14 @@ export default function AircraftLibraryPage() {
     const ownedRequests = requests.current
     generation.current++
     ownedRequests.forEach((c) => c.abort())
+    setBusy(false)
+    setError('')
     setDocuments([])
     setAnswer(null)
     setPassages([])
     setPage(null)
     return () => {
+      generation.current++
       ownedRequests.forEach((c) => c.abort())
       ownedRequests.clear()
     }
@@ -147,22 +181,26 @@ export default function AircraftLibraryPage() {
         }
         throw new Error(message)
       }
-      return binary ? response.blob() : response.json()
+      const value = binary ? await response.blob() : await response.json()
+      if (controller.signal.aborted)
+        throw new DOMException('Library request abandoned', 'AbortError')
+      return value
     } finally {
       requests.current.delete(controller)
     }
   }
 
   async function act(action: () => Promise<void>) {
+    const current = generation.current
     setError('')
     setBusy(true)
     try {
       await action()
     } catch (e) {
-      if (!(e instanceof DOMException && e.name === 'AbortError'))
+      if (current === generation.current && !(e instanceof DOMException && e.name === 'AbortError'))
         setError(e instanceof Error ? e.message : 'Library request failed')
     } finally {
-      setBusy(false)
+      if (current === generation.current) setBusy(false)
     }
   }
 
@@ -194,10 +232,83 @@ export default function AircraftLibraryPage() {
   function addJob(job: Job) {
     setJobs((previous) => [job, ...previous.filter((j) => j.id !== job.id)])
   }
+  function clearJobs() {
+    setJobs([])
+    setJobsRead(false)
+    setJobNextOffset(null)
+  }
+  async function loadJobs(offset = 0) {
+    const current = generation.current
+    const result = (await request(`/jobs?limit=20&offset=${offset}`)) as {
+      jobs: Job[]
+      next_offset: number | null
+    }
+    if (
+      !result ||
+      !Array.isArray(result.jobs) ||
+      !result.jobs.every(validJob) ||
+      !(
+        result.next_offset === null ||
+        (Number.isInteger(result.next_offset) && result.next_offset > offset)
+      )
+    )
+      throw new Error('Library processing jobs response is invalid')
+    if (current === generation.current) {
+      setJobs((previous) =>
+        offset
+          ? [
+              ...new Map<string, Job>(
+                [...previous, ...result.jobs].map((job) => [job.id, job]),
+              ).values(),
+            ]
+          : result.jobs,
+      )
+      setJobNextOffset(result.next_offset)
+      setJobsRead(true)
+    }
+  }
+  async function refreshCapabilities() {
+    const current = generation.current
+    const value = (await request('/capabilities')) as Capabilities
+    if (current === generation.current) setCaps(value)
+  }
   async function refreshJobs() {
-    for (const job of jobs.filter((j) => j.state === 'queued' || j.state === 'running'))
-      addJob((await request('/jobs/' + job.id)) as Job)
-    await refresh()
+    await Promise.all([loadJobs(), refresh(), refreshCapabilities()])
+  }
+  function processingJobs(items: Job[]) {
+    return items.map((job) => (
+      <Box key={job.id}>
+        <Typography sx={{ overflowWrap: 'anywhere' }}>
+          {jobKinds.get(job.kind) ?? 'Document processing'}: {job.state}
+          {job.subject && ` · ${job.subject.icao} · ${job.subject.title}`}
+        </Typography>
+        <Typography variant="caption">Updated: {job.updated_at}</Typography>
+        {job.error && <Alert severity="error">{job.error}</Alert>}
+        {job.has_result && job.result == null && (
+          <Button
+            disabled={busy}
+            aria-label={`Read processing result: ${job.subject?.title ?? job.kind}`}
+            onClick={() =>
+              void act(async () => {
+                const current = generation.current
+                const result = (await request('/jobs/' + job.id)) as Job
+                if (current === generation.current) addJob(result)
+              })
+            }
+          >
+            Read processing result
+          </Button>
+        )}
+        {job.result != null && (
+          <details>
+            <summary>Acquisition / processing results</summary>
+            <Box component="pre" sx={{ whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}>
+              {JSON.stringify(job.result, null, 2)}
+            </Box>
+          </details>
+        )}
+      </Box>
+    ))
   }
   async function download(doc: Document) {
     const blob = (await request('/documents/' + doc.id + '/original', {}, true)) as Blob
@@ -278,7 +389,7 @@ export default function AircraftLibraryPage() {
               onChange={(e) => {
                 setToken(e.target.value)
                 setCaps(null)
-                setJobs([])
+                clearJobs()
               }}
               autoComplete="off"
               helperText="Kept in this page’s memory only. It is cleared when you leave."
@@ -289,9 +400,8 @@ export default function AircraftLibraryPage() {
                 variant="contained"
                 onClick={() =>
                   void act(async () => {
-                    const c = (await request('/capabilities')) as Capabilities
-                    setCaps(c)
-                    await refresh()
+                    await refreshCapabilities()
+                    await Promise.all([refresh(), loadJobs()])
                   })
                 }
               >
@@ -301,7 +411,7 @@ export default function AircraftLibraryPage() {
                 onClick={() => {
                   setToken('')
                   setCaps(null)
-                  setJobs([])
+                  clearJobs()
                 }}
               >
                 Lock library
@@ -516,36 +626,41 @@ export default function AircraftLibraryPage() {
               </Stack>
             </CardContent>
           </Card>
-          {jobs.length > 0 && (
-            <Card>
-              <CardContent>
-                <Stack spacing={1}>
-                  <Typography variant="h6" component="h3">
-                    Document jobs
+          <Card>
+            <CardContent>
+              <Stack spacing={1}>
+                <Typography variant="h6" component="h3">
+                  Document processing
+                </Typography>
+                <Button disabled={busy} onClick={() => void act(refreshJobs)}>
+                  Refresh jobs and documents
+                </Button>
+                {jobs.some(activeJob) ? (
+                  processingJobs(jobs.filter(activeJob))
+                ) : (
+                  <Typography>
+                    {jobsRead
+                      ? 'The last read found no active processing jobs.'
+                      : 'Processing job status has not been read.'}
                   </Typography>
-                  <Button disabled={busy} onClick={() => void act(refreshJobs)}>
-                    Refresh jobs and documents
+                )}
+                {jobs.some((job) => !activeJob(job)) && (
+                  <details>
+                    <summary>
+                      Recent completed or failed jobs (
+                      {jobs.filter((job) => !activeJob(job)).length})
+                    </summary>
+                    {processingJobs(jobs.filter((job) => !activeJob(job)))}
+                  </details>
+                )}
+                {jobNextOffset !== null && (
+                  <Button disabled={busy} onClick={() => void act(() => loadJobs(jobNextOffset))}>
+                    Load more jobs
                   </Button>
-                  {jobs.map((job) => (
-                    <Box key={job.id}>
-                      <Typography>
-                        {job.kind}: {job.state} · {job.id.slice(-8)}
-                      </Typography>
-                      {job.error && <Alert severity="error">{job.error}</Alert>}
-                      {job.result != null && (
-                        <details>
-                          <summary>Acquisition / processing results</summary>
-                          <Box component="pre" sx={{ whiteSpace: 'pre-wrap' }}>
-                            {JSON.stringify(job.result, null, 2)}
-                          </Box>
-                        </details>
-                      )}
-                    </Box>
-                  ))}
-                </Stack>
-              </CardContent>
-            </Card>
-          )}
+                )}
+              </Stack>
+            </CardContent>
+          </Card>
           <Box>
             <Typography variant="h5" component="h3">
               Documents ({documents.length})
@@ -596,6 +711,9 @@ export default function AircraftLibraryPage() {
                           key={kind}
                           disabled={
                             busy ||
+                            jobs.some(
+                              (job) => activeJob(job) && job.subject?.document_id === doc.id,
+                            ) ||
                             (kind === 'distill' && !caps.llm) ||
                             (kind === 'embed' && !caps.embeddings)
                           }
@@ -687,6 +805,8 @@ export default function AircraftLibraryPage() {
               onChange={(e) => {
                 generation.current++
                 requests.current.forEach((c) => c.abort())
+                setBusy(false)
+                setError('')
                 setQuestion(e.target.value)
                 setAnswer(null)
                 setPassages([])

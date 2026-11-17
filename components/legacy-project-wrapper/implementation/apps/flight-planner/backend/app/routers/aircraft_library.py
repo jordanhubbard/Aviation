@@ -128,15 +128,34 @@ class DocumentList(BaseModel):
     documents: list[DocumentRecord]
 
 
-class JobRecord(BaseModel):
+class JobSubject(BaseModel):
+    document_id: str | None
+    icao: str
+    title: str
+
+
+class JobSummary(BaseModel):
     id: str
     kind: str
     state: Literal["queued", "running", "completed", "failed"]
-    request: dict[str, Any]
-    result: dict[str, Any] | None
     error: str | None
     created_at: str
     updated_at: str
+    subject: JobSubject | None = None
+    has_result: bool = False
+
+
+class JobRecord(JobSummary):
+    request: dict[str, Any]
+    result: dict[str, Any] | None
+
+
+class JobList(BaseModel):
+    jobs: list[JobSummary]
+    total: int
+    limit: int
+    offset: int
+    next_offset: int | None
 
 
 class UploadResult(BaseModel):
@@ -339,6 +358,14 @@ def install(app, *, store=None, models=None, worker_enabled=True):
         return current.create_job(
             "acquire", {"metadata": values, "urls": body.urls, "maximum": len(body.urls)}
         )
+
+    @router.get("/jobs", response_model=JobList)
+    def jobs(
+        limit: int = Query(default=20, ge=1, le=100),
+        offset: int = Query(default=0, ge=0, le=1_000_000),
+        current: Store = Depends(library),
+    ):
+        return current.jobs(limit, offset)
 
     @router.get("/jobs/{job_id}", response_model=JobRecord)
     def job(job_id: str, current: Store = Depends(library)):

@@ -43,6 +43,25 @@ Search multiple ICAO/model/manual queries and collect multiple examples, keeping
 
 ## Access and lifecycle
 
+Processing work remains inspectable after a page closes or the service restarts.
+Authenticated GET `/api/aircraft-library/jobs` returns lightweight summaries with
+manual/ICAO context, state, UTC timestamps, errors and a result-availability flag.
+It defaults to 20 records, permits at most 100 per page and uses bounded offset
+pagination. Running and queued work precede recent terminal history. Summaries
+omit raw requests and potentially large result bodies; GET `/jobs/{job_id}`
+retains the detailed record. Existing jobs and their history are preserved.
+
+The UI restores summaries when the user opens the library and refreshes only on
+explicit request. Completed/failed history is collapsed and detailed results are
+loaded explicitly. Credentials and job state stay in page memory; locking or
+changing the access key clears private results and fences late responses. Request
+ownership lasts through body consumption, so abandoning a scope cancels body reads.
+
+Repeated index/embed/distill requests for the same document reuse an already
+queued or running operation atomically across processes. After a terminal result,
+an explicit new request creates a new run. This does not delete or rewrite prior
+jobs and does not merge different operation kinds or document identities.
+
 Operators may explicitly set `AIRCRAFT_LIBRARY_LLM_ENABLE_THINKING=true` or
 `false` for providers/models supporting `chat_template_kwargs.enable_thinking`.
 Unset/empty omits the option and preserves the existing request/fingerprint;
