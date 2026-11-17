@@ -180,3 +180,9 @@ When moving the feed between hosts, quiesce the old owner and transfer the whole
 cache with its originals and reservations. Only one writable cache is authoritative
 per account/environment; independent host-local databases do not coordinate an
 account quota. Never reset cadence by starting from an empty directory.
+
+Importing the application package for the worker must not import web routers or
+initialize flight-plan/recording storage. Web dependencies are loaded by the
+application factory only when creating the web service. A worker with an explicit
+cache path must start on a read-only container filesystem without an unrelated
+writable web data directory.

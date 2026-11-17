@@ -31,6 +31,52 @@ def test_environment_must_be_explicit_and_default_data_path_is_valid(monkeypatch
     assert Path(root) == tmp_path / "nms" / "staging"
 
 
+def test_worker_entrypoint_does_not_boot_web_routers_or_need_web_storage(tmp_path):
+    cache = NMSCache(tmp_path / "cache", "staging", clock=lambda: time.time() + 86400)
+    ticket = cache.reserve()
+    cache.finish(ticket, [])
+    blocked = tmp_path / "not-a-directory"
+    blocked.write_text("No web storage can be initialized below this file")
+    environment = dict(os.environ)
+    environment.update(
+        DATA_DIR=str(blocked / "web-data"),
+        FAA_NMS_ENVIRONMENT="staging",
+        FAA_NMS_CLIENT_ID="fixture-client",
+        FAA_NMS_CLIENT_SECRET="fixture-secret",
+        FAA_NMS_CACHE_DIR=str(cache.root),
+        PYTHONPATH=os.pathsep.join(str(Path(path or os.getcwd()).resolve()) for path in sys.path),
+    )
+    script = """import runpy,sys
+from app.services import nms_client
+assert 'app.routers' not in sys.modules
+class Client:
+    environment='staging'
+    closed=False
+    def __init__(self,*args):pass
+    def features(self,*args,**kwargs):raise AssertionError('No reserved provider fetch is permitted')
+    def close(self):Client.closed=True
+nms_client.NMSClient=Client
+sys.argv=['nms-worker','--once']
+try:runpy.run_module('app.services.nms_worker',run_name='__main__')
+except SystemExit as stopped:assert stopped.code==0
+else:raise AssertionError('Worker entrypoint did not exit')
+assert Client.closed and 'app.routers' not in sys.modules
+print('isolated_worker_entrypoint_passed')
+"""
+    result = subprocess.run(
+        [sys.executable, "-c", script],
+        cwd=tmp_path,
+        env=environment,
+        capture_output=True,
+        text=True,
+        timeout=15,
+    )
+    assert result.returncode == 0, result.stderr
+    assert "isolated_worker_entrypoint_passed" in result.stdout
+    assert "nms_worker_stopped" in result.stdout
+    assert blocked.read_text() == "No web storage can be initialized below this file"
+
+
 def test_once_with_reserved_cadence_does_not_contact_provider_and_restores_signals(
     tmp_path, capsys, monkeypatch
 ):
