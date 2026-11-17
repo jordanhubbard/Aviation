@@ -25,8 +25,8 @@
   },
   "devDependencies": {
     "@aviation/shared-sdk": "workspace:*",
-    "@playwright/test": "^1.0.0",
-    "@types/node": "^25.5.0",
+    "@playwright/test": "^1.65.1",
+    "@types/node": "^26.6.6",
     "ts-node": "^10.9.2",
     "typescript": "^5.9.3"
   },
