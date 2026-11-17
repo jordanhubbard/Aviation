@@ -209,7 +209,7 @@ export function createGateway({ bindings = JSON.parse(process.env.AVIATION_GATEW
         { mimeType: 'application/json', description: `Full ${service.namespace} operation paths, parameters and response schemas` },
         async (uri, ctx) => ({ contents: [{ uri: String(uri), mimeType: 'application/json', text: JSON.stringify(await describe(ctx.signal)) }] }));
       server.registerTool(service.openapi.describeTool, {
-        description: `Discover the full ${service.namespace} API before calling ${service.mcpTool}. Returns OpenAPI paths and input/output schemas for airports/runways/frequencies/services, weather observations/TAFs/PIREPs/advisories, terrain, geographic maps, aircraft profiles, wind/fuel/density-altitude/weight-balance calculations, navigation logs and route planning. Use operation paths as the request tool path, including /api.`,
+        description: `Discover the full ${service.namespace} API before calling ${service.mcpTool}. ${service.description} Returns current OpenAPI operation paths, parameters and input/output schemas. Use the documented operation path as the request tool path, including its native API prefix.`,
         inputSchema: fromJsonSchema({ type: 'object', properties: {}, additionalProperties: false }),
       }, async (_args, ctx) => {
         const schema = await describe(ctx.signal);

@@ -2555,3 +2555,100 @@ body {
     text-align: left;
   }
 }
+
+.procedure-browser {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 24px 20px 100px;
+  overflow-wrap: anywhere;
+}
+.procedure-browser a {
+  color: #8dccff;
+}
+.procedure-browser nav,
+.procedure-browser form {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+  align-items: end;
+}
+.procedure-browser label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  flex: 1 1 180px;
+  min-width: 0;
+}
+.procedure-browser input,
+.procedure-browser select,
+.procedure-browser button {
+  font: inherit;
+  min-height: 44px;
+  max-width: 100%;
+  padding: 8px 12px;
+}
+.procedure-browser article {
+  border: 1px solid #52697d;
+  border-radius: 8px;
+  padding: 16px;
+  margin: 16px 0;
+  min-width: 0;
+}
+.procedure-browser .procedure-notice,
+.procedure-browser [role="alert"] {
+  border-left: 4px solid #e7b35b;
+  background: #222c35;
+  padding: 12px;
+}
+.procedure-browser .procedure-table {
+  max-width: 100%;
+  overflow-x: auto;
+}
+.procedure-browser table {
+  width: 100%;
+  border-collapse: collapse;
+}
+.procedure-browser th,
+.procedure-browser td {
+  border-bottom: 1px solid #52697d;
+  padding: 8px;
+  text-align: left;
+}
+.procedure-browser pre {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.procedure-browser summary {
+  cursor: pointer;
+  padding: 10px 0;
+}
+.procedure-browser dt {
+  color: #a1c9ed;
+}
+.procedure-browser dd {
+  margin: 0 0 8px;
+}
+@media (max-width: 520px) {
+  .procedure-browser {
+    padding: 16px 12px 100px;
+  }
+  .procedure-browser form > button {
+    width: 100%;
+  }
+}
+.procedure-browser table {
+  min-width: 680px;
+}
+.procedure-browser th,
+.procedure-browser td {
+  white-space: nowrap;
+}
+.procedure-browser .procedure-table-hint {
+  display: none;
+}
+@media (max-width: 720px) {
+  .procedure-browser .procedure-table-hint {
+    display: block;
+    color: #a1c9ed;
+  }
+}

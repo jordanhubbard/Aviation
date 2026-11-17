@@ -66,3 +66,5 @@ timed altitude-profile assessment, source coverage and uncertainty semantics.
 
 The [charts and navigation contract](architecture/charts-navigation.md) defines FAA
 chart acquisition, original preservation, georeferenced display and current CIFP ingestion.
+
+- [FAA NMS NOTAM integration](architecture/nms-notams.md): authorized provider contract, cadence, shared cache and consumer acceptance.

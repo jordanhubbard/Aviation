@@ -22,7 +22,7 @@ test('station/list/text preserve METARs and expose original TAFs, source times a
   assert.ok(Number.isFinite(station.latitude)); assert.ok(station.updatedAt);
   assert.deepEqual(await service.getStationSummaries(['KSFO']), [station]);
   const text = await service.generateBriefing('KSFO', 7);
-  for (const part of ['METAR observation:', 'Observed 2026-11-15T23:56:00.000Z', 'TAF forecast:', 'Valid 2026-', 'Retrieved 2026-', '\n FM160600', 'does not extend published TAF validity', 'NOTAMs: None active']) assert.ok(text.includes(part), part);
+  for (const part of ['METAR observation:', 'Observed 2026-11-15T23:56:00.000Z', 'TAF forecast:', 'Valid 2026-', 'Retrieved 2026-', '\n FM160600', 'does not extend published TAF validity', 'NOTAMs: No matching supplied records']) assert.ok(text.includes(part), part);
 });
 test('TAF failure and no-report states preserve METAR; missing METAR preserves TAF', async () => {
   for (const status of ['unavailable', 'no_reports']) {
@@ -60,4 +60,22 @@ test('NOTAM failure preserves both products; active NOTAM severity order remains
   service.notamClient = { fetchByIcao: async () => [{ severity: 'low', text: 'Information' }, { severity: 'critical', text: 'Runway closed' }] };
   const text = await service.generateBriefing('KSFO');
   assert.ok(text.indexOf('Runway closed') < text.indexOf('Information'));
+});
+
+test('rich NMS reports preserve staging, partial source fields, permanence and original text', async () => {
+  const { service } = fixture();
+  const text = '<script>original FAA source text</script>';
+  service.notamClient = {
+    fetchByIcao: async () => { throw Error('legacy array must not be used'); },
+    fetchReportsByIcao: async () => ({status:'partial',total:1,environment:'staging',production_data:false,
+      source:{provider:'FAA NMS'},synchronized_at:'2026-11-16T00:00:00Z',complete_snapshot:true,
+      fully_loaded:true,warnings:['NMS is not authoritative for all non-US NOTAMs.'],error:null,
+      notams:[{id:'NMS_TEST',icao_location:'KSFO',location:'SFO',activity:'unknown_type',severity:null,
+        effective_start_utc:null,effective_end_utc:null,permanent:true,estimated:false,schedule:'DLY 0900-1200',
+        missing_fields:['type','effective_start'],text,text_truncated:false,last_updated_utc:'2026-11-16T00:00:00Z'}]})
+  };
+  const result = await service.generateBriefing('KSFO');
+  for(const value of ['NOTAMs: partial','NON-PRODUCTION','Environment: staging','Unknown → PERM',
+    'Source fields missing: type, effective_start','DLY 0900-1200',text,'not authoritative for all non-US']) assert.ok(result.includes(value),value);
+  assert.ok(!result.includes('None active'));
 });

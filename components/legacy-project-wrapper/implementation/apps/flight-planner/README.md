@@ -212,6 +212,14 @@ changing these settings or upgrading from the earlier model-name-only index.
 Set `AIRCRAFT_LIBRARY_EMBEDDING_BATCH_SIZE` from 1 to 32 (default 32) when the
 provider limits batching. A value of 1 still embeds every passage individually.
 
+For models supporting `chat_template_kwargs.enable_thinking`, operators can set
+`AIRCRAFT_LIBRARY_LLM_ENABLE_THINKING=true` or `false` explicitly. Leaving it unset
+omits the provider-specific field. Invalid values fail configuration validation;
+changing a configured mode restarts incompatible partial distillations while
+preserving embedding identity. Truncated responses remain rejected and are reported
+distinctly from other invalid cited-JSON responses. This setting does not change
+source citation, numeric evidence or completeness checks.
+
 ## Timed route hazard assessment
 
 Open **Route assessment** at `/route-assessment`, or use the panel below a completed
@@ -246,6 +254,51 @@ chat-completion starts across the process's questions and background work. Set i
 for the provider's quota alongside the batch budget; a smaller batch can reduce
 token pressure. This does not change the required evidence, and rate-limited
 failures still preserve resumable partial progress.
+
+`AIRCRAFT_LIBRARY_MODEL_READ_TIMEOUT_SECONDS` accepts 10–600 (default 120) for
+slow model responses. Connect/pool waits are limited to 10 seconds and writes to
+30 seconds. Timeout errors identify their category and configured read limit;
+changing this setting adds no HTTP retries or citation exceptions.
+
+For a compatible provider, explicitly set
+`AIRCRAFT_LIBRARY_LLM_RESPONSE_FORMAT=json_schema` to request the bounded cited-answer
+schema. Unset/empty or `json_object` preserves the existing request. Schema mode
+never bypasses citation/numeric checks or silently downgrades after provider rejection;
+changing the schema invalidates incompatible distillation prefixes, leaving embeddings
+unchanged.
+
+Compatible providers may use `AIRCRAFT_LIBRARY_LLM_REASONING_EFFORT=none|low|high`
+with `AIRCRAFT_LIBRARY_LLM_MAX_TOKENS` (512–32768, default 4096). Leave the thinking
+flag unset when selecting reasoning effort. Provider token budgets can include
+reasoning; exhausting that budget never admits truncated output. Explicit effort
+and nondefault budget changes invalidate incompatible partial distillations.
+
+### Cached FAA NMS NOTAMs
+
+The `/notams` workspace and typed `/api/notams` endpoints read one shared cache,
+without FAA credentials or per-browser upstream calls. `/api/notams/capabilities`
+reports the selected environment; `/api/notams?airport=KPAO,KSFO` returns bounded
+source previews and `/api/notams/detail?id=<source-id>` returns the full notice
+and source GeoJSON. Preserve snapshot identities for pages/details; HTTP 409 means
+reload. `no_reports` means no matching cached source records, not a complete route
+briefing. Staging/FIT data may contain test notices; source status, missing fields,
+schedules, permanence and age remain visible. Text severity hints are advisory.
+
+The separate worker runs `python -m app.services.nms_worker` with explicit
+`FAA_NMS_ENVIRONMENT`, `FAA_NMS_CLIENT_ID` and `FAA_NMS_CLIENT_SECRET` in its private
+environment/keystore. `--once` performs at most one cadence-reserved operation.
+Set `FAA_NMS_CACHE_DIR` to the shared persistent directory. The web process needs
+only the environment selection and cache path and supports a read-only mount;
+it must not receive FAA credentials. The worker owns schema/ingestion writes.
+See [the NMS contract](../../../../../docs/architecture/nms-notams.md).
+
+Build the frontend and run its committed browser acceptance against an actual
+configured cache using `pnpm --filter flight-planner-frontend run test:notams
+<application-origin> <absolute-evidence-directory>` from the implementation root.
+It verifies desktop/mobile source reads, original GeoJSON download, visible
+non-production status, source invalidation, local input errors, qualified empty
+results, accessibility structure and document overflow. It intercepts no provider
+responses and needs no FAA credential. Browser dependencies must already exist.
 
 ## FAA charts and navigation cycles
 

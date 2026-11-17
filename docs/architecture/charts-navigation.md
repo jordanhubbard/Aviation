@@ -16,6 +16,26 @@ Display complete PDF originals and available georeferenced raster charts. Reproj
 
 Acquire the corresponding real FAA CIFP distribution and effective dates. Preserve raw records, continuation/route/transition identity, parser limitations and source checksums. Translate fixed-width records using a maintained ARINC parser and pass provider-neutral records to `aviation.nav-data`. Preserve constraints and unknowns; missing courses/altitudes must not become zero. Incomplete/special legs remain visible with their raw source, without claiming flyable guidance. Provider failure cannot fall back to samples. Synthetic catalogs remain available only when injected for tests/simulation. The VFR form stays free of instrument-procedure inputs; chart/navigation browsing is separate.
 
+## Application consumers
+
+G1000 procedure browsing consumes the same sourced navigation service as the
+planner. Replace hard-coded procedure names and production sample defaults;
+keep sample catalogs available through explicit test/simulator injection only.
+Both the visible browser and legacy procedure API preserve cycle/source metadata,
+verification failures, pagination, unknown constraints and incomplete guidance.
+An unavailable provider or unverified cycle produces an explicit unavailable
+state, without silently substituting sample procedures or an empty success.
+Loading a different airport invalidates earlier responses; requests remain owned
+through body reads and are cancelled when the user leaves that scope. Browsing
+does not activate a flight plan or turn incomplete records into flight guidance.
+
+Planning and preflight workflows provide a discoverable chart/navigation handoff
+that carries the selected airport when known. Airport identifiers retain their
+published meaning; a missing ICAO association is never guessed. These consumers
+use the existing stable HTTP/MCP boundary rather than maintaining independent FAA
+downloads, navigation catalogs or freshness calculations. Verify actual source
+records, unavailable/stale states and desktop/mobile interactions in each flow.
+
 ## Acceptance
 
 Exercise real FAA catalogs and selected originals; independent fixture rollover/failure cases; unsafe downloads/archives; byte identity; CRS/tile reference points; real CIFP records and SDK normalization; HTTP/MCP parity; desktop/mobile viewing and source/expiry visibility. Current receipt/locks, CI, reviewed merge and exact-image live deployment remain required. An index-only or source-registry-only change does not complete #490.

@@ -10,7 +10,7 @@
     {"input": "unhealthy", "expected": "unavailable"},
     {"input": "DOWN", "expected": "unavailable"}
   ],
-  "invalidStatusCases": ["", "unknown", "starting"],
+  "invalidStatusCases": ["", "unknown", "starting", "constructor", "__proto__", "toString", " CONSTRUCTOR ", " __proto__ "],
   "reportCases": [
     {"id": "minimal-default", "input": {}, "expected": {"status": "ok"}},
     {"id": "normalized-service-and-status", "input": {"status": "healthy", "service": " aviation-chat "}, "expected": {"status": "ok", "service": "aviation-chat"}},
@@ -21,6 +21,8 @@
     {"id": "empty-service", "input": {"service": "  "}, "code": "health-service-invalid"},
     {"id": "reserved-status", "input": {"details": {"status": "healthy"}}, "code": "health-details-invalid"},
     {"id": "reserved-service", "input": {"details": {"service": "other"}}, "code": "health-details-invalid"},
-    {"id": "invalid-status", "input": {"status": "starting"}, "code": "health-status-invalid"}
+    {"id": "invalid-status", "input": {"status": "starting"}, "code": "health-status-invalid"},
+    {"id": "prototype-constructor-status", "input": {"status": "constructor"}, "code": "health-status-invalid"},
+    {"id": "prototype-object-status", "input": {"status": "__proto__"}, "code": "health-status-invalid"}
   ]
 }

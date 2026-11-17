@@ -2,9 +2,45 @@
 
 ## Unreleased
 
+- G1000: expose sourced FAA procedure browsing through the shipped factory and
+  dashboard, preserve raw constraints/unknowns and cycle verification, and replace
+  implicit samples with explicit unavailable states. Planning/preflight chart
+  handoffs preserve user inputs and known airport associations (#490).
+
 - Charts and navigation: add sourced FAA terminal, VFR/IFR chart catalogs, retained originals, PDF previews, projected map tiles and real CIFP navigation records. Show edition dates separately from catalog verification, preserve cached files after source failures, and share exclusive cycle boundaries through both navigation SDK bindings (#490).
 
+- Aircraft library: restore durable processing jobs on reopen, paginate lightweight
+  summaries, load detailed results explicitly and reuse repeated active document
+  operations. Keep refresh user-controlled and clear private state on lock (#489).
+
+- Aircraft-library answers can correct a rejected citation once against the same
+  evidence, retaining strict source/numeric checks and failing explicitly after
+  two completions; distillation retains its three-call bound (#489).
+
+- Aircraft library: preserve the actual hybrid retrieval mode when a retrieved
+  document has incomplete extraction; keep its independent coverage warning (#489).
+
+- Aircraft library: correct rejected model claims with focused citation feedback
+  while preserving accepted claims. Revalidate the combined answer, retain the
+  three-call bound, and reject corrections that silently drop failed assertions
+  instead of claiming complete POH/AFM distillation (#489).
+
 - Aircraft document research: add a private POH/AFM/maintenance PDF library with original retention, page indexes/OCR, ICAO and registration associations, public-source acquisition, configured search/model adapters and source-cited questions. Generated distillations remain separate from planning performance data (#489).
+- FAA NMS: add a separately owned ingestion worker, durable shared cache and
+  source-preserving read API. Flight Planner's NOTAM workspace, the shared SDK
+  and Weather Briefing retain source text, timing, incomplete coverage and
+  staging warnings through HTTP/MCP. Staging is verified; production access and
+  hosted acceptance remain pending (#503).
+  Deployment provides a read-only web cache mount and explicit, environment-bound
+  worker install/start/stop/status commands with separate private credentials.
+  Leaf worker imports defer web-router initialization so the read-only worker
+  filesystem does not need unrelated flight-plan storage.
+  The NOTAM workspace releases completed fetch controllers, preventing canceled
+  request failures when a pilot changes location after reading a source notice.
+  Bounded SDK reads count bytes before consuming a native response clone, and
+  cancel both branches on incomplete reads to preserve browser request completion.
+
+- Common service health: reject inherited JavaScript object names as statuses, preserving declared aliases and shared TypeScript/Python error contracts (#442).
 
 - Common weather: share complete AWC station-catalog validation across TypeScript and Python, including explicit unknown-location accounting. Planner retains bounded gzip decoding, its cache and existing discovery/source responses (#486).
 

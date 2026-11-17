@@ -26,6 +26,14 @@
     <div id="results" role="region" aria-label="Loading calculation results" aria-live="polite" tabindex="0"></div>
   </section>
   <aviation-data-panel>Loading aviation data review…</aviation-data-panel>
+  <section><h2>Charts and airport references</h2>
+    <p>Review current airport diagrams, charts and procedure source records separately from this loading calculation.</p>
+    <label>Published airport identifier <input id="chartAirport" maxlength="4" autocomplete="off" placeholder="KSFO"></label>
+    <p id="chartAirportStatus">Enter the three- or four-character identifier published by the source.</p>
+    <nav><a id="airportCharts" aria-disabled="true" target="_blank" rel="noopener noreferrer">FAA charts and diagrams</a>
+    <a id="airportProcedures" aria-disabled="true" target="_blank" rel="noopener noreferrer">FAA procedure records</a></nav>
+    <p>References open separately so your aircraft loading and risk review stay here. Missing associations are not inferred.</p>
+  </section>
   <section><h2>Pilot risk review</h2><p>Record your own decision for each PAVE area before departure.</p>
     <div class="grid"><label><input type="checkbox" class="risk" data-risk="pilot"> Pilot: currency, health, and personal minimums checked</label>
     <label><input type="checkbox" class="risk" data-risk="aircraft"> Aircraft: airworthiness and performance checked</label>
