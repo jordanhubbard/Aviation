@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Aircraft library: retain negative values written with definite unary en dashes during comparison, while preserving numeric ranges and exact source quotations.
+
 - Aircraft library: identify bounded possible excerpt locations for rejected numbers during correction; preserve exact claim text during citation-only repairs so supported ranges and qualifiers cannot silently shrink.
 
 - Aircraft library: compare matching printed reference codes independently of PDF spacing; the fallback removes the same references from claim and quote comparisons so their signed components cannot support separate measurements.

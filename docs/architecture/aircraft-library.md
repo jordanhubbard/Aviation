@@ -112,6 +112,15 @@ The complete grouped value retains its sign; its components do not independently
 support claims. Original evidence, exact citations and generation identity remain
 unchanged by this comparison-only normalization.
 
+For numeric comparison, a definite unary en dash before a number is a minus sign,
+including signed endpoints after connectors such as `to` or `and`. Preserve en
+dashes separating numeric range bounds: a preceding numeric operand, optionally
+followed by a unit word or symbol, remains a range boundary even with horizontal
+spacing. Do not join lines or normalize dashes attached to identifiers, drawing
+rules or other ambiguous forms. Apply this only to temporary comparison text in
+both claim and quote; keep their original characters, model inputs and generation
+identity unchanged. A definite unary negative cannot use positive-only evidence.
+
 PDF spacing can make a hyphenated printed reference look like a signed scalar.
 When a numeric value would otherwise fail, discount it only if every occurrence
 in the claim belongs to a complete printed reference also present in an exact

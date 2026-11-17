@@ -473,9 +473,28 @@ def _unsupported_outside_cited_references(text, quotes):
     return numbers(mask(text)) - set().union(*(numbers(mask(quote)) for quote in quotes))
 
 
+_UNARY_EN_DASH = re.compile(r"(?<![\w.,\-–])–(?=\d)")
+_RANGE_LEFT_OPERAND = re.compile(
+    r"(?:\d|[)\]}]|\d[\d.,]*[ \t]*"
+    r"(?:(?!(?:to|through|and|or|is|equals|at|from)\b)[a-zA-Z°%/]+|['\"′″]))[ \t]*$",
+    re.IGNORECASE,
+)
+
+
+def _comparison_unary_dashes(text):
+    def convert(match):
+        # A numeric left operand makes a range, including a unit-bearing bound.
+        # Inspect only this line; a previous table row cannot change its sign.
+        prefix = text[: match.start()].rsplit("\n", 1)[-1]
+        return match[0] if _RANGE_LEFT_OPERAND.search(prefix) else "-"
+
+    return _UNARY_EN_DASH.sub(convert, text)
+
+
 def numbers(text):
     # Normalize comparison text only: PDF leaders are layout, not a decimal
     # continuation. Keep the source quotation and the complete signed token.
+    text = _comparison_unary_dashes(text)
     text = re.sub(r"\.{3,}(?=-?\d)", " ", text.replace("\N{MINUS SIGN}", "-"))
     text = re.sub(
         r"(?<![\w.,])-?\d{1,3}(?:[ \t]*,\d{3})+(?:\.\d+)?" r"(?!\w|[.,]\d|[ \t]*,[ \t]*\d)",
