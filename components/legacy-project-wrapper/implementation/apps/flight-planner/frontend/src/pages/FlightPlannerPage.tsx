@@ -1,3 +1,5 @@
+import { useNavigate } from 'react-router-dom'
+import { stageFilingInputs } from '../utils/filingInputs'
 import React, { useState, useEffect, useRef } from 'react';
 import { registerDecisionContext, type DecisionContext } from '@aviation/ai-explainer/browser';
 import {
@@ -40,6 +42,7 @@ import type {
 } from '../types'
 
 const FlightPlannerPage: React.FC = () => {
+  const navigate = useNavigate()
   useEffect(() => {
     const performanceData = startPerformanceProfiling();
     console.log('Performance Data:', performanceData);
@@ -194,6 +197,7 @@ const FlightPlannerPage: React.FC = () => {
           ) : lastMode === 'route' && displayedRoutePlan ? (
             <ResultsSection title="Route Results">
               <Button href={`/offline?route=${encodeURIComponent(displayedRoutePlan.route.join(','))}`}>Prepare offline flight package</Button>
+              <Button onClick={() => { stageFilingInputs(displayedRoutePlan); navigate('/filing') }}>Prepare Flight Service draft</Button>
               {isRouteStreaming ? (
                 <Paper sx={{ p: 2, mb: 2 }}>
                   <Typography variant="subtitle2" sx={{ mb: 1 }}>

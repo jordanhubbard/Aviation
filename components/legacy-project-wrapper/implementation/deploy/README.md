@@ -296,3 +296,33 @@ completion. A protocol/cleanup failure remains a failure. Concurrent closes and
 signals share the same cleanup promise. Browser-process exit alone does not establish
 that its streams or descendants have been reaped. Use managed Playwright Chromium for
 qualification; optional system Chrome retains the separate limitations recorded in #479.
+
+### Private Flight Service filing
+
+Flight Planner exposes `/filing` and the typed `/api/filing` contract through native
+HTTP and planning MCP discovery. Missing configuration reports unavailable; no
+provider calls occur at startup and saving a draft does not file it.
+
+In the protected `flight-planner.env`, explicitly select
+`FLIGHT_SERVICE_ENVIRONMENT=lab` or `production`, then supply the vendor-issued
+`FLIGHT_SERVICE_VENDOR_USERNAME` and `FLIGHT_SERVICE_VENDOR_PASSWORD`. These are
+Leidos vendor credentials, separate from FAA NMS and aircraft-library credentials.
+A pilot must grant the vendor permission in their Flight Service account.
+Configure a separate random `FLIGHT_SERVICE_TOKEN` of at least 32 characters for
+private HTTP/MCP access. Do not publish credentials in the browser environment,
+source, command arguments or logs.
+
+Production mutations additionally require an operator-provided
+`FLIGHT_SERVICE_OPERATIONS_APPROVAL_REFERENCE`. This records an attestation;
+it does not replace Leidos vetting or approval. Qualify vendor lab access before
+operations and never submit operational plans as a health/deployment test.
+The fixed provider origins and full review/receipt contract are documented in
+[Flight Service filing](../../../../docs/architecture/flight-service-filing.md).
+
+Private SQLite storage defaults to `DATA_DIR/flight-service`; the existing durable
+Planner data volume retains drafts, confirmations, operation receipts and audit.
+An explicit `FLIGHT_SERVICE_DIR` must remain inside a protected persistent mount.
+Use `Store.backup` for a new owner-only consistent snapshot before storage changes;
+retain the complete snapshot and restore only a supported schema while the writer
+is stopped. A reserved action remains uncertain after interruption. Inspect saved
+receipts and reconcile explicitly before another submission; never auto-replay it.

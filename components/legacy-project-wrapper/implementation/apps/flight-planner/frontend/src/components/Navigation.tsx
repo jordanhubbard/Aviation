@@ -67,6 +67,7 @@ const Navigation: React.FC = () => {
         <Tab label="Charts / navigation" value="/charts" aria-label="Charts and navigation" />
 
         <Tab label="NOTAMs" value="/notams" />
+        <Tab label="Flight Service filing" value="/filing" />
         <Tab label="Route assessment" value="/route-assessment" />
         <Tab
           icon={<Flight />}
