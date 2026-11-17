@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+- Aircraft performance: add original-pinned, explicitly reviewed table datasets
+  and a private workspace for source inspection, draft import, review, exact
+  scenario inputs and cited numerical results. Preserve correction coverage and
+  no-extrapolation limits; source summaries do not become planning figures. Add
+  explicit private reference handoffs to Planner, Preflight and Analyzer, with
+  scenario matching, measured uncertainty and separate operator assertions (#494).
+
 - Explanation tests: bind owned HTTP fixtures to the IPv4 loopback used by Supertest,
   preserving authentication assertions and closing connections/listeners after failure (#507).
 

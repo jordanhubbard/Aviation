@@ -12,6 +12,7 @@ from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from app.models.airport import get_airport, load_airport_cache
 from app.services import ga_data
+from app.services.performance_tables import interpolate
 from aviation.aircraft import (
     AircraftOperatingProfile,
     AircraftTypeDesignatorRecord,
@@ -689,20 +690,14 @@ def performance_table(req: PerformanceTableRequest) -> dict:
             detail="Provide a complete rectangular grid with at least two distinct altitudes and temperatures and no duplicate points",
         )
 
-    def bracket(values, target):
-        if not values[0] <= target <= values[-1]:
-            raise HTTPException(
-                422,
-                detail="Requested conditions are outside the supplied POH table; extrapolation is prohibited",
-            )
-        low, high = next((a, b) for a, b in zip(values, values[1:]) if a <= target <= b)
-        return low, high, (target - low) / (high - low)
-
-    a, b, fa = bracket(altitudes, req.pressure_altitude_ft)
-    c, d, ft = bracket(temperatures, req.temperature_c)
-    value = (1 - fa) * ((1 - ft) * grid[a, c] + ft * grid[a, d]) + fa * (
-        (1 - ft) * grid[b, c] + ft * grid[b, d]
-    )
+    try:
+        value, _ = interpolate(
+            [{"coordinates": {"pressure_altitude_ft": p.pressure_altitude_ft, "temperature_c": p.temperature_c}, "value": p.value} for p in req.points],
+            ["pressure_altitude_ft", "temperature_c"],
+            {"pressure_altitude_ft": req.pressure_altitude_ft, "temperature_c": req.temperature_c},
+        )
+    except ValueError as error:
+        raise HTTPException(422, detail=str(error)) from error
     return {
         "metric": req.metric,
         "value": value,

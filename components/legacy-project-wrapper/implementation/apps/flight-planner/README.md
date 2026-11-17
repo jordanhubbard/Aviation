@@ -474,3 +474,33 @@ listener and sends conformance packets from two local UDP sources. It verifies
 GPS/datum/source separation, stale states, opt-in polling, private disconnection,
 layout and browser errors. This is software integration evidence, not receiver
 hardware evidence. Use an installed managed Chromium through Playwright.
+
+## Source-reviewed aircraft performance API
+
+The private `/api/aircraft-performance` API uses the aircraft-library operator token.
+Datasets pin an original document hash, original-page quotations, exact source
+variant/revision/configuration and type/tail associations. Upload transcriptions
+with `POST /datasets`, then review separately through `POST /datasets/{id}/review`
+with the expected content hash and explicit source/applicability attestation.
+`GET /datasets?icao=...` returns bounded summaries; `GET /datasets/{id}` retains the
+complete source table. Retirement is permanent for that content identity; create
+and review a new content revision to replace it.
+
+`POST /datasets/{id}/calculate` requires every declared condition. Unreviewed,
+retired, corrupted or stale-source data cannot be calculated. Interpolation needs
+separate reviewed axes/source evidence; otherwise only exact source coordinates
+are accepted. No extrapolation, implicit weight/temperature/configuration change
+or nearest-value substitution occurs. Atmosphere uses either absolute Celsius or
+an explicit ISA deviation. Wind uses positive headwind and negative tailwind.
+Percent corrections identify their own-metric basis; uncovered changes fail.
+Combining corrections requires original-page evidence and an explicit order.
+Other-metric/additive corrections are not yet represented and must not be
+approximated as total-distance multipliers. Reviewed data and every numerical
+result remain research references, not dispatch or current-aircraft approval.
+Provider/LLM availability is not required for these calculations.
+
+This API is an implementation checkpoint for #494. Planner, Preflight Check and
+Analyzer UI/application handoffs, linked-basis/additive correction rules, broader
+original-manual examples, actual MCP parity, reviewed deployment and hosted
+acceptance remain unfinished. The legacy caller-supplied table endpoint retains
+its existing PA/OAT bounds, minimum rectangular grid and no-extrapolation behavior.

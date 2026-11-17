@@ -80,6 +80,7 @@ def test_packaged_workspaces_support_cold_links_without_hiding_api_or_asset_erro
             "/route-assessment",
             "/offline",
             "/cockpit",
+            "/aircraft-performance",
         ):
             response = hosted.get(path)
             assert response.status_code == 200, path
@@ -93,6 +94,7 @@ def test_packaged_workspaces_support_cold_links_without_hiding_api_or_asset_erro
         schema = hosted.get("/api/openapi.json").json()
         assert "/offline" not in schema["paths"]
         assert "/cockpit" not in schema["paths"]
+        assert "/aircraft-performance" not in schema["paths"]
 
 
 def test_api_only_factory_does_not_claim_missing_frontend_artifacts(monkeypatch, tmp_path):
@@ -102,3 +104,4 @@ def test_api_only_factory_does_not_claim_missing_frontend_artifacts(monkeypatch,
         assert hosted.get("/api/health").status_code == 200
         assert hosted.get("/offline").status_code == 404
         assert hosted.get("/cockpit").status_code == 404
+        assert hosted.get("/aircraft-performance").status_code == 404

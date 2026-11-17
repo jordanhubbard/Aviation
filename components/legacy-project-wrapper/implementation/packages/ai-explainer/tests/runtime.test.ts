@@ -1,5 +1,6 @@
 import express from 'express';
-import { createServer } from 'node:http';
+import { createServer, type Server } from 'node:http';
+import { startLoopback, closeLoopback } from './loopback.js';
 import request from 'supertest';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { E2E_MAX_AGE_MS, assertTestDataForRun, parseE2ERunId, signE2EHeaders, tagTestData,
@@ -12,20 +13,28 @@ const APP = 'flight-planner'; const RUN = parseE2ERunId('e2e_' + 'a'.repeat(32))
 const OTHER = parseE2ERunId('e2e_' + 'b'.repeat(32)); const SECRET = 'synthetic-e2e-secret-32-characters-long';
 const TOKEN = 'synthetic-provider-token-never-read-in-e2e';
 const instances: ExplanationRuntime[] = [];
-afterEach(() => { for (const instance of instances.splice(0)) instance.close(); vi.restoreAllMocks(); });
+const servers: Server[] = [];
+afterEach(async () => {
+  try { for (const instance of instances.splice(0)) instance.close(); }
+  finally {
+    try { await Promise.all(servers.splice(0).map(closeLoopback)); }
+    finally { vi.restoreAllMocks(); }
+  }
+});
 const headers = () => signE2EHeaders(APP, RUN, SECRET);
 const seed = () => ({ fixture_type: 'explanation', record: tagTestData(RUN, { app_id: APP }) });
-function privateRuntime() {
+async function privateRuntime() {
   const configuration = vi.fn(() => ({ brainUrl: 'https://production.invalid/rcc', apiToken: TOKEN, publicBaseUrl: 'https://production.invalid' }));
   const fetch = vi.fn();
   const runtime = createExplanationRuntime(APP, { environment: { AVIATION_E2E_RUN_ID: RUN, AVIATION_E2E_SECRET: SECRET,
     RCC_API_TOKEN: TOKEN, RCC_BRAIN_URL: 'https://production.invalid/rcc', KEYSTORE_PATH: '/must-not-read-production', KEYSTORE_ENCRYPTION_KEY: TOKEN }, configuration, fetch });
-  instances.push(runtime); const app = express(); app.use(runtime.middleware);
+  instances.push(runtime); const application = express(); application.use(runtime.middleware);
+  const app = await startLoopback(application); servers.push(app);
   return { runtime, app, configuration, fetch };
 }
 describe('normal and SDK-isolated explanation runtimes', () => {
   it('embeds the same guarded API in a plain Node HTTP service without consuming app routes', async () => {
-    const { runtime } = privateRuntime();
+    const { runtime } = await privateRuntime();
     const server = createServer((request, response) => {
       if (runtime.handle(request, response)) return;
       response.end('Application route');
@@ -51,7 +60,7 @@ describe('normal and SDK-isolated explanation runtimes', () => {
     }
   });
   it('the shared E2E fixture helper removes the actor ledger after browser failure', async () => {
-    const { runtime } = privateRuntime();
+    const { runtime } = await privateRuntime();
     const server = await startExplanationServer(runtime.client, { middleware: runtime.middleware });
     try {
       await expect(withE2ERun(SECRET, async run => {
@@ -66,7 +75,7 @@ describe('normal and SDK-isolated explanation runtimes', () => {
     } finally { await server.close(); }
   });
   it('requires signed app/run credentials and a fixture ledger before private submission', async () => {
-    const { runtime, app, configuration, fetch } = privateRuntime();
+    const { runtime, app, configuration, fetch } = await privateRuntime();
     await request(app).get('/api/explain/config').expect(403);
     await request(app).get('/api/explain/config').set({ 'x-aviation-test-run': RUN }).expect(403);
     await request(app).get('/api/explain/config').set(signE2EHeaders('weather-briefing', RUN, SECRET)).expect(403);
@@ -77,7 +86,7 @@ describe('normal and SDK-isolated explanation runtimes', () => {
     expect(configuration).not.toHaveBeenCalled(); expect(fetch).not.toHaveBeenCalled();
   });
   it('runs SDK-only explanations and follow-ups, then clears every tagged owned record', async () => {
-    const { app, runtime, configuration, fetch } = privateRuntime();
+    const { app, runtime, configuration, fetch } = await privateRuntime();
     const initial = await request(app).post('/api/explain/__e2e/fixtures').set(headers()).send(seed()).expect(200);
     expect(initial.body).toMatchObject({ count: 1, run_records: 1, records: 0 });
     assertTestDataForRun(initial.body, RUN); for (const entry of initial.body.entries) assertTestDataForRun(entry, RUN);
@@ -104,7 +113,7 @@ describe('normal and SDK-isolated explanation runtimes', () => {
     expect(configuration).not.toHaveBeenCalled(); expect(fetch).not.toHaveBeenCalled();
   });
   it('rejects foreign fixture tags and malformed bodies without creating state or reflecting values', async () => {
-    const { app } = privateRuntime();
+    const { app } = await privateRuntime();
     await request(app).post('/api/explain/__e2e/fixtures').set(headers()).send({ fixture_type: 'explanation', record: tagTestData(OTHER, { app_id: APP }) }).expect(400);
     await request(app).post('/api/explain/__e2e/fixtures').set(headers()).send({ fixture_type: 'explanation', record: tagTestData(RUN, { app_id: 'weather-briefing' }) }).expect(400);
     const malformed = await request(app).post('/api/explain/__e2e/fixtures').set(headers()).set('Content-Type', 'application/json').send('{"private":"' + TOKEN).expect(400);
@@ -112,7 +121,7 @@ describe('normal and SDK-isolated explanation runtimes', () => {
     expect((await request(app).get('/api/explain/__e2e/status').set(headers())).body.count).toBe(0);
   });
   it('does not renew an expired fixture and still permits signed owned cleanup', async () => {
-    const { app } = privateRuntime();
+    const { app } = await privateRuntime();
     await request(app).post('/api/explain/__e2e/fixtures').set(headers()).send(seed()).expect(200);
     const future = Date.now() + E2E_MAX_AGE_MS + 1; vi.spyOn(Date, 'now').mockReturnValue(future);
     await request(app).post('/api/explain').set(headers()).send({ context: 'facts' }).expect(409);
@@ -121,7 +130,7 @@ describe('normal and SDK-isolated explanation runtimes', () => {
   });
   it('requires private callback tags even for a known nonce', async () => {
     const received = vi.spyOn(ExplainerClient.prototype, 'receiveCallback');
-    const { app } = privateRuntime();
+    const { app } = await privateRuntime();
     await request(app).post('/api/explain/__e2e/fixtures').set(headers()).send(seed()).expect(200);
     await request(app).post('/api/explain').set(headers()).send({ context: 'facts' }).expect(202);
     const payload = structuredClone(received.mock.calls[0][0]) as { metadata: Record<string, unknown> };
@@ -133,7 +142,8 @@ describe('normal and SDK-isolated explanation runtimes', () => {
     const runtime = createExplanationRuntime(APP, { environment: { NODE_ENV: 'production', AVIATION_E2E_SECRET: SECRET },
       configuration: () => ({ brainUrl: 'http://127.0.0.1/rcc', apiToken: TOKEN, publicBaseUrl: 'https://flight-planner.example' }),
       fetch: async (_url, init) => { queuedBody = JSON.parse(String(init?.body)); return new Response(JSON.stringify({ ok: true, status: 'queued', requestId: 'rcc-1' }), { status: 202 }); } });
-    instances.push(runtime); const app = express(); app.use(runtime.middleware);
+    instances.push(runtime); const application = express(); application.use(runtime.middleware);
+  const app = await startLoopback(application); servers.push(app);
     await request(app).get('/api/explain/config').set(headers()).expect(403);
     await request(app).get('/api/explain/__e2e/status').expect(404);
     await request(app).post('/api/explain').send({ context: 'facts' }).expect(202);

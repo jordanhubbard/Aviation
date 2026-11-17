@@ -60,6 +60,8 @@ entrypoints are restored and qualified.
 The [aircraft library contract](architecture/aircraft-library.md) defines original-preserving
 POH/AFM ingestion, source discovery, ICAO/registration associations and cited answers.
 Configuration and use are documented in the retained Flight Planner README.
+The [sourced-performance contract](architecture/aircraft-performance.md) defines original-pinned
+transcriptions, explicit review, applicability and bounded calculations.
 The [route hazard assessment contract](architecture/route-hazard-assessment.md) defines
 timed altitude-profile assessment, source coverage and uncertainty semantics.
 
@@ -70,3 +72,6 @@ chart acquisition, original preservation, georeferenced display and current CIFP
 The [offline and cockpit contract](architecture/offline-cockpit.md) defines durable
 flight packages, disconnected operation and the local GDL90 receiver bridge.
 - [FAA NMS NOTAM integration](architecture/nms-notams.md): authorized provider contract, cadence, shared cache and consumer acceptance.
+
+The [browser CI runner guide](development/browser-ci.md) records the supported
+managed-Chromium runner and the verification required before changing it.

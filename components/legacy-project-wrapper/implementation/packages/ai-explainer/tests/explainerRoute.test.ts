@@ -1,5 +1,6 @@
 import express from 'express';
-import { createServer, type Server } from 'node:http';
+import type { Server } from 'node:http';
+import { startLoopback, closeLoopback } from './loopback.js';
 import request from 'supertest';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { ExplainerClient, type BrainRequest } from '../src/ExplainerClient.js';
@@ -9,11 +10,8 @@ const TOKEN = 'synthetic-provider-credential-do-not-echo';
 const clients: ExplainerClient[] = [];
 const servers: Server[] = [];
 afterEach(async () => {
-  for (const sdk of clients.splice(0)) sdk.close();
-  await Promise.all(servers.splice(0).map(server => new Promise<void>((resolve, reject) => {
-    server.closeAllConnections();
-    server.close(error => error ? reject(error) : resolve());
-  })));
+  try { for (const sdk of clients.splice(0)) sdk.close(); }
+  finally { await Promise.all(servers.splice(0).map(closeLoopback)); }
 });
 async function fixture(configured = true) {
   const bodies: BrainRequest[] = [];
@@ -25,11 +23,7 @@ async function fixture(configured = true) {
     publicBaseUrl: 'http://127.0.0.1/app', apiToken: TOKEN, fetch } : { fetch });
   clients.push(sdk);
   const app = express(); app.use(explainerRoute(sdk));
-  const server = createServer(app);
-  await new Promise<void>((resolve, reject) => {
-    server.once('error', reject);
-    server.listen(0, '127.0.0.1', () => { server.off('error', reject); resolve(); });
-  });
+  const server = await startLoopback(app);
   servers.push(server);
   expect(server.address()).toMatchObject({ address: '127.0.0.1', family: 'IPv4' });
   return { sdk, server, fetch, bodies };

@@ -30,7 +30,8 @@ on:
 jobs:
   typescript:
     name: TypeScript shared packages
-    runs-on: ubuntu-latest
+    # Match the managed Chromium platform in the committed Playwright lock.
+    runs-on: ubuntu-24.04
     defaults:
       run:
         working-directory: components/legacy-project-wrapper/implementation

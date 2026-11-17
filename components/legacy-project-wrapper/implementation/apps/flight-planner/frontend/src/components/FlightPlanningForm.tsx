@@ -1,5 +1,7 @@
 import React, { useMemo, useState, useEffect } from 'react'
 import ImportExportUI from './ImportExportUI'
+import SourcedPerformanceReference from './SourcedPerformanceReference'
+import type { PerformanceReference } from '../utils/performanceReference'
 import SavedAircraftProfiles from './SavedAircraftProfiles'
 import {
   Autocomplete,
@@ -17,6 +19,7 @@ import {
   Slider,
   TextField,
   Typography,
+  Box,
 } from '@mui/material'
 import toast from 'react-hot-toast'
 
@@ -48,6 +51,9 @@ const optionLabel = (a: Airport) => {
   return code
 }
 const FlightPlanningForm: React.FC<Props> = ({ isLoading, onSubmit }) => {
+  const [appliedReferences, setAppliedReferences] = useState<
+    (PerformanceReference & { operator_fields: string[] })[]
+  >([])
   const [flightPlans, setFlightPlans] = useState<FlightPlan[]>([])
   const [open, setOpen] = useState(false)
 
@@ -58,6 +64,8 @@ const FlightPlanningForm: React.FC<Props> = ({ isLoading, onSubmit }) => {
   }, [])
 
   const handleLoad = (plan: FlightPlan) => {
+    setAppliedReferences([])
+    setUseEnteredFuelBurn(false)
     setOrigin(plan.origin ?? '')
     setDestination(plan.destination ?? '')
     setSpeed(plan.speed ?? DEFAULT_AIRCRAFT_CRUISE_SPEED_KT)
@@ -82,9 +90,22 @@ const FlightPlanningForm: React.FC<Props> = ({ isLoading, onSubmit }) => {
   const [applyWind, setApplyWind] = useState(true)
 
   const [planFuelStops, setPlanFuelStops] = useState(false)
+  const [useEnteredFuelBurn, setUseEnteredFuelBurn] = useState(false)
   const [fuelBurnGph, setFuelBurnGph] = useState<number>(8.5)
   const [fuelOnBoardGal, setFuelOnBoardGal] = useState<number>(DEFAULT_AIRCRAFT_USABLE_FUEL_GAL)
   const [reserveMinutes, setReserveMinutes] = useState<number>(45)
+
+  useEffect(() => {
+    setAppliedReferences((previous) =>
+      previous.filter((reference) =>
+        reference.metric === 'cruise_tas_kt'
+          ? reference.value === speed
+          : reference.metric === 'cruise_fuel_flow_gph'
+            ? reference.value === fuelBurnGph
+            : false,
+      ),
+    )
+  }, [speed, fuelBurnGph])
 
   const [forecastDays, setForecastDays] = useState<number>(3)
 
@@ -130,6 +151,14 @@ const FlightPlanningForm: React.FC<Props> = ({ isLoading, onSubmit }) => {
         return
       }
 
+      if (
+        (planFuelStops || useEnteredFuelBurn) &&
+        (!Number.isFinite(fuelBurnGph) || fuelBurnGph <= 0)
+      ) {
+        toast.error('Fuel burn must be greater than 0')
+        return
+      }
+
       const originCode = originValidation.normalized as string
       const destinationCode = destinationValidation.normalized as string
 
@@ -145,7 +174,7 @@ const FlightPlanningForm: React.FC<Props> = ({ isLoading, onSubmit }) => {
         apply_wind: applyWind,
         include_alternates: true,
         plan_fuel_stops: planFuelStops,
-        fuel_burn_gph: planFuelStops ? fuelBurnGph : undefined,
+        fuel_burn_gph: planFuelStops || useEnteredFuelBurn ? fuelBurnGph : undefined,
         fuel_on_board_gal: planFuelStops ? fuelOnBoardGal : undefined,
         reserve_minutes: planFuelStops ? reserveMinutes : undefined,
       }
@@ -209,13 +238,84 @@ const FlightPlanningForm: React.FC<Props> = ({ isLoading, onSubmit }) => {
                 cruiseSpeedKt={speed}
                 fuelBurnGph={fuelBurnGph}
                 fuelOnBoardGal={fuelOnBoardGal}
-                disabled={isLoading}
+                disabled={isLoading || appliedReferences.length > 0}
                 onSelect={(aircraft) => {
+                  setAppliedReferences([])
+                  setUseEnteredFuelBurn(false)
                   setSpeed(aircraft.cruiseSpeedKt)
                   setFuelBurnGph(aircraft.fuelBurnGph)
                   setFuelOnBoardGal(aircraft.fuelOnBoardGal)
                 }}
               />
+            </Grid>
+            <Grid item xs={12}>
+              <SourcedPerformanceReference
+                context={{
+                  planning_altitude_ft: altitude,
+                  planning_speed_kt: speed,
+                  planning_fuel_flow_gph: fuelBurnGph,
+                  fuel_estimate: planFuelStops || useEnteredFuelBurn ? 'entered' : 'default',
+                }}
+                onApply={(reference) => {
+                  if (reference.metric === 'cruise_tas_kt') setSpeed(reference.value)
+                  if (reference.metric === 'cruise_fuel_flow_gph') {
+                    setFuelBurnGph(reference.value)
+                    setUseEnteredFuelBurn(true)
+                  }
+                  setAppliedReferences((previous) => [
+                    ...previous.filter((value) => value.metric !== reference.metric),
+                    reference,
+                  ])
+                }}
+              />
+              {appliedReferences.length > 0 && (
+                <div data-aviation-private="true">
+                  <Typography>
+                    Applied research figures stay associated with these source snapshots in this
+                    page. Normal planning requests use the selected numbers. Private source details
+                    are excluded from saved plans and general AI.
+                  </Typography>
+                  {appliedReferences.map((reference) => (
+                    <Box
+                      component="details"
+                      key={reference.metric}
+                      sx={{ my: 1, overflowWrap: 'anywhere' }}
+                    >
+                      <Typography component="summary" sx={{ cursor: 'pointer' }}>
+                        {reference.metric === 'cruise_tas_kt' ? 'Cruise speed' : 'Fuel flow'}:{' '}
+                        {reference.value} {reference.units} · source revision{' '}
+                        {reference.source.revision}
+                      </Typography>
+                      <Typography variant="body2">
+                        Dataset {reference.dataset_id} · content {reference.content_sha256} ·
+                        original {reference.source.document_id} · SHA-256 {reference.source.sha256}{' '}
+                        · physical pages {reference.source.pages.join(', ')} · calculated{' '}
+                        {reference.calculated_at}
+                      </Typography>
+                      <Box component="ul" sx={{ pl: 2 }}>
+                        {Object.entries(reference.conditions).map(([name, value]) => (
+                          <li key={name}>
+                            {name.replace(/_/g, ' ')}: {value}
+                          </li>
+                        ))}
+                      </Box>
+                      <Typography variant="body2">
+                        Operator-entered conditions (not measured):{' '}
+                        {reference.operator_fields.join(', ')}
+                      </Typography>
+                      <Typography variant="body2">{reference.limitations}</Typography>
+                      {[...reference.warnings, ...reference.notes].map((note, index) => (
+                        <Typography variant="body2" key={index}>
+                          {note}
+                        </Typography>
+                      ))}
+                    </Box>
+                  ))}
+                  <Button onClick={() => setAppliedReferences([])}>
+                    Release reference associations; retain current inputs
+                  </Button>
+                </div>
+              )}
             </Grid>
             <Grid item xs={12} sm={6}>
               <Autocomplete
@@ -344,6 +444,24 @@ const FlightPlanningForm: React.FC<Props> = ({ isLoading, onSubmit }) => {
               <FormControlLabel
                 control={
                   <Checkbox
+                    checked={useEnteredFuelBurn || planFuelStops}
+                    disabled={isLoading || planFuelStops}
+                    onChange={(event) => {
+                      setUseEnteredFuelBurn(event.target.checked)
+                      if (!event.target.checked)
+                        setAppliedReferences((previous) =>
+                          previous.filter(
+                            (reference) => reference.metric !== 'cruise_fuel_flow_gph',
+                          ),
+                        )
+                    }}
+                  />
+                }
+                label="Use entered fuel burn for route estimate"
+              />
+              <FormControlLabel
+                control={
+                  <Checkbox
                     checked={planFuelStops}
                     onChange={(e) => setPlanFuelStops(e.target.checked)}
                     disabled={isLoading}
@@ -353,20 +471,21 @@ const FlightPlanningForm: React.FC<Props> = ({ isLoading, onSubmit }) => {
               />
             </Grid>
 
+            {(planFuelStops || useEnteredFuelBurn) && (
+              <Grid item xs={12} sm={4}>
+                <TextField
+                  fullWidth
+                  label="Fuel burn (gph)"
+                  type="number"
+                  value={fuelBurnGph}
+                  onChange={(e) => setFuelBurnGph(Number(e.target.value))}
+                  disabled={isLoading}
+                  inputProps={{ min: 0.1, step: 0.1 }}
+                />
+              </Grid>
+            )}
             {planFuelStops ? (
               <>
-                <Grid item xs={12} sm={4}>
-                  <TextField
-                    fullWidth
-                    label="Fuel burn (gph)"
-                    type="number"
-                    value={fuelBurnGph}
-                    onChange={(e) => setFuelBurnGph(Number(e.target.value))}
-                    disabled={isLoading}
-                    inputProps={{ min: 0.1, step: 0.1 }}
-                  />
-                </Grid>
-
                 <Grid item xs={12} sm={4}>
                   <TextField
                     fullWidth

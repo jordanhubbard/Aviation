@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { render, screen } from '@testing-library/react'
+import { act, fireEvent, render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 
 import FlightPlanningForm from './FlightPlanningForm'
@@ -73,4 +73,73 @@ describe('VFR flight planning', () => {
       '/charts',
     )
   })
+})
+
+it('uses an explicitly applied cruise fuel flow without enabling fuel-stop routing', async () => {
+  vi.spyOn(globalThis, 'fetch').mockResolvedValue(new Response('[]'))
+  const onSubmit = vi.fn(),
+    user = userEvent.setup()
+  render(<FlightPlanningForm isLoading={false} onSubmit={onSubmit} />)
+  const reference = {
+    schema: 'aviation/performance-reference@1',
+    dataset_id: 'perf_' + 'a'.repeat(64),
+    content_sha256: 'b'.repeat(64),
+    icao: 'SR22',
+    variant: 'Synthetic source variant',
+    configuration: 'Synthetic source configuration',
+    registration: null,
+    table_id: 'cruise',
+    metric: 'cruise_fuel_flow_gph',
+    units: 'US gal/h',
+    value: 18.1,
+    conditions: { weight_lb: 2900, rpm: 2500, pressure_altitude_ft: 6000, isa_deviation_c: 0 },
+    source: {
+      document_id: 'doc_' + 'c'.repeat(32),
+      sha256: 'd'.repeat(64),
+      revision: 'Synthetic source revision',
+      pages: [173],
+    },
+    reviewer: 'Synthetic reviewer',
+    reviewed_at: '2026-11-17T00:00:00Z',
+    calculated_at: '2026-11-17T00:01:00Z',
+    approved_for_flight: false,
+    warnings: [],
+    notes: [],
+    limitations: 'Synthetic research reference',
+  }
+  const element = document.querySelector('aviation-performance-reference')!
+  act(() => {
+    fireEvent(
+      element,
+      new CustomEvent('performance-reference-apply', {
+        detail: {
+          reference,
+          operator_fields: [
+            'weight_lb',
+            'rpm',
+            'pressure_altitude_ft',
+            'isa_deviation_c',
+            'variant',
+            'configuration',
+          ],
+        },
+      }),
+    )
+  })
+  expect(screen.getByLabelText('Fuel burn (gph)')).toHaveValue(18.1)
+  expect(screen.getByLabelText('Use entered fuel burn for route estimate')).toBeChecked()
+  expect(screen.getByLabelText('Add fuel stops')).not.toBeChecked()
+  await user.type(screen.getByRole('combobox', { name: 'Origin' }), 'KDWA')
+  await user.type(screen.getByRole('combobox', { name: 'Destination' }), 'KPAO')
+  await user.click(screen.getByRole('button', { name: 'Plan Route' }))
+  expect(onSubmit).toHaveBeenLastCalledWith(
+    expect.objectContaining({ fuel_burn_gph: 18.1, plan_fuel_stops: false }),
+  )
+  await user.click(
+    screen.getByRole('button', { name: 'Release reference associations; retain current inputs' }),
+  )
+  await user.click(screen.getByRole('button', { name: 'Plan Route' }))
+  expect(onSubmit).toHaveBeenLastCalledWith(
+    expect.objectContaining({ fuel_burn_gph: 18.1, plan_fuel_stops: false }),
+  )
 })
