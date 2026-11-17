@@ -198,6 +198,51 @@ def test_real_http_model_contract_and_verified_page_citations(store):
     assert answer["insufficient_evidence"] is False
 
 
+@pytest.mark.parametrize("embedding_fails", [False, True])
+def test_partial_extraction_warning_does_not_change_actual_retrieval_mode(store, embedding_fails):
+    document = store.ingest(
+        manual("Performance: takeoff ground roll 900 feet at 2500 lb.", ""),
+        {"icao": "C172"},
+        extract=False,
+    )
+    document = store.index(document["id"], ocr=False)
+    assert document["status"] == "partial"
+    value, _ = provider_answer(store, document)
+
+    def provider(request):
+        if request.url.path.endswith("/embeddings"):
+            if embedding_fails:
+                return httpx.Response(503)
+            payload = json.loads(request.content)
+            return httpx.Response(
+                200,
+                json={
+                    "data": [
+                        {"index": i, "embedding": [1.0, 0.5]} for i in range(len(payload["input"]))
+                    ]
+                },
+            )
+        return httpx.Response(200, json={"choices": [{"message": {"content": json.dumps(value)}}]})
+
+    models = Models(
+        {
+            "AIRCRAFT_LIBRARY_LLM_BASE_URL": "https://models.example/v1",
+            "AIRCRAFT_LIBRARY_LLM_MODEL": "test-model",
+            "AIRCRAFT_LIBRARY_EMBEDDING_MODEL": "vector-1",
+        },
+        transport=httpx.MockTransport(provider),
+    )
+    if not embedding_fails:
+        index_vectors(store, [document["id"]], models)
+    answer = ask(store, models, "C172", "takeoff ground roll")
+    assert answer["retrieval"] == ("full_text" if embedding_fails else "hybrid")
+    assert "Some retrieved documents have incomplete extraction" in answer["warnings"]
+    assert (
+        "Embedding provider unavailable; using full-text retrieval" in answer["warnings"]
+    ) == embedding_fails
+    assert answer["claims"][0]["citations"][0]["document_id"] == document["id"]
+
+
 def test_invented_quotes_sources_and_numbers_are_rejected(store):
     document = put(store)
     value, passage = provider_answer(store, document)

@@ -595,6 +595,7 @@ def ask(store: Store, models: Models, code: str, question: str, **filters):
         raise ModelUnavailable(
             "Document applicability changed during generation; retry the question"
         )
+    retrieval = "hybrid" if models.capabilities()["embeddings"] and not warnings else "full_text"
     incomplete = [d["id"] for d in documents.values() if d["status"] != "indexed"]
     if incomplete:
         warnings.append("Some retrieved documents have incomplete extraction")
@@ -603,9 +604,7 @@ def ask(store: Store, models: Models, code: str, question: str, **filters):
             "model": models.model,
             "generated_at": now(),
             "warnings": warnings,
-            "retrieval": (
-                "hybrid" if models.capabilities()["embeddings"] and not warnings else "full_text"
-            ),
+            "retrieval": retrieval,
             "documents": [
                 {"id": d["id"], "metadata": d["metadata"], "status": d["status"]}
                 for d in documents.values()

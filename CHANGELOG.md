@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Aircraft library: preserve the actual hybrid retrieval mode when a retrieved
+  document has incomplete extraction; keep its independent coverage warning (#489).
+
 - Aircraft library: correct rejected model claims with focused citation feedback
   while preserving accepted claims. Revalidate the combined answer, retain the
   three-call bound, and reject corrections that silently drop failed assertions

@@ -10,6 +10,11 @@ Every page retains physical PDF page number, printed page label when available, 
 
 ## Retrieval, distillation and answers
 
+Answer metadata reports the retrieval strategy actually used. An incomplete
+document extraction adds a coverage warning without relabeling successful hybrid
+retrieval as full-text fallback. Embedding failures or absent matching vectors
+still report full-text fallback with their own warning.
+
 Model evidence supplies deterministic indexed contiguous excerpts, each at most
 1,007 characters, covering the complete original passage without dropping text.
 Passages shorter than the existing eight-character quote minimum remain visible
