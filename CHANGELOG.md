@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Aircraft library: keep PDF page locators in verified citations instead of model evidence, preserving source text and historical generations while reducing uncited page-number assertions.
+
 - Add opt-in private bounded diagnostics for rejected manual claims and correction attempts without changing evidence admission or model generation identities.
 
 - Flight Planner: add private ICAO filing drafts and explicit provider lifecycle review, confirmation, receipts and uncertain-outcome handling; vendor access and operational acceptance remain separately required.

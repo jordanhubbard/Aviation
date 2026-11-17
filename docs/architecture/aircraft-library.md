@@ -51,6 +51,16 @@ still report full-text fallback with their own warning.
 
 Model evidence supplies deterministic indexed contiguous excerpts, each at most
 1,007 characters, covering the complete original passage without dropping text.
+The `indexed-excerpts-v2` provider format omits the top-level physical PDF `page`
+and page `label` locator fields. Both remain server-owned provenance in verified
+citations, source-page reads and private validation traces. Labels can repeat
+physical ordinals and must not become an alternate channel for uncited numbers.
+Original passage text, including printed page numbers, is unchanged; document
+identity, extraction method and applicability metadata remain available to the
+model. Passage/excerpt IDs still select exact source spans. The format identity
+changes the distillation generation: retain previous summaries in immutable history
+and never resume their prefixes under the changed provider input. Embeddings,
+source/numeric validation and correction budgets remain unchanged.
 Passages shorter than the existing eight-character quote minimum remain visible
 as text and cannot establish a valid citation alone. Models may cite an integer
 `excerpt_id` within a supplied `passage_id`; the service resolves it to original

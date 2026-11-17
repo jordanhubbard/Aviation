@@ -202,7 +202,10 @@ def test_history_api_auth_schemas_and_immutable_content(store, monkeypatch):
         )
 
 
-def test_changed_generation_starts_fresh_while_previous_summary_remains_inspectable(store):
+@pytest.mark.parametrize("change", ["generation_options", "provider_evidence_format"])
+def test_changed_generation_starts_fresh_while_previous_summary_remains_inspectable(
+    store, monkeypatch, change
+):
     doc = put(store)
 
     class Provider:
@@ -225,12 +228,24 @@ def test_changed_generation_starts_fresh_while_previous_summary_remains_inspecta
             }
 
     first = Provider()
-    original = distill(store, first, doc["id"])
+    # Represent the actual previous locator-bearing provider format, rather than
+    # assuming an arbitrary identity change also preserves its old summary.
+    if change == "provider_evidence_format":
+        with monkeypatch.context() as old_format:
+            old_format.setattr(
+                "app.services.aircraft_library.models.CITATION_FORMAT", "indexed-excerpts-v1"
+            )
+            original = distill(store, first, doc["id"])
+    else:
+        original = distill(store, first, doc["id"])
     second = Provider()
-    second.generation_options = {"max_tokens": 32768}
+    if change == "generation_options":
+        second.generation_options = {"max_tokens": 32768}
     current = distill(store, second, doc["id"])
     assert second.calls == 1 and current["evidence_identity"] != original["evidence_identity"]
-    assert current["generation_options"] == {"max_tokens": 32768}
+    assert current["generation_options"] == (
+        {"max_tokens": 32768} if change == "generation_options" else {}
+    )
     history = store.distillations(doc["id"])["items"]
     assert len(history) == 1
     assert (
