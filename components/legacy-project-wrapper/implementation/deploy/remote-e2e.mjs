@@ -1608,7 +1608,7 @@ if (appId === 'flightschool') {
         },
         {
           id: 'references', dataMode: 'stateless',
-          visit: async () => page.getByRole('heading', { name: 'References' }).scrollIntoViewIfNeeded(),
+          visit: async () => page.getByRole('heading', { name: 'References', exact: true }).scrollIntoViewIfNeeded(),
           verify: async () => {
             await page.getByRole('link', { name: 'FAA Weight & Balance Handbook' }).waitFor();
             const riskBefore = await page.locator('.risk:checked').count();

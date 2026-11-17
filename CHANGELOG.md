@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+- Aircraft library: resume interrupted index jobs from atomic extraction checkpoints,
+  retain provider-identified embeddings and validated summary prefixes, fence stale
+  workers, and partition first-candidate output truncations without dropping source
+  coverage. Add validated, inference-free recovery from private snapshots (#489).
+- Deployment checks: distinguish the preflight References heading from the charts
+  heading, initialize chart tiles at the selected chart bounds, and document private
+  cache ownership checks in the actual container (#490).
+
 - G1000: expose sourced FAA procedure browsing through the shipped factory and
   dashboard, preserve raw constraints/unknowns and cycle verification, and replace
   implicit samples with explicit unavailable states. Planning/preflight chart

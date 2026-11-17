@@ -38,6 +38,19 @@ records, unavailable/stale states and desktop/mobile interactions in each flow.
 
 ## Acceptance
 
+When importing a cache, normalize its private directory, database and immutable
+object ownership to the deployed service UID/GID before activation. Archive
+ownership from a development host is not a runtime identity. Capability-restricted
+containers may run as UID zero without permission to open another UID's private
+files. Verify all transferred hashes before changing ownership, preserve private
+modes, and test opening the database and reading a cached object from the actual
+container. Health endpoints alone do not establish chart availability.
+
+Initialize the map viewport from the selected chart bounds before requesting its
+tiles. Avoid a hard-coded initial center/zoom followed by a mount-time refit that
+starts and cancels a different tile grid. Later user navigation still updates the
+viewport normally; do not suppress genuine tile/network failures in acceptance.
+
 Exercise real FAA catalogs and selected originals; independent fixture rollover/failure cases; unsafe downloads/archives; byte identity; CRS/tile reference points; real CIFP records and SDK normalization; HTTP/MCP parity; desktop/mobile viewing and source/expiry visibility. Current receipt/locks, CI, reviewed merge and exact-image live deployment remain required. An index-only or source-registry-only change does not complete #490.
 
 ## Public source references

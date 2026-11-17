@@ -43,6 +43,33 @@ Search multiple ICAO/model/manual queries and collect multiple examples, keeping
 
 ## Access and lifecycle
 
+Index jobs checkpoint extraction and embedding separately from their final result.
+An expired lease resumes completed phases only when the original, metadata,
+extraction and exact passage identity still match. Extraction and its checkpoint
+commit atomically. A new explicit index job still performs a new extraction.
+An owner whose lease was reclaimed cannot write artifacts, checkpoints or a final
+job state. Checkpoints and accepted distillation batches survive provider failures.
+
+When a first candidate is explicitly truncated, distillation may bisect its
+contiguous passage batch, durably recording the complete ordered partition before
+continuing. Every original passage remains covered exactly once. A single passage
+that still truncates fails explicitly; splitting is bounded by the passage count.
+Never split a rejected correction to evade unresolved assertions. HTTP failures,
+schema errors and numeric failures retain their existing bounded correction rules.
+An explicitly truncated correction may consume the remaining correction attempt
+against the same evidence and rejected positions, within the original call limit.
+Resume revalidates the partition and every saved section against the same root
+evidence identity; existing prefixes without a partition remain compatible.
+
+Snapshot recovery is an explicit operator action, separate from inference. Admit
+only an original/metadata/model/prompt-identical, fully validated prefix from a
+read-only snapshot. Passage-ID remapping requires identical page, label, offset,
+method and complete text. Revalidate all remapped citations against current
+evidence and preserve a longer current valid prefix. Record source identity and
+recovered coverage; never infer missing batches from hashes or claim completeness.
+The [operator recovery procedure](../development/aircraft-library-recovery.md)
+describes backup, rehearsal, admission and subsequent distillation.
+
 Processing work remains inspectable after a page closes or the service restarts.
 Authenticated GET `/api/aircraft-library/jobs` returns lightweight summaries with
 manual/ICAO context, state, UTC timestamps, errors and a result-availability flag.
