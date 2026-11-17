@@ -8,6 +8,7 @@ let renderGeneration = 0;
 window.AviationExplain.registerContext(() => ({
   application: 'Flight Track Analyzer', decision: 'Flight analysis and performance review',
   view: state.view, flightId: state.flightId, targetAgl: state.targetAgl,
+  // Private references render inside their shadow root and are excluded from innerText.
   displayedAnalysis: $view.innerText.slice(0, 3500),
 }), 'Explain the displayed flight analysis, classifications and performance limits from these facts.');
 
@@ -338,7 +339,7 @@ async function viewSummary(display) {
 (async () => {
   try { state.caps = await api('/api/capabilities'); } catch { state.caps = { llm: false }; }
   const m = location.hash.match(/^#\/(flight\/([0-9a-f-]+)|summary|performance)$/);
-  if (m && m[2]) { state.view = 'detail'; state.flightId = m[2]; } else if (m) state.view = 'summary';
+  if (m && m[2]) { state.view = 'detail'; state.flightId = m[2]; } else if (m) state.view = m[1];
   setNav();
   render();
 })();
@@ -372,7 +373,7 @@ const dash = '–';
 const pct = (v) => (v == null ? dash : `${v > 0 ? '+' : ''}${f(v, 0)} %`);
 const ROWSRC = { reported: 'reported', 'estimated-high': 'est.', 'estimated-low': 'est. (approx)' };
 
-function pohTable(kind, sec, hasPoh) {
+function pohTable(kind, sec, hasPoh, sourceReference) {
   const isTO = kind !== 'landing';
   const head = ['Date', 'Rwy', isTO ? 'Start' : 'Type', 'Weight lb', 'Press alt ft', 'OAT °C', 'Dens alt ft', 'Wind kt (HW)', isTO ? 'Lift-off GS kt' : 'Speed @50 ft kt',
     'Ground roll ft', isTO ? 'Total over 50 ft' : 'Total from 50 ft', 'Zero-wind roll ft', 'Zero-wind total ft'];
@@ -385,7 +386,27 @@ function pohTable(kind, sec, hasPoh) {
     `${f(m.ground_roll_ft)}${m.ground_roll_ft_std != null ? ` σ${f(m.ground_roll_ft_std)}` : ''}`, `${f(m.total50_ft)}${m.total50_ft_std != null ? ` σ${f(m.total50_ft_std)}` : ''}`, f(m.zw_ground_roll_ft), f(m.zw_total50_ft),
     ...(hasPoh ? [f(m.poh_ground_roll_ft), f(m.poh_total50_ft), pct(m.delta_ground_roll_pct), pct(m.delta_total50_pct)] : [])];
   const all = [...sec.rows.map(row), ...sec.by_runway.map(mean), mean(sec.mean)];
+  if (sourceReference) head.push('Sourced scenario comparison');
   const t = table(head, all);
+  if (sourceReference) {
+    for (const [index,tr] of [...t.querySelectorAll('tbody tr')].entries()) {
+      const event = sec.rows[index];
+      const action = event ? h('button', { class:'btn', onclick: () => {
+        const context = { observation: event.t_iso, ...(kind === 'takeoff_rolling' ? {observed_start_style:'rolling'} : {}) };
+        const phase = kind === 'landing' ? 'landing' : 'takeoff';
+        if (Number.isFinite(event.uncertainty_ft) && event.uncertainty_ft >= 0) context['measured_uncertainty_'+phase+'_ground_roll_ft'] = event.uncertainty_ft;
+        if (Number.isFinite(event.ground_roll_ft) && event.ground_roll_ft >= 0) context['measured_'+phase+'_ground_roll_ft'] = event.ground_roll_ft;
+        if (Number.isFinite(event.total50_ft) && event.total50_ft >= 0) context['measured_'+phase+'_over_50ft_ft'] = event.total50_ft;
+        if (Number.isFinite(event.weight_lb) && event.weight_lb > 0) context.weight_lb = event.weight_lb;
+        if (event.pa_assumed === false && Number.isFinite(event.pa_ft)) context.pressure_altitude_ft = event.pa_ft;
+        if (event.oat_assumed === false && Number.isFinite(event.oat_c)) context.temperature_c = event.oat_c;
+        if (event.wind_source === 'reported' && Number.isFinite(event.headwind_kt)) context.headwind_kt = event.headwind_kt;
+        sourceReference.context = context;
+        sourceReference.scrollIntoView({block:'start',behavior:'smooth'});
+      } }, 'Select observed scenario') : '';
+      tr.append(h('td', {}, action));
+    }
+  }
   const trs = t.querySelectorAll('tbody tr');
   for (let i = sec.rows.length; i < trs.length; i++) trs[i].style.fontWeight = '650';
   return t;
@@ -435,12 +456,14 @@ async function viewPerformance(display) {
   const { aircraft: [ac] } = await api(`/api/performance?aircraft=${encodeURIComponent(state.perfTail)}`);
   const els = [h('div', { class: 'row', style: 'margin-bottom:12px' }, h('h2', { style: 'margin:0' }, 'Performance'), sel,
     h('span', { class: 'mute' }, 'derived from measured take-offs and landings, laid out like an AFM/POH table'))];
+  const sourceReference = h('aviation-performance-reference', { registration: state.perfTail });
+  els.push(sourceReference);
   els.push(h('div', { class: 'warn' }, 'Measured, not certified. * = assumed (ISA temperature, pressure altitude = field elevation). Take-off total is over a 50 ft obstacle; landing total is from 50 ft. Landing ground roll depends on GPS touchdown timing (± shown). Zero-wind columns need a reported wind (enter it on the flight) or a high-confidence estimate.'));
   const titles = { takeoff: 'Take-off distance (standing / stop-and-go starts)', takeoff_rolling: 'Take-off distance, rolling start (soft-field style)', landing: 'Landing distance (full stop / stop-and-go)' };
   for (const k of ['takeoff', 'takeoff_rolling', 'landing']) {
     const sec = ac.sections[k];
     if (!sec) continue;
-    els.push(panel(titles[k], pohTable(k, sec, ac.has_poh), sec.matrix ? [h('h3', {}, 'POH layout: pressure altitude × OAT'), ...matrixView(sec.matrix, k)] : null));
+    els.push(panel(titles[k], pohTable(k, sec, ac.has_poh, sourceReference), sec.matrix ? [h('h3', {}, 'POH layout: pressure altitude × OAT'), ...matrixView(sec.matrix, k)] : null));
   }
   if (!ac.sections.takeoff && !ac.sections.takeoff_rolling && !ac.sections.landing) els.push(panel(null, h('p', { class: 'mute' }, 'No complete take-offs or full-stop landings for this aircraft.')));
   els.push(panel(null, await pohEditor(state.perfTail)));

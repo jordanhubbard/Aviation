@@ -5,7 +5,11 @@
 - Aircraft performance: add original-pinned, explicitly reviewed table datasets
   and a private workspace for source inspection, draft import, review, exact
   scenario inputs and cited numerical results. Preserve correction coverage and
-  no-extrapolation limits; source summaries do not become planning figures (#494).
+  no-extrapolation limits; source summaries do not become planning figures. Add
+  explicit private reference handoffs to Planner, Preflight and Analyzer, with
+  scenario matching, measured uncertainty and separate operator assertions (#494).
+- Flight Planner: serve offline-package and cockpit workspaces on cold direct
+  loads and reloads from the packaged application (#493).
 
 - Offline flight packages: prepare sourced route/airport/METAR/TAF snapshots and hash-pinned FAA PDF/GeoTIFF assets; retain verified browser packages with explicit coverage, revision, expiry, cancellation and deletion controls, including reopening after a browser restart without a network (#493).
 

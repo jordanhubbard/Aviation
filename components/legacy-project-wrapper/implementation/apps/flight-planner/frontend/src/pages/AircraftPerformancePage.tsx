@@ -28,6 +28,7 @@ import type {
   SourceTable,
 } from './performanceTypes'
 import { conditionLabel } from './performanceTypes'
+import { performanceHandoff, returnPerformanceReference } from '../utils/performanceReference'
 
 const API = '/api/aircraft-performance'
 const PAGE_SIZE = 25
@@ -65,6 +66,8 @@ function Evidence({ citations }: { citations: Citation[] }) {
 }
 
 export default function AircraftPerformancePage() {
+  const [handoff] = useState(performanceHandoff)
+  const [handoffStatus, setHandoffStatus] = useState('')
   const [keyInput, setKeyInput] = useState('')
   const key = useRef('')
   const [connected, setConnected] = useState(false)
@@ -86,6 +89,37 @@ export default function AircraftPerformancePage() {
   const requests = useRef(new Set<AbortController>())
   const urls = useRef(new Set<string>())
 
+  useEffect(() => {
+    if (!handoff || !window.opener) return
+    const opener = window.opener
+    let accepted = false
+    const receive = (event: MessageEvent) => {
+      const value = event.data
+      if (
+        accepted ||
+        key.current ||
+        event.source !== opener ||
+        event.origin !== handoff.origin ||
+        value?.type !== 'aviation.performance.context' ||
+        value?.session !== handoff.session ||
+        typeof value.icao !== 'string' ||
+        !/^[A-Z0-9]{2,4}$/.test(value.icao) ||
+        typeof value.registration !== 'string' ||
+        !/^[A-Z0-9-]{0,16}$/.test(value.registration)
+      )
+        return
+      accepted = true
+      setIcao(value.icao)
+      setRegistration(value.registration)
+    }
+    window.addEventListener('message', receive)
+    opener.postMessage(
+      { type: 'aviation.performance.ready', session: handoff.session },
+      handoff.origin,
+    )
+    return () => window.removeEventListener('message', receive)
+  }, [handoff])
+
   const invalidate = useCallback(() => {
     scope.current += 1
     requests.current.forEach((request) => request.abort())
@@ -95,6 +129,7 @@ export default function AircraftPerformancePage() {
     setBusy(false)
     setError('')
     setResult(null)
+    setHandoffStatus('')
   }, [])
   useEffect(
     () => () => {
@@ -823,6 +858,34 @@ export default function AircraftPerformancePage() {
                   Unrounded value: {result.value} {result.units}
                 </Typography>
               </Box>
+              {handoff && dataset && (
+                <Box>
+                  <Alert severity="info">
+                    Return this calculation-time source reference to {handoff.origin}. The access
+                    key and source quotations stay here. The receiving application must check
+                    applicability.
+                  </Alert>
+                  <Button
+                    onClick={() => {
+                      try {
+                        returnPerformanceReference(handoff, result, dataset)
+                        setHandoffStatus(
+                          'Reference returned. Review conditions in the receiving application.',
+                        )
+                      } catch (failure) {
+                        setHandoffStatus(
+                          failure instanceof Error
+                            ? failure.message
+                            : 'Reference could not be returned.',
+                        )
+                      }
+                    }}
+                  >
+                    Return reference to application
+                  </Button>
+                  {handoffStatus && <Typography role="status">{handoffStatus}</Typography>}
+                </Box>
+              )}
               <Alert severity="warning">{result.limitations}</Alert>
               {result.warnings.map((warning, index) => (
                 <Alert key={index} severity="warning">

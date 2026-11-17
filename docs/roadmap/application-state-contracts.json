@@ -436,6 +436,27 @@
               ]
             }
           ]
+        },
+        {
+          "id": "planner-performance-reference-handoff",
+          "medium": "browser-memory",
+          "location": "receiving reference element and page state; session-bound source popup; no source credentials forwarded",
+          "schema": "aviation/performance-reference@1 with source/review identities, finite values, conditions, warnings and separate operator assertions",
+          "migration": "not persisted; context changes, clear and removal invalidate the pending reference session",
+          "backup": "none; reopen the private source and explicitly calculate again",
+          "rollback": "clear the reference; explicitly applied numbers remain ordinary planning inputs",
+          "classification": "application-private-ephemeral-state",
+          "testOracle": "shared reference browser/protocol tests and original-backed desktop/mobile application handoffs",
+          "evidence": [
+            {
+              "path": "apps/meta-app/public/performance-reference.js",
+              "contains": [
+                "this.session = null",
+                "this.operatorContext",
+                "performance-reference-apply"
+              ]
+            }
+          ]
         }
       ],
       "credentials": [
@@ -641,6 +662,27 @@
               "contains": [
                 "kmlab.tail",
                 "localStorage.setItem"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "analyzer-performance-reference-handoff",
+          "medium": "browser-memory",
+          "location": "receiving reference element and page state; session-bound source popup; no source credentials forwarded",
+          "schema": "aviation/performance-reference@1 with source/review identities, finite values, conditions, warnings and separate operator assertions",
+          "migration": "not persisted; context changes, clear and removal invalidate the pending reference session",
+          "backup": "none; reopen the private source and explicitly calculate again",
+          "rollback": "clear the reference; explicitly applied numbers remain ordinary planning inputs",
+          "classification": "application-private-ephemeral-state",
+          "testOracle": "shared reference browser/protocol tests and original-backed desktop/mobile application handoffs",
+          "evidence": [
+            {
+              "path": "apps/meta-app/public/performance-reference.js",
+              "contains": [
+                "this.session = null",
+                "this.operatorContext",
+                "performance-reference-apply"
               ]
             }
           ]
@@ -999,6 +1041,27 @@
                 "aviation-preflight-profile-v1",
                 "aviation-preflight-risk-v1",
                 "localStorage"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "preflight-performance-reference-handoff",
+          "medium": "browser-memory",
+          "location": "receiving reference element and page state; session-bound source popup; no source credentials forwarded",
+          "schema": "aviation/performance-reference@1 with source/review identities, finite values, conditions, warnings and separate operator assertions",
+          "migration": "not persisted; context changes, clear and removal invalidate the pending reference session",
+          "backup": "none; reopen the private source and explicitly calculate again",
+          "rollback": "clear the reference; explicitly applied numbers remain ordinary planning inputs",
+          "classification": "application-private-ephemeral-state",
+          "testOracle": "shared reference browser/protocol tests and original-backed desktop/mobile application handoffs",
+          "evidence": [
+            {
+              "path": "apps/meta-app/public/performance-reference.js",
+              "contains": [
+                "this.session = null",
+                "this.operatorContext",
+                "performance-reference-apply"
               ]
             }
           ]

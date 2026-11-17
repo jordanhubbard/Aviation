@@ -206,6 +206,11 @@ with ownship/traffic/weather data. Preserve route handoffs from planner and pref
 
 ## Evidence required
 
+The packaged application must serve its browser shell on cold direct requests to
+`/offline` and `/cockpit`, as well as navigation from the planner. Exercise the
+production application factory's static-artifact layout; a test harness must not
+add missing production routes. Unknown API and static paths retain their errors.
+
 Deterministic acceptance includes independent published protocol vectors, escaped
 frames, bad FCS/length/ID, concatenated and partial frames, invalid sentinels, source
 restrictions, bounded load, stale transitions and receiver shutdown/restart. Package

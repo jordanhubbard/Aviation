@@ -31,7 +31,7 @@ AXIS_UNITS = {
     "fuel_on_board_gal": "US gal",
     "reserve_minutes": "min",
 }
-NUMERIC_CONDITIONS = set(AXIS_UNITS) | {"headwind_kt", "runway_slope_pct", "flaps_pct", "flaps_deg"}
+NUMERIC_CONDITIONS = set(AXIS_UNITS) | {"headwind_kt", "runway_slope_pct", "flaps_pct", "flaps_deg", "manifold_pressure_inhg"}
 NONNEGATIVE_CONDITIONS = {
     "fuel_on_board_gal",
     "reserve_minutes",
@@ -48,8 +48,8 @@ def validate_conditions(values):
             continue
         if isinstance(value, bool) or not isinstance(value, (int, float)):
             raise ValueError(f"{key} requires a finite number in its named units")
-        if key == "weight_lb" and value <= 0:
-            raise ValueError("weight_lb must be positive")
+        if key in {"weight_lb", "manifold_pressure_inhg"} and value <= 0:
+            raise ValueError(f"{key} must be positive")
         if key in NONNEGATIVE_CONDITIONS and value < 0:
             raise ValueError(f"{key} cannot be negative")
         if key == "flaps_pct" and value > 100:

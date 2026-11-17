@@ -28,7 +28,7 @@ range/endurance with explicit fuel/reserve conditions. Values use named canonica
 units. Source-supplied rectangular grids may span pressure altitude, temperature,
 weight or power/RPM. Atmosphere specifies either absolute temperature or an explicit ISA deviation, never an inferred standard day. Every required fixed condition must match the request;
 configuration, variant and type/tail applicability must match the pinned source.
-Known numeric conditions require finite JSON numbers in their named units in fixed conditions, grid coordinates and calculation requests. Weight must be positive; fuel, reserve, RPM, power and flap settings cannot be negative; flap percentage cannot exceed 100 and absolute temperature cannot be below absolute zero. Signed winds, slopes, altitudes and ISA deviations remain valid. Categorical configuration values remain text.
+Known numeric conditions require finite JSON numbers in their named units in fixed conditions, grid coordinates and calculation requests. Weight and manifold pressure in inHg must be positive; fuel, reserve, RPM, power and flap settings cannot be negative; flap percentage cannot exceed 100 and absolute temperature cannot be below absolute zero. Signed winds, slopes, altitudes and ISA deviations remain valid. Categorical configuration values remain text.
 Missing inputs remain missing. Do not silently substitute a nearby weight,
 configuration, surface, wind or source revision.
 
@@ -104,3 +104,31 @@ reason. Calculation is enabled only for a reviewed usable dataset and requires
 all axis and fixed-condition inputs; the backend remains the authority for source
 integrity, exact applicability and correction coverage. Broader app handoffs and
 an assisted manual transcription editor remain separate acceptance work.
+
+## Explicit application reference handoff
+
+Planner, Preflight and Analyzer may open the private workspace after an explicit
+selection action. A handoff is bound to the exact opener window, allowed origin,
+random session identity and unchanged application context. Credentials and raw citation
+quotations never cross the channel. Preserve bounded source warnings, operator
+notes and research limitations in the explicitly returned reference. The workspace remains responsible for
+authentication, current-source checks and calculation; only an explicit return
+action may share a bounded numeric reference with its source/review identities,
+conditions and physical-page numbers. Unknown message fields are not retained.
+Reject foreign senders, origins, old sessions and malformed or non-finite results.
+
+Reference artifacts remain in memory and outside saved plans, public caches and general AI
+context. An explicit apply action may place the selected number into the ordinary
+planning workflow, including its normal persistence; disclose that before applying.
+Never attach private reference/source metadata or credentials to those requests. Changing aircraft, loading or analysis context clears pending references.
+Show source conditions alongside known application conditions; missing weather,
+weight, variant or configuration is incomplete, never a match. Applying a cruise
+reference to a planning input requires a separate explicit action and retains the
+source conditions and provenance with that value. Measured Analyzer rows remain
+separate; unknown or assumed conditions cannot establish matched performance.
+A returned reference is a calculation-time snapshot, with no background refresh
+or assertion that a later source/review state remains current.
+
+Analyzer cold navigation to `#/performance` must open the performance workspace,
+including its sourced-reference control, rather than falling back to Summary.
+Retain the existing flight-detail and Summary hash meanings.

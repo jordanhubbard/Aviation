@@ -5,6 +5,13 @@ const $ = id => document.getElementById(id);
 const number = id => Number($(id).value);
 const savedKey = 'aviation-preflight-profile-v1';
 const riskKey = 'aviation-preflight-risk-v1';
+const performanceReference = document.querySelector('aviation-performance-reference');
+function clearPerformanceReference() {
+  performanceReference.setAttribute('registration', $('registration').value.trim().toUpperCase());
+  performanceReference.context = {};
+}
+document.querySelector('main').addEventListener('input', event => { if (event.target !== performanceReference) clearPerformanceReference(); });
+customElements.whenDefined('aviation-performance-reference').then(clearPerformanceReference);
 
 $('chartAirport').addEventListener('input', () => {
   const airport = $('chartAirport').value.trim().toUpperCase();
@@ -43,6 +50,7 @@ function addEnvelope(weight = '', forward = '', aft = '') {
 }
 
 function syncLoads() {
+  clearPerformanceReference();
   const loads = $('loads');
   loads.replaceChildren();
   for (const row of document.querySelectorAll('.station')) {
@@ -95,7 +103,10 @@ function calculate() {
   try {
     const result = calculateLoad(profile(), loading());
     $('results').innerHTML = resultTable(result);
+    performanceReference.context = { takeoff_weight_lb: result.takeoff.weight, landing_weight_lb: result.landing.weight };
+    performanceReference.setAttribute('registration', $('registration').value.trim().toUpperCase());
   } catch (error) {
+    performanceReference.context = {};
     $('results').replaceChildren(Object.assign(document.createElement('p'), { className: 'bad', textContent: error.message }));
   }
 }
