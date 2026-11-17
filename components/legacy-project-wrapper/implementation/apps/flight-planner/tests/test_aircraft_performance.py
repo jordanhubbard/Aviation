@@ -275,8 +275,8 @@ def test_bounds_missing_conditions_and_nonfinite_values_fail(source):
     for invalid in [float("nan"), float("inf"), True]:
         with pytest.raises(ValueError):
             request(weight_lb=invalid)
-    with pytest.raises(ValueError, match="no unique cited correction"):
-        registry.calculate(record["id"], request(weight_lb="2400"))
+    with pytest.raises(ValueError, match="weight_lb requires a finite number"):
+        request(weight_lb="2400")
 
 
 def test_type_tail_variant_revision_and_configuration_are_not_inferred(source):
@@ -409,6 +409,13 @@ def test_private_http_review_calculation_and_openapi(source, monkeypatch):
     base = "/api/aircraft-performance"
     headers = {"Authorization": "Bearer " + token}
     assert client.post(base + "/datasets", content=b"invalid").status_code == 401
+    for weight in [0, -2400, "2400 lb"]:
+        malformed = draft(document).model_dump(mode="json")
+        malformed["tables"][0]["fixed_conditions"]["weight_lb"] = weight
+        rejected = client.post(base + "/datasets", headers=headers, json=malformed)
+        assert rejected.status_code == 422
+        assert rejected.headers["cache-control"] == "private, no-store"
+    assert client.get(base + "/datasets?icao=C172", headers=headers).json()["total"] == 0
     response = client.post(
         base + "/datasets", headers=headers, json=draft(document).model_dump(mode="json")
     )
@@ -609,3 +616,75 @@ def test_private_errors_are_not_cacheable(source, monkeypatch):
         json={},
     )
     assert response.status_code == 422 and response.headers["cache-control"] == "private, no-store"
+
+
+@pytest.mark.parametrize(
+    "key,value",
+    [
+        ("weight_lb", "2400"),
+        ("weight_lb", "2400 kg"),
+        ("weight_lb", 0),
+        ("weight_lb", -1),
+        ("headwind_kt", "12 kt"),
+        ("power_pct", -1),
+        ("rpm", -1),
+        ("fuel_on_board_gal", -1),
+        ("reserve_minutes", -1),
+        ("flaps_pct", -1),
+        ("flaps_pct", 101),
+        ("flaps_deg", -1),
+        ("temperature_c", -273.16),
+    ],
+)
+def test_physical_conditions_rejected_in_drafts_and_requests(source, key, value):
+    _, document = source
+    body = draft(document).model_dump()
+    table = body["tables"][0]
+    if key in table["axes"]:
+        table["points"][0]["coordinates"][key] = value
+    else:
+        table["fixed_conditions"][key] = value
+    with pytest.raises(ValueError):
+        DatasetDraft.model_validate(body)
+    with pytest.raises(ValueError):
+        request(**{key: value})
+
+
+def test_weight_axis_must_be_positive(source):
+    _, document = source
+    body = draft(document).model_dump()
+    table = body["tables"][0]
+    table["axes"].append("weight_lb")
+    table["fixed_conditions"].pop("weight_lb")
+    for point in table["points"]:
+        point["coordinates"]["weight_lb"] = -2400
+    with pytest.raises(ValueError, match="weight_lb must be positive"):
+        DatasetDraft.model_validate(body)
+
+
+def test_signed_and_categorical_conditions_remain_valid(source):
+    conditions = dict(
+        headwind_kt=-12,
+        runway_slope_pct=-2,
+        pressure_altitude_ft=-200,
+        isa_deviation_c=-30,
+        power_pct=110,
+        rpm=0,
+        fuel_on_board_gal=0,
+        reserve_minutes=0,
+        flaps_pct=100,
+        flaps_deg=0,
+        mixture="leaned per placard",
+        air_conditioner="off",
+    )
+    assert request(**conditions).conditions.items() >= conditions.items()
+    _, document = source
+    body = draft(document).model_dump()
+    table = body["tables"][0]
+    table["corrections"] = []
+    table["correction_order"] = []
+    table["combination_citations"] = []
+    table["fixed_conditions"].update(
+        {k: v for k, v in conditions.items() if k not in table["axes"] and k != "isa_deviation_c"}
+    )
+    assert DatasetDraft.model_validate(body).tables[0].fixed_conditions["power_pct"] == 110

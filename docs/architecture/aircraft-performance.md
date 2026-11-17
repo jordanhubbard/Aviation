@@ -28,6 +28,7 @@ range/endurance with explicit fuel/reserve conditions. Values use named canonica
 units. Source-supplied rectangular grids may span pressure altitude, temperature,
 weight or power/RPM. Atmosphere specifies either absolute temperature or an explicit ISA deviation, never an inferred standard day. Every required fixed condition must match the request;
 configuration, variant and type/tail applicability must match the pinned source.
+Known numeric conditions require finite JSON numbers in their named units in fixed conditions, grid coordinates and calculation requests. Weight must be positive; fuel, reserve, RPM, power and flap settings cannot be negative; flap percentage cannot exceed 100 and absolute temperature cannot be below absolute zero. Signed winds, slopes, altitudes and ISA deviations remain valid. Categorical configuration values remain text.
 Missing inputs remain missing. Do not silently substitute a nearby weight,
 configuration, surface, wind or source revision.
 

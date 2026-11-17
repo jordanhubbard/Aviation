@@ -31,6 +31,34 @@ AXIS_UNITS = {
     "fuel_on_board_gal": "US gal",
     "reserve_minutes": "min",
 }
+NUMERIC_CONDITIONS = set(AXIS_UNITS) | {"headwind_kt", "runway_slope_pct", "flaps_pct", "flaps_deg"}
+NONNEGATIVE_CONDITIONS = {
+    "fuel_on_board_gal",
+    "reserve_minutes",
+    "rpm",
+    "power_pct",
+    "flaps_pct",
+    "flaps_deg",
+}
+
+
+def validate_conditions(values):
+    for key, value in values.items():
+        if key not in NUMERIC_CONDITIONS:
+            continue
+        if isinstance(value, bool) or not isinstance(value, (int, float)):
+            raise ValueError(f"{key} requires a finite number in its named units")
+        if key == "weight_lb" and value <= 0:
+            raise ValueError("weight_lb must be positive")
+        if key in NONNEGATIVE_CONDITIONS and value < 0:
+            raise ValueError(f"{key} cannot be negative")
+        if key == "flaps_pct" and value > 100:
+            raise ValueError("flaps_pct cannot exceed 100")
+        if key == "temperature_c" and value < -273.15:
+            raise ValueError("temperature_c cannot be below absolute zero")
+    return values
+
+
 Metric = Literal[
     "takeoff_ground_roll_ft",
     "takeoff_over_50ft_ft",
@@ -60,6 +88,8 @@ class Point(Strict):
     coordinates: dict[str, Number] = Field(min_length=1, max_length=4)
     value: Number = Field(ge=0)
     citations: list[Citation] = Field(min_length=1, max_length=8)
+
+    _physical_coordinates = field_validator("coordinates")(validate_conditions)
 
 
 class LinearCorrection(Strict):
@@ -118,6 +148,8 @@ class Table(Strict):
     correction_order: list[Text] = Field(default_factory=list, max_length=12)
     combination_citations: list[Citation] = Field(default_factory=list, max_length=8)
     notes: list[Annotated[str, Field(max_length=2000)]] = Field(default_factory=list, max_length=20)
+
+    _physical_conditions = field_validator("fixed_conditions")(validate_conditions)
 
     @model_validator(mode="after")
     def coverage(self):
@@ -237,6 +269,8 @@ class Calculation(Strict):
     configuration: str = Field(min_length=1, max_length=2000)
     table_id: str = Field(min_length=1, max_length=64)
     conditions: dict[str, Condition] = Field(min_length=1, max_length=24)
+
+    _physical_conditions = field_validator("conditions")(validate_conditions)
 
 
 class DatasetRecord(Strict):
