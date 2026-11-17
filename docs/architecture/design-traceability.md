@@ -1,6 +1,6 @@
 # Design traceability
 
-<!-- literate-ai:authority-reviewed sha256:7c188d116d8a40a8a68fcc77e1c72955787b2b791437444ec16b861b40459a88 -->
+<!-- literate-ai:authority-reviewed sha256:0c9932ca3e55be16bfaa4368ddcd5e35e7da937b0f25f5290e84c431f08ef9bf -->
 
 [Project guide](../README.md) → design traceability
 
@@ -79,3 +79,10 @@ performance or POH authority. The shared Meta App feedback widget owns submissio
 completion, duplicate prevention and draft-preserving retry across applications.
 
 Dependency automation follows the real retained workspace manifests and shared pnpm lockfile. The remaining service/model suites share Vitest while preserving hermetic provider isolation and signed loopback HTTP assertions; this removes the unsupported Jest/deepmerge development chain without changing production service behavior.
+
+Flight Planner owns the private [Flight Service filing workflow](flight-service-filing.md),
+provider transport, ICAO drafts, revision-bound confirmations and durable uncertain
+outcomes. Meta discovers and forwards those typed operations with explicit client
+authentication; its public aviation CORS list excludes private filing. Contract
+fixtures establish deterministic behavior, while actual vendor lab and operational
+approval remain separate admission requirements.

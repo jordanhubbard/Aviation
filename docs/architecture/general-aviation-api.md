@@ -154,3 +154,10 @@ joined to public geometry; absent geometry and uninterpreted schedules/vertical
 limits stay explicit. FAA DOF queries follow actual nested GeoJSON pagination.
 Neither these sources nor a successful assessment establishes safe/authorized
 flight or full NOTAM coverage. See [the contract](route-hazard-assessment.md).
+
+## Private flight-plan filing
+
+The [Flight Service filing contract](flight-service-filing.md) owns typed private
+`/api/filing` draft, validation, review/confirmation, provider lifecycle and receipt
+operations. Source-backed provider states and uncertainty remain explicit.
+Configuration or a saved/exported route does not establish provider filing success.

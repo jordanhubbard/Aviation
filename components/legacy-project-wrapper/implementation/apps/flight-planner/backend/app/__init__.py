@@ -133,6 +133,8 @@ def create_app(settings):
     app.include_router(aviation_data_router, prefix="/api")
     from .routers.aircraft_library import install as install_aircraft_library
     install_aircraft_library(app)
+    from .routers.filing import install as install_filing
+    install_filing(app)
     from .routers.aircraft_performance import install as install_aircraft_performance
     install_aircraft_performance(app)
     from .routers.charts import install as install_charts
@@ -237,6 +239,7 @@ def create_app(settings):
         @app.get("/", include_in_schema=False)
         @app.get("/weather", include_in_schema=False)
         @app.get("/notams", include_in_schema=False)
+        @app.get("/filing", include_in_schema=False)
         @app.get("/route-assessment", include_in_schema=False)
         @app.get("/airports", include_in_schema=False)
         @app.get("/aircraft-library", include_in_schema=False)

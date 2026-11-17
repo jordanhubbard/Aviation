@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Flight Planner: add private ICAO filing drafts and explicit provider lifecycle review, confirmation, receipts and uncertain-outcome handling; vendor access and operational acceptance remain separately required.
+
 - Aircraft library: recognize PDF dotted leaders during numeric evidence checks, retaining exact quotations and negative signs so valid cited figures do not stall distillation.
 
 - Aircraft library: distinguish strictly rendered blank pages from unreadable content and support explicit, audited blank-scan review without replacing originals, passages, embeddings or saved summaries.

@@ -20,6 +20,7 @@ const NotamsPage = lazy(() => import('./pages/NotamsPage'))
 const WeatherPage = lazy(() => import('./pages/WeatherPage'))
 const AirportsPage = lazy(() => import('./pages/AirportsPage'))
 const AircraftLibraryPage = lazy(() => import('./pages/AircraftLibraryPage'))
+const FilingPage = lazy(() => import('./pages/FilingPage'))
 const AircraftPerformancePage = lazy(() => import('./pages/AircraftPerformancePage'))
 const ChartsPage = lazy(() => import('./pages/ChartsPage'))
 const OfflinePage = lazy(() => import('./pages/OfflinePage'))
@@ -79,7 +80,7 @@ function App() {
     application: 'Flight Planner',
     decision: 'Displayed planning, weather and airport results',
     page: window.location.pathname,
-    displayedFacts: document.querySelector('[data-aviation-private="true"]') || ['/aircraft-library', '/aircraft-performance', '/cockpit'].some((path) => window.location.pathname.startsWith(path)) ? 'Private aircraft documents, performance data and receiver telemetry are excluded from general explanations.' : (document.querySelector('main')?.textContent ?? '').slice(0, 3500),
+    displayedFacts: document.querySelector('[data-aviation-private="true"]') || ['/aircraft-library', '/aircraft-performance', '/cockpit', '/filing'].some((path) => window.location.pathname.startsWith(path)) ? 'Private aircraft documents, performance data and receiver telemetry are excluded from general explanations.' : (document.querySelector('main')?.textContent ?? '').slice(0, 3500),
   }), 'Explain the displayed aviation information and its limitations using the supplied facts.'), [])
   const [themeMode, setThemeMode] = useState<'light' | 'dark' | 'night' | 'high-contrast'>('light');
 
@@ -221,6 +222,7 @@ function App() {
                   <Route path="/route-assessment" element={<RouteAssessmentPage />} />
                   <Route path="/weather" element={<WeatherPage />} />
                   <Route path="/notams" element={<NotamsPage />} />
+                  <Route path="/filing" element={<Box data-aviation-private="true"><FilingPage /></Box>} />
                   <Route path="/airports" element={<AirportsPage />} />
                   <Route path="/aircraft-library" element={<Box data-aviation-private="true"><AircraftLibraryPage /></Box>} />
                   <Route path="/aircraft-performance" element={<Box data-aviation-private="true"><AircraftPerformancePage /></Box>} />
