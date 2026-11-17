@@ -4,6 +4,7 @@ from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timedelta, timezone
 import json
 import os
+from pathlib import Path
 from threading import Event
 import selectors
 import subprocess
@@ -265,6 +266,7 @@ with Store(sys.argv[1]).operation_guard(sys.argv[2]):
 """
     process = subprocess.Popen(
         [sys.executable, "-c", code, str(store.path.parent), operation_id],
+        cwd=Path(__file__).resolve().parents[1] / "backend",
         stdin=subprocess.PIPE,
         stdout=subprocess.PIPE,
         text=True,
