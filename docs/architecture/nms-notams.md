@@ -149,3 +149,34 @@ the store. The worker owns schema updates and can mount the same cache for write
 while the web service mounts it read-only, without any FAA credentials. Notices
 show the original source number/series/year when supplied, retaining the opaque
 source ID for audit/download identity. Missing source references remain unknown.
+
+## Hosted worker deployment
+
+The deployment manifest mounts a dedicated `nms` directory into Flight Planner
+read-only at `/app/nms`, separate from its writable application data. Select the
+web feed explicitly with `FAA_NMS_ENVIRONMENT` and
+`FAA_NMS_CACHE_DIR=/app/nms/<environment>` in the planner's protected configuration.
+Never place FAA client credentials in that web configuration or its keystore.
+
+The operator installs an environment-specific worker unit from the same immutable
+planner image using `deploy.py nms-worker-install --environment <environment>`.
+Installation preserves cache contents/reservations, refuses to replace an active
+worker, and neither enables nor starts a new unit. Its root-owned credential file
+is `/etc/aviation/nms-<environment>.env`, containing only the distinct client ID and
+secret. `nms-worker-start` validates that private file before explicitly enabling
+and starting the unit; it is never coupled to web startup. `nms-worker-stop`
+disables/stops only that environment's worker, and `nms-worker-status` reports unit
+state without dumping credentials. Installation reload failure restores the prior
+unit. Cadence state and originals are never rolled back or erased by deployment.
+
+The worker runs without a published port, with a read-only container filesystem,
+bounded memory and temporary storage, and its single writable cache mount at
+`/var/lib/aviation/flight-planner/nms/<environment>`. The deployment image revision
+is checked before installation. Process status alone does not prove feed health:
+hosted acceptance must also verify the read API's environment, complete snapshot,
+source synchronization age and HTTP/MCP/application behavior. Do not start a
+production feed using credentials already rejected by production authentication.
+When moving the feed between hosts, quiesce the old owner and transfer the whole
+cache with its originals and reservations. Only one writable cache is authoritative
+per account/environment; independent host-local databases do not coordinate an
+account quota. Never reset cadence by starting from an empty directory.

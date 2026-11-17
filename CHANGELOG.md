@@ -7,6 +7,8 @@
   and Weather Briefing retain source text, timing, incomplete coverage and
   staging warnings through HTTP/MCP. Staging is verified; production access and
   hosted acceptance remain pending (#503).
+  Deployment provides a read-only web cache mount and explicit, environment-bound
+  worker install/start/stop/status commands with separate private credentials.
 
 - Common service health: reject inherited JavaScript object names as statuses, preserving declared aliases and shared TypeScript/Python error contracts (#442).
 
