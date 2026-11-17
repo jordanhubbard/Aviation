@@ -18,7 +18,10 @@ from .store import Store, now
 
 
 class ModelUnavailable(RuntimeError):
-    pass
+    def __init__(self, message, *, feedback=None):
+        super().__init__(message)
+        # Private model-correction diagnostics; public adapters expose only str(error).
+        self.feedback = feedback
 
 
 CITATION_FORMAT = "indexed-excerpts-v1"
@@ -464,10 +467,15 @@ def validate_answer(answer, evidence):
                 }
             )
             supporting.append(quote)
-        if not numbers(claim["text"]).issubset(numbers(" ".join(supporting))):
+        unsupported = numbers(claim["text"]) - numbers(" ".join(supporting))
+        if unsupported:
             raise ModelUnavailable(
                 f"Model introduced numeric values absent from its quoted evidence in claim {claim_number}; "
-                "cite excerpts supporting every numeric value in this claim or remove unsupported assertions"
+                "cite excerpts supporting every numeric value in this claim or remove unsupported assertions",
+                feedback={
+                    "unsupported_numeric_values": sorted(str(value) for value in unsupported),
+                    "cited_numeric_values": sorted(str(value) for value in numbers(" ".join(supporting))),
+                },
             )
         clean.append({"text": claim["text"], "citations": verified})
     return {
@@ -477,24 +485,89 @@ def validate_answer(answer, evidence):
     }
 
 
+def _rejected_claims(candidate, evidence):
+    if not isinstance(candidate, dict) or candidate.get("insufficient_evidence") is not False:
+        return None
+    claims = candidate.get("claims")
+    if not isinstance(claims, list) or not 1 <= len(claims) <= 12:
+        return None
+    failures = []
+    for index, claim in enumerate(claims):
+        try:
+            validate_answer({"insufficient_evidence": False, "reason": "", "claims": [claim]}, evidence)
+        except ModelUnavailable as error:
+            failures.append({
+                "claim_number": index + 1,
+                "claim": claim,
+                "validation_failure": str(error).replace("in claim 1;", "in this claim;"),
+                **(error.feedback or {}),
+            })
+    return failures or None
+
+
 def verified_completion(models, evidence, question):
     prompt = question
+    repair_base, repair_positions = None, None
     for attempt in range(3):
-        candidate = models.complete(evidence, prompt)
+        response = models.complete(evidence, prompt)
+        correction_error = None
+        if repair_positions is not None:
+            candidate = repair_base
+            if (
+                not isinstance(response, dict)
+                or response.get("insufficient_evidence") is not False
+                or not isinstance(response.get("claims"), list)
+                or len(response["claims"]) != len(repair_positions)
+            ):
+                correction_error = ModelUnavailable(
+                    f"Correction must replace all {len(repair_positions)} rejected claims in order; "
+                    "failed assertions cannot be silently dropped"
+                )
+            else:
+                candidate = {**repair_base, "claims": list(repair_base["claims"])}
+                for position, replacement in zip(repair_positions, response["claims"]):
+                    candidate["claims"][position] = replacement
+        else:
+            candidate = response
         try:
+            if correction_error is not None:
+                raise correction_error
             return validate_answer(candidate, evidence)
         except ModelUnavailable as error:
             if attempt == 2:
                 raise
+            failures = _rejected_claims(candidate, evidence)
+            if failures:
+                repair_base = candidate
+                repair_positions = [failure["claim_number"] - 1 for failure in failures]
+                instruction = (
+                    f"Correct ONLY the {len(failures)} rejected claims listed below, in their listed order. "
+                    "Return exactly that many replacement claims in the required JSON schema; do not return "
+                    "already accepted claims, drop a listed claim, or add a new topic. "
+                    "Select all excerpts supporting the complete replacement, including conditions, units "
+                    "and identifiers; neighboring excerpts require their own citations. "
+                    "Unsupported-number diagnostics locate citation gaps, not permission to invent evidence. "
+                    "Numeric signs are significant: PDF spacing around a hyphen can make an identifier "
+                    "look like a signed number. Preserve exact original identifier punctuation and spacing, "
+                    "or add separate supporting excerpts showing the compact form. Never change a negative "
+                    "measurement into a positive one or invent an absolute-value equivalence. "
+                    "Do not weaken or omit a supported fact merely to avoid selecting its supporting excerpt. "
+                )
+                feedback = {"validation_failure": str(error), "rejected_claims": failures}
+            else:
+                repair_base, repair_positions = None, None
+                instruction = "Correct the rejected candidate below using only the same evidence. "
+                feedback = {"validation_failure": str(error), "rejected_candidate": candidate}
             prompt = (
-                question + "\nCorrect the rejected candidate below using only the same evidence. "
+                question + "\n" + instruction
+                + "Use only the same supplied evidence. "
                 "Select each excerpt_id from the excerpts of its cited passage_id. "
                 "Do not invent references or join disjoint excerpts; use separate citations. "
                 "Preserve conditions, punctuation and numbers. Every claim still needs support. "
                 "Return the required JSON schema. Correction attempt "
                 + str(attempt + 1)
                 + ".\n"
-                + json.dumps({"validation_failure": str(error), "rejected_candidate": candidate})
+                + json.dumps(feedback)
             )
 
 

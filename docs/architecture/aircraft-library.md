@@ -65,6 +65,20 @@ All original-span, numeric, applicability and completeness guards remain in forc
 NVIDIA documents this opt-in control in its [model card](https://build.nvidia.com/nvidia/nemotron-3.5-super-vl-120b-a12b/modelcard);
 it must not be sent implicitly to other providers.
 
+When a structurally valid answer fails individual claim validation, bounded model
+correction targets only those rejected claims. Supply their original positions,
+validation failures and private unsupported-number diagnostics to the configured
+model, using the same original evidence and citation schema. Preserve already
+validated claims unchanged, require a replacement for every rejected position in
+order, and revalidate the complete merged answer. A short/empty correction or an
+insufficient-evidence response cannot silently erase failed assertions or claim
+complete coverage. Whole-answer schema/claim-count failures may request a full
+correction. The total bound remains three model calls; unresolved failures retain
+partial distillation. Private diagnostics include the cited signed numeric values
+so PDF hyphen/spacing differences can be corrected with faithful source forms or
+additional supporting excerpts. Negative measurements never gain absolute-value
+equivalence. Public errors never expose source text or numeric diagnostics.
+
 Operators may configure model response read timeouts from 10 to 600 seconds,
 defaulting to 120 seconds; connection and pool acquisition remain bounded at
 10 seconds and writes at 30 seconds. A transport timeout identifies its safe

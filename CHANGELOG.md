@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- Aircraft library: correct rejected model claims with focused citation feedback
+  while preserving accepted claims. Revalidate the combined answer, retain the
+  three-call bound, and reject corrections that silently drop failed assertions
+  instead of claiming complete POH/AFM distillation (#489).
+
 - Aircraft document research: add a private POH/AFM/maintenance PDF library with original retention, page indexes/OCR, ICAO and registration associations, public-source acquisition, configured search/model adapters and source-cited questions. Generated distillations remain separate from planning performance data (#489).
 - Common service health: reject inherited JavaScript object names as statuses, preserving declared aliases and shared TypeScript/Python error contracts (#442).
 
