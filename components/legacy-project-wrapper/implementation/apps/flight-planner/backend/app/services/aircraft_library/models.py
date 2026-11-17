@@ -260,24 +260,38 @@ class Models:
             self._last_completion = self._clock()
             return self.post("/chat/completions", payload)
 
-    def complete_replacements(self, evidence, question, count):
+    def complete_replacements(self, evidence, question, count, *, replacement_texts=None):
         if type(count) is not int or not 1 <= count <= 12:
             raise ValueError("Correction requires one to twelve replacement claims")
         # Legacy completion adapters accept only two arguments. Inspect before
         # invoking them; catching TypeError afterward could duplicate a request.
-        try:
-            inspect.signature(self.complete).bind(evidence, question, replacement_count=count)
-        except (TypeError, ValueError):
-            return self.complete(evidence, question)
-        return self.complete(evidence, question, replacement_count=count)
+        choices = [{"replacement_count": count}]
+        if replacement_texts is not None:
+            choices.insert(0, {"replacement_count": count, "replacement_texts": replacement_texts})
+        for options in choices:
+            try:
+                inspect.signature(self.complete).bind(evidence, question, **options)
+            except (TypeError, ValueError):
+                continue
+            return self.complete(evidence, question, **options)
+        return self.complete(evidence, question)
 
-    def complete(self, evidence, question, *, replacement_count=None):
+    def complete(self, evidence, question, *, replacement_count=None, replacement_texts=None):
         if not self.model:
             raise ModelUnavailable("Configure AIRCRAFT_LIBRARY_LLM_MODEL")
         if replacement_count is not None and (
             type(replacement_count) is not int or not 1 <= replacement_count <= 12
         ):
             raise ValueError("Correction requires one to twelve replacement claims")
+        if replacement_texts is not None and (
+            not isinstance(replacement_texts, list)
+            or len(replacement_texts) != replacement_count
+            or any(
+                not isinstance(text, str) or not 1 <= len(text) <= 3000
+                for text in replacement_texts
+            )
+        ):
+            raise ValueError("Citation-only correction requires the original replacement texts")
         options = self.generation_options
         if (
             replacement_count is not None
@@ -287,6 +301,10 @@ class Models:
             properties = options["response_format"]["json_schema"]["schema"]["properties"]
             properties["claims"].update(minItems=replacement_count, maxItems=replacement_count)
             properties["insufficient_evidence"]["enum"] = [False]
+            if replacement_texts is not None:
+                properties["claims"]["items"]["properties"]["text"]["enum"] = list(
+                    dict.fromkeys(replacement_texts)
+                )
         result = self._completion_post(
             {
                 "model": self.model,
@@ -657,6 +675,14 @@ def _rejected_claims(candidate, evidence):
                 feedback["numeric_evidence_options"] = _numeric_excerpt_options(
                     feedback["unsupported_numeric_values"], evidence
                 )
+                covered = {
+                    value
+                    for option in feedback["numeric_evidence_options"]["matches"]
+                    for value in option["numeric_values"]
+                }
+                feedback["citation_only"] = {
+                    Decimal(value) for value in feedback["unsupported_numeric_values"]
+                } <= {Decimal(value) for value in covered}
             failures.append(
                 {
                     "claim_number": index + 1,
@@ -769,12 +795,23 @@ def verified_completion(models, evidence, question, *, max_attempts=3, trace_con
     if type(max_attempts) is not int or not 1 <= max_attempts <= 3:
         raise ValueError("Citation correction requires one to three completion attempts")
     prompt = question
-    repair_base, repair_positions = None, None
+    repair_base, repair_positions, repair_texts = None, None, {}
     for attempt in range(max_attempts):
         try:
             replacements = getattr(models, "complete_replacements", None)
             if repair_positions is not None and callable(replacements):
-                response = replacements(evidence, prompt, len(repair_positions))
+                options = {}
+                if len(repair_texts) == len(repair_positions):
+                    proposed = {"replacement_texts": [repair_texts[p] for p in repair_positions]}
+                    try:
+                        inspect.signature(replacements).bind(
+                            evidence, prompt, len(repair_positions), **proposed
+                        )
+                    except (TypeError, ValueError):
+                        pass
+                    else:
+                        options = proposed
+                response = replacements(evidence, prompt, len(repair_positions), **options)
             else:
                 response = models.complete(evidence, prompt)
         except ModelTruncated as error:
@@ -812,9 +849,20 @@ def verified_completion(models, evidence, question, *, max_attempts=3, trace_con
                     "failed assertions cannot be silently dropped"
                 )
             else:
-                candidate = {**repair_base, "claims": list(repair_base["claims"])}
                 for position, replacement in zip(repair_positions, response["claims"]):
-                    candidate["claims"][position] = replacement
+                    if position in repair_texts and (
+                        not isinstance(replacement, dict)
+                        or replacement.get("text") != repair_texts[position]
+                    ):
+                        correction_error = ModelUnavailable(
+                            "Correction must preserve the rejected claim text for citation-only repair; "
+                            "select its supporting excerpts without narrowing the assertion"
+                        )
+                        break
+                if correction_error is None:
+                    candidate = {**repair_base, "claims": list(repair_base["claims"])}
+                    for position, replacement in zip(repair_positions, response["claims"]):
+                        candidate["claims"][position] = replacement
         else:
             candidate = response
         try:
@@ -840,6 +888,11 @@ def verified_completion(models, evidence, question, *, max_attempts=3, trace_con
             if failures:
                 repair_base = candidate
                 repair_positions = [failure["claim_number"] - 1 for failure in failures]
+                repair_texts = {
+                    failure["claim_number"] - 1: failure["claim"]["text"]
+                    for failure in failures
+                    if failure.get("citation_only")
+                }
                 instruction = (
                     f"Correct ONLY the {len(failures)} rejected claims listed below, in their listed order. "
                     "Return exactly that many replacement claims in the required JSON schema; do not return "
@@ -849,6 +902,9 @@ def verified_completion(models, evidence, question, *, max_attempts=3, trace_con
                     "Numeric evidence options identify possible locations in this same evidence, not proof "
                     "of the claim or its applicability; read each excerpt before selecting it. "
                     "Put every selected citation in the replacement JSON, not only the reason text. "
+                    "For each claim marked citation_only, repeat its text EXACTLY and repair only its "
+                    "citations. Do not shorten a range, change a number, or remove a qualifier to avoid "
+                    "selecting support. If it cannot be supported, it must remain unresolved. "
                     "Each claim has at most eight citations: replace redundant citations if necessary "
                     "to include the missing support without dropping supported facts. "
                     "Unsupported-number diagnostics locate citation gaps, not permission to invent evidence. "
@@ -863,7 +919,7 @@ def verified_completion(models, evidence, question, *, max_attempts=3, trace_con
                 )
                 feedback = {"validation_failure": str(error), "rejected_claims": failures}
             else:
-                repair_base, repair_positions = None, None
+                repair_base, repair_positions, repair_texts = None, None, {}
                 instruction = "Correct the rejected candidate below using only the same evidence. "
                 feedback = {"validation_failure": str(error), "rejected_candidate": candidate}
             prompt = (
