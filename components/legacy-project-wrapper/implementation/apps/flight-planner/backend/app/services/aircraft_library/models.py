@@ -24,6 +24,10 @@ class ModelUnavailable(RuntimeError):
         self.feedback = feedback
 
 
+class ModelTruncated(ModelUnavailable):
+    """The first candidate has no admissible completion to preserve."""
+
+
 CITATION_FORMAT = "indexed-excerpts-v1"
 
 SYSTEM = """You answer questions about aircraft manuals using ONLY the supplied evidence.
@@ -51,13 +55,16 @@ ANSWER_SCHEMA = {
         "insufficient_evidence": {"type": "boolean"},
         "reason": {"type": "string"},
         "claims": {
-            "type": "array", "maxItems": 12,
+            "type": "array",
+            "maxItems": 12,
             "items": {
                 "type": "object",
                 "properties": {
                     "text": {"type": "string", "minLength": 1, "maxLength": 3000},
                     "citations": {
-                        "type": "array", "minItems": 1, "maxItems": 8,
+                        "type": "array",
+                        "minItems": 1,
+                        "maxItems": 8,
                         "items": {
                             "type": "object",
                             "properties": {
@@ -69,7 +76,8 @@ ANSWER_SCHEMA = {
                         },
                     },
                 },
-                "required": ["text", "citations"], "additionalProperties": False,
+                "required": ["text", "citations"],
+                "additionalProperties": False,
             },
         },
     },
@@ -109,13 +117,19 @@ class Models:
             self.generation_options["max_tokens"] = int(budget)
         output_format = env.get("AIRCRAFT_LIBRARY_LLM_RESPONSE_FORMAT", "")
         if not isinstance(output_format, str) or output_format.strip().lower() not in {
-            "", "json_object", "json_schema"
+            "",
+            "json_object",
+            "json_schema",
         }:
             raise ValueError("LLM response format must be json_object, json_schema or unset")
         if output_format.strip().lower() == "json_schema":
             self.generation_options["response_format"] = {
                 "type": "json_schema",
-                "json_schema": {"name": "aircraft_manual_answer", "strict": True, "schema": ANSWER_SCHEMA},
+                "json_schema": {
+                    "name": "aircraft_manual_answer",
+                    "strict": True,
+                    "schema": ANSWER_SCHEMA,
+                },
             }
         self.embedding_model = env.get("AIRCRAFT_LIBRARY_EMBEDDING_MODEL", "")
         self.embedding_mode = env.get("AIRCRAFT_LIBRARY_EMBEDDING_MODE", "symmetric")
@@ -247,7 +261,7 @@ class Models:
         )
         try:
             if result["choices"][0].get("finish_reason") == "length":
-                raise ModelUnavailable(
+                raise ModelTruncated(
                     "Model required cited JSON answer was truncated at the output budget"
                 )
             content = result["choices"][0]["message"]["content"]
@@ -284,12 +298,26 @@ class Models:
 
 
 def index_vectors(store: Store, identifiers: list[str], models: Models):
+    identities = {identifier: store.index_identity(identifier) for identifier in identifiers}
     passages = store.passages(identifiers)
-    count = 0
-    for offset in range(0, len(passages), models.embedding_batch_size):
-        batch = passages[offset : offset + models.embedding_batch_size]
+    with store.connection() as connection:
+        existing = {
+            row[0]
+            for row in connection.execute(
+                "SELECT passage_id FROM vectors WHERE model=?", (models.embedding_identity,)
+            )
+        }
+    pending = [p for p in passages if p["passage_id"] not in existing]
+    for offset in range(0, len(pending), models.embedding_batch_size):
+        batch = pending[offset : offset + models.embedding_batch_size]
         vectors = models.embed([row["text"] for row in batch])
         with store.connection() as connection:
+            connection.execute("BEGIN IMMEDIATE")
+            if any(
+                store.index_identity(identifier, connection=connection) != identity
+                for identifier, identity in identities.items()
+            ):
+                raise ValueError("Document extraction changed during embedding; retry")
             connection.executemany(
                 "INSERT OR REPLACE INTO vectors VALUES (?,?,?)",
                 [
@@ -297,9 +325,8 @@ def index_vectors(store: Store, identifiers: list[str], models: Models):
                     for row, vector in zip(batch, vectors)
                 ],
             )
-        count += len(batch)
     return {
-        "passages": count,
+        "passages": len(passages),
         "model": models.embedding_model,
         "embedding_identity": models.embedding_identity,
     }
@@ -474,7 +501,9 @@ def validate_answer(answer, evidence):
                 "cite excerpts supporting every numeric value in this claim or remove unsupported assertions",
                 feedback={
                     "unsupported_numeric_values": sorted(str(value) for value in unsupported),
-                    "cited_numeric_values": sorted(str(value) for value in numbers(" ".join(supporting))),
+                    "cited_numeric_values": sorted(
+                        str(value) for value in numbers(" ".join(supporting))
+                    ),
                 },
             )
         clean.append({"text": claim["text"], "citations": verified})
@@ -494,14 +523,18 @@ def _rejected_claims(candidate, evidence):
     failures = []
     for index, claim in enumerate(claims):
         try:
-            validate_answer({"insufficient_evidence": False, "reason": "", "claims": [claim]}, evidence)
+            validate_answer(
+                {"insufficient_evidence": False, "reason": "", "claims": [claim]}, evidence
+            )
         except ModelUnavailable as error:
-            failures.append({
-                "claim_number": index + 1,
-                "claim": claim,
-                "validation_failure": str(error).replace("in claim 1;", "in this claim;"),
-                **(error.feedback or {}),
-            })
+            failures.append(
+                {
+                    "claim_number": index + 1,
+                    "claim": claim,
+                    "validation_failure": str(error).replace("in claim 1;", "in this claim;"),
+                    **(error.feedback or {}),
+                }
+            )
     return failures or None
 
 
@@ -511,7 +544,16 @@ def verified_completion(models, evidence, question, *, max_attempts=3):
     prompt = question
     repair_base, repair_positions = None, None
     for attempt in range(max_attempts):
-        response = models.complete(evidence, prompt)
+        try:
+            response = models.complete(evidence, prompt)
+        except ModelTruncated as error:
+            if attempt:
+                # A rejected candidate already exists: do not evade its assertions
+                # by splitting evidence and starting an unrelated answer.
+                if attempt + 1 < max_attempts:
+                    continue
+                raise ModelUnavailable(str(error)) from error
+            raise
         correction_error = None
         if repair_positions is not None:
             candidate = repair_base
@@ -564,8 +606,7 @@ def verified_completion(models, evidence, question, *, max_attempts=3):
                 instruction = "Correct the rejected candidate below using only the same evidence. "
                 feedback = {"validation_failure": str(error), "rejected_candidate": candidate}
             prompt = (
-                question + "\n" + instruction
-                + "Use only the same supplied evidence. "
+                question + "\n" + instruction + "Use only the same supplied evidence. "
                 "Select each excerpt_id from the excerpts of its cited passage_id. "
                 "Do not invent references or join disjoint excerpts; use separate citations. "
                 "Preserve conditions, punctuation and numbers. Every claim still needs support. "
@@ -617,7 +658,7 @@ def ask(store: Store, models: Models, code: str, question: str, **filters):
     return answer
 
 
-def distill(store: Store, models: Models, identifier: str):
+def distillation_context(store: Store, models: Models, identifier: str):
     doc = store.get(identifier)
     if doc is None:
         raise ValueError("Document not found")
@@ -665,34 +706,54 @@ def distill(store: Store, models: Models, identifier: str):
             separators=(",", ":"),
         ).encode()
     ).hexdigest()
+    return doc, batches, question, fingerprint
+
+
+def distillation_plan(batches, saved=None):
+    """Admit only a complete ordered refinement of the original batch boundaries."""
+    if saved is None:
+        return batches
+    flattened = []
+    by_id = {p["passage_id"]: p for batch in batches for p in batch}
+    boundaries = {batch[-1]["passage_id"] for batch in batches}
+    for group in saved:
+        if (
+            not isinstance(group, list)
+            or not group
+            or any(type(p) is not int or p not in by_id for p in group)
+        ):
+            raise ModelUnavailable("Invalid saved distillation partition")
+        if any(p in boundaries for p in group[:-1]):
+            raise ModelUnavailable("Saved distillation partition crossed original batches")
+        flattened.extend(group)
+    if flattened != [p["passage_id"] for batch in batches for p in batch]:
+        raise ModelUnavailable("Saved distillation partition omitted or duplicated evidence")
+    return [[by_id[p] for p in group] for group in saved]
+
+
+def validated_prefix(existing, batches):
     summaries = []
+    for saved, batch in zip(existing.get("sections", []), batches):
+        try:
+            verified = validate_answer(saved, batch)
+            if verified["insufficient_evidence"]:
+                break
+            summaries.append({"pages": sorted({p["page"] for p in batch}), **verified})
+        except ModelUnavailable:
+            break
+    return summaries
+
+
+def distill(store: Store, models: Models, identifier: str):
+    identity = store.index_identity(identifier)
+    doc, roots, question, fingerprint = distillation_context(store, models, identifier)
+    summaries, batches = [], roots
     existing = doc["artifacts"].get("distillation", {})
     if existing.get("status") == "partial" and existing.get("evidence_identity") == fingerprint:
-        for saved, batch in zip(existing.get("sections", []), batches):
-            try:
-                verified = validate_answer(saved, batch)
-                if verified["insufficient_evidence"]:
-                    break
-                summaries.append({"pages": sorted({p["page"] for p in batch}), **verified})
-            except ModelUnavailable:
-                break
-    value = {
-        "kind": "llm_distillation",
-        "model": models.model,
-        "generated_at": now(),
-        "status": "partial",
-        "completed_batches": len(summaries),
-        "total_batches": len(batches),
-        "document_extraction": doc["extraction"],
-        "evidence_identity": fingerprint,
-        "sections": summaries,
-        "unresolved_batches": len(batches) - len(summaries),
-    }
-    store.artifact(identifier, "distillation", value, expected_metadata=doc["metadata"])
-    for batch in batches[len(summaries) :]:
-        result = verified_completion(models, batch, question)
-        summaries.append({"pages": sorted({p["page"] for p in batch}), **result})
-        # Admit each completed batch durably; a provider failure cannot fabricate full coverage.
+        batches = distillation_plan(roots, existing.get("batch_plan"))
+        summaries = validated_prefix(existing, batches)
+
+    def persist():
         value = {
             "kind": "llm_distillation",
             "model": models.model,
@@ -711,7 +772,33 @@ def distill(store: Store, models: Models, identifier: str):
             - len(summaries),
             "total_batches": len(batches),
             "document_extraction": doc["extraction"],
+            "batch_plan": [[p["passage_id"] for p in batch] for batch in batches],
             "sections": summaries,
         }
-        store.artifact(identifier, "distillation", value, expected_metadata=doc["metadata"])
+        if existing.get("recovery"):
+            value["recovery"] = existing["recovery"]
+        store.artifact(
+            identifier,
+            "distillation",
+            value,
+            expected_metadata=doc["metadata"],
+            expected_index_identity=identity,
+        )
+        return value
+
+    value = persist()
+    while len(summaries) < len(batches):
+        position = len(summaries)
+        batch = batches[position]
+        try:
+            result = verified_completion(models, batch, question)
+        except ModelTruncated:
+            if len(batch) < 2:
+                raise
+            middle = len(batch) // 2
+            batches[position : position + 1] = [batch[:middle], batch[middle:]]
+            value = persist()
+            continue
+        summaries.append({"pages": sorted({p["page"] for p in batch}), **result})
+        value = persist()
     return value
