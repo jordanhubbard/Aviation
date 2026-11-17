@@ -120,3 +120,9 @@ consumer application origins only, as defined in [the application contract](../.
 Preflight permits the exact read method and Content-Type header; credentials are
 not forwarded and credentialed CORS is not enabled. This does not expose general
 service mutations, MCP, or WebSockets to cross-origin browser requests.
+
+The shared NOTAM view adds only `GET /api/notams`, `GET /api/notams/capabilities`
+and `GET /api/notams/detail` to the existing five-origin credential-free browser
+data scope. Origin, method and preflight-header validation and cookie/Authorization
+stripping apply identically; other NMS paths and private planning operations are
+not admitted by this addition. Error responses remain readable to admitted origins.

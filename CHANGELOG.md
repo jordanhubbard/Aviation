@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Synchronize shared aviation-data panels and source discovery with cache-backed FAA NMS status, snapshot-pinned notices and source detail.
+
+
 - Preserve and inspect historical manual distillations when model generation, source metadata or extraction changes; successful append checkpoints retain their existing progress.
 
 

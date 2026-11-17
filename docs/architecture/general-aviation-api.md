@@ -92,6 +92,8 @@ reject a changed license until reviewed. Unconfigured authenticated sources fail
 explicitly; provider errors must never fall back to invented or mock records.
 Fixed provider origins, bounded payloads/pages/caches and sanitized errors apply.
 Source discovery reports configuration, not a live availability or safety verdict.
+FAA NMS is a cache reader with separately selected environment and worker-owned
+credentials; its report/status API establishes feed availability independently.
 
 See the [source inventory and access decisions](aviation-data-sources.md) for the
 verified provider contracts, credential coverage and integration boundaries.

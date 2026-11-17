@@ -338,7 +338,21 @@ def airport_events(airport_id: str | None = Query(None, pattern=r"^[A-Za-z0-9]{3
     summary="Discover aviation data sources, API operations, coverage and configuration readiness",
 )
 def source_catalog():
+    from .notams import selection as nms_selection
+
+    nms_environment, _ = nms_selection()
     rows = [
+        (
+            "faa-nms",
+            "FAA NMS cached NOTAMs",
+            "Exact source location identifiers and observed aliases; international coverage is incomplete",
+            "No client credentials for cache reads; distinct FAA credentials belong only to the ingestion worker",
+            nms_environment is not None,
+            ["GET /api/notams/capabilities", "GET /api/notams", "GET /api/notams/detail"],
+            "https://notams.aim.faa.gov/notamSearch/",
+            "FAA source attribution and NMS usage/display terms apply",
+            "Configured means a supported cache-reader environment is selected, not live availability. Inspect report environment, freshness and complete snapshot; no route intersection or complete international briefing is implied.",
+        ),
         (
             "noaa-awc",
             "NOAA Aviation Weather Center",

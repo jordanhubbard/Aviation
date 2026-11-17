@@ -192,3 +192,31 @@ initialize flight-plan/recording storage. Web dependencies are loaded by the
 application factory only when creating the web service. A worker with an explicit
 cache path must start on a read-only container filesystem without an unrelated
 writable web data directory.
+
+## Shared aviation-data consumers
+
+The source catalog includes FAA NMS cache-read operations. Its configuration flag
+means an explicit supported reader environment is selected, never that FAA client
+credentials exist in the web process or that a live complete feed is available.
+The shared aviation-data panel replaces the old hard-coded connection statement
+with an explicit selected-location NOTAM reader. Creating a panel, loading weather,
+changing a point, or opening source configuration does not request NOTAM reports.
+Source selection follows the first route airport or explicitly selected weather
+point, can be edited independently, and never assumes an IATA-to-ICAO alias.
+
+Only an explicit NOTAM load reads the cache. Show returned status, environment,
+production/complete flags, synchronized/full-load times, requested/matched aliases,
+missing fields, warnings and counts. A zero match is an observation about the
+cached selection only; stale/partial/unavailable or non-production data never
+establishes absent production notices. Effectivity, cancellation, permanence,
+estimated expiry, schedules, source type and exact identifiers stay visible.
+Optional inactive records require an explicit selection. Report times do not
+imply applicability at the separately selected forecast validity time.
+
+Pagination and full-source detail pin the committed snapshot and original total;
+changed snapshots/totals require a reload. Detail uses a constructed same-service
+path and preserves full notice text and the original source feature. No provider
+URL, untrusted HTML, upstream credential, automatic polling or model call is used.
+Abort and clear stale notice/detail results on route, point, validity, inactive
+selection, location changes or disconnection. NOTAM controls must not submit an
+embedding application's booking form or change a pilot's decision.

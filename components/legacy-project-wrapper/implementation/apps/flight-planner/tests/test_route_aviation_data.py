@@ -756,3 +756,37 @@ def test_generic_gzip_json_accepts_exact_expansion_ceiling(monkeypatch):
         ),
     )
     assert ga_data.fetch(sources.STATIONS, gzip_json=True) == []
+
+
+@pytest.mark.parametrize(
+    "environment,configured",
+    [(None, False), ("invalid", False), ("production", True), ("staging", True), ("fit", True)],
+)
+def test_nms_catalog_describes_reader_configuration_without_credentials_or_feed_creation(
+    client, monkeypatch, tmp_path, environment, configured
+):
+    if environment is None:
+        monkeypatch.delenv("FAA_NMS_ENVIRONMENT", raising=False)
+    else:
+        monkeypatch.setenv("FAA_NMS_ENVIRONMENT", environment)
+    cache = tmp_path / "not-created"
+    monkeypatch.setenv("FAA_NMS_CACHE_DIR", str(cache))
+    monkeypatch.delenv("FAA_NMS_CLIENT_ID", raising=False)
+    monkeypatch.delenv("FAA_NMS_CLIENT_SECRET", raising=False)
+    result = client.get("/api/aviation-data/sources")
+    assert result.status_code == 200
+    entry = next(s for s in result.json()["sources"] if s["id"] == "faa-nms")
+    assert entry["configured"] is configured
+    assert entry["operations"] == [
+        "GET /api/notams/capabilities",
+        "GET /api/notams",
+        "GET /api/notams/detail",
+    ]
+    assert "only to the ingestion worker" in entry["authentication"]
+    assert "not live availability" in entry["limitations"]
+    assert not cache.exists()
+    monkeypatch.setenv("FAA_NMS_CLIENT_ID", "fixture-client-private-never-exposed")
+    monkeypatch.setenv("FAA_NMS_CLIENT_SECRET", "fixture-secret-private-never-exposed")
+    again = client.get("/api/aviation-data/sources")
+    assert again.json() == result.json()
+    assert "fixture-client-private" not in again.text and "fixture-secret-private" not in again.text

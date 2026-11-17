@@ -25,7 +25,9 @@ A failed asset request remains visible to browser deployment checks.
 The gateway admits credential-free browser CORS only from the five consumer HTTPS
 origins and only on these public data GETs and the read-only route POST. It handles
 Content-Type preflights locally, preserves error readability and rejects foreign origins,
-extra requested headers and mutation methods. Cookie/Authorization forwarding and
+extra requested headers and mutation methods. Cached NMS capabilities, reports and
+source detail are also credential-free GETs in this same narrow browser scope;
+no other NMS paths or methods receive this permission. Cookie/Authorization forwarding and
 Set-Cookie responses are excluded on this scoped browser path. Other gateway routes,
 MCP origin checks and WebSocket rules retain their existing policy.
 
@@ -110,3 +112,5 @@ the separate route-review panel remains a route/source exploration tool. HTTP an
 MCP middleware preserve these additive fields and text unchanged. Tests exercise
 real legacy handlers through both middleware transports plus desktop/mobile UI,
 including missing products, failures, hostile report text and stale selections.
+
+The shared NOTAM panel contract is specified in [NMS consumers](nms-notams.md#shared-aviation-data-consumers), with explicit location loads, pinned snapshots, stale/non-production coverage and cancellation of obsolete reads.
