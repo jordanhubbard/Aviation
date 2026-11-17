@@ -1016,6 +1016,29 @@
               ]
             }
           ]
+        },
+        {
+          "id": "shared-notam-review",
+          "medium": "browser-memory",
+          "location": "Each aviation-data-panel browser instance served by Meta App in the five consuming applications",
+          "schema": "Bounded NMS report page, source snapshot/total and one selected full-source notice",
+          "migration": "Clear and abort on route, weather point, validity, location, inactive selection or disconnect; no persisted browser migration",
+          "backup": "none; explicit cache reads reload the selection",
+          "rollback": "close/reload the view; no server provider/cadence state is changed by browser reads",
+          "classification": "application-private-ephemeral-state",
+          "testOracle": "apps/meta-app/shared-notams.test.mjs status, snapshot, text, cancellation, nested form and mobile coverage",
+          "evidence": [
+            {
+              "path": "apps/meta-app/public/aviation-data.js",
+              "contains": [
+                "clearNotams()",
+                "this.notamGeneration",
+                "this.notamSnapshot",
+                "loadNotamDetail",
+                "credentials: 'omit'"
+              ]
+            }
+          ]
         }
       ],
       "credentials": [

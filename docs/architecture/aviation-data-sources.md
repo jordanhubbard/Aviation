@@ -24,10 +24,15 @@ registered-source store contains openAIP and OpenWeatherMap credentials. The
 planner's existing `OPENAIP_API_KEY` and `OPENWEATHERMAP_API_KEY` settings/keystore
 boundary owns runtime access. Runtime never reads workstation credential files.
 
-No FAA NOTAM/NMS credential was present in the checked registered-source store or
-the deployed planner configuration. Full NMS access remains dependent on FAA
-approval; the legacy SDK's single-key client and mock fallback are not admitted
-as a real service integration. TFR and NAS events are separately identified feeds.
+The owner supplied the current FAA NMS contract, FAQ and separate key/secret privately.
+Actual staging full/delta ingestion is verified. Production authentication last
+returned HTTP 401; successful production data acceptance remains open in #503.
+The web process deliberately has no FAA client credentials: it reads the
+worker-managed, environment-bound cache through the typed NMS API. The source
+catalog reports reader configuration separately from feed availability, and no
+browser or per-airport web request contacts FAA. Legacy strict projections reject
+incomplete/non-production coverage rather than falling back to sample notices.
+TFR and NAS events remain separately identified feeds.
 AVWX, CheckWX, AeroDataBox, FlightAware and similar registration/plan-gated services
 are not silently enabled without credentials and applicable access terms. No new
 account, purchase or API entitlement is assumed. Additional duplicate weather

@@ -28,6 +28,7 @@
         label{display:flex;flex-direction:column;gap:4px;max-width:100%}input,select,button{font:inherit;max-width:100%;padding:8px;border:1px solid #7b8da6;border-radius:5px;background:#fff;color:#172033}
         input[name=airports]{width:330px}button{background:#174b99;color:white;cursor:pointer;min-height:42px}button:disabled{opacity:.6;cursor:wait}
         :focus-visible{outline:3px solid #e67b00;outline-offset:2px}.hint,small{color:#43536a;font-size:.85rem}.warning{background:#fff1d6;padding:8px;border-left:4px solid #a25800}.error{color:#9a1c14}
+        .notam-inactive{flex-direction:row;align-items:center}.notam-inactive input{width:auto}
         pre{white-space:pre-wrap;overflow-wrap:anywhere;font:13px/1.5 ui-monospace,monospace;background:#edf2f8;padding:10px}
         article{border-top:1px solid #d1dbe7;padding:10px 0;overflow-wrap:anywhere}details{margin:10px 0}summary{cursor:pointer;font-weight:600}
         .scroll{overflow-x:auto}table{border-collapse:collapse;width:100%;font-size:.85rem}td,th{padding:7px;text-align:left;border-bottom:1px solid #d1dbe7;white-space:nowrap}
@@ -44,7 +45,7 @@
         <p><a class="assessment-link" href="https://flight-planner.jordanhubbard.net/route-assessment">Open route hazard assessment</a> <span class="hint">Review timing and altitude before assessing.</span></p>
         <p role="status" class="status">Choose a route or a single airport, then load data.</p>
         <div class="route"></div>
-        <div class="point-controls" hidden><label>Weather review point<select name="point"></select></label></div>
+        <div class="point-controls" hidden><label>Weather review point<select name="point" aria-label="Weather review point"></select></label></div>
         <div class="environment"></div>
         <details class="references"><summary>openAIP reference lookup</summary>
           <p class="hint">Worldwide community reference data, licensed CC BY-NC 4.0. Country and search are explicit filters, independent of the route. Check the provider record and dates.</p>
@@ -56,9 +57,21 @@
           </form><div class="reference-results" role="region" aria-label="Reference results"></div>
         </details>
         <details class="sources"><summary>Sources and availability</summary><button type="button" class="source-load">Check source configuration</button><div class="source-results"></div></details>
-        <p class="hint">Current provider data is not a complete flight briefing. FAA NOTAM/NMS is not connected; <a href="https://notams.aim.faa.gov/notamSearch/" target="_blank" rel="noopener noreferrer">review FAA NOTAMs</a>. Loading data does not complete your preflight review.</p>
+        <p class="hint">Current provider data is not a complete flight briefing. Load cached FAA NMS status and notices below, and independently <a href="https://notams.aim.faa.gov/notamSearch/" target="_blank" rel="noopener noreferrer">review FAA NOTAMs</a>. Loading data does not complete your preflight review.</p>
+        <div role="region" aria-label="Cached FAA NMS NOTAM review">
+          <h3>FAA NMS cached NOTAMs</h3>
+          <p class="hint">Read the selected source airport/location only. Status is as received; this view does not refresh automatically. Weather forecast time does not select NOTAM applicability. Exact source aliases and international coverage may be incomplete.</p>
+          <form aria-label="NOTAM location review">
+            <label>NOTAM source location<input name="notam-airport" maxlength="8" pattern="[A-Za-z0-9]{2,8}" required autocomplete="off"></label>
+            <label class="notam-inactive">Include cancelled and expired notices<input name="notam-inactive" type="checkbox"></label>
+            <button type="submit">Load cached NOTAMs</button>
+          </form>
+          <p class="notam-status" role="status">Select a source location, then explicitly load its cached notices.</p>
+          <div class="notam-results"></div>
+        </div>
       </section>`;
       this.q('input[name=airports]').value = this.getAttribute('airports') || '';
+      this.q('input[name=notam-airport]').value = this.firstNotamLocation();
       this.setTime();
       this.updateAssessmentLink();
       this.q('form[aria-label="Aviation route review"]').addEventListener('submit', event => { event.preventDefault(); void this.loadRoute(); });
@@ -69,9 +82,12 @@
       for (const node of this.shadowRoot.querySelectorAll('.references input,.references select')) {
         node.addEventListener('input', () => { this.referenceRequest?.abort(); this.q('.reference-results').replaceChildren(); });
       }
+      this.q('form[aria-label="NOTAM location review"]').addEventListener('submit', event => { event.preventDefault(); void this.loadNotams(); });
+      this.q('input[name=notam-airport]').addEventListener('input', () => this.clearNotams());
+      this.q('input[name=notam-inactive]').addEventListener('change', () => this.clearNotams());
       this.q('.source-load').addEventListener('click', () => void this.loadSources());
     }
-    disconnectedCallback() { this.routeRequest?.abort(); this.pointRequest?.abort(); this.referenceRequest?.abort(); this.sourceRequest?.abort(); }
+    disconnectedCallback() { this.routeRequest?.abort(); this.pointRequest?.abort(); this.referenceRequest?.abort(); this.sourceRequest?.abort(); this.clearNotams(); }
     attributeChangedCallback(name, old, value) {
       if (!this.shadowRoot || old === value) return;
       if (name === 'airports') this.q('input[name=airports]').value = value || '';
@@ -92,6 +108,8 @@
     }
     clearRoute() {
       this.updateAssessmentLink();
+      this.clearNotams();
+      this.q('input[name=notam-airport]').value = this.firstNotamLocation();
       this.routeRequest?.abort(); this.pointRequest?.abort(); this.points = [];
       this.q('.route').replaceChildren(); this.q('.environment').replaceChildren();
       this.q('.point-controls').hidden = true;
@@ -101,7 +119,7 @@
     async request(path, controller, body) {
       const response = await fetch(api + path, { signal: AbortSignal.any([controller.signal, AbortSignal.timeout(30000)]), credentials: 'omit',
         ...(body ? { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) } : {}) });
-      if (!response.ok) throw new Error(`Provider request unavailable (HTTP ${response.status}).`);
+      if (!response.ok) { const error = new Error(`Provider request unavailable (HTTP ${response.status}).`); error.status = response.status; throw error; }
       return response.json();
     }
     source(container, payload) {
@@ -170,6 +188,8 @@
       this.pointRequest?.abort();
       const controller = this.pointRequest = new AbortController();
       const point = this.points?.[Number(this.q('select[name=point]').value)];
+      this.clearNotams();
+      this.q('input[name=notam-airport]').value = /^[A-Z0-9]{2,8}$/.test(point?.name || '') ? point.name : '';
       const out = this.q('.environment'); out.replaceChildren(); if (!point) return;
       const query = new URLSearchParams({ lat: point.latitude, lon: point.longitude });
       const jobs = [
@@ -192,6 +212,115 @@
           if (title.includes('advisories')) content.prepend(el('p', 'All reported US center advisories; route intersection is not determined.', { class: 'hint' }));
         } catch (error) { if (!controller.signal.aborted) { summary.textContent = `${title} · ${point.name} · Unavailable`; content.replaceChildren(el('p', error.message + ' Check this source’s coverage and retry.', { class: 'error' })); } }
       }));
+    }
+    firstNotamLocation() {
+      const first = this.q('input[name=airports]').value.trim().toUpperCase().split(/[\s,;→]+/)[0];
+      return /^[A-Z0-9]{2,8}$/.test(first || '') ? first : '';
+    }
+    clearNotams() {
+      this.notamRequest?.abort(); this.notamDetailRequest?.abort();
+      if (this.notamDetailView) { this.notamDetailView.out.replaceChildren(); this.notamDetailView.button.disabled = false; this.notamDetailView = null; }
+      this.notamGeneration = (this.notamGeneration || 0) + 1; this.notamSnapshot = null;
+      if (!this.shadowRoot) return;
+      this.q('.notam-results').replaceChildren();
+      this.q('.notam-status').textContent = 'Selection changed. Explicitly load cached notices for this source location.';
+      this.q('form[aria-label="NOTAM location review"] button').disabled = false;
+    }
+    async loadNotams(offset = 0, continuing = false) {
+      const airport = this.q('input[name=notam-airport]').value.trim().toUpperCase();
+      const includeInactive = this.q('input[name=notam-inactive]').checked;
+      const previous = continuing ? this.notamSnapshot : null;
+      this.clearNotams();
+      const generation = this.notamGeneration, controller = this.notamRequest = new AbortController();
+      const status = this.q('.notam-status'), out = this.q('.notam-results');
+      if (!/^[A-Z0-9]{2,8}$/.test(airport)) { status.textContent = 'Enter one source location with 2–8 ASCII letters/digits.'; return; }
+      if (continuing && !previous) { status.textContent = 'Reload notices before requesting another page.'; return; }
+      const query = new URLSearchParams({ airport, include_inactive: String(includeInactive), limit: '20', offset: String(offset), ...(previous ? { snapshot_id: previous.id } : {}) });
+      this.q('form[aria-label="NOTAM location review"] button').disabled = true; status.textContent = 'Loading cached NOTAMs…';
+      try {
+        const data = await this.request('/notams?' + query, controller);
+        if (controller.signal.aborted || generation !== this.notamGeneration) return;
+        if (!['available', 'no_reports', 'partial', 'stale', 'unavailable'].includes(data.status) ||
+          ![null, 'production', 'staging', 'fit'].includes(data.environment) ||
+          typeof data.production_data !== 'boolean' || typeof data.complete_snapshot !== 'boolean' ||
+          (data.production_data && (data.environment !== 'production' || !data.complete_snapshot)) ||
+          !Number.isInteger(data.total) || data.total < 0 || data.offset !== offset || !Number.isInteger(data.incomplete_records) || data.incomplete_records < 0 || data.incomplete_records > data.total ||
+          !Array.isArray(data.notams) || data.notams.length > 20 || data.notams.length > data.total || data.limit !== 20 ||
+          !data.notams.every(n => typeof n.id === 'string' && n.id.length <= 128 && (n.text === null || typeof n.text === 'string')) ||
+          !Array.isArray(data.warnings) || !data.warnings.every(w => typeof w === 'string') || !Array.isArray(data.requested_locations) || data.requested_locations.length !== 1 || data.requested_locations[0] !== airport || !Array.isArray(data.matched_locations) || !data.matched_locations.every(v => typeof v === 'string') || data.source?.environment !== data.environment ||
+          !(data.next_offset === null || (Number.isInteger(data.next_offset) && data.next_offset > offset && data.next_offset <= 250000)) ||
+          !(data.snapshot_id === null || /^[a-f0-9]{64}$/.test(data.snapshot_id)) ||
+          (['available', 'no_reports'].includes(data.status) && (!data.complete_snapshot || !data.snapshot_id)) ||
+          (data.status === 'no_reports' && (data.total !== 0 || data.notams.length !== 0))) throw new Error('Invalid cached NOTAM coverage response.');
+        if (previous && (data.snapshot_id !== previous.id || data.total !== previous.total || data.environment !== previous.environment || data.production_data !== previous.production_data || data.complete_snapshot !== previous.complete_snapshot))
+          throw new Error('NMS snapshot or coverage changed. Reload the notices.');
+        const end = offset + data.notams.length;
+        if (new Set(data.notams.map(n => n.id)).size !== data.notams.length || end > data.total ||
+          (data.next_offset !== null && (data.notams.length === 0 || data.next_offset !== end)) ||
+          (end < data.total && data.next_offset === null)) throw new Error('Incomplete or inconsistent NOTAM pagination.');
+        if (data.snapshot_id) this.notamSnapshot = { id: data.snapshot_id, total: data.total, environment: data.environment, production_data: data.production_data, complete_snapshot: data.complete_snapshot };
+        status.textContent = `FAA NMS · ${airport} · ${data.status} · environment ${data.environment || 'not selected'}`;
+        out.append(el('p', `Production feed data: ${data.production_data ? 'yes' : 'no'} · Complete snapshot: ${data.complete_snapshot ? 'yes' : 'no'}`),
+          el('p', `Synchronized ${utc(data.synchronized_at)} · Full load ${utc(data.full_load_at)}`, { class: 'hint' }),
+          el('p', `Requested: ${data.requested_locations.join(', ') || 'Unknown'} · Matched source aliases: ${data.matched_locations.join(', ') || 'none returned'}`),
+          el('p', `Showing ${data.notams.length ? (offset + 1) + '–' + end : '0 on this page'} of ${data.total} matching cached records · ${show(data.incomplete_records)} matched records missing source fields`));
+        this.source(out, data);
+        if (data.environment !== 'production') out.append(el('p', 'Non-production or unselected feed. These notices do not establish production NOTAM coverage.', { class: 'warning' }));
+        if (data.status !== 'available' || !data.production_data || !data.complete_snapshot) out.append(el('p', 'Coverage is limited. Do not interpret missing or zero returned notices as absent applicable NOTAMs.', { class: 'warning' }));
+        if (data.status === 'no_reports') out.append(el('p', 'No matching cached records for this selection; this is not a complete NOTAM briefing.'));
+        for (const warning of data.warnings) out.append(el('p', warning, { class: 'warning' }));
+        if (data.error) out.append(el('p', data.error, { class: 'error' }));
+        for (const notice of data.notams) {
+          const article = el('article', null, { 'aria-label': `NOTAM ${notice.id}` });
+          this.renderNotam(article, notice);
+          if (this.notamSnapshot) {
+            const detail = el('div'), button = el('button', 'Read full source notice', { type: 'button' });
+            const pin = this.notamSnapshot;
+            button.onclick = () => void this.loadNotamDetail(notice.id, pin, generation, detail, button);
+            article.append(button, detail);
+          }
+          out.append(article);
+        }
+        const pages = el('div', null, { class: 'controls' });
+        for (const [label, next] of [['Previous NOTAM page', offset ? Math.max(0, offset - 20) : null], ['Next NOTAM page', data.next_offset]]) {
+          if (next !== null) { const button = el('button', label, { type: 'button' }); button.onclick = () => void this.loadNotams(next, true); pages.append(button); }
+        }
+        out.append(pages);
+      } catch (error) {
+        if (!controller.signal.aborted && generation === this.notamGeneration) {
+          out.replaceChildren(); this.notamSnapshot = null;
+          status.textContent = error.status === 409 ? 'NMS snapshot changed. Explicitly reload the notices.' : `${error.message} Cached NOTAMs could not be reviewed. Explicitly reload when available.`;
+        }
+      } finally { if (!controller.signal.aborted && generation === this.notamGeneration) this.q('form[aria-label="NOTAM location review"] button').disabled = false; }
+    }
+    renderNotam(node, notice) {
+      node.append(el('h4', `${notice.number || notice.id} · ${notice.location || 'Unknown location'}`),
+        el('p', `Source identity: ${notice.id} · ICAO alias: ${notice.icao_location || 'Unknown'}`),
+        el('p', `Classification ${notice.classification || 'Unknown'} · Source type ${notice.type || 'Unknown'} · Activity ${notice.activity || 'Unknown'}`),
+        el('p', `Effective ${utc(notice.effective_start_utc)} → ${notice.permanent ? 'PERMANENT' : utc(notice.effective_end_utc)}${notice.estimated ? ' (estimated expiry)' : ''}`),
+        el('p', `Updated ${utc(notice.last_updated_utc)} · Cancelled ${utc(notice.cancelled_at_utc)}`, { class: 'hint' }),
+        el('pre', notice.text ?? 'Source notice text unavailable.'));
+      if (notice.schedule) node.append(el('p', 'Source schedule: ' + notice.schedule));
+      if (notice.text_truncated) node.append(el('p', `Preview only (${notice.text_length} source characters). Read full source notice below.`, { class: 'warning' }));
+      if (notice.missing_fields?.length) node.append(el('p', 'Missing source fields: ' + notice.missing_fields.join(', '), { class: 'warning' }));
+    }
+    async loadNotamDetail(id, pin, generation, out, button) {
+      this.notamDetailRequest?.abort();
+      if (this.notamDetailView) { this.notamDetailView.out.replaceChildren(); this.notamDetailView.button.disabled = false; }
+      const controller = this.notamDetailRequest = new AbortController(); this.notamDetailView = { out, button };
+      button.disabled = true; out.replaceChildren(el('p', 'Loading full source notice…'));
+      try {
+        const query = new URLSearchParams({ id, snapshot_id: pin.id });
+        const data = await this.request('/notams/detail?' + query, controller);
+        if (controller.signal.aborted || generation !== this.notamGeneration) return;
+        if (!['available', 'no_reports', 'partial', 'stale', 'unavailable'].includes(data.status) || data.snapshot_id !== pin.id || data.environment !== pin.environment || data.production_data !== pin.production_data || data.notice?.id !== id || data.notice.text_truncated !== false || !data.source_feature || typeof data.source_feature !== 'object' || Array.isArray(data.source_feature))
+          throw new Error('NMS detail identity or coverage changed. Reload the notices.');
+        out.replaceChildren(el('h4', 'Full original source notice'), el('p', `Detail status: ${data.status} · Environment ${data.environment} · Production feed data: ${data.production_data ? 'yes' : 'no'}`));
+        this.renderNotam(out, data.notice); this.source(out, data);
+        for (const warning of data.warnings || []) out.append(el('p', warning, { class: 'warning' }));
+        const original = el('details'); original.append(el('summary', 'Original source record'), el('pre', JSON.stringify(data.source_feature, null, 2))); out.append(original);
+      } catch (error) { if (!controller.signal.aborted && generation === this.notamGeneration) out.replaceChildren(el('p', error.message + ' Reload notices before retrying detail.', { class: 'error' })); }
+      finally { if (!controller.signal.aborted && generation === this.notamGeneration) button.disabled = false; }
     }
     table(container, headers, rows) {
       const scroll = el('div', null, { class: 'scroll', tabindex: '0' }); const table = el('table');
@@ -286,7 +415,7 @@
         out.replaceChildren(el('p', 'Configured means credentials are present where required; it does not establish live availability.', { class: 'hint' }));
         for (const source of data.sources) {
           const article = el('article'); article.append(el('h4', source.provider),
-            el('p', source.configured ? 'Configured' : 'Not configured'), el('p', source.coverage),
+            el('p', source.id === 'faa-nms' ? (source.configured ? 'Cache-reader environment selected; feed availability is separate.' : 'Cache-reader environment not selected.') : (source.configured ? 'Configured' : 'Not configured')), el('p', source.coverage),
             el('p', source.license), el('p', source.limitations, { class: 'hint' })); out.append(article);
         }
       } catch (error) { if (!controller.signal.aborted) out.replaceChildren(el('p', error.message, { class: 'error' })); }

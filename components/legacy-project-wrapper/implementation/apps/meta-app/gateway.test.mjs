@@ -457,3 +457,30 @@ test('route assessment CORS admits only public read-only POST and strips credent
   ]) assert.equal((await fetch(edge + path, { method: 'OPTIONS', headers })).status, 403);
   assert.equal(calls.length, count);
 });
+
+test('cached NMS CORS admits only the three public GET operations and strips credentials', async t => {
+  const { edge, calls } = await fixture(t);
+  const origin = 'https://preflight-check.jordanhubbard.net';
+  for (const path of ['/api/notams?airport=KPAO', '/api/notams/capabilities', '/api/notams/detail?id=synthetic']) {
+    const url = edge + '/api/v1/planning' + path;
+    const before = calls.length;
+    const options = await fetch(url, { method: 'OPTIONS', headers: { origin, 'access-control-request-method': 'GET' } });
+    assert.equal(options.status, 204); assert.equal(calls.length, before); assert.equal(options.headers.get('access-control-allow-methods'), 'GET');
+    for (const app of ['flight-planner', 'weather-briefing', 'preflight-check', 'aviation-missions-app', 'flightschool']) {
+      const allowed = `https://${app}.jordanhubbard.net`;
+      const response = await fetch(url, { headers: { origin: allowed, authorization: 'Bearer synthetic-private', cookie: 'aviation_planning_session=synthetic-private' } });
+      assert.equal(response.status, 200); assert.equal(response.headers.get('access-control-allow-origin'), allowed);
+      assert.equal(response.headers.get('access-control-allow-credentials'), null); assert.equal(response.headers.get('set-cookie'), null);
+      assert.equal(calls.at(-1).headers.authorization, undefined); assert.equal(calls.at(-1).headers.cookie, undefined);
+    }
+    const count = calls.length;
+    assert.equal((await fetch(url, { headers: { origin: 'https://foreign.invalid' } })).status, 403);
+    for (const method of ['POST', 'PUT', 'DELETE']) assert.equal((await fetch(url, { method, headers: { origin } })).status, 405);
+    assert.equal((await fetch(url, { method: 'OPTIONS', headers: { origin, 'access-control-request-method': 'GET', 'access-control-request-headers': 'authorization' } })).status, 403);
+    assert.equal(calls.length, count);
+  }
+  for (const path of ['/api/notams/admin', '/api/notams/other/detail']) {
+    const response = await fetch(edge + '/api/v1/planning' + path, { method: 'OPTIONS', headers: { origin, 'access-control-request-method': 'GET' } });
+    assert.equal(response.headers.get('access-control-allow-origin'), null);
+  }
+});
