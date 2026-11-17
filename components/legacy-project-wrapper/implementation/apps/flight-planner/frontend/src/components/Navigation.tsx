@@ -59,6 +59,7 @@ const Navigation: React.FC = () => {
         allowScrollButtonsMobile
         aria-label="Navigation tabs"
       >
+        <Tab label="NOTAMs" value="/notams" />
         <Tab label="Route assessment" value="/route-assessment" />
         <Tab
           icon={<Flight />}

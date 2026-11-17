@@ -42,6 +42,54 @@ data. The installer backs up the previous unit and Caddy configuration for the
 current app and restores them if startup or health checking fails. Inspect failures
 with `journalctl -u aviation-<app> -n 100` and `docker logs aviation-<app>`.
 
+### FAA NMS ingestion worker
+
+The planner mounts `/var/lib/aviation/flight-planner/nms` read-only at `/app/nms`.
+Its protected `/etc/aviation/flight-planner.env` selects `FAA_NMS_ENVIRONMENT` and
+`FAA_NMS_CACHE_DIR=/app/nms/<environment>`; it must not contain FAA client
+credentials. Keep those credentials out of the web keystore as well. The weather
+service consumes the shared read API and needs no FAA credentials.
+
+Install a separate worker from the exact committed planner image:
+
+```sh
+python3 deploy/deploy.py nms-worker-install --environment production
+python3 deploy/deploy.py nms-worker-status --environment production
+```
+
+Installation creates the environment's private cache directory, checks the image
+revision and installs `aviation-nms-worker-production.service`. It does not start
+or newly enable a worker, and refuses to replace an active/transitioning unit.
+If an existing worker needs updating, stop it first. The worker is an internal
+process, not an additional public application or gateway namespace.
+
+Provision `/etc/aviation/nms-production.env` separately as a root-owned regular
+file with mode 0600, with exactly the unquoted `FAA_NMS_CLIENT_ID` and
+`FAA_NMS_CLIENT_SECRET` assignments. Neither installation nor source control
+provisions or displays their values. After actual production authentication is
+verified, explicitly start the worker:
+
+```sh
+python3 deploy/deploy.py nms-worker-start --environment production
+python3 deploy/deploy.py nms-worker-status --environment production
+# Stops and disables only this environment's worker, preserving its cache:
+python3 deploy/deploy.py nms-worker-stop --environment production
+```
+
+The same commands require an explicit `staging` or `fit` selection for those
+environments, with separate files/units/cache directories. Never start production
+using credentials that production rejected. An active unit establishes process
+state only: inspect `/api/notams/capabilities` and `/api/notams?airport=KPAO` for the
+selected environment, complete snapshot, source age and warnings, then verify the
+gateway, MCP and UI. Staging data may contain test notices and is not production
+acceptance. Full initialization can take several cadence intervals.
+
+Preserve the complete cache, original receipts and durable request reservations
+when moving a feed between hosts. Quiesce the old worker before transfer and use
+only one authoritative writable cache per account/environment. Do not start from
+a fresh directory to bypass a daily full-load or three-minute delta reservation.
+Deployment rollback restores unit configuration, never old cadence/data state.
+
 The installer generates stable Flask session and CSRF keys for Flight School and
 a session key for ForeFlight Dashboard on first install. Aviation Chat needs
 `OPENCLAW_BASE_URL` and `OPENCLAW_API_KEY` in its protected environment file for

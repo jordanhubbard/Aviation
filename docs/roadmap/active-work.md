@@ -6,6 +6,8 @@ index, not an independently maintained task list. Use `gh issue` and `gh pr`.
 
 ## Current work and requests
 
+- [#503 — Authorized FAA NMS feed, cache and application integration](https://github.com/jordanhubbard/Aviation/issues/503)
+
 - [#497 — Connected browser cleanup before server shutdown](https://github.com/jordanhubbard/Aviation/issues/497)
 
 - [#491 — Route, altitude and time hazard assessment](https://github.com/jordanhubbard/Aviation/issues/491)

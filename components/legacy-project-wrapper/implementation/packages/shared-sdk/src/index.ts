@@ -20,6 +20,7 @@ export * from './aviation/nav-data/index.js';
 
 // Aviation NOTAM services (FAA NOTAM Search API client)
 export * from './aviation/notam.js';
+export * from './aviation/notam-reports.js';
 // Aviation hazard services (SIGMETs / AIRMETs / TFRs)
 export * from './aviation/hazards.js';
 // Provider-neutral alert lifecycle semantics
