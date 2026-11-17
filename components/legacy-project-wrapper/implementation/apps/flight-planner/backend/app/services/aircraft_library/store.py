@@ -407,11 +407,74 @@ class Store:
     def create_job(self, kind: str, request: dict):
         identifier = "job_" + uuid.uuid4().hex
         with self.connection() as connection:
-            connection.execute(
-                "INSERT INTO jobs VALUES (?,?,'queued',?,NULL,NULL,?,?,NULL)",
-                (identifier, kind, json.dumps(request), now(), now()),
-            )
+            connection.execute("BEGIN IMMEDIATE")
+            existing = None
+            if kind in {"index", "embed", "distill"} and set(request) == {"document_id"}:
+                existing = connection.execute(
+                    "SELECT id FROM jobs WHERE kind=? AND state IN ('queued','running') "
+                    "AND json_extract(request,'$.document_id')=? ORDER BY created_at LIMIT 1",
+                    (kind, request["document_id"]),
+                ).fetchone()
+            if existing:
+                identifier = existing["id"]
+            else:
+                connection.execute(
+                    "INSERT INTO jobs VALUES (?,?,'queued',?,NULL,NULL,?,?,NULL)",
+                    (identifier, kind, json.dumps(request), now(), now()),
+                )
         return self.job(identifier)
+
+    @staticmethod
+    def _job_subject(connection, request):
+        identifier = request.get("document_id")
+        if identifier:
+            row = connection.execute(
+                "SELECT icao,metadata FROM documents WHERE id=?", (identifier,)
+            ).fetchone()
+            if row:
+                meta = json.loads(row["metadata"])
+                return {
+                    "document_id": identifier,
+                    "icao": row["icao"],
+                    "title": meta["title"] or meta["model"] or "Untitled manual",
+                }
+        meta = request.get("metadata")
+        if isinstance(meta, dict) and meta.get("icao"):
+            return {
+                "document_id": None,
+                "icao": meta["icao"],
+                "title": meta.get("title") or "Public manual acquisition",
+            }
+        return None
+
+    def jobs(self, limit=20, offset=0):
+        if type(limit) is not int or not 1 <= limit <= 100:
+            raise ValueError("List between 1 and 100 library jobs")
+        if type(offset) is not int or not 0 <= offset <= 1_000_000:
+            raise ValueError("Library job offset is out of range")
+        with self.connection() as connection:
+            connection.execute("BEGIN")
+            total = connection.execute("SELECT COUNT(*) FROM jobs").fetchone()[0]
+            rows = connection.execute(
+                "SELECT id,kind,state,request,error,created_at,updated_at, "
+                "CASE WHEN result IS NULL OR json_type(result)='null' THEN 0 ELSE 1 END AS has_result "
+                "FROM jobs ORDER BY CASE state WHEN 'running' THEN 0 WHEN 'queued' THEN 1 ELSE 2 END, "
+                "CASE WHEN state IN ('queued','running') THEN created_at END, updated_at DESC LIMIT ? OFFSET ?",
+                (limit, offset),
+            ).fetchall()
+            results = []
+            for row in rows:
+                value = dict(row)
+                value["subject"] = self._job_subject(connection, json.loads(value.pop("request")))
+                value["has_result"] = bool(value["has_result"])
+                results.append(value)
+        return {
+            "jobs": results,
+            "total": total,
+            "limit": limit,
+            "offset": offset,
+            "next_offset": offset + len(results) if offset + len(results) < total else None,
+        }
 
     def claim_job(self, owner: str):
         from datetime import timedelta
@@ -450,11 +513,13 @@ class Store:
     def job(self, identifier: str):
         with self.connection() as connection:
             row = connection.execute("SELECT * FROM jobs WHERE id=?", (identifier,)).fetchone()
-        if row is None:
-            return None
-        result = dict(row)
-        for key in ("request", "result"):
-            result[key] = json.loads(result[key]) if result[key] else None
+            if row is None:
+                return None
+            result = dict(row)
+            for key in ("request", "result"):
+                result[key] = json.loads(result[key]) if result[key] else None
+            result["subject"] = self._job_subject(connection, result["request"])
+            result["has_result"] = result["result"] is not None
         return result
 
     def finish_job(self, identifier: str, result: dict | None = None, error: str | None = None):
