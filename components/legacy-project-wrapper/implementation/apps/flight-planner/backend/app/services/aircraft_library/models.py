@@ -619,6 +619,26 @@ def validate_answer(answer, evidence):
     }
 
 
+def _numeric_excerpt_options(values, evidence):
+    """Locate bounded possible evidence; matching tokens do not prove a claim."""
+    wanted = {Decimal(value) for value in values[:32]}
+    options = []
+    for passage in evidence:
+        for index, excerpt in enumerate(citation_excerpts(passage["text"])):
+            matched = wanted & numbers(excerpt)
+            if matched:
+                options.append(
+                    {
+                        "passage_id": passage["passage_id"],
+                        "excerpt_id": index,
+                        "numeric_values": sorted(str(value) for value in matched),
+                    }
+                )
+    # Prefer options covering more gaps; preserve source order for ties.
+    options.sort(key=lambda row: -len(row["numeric_values"]))
+    return {"matches": options[:8], "limited": len(options) > 8 or len(values) > 32}
+
+
 def _rejected_claims(candidate, evidence):
     if not isinstance(candidate, dict) or candidate.get("insufficient_evidence") is not False:
         return None
@@ -632,12 +652,17 @@ def _rejected_claims(candidate, evidence):
                 {"insufficient_evidence": False, "reason": "", "claims": [claim]}, evidence
             )
         except ModelUnavailable as error:
+            feedback = dict(error.feedback or {})
+            if feedback.get("unsupported_numeric_values"):
+                feedback["numeric_evidence_options"] = _numeric_excerpt_options(
+                    feedback["unsupported_numeric_values"], evidence
+                )
             failures.append(
                 {
                     "claim_number": index + 1,
                     "claim": claim,
                     "validation_failure": str(error).replace("in claim 1;", "in this claim;"),
-                    **(error.feedback or {}),
+                    **feedback,
                 }
             )
     return failures or None
@@ -821,6 +846,11 @@ def verified_completion(models, evidence, question, *, max_attempts=3, trace_con
                     "already accepted claims, drop a listed claim, or add a new topic. "
                     "Select all excerpts supporting the complete replacement, including conditions, units "
                     "and identifiers; neighboring excerpts require their own citations. "
+                    "Numeric evidence options identify possible locations in this same evidence, not proof "
+                    "of the claim or its applicability; read each excerpt before selecting it. "
+                    "Put every selected citation in the replacement JSON, not only the reason text. "
+                    "Each claim has at most eight citations: replace redundant citations if necessary "
+                    "to include the missing support without dropping supported facts. "
                     "Unsupported-number diagnostics locate citation gaps, not permission to invent evidence. "
                     "Numeric signs are significant: PDF spacing around a hyphen can make an identifier "
                     "look like a signed number. Preserve exact original identifier punctuation and spacing, "

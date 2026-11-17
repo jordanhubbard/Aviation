@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Aircraft library: identify bounded possible excerpt locations for rejected numbers during correction, preserving signed tokens, citation limits and full answer validation.
+
 - Aircraft library: compare matching printed reference codes independently of PDF spacing; the fallback removes the same references from claim and quote comparisons so their signed components cannot support separate measurements.
 
 - Aircraft library: constrain structured correction responses to the required replacement count while retaining full evidence validation and per-request schema isolation.
