@@ -15,6 +15,11 @@ from urllib.parse import urlsplit
 import httpx
 
 from .store import Store, now
+from .diagnostics import (
+    ValidationTrace,
+    candidate as diagnostic_candidate,
+    digest as diagnostic_digest,
+)
 
 
 class ModelUnavailable(RuntimeError):
@@ -92,6 +97,11 @@ class Models:
         self.base = env.get("AIRCRAFT_LIBRARY_LLM_BASE_URL", "").rstrip("/")
         self.model = env.get("AIRCRAFT_LIBRARY_LLM_MODEL", "")
         self.key = env.get("AIRCRAFT_LIBRARY_LLM_API_KEY", "")
+        trace_root = env.get("AIRCRAFT_LIBRARY_VALIDATION_TRACE_DIR", "")
+        if not isinstance(trace_root, str):
+            raise ValueError("Validation trace directory must be an absolute path or unset")
+        self.validation_trace = ValidationTrace(trace_root) if trace_root else None
+        self.validation_trace_status = {"state": "enabled" if trace_root else "disabled"}
         thinking = env.get("AIRCRAFT_LIBRARY_LLM_ENABLE_THINKING", "")
         if not isinstance(thinking, str) or thinking.strip().lower() not in {"", "true", "false"}:
             raise ValueError("LLM enable thinking must be true, false or unset")
@@ -198,6 +208,16 @@ class Models:
             "embedding_mode": self.embedding_mode,
             "embedding_identity": self.embedding_identity if self.embedding_model else None,
         }
+
+    def trace_validation(self, value):
+        if self.validation_trace is None:
+            return
+        try:
+            self.validation_trace_status = self.validation_trace.write(value, secrets=(self.key,))
+        except Exception:
+            # Diagnostic failures must neither admit bad claims nor replace the
+            # original evidence-validation failure with a filesystem/path error.
+            self.validation_trace_status = {"state": "unavailable"}
 
     def post(self, path, payload):
         if not self.base:
@@ -541,7 +561,104 @@ def _rejected_claims(candidate, evidence):
     return failures or None
 
 
-def verified_completion(models, evidence, question, *, max_attempts=3):
+def _trace_rejection(
+    models,
+    evidence,
+    question,
+    attempt,
+    max_attempts,
+    candidate,
+    response,
+    repair_positions,
+    error,
+    trace_context,
+    *,
+    event="claim_validation",
+):
+    observer = getattr(models, "trace_validation", None)
+    if callable(observer) and getattr(models, "validation_trace", None) is not None:
+        try:
+            selected_evidence = [
+                {
+                    **{
+                        key: row[key]
+                        for key in (
+                            "document_id",
+                            "passage_id",
+                            "page",
+                            "label",
+                            "method",
+                            "text",
+                        )
+                        if key in row
+                    },
+                    "excerpts": citation_excerpts(row["text"]),
+                    "metadata": {
+                        key: value
+                        for key, value in row.get("metadata", {}).items()
+                        if key
+                        in {
+                            "icao",
+                            "title",
+                            "kind",
+                            "manufacturer",
+                            "model",
+                            "variant",
+                            "revision",
+                            "serial_applicability",
+                            "tails",
+                            "scope",
+                            "notes",
+                        }
+                    },
+                }
+                for row in evidence
+            ]
+            observer(
+                {
+                    "schema": "aviation/library-validation-trace@1",
+                    "event": event,
+                    "response_available": response is not None,
+                    "context": trace_context() if callable(trace_context) else trace_context or {},
+                    "attempt": attempt + 1,
+                    "max_attempts": max_attempts,
+                    "final_attempt": attempt + 1 == max_attempts,
+                    "question_sha256": hashlib.sha256(question.encode()).hexdigest(),
+                    "profile_sha256": diagnostic_digest(
+                        [
+                            getattr(models, "base", ""),
+                            getattr(models, "model", ""),
+                            SYSTEM,
+                            CITATION_FORMAT,
+                            getattr(models, "generation_options", {}),
+                        ]
+                    ),
+                    "citation_format": CITATION_FORMAT,
+                    "evidence_sha256": diagnostic_digest(selected_evidence),
+                    "evidence": selected_evidence,
+                    "candidate": diagnostic_candidate(candidate),
+                    "response": diagnostic_candidate(response),
+                    "replacement_positions": repair_positions,
+                    "validation_failure": str(error),
+                    "numeric_feedback": {
+                        key: value
+                        for key, value in (error.feedback or {}).items()
+                        if key in {"unsupported_numeric_values", "cited_numeric_values"}
+                    },
+                    "rejections": [
+                        {key: value for key, value in failure.items() if key != "claim"}
+                        for failure in (_rejected_claims(candidate, evidence) or [])
+                    ],
+                }
+            )
+        except Exception:
+            # Keep the validation contract even for an unavailable
+            # optional observer or non-serializable diagnostic fixture.
+            if hasattr(models, "validation_trace_status"):
+                models.validation_trace_status = {"state": "unavailable"}
+
+
+def verified_completion(models, evidence, question, *, max_attempts=3, trace_context=None):
     if type(max_attempts) is not int or not 1 <= max_attempts <= 3:
         raise ValueError("Citation correction requires one to three completion attempts")
     prompt = question
@@ -550,6 +667,19 @@ def verified_completion(models, evidence, question, *, max_attempts=3):
         try:
             response = models.complete(evidence, prompt)
         except ModelTruncated as error:
+            _trace_rejection(
+                models,
+                evidence,
+                question,
+                attempt,
+                max_attempts,
+                repair_base,
+                None,
+                repair_positions,
+                error,
+                trace_context,
+                event="truncation",
+            )
             if attempt:
                 # A rejected candidate already exists: do not evade its assertions
                 # by splitting evidence and starting an unrelated answer.
@@ -581,6 +711,18 @@ def verified_completion(models, evidence, question, *, max_attempts=3):
                 raise correction_error
             return validate_answer(candidate, evidence)
         except ModelUnavailable as error:
+            _trace_rejection(
+                models,
+                evidence,
+                question,
+                attempt,
+                max_attempts,
+                candidate,
+                response,
+                repair_positions,
+                error,
+                trace_context,
+            )
             if attempt + 1 == max_attempts:
                 raise
             failures = _rejected_claims(candidate, evidence)
@@ -634,7 +776,29 @@ def ask(store: Store, models: Models, code: str, question: str, **filters):
         }
     documents = {row["document_id"]: store.get(row["document_id"]) for row in evidence}
     context = [{**row, "metadata": documents[row["document_id"]]["metadata"]} for row in evidence]
-    answer = verified_completion(models, context, question, max_attempts=2)
+    answer = verified_completion(
+        models,
+        context,
+        question,
+        max_attempts=2,
+        trace_context=(
+            (
+                lambda: {
+                    "operation": "question",
+                    "documents": [
+                        {
+                            "document_id": key,
+                            "source_sha256": doc["sha256"],
+                            "index_identity_observed_at_trace": store.index_identity(key),
+                        }
+                        for key, doc in documents.items()
+                    ],
+                }
+            )
+            if getattr(models, "validation_trace", None) is not None
+            else None
+        ),
+    )
     if any(
         store.get(key)["metadata"] != document["metadata"] for key, document in documents.items()
     ):
@@ -795,7 +959,19 @@ def distill(store: Store, models: Models, identifier: str):
         position = len(summaries)
         batch = batches[position]
         try:
-            result = verified_completion(models, batch, question)
+            result = verified_completion(
+                models,
+                batch,
+                question,
+                trace_context={
+                    "operation": "distillation",
+                    "document_id": identifier,
+                    "source_sha256": doc["sha256"],
+                    "index_identity": identity,
+                    "evidence_identity": fingerprint,
+                    "batch_position": position,
+                },
+            )
         except ModelTruncated:
             if len(batch) < 2:
                 raise

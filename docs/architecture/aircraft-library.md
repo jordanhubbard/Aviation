@@ -10,6 +10,34 @@ Every page retains physical PDF page number, printed page label when available, 
 
 ## Retrieval, distillation and answers
 
+For [#520](https://github.com/jordanhubbard/Aviation/issues/520), operators may set
+`AIRCRAFT_LIBRARY_VALIDATION_TRACE_DIR` to an absolute protected server directory.
+Unset/empty disables diagnostics and performs no diagnostic storage I/O. On claim
+validation failure, retain the bounded candidate, actual correction response,
+replacement positions, exact supplied passages/excerpts and signed numeric failure
+details, including the final attempt. Identify document original/index identity,
+batch and generation profile; hash the question instead of retaining prompt journals.
+Truncation records retain any prior rejected candidate and explicitly identify
+the absence of a parseable response; partial JSON is never admitted or reinterpreted.
+Question traces hash the exact supplied evidence and label any separately observed
+index identity as observed at trace time. Diagnostic context is resolved lazily only
+on rejection, and lookup failures cannot change the original validation result.
+Provider headers, credentials and unrelated response properties are excluded; redact
+any configured model key reflected in selected text. Traces never enter public errors,
+job responses, HTTP/MCP discovery or browser storage.
+
+Use a separate owner-only directory/database (0700/0600), reject links and insecure
+existing permissions, and atomically retain at most 64 immutable records of at most
+512 KiB each across processes/restarts. Oversize/limit/storage failures leave a private
+status and preserve the original validation outcome. Do not evict old traces or silently
+truncate one into an apparently complete diagnostic. Diagnostics do not change prompts,
+retry limits, provider requests, embedding/distillation identities, valid prefixes or
+admission. The private model object exposes only its last diagnostic state and record
+ID to operator code; inspect the protected SQLite records locally, never through
+public adapters. A full store requires selecting a new explicit private directory;
+existing records are retained. Inspect actual failures against originals before
+changing interpretation.
+
 Interactive answers may correct a rejected citation/schema/numeric candidate once,
 for at most two model completions against the same evidence. Distillation keeps
 its existing three-completion limit per batch. Both paths retain valid claims,
