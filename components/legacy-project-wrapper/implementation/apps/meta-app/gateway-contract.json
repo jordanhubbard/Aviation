@@ -87,8 +87,14 @@
       "http": "/api/v1/avionics",
       "mcpTool": "v1.avionics.request",
       "direct": "https://g1000-simulator.jordanhubbard.net",
-      "description": "G1000 simulator configuration and instrument data.",
-      "healthPath": "/api/health"
+      "description": "G1000 configuration, instrument data and sourced FAA procedure/cycle browsing.",
+      "healthPath": "/api/health",
+      "openapi": {
+        "path": "/openapi.json",
+        "http": "/api/v1/avionics/openapi.json",
+        "resource": "aviation://v1/avionics/openapi",
+        "describeTool": "v1.avionics.describe"
+      }
     },
     {
       "namespace": "preflight",

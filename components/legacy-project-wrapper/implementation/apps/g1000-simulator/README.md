@@ -1,5 +1,38 @@
 # G1000 Simulator
 
+## Current sourced procedure browser
+
+The shipped dashboard links to `/procedures`. Enter a published airport identifier
+and explicitly load FAA departure, arrival and approach records, or open a
+`/procedures?airport=KSFO` handoff from charts/preflight. The browser preserves cycle
+verification, effective dates, original ARINC fields, unknown values and incomplete
+guidance. Results are paginated; browsing does not activate a flight plan. Tables
+scroll horizontally on narrow screens. No navigation requests or polling run until
+the user asks for data.
+
+The mounted FastAPI factory exposes typed GET `/api/navigation/{airport}` and the
+legacy GET `/api/procedures/{airport}` view. Both use the same sourced planning API;
+the legacy response includes the complete `navigation` envelope for its page, not
+a complete airport database. HTTP 503 means current coverage is unverified or
+unavailable; HTTP 502 means the upstream response was invalid. Neither falls back
+to sample procedures. Explicit catalog injection remains available for tests.
+
+`AVIATION_PLANNING_BASE_URL` optionally selects an operator-controlled planning
+HTTP(S) base; the default is `https://meta-app.jordanhubbard.net/api/v1/planning`.
+The adapter appends `/api/navigation/<identifier>`. Keep credentials out of this
+URL: public FAA reference reads require none, caller credentials are not forwarded,
+and this process does not download FAA catalogs or own their freshness calculations.
+See the [chart/navigation contract](../../../../../docs/architecture/charts-navigation.md).
+`pnpm --filter g1000-simulator-frontend run test:procedures` exercises the shipped
+browser's request ownership, invalidation, paging and explicit failure behavior.
+For a built running app backed by actual current FAA data, run
+`pnpm --filter g1000-simulator-frontend run test:navigation <application-origin> KSFO <absolute-evidence-directory>`.
+Use an ignored evidence directory and an airport with at least two procedure pages.
+This desktop/mobile gate reads real source records, checks raw-record identity,
+unknown values, pagination, input invalidation and table scrolling, and rejects
+runtime/request failures or document overflow. It uses the owned browser runner;
+no FAA credential or provider interception is required.
+
 ## Overview
 The G1000 Simulator is a comprehensive flight simulation application designed to emulate the Garmin G1000 avionics suite. It is structured to be developed in multiple phases, each focusing on different aspects of the avionics and flight simulation.
 

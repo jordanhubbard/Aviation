@@ -69,3 +69,4 @@ chart acquisition, original preservation, georeferenced display and current CIFP
 
 The [offline and cockpit contract](architecture/offline-cockpit.md) defines durable
 flight packages, disconnected operation and the local GDL90 receiver bridge.
+- [FAA NMS NOTAM integration](architecture/nms-notams.md): authorized provider contract, cadence, shared cache and consumer acceptance.

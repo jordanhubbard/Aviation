@@ -88,7 +88,14 @@ type Nav = {
 const base = '/api/charts'
 
 export default function ChartsPage() {
-  const [airport, setAirport] = useState('KSFO')
+  const [airport, setAirport] = useState(() => {
+    const supplied = new URLSearchParams(window.location.search).get('airport')
+    return supplied === null
+      ? 'KSFO'
+      : /^[A-Za-z0-9]{3,4}$/.test(supplied)
+        ? supplied.toUpperCase()
+        : ''
+  })
   const [query, setQuery] = useState('')
   const [family, setFamily] = useState('terminal')
   const [freshness, setFreshness] = useState('current')
@@ -203,6 +210,14 @@ export default function ChartsPage() {
         <Typography>
           FAA terminal procedures, airport diagrams, sectional/enroute charts and real CIFP records.
         </Typography>
+        <Button
+          component="a"
+          href={`https://g1000-simulator.jordanhubbard.net/procedures${/^[A-Z0-9]{3,4}$/.test(airport.trim()) ? '?airport=' + encodeURIComponent(airport.trim()) : ''}`}
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          Open G1000 procedure browser
+        </Button>
       </Box>
       <Alert severity="info">
         Check the source, effective dates and FAA chart notices. This suite is for reference and

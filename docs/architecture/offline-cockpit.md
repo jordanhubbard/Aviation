@@ -212,6 +212,11 @@ restrictions, bounded load, stale transitions and receiver shutdown/restart. Pac
 tests cover actual chart/source bytes, corrupted assets, quota exhaustion, interrupted
 installation, revision pinning and credential exclusion.
 
+Single-browser cockpit acceptance uses the shared owned-browser lifecycle, retaining
+startup/connect/close diagnostics and bounded cleanup. A graceful browser exit
+must not strand the runner; persistent-profile offline restart tests still verify
+the separate whole-browser persistence boundary.
+
 Browser acceptance must install a real package, disable the network, restart the
 browser, open its route/charts/briefing, inspect expired/missing states, and delete it
 on desktop and mobile. Real UDP integration verifies transport without being labelled

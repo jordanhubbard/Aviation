@@ -18,8 +18,17 @@ function Fit({ bounds }: { bounds: number[] }) {
 }
 
 export default function ChartMap({ url, bounds }: { url: string; bounds: number[] }) {
+  const [west, south, east, north] = bounds
+  const initialBounds: [[number, number], [number, number]] = [
+    [south, west],
+    [north, east < west ? east + 360 : east],
+  ]
   return (
-    <MapContainer center={[37, -122]} zoom={7} style={{ height: 500, width: '100%', zIndex: 0 }}>
+    <MapContainer
+      bounds={initialBounds}
+      boundsOptions={{ padding: [8, 8] }}
+      style={{ height: 500, width: '100%', zIndex: 0 }}
+    >
       <TileLayer url={url} maxZoom={16} attribution="FAA aeronautical charts" />
       <Fit bounds={bounds} />
     </MapContainer>

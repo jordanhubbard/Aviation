@@ -46,6 +46,23 @@ beforeEach(() => {
 afterEach(() => {
   cleanup()
   vi.unstubAllGlobals()
+  window.history.replaceState({}, '', '/')
+})
+
+it('preserves a published airport handoff without fetching or truncating an invalid association', () => {
+  window.history.replaceState({}, '', '/charts?airport=ksql')
+  const view = render(<ChartsPage />)
+  expect(screen.getByLabelText('Airport identifier')).toHaveValue('KSQL')
+  expect(screen.getByRole('link', { name: 'Open G1000 procedure browser' })).toHaveAttribute(
+    'href',
+    'https://g1000-simulator.jordanhubbard.net/procedures?airport=KSQL',
+  )
+  expect(fetch).not.toHaveBeenCalled()
+  view.unmount()
+  window.history.replaceState({}, '', '/charts?airport=KSFOBAD')
+  render(<ChartsPage />)
+  expect(screen.getByLabelText('Airport identifier')).toHaveValue('')
+  expect(fetch).not.toHaveBeenCalled()
 })
 
 it('finds sourced charts and displays pinned PDF pages with local zoom', async () => {

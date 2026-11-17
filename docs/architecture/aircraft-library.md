@@ -10,6 +10,17 @@ Every page retains physical PDF page number, printed page label when available, 
 
 ## Retrieval, distillation and answers
 
+Interactive answers may correct a rejected citation/schema/numeric candidate once,
+for at most two model completions against the same evidence. Distillation keeps
+its existing three-completion limit per batch. Both paths retain valid claims,
+revalidate every replacement, reject dropped claims, and fail explicitly when
+the correction budget is exhausted. Provider HTTP failures are not retried.
+
+Answer metadata reports the retrieval strategy actually used. An incomplete
+document extraction adds a coverage warning without relabeling successful hybrid
+retrieval as full-text fallback. Embedding failures or absent matching vectors
+still report full-text fallback with their own warning.
+
 Model evidence supplies deterministic indexed contiguous excerpts, each at most
 1,007 characters, covering the complete original passage without dropping text.
 Passages shorter than the existing eight-character quote minimum remain visible
@@ -31,6 +42,52 @@ Performance questions must retain units, weight/configuration, source revision a
 Search multiple ICAO/model/manual queries and collect multiple examples, keeping per-result URL/title/query/provider provenance, deduplication and explicit failures. Fetch public documents and PDF links from public result pages using bounded, SSRF-resistant requests, honoring redirects only after revalidation. Do not bypass accounts/paywalls. Keep originals private, with publisher/source attribution and unknown rights explicit. Missing search credentials/provider failure is an unavailable search, never zero known manuals. Background work is persistent, inspectable and bounded per request; users can extend discovery with further batches.
 
 ## Access and lifecycle
+
+Index jobs checkpoint extraction and embedding separately from their final result.
+An expired lease resumes completed phases only when the original, metadata,
+extraction and exact passage identity still match. Extraction and its checkpoint
+commit atomically. A new explicit index job still performs a new extraction.
+An owner whose lease was reclaimed cannot write artifacts, checkpoints or a final
+job state. Checkpoints and accepted distillation batches survive provider failures.
+
+When a first candidate is explicitly truncated, distillation may bisect its
+contiguous passage batch, durably recording the complete ordered partition before
+continuing. Every original passage remains covered exactly once. A single passage
+that still truncates fails explicitly; splitting is bounded by the passage count.
+Never split a rejected correction to evade unresolved assertions. HTTP failures,
+schema errors and numeric failures retain their existing bounded correction rules.
+An explicitly truncated correction may consume the remaining correction attempt
+against the same evidence and rejected positions, within the original call limit.
+Resume revalidates the partition and every saved section against the same root
+evidence identity; existing prefixes without a partition remain compatible.
+
+Snapshot recovery is an explicit operator action, separate from inference. Admit
+only an original/metadata/model/prompt-identical, fully validated prefix from a
+read-only snapshot. Passage-ID remapping requires identical page, label, offset,
+method and complete text. Revalidate all remapped citations against current
+evidence and preserve a longer current valid prefix. Record source identity and
+recovered coverage; never infer missing batches from hashes or claim completeness.
+The [operator recovery procedure](../development/aircraft-library-recovery.md)
+describes backup, rehearsal, admission and subsequent distillation.
+
+Processing work remains inspectable after a page closes or the service restarts.
+Authenticated GET `/api/aircraft-library/jobs` returns lightweight summaries with
+manual/ICAO context, state, UTC timestamps, errors and a result-availability flag.
+It defaults to 20 records, permits at most 100 per page and uses bounded offset
+pagination. Running and queued work precede recent terminal history. Summaries
+omit raw requests and potentially large result bodies; GET `/jobs/{job_id}`
+retains the detailed record. Existing jobs and their history are preserved.
+
+The UI restores summaries when the user opens the library and refreshes only on
+explicit request. Completed/failed history is collapsed and detailed results are
+loaded explicitly. Credentials and job state stay in page memory; locking or
+changing the access key clears private results and fences late responses. Request
+ownership lasts through body consumption, so abandoning a scope cancels body reads.
+
+Repeated index/embed/distill requests for the same document reuse an already
+queued or running operation atomically across processes. After a terminal result,
+an explicit new request creates a new run. This does not delete or rewrite prior
+jobs and does not merge different operation kinds or document identities.
 
 Operators may explicitly set `AIRCRAFT_LIBRARY_LLM_ENABLE_THINKING=true` or
 `false` for providers/models supporting `chat_template_kwargs.enable_thinking`.
@@ -64,6 +121,24 @@ exposing provider response text, and must never admit even parseable partial JSO
 All original-span, numeric, applicability and completeness guards remain in force.
 NVIDIA documents this opt-in control in its [model card](https://build.nvidia.com/nvidia/nemotron-3.5-super-vl-120b-a12b/modelcard);
 it must not be sent implicitly to other providers.
+
+When a structurally valid answer fails individual claim validation, bounded model
+correction targets only those rejected claims. Supply their original positions,
+validation failures and private unsupported-number diagnostics to the configured
+model, using the same original evidence and citation schema. Preserve already
+validated claims unchanged, require a replacement for every rejected position in
+order, and revalidate the complete merged answer. A short/empty correction or an
+insufficient-evidence response cannot silently erase failed assertions or claim
+complete coverage. Whole-answer schema/claim-count failures may request a full
+correction. The total bound remains three model calls; unresolved failures retain
+partial distillation. Private diagnostics include the cited signed numeric values
+so PDF hyphen/spacing differences can be corrected with faithful source forms or
+additional supporting excerpts. Negative measurements never gain absolute-value
+equivalence. Public errors never expose source text or numeric diagnostics.
+Physical PDF page ordinals stay in verified citation metadata; correction removes
+duplicate metadata-only page-locator wording from factual claims while preserving
+the actual document facts and their source references. Metadata page numbers never
+become support for otherwise uncited numeric assertions.
 
 Operators may configure model response read timeouts from 10 to 600 seconds,
 defaulting to 120 seconds; connection and pool acquisition remain bounded at

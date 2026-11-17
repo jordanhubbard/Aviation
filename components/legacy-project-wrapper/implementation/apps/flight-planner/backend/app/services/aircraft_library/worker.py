@@ -32,12 +32,22 @@ class Worker:
     def execute(self, job):
         request = job["request"]
         if job["kind"] == "index":
-            document = self.store.index(request["document_id"])
+            identifier = request["document_id"]
+            checkpoint = self.store.checkpoint(job["id"])
+            if checkpoint.get("index_identity") != self.store.index_identity(identifier):
+                document = self.store.index(identifier, checkpoint_job=job["id"])
+                checkpoint = self.store.checkpoint(job["id"])
+            else:
+                document = self.store.get(identifier)
+                self.store.distill_index(identifier)
             if document["status"] == "failed":
                 raise ValueError(document["error"])
             result = {"document_id": document["id"], "status": document["status"]}
             if self.models.capabilities()["embeddings"]:
+                # Vector indexing already resumes individual provider-identified passages.
                 result["vectors"] = index_vectors(self.store, [document["id"]], self.models)
+                checkpoint["embedding_identity"] = self.models.embedding_identity
+                self.store.checkpoint(job["id"], checkpoint)
             if self.models.capabilities()["llm"]:
                 result["distillation"] = distill(self.store, self.models, document["id"])
             return result
@@ -77,8 +87,9 @@ class Worker:
         keeper = threading.Thread(target=heartbeat, daemon=True)
         keeper.start()
         try:
-            result = self.execute(job)
-            self.store.finish_job(job["id"], result=result)
+            with self.store.job_scope(job["id"], self.owner):
+                result = self.execute(job)
+            self.store.finish_job(job["id"], result=result, owner=self.owner)
         except Exception as error:
             # Provider response bodies and credentials never enter job records.
             from .discovery import AcquisitionError
@@ -89,7 +100,7 @@ class Worker:
                 if isinstance(error, (AcquisitionError, ModelUnavailable, ValueError))
                 else "Library job failed; originals retained"
             )
-            self.store.finish_job(job["id"], error=message[:2000])
+            self.store.finish_job(job["id"], error=message[:2000], owner=self.owner)
         finally:
             finished.set()
             keeper.join(timeout=1)

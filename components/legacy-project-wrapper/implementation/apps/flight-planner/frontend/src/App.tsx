@@ -16,6 +16,7 @@ import { reportFrontendError } from './utils/issueReporting'
 // Code splitting with React.lazy for better performance
 const RouteAssessmentPage = lazy(() => import('./pages/RouteAssessmentPage'))
 const FlightPlannerPage = lazy(() => import('./pages/FlightPlannerPage'))
+const NotamsPage = lazy(() => import('./pages/NotamsPage'))
 const WeatherPage = lazy(() => import('./pages/WeatherPage'))
 const AirportsPage = lazy(() => import('./pages/AirportsPage'))
 const AircraftLibraryPage = lazy(() => import('./pages/AircraftLibraryPage'))
@@ -218,6 +219,7 @@ function App() {
                   <Route path="/" element={<FlightPlannerPage />} />
                   <Route path="/route-assessment" element={<RouteAssessmentPage />} />
                   <Route path="/weather" element={<WeatherPage />} />
+                  <Route path="/notams" element={<NotamsPage />} />
                   <Route path="/airports" element={<AirportsPage />} />
                   <Route path="/aircraft-library" element={<AircraftLibraryPage />} />
                   <Route path="/charts" element={<ChartsPage />} />

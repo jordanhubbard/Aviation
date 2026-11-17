@@ -198,6 +198,95 @@ def test_real_http_model_contract_and_verified_page_citations(store):
     assert answer["insufficient_evidence"] is False
 
 
+@pytest.mark.parametrize("embedding_fails", [False, True])
+def test_partial_extraction_warning_does_not_change_actual_retrieval_mode(store, embedding_fails):
+    document = store.ingest(
+        manual("Performance: takeoff ground roll 900 feet at 2500 lb.", ""),
+        {"icao": "C172"},
+        extract=False,
+    )
+    document = store.index(document["id"], ocr=False)
+    assert document["status"] == "partial"
+    value, _ = provider_answer(store, document)
+
+    def provider(request):
+        if request.url.path.endswith("/embeddings"):
+            if embedding_fails:
+                return httpx.Response(503)
+            payload = json.loads(request.content)
+            return httpx.Response(
+                200,
+                json={
+                    "data": [
+                        {"index": i, "embedding": [1.0, 0.5]} for i in range(len(payload["input"]))
+                    ]
+                },
+            )
+        return httpx.Response(200, json={"choices": [{"message": {"content": json.dumps(value)}}]})
+
+    models = Models(
+        {
+            "AIRCRAFT_LIBRARY_LLM_BASE_URL": "https://models.example/v1",
+            "AIRCRAFT_LIBRARY_LLM_MODEL": "test-model",
+            "AIRCRAFT_LIBRARY_EMBEDDING_MODEL": "vector-1",
+        },
+        transport=httpx.MockTransport(provider),
+    )
+    if not embedding_fails:
+        index_vectors(store, [document["id"]], models)
+    answer = ask(store, models, "C172", "takeoff ground roll")
+    assert answer["retrieval"] == ("full_text" if embedding_fails else "hybrid")
+    assert "Some retrieved documents have incomplete extraction" in answer["warnings"]
+    assert (
+        "Embedding provider unavailable; using full-text retrieval" in answer["warnings"]
+    ) == embedding_fails
+    assert answer["claims"][0]["citations"][0]["document_id"] == document["id"]
+
+
+@pytest.mark.parametrize("correct", [False, True])
+def test_interactive_answer_repairs_citations_once_without_relaxing_evidence(store, correct):
+    document = put(store)
+    valid, _ = provider_answer(store, document)
+    invalid = json.loads(json.dumps(valid))
+    invalid["claims"][0]["text"] = "Takeoff requires 7777 feet."
+
+    class CandidateModels(Models):
+        calls = 0
+
+        def complete(self, evidence, question):
+            self.calls += 1
+            if self.calls == 2:
+                assert "rejected_claims" in question
+                assert "7777" in question
+            return valid if correct and self.calls == 2 else invalid
+
+    models = CandidateModels({"AIRCRAFT_LIBRARY_LLM_MODEL": "test-model"})
+    if correct:
+        answer = ask(store, models, "C172", "takeoff ground roll")
+        assert answer["claims"][0]["text"] == valid["claims"][0]["text"]
+        assert answer["claims"][0]["citations"][0]["document_id"] == document["id"]
+    else:
+        with pytest.raises(ModelUnavailable, match="numeric values"):
+            ask(store, models, "C172", "takeoff ground roll")
+    assert models.calls == 2
+
+
+def test_interactive_answer_does_not_retry_a_provider_failure(store):
+    put(store)
+
+    class UnavailableModels(Models):
+        calls = 0
+
+        def complete(self, evidence, question):
+            self.calls += 1
+            raise ModelUnavailable("Model provider unavailable (HTTP 503)")
+
+    models = UnavailableModels({"AIRCRAFT_LIBRARY_LLM_MODEL": "test-model"})
+    with pytest.raises(ModelUnavailable, match="HTTP 503"):
+        ask(store, models, "C172", "takeoff ground roll")
+    assert models.calls == 1
+
+
 def test_invented_quotes_sources_and_numbers_are_rejected(store):
     document = put(store)
     value, passage = provider_answer(store, document)
@@ -648,7 +737,7 @@ def test_model_correction_revalidates_evidence_and_stops_at_a_bound(store):
     answer = verified_completion(models, [passage], "Summarize")
     assert answer["claims"] and len(models.prompts) == 2
     assert "citation not present" in models.prompts[1]
-    assert "rejected_candidate" in models.prompts[1]
+    assert "rejected_claims" in models.prompts[1]
     failing = Correcting(False)
     with pytest.raises(ModelUnavailable, match="citation not present"):
         verified_completion(failing, [passage], "Summarize")
@@ -1185,12 +1274,14 @@ def test_numeric_feedback_locates_claim_without_echoing_source_or_relaxing_valid
 
         def complete(self, evidence, question):
             self.prompts.append(question)
-            return good if correct and len(self.prompts) > 1 else bad
+            if len(self.prompts) > 1:
+                return good if correct else {**bad, "claims": [bad["claims"][1]]}
+            return bad
 
     models = Correcting()
     if correct:
         answer = verified_completion(models, [passage], "Summarize")
-        assert len(answer["claims"]) == 1
+        assert len(answer["claims"]) == 2
         assert len(models.prompts) == 2
     else:
         with pytest.raises(ModelUnavailable, match="quoted evidence in claim 2") as failure:
@@ -1201,6 +1292,119 @@ def test_numeric_feedback_locates_claim_without_echoing_source_or_relaxing_valid
     assert "quoted evidence in claim 2" in models.prompts[1]
     assert "cite excerpts supporting every numeric value" in models.prompts[1]
     assert len(bad["claims"]) == 2  # Rejection never silently edits the candidate.
+
+
+def test_targeted_correction_preserves_valid_claims_and_adds_missing_source_excerpt(store):
+    document = put(store, "Ground roll is 900 feet at 2500 lb.\n" + "Source context. " * 80
+                   + "\nPower is 100 hp at 5800 rpm for 5 minutes maximum.")
+    passage = store.passages([document["id"]])[0]
+    excerpts = citation_excerpts(passage["text"])
+    roll = next(index for index, text in enumerate(excerpts) if "900 feet" in text)
+    power = next(index for index, text in enumerate(excerpts) if "5800 rpm" in text)
+    assert roll != power
+    def claim(text, reference):
+        return {"text": text, "citations": [{"passage_id": passage["passage_id"], "excerpt_id": reference}]}
+    accepted = [claim("Ground roll is 900 feet.", roll), claim("The stated weight is 2500 lb.", roll)]
+    bad = {"insufficient_evidence": False, "reason": "Source summary", "claims": accepted + [
+        claim("Power is 100 hp at 5800 rpm for 5 minutes maximum.", roll)]}
+    before = json.dumps(bad, sort_keys=True)
+    class Correcting:
+        def __init__(self): self.prompts = []
+        def complete(self, evidence, question):
+            self.prompts.append(question)
+            if len(self.prompts) == 1: return bad
+            assert '"claim_number": 3' in question
+            assert '"unsupported_numeric_values": ["100", "5", "5800"]' in question
+            assert accepted[0]["text"] not in question
+            return {"insufficient_evidence": False, "reason": "Fixed citation", "claims": [
+                claim(bad["claims"][2]["text"], power)]}
+    model = Correcting()
+    answer = verified_completion(model, [passage], "Summarize this source batch")
+    assert [item["text"] for item in answer["claims"]] == [item["text"] for item in bad["claims"]]
+    assert answer["claims"][2]["citations"][0]["quote"] == excerpts[power]
+    assert json.dumps(bad, sort_keys=True) == before
+    assert len(model.prompts) == 2
+
+
+@pytest.mark.parametrize("correct", [True, False])
+def test_private_numeric_feedback_preserves_signs_instead_of_accepting_absolute_values(store, correct):
+    document = put(store, "The reference arm is -12 inches.")
+    passage = store.passages([document["id"]])[0]
+    def response(value):
+        return {"insufficient_evidence": False, "reason": "", "claims": [{
+            "text": f"The reference arm is {value} inches.",
+            "citations": [{"passage_id": passage["passage_id"], "excerpt_id": 0}],
+        }]}
+    class Signed:
+        def __init__(self): self.prompts = []
+        def complete(self, evidence, question):
+            self.prompts.append(question)
+            if len(self.prompts) > 1:
+                assert '"unsupported_numeric_values": ["12"]' in question
+                assert '"cited_numeric_values": ["-12"]' in question
+            return response(-12 if correct and len(self.prompts) > 1 else 12)
+    model = Signed()
+    if correct:
+        assert verified_completion(model, [passage], "Summarize")["claims"][0]["text"] == response(-12)["claims"][0]["text"]
+        assert len(model.prompts) == 2
+    else:
+        with pytest.raises(ModelUnavailable, match="numeric values") as failure:
+            verified_completion(model, [passage], "Summarize")
+        assert "-12" not in str(failure.value) and passage["text"] not in str(failure.value)
+        assert len(model.prompts) == 3
+
+
+@pytest.mark.parametrize("correction", [
+    {"insufficient_evidence": False, "reason": "", "claims": []},
+    {"insufficient_evidence": True, "reason": "Cannot repair", "claims": []},
+    {"insufficient_evidence": False, "reason": "", "claims": [{}, {}]},
+])
+def test_correction_cannot_drop_or_replace_accepted_claims_to_complete_distillation(store, correction):
+    document = put(store)
+    good, passage = provider_answer(store, document)
+    bad = json.loads(json.dumps(good))
+    bad["claims"].append({**good["claims"][0], "text": "Unsupported private assertion 987654321"})
+    class Dropping:
+        model = "bounded-repair-test"
+        def __init__(self): self.calls = 0
+        def complete(self, evidence, question):
+            self.calls += 1
+            return bad if self.calls == 1 else correction
+    model = Dropping()
+    with pytest.raises(ModelUnavailable, match="cannot be silently dropped") as failure:
+        distill(store, model, document["id"])
+    assert "987654321" not in str(failure.value)
+    assert passage["text"] not in str(failure.value)
+    assert model.calls == 3
+    saved = store.get(document["id"])["artifacts"]["distillation"]
+    assert saved["status"] == "partial" and saved["completed_batches"] == 0
+    assert len(bad["claims"]) == 2
+
+
+@pytest.mark.parametrize("correct", [True, False])
+def test_pdf_page_locator_stays_in_citation_instead_of_supporting_a_factual_number(store, correct):
+    document = put(store)
+    good, passage = provider_answer(store, document)
+    bad = json.loads(json.dumps(good))
+    bad["claims"][0]["text"] = f"PDF page {passage['page']}: " + good["claims"][0]["text"]
+    class Locating:
+        def __init__(self): self.prompts = []
+        def complete(self, evidence, question):
+            self.prompts.append(question)
+            if len(self.prompts) > 1:
+                assert 'metadata-only page-locator wording' in question
+                return good if correct else bad
+            return bad
+    model = Locating()
+    if correct:
+        answer = verified_completion(model, [passage], "Summarize")
+        assert answer["claims"][0]["text"] == good["claims"][0]["text"]
+        assert answer["claims"][0]["citations"][0]["page"] == passage["page"]
+        assert len(model.prompts) == 2
+    else:
+        with pytest.raises(ModelUnavailable, match="numeric values"):
+            verified_completion(model, [passage], "Summarize")
+        assert len(model.prompts) == 3
 
 
 @pytest.mark.parametrize("effort,budget,expected", [

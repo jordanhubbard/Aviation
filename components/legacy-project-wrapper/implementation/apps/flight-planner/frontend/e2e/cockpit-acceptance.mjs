@@ -5,6 +5,7 @@ import dgram from 'node:dgram'
 import { mkdirSync, mkdtempSync } from 'node:fs'
 import { join } from 'node:path'
 import { tmpdir } from 'node:os'
+import { launchOwnedBrowser } from '../../../../deploy/browser-runner.mjs'
 const require = createRequire(new URL('../package.json', import.meta.url))
 const { chromium, expect } = require('@playwright/test')
 const base = process.env.AVIATION_COCKPIT_BASE_URL,
@@ -76,7 +77,7 @@ const initial = await state()
 assert.equal(initial.listening, false, 'Refusing to control an already running bridge.')
 assert.equal(initial.udp_bind, '127.0.0.1')
 assert.equal(initial.receivers.length, 0, 'Use a fresh isolated bridge process.')
-const browser = await chromium.launch({ headless: true }),
+const browser = await launchOwnedBrowser(chromium, { headless: true }),
   results = []
 try {
   for (const [label, viewport] of [

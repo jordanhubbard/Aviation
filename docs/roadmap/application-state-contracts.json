@@ -339,6 +339,34 @@
           ]
         },
         {
+          "id": "nms-shared-cache",
+          "medium": "sqlite-and-original-source-files",
+          "location": "FAA_NMS_CACHE_DIR or DATA_DIR/nms/<explicit environment>",
+          "schema": "SQLite user_version 1; environment-bound current/building snapshots, durable request reservations and SHA-256 original associations",
+          "migration": "reject unknown versions and mismatched environments; no automatic migration",
+          "backup": "quiesce the worker and copy the complete cache directory, preserving permissions and request reservations",
+          "rollback": "restore only a compatible whole-directory backup with current request reservations; do not reset provider cadence by deleting the database",
+          "classification": "application-private-runtime-state",
+          "testOracle": "test_nms_cache.py, test_nms_worker.py and test_notams_api.py",
+          "evidence": [
+            {
+              "path": "apps/flight-planner/backend/app/services/nms_cache.py",
+              "contains": [
+                "PRAGMA user_version=1",
+                "BEGIN IMMEDIATE",
+                "originals"
+              ]
+            },
+            {
+              "path": "apps/flight-planner/backend/app/routers/notams.py",
+              "contains": [
+                "read_only=True",
+                "FAA_NMS_CACHE_DIR"
+              ]
+            }
+          ]
+        },
+        {
           "id": "faa-chart-cache",
           "medium": "sqlite-and-immutable-source-files",
           "location": "AVIATION_CHARTS_DIR, default /app/data/charts",
@@ -435,6 +463,34 @@
               "path": "apps/flight-planner/backend/app/services/aircraft_library/discovery.py",
               "contains": [
                 "AIRCRAFT_LIBRARY_BRAVE_SEARCH_KEY"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "nms-worker",
+          "provider": "environment-and-keystore",
+          "namespace": "flight-planner",
+          "keys": [
+            "FAA_NMS_CLIENT_ID",
+            "FAA_NMS_CLIENT_SECRET"
+          ],
+          "precedence": "worker environment, then flight-planner keystore; FAA_NMS_ENVIRONMENT must be explicit",
+          "missingBehavior": "worker exits with a redacted configuration error; read-only web endpoints report cache availability without credentials or provider calls",
+          "classification": "application-private-credential-adapter",
+          "evidence": [
+            {
+              "path": "apps/flight-planner/backend/app/services/nms_worker.py",
+              "contains": [
+                "FAA_NMS_CLIENT_ID",
+                "FAA_NMS_CLIENT_SECRET",
+                "nms_configuration_unavailable"
+              ]
+            },
+            {
+              "path": "apps/flight-planner/backend/app/routers/notams.py",
+              "contains": [
+                "read_only=True"
               ]
             }
           ]
@@ -907,20 +963,21 @@
       ],
       "credentials": [
         {
-          "id": "faa-notam",
-          "provider": "environment-through-sdk-adapter",
+          "id": "cached-notam-service",
+          "provider": "shared-read-only-service",
           "namespace": "weather-briefing",
           "keys": [
-            "FAA_NOTAM_API_KEY"
+            "AVIATION_NOTAM_API_BASE_URL"
           ],
-          "precedence": "explicit NotamClient option, then environment",
+          "precedence": "explicit NotamClient baseUrl, then AVIATION_NOTAM_API_BASE_URL, then the SDK service default; no FAA credential is consumed",
           "missingBehavior": "NOTAM section reports unavailable while weather remains usable",
-          "classification": "application-private-credential-adapter",
+          "classification": "application-public-client-configuration",
           "evidence": [
             {
-              "path": "packages/shared-sdk/src/aviation/notam.ts",
+              "path": "packages/shared-sdk/src/aviation/notam-reports.ts",
               "contains": [
-                "opts.apiKey ?? process.env.FAA_NOTAM_API_KEY"
+                "options.baseUrl",
+                "AVIATION_NOTAM_API_BASE_URL"
               ]
             },
             {
