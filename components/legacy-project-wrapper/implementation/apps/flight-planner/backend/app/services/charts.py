@@ -645,21 +645,26 @@ class Charts:
             return self.get(identifier)
 
     def member(self, identifier, number=0, sha256=None):
+        path, member, _ = self.member_receipt(identifier, number, sha256)
+        return path, member
+
+    def member_receipt(self, identifier, number=0, sha256=None):
         chart = self.get(identifier)
         if not chart["cached"]:
             raise ChartError("Download this chart before opening its cached copy")
         if sha256 is not None:
             with self.connection() as c:
                 versions = c.execute(
-                    "SELECT members FROM receipts WHERE chart_id=? ORDER BY id DESC", (identifier,)
+                    "SELECT * FROM receipts WHERE chart_id=? ORDER BY id DESC", (identifier,)
                 ).fetchall()
             for version in versions:
                 members = json.loads(version["members"])
                 if 0 <= number < len(members) and members[number]["sha256"] == sha256:
-                    return self.objects / sha256, members[number]
+                    receipt = {**dict(version), "members": members}
+                    return self.objects / sha256, members[number], receipt
             raise ChartError("Pinned chart member is not present in the acquisition history")
         members = chart["cached"]["members"]
         if not 0 <= number < len(members):
             raise ChartError("Chart member not found")
         member = members[number]
-        return self.objects / member["sha256"], member
+        return self.objects / member["sha256"], member, chart["cached"]

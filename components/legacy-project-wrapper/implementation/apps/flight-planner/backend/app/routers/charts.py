@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import os
+import hashlib
 import secrets
 from typing import Any, Literal
 
@@ -244,7 +245,7 @@ def install(app, *, store=None):
         return Response(
             content,
             media_type="image/png",
-            headers={**file_headers(record["sha256"]), "X-PDF-Pages": str(pages)},
+            headers={**file_headers(hashlib.sha256(content).hexdigest()), "X-Source-SHA256": record["sha256"], "X-PDF-Pages": str(pages)},
         )
 
     @router.get("/{chart_id}/members/{number}/tiles/{zoom}/{x}/{y}.png")
@@ -260,8 +261,9 @@ def install(app, *, store=None):
         path, record = current.member(chart_id, number, sha256)
         if record["format"] != "geotiff":
             raise HTTPException(422, "This chart has no GeoTIFF tile layer")
+        content = tile(path, zoom, x, y)
         return Response(
-            tile(path, zoom, x, y), media_type="image/png", headers=file_headers(record["sha256"])
+            content, media_type="image/png", headers={**file_headers(hashlib.sha256(content).hexdigest()), "X-Source-SHA256": record["sha256"]}
         )
 
     @router.get("/{chart_id}/offline-manifest")
@@ -318,4 +320,6 @@ def install(app, *, store=None):
     app.include_router(router)
     app.include_router(management)
     app.include_router(nav)
+    from .offline import install as install_offline
+    install_offline(app, charts=charts)
     return selected

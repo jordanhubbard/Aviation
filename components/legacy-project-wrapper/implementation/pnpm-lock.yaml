@@ -290,6 +290,9 @@ importers:
 
   apps/flight-planner/frontend:
     dependencies:
+      '@aviation/g1000-avionics-sdk':
+        specifier: workspace:*
+        version: link:../../../packages/g1000-avionics-sdk
       '@aviation/ai-explainer':
         specifier: workspace:*
         version: link:../../../packages/ai-explainer

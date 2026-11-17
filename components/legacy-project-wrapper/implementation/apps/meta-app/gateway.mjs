@@ -56,9 +56,9 @@ function outboundCookie(value, ns, binding) {
   if (!path.startsWith('/')) path = '/';
   return [...parts.filter((x, i) => i === 0 || !/^\s*(domain|path)=/i.test(x)), ` Path=/api/v1/${ns}${path}`].join(';');
 }
-export function openapi() {
+export function openapi(services = contract.services) {
   return { openapi: '3.1.0', info: { title: 'Aviation edge gateway', version: contract.version, description: contract.compatibility },
-    paths: Object.fromEntries(contract.services.map(service => [`${service.http}/{path}`, Object.fromEntries(methods.filter(x => x !== 'HEAD' && x !== 'OPTIONS').map(method => [method.toLowerCase(), {
+    paths: Object.fromEntries(services.map(service => [`${service.http}/{path}`, Object.fromEntries(methods.filter(x => x !== 'HEAD' && x !== 'OPTIONS').map(method => [method.toLowerCase(), {
       operationId: `${service.namespace}_${method.toLowerCase()}`, description: 'Service-relative path includes its native API prefix. See service discovery for direct APIs. HTTP response bytes and status are preserved.',
       ...( ['POST', 'PUT', 'PATCH', 'DELETE'].includes(method) ? { requestBody: { required: false, content: { 'application/json': { schema: {} }, 'application/octet-stream': { schema: { type: 'string', format: 'binary' } }, 'multipart/form-data': { schema: { type: 'object', additionalProperties: true } } } } } : {}),
       'x-aviation-catch-all': true,
@@ -66,12 +66,13 @@ export function openapi() {
       responses: { default: { description: 'Upstream status, headers and body, or a JSON gateway error.' } },
     }]))])), components: { schemas: { ServiceRequest: contract.requestSchema, ServiceResponse: contract.responseSchema } } };
 }
-export function createGateway({ bindings = JSON.parse(process.env.AVIATION_GATEWAY_BINDINGS || '{}'), adapters = {}, timeoutMs = 180000, appHosts = process.env.AVIATION_GATEWAY_APP_HOSTS === '1', allowedHosts = ['meta-app.jordanhubbard.net', 'localhost', '127.0.0.1', '[::1]'] } = {}) {
+export function createGateway({ services = contract.services, bindings = JSON.parse(process.env.AVIATION_GATEWAY_BINDINGS || '{}'), adapters = {}, timeoutMs = 180000, appHosts = process.env.AVIATION_GATEWAY_APP_HOSTS === '1', allowedHosts = ['meta-app.jordanhubbard.net', 'localhost', '127.0.0.1', '[::1]'] } = {}) {
+  const profile = { ...contract, services };
   const registry = new Map();
   const sockets = new Set();
-  const publicHosts = new Map(contract.services.map(service => [new URL(service.direct).host, service.namespace]));
-  for (const key of Object.keys(bindings)) if (!contract.services.some(s => s.namespace === key)) throw new Error(`Unknown gateway namespace: ${key}`);
-  for (const service of contract.services) {
+  const publicHosts = new Map(profile.services.map(service => [new URL(service.direct).host, service.namespace]));
+  for (const key of Object.keys(bindings)) if (!profile.services.some(s => s.namespace === key)) throw new Error(`Unknown gateway namespace: ${key}`);
+  for (const service of profile.services) {
     const binding = bindings[service.namespace] || {};
     const origin = new URL(binding.origin || service.direct);
     if (!['http:', 'https:'].includes(origin.protocol) || origin.username || origin.password || origin.search || origin.hash || origin.pathname !== '/') throw new Error('Gateway origins must be plain HTTP(S) origins');
@@ -125,7 +126,7 @@ export function createGateway({ bindings = JSON.parse(process.env.AVIATION_GATEW
   }
   function responseHeaders(ns, binding, upstream, scopedCookies, target, native = false) {
     const headers = cleanHeaders(upstream.headers);
-    headers['x-aviation-gateway'] = contract.apiVersion;
+    headers['x-aviation-gateway'] = profile.apiVersion;
     headers['x-aviation-namespace'] = ns;
     if (scopedCookies && headers['set-cookie']) headers['set-cookie'] = headers['set-cookie'].map(value => outboundCookie(value, ns, binding));
     if (headers.location && !native) {
@@ -183,15 +184,15 @@ export function createGateway({ bindings = JSON.parse(process.env.AVIATION_GATEW
     }
   }
   const mcp = createMcpHandler(() => {
-    const server = new McpServer({ name: 'aviation-edge', version: contract.version });
-    for (const service of contract.services) server.registerTool(service.mcpTool, {
+    const server = new McpServer({ name: 'aviation-edge', version: profile.version });
+    for (const service of profile.services) server.registerTool(service.mcpTool, {
       description: `Call the stable v1 ${service.namespace} service API. ${service.description} Explicit service credentials required where the upstream requires authentication. Response status/headers/body are preserved; use HTTP for streaming or responses above 4 MiB.`,
-      inputSchema: fromJsonSchema(contract.requestSchema), outputSchema: fromJsonSchema(contract.responseSchema),
+      inputSchema: fromJsonSchema(profile.requestSchema), outputSchema: fromJsonSchema(profile.responseSchema),
     }, async (args, ctx) => {
       const value = await invoke(service.namespace, args, ctx.signal);
       return { content: [{ type: 'text', text: JSON.stringify(value) }], structuredContent: value, isError: value.status >= 400 };
     });
-    for (const service of contract.services.filter(s => s.openapi)) {
+    for (const service of profile.services.filter(s => s.openapi)) {
       async function describe(signal) {
         const result = await invoke(service.namespace, { path: service.openapi.path, method: 'GET', headers: { 'accept-encoding': 'identity' } }, signal);
         if (result.status !== 200) throw new Error(`Service schema unavailable (HTTP ${result.status})`);
@@ -216,8 +217,8 @@ export function createGateway({ bindings = JSON.parse(process.env.AVIATION_GATEW
         return { content: [{ type: 'text', text: JSON.stringify(schema) }] };
       });
     }
-    server.registerResource('services', 'aviation://v1/services', { mimeType: 'application/json', description: 'Versioned service catalog and compatibility policy' }, async uri => ({ contents: [{ uri: String(uri), mimeType: 'application/json', text: JSON.stringify(contract) }] }));
-    server.registerResource('openapi', 'aviation://v1/openapi', { mimeType: 'application/json' }, async uri => ({ contents: [{ uri: String(uri), mimeType: 'application/json', text: JSON.stringify(openapi()) }] }));
+    server.registerResource('services', 'aviation://v1/services', { mimeType: 'application/json', description: 'Versioned service catalog and compatibility policy' }, async uri => ({ contents: [{ uri: String(uri), mimeType: 'application/json', text: JSON.stringify(profile) }] }));
+    server.registerResource('openapi', 'aviation://v1/openapi', { mimeType: 'application/json' }, async uri => ({ contents: [{ uri: String(uri), mimeType: 'application/json', text: JSON.stringify(openapi(profile.services)) }] }));
     return server;
   });
   const nodeMcp = toNodeHandler(mcp);
@@ -227,13 +228,13 @@ export function createGateway({ bindings = JSON.parse(process.env.AVIATION_GATEW
     if (!dest?.native && pathname === '/mcp') {
       let host, origin;
       try { host = new URL(`http://${req.headers.host}`).hostname; origin = req.headers.origin && new URL(req.headers.origin); } catch { sendJson(res, 403, { error: { code: 'invalid_origin' } }); return true; }
-      if (!allowedHosts.includes(host) || (origin && !contract.services.some(s => s.direct === origin.origin) && !['https://meta-app.jordanhubbard.net', 'http://localhost', 'http://127.0.0.1'].includes(origin.origin))) { sendJson(res, 403, { error: { code: 'origin_not_allowed' } }); return true; }
+      if (!allowedHosts.includes(host) || (origin && !profile.services.some(s => s.direct === origin.origin) && !['https://meta-app.jordanhubbard.net', 'http://localhost', 'http://127.0.0.1'].includes(origin.origin))) { sendJson(res, 403, { error: { code: 'origin_not_allowed' } }); return true; }
       await nodeMcp(req, res); return true;
     }
     if (!dest?.native && (pathname === '/api/v1/services' || pathname === '/api/v1/openapi.json')) {
       if (!['GET', 'HEAD'].includes(req.method)) sendJson(res, 405, { error: { code: 'method_not_allowed' } });
       else if (req.method === 'HEAD') { res.writeHead(200, { 'content-type': 'application/json' }); res.end(); }
-      else sendJson(res, 200, pathname.endsWith('services') ? contract : openapi());
+      else sendJson(res, 200, pathname.endsWith('services') ? profile : openapi(profile.services));
       return true;
     }
     if (!dest) return false;

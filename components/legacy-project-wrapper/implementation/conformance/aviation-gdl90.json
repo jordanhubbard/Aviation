@@ -1,0 +1,339 @@
+{
+  "schema": "aviation/gdl90-acceptance-vectors@1",
+  "source": {
+    "url": "https://www.faa.gov/sites/faa.gov/files/air_traffic/technology/adsb/archival/GDL90_Public_ICD_RevA.PDF",
+    "sha256": "81904b5cc7f0a3b66317e5bd285c4e96976577bd089d238a5271269ba131c738"
+  },
+  "reports": [
+    {
+      "id": "published-heartbeat-section-2.2.4",
+      "frame_hex": "7e008141dbd00802b38b7e",
+      "expected": {
+        "kind": "heartbeat",
+        "message_id": 0,
+        "gps_position_valid": true,
+        "utc_valid": true,
+        "seconds_since_midnight": 53467
+      }
+    },
+    {
+      "id": "published-traffic-section-3.5.2",
+      "payload_hex": "1400ab45491fef15a889780f09a907b00120014e3832355620202000",
+      "frame_hex": "7e1400ab45491fef15a889780f09a907b00120014e383235562020200057d67e",
+      "fcs_provenance": "ICD section 2.2.3 reference recurrence; payload from Table 12",
+      "expected": {
+        "kind": "traffic",
+        "message_id": 20,
+        "participant_address": "AB4549",
+        "address_type": 0,
+        "latitude_deg": 44.90708,
+        "longitude_deg": -122.99488,
+        "pressure_altitude_ft": 5000,
+        "horizontal_speed_kt": 123,
+        "vertical_speed_fpm": 64,
+        "angle_deg": 45,
+        "angle_reference": "true_track",
+        "nic": 10,
+        "nacp": 9,
+        "airborne": true,
+        "extrapolated": false,
+        "callsign": "N825V"
+      },
+      "coordinate_tolerance_deg": 2.2e-05
+    },
+    {
+      "id": "synthetic-escaped-unsupported",
+      "frame_hex": "7e7f7d5e7d5d05f17e",
+      "fcs_provenance": "Independent bitwise recurrence, cross-checked against the published heartbeat FCS",
+      "expected": {
+        "kind": "unsupported",
+        "message_id": 127,
+        "payload_hex": "7f7e7d",
+        "supported": false
+      }
+    },
+    {
+      "id": "ownship-unavailable-values",
+      "frame_hex": "7e0a00ab4549000000000000fff000fff80020014e3832355620202000b58d7e",
+      "payload_hex": "0a00ab4549000000000000fff000fff80020014e3832355620202000",
+      "fcs_provenance": "Independent bit-serial recurrence cross-checked against the published heartbeat; protocol boundary fields from ICD sections 3.1, 3.5 and 3.8",
+      "expected": {
+        "kind": "ownship",
+        "position_valid": false,
+        "latitude_deg": null,
+        "longitude_deg": null,
+        "pressure_altitude_ft": null,
+        "horizontal_speed_kt": null,
+        "horizontal_speed_at_least_kt": null,
+        "vertical_speed_fpm": null,
+        "vertical_speed_bound_fpm": null,
+        "angle_deg": null,
+        "angle_reference": null
+      }
+    },
+    {
+      "id": "climb-saturated",
+      "frame_hex": "7e1400ab45491fef15a889780f09a9ffe1fe20014e38323556202020004b477e",
+      "payload_hex": "1400ab45491fef15a889780f09a9ffe1fe20014e3832355620202000",
+      "fcs_provenance": "Independent bit-serial recurrence cross-checked against the published heartbeat; protocol boundary fields from ICD sections 3.1, 3.5 and 3.8",
+      "expected": {
+        "kind": "traffic",
+        "horizontal_speed_kt": null,
+        "horizontal_speed_at_least_kt": 4094,
+        "horizontal_speed_saturated": true,
+        "vertical_speed_fpm": null,
+        "vertical_speed_bound_fpm": 32576,
+        "vertical_speed_saturated": true
+      }
+    },
+    {
+      "id": "descent-saturated",
+      "frame_hex": "7e1400ab45491fef15a889780f09a9ffee0220014e3832355620202000b3107e",
+      "payload_hex": "1400ab45491fef15a889780f09a9ffee0220014e3832355620202000",
+      "fcs_provenance": "Independent bit-serial recurrence cross-checked against the published heartbeat; protocol boundary fields from ICD sections 3.1, 3.5 and 3.8",
+      "expected": {
+        "kind": "traffic",
+        "horizontal_speed_kt": null,
+        "horizontal_speed_at_least_kt": 4094,
+        "horizontal_speed_saturated": true,
+        "vertical_speed_fpm": null,
+        "vertical_speed_bound_fpm": -32576,
+        "vertical_speed_saturated": true
+      }
+    },
+    {
+      "id": "reserved-positive",
+      "frame_hex": "7e1400ab45491fef15a889780f09a9ffe1ff20014e38323556202020000e287e",
+      "payload_hex": "1400ab45491fef15a889780f09a9ffe1ff20014e3832355620202000",
+      "fcs_provenance": "Independent bit-serial recurrence cross-checked against the published heartbeat; protocol boundary fields from ICD sections 3.1, 3.5 and 3.8",
+      "expected": {
+        "kind": "traffic",
+        "horizontal_speed_kt": null,
+        "horizontal_speed_at_least_kt": 4094,
+        "horizontal_speed_saturated": true,
+        "vertical_speed_fpm": null,
+        "vertical_speed_bound_fpm": null,
+        "vertical_speed_saturated": false
+      }
+    },
+    {
+      "id": "reserved-negative",
+      "frame_hex": "7e1400ab45491fef15a889780f09a9ffee0120014e38323556202020007ca17e",
+      "payload_hex": "1400ab45491fef15a889780f09a9ffee0120014e3832355620202000",
+      "fcs_provenance": "Independent bit-serial recurrence cross-checked against the published heartbeat; protocol boundary fields from ICD sections 3.1, 3.5 and 3.8",
+      "expected": {
+        "kind": "traffic",
+        "horizontal_speed_kt": null,
+        "horizontal_speed_at_least_kt": 4094,
+        "horizontal_speed_saturated": true,
+        "vertical_speed_fpm": null,
+        "vertical_speed_bound_fpm": null,
+        "vertical_speed_saturated": false
+      }
+    },
+    {
+      "id": "heartbeat-last-second",
+      "frame_hex": "7e0081817f51080257fd7e",
+      "payload_hex": "0081817f510802",
+      "fcs_provenance": "Independent bit-serial recurrence cross-checked against the published heartbeat; protocol boundary fields from ICD sections 3.1, 3.5 and 3.8",
+      "expected": {
+        "seconds_since_midnight": 86399,
+        "utc_valid": true
+      }
+    },
+    {
+      "id": "heartbeat-out-of-day",
+      "frame_hex": "7e00818180510802a8fe7e",
+      "payload_hex": "00818180510802",
+      "fcs_provenance": "Independent bit-serial recurrence cross-checked against the published heartbeat; protocol boundary fields from ICD sections 3.1, 3.5 and 3.8",
+      "expected": {
+        "seconds_since_midnight": null,
+        "utc_valid": false
+      }
+    },
+    {
+      "id": "geometric-negative-unknown-quality",
+      "frame_hex": "7e0bff38ffffaabb7e",
+      "payload_hex": "0bff38ffff",
+      "fcs_provenance": "Independent bit-serial recurrence cross-checked against the published heartbeat; protocol boundary fields from ICD sections 3.1, 3.5 and 3.8",
+      "expected": {
+        "kind": "geometric_altitude",
+        "geometric_altitude_ft": -1000,
+        "datum": "WGS84_ellipsoid",
+        "vertical_warning": true,
+        "vertical_figure_of_merit_m": null,
+        "vertical_figure_of_merit_lower_bound": false
+      }
+    },
+    {
+      "id": "geometric-quality-lower-bound",
+      "frame_hex": "7e0b00c87ffe4bd77e",
+      "payload_hex": "0b00c87ffe",
+      "fcs_provenance": "Independent bit-serial recurrence cross-checked against the published heartbeat; protocol boundary fields from ICD sections 3.1, 3.5 and 3.8",
+      "expected": {
+        "kind": "geometric_altitude",
+        "geometric_altitude_ft": 1000,
+        "datum": "WGS84_ellipsoid",
+        "vertical_warning": false,
+        "vertical_figure_of_merit_m": 32766,
+        "vertical_figure_of_merit_lower_bound": true
+      }
+    },
+    {
+      "id": "escaped-fcs",
+      "frame_hex": "7e7f7d5d7d5d7f7e",
+      "payload_hex": "7f7d",
+      "fcs_provenance": "Independent bit-serial recurrence cross-checked against the published heartbeat; protocol boundary fields from ICD sections 3.1, 3.5 and 3.8",
+      "expected": {
+        "kind": "unsupported",
+        "payload_hex": "7f7d",
+        "supported": false
+      }
+    },
+    {
+      "id": "ownship-published-position-adaptation",
+      "frame_hex": "7e0a00ab45491fef15a889780f09a907b00120014e3832355620202000855b7e",
+      "payload_hex": "0a00ab45491fef15a889780f09a907b00120014e3832355620202000",
+      "fcs_provenance": "Independent bit-serial recurrence cross-checked against the published heartbeat; protocol boundary fields from ICD sections 3.1, 3.5 and 3.8",
+      "expected": {
+        "kind": "ownship",
+        "position_valid": true,
+        "pressure_altitude_ft": 5000,
+        "horizontal_speed_kt": 123,
+        "vertical_speed_fpm": 64,
+        "angle_reference": "true_track"
+      }
+    },
+    {
+      "id": "extension-id-msl-serial64",
+      "payload_hex": "650001fedcba987654321052580000000000005265636569766572000000000000000000000001",
+      "frame_hex": "7e650001fedcba98765432105258000000000000526563656976657200000000000000000000000133b47e",
+      "expected": {
+        "kind": "device_id",
+        "message_id": 101,
+        "version": 1,
+        "serial_number_hex": "FEDCBA9876543210",
+        "device_name": "RX",
+        "device_long_name": "Receiver",
+        "capabilities_mask": 1,
+        "reserved_capabilities_mask": 0,
+        "geometric_altitude_datum": "MSL",
+        "internet_policy": "unrestricted"
+      }
+    },
+    {
+      "id": "extension-id-ellipsoid-utf8",
+      "payload_hex": "650001ffffffffffffffff2052c3a90000000052c3a96365707465757200000000000000000002",
+      "frame_hex": "7e650001ffffffffffffffff2052c3a90000000052c3a963657074657572000000000000000000028eda7e",
+      "expected": {
+        "kind": "device_id",
+        "message_id": 101,
+        "version": 1,
+        "serial_number_hex": null,
+        "device_name": " Ré",
+        "device_long_name": "Récepteur",
+        "geometric_altitude_datum": "WGS84_ellipsoid",
+        "internet_policy": "expensive",
+        "capabilities_mask": 2,
+        "reserved_capabilities_mask": 0
+      }
+    },
+    {
+      "id": "extension-id-reserved-policy",
+      "payload_hex": "6500010000000000000000ff00200000000000efbbbf424f4d0000000000000000000080000007",
+      "frame_hex": "7e6500010000000000000000ff00200000000000efbbbf424f4d0000000000000000000080000007bf507e",
+      "expected": {
+        "kind": "device_id",
+        "message_id": 101,
+        "version": 1,
+        "serial_number_hex": "0000000000000000",
+        "device_name": "�",
+        "device_long_name": "﻿BOM",
+        "geometric_altitude_datum": "MSL",
+        "internet_policy": null,
+        "capabilities_mask": 2147483655,
+        "reserved_capabilities_mask": 2147483648
+      }
+    },
+    {
+      "id": "extension-id-disallowed",
+      "payload_hex": "65000100000000000000004e657400000000004e6574776f726b00000000000000000000000004",
+      "frame_hex": "7e65000100000000000000004e657400000000004e6574776f726b0000000000000000000000000480127e",
+      "expected": {
+        "kind": "device_id",
+        "message_id": 101,
+        "version": 1,
+        "serial_number_hex": "0000000000000000",
+        "internet_policy": "disallowed",
+        "geometric_altitude_datum": "WGS84_ellipsoid"
+      }
+    },
+    {
+      "id": "extension-id-unknown-version",
+      "payload_hex": "650002",
+      "frame_hex": "7e650002013c7e",
+      "expected": {
+        "kind": "unsupported",
+        "supported": false,
+        "message_id": 101
+      }
+    },
+    {
+      "id": "extension-unknown-subtype",
+      "payload_hex": "657f01",
+      "frame_hex": "7e657f0102437e",
+      "expected": {
+        "kind": "unsupported",
+        "supported": false,
+        "message_id": 101
+      }
+    }
+  ],
+  "invalid_frames": [
+    {
+      "id": "reserved-message-id",
+      "frame_hex": "7e8080007e",
+      "error": "invalid-message-id"
+    },
+    {
+      "id": "short-heartbeat",
+      "frame_hex": "7e0000007e",
+      "error": "invalid-message-length"
+    },
+    {
+      "id": "short-geometric-report",
+      "frame_hex": "7e0b00000b7e",
+      "error": "invalid-message-length"
+    },
+    {
+      "id": "empty-payload",
+      "frame_hex": "7e00007e",
+      "error": "short-frame"
+    },
+    {
+      "id": "extension-missing-subtype",
+      "frame_hex": "7e6565007e",
+      "error": "invalid-message-length"
+    },
+    {
+      "id": "extension-id-missing-version",
+      "frame_hex": "7e650000657e",
+      "error": "invalid-message-length"
+    },
+    {
+      "id": "extension-id-truncated",
+      "frame_hex": "7e650001fedcba98765432105258000000000000526563656976657200000000000000000000009a757e",
+      "error": "invalid-message-length"
+    },
+    {
+      "id": "extension-id-extra-byte",
+      "frame_hex": "7e650001fedcba987654321052580000000000005265636569766572000000000000000000000001005fd47e",
+      "error": "invalid-message-length"
+    }
+  ],
+  "extension_source": {
+    "url": "https://foreflight.com/connect/spec/",
+    "section": "ID Message; 39-byte version-1 layout",
+    "fixture_provenance": "Synthetic boundary inputs using published field layout; independent bit-serial FCS checked against published standard heartbeat"
+  }
+}

@@ -42,6 +42,49 @@ The public surface is defined by `interfaces/avionics.md`. TypeScript realizatio
 pass `acceptance/avionics.md` against `acceptance/vectors.json` without network access
 or a browser.
 
+GDL90 realizations additionally pass `acceptance/gdl90.json` in both bindings.
+Python host schemas reuse the frozen decoded-report records exported by this
+Component while leaving socket ownership, authentication and freshness to hosts.
+
+### Requirement: Cockpit datalink bytes converge on one portable decoder
+
+GDL90 framing, FCS validation and standard heartbeat, ownship, traffic and
+geometric-altitude decoding SHALL belong to this Component in both TypeScript and
+Python. Applications SHALL retain UDP and browser transport ownership while
+delegating byte interpretation here. Both bindings SHALL agree on published
+independent vectors, bounded incremental framing, invalid-value handling and
+explicit unsupported reports. A decoded report SHALL NOT imply a live connection,
+valid ownship fix, complete traffic coverage or current weather.
+
+#### Scenario: Published and invalid datalink frames are ingested
+
+- **WHEN** either binding receives the published framing/traffic vectors or the
+  declared unavailable, saturated, reserved and malformed variants
+- **THEN** the JSON-compatible reports and errors match `acceptance/gdl90.json`,
+  bounded incremental recovery preserves later valid frames, and invalid or
+  saturated values cannot become exact usable measurements
+
+### Requirement: Receiver declarations preserve geometric altitude datum
+
+Both bindings SHALL decode version-1 ForeFlight device-ID messages (0x65,
+sub-ID 0), preserving the full 64-bit serial as hexadecimal or null for the
+all-ones sentinel, UTF-8 device names, capability mask, altitude datum and
+internet policy. Unknown extension versions/subtypes SHALL remain unsupported.
+A pure shared resolver SHALL apply a supplied same-receiver declaration to a
+geometric-altitude report, preserve the measured value and quality, and expose
+unknown datum when the host declares the receiver profile uncertain. Decoding
+alone SHALL retain the standard WGS84 ellipsoid default. Pressure altitude SHALL
+never be converted or relabeled by this operation.
+
+#### Scenario: Receiver declares MSL geometric altitude
+
+- **WHEN** a valid version-1 device ID declares capability bit 0 and its
+  geometric-altitude report is resolved with that declaration
+- **THEN** both bindings return MSL with explicit extension provenance, unchanged
+  altitude/quality, and identical lossless serial and capability metadata
+- **AND** unknown profile state yields null datum rather than an inferred MSL or
+  ellipsoid reference
+
 ### Requirement: Applications share avionics wire contracts
 
 Applications SHALL import telemetry, command, and flight-plan records and validators

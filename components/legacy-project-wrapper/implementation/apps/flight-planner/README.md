@@ -329,3 +329,148 @@ distribution readme determines cycle identity, since individual records retain o
 amendment dates. The shared SDK owns catalog queries and freshness. Raw special legs,
 continuations and constraints remain available; common legs are an incomplete reference,
 not a flyable guidance model. The legacy procedure endpoint no longer defaults to samples.
+
+## Local cockpit receiver bridge
+
+The operator-run bridge accepts source-filtered GDL90 UDP and exposes typed,
+authenticated status, telemetry and listener controls. It starts no UDP socket
+when imported or during ordinary planner startup. Use the planner Python
+environment with its declared dependencies. From the retained implementation root:
+
+```bash
+export AVIATION_COCKPIT_TOKEN="$(python -c 'import secrets; print(secrets.token_urlsafe(32))')"
+PYTHONPATH=packages/g1000-avionics-sdk/python:packages/shared-sdk/python:apps/flight-planner/backend \
+  python -m app.cockpit_bridge --source 192.168.10.1 \
+  --allow-origin https://flight-planner.jordanhubbard.net
+```
+
+The receiver IP above is an example: configure the actual sender address or CIDR
+with repeatable `--source` arguments. UDP binds to `0.0.0.0:4000`, while HTTP binds
+to `127.0.0.1:18190` by default. `--udp-bind`, `--udp-port`, `--http-bind` and
+`--http-port` change those addresses. Non-loopback browser access needs an
+explicit reachable binding, trusted TLS via `--tls-cert`/`--tls-key`, and the exact
+browser origin in `--allow-origin`. A desktop browser may also require TLS for
+its local connection. Keep the token in environment/page memory, outside URLs,
+command-line arguments and persistent browser storage.
+
+Authenticated `POST /api/cockpit/start` explicitly opens the configured UDP
+listener; `POST /api/cockpit/stop` releases it. CLI `--start` explicitly requests
+start on launch. `GET /api/cockpit/status` and `/api/cockpit/state` require the same
+bearer token. OpenAPI is at `/api/openapi.json`. A listening socket and a recent
+receiver report are separate states; GPS requires fresh source-specific validity.
+Traffic/ownship ages, unknown values, saturation bounds and pressure/geometric
+altitude references remain visible. Weather decoding is currently unavailable;
+capabilities expose that limitation rather than labelling raw bytes as weather.
+No compatibility with a physical receiver is established by loopback tests.
+
+Report ages include observed suspend gaps and never decrease after a clock
+correction. Only newly received reports can restore freshness. Clock disagreements
+over one second increment the `clock_discontinuities` diagnostic counter.
+
+Optional local HTTP/MCP access reuses the Meta gateway engine:
+
+```bash
+node apps/meta-app/cockpit-gateway.mjs
+```
+
+It binds `127.0.0.1:18191`, publishes only the cockpit service at
+`/api/v1/cockpit`, and exposes `/mcp`, `v1.cockpit.request`,
+`v1.cockpit.describe` and `aviation://v1/cockpit/openapi`. Callers pass bridge
+credentials explicitly in service request headers; the gateway does not store
+them. `AVIATION_COCKPIT_BRIDGE_ORIGIN`, `AVIATION_COCKPIT_GATEWAY_BIND` and
+`AVIATION_COCKPIT_GATEWAY_PORT` configure this explicitly launched profile.
+The normal hosted gateway keeps its existing service list.
+
+## Offline flight packages
+
+Open **Offline packages**, or use **Prepare offline flight package** on a planned
+route. Select airport codes or an existing saved route, and choose already acquired
+chart members. Prepare the package to review its exact byte count, selected PDF
+pages and raster bounds/zoom before downloading. Charts must be acquired through
+the existing chart operator flow first; package preparation cannot use private
+library documents or bypass chart acquisition.
+
+An explicitly selected saved plan retains all serialized flight data, metadata and
+authored notes in the private manifest/browser package. Those bytes never enter
+the public chart object store.
+
+Downloaded packages stay in IndexedDB in that browser. Installation verifies every
+asset before publishing a complete package record, and opening verifies retained
+bytes again. The production build includes a hash-inventoried service worker for
+reopening `/offline` after a browser restart without a connection. API responses,
+credentials and private aircraft documents are excluded from the shell cache.
+HTTPS or localhost, IndexedDB, Web Crypto, service workers and browser writer locks
+are required. Development-mode Vite does not generate the production shell.
+
+PDF originals and selected page images remain available; GeoTIFF packages include
+the original and their declared tiles. Requested bounds and actual tile-grid
+extent are separate. Tiles outside the declared zoom/coverage are unavailable.
+Station METARs/TAFs retain original text, observation/issue/validity times, provider
+retrieval times, missing-report and partial-coverage states. Airport references
+retain the suite catalog snapshot with explicitly unknown source revision.
+Opening offline does not refresh any source or establish current chart/weather
+coverage. Stale/expired/future and unverified source states remain visible.
+
+Limits are 128 MiB per package, 512 MiB/32 complete packages per browser, four chart
+members, 128 PDF previews and 512 raster tiles. The browser reports storage estimates
+and download progress; cancellation, interrupted installs and failed integrity/quota
+checks cannot publish a partial package. A refreshed revision keeps selected chart
+editions and creates a new package ID; select replacement members to change editions.
+The old package remains until explicitly deleted. Browser data clearing or eviction
+can remove saved material, so verify it before relying on it disconnected.
+
+`POST /api/offline/prepare` exposes the typed manifest over native HTTP and the
+normal planning gateway/MCP discovery. Rendered PNG transfer uses
+`GET /api/offline/assets/{sha256}`; original members keep their hash-pinned chart
+URLs. PNG content hashes identify PNG bytes, with original-source identity retained
+separately. Provider URLs and retrieval times remain bound to the matching
+acquisition receipt even after a forced refresh changes the current original.
+Inline route/airport/weather snapshots are returned privately and never
+written into the public chart object store. The object store's existing disk quota
+and reserve apply to derived chart bytes as well as originals.
+
+Repeatable browser acceptance lives in `frontend/e2e/offline-acceptance.mjs` and
+`offline-failures.mjs`. Use an isolated running production build with the FAA KSFO
+airport diagram and San Francisco TAC already acquired. From `frontend`, run:
+
+```bash
+AVIATION_OFFLINE_BASE_URL=http://127.0.0.1:8769 npm run test:offline
+```
+
+The runner prints its evidence directory and writes screenshots, accessible page
+structure, source manifests and desktop/mobile restart results. It creates new,
+isolated browser profiles and retains them for diagnosis. It never files or saves
+a flight plan. For controlled corruption/quota/cancellation/concurrency tests,
+reuse its `desktop-manifest.json`:
+
+```bash
+AVIATION_OFFLINE_BASE_URL=http://127.0.0.1:8769 \
+AVIATION_OFFLINE_FIXTURE_MANIFEST=/path/to/evidence/desktop-manifest.json \
+  npm run test:offline-failures
+```
+
+Set `AVIATION_OFFLINE_EVIDENCE_DIR` to choose the retained output location. These
+runners require the installed Playwright Chromium build; they do not install or
+launch a system browser. Source acquisition/availability and controlled failure
+injection are recorded as separate evidence, and neither proves receiver hardware.
+
+The **Cockpit receiver** page connects explicitly to the operator-run bridge.
+Opening the page makes no receiver requests. Enter the bridge origin and operator
+token, then connect for one snapshot; monitoring every two seconds is opt-in.
+Start/stop controls use the listener's existing source restrictions. Disconnecting
+clears page credentials and telemetry. Reports keep separate sources, receipt age,
+ownship GPS validity, pressure altitude and geometric datum; a failed refresh or
+aging snapshot is shown as last known. Tokens and receiver telemetry are excluded
+from persistent browser storage and general AI explanations. Receiver weather
+products and actual hardware qualification remain incomplete.
+
+`npm run test:cockpit` is a desktop/mobile native-bridge acceptance runner. Set
+`AVIATION_COCKPIT_BASE_URL` to the served frontend, `AVIATION_COCKPIT_BRIDGE_URL`
+to a fresh isolated IPv4 loopback bridge and `AVIATION_COCKPIT_TOKEN` to its operator
+credential; optionally set `AVIATION_COCKPIT_EVIDENCE_DIR`. The bridge must allow
+that frontend origin and use UDP bind/source `127.0.0.1`; start with no UDP listener.
+The runner refuses an already running/populated bridge, explicitly controls its
+listener and sends conformance packets from two local UDP sources. It verifies
+GPS/datum/source separation, stale states, opt-in polling, private disconnection,
+layout and browser errors. This is software integration evidence, not receiver
+hardware evidence. Use an installed managed Chromium through Playwright.
