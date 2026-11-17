@@ -44,3 +44,15 @@ describe('aviation.nav-data Component conformance', () => {
     });
   }
 });
+
+for (const vector of contract.invalidFreshness) {
+  it(`rejects freshness: ${vector.id}`, () => {
+    expect(() => freshnessStatus(vector.metadata, vector.at || '2026-11-01T00:00:00Z')).toThrow();
+  });
+}
+it('retains exclusive end provenance without changing legacy status shape', () => {
+  const metadata = {source:'x', effective_until:'2026-11-26T09:01:00Z'};
+  const catalog = new NavDataCatalog({...contract.bundle, metadata});
+  expect(catalog.status('2026-11-26T09:01:00Z').effective_until).toBe(metadata.effective_until);
+  expect(new NavDataCatalog(contract.bundle).status()).not.toHaveProperty('effective_until');
+});

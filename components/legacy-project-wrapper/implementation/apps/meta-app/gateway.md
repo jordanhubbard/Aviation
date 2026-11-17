@@ -94,6 +94,14 @@ layers, NOAA aviation weather products and FAA TFR summaries. Unknown fuel price
 FBO hours and provider failures remain explicit; TFR summaries are not a complete
 NOTAM briefing. Generic v1 request tools remain compatible.
 
+The avionics entry advertises `/api/v1/avionics/openapi.json`. Read MCP resource
+`aviation://v1/avionics/openapi` or call `v1.avionics.describe` with `{}` before
+using `v1.avionics.request`. The shipped G1000 API includes sourced FAA navigation
+and legacy procedure views with cycle verification, paging, raw constraints and
+explicit unavailable states. Planning remains the owner of FAA ingestion and
+navigation catalog behavior; the avionics API is a read-only consumer of that
+boundary. These additive discovery tools do not change existing v1 request tools.
+
 Run the read-only domain audit from the repository root:
 
 ```sh

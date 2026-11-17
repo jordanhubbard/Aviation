@@ -5,6 +5,8 @@ websockets
 # Imported by app/config.py but previously undeclared, so the image could not start.
 pydantic
 pydantic-settings
+# Typed read-only adapter to the shared planning navigation API.
+httpx>=0.25.0
 -e ../../../packages/shared-sdk/python
 -e ../../../packages/flight-dynamics
 -e ../../../packages/g1000-avionics-sdk/python

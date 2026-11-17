@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+- G1000: expose sourced FAA procedure browsing through the shipped factory and
+  dashboard, preserve raw constraints/unknowns and cycle verification, and replace
+  implicit samples with explicit unavailable states. Planning/preflight chart
+  handoffs preserve user inputs and known airport associations (#490).
+
+- Charts and navigation: add sourced FAA terminal, VFR/IFR chart catalogs, retained originals, PDF previews, projected map tiles and real CIFP navigation records. Show edition dates separately from catalog verification, preserve cached files after source failures, and share exclusive cycle boundaries through both navigation SDK bindings (#490).
+
 - Aircraft library: restore durable processing jobs on reopen, paginate lightweight
   summaries, load detailed results explicitly and reuse repeated active document
   operations. Keep refresh user-controlled and clear private state on lock (#489).

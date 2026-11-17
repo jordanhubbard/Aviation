@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from aviation.nav_data import NavDataCatalog, sample_nav_data_catalog
+from aviation.nav_data import NavDataCatalog
 
 
 def _compatibility_record(record: dict[str, Any]) -> dict[str, Any]:
@@ -21,31 +21,27 @@ class ProceduresService:
     """Preserve the application API while the SDK owns catalog behavior."""
 
     def __init__(self, catalog: NavDataCatalog | None = None) -> None:
-        self.catalog = catalog or sample_nav_data_catalog()
+        self.catalog = catalog
 
     def _get(
         self, airport_code: str, procedure_type: str, runway: str | None = None
     ) -> list[dict[str, Any]]:
+        if self.catalog is None:
+            raise ValueError(
+                "No sourced navigation catalog was injected; use the shared navigation service"
+            )
         return [
             _compatibility_record(record)
-            for record in self.catalog.procedures_for_airport(
-                airport_code, procedure_type, runway
-            )
+            for record in self.catalog.procedures_for_airport(airport_code, procedure_type, runway)
         ]
 
-    def get_sid(
-        self, airport_code: str, runway: str | None = None
-    ) -> list[dict[str, Any]]:
+    def get_sid(self, airport_code: str, runway: str | None = None) -> list[dict[str, Any]]:
         return self._get(airport_code, "SID", runway)
 
-    def get_star(
-        self, airport_code: str, runway: str | None = None
-    ) -> list[dict[str, Any]]:
+    def get_star(self, airport_code: str, runway: str | None = None) -> list[dict[str, Any]]:
         return self._get(airport_code, "STAR", runway)
 
-    def get_approach(
-        self, airport_code: str, runway: str | None = None
-    ) -> list[dict[str, Any]]:
+    def get_approach(self, airport_code: str, runway: str | None = None) -> list[dict[str, Any]]:
         return self._get(airport_code, "APPROACH", runway)
 
     def get_all_procedures(self, airport_code: str) -> dict[str, list[dict[str, Any]]]:

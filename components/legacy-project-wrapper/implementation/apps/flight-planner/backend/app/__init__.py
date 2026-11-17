@@ -133,6 +133,8 @@ def create_app(settings):
     app.include_router(aviation_data_router, prefix="/api")
     from .routers.aircraft_library import install as install_aircraft_library
     install_aircraft_library(app)
+    from .routers.charts import install as install_charts
+    install_charts(app)
     app.include_router(route_assessment_router, prefix="/api")
     app.include_router(ga_router, prefix="/api")
     install_notams(app)
@@ -236,6 +238,7 @@ def create_app(settings):
         @app.get("/route-assessment", include_in_schema=False)
         @app.get("/airports", include_in_schema=False)
         @app.get("/aircraft-library", include_in_schema=False)
+        @app.get("/charts", include_in_schema=False)
         def frontend_page() -> FileResponse:
             return FileResponse(static_root / "index.html")
 

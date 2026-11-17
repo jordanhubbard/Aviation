@@ -299,3 +299,33 @@ It verifies desktop/mobile source reads, original GeoJSON download, visible
 non-production status, source invalidation, local input errors, qualified empty
 results, accessibility structure and document overflow. It intercepts no provider
 responses and needs no FAA credential. Browser dependencies must already exist.
+
+## FAA charts and navigation cycles
+
+Open **Charts / Navigation** at `/charts`. Search terminal charts by their published
+ICAO/FAA airport identifier, or choose VFR/IFR and search chart names. Editions retain
+UTC effective/end instants, source links, original SHA-256 and acquisition history.
+Edition dates and catalog verification are displayed separately. A chart is current
+only when its edition is effective and a successful catalog check is at most 24 hours
+old. Failed or stale checks remain visible without removing cached originals.
+PDF previews include paging/zoom; GeoTIFFs use their declared projection for map tiles.
+Only the main chart body inside the FAA neatline is accurately georeferenced.
+
+An operator first refreshes FAA catalogs and downloads selected originals. Set
+`AVIATION_CHARTS_TOKEN` to at least 32 characters (or reuse `AIRCRAFT_LIBRARY_TOKEN`);
+enter it in the management panel. It stays in page memory and mutation headers.
+No periodic source polling runs on startup. Public readers can browse the synchronized
+catalog and cached government reference files without the management credential.
+
+`AVIATION_CHARTS_DIR` defaults to `/app/data/charts`. Back up the complete directory,
+including `charts.sqlite3` and immutable `objects`, using a consistent SQLite backup
+or stopping the service first. Schema version 1 is checked on startup. Restore the
+whole directory at a compatible version for rollback. `AVIATION_CHARTS_CACHE_BYTES`
+defaults to 4 GiB; writes preserve 2 GiB of free disk. Failed updates retain old copies.
+An offline manifest pins member hashes across source updates; verify those hashes.
+
+Current navigation browsing ingests real FAA CIFP ARINC 424-18 distributions; the
+distribution readme determines cycle identity, since individual records retain older
+amendment dates. The shared SDK owns catalog queries and freshness. Raw special legs,
+continuations and constraints remain available; common legs are an incomplete reference,
+not a flyable guidance model. The legacy procedure endpoint no longer defaults to samples.

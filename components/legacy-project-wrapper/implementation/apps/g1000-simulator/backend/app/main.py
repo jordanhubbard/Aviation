@@ -11,6 +11,7 @@ from app.services.routing import RoutingService
 from app.services.procedures import ProceduresService
 from app.services.flight_dynamics import FlightDynamicsSimulator
 from app.routers import settings as settings_router
+from app.routers.navigation import build_navigation_router
 
 app = FastAPI()
 
@@ -80,9 +81,7 @@ async def search_nav_database(query: str) -> dict:
     return nav_database_service.search(query)
 
 
-@app.get("/api/procedures/{airport}")
-async def get_procedures(airport: str) -> dict:
-    return nav_database_service.get_procedures(airport)
+app.include_router(build_navigation_router())
 
 
 @app.get("/health")

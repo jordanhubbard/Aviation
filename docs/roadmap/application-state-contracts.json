@@ -365,6 +365,27 @@
               ]
             }
           ]
+        },
+        {
+          "id": "faa-chart-cache",
+          "medium": "sqlite-and-immutable-source-files",
+          "location": "AVIATION_CHARTS_DIR, default /app/data/charts",
+          "schema": "SQLite user_version=1; chart editions, source snapshots, cycles and acquisition receipts",
+          "migration": "idempotent initialization; reject incompatible schema versions",
+          "backup": "stop service and copy complete chart directory or consistent SQLite backup plus immutable objects",
+          "rollback": "restore complete directory at compatible schema version",
+          "classification": "application-private-runtime-state",
+          "testOracle": "tests/test_charts.py pinning, withdrawal, refresh failure and cycle rollover",
+          "evidence": [
+            {
+              "path": "apps/flight-planner/backend/app/services/charts.py",
+              "contains": [
+                "AVIATION_CHARTS_DIR",
+                "PRAGMA user_version=1",
+                "CREATE TABLE IF NOT EXISTS receipts"
+              ]
+            }
+          ]
         }
       ],
       "credentials": [
@@ -470,6 +491,28 @@
               "path": "apps/flight-planner/backend/app/routers/notams.py",
               "contains": [
                 "read_only=True"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "chart-cache-management",
+          "provider": "operator-environment",
+          "namespace": "faa-charts",
+          "keys": [
+            "AVIATION_CHARTS_TOKEN",
+            "AIRCRAFT_LIBRARY_TOKEN"
+          ],
+          "precedence": "dedicated chart bearer credential then aircraft-library credential; server-side acquisition never forwards caller credential",
+          "missingBehavior": "management unavailable without credential of at least 32 characters; cached FAA reference reads public",
+          "classification": "application-private-credential-adapter",
+          "evidence": [
+            {
+              "path": "apps/flight-planner/backend/app/routers/charts.py",
+              "contains": [
+                "AVIATION_CHARTS_TOKEN",
+                "compare_digest",
+                "await operator(request)"
               ]
             }
           ]

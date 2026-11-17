@@ -101,3 +101,13 @@ behavior to those common SDK capabilities.
 - **WHEN** synthetic OurAirports CSV, openAIP GeoJSON, and FAA CIFP records are ingested
 - **THEN** the resulting airports and navigation bundle pass the Component-owned adapter
   vectors without introducing a parallel database or search surface
+
+## Exclusive provider intervals
+
+Optional `effective_until` supplies an exclusive end instant: the record expires
+at or after it. Existing `effective_through` remains inclusive and unchanged.
+Nonempty inclusive and exclusive ends cannot coexist. A supplied start must
+precede an exclusive end; dates require explicit timezones. Normalization and
+catalog status retain `effective_until` when supplied, without adding it to
+legacy metadata. Paired conformance covers exact end boundaries, legacy inclusive
+behavior and invalid or ambiguous intervals.

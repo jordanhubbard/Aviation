@@ -49,5 +49,9 @@ pre-commit
 # WebSocket client (required by integration_test.py)
 websocket-client
 
+# Current FAA chart and fixed-width navigation ingestion
+beautifulsoup4
+rasterio
+arinc424==0.3.0
 # Route-assessment projection (shared SDK owns interval clipping)
 pyproj
