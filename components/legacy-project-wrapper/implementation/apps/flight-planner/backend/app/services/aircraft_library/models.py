@@ -399,6 +399,20 @@ def numbers(text):
     # Normalize comparison text only: PDF leaders are layout, not a decimal
     # continuation. Keep the source quotation and the complete signed token.
     text = re.sub(r"\.{3,}(?=-?\d)", " ", text.replace("\N{MINUS SIGN}", "-"))
+    # Superscript footnotes can flatten to "d20 second delay". Only split
+    # a line-leading definition with a matching numeric suffix reference in
+    # this same quote; general identifiers must not supply numeric evidence.
+    references = set(re.findall(
+        r"(?<![\w.])-?\d[\d,]*(?:\.\d+)?([a-z])(?=\s|$|[.,;:)])", text
+    ))
+    text = re.sub(
+        r"(?m)^([ \t]*)([a-z])(-?\d[\d,]*(?:\.\d+)?)([ \t]+seconds?[ \t]+delay\b)",
+        lambda match: (
+            match[1] + match[2] + " " + match[3] + match[4]
+            if match[2] in references else match[0]
+        ),
+        text,
+    )
     values = set()
     for number in re.findall(r"(?<![\w.])-?\d[\d,]*(?:\.\d+)?", text):
         try:
@@ -522,16 +536,15 @@ def validate_answer(answer, evidence):
                 }
             )
             supporting.append(quote)
-        unsupported = numbers(claim["text"]) - numbers(" ".join(supporting))
+        cited_numbers = set().union(*(numbers(quote) for quote in supporting))
+        unsupported = numbers(claim["text"]) - cited_numbers
         if unsupported:
             raise ModelUnavailable(
                 f"Model introduced numeric values absent from its quoted evidence in claim {claim_number}; "
                 "cite excerpts supporting every numeric value in this claim or remove unsupported assertions",
                 feedback={
                     "unsupported_numeric_values": sorted(str(value) for value in unsupported),
-                    "cited_numeric_values": sorted(
-                        str(value) for value in numbers(" ".join(supporting))
-                    ),
+                    "cited_numeric_values": sorted(str(value) for value in cited_numbers),
                 },
             )
         clean.append({"text": claim["text"], "citations": verified})

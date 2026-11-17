@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Aircraft library: recognize attached footnote delay values when the same cited excerpt contains their matching numeric reference, preserving exact quotes and signed limits.
+
 - Aircraft library: keep PDF page locators in verified citations instead of model evidence, preserving source text and historical generations while reducing uncited page-number assertions.
 
 - Add opt-in private bounded diagnostics for rejected manual claims and correction attempts without changing evidence admission or model generation identities.
