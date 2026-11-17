@@ -132,3 +132,8 @@ or assertion that a later source/review state remains current.
 Analyzer cold navigation to `#/performance` must open the performance workspace,
 including its sourced-reference control, rather than falling back to Summary.
 Retain the existing flight-detail and Summary hash meanings.
+
+Applying a cruise fuel-flow reference enables its use for the route fuel estimate
+without enabling fuel-stop routing. The form exposes that choice independently;
+retaining the selected number after releasing private provenance retains its
+ordinary input behavior. An enabled estimate requires finite positive fuel flow.

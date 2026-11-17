@@ -65,6 +65,7 @@ const FlightPlanningForm: React.FC<Props> = ({ isLoading, onSubmit }) => {
 
   const handleLoad = (plan: FlightPlan) => {
     setAppliedReferences([])
+    setUseEnteredFuelBurn(false)
     setOrigin(plan.origin ?? '')
     setDestination(plan.destination ?? '')
     setSpeed(plan.speed ?? DEFAULT_AIRCRAFT_CRUISE_SPEED_KT)
@@ -89,6 +90,7 @@ const FlightPlanningForm: React.FC<Props> = ({ isLoading, onSubmit }) => {
   const [applyWind, setApplyWind] = useState(true)
 
   const [planFuelStops, setPlanFuelStops] = useState(false)
+  const [useEnteredFuelBurn, setUseEnteredFuelBurn] = useState(false)
   const [fuelBurnGph, setFuelBurnGph] = useState<number>(8.5)
   const [fuelOnBoardGal, setFuelOnBoardGal] = useState<number>(DEFAULT_AIRCRAFT_USABLE_FUEL_GAL)
   const [reserveMinutes, setReserveMinutes] = useState<number>(45)
@@ -149,6 +151,14 @@ const FlightPlanningForm: React.FC<Props> = ({ isLoading, onSubmit }) => {
         return
       }
 
+      if (
+        (planFuelStops || useEnteredFuelBurn) &&
+        (!Number.isFinite(fuelBurnGph) || fuelBurnGph <= 0)
+      ) {
+        toast.error('Fuel burn must be greater than 0')
+        return
+      }
+
       const originCode = originValidation.normalized as string
       const destinationCode = destinationValidation.normalized as string
 
@@ -164,7 +174,7 @@ const FlightPlanningForm: React.FC<Props> = ({ isLoading, onSubmit }) => {
         apply_wind: applyWind,
         include_alternates: true,
         plan_fuel_stops: planFuelStops,
-        fuel_burn_gph: planFuelStops ? fuelBurnGph : undefined,
+        fuel_burn_gph: planFuelStops || useEnteredFuelBurn ? fuelBurnGph : undefined,
         fuel_on_board_gal: planFuelStops ? fuelOnBoardGal : undefined,
         reserve_minutes: planFuelStops ? reserveMinutes : undefined,
       }
@@ -231,6 +241,7 @@ const FlightPlanningForm: React.FC<Props> = ({ isLoading, onSubmit }) => {
                 disabled={isLoading || appliedReferences.length > 0}
                 onSelect={(aircraft) => {
                   setAppliedReferences([])
+                  setUseEnteredFuelBurn(false)
                   setSpeed(aircraft.cruiseSpeedKt)
                   setFuelBurnGph(aircraft.fuelBurnGph)
                   setFuelOnBoardGal(aircraft.fuelOnBoardGal)
@@ -243,10 +254,14 @@ const FlightPlanningForm: React.FC<Props> = ({ isLoading, onSubmit }) => {
                   planning_altitude_ft: altitude,
                   planning_speed_kt: speed,
                   planning_fuel_flow_gph: fuelBurnGph,
+                  fuel_estimate: planFuelStops || useEnteredFuelBurn ? 'entered' : 'default',
                 }}
                 onApply={(reference) => {
                   if (reference.metric === 'cruise_tas_kt') setSpeed(reference.value)
-                  if (reference.metric === 'cruise_fuel_flow_gph') setFuelBurnGph(reference.value)
+                  if (reference.metric === 'cruise_fuel_flow_gph') {
+                    setFuelBurnGph(reference.value)
+                    setUseEnteredFuelBurn(true)
+                  }
                   setAppliedReferences((previous) => [
                     ...previous.filter((value) => value.metric !== reference.metric),
                     reference,
@@ -429,6 +444,24 @@ const FlightPlanningForm: React.FC<Props> = ({ isLoading, onSubmit }) => {
               <FormControlLabel
                 control={
                   <Checkbox
+                    checked={useEnteredFuelBurn || planFuelStops}
+                    disabled={isLoading || planFuelStops}
+                    onChange={(event) => {
+                      setUseEnteredFuelBurn(event.target.checked)
+                      if (!event.target.checked)
+                        setAppliedReferences((previous) =>
+                          previous.filter(
+                            (reference) => reference.metric !== 'cruise_fuel_flow_gph',
+                          ),
+                        )
+                    }}
+                  />
+                }
+                label="Use entered fuel burn for route estimate"
+              />
+              <FormControlLabel
+                control={
+                  <Checkbox
                     checked={planFuelStops}
                     onChange={(e) => setPlanFuelStops(e.target.checked)}
                     disabled={isLoading}
@@ -438,20 +471,21 @@ const FlightPlanningForm: React.FC<Props> = ({ isLoading, onSubmit }) => {
               />
             </Grid>
 
+            {(planFuelStops || useEnteredFuelBurn) && (
+              <Grid item xs={12} sm={4}>
+                <TextField
+                  fullWidth
+                  label="Fuel burn (gph)"
+                  type="number"
+                  value={fuelBurnGph}
+                  onChange={(e) => setFuelBurnGph(Number(e.target.value))}
+                  disabled={isLoading}
+                  inputProps={{ min: 0.1, step: 0.1 }}
+                />
+              </Grid>
+            )}
             {planFuelStops ? (
               <>
-                <Grid item xs={12} sm={4}>
-                  <TextField
-                    fullWidth
-                    label="Fuel burn (gph)"
-                    type="number"
-                    value={fuelBurnGph}
-                    onChange={(e) => setFuelBurnGph(Number(e.target.value))}
-                    disabled={isLoading}
-                    inputProps={{ min: 0.1, step: 0.1 }}
-                  />
-                </Grid>
-
                 <Grid item xs={12} sm={4}>
                   <TextField
                     fullWidth
