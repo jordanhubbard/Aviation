@@ -21,7 +21,7 @@ class OCRSelection(TypedDict):
 
 class OCRPreviewRequest(OCRIdentity):
     pages: list[int]
-    mode: Literal["normal", "sparse", "table"]
+    mode: Literal["normal", "sparse", "table", "words"]
 
 
 class OCRApplyRequest(OCRIdentity):
@@ -46,7 +46,7 @@ class OCRContext(TypedDict):
     index_identity: str
     source_metadata: dict[str, Any]
     page_count: int
-    modes: list[Literal["normal", "sparse", "table"]]
+    modes: list[Literal["normal", "sparse", "table", "words"]]
     max_pages: int
 
 
@@ -78,7 +78,7 @@ class OCRPreview(TypedDict):
     integrity_sha256: str
     source_current: bool
     engine_version: str
-    mode: Literal["normal", "sparse", "table"]
+    mode: Literal["normal", "sparse", "table", "words"]
     approved: Literal[False]
     status: Literal["preview", "partial"]
     pages: list[OCRPage]

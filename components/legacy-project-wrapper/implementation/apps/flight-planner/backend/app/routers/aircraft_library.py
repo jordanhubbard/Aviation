@@ -278,7 +278,7 @@ class OCRProvenance(BaseModel):
     source_metadata: DocumentMetadata
     engine: str
     engine_version: str
-    mode: Literal["normal", "sparse", "table"]
+    mode: Literal["normal", "sparse", "table", "words"]
     confidence: float
     bbox: list[int]
     image_url: str
@@ -292,7 +292,7 @@ class OCRIdentityRequest(BaseModel):
 
 class OCRPreviewRequest(OCRIdentityRequest):
     pages: list[int] = Field(min_length=1, max_length=10)
-    mode: Literal["normal", "sparse", "table"] = "normal"
+    mode: Literal["normal", "sparse", "table", "words"] = "normal"
 
 
 class OCRSelection(BaseModel):
@@ -315,7 +315,7 @@ class OCRContext(BaseModel):
     index_identity: str
     source_metadata: DocumentMetadata
     page_count: int
-    modes: list[Literal["normal", "sparse", "table"]]
+    modes: list[Literal["normal", "sparse", "table", "words"]]
     max_pages: int
 
 
@@ -359,7 +359,7 @@ class OCRPreview(BaseModel):
     integrity_sha256: str
     source_current: bool
     page_count: int
-    mode: Literal["normal", "sparse", "table"]
+    mode: Literal["normal", "sparse", "table", "words"]
     engine: str
     engine_version: str
     renderer: str
@@ -392,7 +392,7 @@ class OCRReview(BaseModel):
     fragments: list[OCRReviewedFragment]
     engine: str
     engine_version: str
-    mode: Literal["normal", "sparse", "table"]
+    mode: Literal["normal", "sparse", "table", "words"]
     active: bool
     source_current: bool
 

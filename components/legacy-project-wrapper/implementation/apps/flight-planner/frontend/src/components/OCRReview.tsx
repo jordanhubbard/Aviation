@@ -77,6 +77,7 @@ export default function OCRReview({
   const [context, setContext] = useState<Context | null>(null)
   const [pages, setPages] = useState('')
   const [mode, setMode] = useState<AircraftOCRMode>('sparse')
+  const [wordFilter, setWordFilter] = useState('')
   const [preview, setPreview] = useState<Preview | null>(null)
   const [number, setNumber] = useState(0)
   const [image, setImage] = useState('')
@@ -107,6 +108,7 @@ export default function OCRReview({
     setPages('')
     setPreview(null)
     setSelected([])
+    setWordFilter('')
     setReviewer('')
     setAttested(false)
     setHistory(null)
@@ -134,6 +136,7 @@ export default function OCRReview({
       if (current === epoch.current && !(e instanceof DOMException && e.name === 'AbortError')) {
         setError(e instanceof Error ? e.message : 'OCR review failed')
         setSelected([])
+        setWordFilter('')
         setAttested(false)
         setContext(null)
         setPreview((value) => (value ? { ...value, source_current: false } : null))
@@ -156,6 +159,7 @@ export default function OCRReview({
     releaseImage()
     setPreview(null)
     setSelected([])
+    setWordFilter('')
     setAttested(false)
     const value = await client.preview(documentId, id)
     if (current !== epoch.current) return
@@ -217,6 +221,7 @@ export default function OCRReview({
                 releaseImage()
                 setPreview(null)
                 setSelected([])
+                setWordFilter('')
                 setAttested(false)
                 setContext(value)
               })
@@ -262,6 +267,7 @@ export default function OCRReview({
               <MenuItem value="sparse">Sparse labels and diagrams</MenuItem>
               <MenuItem value="normal">Normal page layout</MenuItem>
               <MenuItem value="table">Table grid suppression</MenuItem>
+              <MenuItem value="words">Individual recognized words</MenuItem>
             </TextField>
             <Button
               disabled={disabled || !pages.trim()}
@@ -278,6 +284,7 @@ export default function OCRReview({
                   releaseImage()
                   setPreview(null)
                   setSelected([])
+                  setWordFilter('')
                   setAttested(false)
                   setReview(null)
                   const queued = await client.queuePreview(documentId, {
@@ -311,6 +318,12 @@ export default function OCRReview({
               {preview.engine_version} · {preview.mode} layout · {preview.status}. OCR confidence
               reflects recognition uncertainty.
             </Typography>
+            {preview.mode === 'words' && (
+              <Alert severity="info">
+                Words are shown individually. Select only complete words that match the original
+                page. Other words in the same line remain unapproved.
+              </Alert>
+            )}
             {preview.mode === 'table' && (
               <Alert severity="info">
                 Long table rules were suppressed for recognition. The review image is the untouched
@@ -399,56 +412,81 @@ export default function OCRReview({
                     <Typography>Load the page image before selecting its fragments.</Typography>
                   )}
                 </Box>
-                <Stack spacing={1} sx={{ maxHeight: '75vh', overflow: 'auto' }}>
+                <Stack spacing={1}>
                   {currentPage.error && <Alert severity="warning">{currentPage.error}</Alert>}
                   {!currentPage.fragments.length && (
                     <Typography>
                       No readable OCR fragments on this page. Native extraction status is unchanged.
                     </Typography>
                   )}
-                  {currentPage.fragments.map((f) => {
-                    const checked = selected.some(
-                      (s) => s.page === currentPage.page && s.fragment_id === f.id,
-                    )
-                    return (
-                      <Box key={f.id}>
-                        <FormControlLabel
-                          control={
-                            <Checkbox
-                              checked={checked}
-                              disabled={
-                                disabled ||
-                                !image ||
-                                !preview.source_current ||
-                                Boolean(currentPage.error) ||
-                                (!checked && selected.length >= 100)
+                  {preview.mode === 'words' && (
+                    <TextField
+                      label="Find recognized word (exact)"
+                      value={wordFilter}
+                      onChange={(e) => setWordFilter(e.target.value)}
+                      helperText="Filters this list locally. Hidden selections remain counted below."
+                    />
+                  )}
+                  <Stack spacing={1} sx={{ maxHeight: '75vh', overflow: 'auto' }}>
+                    {currentPage.fragments
+                      .filter(
+                        (f) =>
+                          preview.mode !== 'words' ||
+                          !wordFilter.trim() ||
+                          f.text.toLowerCase() === wordFilter.trim().toLowerCase(),
+                      )
+                      .map((f) => {
+                        const checked = selected.some(
+                          (s) => s.page === currentPage.page && s.fragment_id === f.id,
+                        )
+                        return (
+                          <Box key={f.id}>
+                            <FormControlLabel
+                              control={
+                                <Checkbox
+                                  checked={checked}
+                                  disabled={
+                                    disabled ||
+                                    !image ||
+                                    !preview.source_current ||
+                                    Boolean(currentPage.error) ||
+                                    (!checked && selected.length >= 100)
+                                  }
+                                  onChange={() => {
+                                    setAttested(false)
+                                    setSelected(
+                                      checked
+                                        ? selected.filter(
+                                            (s) =>
+                                              !(
+                                                s.page === currentPage.page &&
+                                                s.fragment_id === f.id
+                                              ),
+                                          )
+                                        : [
+                                            ...selected,
+                                            { page: currentPage.page, fragment_id: f.id },
+                                          ],
+                                    )
+                                  }}
+                                />
                               }
-                              onChange={() => {
-                                setAttested(false)
-                                setSelected(
-                                  checked
-                                    ? selected.filter(
-                                        (s) =>
-                                          !(s.page === currentPage.page && s.fragment_id === f.id),
-                                      )
-                                    : [...selected, { page: currentPage.page, fragment_id: f.id }],
-                                )
-                              }}
+                              label={
+                                <Typography
+                                  sx={{ whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}
+                                >
+                                  {f.text}
+                                </Typography>
+                              }
                             />
-                          }
-                          label={
-                            <Typography sx={{ whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}>
-                              {f.text}
+                            <Typography variant="caption" display="block">
+                              Recognition confidence {f.confidence.toFixed(1)}%; image box{' '}
+                              {f.bbox.join(', ')}
                             </Typography>
-                          }
-                        />
-                        <Typography variant="caption" display="block">
-                          Recognition confidence {f.confidence.toFixed(1)}%; image box{' '}
-                          {f.bbox.join(', ')}
-                        </Typography>
-                      </Box>
-                    )
-                  })}
+                          </Box>
+                        )
+                      })}
+                  </Stack>
                 </Stack>
               </Box>
             )}
@@ -505,6 +543,7 @@ export default function OCRReview({
                   if (current !== epoch.current) return
                   setReview(value)
                   setSelected([])
+                  setWordFilter('')
                   setAttested(false)
                   setContext(null)
                   setPreview({ ...preview, source_current: false })

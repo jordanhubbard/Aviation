@@ -6,6 +6,8 @@ index, not an independently maintained task list. Use `gh issue` and `gh pr`.
 
 ## Current work and requests
 
+- [#542 — Literal word review and unchanged-scope admission](https://github.com/jordanhubbard/Aviation/issues/542): [library contract](../architecture/aircraft-library.md) and [operator recovery](../development/aircraft-library-recovery.md).
+
 - [#539 — Reviewed table OCR previews](https://github.com/jordanhubbard/Aviation/issues/539): [behavior contract](../architecture/aircraft-library.md); explicit grid suppression preserves original review images and source-generation history.
 
 - [#538 — Explicit half-percent numeric comparison](https://github.com/jordanhubbard/Aviation/issues/538): [behavior contract](../architecture/aircraft-library.md); native continuation and landing remain subject to #520 and #522.

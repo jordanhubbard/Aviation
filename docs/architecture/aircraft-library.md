@@ -266,7 +266,8 @@ Performance questions must retain units, weight/configuration, source revision a
 Mixed text/diagram pages may receive an explicitly requested supplemental OCR
 preview even when native text extraction succeeded (#523). Preview at most ten
 distinct physical pages using `normal` (Tesseract PSM 3), `sparse` (PSM 11), or
-explicitly selected `table` (PSM 11 with straight-rule suppression, #539).
+explicitly selected `table` (PSM 11 with straight-rule suppression, #539), or
+`words` (PSM 11 with each recognized word retained independently, #542).
 Keep the original PDF, native page text, native passages, vectors and summaries
 unchanged during preview. Pin each immutable candidate to the original SHA-256,
 metadata and exact index identity. Retain PDFium-rendered page images, image
@@ -292,6 +293,16 @@ Display that table rules were suppressed for recognition, while review uses the
 original page. Rule suppression can also damage text; every selected fragment
 still requires literal comparison with the original image. No automatic review,
 value inference or performance-data approval follows from this mode.
+
+Individual-word previews preserve each complete TSV token's characters, box and
+confidence without editing or splitting the token. They permit selecting faithful
+words within an otherwise incorrectly recognized line. Bound this explicit mode
+to 1,000 fragments per page; existing line modes retain their 500-fragment bound.
+All modes retain the same total candidate, image, process and review limits.
+An independently reviewed word becomes its own complete attributed fragment;
+unreviewed substrings do not acquire the short-quotation exception.
+Provide a local exact-word filter for this mode; filtering changes only display,
+makes no requests, never selects evidence, and clears with private review state.
 
 An explicit reviewed application selects at most 100 candidate fragments, names
 the reviewer and attests that those selected fragments match the original page
@@ -382,6 +393,25 @@ evidence and preserve a longer current valid prefix. Record source identity and
 recovered coverage; never infer missing batches from hashes or claim completeness.
 The [operator recovery procedure](../development/aircraft-library-recovery.md)
 describes backup, rehearsal, admission and subsequent distillation.
+
+Separate explicit operator recovery after reviewed OCR additions (#542) may admit
+only unchanged leading batch scopes from a standalone snapshot. Preserve strict
+snapshot recovery unchanged. Require identical original bytes, metadata, provider,
+model, prompt/profile, native page/blank-review rows and complete native/prior OCR
+passages in the same order. The only source changes may be appended active,
+server-verified supplemental OCR reviews and their passages; reject removed,
+reordered, edited or unauthenticated evidence. Revalidate the entire saved prefix,
+then stop reuse at the first changed batch scope or current root boundary. Preserve
+any valid refinements, and explicitly partition every remaining current passage
+as unresolved evidence. Never skip an inserted fragment or infer its review.
+Preserve a longer valid current prefix. Publish a new current-generation artifact
+with an explicit recovery receipt identifying its snapshot, prior generation,
+new reviews and unchanged scope digest; leave the historical artifact untouched.
+Require idle document work and atomic metadata/index/native/review/artifact/idle checks so a
+concurrent job or source change cannot lose progress. Make no model calls and
+never count recovery as a new LLM completion or complete-document admission.
+Current-summary controls identify reused sections after source review and keep
+remaining unresolved evidence explicit until distillation completes.
 
 Processing work remains inspectable after a page closes or the service restarts.
 Authenticated GET `/api/aircraft-library/jobs` returns lightweight summaries with

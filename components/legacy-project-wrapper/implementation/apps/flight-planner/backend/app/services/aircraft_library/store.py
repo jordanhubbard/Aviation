@@ -239,6 +239,39 @@ class Store:
         value = [list(document) if document else None, [list(p) for p in passages]]
         return hashlib.sha256(json.dumps(value, separators=(",", ":")).encode()).hexdigest()
 
+    def recovery_identity(self, identifier, *, connection=None):
+        """Bind recovery to native/review records as well as the live text index."""
+        if connection is None:
+            with self.connection() as connection:
+                connection.execute("BEGIN")
+                return self.recovery_identity(identifier, connection=connection)
+        digest = hashlib.sha256(self.index_identity(identifier, connection=connection).encode())
+        queries = (
+            "SELECT * FROM pages WHERE document_id=? ORDER BY page",
+            "SELECT * FROM blank_page_reviews WHERE document_id=? ORDER BY review_id",
+            "SELECT * FROM ocr_previews WHERE document_id=? ORDER BY id",
+            "SELECT * FROM ocr_reviews WHERE document_id=? ORDER BY id",
+            "SELECT * FROM ocr_passages WHERE document_id=? ORDER BY passage_id",
+            "SELECT i.* FROM ocr_preview_images i JOIN ocr_previews p ON p.id=i.preview_id "
+            "WHERE p.document_id=? ORDER BY i.preview_id,i.page",
+        )
+        for query in queries:
+            digest.update(query.encode())
+            for row in connection.execute(query, (identifier,)):
+                # Stream rows; do not materialize all retained image blobs together.
+                values = [
+                    (
+                        ["bytes", len(v), hashlib.sha256(v).hexdigest()]
+                        if isinstance(v, bytes)
+                        else [type(v).__name__, v]
+                    )
+                    for v in row
+                ]
+                encoded = json.dumps(values, separators=(",", ":"), allow_nan=False).encode()
+                digest.update(len(encoded).to_bytes(8, "big"))
+                digest.update(encoded)
+        return digest.hexdigest()
+
     def ingest(
         self,
         data: bytes,
@@ -503,9 +536,26 @@ class Store:
         expected_metadata=None,
         expected_index_identity=None,
         expected_previous=_UNSET,
+        expected_idle=False,
+        expected_recovery_identity=None,
     ):
         with self.connection() as connection:
             connection.execute("BEGIN IMMEDIATE")
+            if (
+                expected_recovery_identity is not None
+                and self.recovery_identity(identifier, connection=connection)
+                != expected_recovery_identity
+            ):
+                raise ValueError("Native or reviewed source records changed during recovery; retry")
+            if (
+                expected_idle
+                and connection.execute(
+                    "SELECT 1 FROM jobs WHERE state IN ('queued','running') "
+                    "AND json_extract(request,'$.document_id')=? LIMIT 1",
+                    (identifier,),
+                ).fetchone()
+            ):
+                raise ValueError("Document work is queued or running; recovery requires idle work")
             if (
                 expected_index_identity is not None
                 and self.index_identity(identifier, connection=connection)

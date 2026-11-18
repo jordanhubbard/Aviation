@@ -2,7 +2,7 @@
  * Credentials belong to the caller's private transport, never PDF metadata or jobs.
  * Poll only a job explicitly requested by the operator. Images require HTTP for >4 MiB.
  */
-export type AircraftOCRMode = "normal" | "sparse" | "table";
+export type AircraftOCRMode = "normal" | "sparse" | "table" | "words";
 
 export interface AircraftOCRPreprocessing {
   method: "straight-rules-v1";

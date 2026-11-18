@@ -22,7 +22,8 @@ MAX_CANDIDATE_BYTES = 512 * 1024
 MAX_IMAGE_BYTES = 24 * 1024 * 1024
 MAX_TSV_BYTES = 4 * 1024 * 1024
 MAX_FRAGMENTS = 500
-MODES = {"normal": 3, "sparse": 11, "table": 11}
+MAX_WORD_FRAGMENTS = 1000
+MODES = {"normal": 3, "sparse": 11, "table": 11, "words": 11}
 
 
 class OCRError(ValueError):
@@ -31,7 +32,7 @@ class OCRError(ValueError):
 
 def selection(pages, mode):
     if not isinstance(mode, str) or mode not in MODES:
-        raise OCRError("OCR mode must be normal, sparse or table")
+        raise OCRError("OCR mode must be normal, sparse, table or words")
     if (
         not isinstance(pages, list)
         or not 1 <= len(pages) <= MAX_PAGES
@@ -50,8 +51,8 @@ def encoded(value):
     return json.dumps(value, ensure_ascii=False, sort_keys=True, separators=(",", ":")).encode()
 
 
-def fragments(tsv: str, width: int, height: int):
-    """Group Tesseract words by line; retain exact token characters and uncertainty."""
+def fragments(tsv: str, width: int, height: int, *, individual_words=False):
+    """Retain exact tokens, grouped by line unless individual review is requested."""
     lines = {}
     try:
         rows = csv.DictReader(StringIO(tsv), delimiter="\t", quoting=csv.QUOTE_NONE)
@@ -90,6 +91,8 @@ def fragments(tsv: str, width: int, height: int):
             ):
                 raise ValueError("Invalid OCR word")
             key = tuple(int(row[name]) for name in ("page_num", "block_num", "par_num", "line_num"))
+            if individual_words:
+                key += (len(lines),)
             lines.setdefault(key, []).append((text, x, y, w, h, confidence))
         output, offset = [], 0
         for words in lines.values():
@@ -118,7 +121,7 @@ def fragments(tsv: str, width: int, height: int):
                     }
                 )
                 offset += len(text) + 1
-                if len(output) > MAX_FRAGMENTS:
+                if len(output) > (MAX_WORD_FRAGMENTS if individual_words else MAX_FRAGMENTS):
                     raise ValueError("Too many OCR fragments")
         return output
     except (ValueError, TypeError, KeyError, csv.Error, OverflowError) as error:
@@ -287,7 +290,9 @@ def _generate(path: Path, output: Path, pages: list[int], mode: str):
                         raise OCRError("OCR fragment data exceeds size limit")
                     tsv = tsv_path.read_bytes()
                     record["tsv_sha256"] = digest(tsv)
-                    record["fragments"] = fragments(tsv.decode("utf-8"), w, h)
+                    record["fragments"] = fragments(
+                        tsv.decode("utf-8"), w, h, individual_words=mode == "words"
+                    )
                     record["error"] = None
                 except (subprocess.TimeoutExpired, OCRError, UnicodeError):
                     record["error"] = "OCR failed or exceeded page limits; no fragments retained"

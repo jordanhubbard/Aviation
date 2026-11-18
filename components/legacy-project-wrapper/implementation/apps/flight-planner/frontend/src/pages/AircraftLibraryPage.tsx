@@ -66,7 +66,15 @@ type Document = {
         { status: string; pages: { page: number; label: string; excerpt: string }[] }
       >
     }
-    distillation?: { status: string; sections: (Answer & { pages: number[] })[] }
+    distillation?: {
+      status: string
+      sections: (Answer & { pages: number[] })[]
+      recovery?: {
+        kind?: string
+        recovered_batches: number
+        recovered_claims: number
+      }
+    }
   }
 }
 type Job = {
@@ -893,6 +901,15 @@ export default function AircraftLibraryPage() {
                     {doc.artifacts.distillation && (
                       <details>
                         <summary>LLM distillation ({doc.artifacts.distillation.status})</summary>
+                        {doc.artifacts.distillation.recovery?.kind === 'reviewed_ocr_prefix' && (
+                          <Alert severity="info">
+                            Previously validated sections reused after source review:{' '}
+                            {doc.artifacts.distillation.recovery.recovered_batches} batches and{' '}
+                            {doc.artifacts.distillation.recovery.recovered_claims} claims.
+                            {doc.artifacts.distillation.status === 'partial' &&
+                              ' Additional evidence remains unresolved until further distillation.'}
+                          </Alert>
+                        )}
                         {doc.artifacts.distillation.sections.map((s, i) => (
                           <Box key={i} sx={{ my: 2 }}>
                             <Typography variant="subtitle2">

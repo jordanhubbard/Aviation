@@ -27,6 +27,21 @@ extraction/artifact and retains a current prefix covering at least as much evide
 Its audit identifies the snapshot, source fingerprint and recovered batch/claim
 counts. Paths, credentials and original text are not returned in that audit.
 
+After applying image-verified supplemental OCR, use the separate explicit
+`recover_reviewed_ocr_prefix(store, models, document_id, backup_file)` operation
+only on an idle document. Rehearse on a copy of the latest corpus. Its snapshot
+must precede those additions and match the current original, metadata, model and
+prompt/profile. Native source and all prior OCR provenance must remain identical;
+only appended, server-verified reviews and passages are eligible. It admits only
+fully revalidated leading batch scopes that still match current evidence exactly,
+stopping before changed scopes. Every other current passage remains in the saved
+unresolved partition. The receipt records that the source generation changed and
+identifies the original summary/snapshot and new reviews. Historical summaries
+remain unchanged. An earlier insertion may leave no eligible prefix; recover
+nothing in that case. An active/newly queued job, changed source or concurrent
+artifact update rejects publication. This operator function exposes no filesystem
+path through the HTTP/MCP API and makes no inference calls.
+
 After verifying the recovery result, enqueue **distillation**, rather than a new
 index run, to continue inference. A new index request intentionally refreshes
 extraction and derived work. Reclaimed leases belonging to the same index job now

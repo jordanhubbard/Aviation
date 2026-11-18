@@ -277,7 +277,7 @@ def test_corrupt_applied_text_fails_closed(library):
         store.passages([identifier])
 
 
-@pytest.mark.parametrize("mode", ["sparse", "table"])
+@pytest.mark.parametrize("mode", ["sparse", "table", "words"])
 def test_authenticated_typed_preview_apply_search_and_history_http(library, monkeypatch, mode):
     from aviation.aircraft_library import AircraftLibraryOCRClient
 

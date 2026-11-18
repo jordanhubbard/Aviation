@@ -23,6 +23,7 @@ const document = {
   sources: [{ filename: 'example.pdf', url: null, retrieved_at: '2026-11-16T00:00:00Z' }],
   artifacts: {},
 }
+let documentsResponse: unknown | undefined
 let seen: { path: string; init?: RequestInit }[]
 let askResponse: (() => Promise<unknown>) | undefined
 let historyResponse: (() => Promise<unknown>) | undefined
@@ -70,6 +71,7 @@ const historicalRecord = {
 }
 beforeEach(() => {
   seen = []
+  documentsResponse = undefined
   askResponse = undefined
   historyResponse = undefined
   vi.stubGlobal(
@@ -86,7 +88,7 @@ beforeEach(() => {
           types: [{ icao: 'C172', documents: 1 }],
           search: { configured: false, provider: null },
         }
-      else if (path.includes('/documents?')) body = { documents: [document] }
+      else if (path.includes('/documents?')) body = documentsResponse ?? { documents: [document] }
       else if (path.includes('/jobs?'))
         body = { jobs: [], next_offset: null, total: 0, offset: 0, limit: 20 }
       else if (path.includes('/distillations?'))
@@ -299,3 +301,34 @@ it('paginates summary history explicitly and reports malformed history without i
   )
   await screen.findByText('Invalid distillation history response')
 })
+
+it.each(['partial', 'complete'])(
+  'shows reused-section provenance with honest %s coverage',
+  async (status) => {
+    documentsResponse = {
+      documents: [
+        {
+          ...document,
+          artifacts: {
+            distillation: {
+              status,
+              sections: [],
+              recovery: { kind: 'reviewed_ocr_prefix', recovered_batches: 2, recovered_claims: 3 },
+            },
+          },
+        },
+      ],
+    }
+    await open()
+    fireEvent.click(await screen.findByText(`LLM distillation (${status})`))
+    expect(
+      await screen.findByText(
+        /Previously validated sections reused after source review: 2 batches and 3 claims/,
+      ),
+    ).toBeVisible()
+    if (status === 'partial')
+      expect(screen.getByText(/Additional evidence remains unresolved/)).toBeVisible()
+    else
+      expect(screen.queryByText(/Additional evidence remains unresolved/)).not.toBeInTheDocument()
+  },
+)
