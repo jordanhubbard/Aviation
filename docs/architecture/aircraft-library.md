@@ -157,6 +157,17 @@ ambiguous. Exact original source/quote/claim bytes, model inputs, generation
 identities and previously admitted artifacts stay intact; audit retained claims
 explicitly when comparison changes.
 
+Explicit standalone half percentages (#538), written `½%`, `1/2%` or with
+horizontal whitespace around the ASCII slash or before `%`, compare as `0.5%`.
+Preserve an immediately adjacent sign. Require the complete percent unit and
+ordinary token boundaries; reject identifier/reference labels, mixed numbers,
+chained fractions, detached signs and line joins from this normalization. Other
+fractions and quantities without `%` retain existing behavior. The numerator and
+denominator of a recognized half percentage cannot separately support whole
+numbers. This changes comparison only: source/claim text, exact cited quotations,
+model evidence, original hashes and generation fingerprints remain unchanged.
+Audit all saved current and historical claims before native continuation.
+
 For complete frequency measurements (#536), a missing boundary after lowercase or
 title-case `at`, `from`, `to`, `of`, `than`, `between`, `and` or `in` may be restored
 in temporary numeric comparison text. Require the existing complete signed

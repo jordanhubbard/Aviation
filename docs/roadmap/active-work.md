@@ -6,6 +6,8 @@ index, not an independently maintained task list. Use `gh issue` and `gh pr`.
 
 ## Current work and requests
 
+- [#538 — Explicit half-percent numeric comparison](https://github.com/jordanhubbard/Aviation/issues/538): [behavior contract](../architecture/aircraft-library.md); native continuation and landing remain subject to #520 and #522.
+
 - [#536 — Frequency measurements joined to PDF prose](https://github.com/jordanhubbard/Aviation/issues/536): [numeric comparison contract](../architecture/aircraft-library.md).
 
 - [#533 — Preserve signs in ISA temperature offsets](https://github.com/jordanhubbard/Aviation/issues/533): [numeric comparison contract](../architecture/aircraft-library.md).

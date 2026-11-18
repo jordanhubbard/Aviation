@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Aircraft library: compare explicit Unicode and ASCII half percentages with their decimal value while retaining exact original quotations and signs.
+
 - Aircraft library: recognize complete frequency measurements joined to ordinary PDF prose while preserving original quotations, signs, units and identifier exclusions.
 
 - Aircraft library: preserve signed ISA temperature offsets when horizontal PDF spacing separates the sign from the measured value, without changing original quotations or model inputs.
