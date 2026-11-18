@@ -6,6 +6,8 @@ index, not an independently maintained task list. Use `gh issue` and `gh pr`.
 
 ## Current work and requests
 
+- [#563 — Complete native-page context](https://github.com/jordanhubbard/Aviation/issues/563): [bounded request policy](../architecture/aircraft-library.md); version changed generations, preserve exact legacy replay and mark oversized page context unresolved. Known C182 table OCR requires separate image review before provider qualification.
+
 - [#561 — Explicit page-reference layout equivalence](https://github.com/jordanhubbard/Aviation/issues/561): [paired reference comparison contract](../architecture/aircraft-library.md); retain complete page identities, exact quotes and signed measurement checks.
 
 - [#558 — Printed leading-decimal measurements attached to units](https://github.com/jordanhubbard/Aviation/issues/558): [comparison and source-layout contract](../architecture/aircraft-library.md); keep exact quotations, identifier exclusions and independently reviewed source relationships.

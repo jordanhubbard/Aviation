@@ -72,6 +72,8 @@ type Document = {
     distillation?: {
       status: string
       unresolved_source_pages?: number[]
+      unresolved_context_pages?: number[]
+      context_warnings?: string[]
       sections: (Answer & { pages: number[] })[]
       recovery?: {
         kind?: string
@@ -108,7 +110,12 @@ type HistoricalDistillation = {
   source_metadata: Metadata
   historical: true
   eligible_for_resume: false
-  artifact: { status: string; sections: (Answer & { pages: number[] })[] }
+  artifact: {
+    status: string
+    sections: (Answer & { pages: number[] })[]
+    unresolved_context_pages?: number[]
+    context_warnings?: string[]
+  }
 }
 type Capabilities = {
   search: { configured: boolean; provider: string | null }
@@ -939,6 +946,13 @@ export default function AircraftLibraryPage() {
                     {doc.artifacts.distillation && (
                       <details>
                         <summary>LLM distillation ({doc.artifacts.distillation.status})</summary>
+                        {!!doc.artifacts.distillation.unresolved_context_pages?.length && (
+                          <Alert severity="warning">
+                            Complete page context remains unresolved for physical pages{' '}
+                            {doc.artifacts.distillation.unresolved_context_pages.join(', ')}.{' '}
+                            {doc.artifacts.distillation.context_warnings?.join(' ')}
+                          </Alert>
+                        )}
                         {!!doc.artifacts.distillation.unresolved_source_pages?.length && (
                           <Alert severity="warning">
                             Original-image interpretation remains unresolved on PDF pages{' '}
@@ -1023,6 +1037,13 @@ export default function AircraftLibraryPage() {
                           <Typography variant="caption">
                             Original SHA-256: {historical.source_sha256}
                           </Typography>
+                          {!!historical.artifact.unresolved_context_pages?.length && (
+                            <Alert severity="warning">
+                              Historical complete page context remains unresolved for physical pages{' '}
+                              {historical.artifact.unresolved_context_pages.join(', ')}.{' '}
+                              {historical.artifact.context_warnings?.join(' ')}
+                            </Alert>
+                          )}
                           {historical.artifact.sections.map((section, i) => (
                             <details key={i}>
                               <summary>

@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Aircraft library: keep complete short-page evidence in bounded distillation requests and explicitly retain partial coverage for oversized page context, with versioned generations and exact historical replay.
+
 - Aircraft library: compare matching explicitly marked page references across horizontal PDF layout spacing without borrowing their components as measurement evidence.
 
 - Aircraft library: recognize complete printed leading-decimal measurements attached to physical units during numeric comparison, preserving exact quotes and source-layout review requirements.

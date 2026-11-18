@@ -16,6 +16,7 @@ from .models import (
     distillation_context,
     distillation_plan,
     distillation_request_evidence,
+    retain_distillation_context_limits,
     validated_prefix,
     validate_answer,
 )
@@ -128,6 +129,7 @@ def _retain_source_limits(value, current, plan, recovered):
     else:
         value.pop("source_limits", None)
         value.pop("unresolved_source_pages", None)
+    limited |= retain_distillation_context_limits(value, plan)
     value["unresolved_batches"] = sum(
         i >= len(recovered)
         or recovered[i]["insufficient_evidence"]

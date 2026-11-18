@@ -406,6 +406,32 @@ do not grant completion to unprocessed material. Carry a recovery receipt only w
 resuming its fully validated prefix; a fresh run or invalidated prefix must not inherit
 an older admission receipt.
 
+### Complete native-page context (#563)
+
+New distillations of documents with multiple native passages on a physical page
+use `native-page-context-v1`. Include all readable passages from each primary
+page when their total source characters fit the configured budget, including
+verified reviewed OCR/transcriptions. Pack against this complete request size;
+primary passages still form a unique ordered partition. Refinements use the same
+page context. A page larger than the budget uses bounded primary passages plus
+the existing mandatory reviewed context; never truncate a source passage. Retain
+`unresolved_context_pages` and an explicit warning for these pages, count their
+batches as unresolved and keep the artifact partial even after all primary batches
+finish. HTTP/MCP and SDK document artifacts retain these fields; current and
+historical summary views show the affected physical pages and context warning.
+If primary plus mandatory reviewed context exceeds the budget, fail before
+inference as before. Context repetition is not extra primary coverage.
+
+This versioned policy participates in generation identity. Documents without
+multiple native passages retain their existing default policy and identity.
+Explicit `ordered-passages-v1` and `reviewed-page-context-v1` reconstruction keeps
+the exact previous requests and fingerprints. Do not widen historical evidence,
+relabel a changed request or reuse a prefix merely because its claims would pass
+against new context. Snapshot admission compares complete ordered request evidence
+and stops at the first changed scope; preserve archived generations and failures.
+Source text, model/profile, question, system instructions and numeric validation
+remain unchanged. Context repair does not repair independently known table OCR.
+
 Performance questions must retain units, weight/configuration, source revision and applicability. No LLM-derived number becomes a planning dataset without separate review and independent numerical acceptance under #494. Maintenance information can be retrieved from relevant manuals but no inferred service interval or return-to-service authority is fabricated.
 
 ## Supplemental OCR review

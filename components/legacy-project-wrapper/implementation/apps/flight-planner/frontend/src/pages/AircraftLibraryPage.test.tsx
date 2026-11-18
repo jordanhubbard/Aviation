@@ -335,3 +335,29 @@ it.each(['partial', 'complete'])(
       expect(screen.queryByText(/Additional evidence remains unresolved/)).not.toBeInTheDocument()
   },
 )
+
+it('shows oversized page context as unresolved even after primary batches finish', async () => {
+  documentsResponse = {
+    documents: [
+      {
+        ...document,
+        artifacts: {
+          distillation: {
+            status: 'partial',
+            sections: [],
+            completed_batches: 4,
+            total_batches: 4,
+            unresolved_context_pages: [8, 12],
+            context_warnings: ['Cross-passage context remains unresolved.'],
+          },
+        },
+      },
+    ],
+  }
+  await open()
+  fireEvent.click(await screen.findByText('LLM distillation (partial)'))
+  expect(
+    screen.getByText(/Complete page context remains unresolved for physical pages 8, 12/),
+  ).toBeVisible()
+  expect(screen.getByText(/Cross-passage context remains unresolved/)).toBeVisible()
+})

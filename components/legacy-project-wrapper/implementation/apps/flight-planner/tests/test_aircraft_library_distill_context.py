@@ -7,6 +7,7 @@ import pytest
 from app.services.aircraft_library import ocr_reviews, transcriptions
 from app.services.aircraft_library.models import (
     LEGACY_DISTILLATION_EVIDENCE,
+    NATIVE_DISTILLATION_EVIDENCE,
     REVIEWED_DISTILLATION_EVIDENCE,
     Models,
     ModelTruncated,
@@ -111,8 +112,12 @@ def test_long_page_context_repeats_without_duplicate_primary_coverage(library, t
     review = transcribe(store, identifier, 8, "Timer selector digits are the 10's.")
     provider = ContextProvider(truncate=truncate)
     result = distill(store, provider, identifier)
-    assert result["status"] == "complete"
-    assert result["evidence_policy"] == REVIEWED_DISTILLATION_EVIDENCE
+    assert result["status"] == "partial"
+    assert result["completed_batches"] == result["total_batches"]
+    assert result["unresolved_context_pages"] == [8]
+    assert result["context_warnings"]
+    assert result["unresolved_batches"] > 0
+    assert result["evidence_policy"] == NATIVE_DISTILLATION_EVIDENCE
     assert result["context_limit_chars"] == 4000
     assert provider.truncated == truncate
     _, roots, _, fp = distillation_context(store, provider, identifier)
@@ -143,7 +148,8 @@ def test_context_request_resume_does_not_regenerate_validated_prefix(library):
     assert partial["completed_batches"] == 2
     resumed = ContextProvider()
     result = distill(store, resumed, identifier)
-    assert result["status"] == "complete"
+    assert result["status"] == "partial" and result["unresolved_context_pages"] == [8]
+    assert result["completed_batches"] == result["total_batches"]
     assert result["evidence_identity"] == partial["evidence_identity"]
     assert result["sections"][:2] == partial["sections"]
     assert not any(ids in provider.calls[:2] for ids in resumed.calls)
@@ -465,4 +471,176 @@ def test_invalidated_prefix_does_not_resurrect_its_old_admission_receipt(library
     assert any(
         store.historical_distillation(identifier, r["revision_id"])["artifact"] == old
         for r in store.distillations(identifier)["items"]
+    )
+
+
+class NativeBoundaryStore:
+    """A short split page follows enough text to cross the old request boundary."""
+
+    def __init__(self):
+        self.rows = [
+            self.row(1, 1, "Introduction. " + "a" * 987),
+            self.row(2, 2, "Climb distance is 21 miles. " + "b" * 720),
+            self.row(3, 2, "Subtraction row: 450 -21 429. " + "c" * 720),
+            self.row(4, 3, "Following page. " + "d" * 985),
+        ]
+
+    @staticmethod
+    def row(identifier, page, text):
+        return {
+            "passage_id": identifier,
+            "document_id": "native-fixture",
+            "page": page,
+            "label": str(page),
+            "offset": identifier * 1000,
+            "text": text,
+            "method": "text",
+        }
+
+    def get(self, identifier):
+        return {"metadata": {"icao": "C182"}}
+
+    def passages(self, identifiers):
+        return copy.deepcopy(self.rows)
+
+
+def test_short_native_page_prose_and_subtraction_row_stay_together():
+    store, provider = NativeBoundaryStore(), Provider()
+    _, roots, question, fp = distillation_context(store, provider, "native-fixture")
+    _, legacy, old_question, old_fp = distillation_context(
+        store, provider, "native-fixture", evidence_policy=LEGACY_DISTILLATION_EVIDENCE
+    )
+    assert fp != old_fp and question == old_question
+    assert [[p["passage_id"] for p in b] for b in legacy] == [[1, 2], [3, 4]]
+    assert [[p["passage_id"] for p in b] for b in roots] == [[1], [2, 3], [4]]
+    artifact = {"evidence_policy": NATIVE_DISTILLATION_EVIDENCE, "context_limit_chars": 2000}
+    plan = distillation_plan(roots, [[1], [2], [3], [4]])
+    for batch in plan:
+        evidence = distillation_request_evidence(batch, plan, artifact)
+        ids = [p["passage_id"] for p in evidence]
+        assert len(ids) == len(set(ids))
+        assert sum(len(p["text"]) for p in evidence) <= 2000
+        if batch[0]["page"] == 2:
+            assert set(ids) == {2, 3}
+        else:
+            assert ids == [batch[0]["passage_id"]]
+    candidate = {
+        "insufficient_evidence": False,
+        "reason": "",
+        "claims": [
+            {
+                "text": "Climb distance is 21 miles.",
+                "citations": [{"passage_id": 2, "quote": "Climb distance is 21 miles."}],
+            }
+        ],
+    }
+    with pytest.raises(ModelUnavailable):
+        validate_answer(candidate, legacy[1])
+    validate_answer(candidate, distillation_request_evidence(plan[2], plan, artifact))
+    assert store.rows[2]["text"].startswith("Subtraction row: 450 -21 429.")
+
+
+@pytest.mark.parametrize("policy", [LEGACY_DISTILLATION_EVIDENCE, REVIEWED_DISTILLATION_EVIDENCE])
+def test_explicit_previous_policies_keep_their_original_boundary_requests(policy):
+    store, provider = NativeBoundaryStore(), Provider()
+    _, roots, _, _ = distillation_context(store, provider, "native-fixture", evidence_policy=policy)
+    artifact = (
+        {}
+        if policy == LEGACY_DISTILLATION_EVIDENCE
+        else {
+            "evidence_policy": policy,
+            "context_limit_chars": 2000,
+        }
+    )
+    assert [[p["passage_id"] for p in b] for b in roots] == [[1, 2], [3, 4]]
+    assert [distillation_request_evidence(b, roots, artifact) for b in roots] == roots
+
+
+def test_native_context_does_not_grant_unverified_review_provenance():
+    store = NativeBoundaryStore()
+    store.rows[1]["transcription_review"] = {"id": "unverified"}
+    with pytest.raises(ModelUnavailable, match="Unverified"):
+        distillation_context(
+            store, Provider(), "native-fixture", evidence_policy=NATIVE_DISTILLATION_EVIDENCE
+        )
+
+
+def test_native_context_never_expands_to_other_documents_or_pages():
+    store = NativeBoundaryStore()
+    extra = {**store.rows[1], "document_id": "other", "passage_id": 5}
+    rows = store.rows + [extra]
+    artifact = {"evidence_policy": NATIVE_DISTILLATION_EVIDENCE, "context_limit_chars": 2000}
+    evidence = distillation_request_evidence([store.rows[2]], [rows], artifact)
+    assert {p["passage_id"] for p in evidence} == {2, 3}
+
+
+def test_snapshot_recovery_retains_oversize_context_warnings(library, tmp_path):
+    store, _, _ = library
+    identifier = long_page(store)
+    provider = ContextProvider()
+    full = copy.deepcopy(distill(store, provider, identifier))
+    assert full["completed_batches"] == full["total_batches"] and full["status"] == "partial"
+    backup = snapshot(store, tmp_path / "oversized-native.sqlite3")
+    store.artifact(
+        identifier,
+        "distillation",
+        {
+            **full,
+            "sections": full["sections"][:1],
+            "completed_batches": 1,
+        },
+    )
+    calls = len(provider.calls)
+    recover_distillation(store, provider, identifier, backup)
+    recovered = store.get(identifier)["artifacts"]["distillation"]
+    assert recovered["unresolved_context_pages"] == [8]
+    assert recovered["context_warnings"] == full["context_warnings"]
+    assert recovered["unresolved_batches"] == full["unresolved_batches"] > 0
+    assert recovered["status"] == "partial" and len(provider.calls) == calls
+
+
+@pytest.mark.parametrize("truncate", [False, True])
+def test_short_page_keeps_verified_review_and_all_native_passages(library, truncate):
+    store, _, _ = library
+    identifier = store.ingest(manual("Native table description. " * 90), {"icao": "C182"})["id"]
+    review = transcribe(store, identifier, 1, "Literal reviewed pressure is 37 psi.")
+    before = copy.deepcopy(store.passages([identifier]))
+    assert len([p for p in before if not p.get("transcription_review")]) > 1
+    provider = ContextProvider(truncate=truncate)
+    result = distill(store, provider, identifier)
+    assert (
+        result["status"] == "complete" and result["evidence_policy"] == NATIVE_DISTILLATION_EVIDENCE
+    )
+    assert "unresolved_context_pages" not in result and "context_warnings" not in result
+    assert provider.truncated == truncate
+    for evidence in provider.received:
+        assert {p["passage_id"] for p in evidence} == {p["passage_id"] for p in before}
+        assert sum(len(p["text"]) for p in evidence) <= 4000
+        assert any(p["passage_id"] == review["passage_id"] for p in evidence)
+    assert store.passages([identifier]) == before
+
+
+def test_policy_migration_refuses_changed_first_request_without_relabelling(library, tmp_path):
+    store, _, _ = library
+    identifier = store.ingest(
+        manual(
+            "Introductory systems. " * 70,
+            "Native table description. " * 90,
+        ),
+        {"icao": "C182"},
+    )["id"]
+    provider = ContextProvider()
+    old, _ = legacy_result(store, identifier, provider)
+    store.artifact(identifier, "distillation", old)
+    backup = snapshot(store, tmp_path / "changed-first-request.sqlite3")
+    before, calls = store.get(identifier), len(provider.calls)
+    with pytest.raises(ValueError, match="No unchanged leading request scopes"):
+        recover_distillation(store, provider, identifier, backup)
+    assert store.get(identifier) == before and len(provider.calls) == calls
+    fresh = distill(store, provider, identifier)
+    assert fresh["evidence_identity"] != old["evidence_identity"] and "recovery" not in fresh
+    assert fresh["evidence_policy"] == NATIVE_DISTILLATION_EVIDENCE
+    assert any(
+        store.historical_distillation(identifier, row["revision_id"])["artifact"] == old
+        for row in store.distillations(identifier)["items"]
     )
