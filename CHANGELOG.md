@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Aircraft library: recognize measured decimals split by horizontal PDF spacing while preserving original quotations, signs, precision and identifier exclusions.
+
 - Aircraft library: give failed citation repairs bounded request-scoped excerpt-availability hints without changing accepted claims, source evidence or validation rules.
 
 - Aircraft library: recognize quoted quantities joined to ordinary prose when explicit physical-unit context is present, preserving exact source text, negative signs, ranges and identifier exclusions.

@@ -121,6 +121,28 @@ rules or other ambiguous forms. Apply this only to temporary comparison text in
 both claim and quote; keep their original characters, model inputs and generation
 identity unchanged. A definite unary negative cannot use positive-only evidence.
 
+Horizontal PDF layout gaps around a decimal point can split a complete measured
+value (#532). For numeric comparison only, remove horizontal whitespace immediately
+around a single decimal point between integer and fractional digits when the full
+signed scalar or two-endpoint range has an explicit complete physical unit. Support
+the existing speed, distance, mass, volume, flow, time and temperature unit words,
+plus load-factor `g`, pressure (`psi`, `inHg`, `hPa`, `mbar`), `kg`, `cm`, `mm`,
+`inch(es)` and `%`; unit case may vary and may be attached to the fractional digits.
+Range connectors are the existing hyphen/en-dash/em-dash or `to`/`through` forms;
+preserve their characters and both endpoints' signs and precision. Grouped integer
+parts retain the existing comma rules. Apply this comparison boundary before unary
+dash interpretation so a measured range remains a range.
+
+Require an ordinary token boundary and exclude embedded/hyphenated/slashed/dotted
+identifiers, explicit part/model/code/reference labels, numbered Section/Figure/Table
+labels, malformed comma groups, separated unary signs and unit-like identifier
+suffixes. Never join lines, merge distinct decimal points, infer a missing digit,
+reinterpret decimal hours as clock notation or remove a negative sign. Bare spaced
+decimals without explicit unit context remain unchanged. Preserve original source,
+quote and claim bytes, model evidence and generation identities. A previously
+unsupported rounded integer component must not survive as false numeric support
+when the exact measured decimal is recognized; audit retained artifacts explicitly.
+
 PDF layout extraction can join ordinary prose directly to a quantity (#526).
 For numeric comparison only, recognize lowercase or title-case `at`, `from`,
 `to`, `of`, `than`, `between` and `and` joined to a signed scalar or numeric range

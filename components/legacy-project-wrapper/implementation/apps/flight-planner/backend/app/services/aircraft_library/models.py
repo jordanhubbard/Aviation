@@ -524,12 +524,47 @@ def _comparison_prose_quantities(text):
     return _PROSE_QUANTITY.sub(separate, text)
 
 
+_DECIMAL_MEASURE_VALUE = (
+    r"[-\N{MINUS SIGN}\N{EN DASH}+]?" r"(?:\d{1,3}(?:[ \t]*,\d{3})+|\d+)(?:[ \t]*\.[ \t]*\d+)?"
+)
+_SPACED_DECIMAL_MEASURE = re.compile(
+    r"(?<![\w.,/+\-\N{MINUS SIGN}\N{EN DASH}\N{EM DASH}])"
+    + _DECIMAL_MEASURE_VALUE
+    + r"(?:"
+    + _QUANTITY_RANGE
+    + _DECIMAL_MEASURE_VALUE
+    + r")?"
+    r"(?=[ \t]*(?i:(?:g|KIAS|KCAS|KTAS|knots?|kts?|RPM|ft|feet|foot|lbs?|pounds?|"
+    r"gallons?|gal|GPH|hours?|hrs?|minutes?|mins?|seconds?|secs?|\N{DEGREE SIGN}[CF]|"
+    r"psi|inHg|hPa|mbar|kg|cm|mm|inches|inch)\b|%)"
+    r"(?![\w/\-\N{EN DASH}\N{EM DASH}]|\.\w))"
+)
+_DECIMAL_REFERENCE_LABEL = re.compile(
+    r"(?i)(?<!\w)(?:Section|Sec\.?|Figure|Fig\.?|Table)\s*(?:[:#]\s*)?$"
+)
+
+
+def _comparison_spaced_decimals(text):
+    def combine(match):
+        prefix = text[: match.start()]
+        if (
+            _QUANTITY_CODE_LABEL.search(prefix)
+            or _DECIMAL_REFERENCE_LABEL.search(prefix)
+            or re.search(r"(?:\d,|[-+\N{MINUS SIGN}\N{EN DASH}])[ \t]+$", prefix)
+        ):
+            return match[0]
+        return re.sub(r"(?<=\d)[ \t]*\.[ \t]*(?=\d)", ".", match[0])
+
+    return _SPACED_DECIMAL_MEASURE.sub(combine, text)
+
+
 def numbers(text):
     # Normalize comparison text only: PDF leaders are layout, not a decimal
     # continuation. Keep the source quotation and the complete signed token.
     # A prose/quantity boundary requires an explicit unit. Do not extract
     # arbitrary identifier suffixes or change the retained source quotation.
     text = _comparison_prose_quantities(text)
+    text = _comparison_spaced_decimals(text)
     text = _comparison_unary_dashes(text)
     text = re.sub(r"\.{3,}(?=-?\d)", " ", text.replace("\N{MINUS SIGN}", "-"))
     text = re.sub(
