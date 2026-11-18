@@ -577,12 +577,32 @@ def _comparison_isa_temperature_offsets(text):
     return _ISA_TEMPERATURE_OFFSET.sub(combine, text)
 
 
+_FREQUENCY_PROSE_QUANTITY = re.compile(
+    r"(?<![\w./+\-\N{MINUS SIGN}\N{EN DASH}\N{EM DASH}])"
+    r"(at|At|from|From|to|To|of|Of|than|Than|between|Between|and|And|in|In)"
+    r"(?=" + _QUANTITY_VALUE + r"(?:" + _QUANTITY_RANGE + _QUANTITY_VALUE + r")?"
+    r"(?:[ \t]+|[ \t]*-[ \t]*)(?i:GHz|MHz|kHz|Hz)\b"
+    r"(?![\w/\-\N{EN DASH}\N{EM DASH}]|\.\w))"
+)
+
+
+def _comparison_frequency_quantities(text):
+    def separate(match):
+        prefix = text[: match.start()]
+        if _QUANTITY_CODE_LABEL.search(prefix) or _DECIMAL_REFERENCE_LABEL.search(prefix):
+            return match[0]
+        return match[0] + " "
+
+    return _FREQUENCY_PROSE_QUANTITY.sub(separate, text)
+
+
 def numbers(text):
     # Normalize comparison text only: PDF leaders are layout, not a decimal
     # continuation. Keep the source quotation and the complete signed token.
     # A prose/quantity boundary requires an explicit unit. Do not extract
     # arbitrary identifier suffixes or change the retained source quotation.
     text = _comparison_isa_temperature_offsets(text)
+    text = _comparison_frequency_quantities(text)
     text = _comparison_prose_quantities(text)
     text = _comparison_spaced_decimals(text)
     text = _comparison_unary_dashes(text)

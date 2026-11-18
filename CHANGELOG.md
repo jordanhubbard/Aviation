@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Aircraft library: recognize complete frequency measurements joined to ordinary PDF prose while preserving original quotations, signs, units and identifier exclusions.
+
 - Aircraft library: preserve signed ISA temperature offsets when horizontal PDF spacing separates the sign from the measured value, without changing original quotations or model inputs.
 
 - Aircraft library: recognize measured decimals split by horizontal PDF spacing while preserving original quotations, signs, precision and identifier exclusions.

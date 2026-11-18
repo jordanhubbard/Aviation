@@ -157,6 +157,24 @@ ambiguous. Exact original source/quote/claim bytes, model inputs, generation
 identities and previously admitted artifacts stay intact; audit retained claims
 explicitly when comparison changes.
 
+For complete frequency measurements (#536), a missing boundary after lowercase or
+title-case `at`, `from`, `to`, `of`, `than`, `between`, `and` or `in` may be restored
+in temporary numeric comparison text. Require the existing complete signed
+integer/decimal or two-endpoint range grammar followed by horizontal whitespace
+or a single ASCII hyphen separating the value from a complete `Hz`, `kHz`, `MHz`
+or `GHz` unit (unit case may vary). Horizontal spacing may surround that unit
+hyphen. Keep the hyphen, numeric signs, range connectors and precision unchanged;
+this inserts only the boundary after the prose word. No unit conversion, digit
+inference, decimal-gap joining or line joining is introduced.
+
+Require ordinary token boundaries. Exclude embedded/hyphenated/slashed/dotted
+identifiers, explicit part/model/code/reference and Section/Figure/Table labels,
+malformed numeric expressions, doubled unit hyphens, missing unit separators and
+unit-like identifier suffixes. Keep bare joined measurements without a recognized
+prose prefix unchanged. Preserve original source, claim and quote bytes, model
+evidence and generation identities; audit all retained current/historical claims
+for any change to prior numeric support, including a lost negative sign.
+
 PDF layout extraction can join ordinary prose directly to a quantity (#526).
 For numeric comparison only, recognize lowercase or title-case `at`, `from`,
 `to`, `of`, `than`, `between` and `and` joined to a signed scalar or numeric range
