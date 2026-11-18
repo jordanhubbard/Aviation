@@ -470,12 +470,20 @@ def retrieve(store: Store, models: Models, code: str, question: str, *, limit=12
     return expanded[:limit], warnings
 
 
+_PRINTED_PAGE_IDENTIFIER = r"(?a:(?:[A-Z][A-Z0-9]*|\d+)(?:[ \t]*-[ \t]*\d+)+)"
 _PRINTED_REFERENCE = re.compile(
     r"(?<![\w-])(?:"
     r"(?P<service>(?:SL|SB)[ \t]*-[ \t]*\d+(?:[ \t]*-[ \t]*\d+)*"
     r"|SB[ \t]*\d+(?:[ \t]*-[ \t]*\d+)+)"
     r"|(?P<kind>Figure|Fig\.|Table|Section|Sec\.)[ \t]*"
     r"(?P<identifier>\d+(?:[ \t]*-[ \t]*\d+)+)"
+    r"|(?ai:pages?[ \t]+|pp?\.[ \t]*)(?P<page_identifier>"
+    + _PRINTED_PAGE_IDENTIFIER
+    + r")(?![ \t]*-[ \t]*[A-Za-z0-9])"
+    r"(?=$|[ \t\r\n),;\]}!?'\"]|[.:](?!\w))"
+    r"|(?ai:Title)[ \t]*\([ \t]*(?P<title_page_identifier>"
+    + _PRINTED_PAGE_IDENTIFIER
+    + r")[ \t]*\)"
     r")(?![\w-]|\.\d)",
     re.IGNORECASE,
 )
@@ -487,6 +495,9 @@ def _unsupported_outside_cited_references(text, quotes):
     def identity(match):
         if match["service"] is not None:
             return "service", re.sub(r"[ \t]+", "", match["service"]).upper()
+        page = match["page_identifier"] or match["title_page_identifier"]
+        if page is not None:
+            return "page", re.sub(r"[ \t]+", "", page).upper()
         kind = match["kind"].lower().rstrip(".")
         kind = {"fig": "figure", "sec": "section"}.get(kind, kind)
         return kind, re.sub(r"[ \t]+", "", match["identifier"])
