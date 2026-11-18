@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Aircraft library: let image reviewers explicitly restrict inaccurate native text, preserving original evidence and exposing the reason through API, SDK and page-review controls.
+
 - Aircraft library: keep complete short-page evidence in bounded distillation requests and explicitly retain partial coverage for oversized page context, with versioned generations and exact historical replay.
 
 - Aircraft library: compare matching explicitly marked page references across horizontal PDF layout spacing without borrowing their components as measurement evidence.

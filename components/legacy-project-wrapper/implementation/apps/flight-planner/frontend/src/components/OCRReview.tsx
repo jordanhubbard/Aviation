@@ -76,6 +76,13 @@ type Props = {
   onReviewed: () => Promise<void>
 }
 
+type RestrictionReason = Exclude<AircraftSourceLimitRecord['reason'], 'original_text_reviewed'>
+const sourceReasonLabels: Record<AircraftSourceLimitRecord['reason'], string> = {
+  layout_relationships_unavailable: 'Diagram or table relationships unavailable',
+  native_text_inaccurate: 'Native text is inaccurate',
+  original_text_reviewed: 'Native text reviewed and re-enabled',
+}
+
 export default function OCRReview({
   documentId,
   sourceSha256,
@@ -106,6 +113,9 @@ export default function OCRReview({
   const [transcriptionAttested, setTranscriptionAttested] = useState(false)
   const [transcription, setTranscription] = useState<AircraftPageTranscription | null>(null)
   const [sourceReviewer, setSourceReviewer] = useState('')
+  const [sourceReason, setSourceReason] = useState<RestrictionReason>(
+    'layout_relationships_unavailable',
+  )
   const [sourceAttested, setSourceAttested] = useState(false)
   const [sourceReview, setSourceReview] = useState<AircraftSourceLimitRecord | null>(null)
   const [busy, setBusy] = useState(false)
@@ -125,6 +135,7 @@ export default function OCRReview({
     setTranscriptionReviewer('')
     setTranscriptionAttested(false)
     setSourceReviewer('')
+    setSourceReason('layout_relationships_unavailable')
     setSourceAttested(false)
   }
   useEffect(() => {
@@ -143,6 +154,7 @@ export default function OCRReview({
     setTranscriptionAttested(false)
     setTranscription(null)
     setSourceReviewer('')
+    setSourceReason('layout_relationships_unavailable')
     setSourceAttested(false)
     setSourceReview(null)
     setStatus('')
@@ -173,6 +185,7 @@ export default function OCRReview({
         setDraft('')
         setTranscriptionAttested(false)
         setSourceAttested(false)
+        setSourceReason('layout_relationships_unavailable')
         setContext(null)
         setPreview((value) => (value ? { ...value, source_current: false } : null))
       }
@@ -472,8 +485,31 @@ export default function OCRReview({
                       <Alert severity={pageLimited ? 'warning' : 'info'}>
                         {pageLimited
                           ? 'Native text from this page is original-image-only. It remains searchable, but cannot support generated claims. Compare a fresh page image before re-enabling it.'
-                          : 'Flattened diagrams can associate numbers with the wrong labels. Mark native text as original-image-only when it cannot establish the relationships. Originals and reviewed literal sources are preserved; coverage remains partial.'}
+                          : 'Native text can misread visible words or numbers, or lose diagram and table relationships. Compare the original image and select the reason to limit it. Originals and reviewed literal sources are preserved; coverage remains partial.'}
                       </Alert>
+                      {!pageLimited && (
+                        <TextField
+                          select
+                          label="Reason to limit native text"
+                          value={sourceReason}
+                          SelectProps={{ sx: { '& .MuiSelect-select': { whiteSpace: 'normal' } } }}
+                          disabled={disabled || !image || !preview.source_current}
+                          onChange={(e) => {
+                            setSourceReason(e.target.value as RestrictionReason)
+                            setSourceAttested(false)
+                          }}
+                        >
+                          <MenuItem
+                            value="layout_relationships_unavailable"
+                            sx={{ whiteSpace: 'normal' }}
+                          >
+                            {sourceReasonLabels.layout_relationships_unavailable}
+                          </MenuItem>
+                          <MenuItem value="native_text_inaccurate" sx={{ whiteSpace: 'normal' }}>
+                            {sourceReasonLabels.native_text_inaccurate}
+                          </MenuItem>
+                        </TextField>
+                      )}
                       <TextField
                         label="Source-use reviewer name"
                         helperText="Identify yourself; label agent reviews as such."
@@ -501,7 +537,9 @@ export default function OCRReview({
                         label={
                           pageLimited
                             ? 'I compared the current original image and confirm that native page text is suitable source evidence.'
-                            : 'I compared the original image and confirm that native text cannot establish its diagram relationships.'
+                            : sourceReason === 'native_text_inaccurate'
+                              ? 'I compared the original image and confirm that native words, signs or numbers are inaccurate.'
+                              : 'I compared the original image and confirm that native text cannot establish its diagram relationships.'
                         }
                       />
                       <Button
@@ -528,7 +566,7 @@ export default function OCRReview({
                                 }
                               : {
                                   action: 'restrict' as const,
-                                  reason: 'layout_relationships_unavailable' as const,
+                                  reason: sourceReason,
                                 }
                             const queued = await client.reviewSourceUse(documentId, {
                               ...decision,
@@ -553,6 +591,7 @@ export default function OCRReview({
                               value.document_id !== documentId ||
                               value.page !== currentPage.page ||
                               value.action !== decision.action ||
+                              value.reason !== decision.reason ||
                               value.source_sha256 !== sourceSha256 ||
                               value.image_sha256 !== currentPage.image_sha256 ||
                               value.before_index_identity !== preview.index_identity
@@ -560,6 +599,7 @@ export default function OCRReview({
                               throw new Error('Source-use receipt does not match the reviewed page')
                             setSourceReview(value)
                             setSourceReviewer('')
+                            setSourceReason('layout_relationships_unavailable')
                             setSourceAttested(false)
                             setSelected([])
                             setAttested(false)
@@ -913,6 +953,7 @@ export default function OCRReview({
               {sourceReview.created_at}. This review does not approve generated interpretations or
               performance data.
             </Typography>
+            <Typography>Source-use reason: {sourceReasonLabels[sourceReview.reason]}</Typography>
             <Button
               disabled={disabled}
               onClick={() =>

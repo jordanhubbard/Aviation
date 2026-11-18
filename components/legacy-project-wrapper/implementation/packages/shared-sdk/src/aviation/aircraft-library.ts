@@ -38,7 +38,10 @@ export interface AircraftTranscriptionApply extends AircraftOCRIdentity {
 }
 export type AircraftSourceUseReview = Omit<AircraftTranscriptionApply, "text"> &
   (
-    | { action: "restrict"; reason: "layout_relationships_unavailable" }
+    | {
+        action: "restrict";
+        reason: "layout_relationships_unavailable" | "native_text_inaccurate";
+      }
     | { action: "release"; reason: "original_text_reviewed" }
   );
 export interface AircraftSourceLimitRecord {
@@ -52,7 +55,10 @@ export interface AircraftSourceLimitRecord {
   source_sha256: string;
   source_metadata: Record<string, unknown>;
   action: "restrict" | "release";
-  reason: "layout_relationships_unavailable" | "original_text_reviewed";
+  reason:
+    | "layout_relationships_unavailable"
+    | "native_text_inaccurate"
+    | "original_text_reviewed";
   reviewer: string;
   attest_matches_image: true;
   job_id: string;

@@ -34,15 +34,19 @@ def request(store, identifier, *, action="restrict", **changes):
     }
 
 
-def apply(store, identifier, *, action="restrict"):
-    job = source_limits.queue_review(store, identifier, request(store, identifier, action=action))
+def apply(store, identifier, *, action="restrict", reason=None):
+    values = request(store, identifier, action=action)
+    if reason is not None:
+        values["reason"] = reason
+    job = source_limits.queue_review(store, identifier, values)
     assert Worker(store, Models({})).run_one()
     done = store.job(job["id"])
     assert done["state"] == "completed", done["error"]
     return source_limits.review(store, identifier, done["result"]["source_limit_review_id"])
 
 
-def test_present_numbers_do_not_override_reviewed_layout_limitation(library):
+@pytest.mark.parametrize("reason", ["layout_relationships_unavailable", "native_text_inaccurate"])
+def test_present_numbers_do_not_override_reviewed_layout_limitation(library, reason):
     store, identifier = library
     original = store.original(identifier).read_bytes()
     before = store.passages([identifier])
@@ -59,7 +63,7 @@ def test_present_numbers_do_not_override_reviewed_layout_limitation(library):
     assert validate_answer(copy.deepcopy(candidate), before)["claims"]
     identity = store.index_identity(identifier)
     saved = store.get(identifier)["artifacts"]["distillation"]
-    review = apply(store, identifier)
+    review = apply(store, identifier, reason=reason)
     after = store.passages([identifier])
     restricted = after[0]
     assert restricted["text"] == native["text"] and restricted["passage_id"] == native["passage_id"]
@@ -82,9 +86,10 @@ def test_present_numbers_do_not_override_reviewed_layout_limitation(library):
     assert wire[1] == model_evidence(before)[1]
 
 
-def test_verified_literal_transcription_remains_usable_and_not_diagram_permission(library):
+@pytest.mark.parametrize("reason", ["layout_relationships_unavailable", "native_text_inaccurate"])
+def test_verified_literal_transcription_remains_usable_and_not_diagram_permission(library, reason):
     store, identifier = library
-    apply(store, identifier)
+    apply(store, identifier, reason=reason)
     values = ready(store, identifier, text="Door width 32 1/2 inches, height 40 1/2 inches.")
     job = transcriptions.queue_apply(store, identifier, values)
     assert Worker(store, Models({})).run_one()
@@ -105,9 +110,10 @@ def test_verified_literal_transcription_remains_usable_and_not_diagram_permissio
     assert any(p.get("source_limit", {}).get("original_image_only") for p in sources)
 
 
-def test_restriction_survives_reindex_and_release_requires_fresh_review(library):
+@pytest.mark.parametrize("reason", ["layout_relationships_unavailable", "native_text_inaccurate"])
+def test_restriction_survives_reindex_and_release_requires_fresh_review(library, reason):
     store, identifier = library
-    first = apply(store, identifier)
+    first = apply(store, identifier, reason=reason)
     store.index(identifier, ocr=False)
     assert store.get(identifier)["source_limits"][0]["id"] == first["id"]
     assert store.passages([identifier])[0]["source_limit"]["original_image_only"]
@@ -163,6 +169,10 @@ def test_all_restricted_retrieval_and_batch_do_not_request_chat_or_claim_complet
         {"image_sha256": "0" * 64},
         {"action": "arbitrary"},
         {"reason": "infer geometry"},
+        {"reason": []},
+        {"reason": {}},
+        {"action": "release", "reason": "native_text_inaccurate"},
+        {"action": "restrict", "reason": "original_text_reviewed"},
         {"text": "replacement text"},
     ],
 )
@@ -185,12 +195,13 @@ def test_source_job_reservation_is_bidirectional(library):
         store.create_job("source_limit_review", {"document_id": identifier})
 
 
-def test_corrupt_image_ledger_and_forged_policy_fail_closed(library):
+@pytest.mark.parametrize("reason", ["layout_relationships_unavailable", "native_text_inaccurate"])
+def test_corrupt_image_ledger_and_forged_policy_fail_closed(library, reason):
     store, identifier = library
     for flag in ({}, {"original_image_only": False}, {"original_image_only": True}):
         with pytest.raises(ModelUnavailable, match="Unverified source-use"):
             model_evidence([{**store.passages([identifier])[0], "source_limit": flag}])
-    review = apply(store, identifier)
+    review = apply(store, identifier, reason=reason)
     with store.connection() as connection:
         connection.execute(
             "UPDATE ocr_preview_images SET image=? WHERE preview_id=?",
@@ -202,7 +213,8 @@ def test_corrupt_image_ledger_and_forged_policy_fail_closed(library):
         source_limits.records(store, identifier)
 
 
-def test_private_http_sdk_discovery_and_coverage_are_synchronized(library, monkeypatch):
+@pytest.mark.parametrize("reason", ["layout_relationships_unavailable", "native_text_inaccurate"])
+def test_private_http_sdk_discovery_and_coverage_are_synchronized(library, monkeypatch, reason):
     from fastapi import FastAPI
     from fastapi.testclient import TestClient
     from app.routers.aircraft_library import install
@@ -229,16 +241,19 @@ def test_private_http_sdk_discovery_and_coverage_are_synchronized(library, monke
 
     sdk = AircraftLibraryOCRClient(transport)
     assert calls == []
-    job = sdk.review_source_use(identifier, request(store, identifier))
+    job = sdk.review_source_use(identifier, request(store, identifier, reason=reason))
     assert calls[-1].status_code == 202 and Worker(store, Models({})).run_one()
     rid = store.job(job["id"])["result"]["source_limit_review_id"]
     assert sdk.source_limit(identifier, rid)["active"]
+    assert sdk.source_limit(identifier, rid)["reason"] == reason
     assert sdk.source_limits(identifier)["items"][0]["id"] == rid
     detail = client.get(f"/api/aircraft-library/documents/{identifier}", headers=headers)
     assert detail.json()["source_limits"][0]["active"]
     assert detail.json()["extraction"]["source_limit_reviews"] == [rid]
     search = client.post(
-        "/api/aircraft-library/search", headers=headers, json={"icao": "C172", "question": "signed"}
+        "/api/aircraft-library/search",
+        headers=headers,
+        json={"icao": "C172", "question": "signed"},
     )
     assert search.status_code == 200, search.text
     assert search.json()["passages"][0]["source_limit"]["original_image_only"]
@@ -248,6 +263,12 @@ def test_private_http_sdk_discovery_and_coverage_are_synchronized(library, monke
         == "aircraft_library_source_limit_review"
     )
     assert schema["components"]["schemas"]["SourceLimitRequest"]["additionalProperties"] is False
+    for name in ("SourceLimitRequest", "SourceLimitRecord", "SourceLimitProvenance"):
+        assert set(schema["components"]["schemas"][name]["properties"]["reason"]["enum"]) == {
+            "layout_relationships_unavailable",
+            "native_text_inaccurate",
+            "original_text_reviewed",
+        }
 
 
 def test_deleted_ledger_and_metadata_changes_do_not_silently_clear_limits(library):
@@ -334,7 +355,9 @@ def test_source_limit_recovery_stops_before_changed_scope_and_keeps_coverage_par
     )
 
 
-def test_process_loss_after_commit_replays_same_decision_without_duplicate_history(library):
+def test_process_loss_after_commit_replays_same_decision_without_duplicate_history(
+    library,
+):
     from .test_aircraft_library_resume import ProcessKilled, expire
 
     store, identifier = library
@@ -383,3 +406,22 @@ def test_question_cannot_publish_old_native_claim_after_source_use_changes(libra
         ask(store, models, "C172", "signed", document_ids=[identifier])
     assert len(calls) == 1
     assert store.get(identifier)["source_limits"]
+
+
+def test_inaccurate_native_review_cannot_be_relabelled_as_a_release(library):
+    import json
+    from app.services.aircraft_library import ocr
+
+    store, identifier = library
+    apply(store, identifier, reason="native_text_inaccurate")
+    with store.connection() as connection:
+        row = connection.execute("SELECT id,value FROM page_source_limits").fetchone()
+        value = json.loads(row["value"])
+        value["reason"] = "original_text_reviewed"
+        encoded = json.dumps(value)
+        connection.execute(
+            "UPDATE page_source_limits SET value=?, integrity_sha256=? WHERE id=?",
+            (encoded, ocr.digest(encoded.encode()), row["id"]),
+        )
+    with pytest.raises(ValueError, match="Source review requires"):
+        store.passages([identifier])

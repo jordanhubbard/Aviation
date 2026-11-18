@@ -430,7 +430,9 @@ class SourceLimitRequest(OCRIdentityRequest):
     page: int = Field(strict=True, ge=1, le=1500)
     image_sha256: str = Field(pattern=r"^[a-f0-9]{64}$")
     action: Literal["restrict", "release"]
-    reason: Literal["layout_relationships_unavailable", "original_text_reviewed"]
+    reason: Literal[
+        "layout_relationships_unavailable", "native_text_inaccurate", "original_text_reviewed"
+    ]
     reviewer: str = Field(min_length=1, max_length=200)
     attest_matches_image: StrictBool
 
@@ -439,7 +441,9 @@ class SourceLimitProvenance(BaseModel):
     id: str
     page: int
     preview_id: str
-    reason: Literal["layout_relationships_unavailable", "original_text_reviewed"]
+    reason: Literal[
+        "layout_relationships_unavailable", "native_text_inaccurate", "original_text_reviewed"
+    ]
     original_image_only: bool
     source_sha256: str
     image_sha256: str
@@ -455,7 +459,9 @@ class SourceLimitRecord(BaseModel):
     preview_id: str
     preview_integrity_sha256: str
     action: Literal["restrict", "release"]
-    reason: Literal["layout_relationships_unavailable", "original_text_reviewed"]
+    reason: Literal[
+        "layout_relationships_unavailable", "native_text_inaccurate", "original_text_reviewed"
+    ]
     source_sha256: str
     source_metadata: DocumentMetadata
     image_sha256: str

@@ -61,7 +61,9 @@ class SourceUseReview(OCRIdentity):
     page: int
     image_sha256: str
     action: Literal["restrict", "release"]
-    reason: Literal["layout_relationships_unavailable", "original_text_reviewed"]
+    reason: Literal[
+        "layout_relationships_unavailable", "native_text_inaccurate", "original_text_reviewed"
+    ]
     reviewer: str
     attest_matches_image: Literal[True]
 
@@ -77,7 +79,9 @@ class SourceLimitRecord(TypedDict):
     source_sha256: str
     source_metadata: dict[str, Any]
     action: Literal["restrict", "release"]
-    reason: Literal["layout_relationships_unavailable", "original_text_reviewed"]
+    reason: Literal[
+        "layout_relationships_unavailable", "native_text_inaccurate", "original_text_reviewed"
+    ]
     reviewer: str
     attest_matches_image: Literal[True]
     job_id: str

@@ -18,6 +18,20 @@ REASONS = {
 }
 
 
+def _valid_decision(action, reason):
+    return (
+        isinstance(action, str)
+        and action in REASONS
+        and isinstance(reason, str)
+        and reason
+        in (
+            (REASONS["restrict"], "native_text_inaccurate")
+            if action == "restrict"
+            else (REASONS["release"],)
+        )
+    )
+
+
 class VerifiedSourceLimit(dict):
     """Capability granted only after validating the immutable image/review ledger."""
 
@@ -46,9 +60,7 @@ def _inputs(values):
         )
         or type(values["page"]) is not int
         or not 1 <= values["page"] <= 1500
-        or not isinstance(values["action"], str)
-        or values["action"] not in REASONS
-        or values["reason"] != REASONS[values["action"]]
+        or not _valid_decision(values["action"], values["reason"])
         or not _plain(values["reviewer"])
         or not 1 <= len(values["reviewer"].strip()) <= 200
         or values["attest_matches_image"] is not True
@@ -118,9 +130,7 @@ def events(connection, identifier):
                 item.get(k) != row[k]
                 for k in ("id", "document_id", "preview_id", "page", "action", "job_id")
             )
-            or not isinstance(item.get("action"), str)
-            or item.get("action") not in REASONS
-            or item.get("reason") != REASONS[item["action"]]
+            or not _valid_decision(item.get("action"), item.get("reason"))
             or item.get("source_sha256") != document["sha256"]
             or item.get("previous_review_id") != previous.get(item["page"])
             or item.get("attest_matches_image") is not True

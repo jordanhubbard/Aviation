@@ -611,7 +611,12 @@ not claim independent human review or performance-data approval.
 Use the current source/index identity and an immutable, integrity-checked page
 preview. Require the original SHA, preview integrity, physical page/image hash,
 named reviewer, explicit image-comparison attestation and a fixed
-`layout_relationships_unavailable` reason. A draft or preview changes nothing.
+restriction reason: `layout_relationships_unavailable` for unrepresented spatial
+relationships, or `native_text_inaccurate` for image-confirmed incorrect native
+words, signs or numbers (#566). These are explicit reviewer decisions, never
+automatic OCR-confidence thresholds or inferred corrections. Keep existing
+layout decisions valid and retain the unchanged `original_text_reviewed` release
+reason. A draft or preview changes nothing.
 Apply/release a limitation through bounded, exclusive durable jobs with the same
 ownership, stale-source, original-image and idempotent-commit guards as source
 reviews. Application is atomic with archiving the previous distillation and
@@ -648,6 +653,16 @@ verifying the original, profile, prior source/review records and restriction
 ledger. It must stop before the first affected scope. A known rejected
 interpretation remains archived and ineligible for current-source resume/admission;
 do not waive additional historical validation failures.
+
+HTTP/OpenAPI/MCP discovery and both SDKs retain the exact reason. Desktop/mobile
+page review offers both restriction reasons, shows the chosen reason in history,
+and clears attestation when the reason changes. Reset the selection with the
+page/image/document/credential context. Require an image, named reviewer and
+unchecked explicit attestation for either reason. Reject unknown or mismatched
+action/reason combinations in requests and retained ledgers. A native-text
+restriction uses the existing exclusion, coverage, integrity and history rules;
+separately verified OCR/transcriptions remain independent usable sources without
+silently overriding contradictions or admitting performance data.
 
 Documents with no source-limit reviews retain their current generation identities,
 model wire inputs, numeric grammar, prompt/profile and behavior. A release is a
