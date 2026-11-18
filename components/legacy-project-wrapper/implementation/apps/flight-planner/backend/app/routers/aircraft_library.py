@@ -8,7 +8,7 @@ import secrets
 from typing import Annotated, Any, Literal
 
 from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, Request, UploadFile
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, Response
 from fastapi.exceptions import RequestValidationError
 from fastapi.exception_handlers import request_validation_exception_handler
 from fastapi.routing import APIRoute
@@ -17,6 +17,7 @@ from pydantic import BaseModel, ConfigDict, Field, StrictBool
 from starlette.concurrency import run_in_threadpool
 
 from ..services.aircraft_library import pdf
+from ..services.aircraft_library import ocr_reviews
 from ..services.aircraft_library.models import Models, ModelUnavailable, ask
 from ..services.aircraft_library.store import BlankReviewConflict, Store, metadata
 from ..services.aircraft_library.worker import Worker
@@ -62,6 +63,8 @@ class PrivateRoute(APIRoute):
                 response = await handler(request)
             except RequestValidationError as error:
                 response = await request_validation_exception_handler(request, error)
+            except ocr_reviews.OCRConflict as error:
+                raise HTTPException(409, str(error), headers=private_headers) from error
             except ValueError as error:
                 raise HTTPException(422, str(error), headers=private_headers) from error
             except ModelUnavailable as error:
@@ -137,6 +140,7 @@ class Extraction(BaseModel):
     characters: int
     encryption: str | None = None
     blank_pages: list[BlankVerification] = Field(default_factory=list)
+    supplemental_ocr_reviews: list[str] = Field(default_factory=list)
 
 
 class BlankPageCandidate(BaseModel):
@@ -263,6 +267,138 @@ class DocumentPage(BaseModel):
     error: str | None
 
 
+class OCRProvenance(BaseModel):
+    review_id: str
+    preview_id: str
+    fragment_id: str
+    reviewer: str
+    reviewed_at: str
+    integrity_sha256: str
+    source_sha256: str
+    source_metadata: DocumentMetadata
+    engine: str
+    engine_version: str
+    mode: Literal["normal", "sparse"]
+    confidence: float
+    bbox: list[int]
+    image_url: str
+
+
+class OCRIdentityRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid", strict=True)
+    expected_sha256: str = Field(pattern=r"^[a-f0-9]{64}$")
+    expected_index_identity: str = Field(pattern=r"^[a-f0-9]{64}$")
+
+
+class OCRPreviewRequest(OCRIdentityRequest):
+    pages: list[int] = Field(min_length=1, max_length=10)
+    mode: Literal["normal", "sparse"] = "normal"
+
+
+class OCRSelection(BaseModel):
+    model_config = ConfigDict(extra="forbid", strict=True)
+    page: int = Field(ge=1, le=1500)
+    fragment_id: str = Field(min_length=1, max_length=100)
+
+
+class OCRApplyRequest(OCRIdentityRequest):
+    preview_id: str = Field(min_length=1, max_length=100)
+    preview_integrity_sha256: str = Field(pattern=r"^[a-f0-9]{64}$")
+    selections: list[OCRSelection] = Field(min_length=1, max_length=100)
+    reviewer: str = Field(min_length=1, max_length=200)
+    attest_matches_image: StrictBool
+
+
+class OCRContext(BaseModel):
+    document_id: str
+    source_sha256: str
+    index_identity: str
+    source_metadata: DocumentMetadata
+    page_count: int
+    modes: list[Literal["normal", "sparse"]]
+    max_pages: int
+
+
+class OCRFragment(BaseModel):
+    id: str
+    text: str
+    offset: int
+    bbox: list[int]
+    confidence: float
+
+
+class OCRPreviewPage(BaseModel):
+    page: int
+    label: str
+    width: int
+    height: int
+    scale: float | None = None
+    image_sha256: str
+    tsv_sha256: str | None = None
+    fragments: list[OCRFragment]
+    error: str | None
+
+
+class OCRPreview(BaseModel):
+    id: str
+    document_id: str
+    job_id: str
+    created_at: str
+    source_sha256: str
+    source_metadata: DocumentMetadata
+    index_identity: str
+    integrity_sha256: str
+    source_current: bool
+    page_count: int
+    mode: Literal["normal", "sparse"]
+    engine: str
+    engine_version: str
+    renderer: str
+    renderer_version: str | None = None
+    status: Literal["preview", "partial"]
+    approved: Literal[False]
+    pages: list[OCRPreviewPage]
+
+
+class OCRReviewedFragment(OCRFragment):
+    page: int
+    label: str
+    passage_id: int
+
+
+class OCRReview(BaseModel):
+    id: str
+    document_id: str
+    preview_id: str
+    preview_integrity_sha256: str
+    job_id: str
+    source_sha256: str
+    source_metadata: DocumentMetadata
+    reviewer: str
+    attest_matches_image: Literal[True]
+    created_at: str
+    before_index_identity: str
+    after_index_identity: str
+    integrity_sha256: str
+    fragments: list[OCRReviewedFragment]
+    engine: str
+    engine_version: str
+    mode: Literal["normal", "sparse"]
+    active: bool
+    source_current: bool
+
+
+class OCRHistoryItem(BaseModel):
+    id: str
+    created_at: str
+    integrity_sha256: str
+
+
+class OCRHistory(BaseModel):
+    items: list[OCRHistoryItem]
+    next_offset: int | None
+
+
 class Passage(BaseModel):
     passage_id: int
     document_id: str
@@ -272,6 +408,7 @@ class Passage(BaseModel):
     text: str
     method: str
     rank: float | None = None
+    ocr_review: OCRProvenance | None = None
 
 
 class SearchResult(BaseModel):
@@ -286,6 +423,7 @@ class Citation(BaseModel):
     quote: str
     method: str
     original_url: str
+    ocr_review: OCRProvenance | None = None
 
 
 class Claim(BaseModel):
@@ -439,6 +577,118 @@ def install(app, *, store=None, models=None, worker_enabled=True):
     @router.get("/documents/{document_id}", response_model=DocumentRecord)
     def document(document_id: str, current: Store = Depends(library)):
         return required(current, document_id)
+
+    @router.get(
+        "/documents/{document_id}/ocr",
+        response_model=OCRContext,
+        operation_id="aircraft_library_ocr_context",
+    )
+    def ocr_context(document_id: str, current: Store = Depends(library)):
+        required(current, document_id)
+        return ocr_reviews.context(current, document_id)
+
+    @router.post(
+        "/documents/{document_id}/ocr-previews",
+        response_model=JobRecord,
+        status_code=202,
+        operation_id="aircraft_library_ocr_preview_create",
+    )
+    def ocr_create(document_id: str, body: OCRPreviewRequest, current: Store = Depends(library)):
+        required(current, document_id)
+        return ocr_reviews.queue_preview(current, document_id, body.model_dump())
+
+    @router.get(
+        "/documents/{document_id}/ocr-previews",
+        response_model=OCRHistory,
+        operation_id="aircraft_library_ocr_preview_history",
+    )
+    def ocr_previews(
+        document_id: str,
+        limit: int = Query(20, ge=1, le=100),
+        offset: int = Query(0, ge=0, le=1_000_000),
+        current: Store = Depends(library),
+    ):
+        required(current, document_id)
+        return ocr_reviews.records(current, document_id, limit=limit, offset=offset)
+
+    @router.get(
+        "/documents/{document_id}/ocr-previews/{preview_id}",
+        response_model=OCRPreview,
+        operation_id="aircraft_library_ocr_preview_detail",
+    )
+    def ocr_preview(document_id: str, preview_id: str, current: Store = Depends(library)):
+        required(current, document_id)
+        return ocr_reviews.preview(current, document_id, preview_id)
+
+    @router.get(
+        "/documents/{document_id}/ocr-previews/{preview_id}/pages/{page}.png",
+        response_class=Response,
+        operation_id="aircraft_library_ocr_preview_image",
+        responses={
+            200: {"content": {"image/png": {"schema": {"type": "string", "format": "binary"}}}}
+        },
+    )
+    def ocr_image(document_id: str, preview_id: str, page: int, current: Store = Depends(library)):
+        required(current, document_id)
+        return Response(
+            ocr_reviews.preview_image(current, document_id, preview_id, page),
+            media_type="image/png",
+            headers={"Content-Disposition": f'inline; filename="ocr-page-{page}.png"'},
+        )
+
+    @router.post(
+        "/documents/{document_id}/ocr-reviews",
+        response_model=JobRecord,
+        status_code=202,
+        operation_id="aircraft_library_ocr_apply",
+    )
+    def ocr_apply(document_id: str, body: OCRApplyRequest, current: Store = Depends(library)):
+        required(current, document_id)
+        return ocr_reviews.queue_apply(current, document_id, body.model_dump())
+
+    @router.get(
+        "/documents/{document_id}/ocr-reviews",
+        response_model=OCRHistory,
+        operation_id="aircraft_library_ocr_review_history",
+    )
+    def ocr_reviews_list(
+        document_id: str,
+        limit: int = Query(20, ge=1, le=100),
+        offset: int = Query(0, ge=0, le=1_000_000),
+        current: Store = Depends(library),
+    ):
+        required(current, document_id)
+        return ocr_reviews.records(current, document_id, kind="reviews", limit=limit, offset=offset)
+
+    @router.get(
+        "/documents/{document_id}/ocr-reviews/{review_id}",
+        response_model=OCRReview,
+        operation_id="aircraft_library_ocr_review_detail",
+    )
+    def ocr_review(document_id: str, review_id: str, current: Store = Depends(library)):
+        required(current, document_id)
+        return ocr_reviews.review(current, document_id, review_id)
+
+    @router.post(
+        "/documents/{document_id}/ocr-reviews/{review_id}/embeddings",
+        response_model=JobRecord,
+        status_code=202,
+        operation_id="aircraft_library_ocr_review_embed",
+    )
+    def ocr_embed(
+        document_id: str,
+        review_id: str,
+        body: OCRIdentityRequest,
+        current: Store = Depends(library),
+    ):
+        required(current, document_id)
+        if not state["models"].capabilities()["embeddings"]:
+            raise HTTPException(
+                503, "Embedding provider is not configured; OCR review remains retained"
+            )
+        return ocr_reviews.queue_review_embedding(
+            current, document_id, review_id, body.model_dump()
+        )
 
     @router.get("/documents/{document_id}/blank-pages", response_model=BlankPageList)
     def blank_pages(

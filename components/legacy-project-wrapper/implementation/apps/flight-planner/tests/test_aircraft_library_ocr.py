@@ -187,8 +187,7 @@ def test_bad_source_and_out_of_range_are_safe_errors(tmp_path):
     assert "private" not in str(error.value)
 
 
-@pytest.fixture
-def library(tmp_path, monkeypatch):
+def make_library(tmp_path, monkeypatch):
     store = Store(tmp_path / "library")
     doc = store.ingest(
         manual(
@@ -234,6 +233,11 @@ def library(tmp_path, monkeypatch):
 
     monkeypatch.setattr(ocr, "extract_selected", extraction)
     return store, doc["id"]
+
+
+@pytest.fixture
+def library(tmp_path, monkeypatch):
+    return make_library(tmp_path, monkeypatch)
 
 
 def preview_request(store, identifier, **changes):

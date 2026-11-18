@@ -35,6 +35,33 @@ class Worker:
             from .ocr_reviews import generate_preview
 
             return generate_preview(self.store, job, cancelled=self.stop.is_set)
+        if job["kind"] in {"ocr_apply", "ocr_embed"}:
+            from .ocr_reviews import apply_review, embedding_review
+
+            review = (
+                apply_review(self.store, job)
+                if job["kind"] == "ocr_apply"
+                else embedding_review(self.store, job)
+            )
+            result = {
+                "document_id": request["document_id"],
+                "review_id": review["id"],
+                "applied": True,
+                "embeddings": "unavailable",
+            }
+            if self.models.capabilities()["embeddings"]:
+                result["vectors"] = index_vectors(
+                    self.store,
+                    [request["document_id"]],
+                    self.models,
+                    passage_ids=[f["passage_id"] for f in review["fragments"]],
+                )
+                result["embeddings"] = "indexed"
+            elif job["kind"] == "ocr_embed":
+                raise ValueError(
+                    "Aircraft library embedding provider is not configured; OCR review retained"
+                )
+            return result
         if job["kind"] == "index":
             identifier = request["document_id"]
             checkpoint = self.store.checkpoint(job["id"])

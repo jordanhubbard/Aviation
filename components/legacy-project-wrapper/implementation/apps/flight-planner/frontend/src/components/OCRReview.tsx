@@ -1,0 +1,595 @@
+import { AircraftLibraryOCRClient } from '@aviation/shared-sdk/aviation/aircraft-library'
+import { useCallback, useEffect, useRef, useState } from 'react'
+import {
+  Alert,
+  Box,
+  Button,
+  Checkbox,
+  FormControlLabel,
+  MenuItem,
+  Stack,
+  TextField,
+  Typography,
+} from '@mui/material'
+
+type Context = {
+  document_id: string
+  source_sha256: string
+  index_identity: string
+  page_count: number
+}
+type Fragment = { id: string; text: string; offset: number; bbox: number[]; confidence: number }
+type Page = {
+  page: number
+  label: string
+  width: number
+  height: number
+  fragments: Fragment[]
+  error: string | null
+}
+type Preview = Context & {
+  source_metadata?: Record<string, unknown>
+  id: string
+  integrity_sha256: string
+  source_current: boolean
+  mode: string
+  engine_version: string
+  status: string
+  pages: Page[]
+}
+type Review = {
+  source_metadata?: Record<string, unknown>
+  source_sha256?: string
+  id: string
+  preview_id: string
+  reviewer: string
+  created_at: string
+  active: boolean
+  fragments: (Fragment & { page: number; label: string })[]
+}
+type History = { items: { id: string; created_at: string }[]; next_offset: number | null }
+type Job = {
+  id: string
+  state: string
+  error: string | null
+  result: { preview_id?: string; review_id?: string; embeddings?: string } | null
+}
+type Props = {
+  documentId: string
+  sourceSha256: string
+  locked: boolean
+  request: (path: string, options?: RequestInit, binary?: boolean) => Promise<unknown>
+  download: () => Promise<void>
+  onReviewed: () => Promise<void>
+}
+
+export default function OCRReview({
+  documentId,
+  sourceSha256,
+  locked,
+  request,
+  download,
+  onReviewed,
+}: Props) {
+  const [context, setContext] = useState<Context | null>(null)
+  const [pages, setPages] = useState('')
+  const [mode, setMode] = useState<'normal' | 'sparse'>('sparse')
+  const [preview, setPreview] = useState<Preview | null>(null)
+  const [number, setNumber] = useState(0)
+  const [image, setImage] = useState('')
+  const [zoom, setZoom] = useState(false)
+  const [selected, setSelected] = useState<{ page: number; fragment_id: string }[]>([])
+  const [reviewer, setReviewer] = useState('')
+  const [attested, setAttested] = useState(false)
+  const [history, setHistory] = useState<History | null>(null)
+  const [historyKind, setHistoryKind] = useState<'ocr-previews' | 'ocr-reviews'>('ocr-previews')
+  const [review, setReview] = useState<Review | null>(null)
+  const [busy, setBusy] = useState(false)
+  const [status, setStatus] = useState('')
+  const [error, setError] = useState('')
+  const epoch = useRef(0)
+  const invalidate = useCallback(() => {
+    epoch.current++
+  }, [])
+  const imageURL = useRef('')
+  const client = new AircraftLibraryOCRClient(request)
+  function releaseImage() {
+    if (imageURL.current) URL.revokeObjectURL(imageURL.current)
+    imageURL.current = ''
+    setImage('')
+  }
+  useEffect(() => {
+    invalidate()
+    setContext(null)
+    setPages('')
+    setPreview(null)
+    setSelected([])
+    setReviewer('')
+    setAttested(false)
+    setHistory(null)
+    setReview(null)
+    setStatus('')
+    setError('')
+    setBusy(false)
+    setZoom(false)
+    if (imageURL.current) URL.revokeObjectURL(imageURL.current)
+    imageURL.current = ''
+    setImage('')
+    return () => {
+      invalidate()
+      if (imageURL.current) URL.revokeObjectURL(imageURL.current)
+      imageURL.current = ''
+    }
+  }, [documentId, sourceSha256, locked, invalidate])
+  async function run(action: (current: number) => Promise<void>) {
+    const current = ++epoch.current
+    setBusy(true)
+    setError('')
+    try {
+      await action(current)
+    } catch (e) {
+      if (current === epoch.current && !(e instanceof DOMException && e.name === 'AbortError')) {
+        setError(e instanceof Error ? e.message : 'OCR review failed')
+        setSelected([])
+        setAttested(false)
+        setContext(null)
+        setPreview((value) => (value ? { ...value, source_current: false } : null))
+      }
+    } finally {
+      if (current === epoch.current) setBusy(false)
+    }
+  }
+  async function loadImage(value: Preview, physicalPage: number, current: number) {
+    releaseImage()
+    setNumber(physicalPage)
+    const blob = await client.image(documentId, value.id, physicalPage)
+    if (current !== epoch.current) return
+    if (!(blob instanceof Blob) || blob.type !== 'image/png')
+      throw new Error('OCR page image is unavailable')
+    imageURL.current = URL.createObjectURL(blob)
+    setImage(imageURL.current)
+  }
+  async function loadPreview(id: string, current: number) {
+    releaseImage()
+    setPreview(null)
+    setSelected([])
+    setAttested(false)
+    const value = await client.preview(documentId, id)
+    if (current !== epoch.current) return
+    if (
+      value.document_id !== documentId ||
+      value.source_sha256 !== sourceSha256 ||
+      !Array.isArray(value.pages) ||
+      !value.pages.length
+    )
+      throw new Error('OCR preview source does not match this document')
+    setPreview(value)
+    await loadImage(value, value.pages[0].page, current)
+  }
+  async function waitForJob(initial: Job, current: number) {
+    let job = initial
+    while (current === epoch.current && ['queued', 'running'].includes(job.state)) {
+      setStatus(`OCR job ${job.state}`)
+      await new Promise((resolve) => setTimeout(resolve, 1000))
+      if (current !== epoch.current) return null
+      job = await client.job(job.id)
+      if (job.id !== initial.id) throw new Error('OCR job identity changed')
+    }
+    if (current !== epoch.current) return null
+    if (job.state !== 'completed')
+      throw new Error(
+        (job.error || 'OCR job did not complete') +
+          '. If this was an application, inspect OCR review history before retrying: its source stage may already be retained.',
+      )
+    return job
+  }
+  async function loadHistory(kind: typeof historyKind, current: number, offset = 0) {
+    const value = await client.history(documentId, kind, offset)
+    if (current !== epoch.current) return
+    setHistoryKind(kind)
+    setHistory(offset ? { ...value, items: [...(history?.items || []), ...value.items] } : value)
+  }
+  const currentPage = preview?.pages.find((p) => p.page === number)
+  const disabled = busy || locked
+  return (
+    <Box component="details" sx={{ mt: 2 }}>
+      <summary>Review OCR for diagram labels</summary>
+      <Stack spacing={2} sx={{ mt: 2, minWidth: 0 }}>
+        <Alert severity="warning">
+          OCR can misread signs, labels and drawing lines. Compare each selected fragment with the
+          original page image. This review does not approve performance data or aircraft
+          applicability.
+        </Alert>
+        {error && <Alert severity="error">{error}</Alert>}
+        {status && <Typography role="status">{status}</Typography>}
+        <Stack direction="row" flexWrap="wrap" gap={1}>
+          <Button
+            disabled={disabled}
+            onClick={() =>
+              void run(async (current) => {
+                const value = await client.context(documentId)
+                if (current !== epoch.current) return
+                if (value.document_id !== documentId || value.source_sha256 !== sourceSha256)
+                  throw new Error('OCR source changed')
+                releaseImage()
+                setPreview(null)
+                setSelected([])
+                setAttested(false)
+                setContext(value)
+              })
+            }
+          >
+            Prepare OCR preview
+          </Button>
+          <Button disabled={disabled} onClick={() => void run(() => download())}>
+            Download original PDF
+          </Button>
+          <Button
+            disabled={disabled}
+            onClick={() => void run((e) => loadHistory('ocr-previews', e))}
+          >
+            Retained previews
+          </Button>
+          <Button
+            disabled={disabled}
+            onClick={() => void run((e) => loadHistory('ocr-reviews', e))}
+          >
+            OCR review history
+          </Button>
+        </Stack>
+        {context && (
+          <Stack spacing={2}>
+            <Typography variant="body2">
+              Select up to ten physical PDF pages, from 1 to {context.page_count}. Native page text
+              will be preserved.
+            </Typography>
+            <TextField
+              label="Physical PDF pages (comma separated)"
+              value={pages}
+              disabled={disabled}
+              onChange={(e) => setPages(e.target.value)}
+            />
+            <TextField
+              select
+              label="OCR layout"
+              value={mode}
+              disabled={disabled}
+              onChange={(e) => setMode(e.target.value as 'normal' | 'sparse')}
+            >
+              <MenuItem value="sparse">Sparse labels and diagrams</MenuItem>
+              <MenuItem value="normal">Normal page layout</MenuItem>
+            </TextField>
+            <Button
+              disabled={disabled || !pages.trim()}
+              onClick={() =>
+                void run(async (current) => {
+                  const numbers = pages.split(',').map((v) => Number(v.trim()))
+                  if (
+                    !numbers.length ||
+                    numbers.length > 10 ||
+                    new Set(numbers).size !== numbers.length ||
+                    numbers.some((p) => !Number.isInteger(p) || p < 1 || p > context.page_count)
+                  )
+                    throw new Error('Select 1–10 distinct physical pages within the document')
+                  releaseImage()
+                  setPreview(null)
+                  setSelected([])
+                  setAttested(false)
+                  setReview(null)
+                  const queued = await client.queuePreview(documentId, {
+                    pages: numbers,
+                    mode,
+                    expected_sha256: context.source_sha256,
+                    expected_index_identity: context.index_identity,
+                  })
+                  if (current !== epoch.current) return
+                  const done = await waitForJob(queued, current)
+                  if (done?.result?.preview_id) {
+                    setStatus('OCR preview ready; no fragments approved')
+                    await loadPreview(done.result.preview_id, current)
+                  }
+                })
+              }
+            >
+              Generate selected-page preview
+            </Button>
+          </Stack>
+        )}
+        {preview && (
+          <Stack spacing={2}>
+            {!preview.source_current && (
+              <Alert severity="warning">
+                Historical preview: the source index or metadata changed. Prepare a fresh preview
+                before applying fragments.
+              </Alert>
+            )}
+            <Typography variant="body2">
+              {preview.engine_version} · {preview.mode} layout · {preview.status}. OCR confidence
+              reflects recognition uncertainty.
+            </Typography>
+            <Typography variant="caption" sx={{ overflowWrap: 'anywhere' }}>
+              Original SHA-256 {preview.source_sha256}. Source association:{' '}
+              {String(preview.source_metadata?.icao || 'unknown type')}, variant{' '}
+              {String(preview.source_metadata?.variant || 'unknown')}, revision{' '}
+              {String(preview.source_metadata?.revision || 'unknown')}.
+            </Typography>
+            <Stack direction="row" gap={1} flexWrap="wrap">
+              {preview.pages.map((p) => (
+                <Button
+                  key={p.page}
+                  disabled={disabled}
+                  onClick={() => void run((e) => loadImage(preview, p.page, e))}
+                >
+                  PDF page {p.page} (label {p.label})
+                </Button>
+              ))}
+              <Button disabled={disabled || !image} onClick={() => setZoom(!zoom)}>
+                {zoom ? 'Fit page' : 'Zoom page'}
+              </Button>
+            </Stack>
+            {currentPage && (
+              <Box
+                sx={{
+                  display: 'grid',
+                  gridTemplateColumns: {
+                    xs: 'minmax(0, 1fr)',
+                    lg: 'minmax(0, 1fr) minmax(240px, 1fr)',
+                  },
+                  gap: 2,
+                }}
+              >
+                <Box
+                  sx={{
+                    overflow: 'auto',
+                    maxHeight: '75vh',
+                    border: '1px solid',
+                    borderColor: 'divider',
+                  }}
+                >
+                  {image ? (
+                    <Box sx={{ position: 'relative', width: zoom ? currentPage.width : '100%' }}>
+                      <Box
+                        component="img"
+                        src={image}
+                        alt={`Original PDF page ${currentPage.page}, label ${currentPage.label}`}
+                        sx={{ display: 'block', width: '100%' }}
+                      />
+                      <svg
+                        aria-hidden="true"
+                        viewBox={`0 0 ${currentPage.width} ${currentPage.height}`}
+                        style={{
+                          position: 'absolute',
+                          inset: 0,
+                          width: '100%',
+                          height: '100%',
+                          pointerEvents: 'none',
+                        }}
+                      >
+                        {currentPage.fragments
+                          .filter((f) =>
+                            selected.some(
+                              (s) => s.page === currentPage.page && s.fragment_id === f.id,
+                            ),
+                          )
+                          .map((f) => (
+                            <rect
+                              key={f.id}
+                              x={f.bbox[0]}
+                              y={f.bbox[1]}
+                              width={f.bbox[2]}
+                              height={f.bbox[3]}
+                              fill="none"
+                              stroke="#005fcc"
+                              strokeWidth="3"
+                            />
+                          ))}
+                      </svg>
+                    </Box>
+                  ) : (
+                    <Typography>Load the page image before selecting its fragments.</Typography>
+                  )}
+                </Box>
+                <Stack spacing={1} sx={{ maxHeight: '75vh', overflow: 'auto' }}>
+                  {currentPage.error && <Alert severity="warning">{currentPage.error}</Alert>}
+                  {!currentPage.fragments.length && (
+                    <Typography>
+                      No readable OCR fragments on this page. Native extraction status is unchanged.
+                    </Typography>
+                  )}
+                  {currentPage.fragments.map((f) => {
+                    const checked = selected.some(
+                      (s) => s.page === currentPage.page && s.fragment_id === f.id,
+                    )
+                    return (
+                      <Box key={f.id}>
+                        <FormControlLabel
+                          control={
+                            <Checkbox
+                              checked={checked}
+                              disabled={
+                                disabled ||
+                                !image ||
+                                !preview.source_current ||
+                                Boolean(currentPage.error) ||
+                                (!checked && selected.length >= 100)
+                              }
+                              onChange={() => {
+                                setAttested(false)
+                                setSelected(
+                                  checked
+                                    ? selected.filter(
+                                        (s) =>
+                                          !(s.page === currentPage.page && s.fragment_id === f.id),
+                                      )
+                                    : [...selected, { page: currentPage.page, fragment_id: f.id }],
+                                )
+                              }}
+                            />
+                          }
+                          label={
+                            <Typography sx={{ whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}>
+                              {f.text}
+                            </Typography>
+                          }
+                        />
+                        <Typography variant="caption" display="block">
+                          Recognition confidence {f.confidence.toFixed(1)}%; image box{' '}
+                          {f.bbox.join(', ')}
+                        </Typography>
+                      </Box>
+                    )
+                  })}
+                </Stack>
+              </Box>
+            )}
+            <Typography>
+              {selected.length} fragments selected across this preview (maximum 100).
+            </Typography>
+            <TextField
+              label="OCR reviewer name"
+              value={reviewer}
+              disabled={disabled || !preview.source_current}
+              inputProps={{ maxLength: 200 }}
+              onChange={(e) => {
+                setReviewer(e.target.value)
+                setAttested(false)
+              }}
+            />
+            <FormControlLabel
+              control={
+                <Checkbox
+                  checked={attested}
+                  disabled={disabled || !selected.length || !preview.source_current}
+                  onChange={(e) => setAttested(e.target.checked)}
+                />
+              }
+              label="I compared every selected fragment with its original page image and confirm the selected OCR text matches."
+            />
+            <Button
+              disabled={
+                disabled ||
+                !preview.source_current ||
+                !selected.length ||
+                !reviewer.trim() ||
+                !attested
+              }
+              onClick={() =>
+                void run(async (current) => {
+                  const queued = await client.apply(documentId, {
+                    expected_sha256: preview.source_sha256,
+                    expected_index_identity: preview.index_identity,
+                    preview_id: preview.id,
+                    preview_integrity_sha256: preview.integrity_sha256,
+                    selections: selected,
+                    reviewer,
+                    attest_matches_image: true,
+                  })
+                  if (current !== epoch.current) return
+                  const done = await waitForJob(queued, current)
+                  if (!done) return
+                  if (!done.result?.review_id)
+                    throw new Error(
+                      'OCR review result is unavailable; inspect the job before retrying',
+                    )
+                  const value = await client.review(documentId, done.result.review_id)
+                  if (current !== epoch.current) return
+                  setReview(value)
+                  setSelected([])
+                  setAttested(false)
+                  setContext(null)
+                  setPreview({ ...preview, source_current: false })
+                  setStatus(
+                    `Selected OCR retained. Semantic indexing: ${done.result.embeddings || 'inspect job'}. Generate a new distillation explicitly when ready.`,
+                  )
+                  await onReviewed()
+                })
+              }
+            >
+              Apply selected OCR fragments
+            </Button>
+          </Stack>
+        )}
+        {history && (
+          <Stack spacing={1}>
+            {history.items.map((item) => (
+              <Button
+                key={item.id}
+                disabled={disabled}
+                onClick={() =>
+                  void run(async (current) => {
+                    if (historyKind === 'ocr-previews') await loadPreview(item.id, current)
+                    else {
+                      const value = await client.review(documentId, item.id)
+                      if (current === epoch.current) setReview(value)
+                    }
+                  })
+                }
+              >
+                Inspect {historyKind === 'ocr-previews' ? 'preview' : 'review'} · {item.created_at}
+              </Button>
+            ))}
+            {!history.items.length && (
+              <Typography>
+                No retained {historyKind === 'ocr-previews' ? 'previews' : 'reviews'}.
+              </Typography>
+            )}
+            {history.next_offset !== null && (
+              <Button
+                disabled={disabled}
+                onClick={() => void run((e) => loadHistory(historyKind, e, history.next_offset!))}
+              >
+                More OCR history
+              </Button>
+            )}
+          </Stack>
+        )}
+        {review && (
+          <Box>
+            <Typography>
+              Reviewed by {review.reviewer} · {review.created_at} ·{' '}
+              {review.active ? 'Active supplement' : 'Historical review'}
+            </Typography>
+            <Typography variant="body2" sx={{ overflowWrap: 'anywhere' }}>
+              Retained source association: {String(review.source_metadata?.icao || 'unknown type')},
+              variant {String(review.source_metadata?.variant || 'unknown')}, revision{' '}
+              {String(review.source_metadata?.revision || 'unknown')}. Original SHA-256{' '}
+              {review.source_sha256 || sourceSha256}.
+            </Typography>
+            {review.fragments.map((f) => (
+              <Typography
+                key={`${f.page}-${f.id}`}
+                sx={{ whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}
+              >
+                PDF page {f.page} (label {f.label}): {f.text}
+              </Typography>
+            ))}
+            <Button
+              disabled={disabled}
+              onClick={() => void run((e) => loadPreview(review.preview_id, e))}
+            >
+              Compare retained review with page image
+            </Button>
+            <Button
+              disabled={disabled || !review.active}
+              onClick={() =>
+                void run(async (current) => {
+                  const value = await client.context(documentId)
+                  if (current !== epoch.current) return
+                  const queued = await client.embed(documentId, review.id, {
+                    expected_sha256: value.source_sha256,
+                    expected_index_identity: value.index_identity,
+                  })
+                  if (current !== epoch.current) return
+                  const done = await waitForJob(queued, current)
+                  if (done) setStatus('Semantic indexing completed for these reviewed fragments.')
+                })
+              }
+            >
+              Retry semantic indexing for these fragments
+            </Button>
+          </Box>
+        )}
+      </Stack>
+    </Box>
+  )
+}

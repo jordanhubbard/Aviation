@@ -361,9 +361,16 @@ class Models:
             raise ModelUnavailable("Invalid embedding provider response") from error
 
 
-def index_vectors(store: Store, identifiers: list[str], models: Models):
+def index_vectors(store: Store, identifiers: list[str], models: Models, *, passage_ids=None):
     identities = {identifier: store.index_identity(identifier) for identifier in identifiers}
     passages = store.passages(identifiers)
+    if passage_ids is not None:
+        requested = set(passage_ids)
+        if any(type(p) is not int or p < 1 for p in passage_ids) or not requested <= {
+            p["passage_id"] for p in passages
+        }:
+            raise ValueError("Requested embedding passages are absent from the current source")
+        passages = [p for p in passages if p["passage_id"] in requested]
     with store.connection() as connection:
         existing = {
             row[0]
@@ -554,14 +561,43 @@ def citation_excerpts(text):
     return excerpts
 
 
+def source_excerpts(source):
+    from .ocr_reviews import VerifiedOCR
+
+    text = source["text"]
+    if 0 < len(text) < 8 and isinstance(source.get("ocr_review"), VerifiedOCR):
+        return [text]
+    return citation_excerpts(text)
+
+
+def source_quote(source, quote):
+    from .ocr_reviews import VerifiedOCR
+
+    if (
+        isinstance(source.get("ocr_review"), VerifiedOCR)
+        and 0 < len(source["text"]) < 8
+        and quote == source["text"]
+    ):
+        return source["text"]
+    return original_quote(source["text"], quote)
+
+
 def model_evidence(evidence):
     result = []
     for source in evidence:
-        excerpts = citation_excerpts(source["text"])
+        excerpts = source_excerpts(source)
         # PDF locators belong to verified citations, not factual model evidence.
         # A label may simply repeat the physical ordinal; retain printed numbers
         # in the unchanged source excerpts instead.
         row = {key: value for key, value in source.items() if key not in {"text", "page", "label"}}
+        if source.get("ocr_review"):
+            # Recognition coordinates/confidence and image-page locators are
+            # provenance for the reviewer, never numerical factual evidence.
+            row["ocr_review"] = {
+                key: source["ocr_review"][key]
+                for key in ("review_id", "fragment_id", "engine", "mode")
+                if key in source["ocr_review"]
+            }
         row["excerpts"] = [
             {"excerpt_id": index, "text": text} for index, text in enumerate(excerpts)
         ]
@@ -611,14 +647,14 @@ def validate_answer(answer, evidence):
             proposed = citation.get("quote")
             if "excerpt_id" in citation:
                 index = citation["excerpt_id"]
-                excerpts = citation_excerpts(source["text"]) if source else []
+                excerpts = source_excerpts(source) if source else []
                 if type(index) is not int or not 0 <= index < len(excerpts):
                     raise ModelUnavailable("Model returned a citation not present in the source")
                 resolved = excerpts[index]
-                if "quote" in citation and original_quote(source["text"], proposed) != resolved:
+                if "quote" in citation and source_quote(source, proposed) != resolved:
                     raise ModelUnavailable("Model citation conflicts with its excerpt reference")
                 proposed = resolved
-            quote = original_quote(source["text"], proposed) if source else None
+            quote = source_quote(source, proposed) if source else None
             if quote is None:
                 raise ModelUnavailable("Model returned a citation not present in the source")
             verified.append(
@@ -630,6 +666,11 @@ def validate_answer(answer, evidence):
                     "quote": quote,
                     "method": source["method"],
                     "original_url": f"/api/aircraft-library/documents/{source['document_id']}/original#page={source['page']}",
+                    **(
+                        {"ocr_review": dict(source["ocr_review"])}
+                        if source.get("ocr_review")
+                        else {}
+                    ),
                 }
             )
             supporting.append(quote)
@@ -661,7 +702,7 @@ def _numeric_excerpt_options(values, evidence):
     wanted = {Decimal(value) for value in values[:32]}
     options = []
     for passage in evidence:
-        for index, excerpt in enumerate(citation_excerpts(passage["text"])):
+        for index, excerpt in enumerate(source_excerpts(passage)):
             matched = wanted & numbers(excerpt)
             if matched:
                 options.append(
@@ -744,7 +785,7 @@ def _trace_rejection(
                         )
                         if key in row
                     },
-                    "excerpts": citation_excerpts(row["text"]),
+                    "excerpts": source_excerpts(row),
                     "metadata": {
                         key: value
                         for key, value in row.get("metadata", {}).items()

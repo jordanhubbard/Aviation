@@ -1,4 +1,5 @@
 import BlankPageReview from '../components/BlankPageReview'
+import OCRReview from '../components/OCRReview'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import {
   Alert,
@@ -31,7 +32,14 @@ type Metadata = {
   scope: string
   notes: string
 }
-type Citation = { document_id: string; page: number; label: string; quote: string; method: string }
+type Citation = {
+  document_id: string
+  page: number
+  label: string
+  quote: string
+  method: string
+  ocr_review?: { reviewer: string; reviewed_at: string } | null
+}
 type Claim = { text: string; citations: Citation[] }
 type Answer = {
   insufficient_evidence: boolean
@@ -105,6 +113,9 @@ const jobKinds = new Map<string, string>([
   ['distill', 'Distill manual'],
   ['discover', 'Find web examples'],
   ['acquire', 'Acquire manuals'],
+  ['ocr_preview', 'Preview diagram OCR'],
+  ['ocr_apply', 'Apply reviewed OCR'],
+  ['ocr_embed', 'Index reviewed OCR'],
 ])
 const activeJob = (job: Job) => job.state === 'queued' || job.state === 'running'
 const validJob = (job: Job) =>
@@ -425,6 +436,13 @@ export default function AircraftLibraryPage() {
                   </Typography>
                 </Box>
                 {citation.method === 'ocr' && <Chip size="small" label="OCR — check original" />}
+                {citation.ocr_review && (
+                  <Typography variant="caption" display="block">
+                    Supplemental OCR reviewed by {citation.ocr_review.reviewer} ·{' '}
+                    {citation.ocr_review.reviewed_at}. Retained page images are available in the
+                    document’s OCR review history.
+                  </Typography>
+                )}
               </Box>
             ))}
           </Box>
@@ -812,6 +830,17 @@ export default function AircraftLibraryPage() {
                       ))}
                     </Stack>
                     <BlankPageReview
+                      documentId={doc.id}
+                      sourceSha256={doc.sha256}
+                      locked={
+                        busy ||
+                        jobs.some((job) => activeJob(job) && job.subject?.document_id === doc.id)
+                      }
+                      request={request}
+                      download={() => download(doc)}
+                      onReviewed={refresh}
+                    />
+                    <OCRReview
                       documentId={doc.id}
                       sourceSha256={doc.sha256}
                       locked={

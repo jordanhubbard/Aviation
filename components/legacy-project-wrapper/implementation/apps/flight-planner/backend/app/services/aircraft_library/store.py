@@ -161,6 +161,18 @@ class Store:
                     image BLOB NOT NULL, sha256 TEXT NOT NULL,
                     PRIMARY KEY(preview_id,page)
                 );
+                CREATE TABLE IF NOT EXISTS ocr_reviews (
+                    id TEXT PRIMARY KEY, document_id TEXT NOT NULL REFERENCES documents(id),
+                    preview_id TEXT NOT NULL UNIQUE REFERENCES ocr_previews(id),
+                    job_id TEXT NOT NULL UNIQUE REFERENCES jobs(id), value TEXT NOT NULL,
+                    integrity_sha256 TEXT NOT NULL, created_at TEXT NOT NULL
+                );
+                CREATE TABLE IF NOT EXISTS ocr_passages (
+                    passage_id INTEGER PRIMARY KEY, document_id TEXT NOT NULL REFERENCES documents(id),
+                    review_id TEXT NOT NULL REFERENCES ocr_reviews(id),
+                    page INTEGER NOT NULL, fragment_id TEXT NOT NULL,
+                    UNIQUE(review_id,page,fragment_id)
+                );
                 PRAGMA user_version=1;
             """)
             if "worker" not in {r[1] for r in connection.execute("PRAGMA table_info(jobs)")}:
@@ -373,6 +385,7 @@ class Store:
                 connection.execute("BEGIN IMMEDIATE")
                 self._assert_no_ocr_job(connection, identifier)
                 self._archive_distillation(connection, identifier, "source_reindexed")
+                connection.execute("DELETE FROM ocr_passages WHERE document_id=?", (identifier,))
                 connection.execute(
                     "DELETE FROM vectors WHERE passage_id IN (SELECT rowid FROM passages WHERE document_id=?)",
                     (identifier,),
@@ -612,20 +625,25 @@ class Store:
                 f"SELECT rowid AS passage_id,document_id,page,label,offset,text,method,bm25(passages) AS rank FROM passages WHERE passages MATCH ? AND document_id IN ({placeholders}) ORDER BY rank LIMIT ?",
                 (expression, *identifiers, min(max(limit, 1), 50)),
             ).fetchall()
-        return [dict(row) for row in rows]
+            from .ocr_reviews import enrich_passages
+
+            return enrich_passages(connection, [dict(row) for row in rows])
 
     def passages(self, identifiers: list[str]):
         if not identifiers:
             return []
         placeholders = ",".join("?" for _ in identifiers)
         with self.connection() as connection:
-            return [
+            rows = [
                 dict(r)
                 for r in connection.execute(
                     f"SELECT rowid AS passage_id,* FROM passages WHERE document_id IN ({placeholders})",
                     identifiers,
                 )
             ]
+            from .ocr_reviews import enrich_passages
+
+            return enrich_passages(connection, rows, source_order=True)
 
     def _assert_no_ocr_job(self, connection, identifier):
         from .ocr_reviews import OCRConflict
@@ -633,14 +651,14 @@ class Store:
         lease = getattr(self._scope, "lease", None)
         if connection.execute(
             "SELECT 1 FROM jobs WHERE state IN ('queued','running') "
-            "AND kind IN ('ocr_preview','ocr_apply') "
+            "AND kind IN ('ocr_preview','ocr_apply','ocr_embed') "
             "AND json_extract(request,'$.document_id')=? AND id!=? LIMIT 1",
             (identifier, lease[0] if lease else ""),
         ).fetchone():
             raise OCRConflict("Document has queued or running OCR work")
 
     def create_job(self, kind: str, request: dict):
-        if kind in {"ocr_preview", "ocr_apply"}:
+        if kind in {"ocr_preview", "ocr_apply", "ocr_embed"}:
             raise ValueError("OCR jobs require the source-pinned review operation")
         identifier = "job_" + uuid.uuid4().hex
         with self.connection() as connection:

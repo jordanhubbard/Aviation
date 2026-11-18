@@ -217,6 +217,23 @@ fresh preview. Keep generated text inert and display both recognition uncertaint
 and source provenance. An explicit operation may poll only its owned job until
 terminal state; no background provider polling is introduced.
 
+The TypeScript `AircraftLibraryOCRClient` and Python
+`aviation.aircraft_library.AircraftLibraryOCRClient` accept a caller-owned private
+library transport rooted at `/api/aircraft-library`. The transport owns the Bearer
+credential, bounded response reads, no-store behavior and redirect rejection; never
+persist credentials or derive them from document metadata. The TypeScript adapter
+sets no-store/redirect-error options on each request, and the application transport
+supplies the in-memory credential. Both SDKs expose explicit context, preview,
+image, review, embedding-retry, history and job operations without polling or
+model selection. The planning gateway's existing OpenAPI resource and request tool
+discover/forward these native operations, preserving authentication and binary
+image responses; images above its 4 MiB MCP bound use authenticated HTTP.
+Browser consumers import the dedicated
+`@aviation/shared-sdk/aviation/aircraft-library` entry point so unrelated server
+integrations do not enter the browser bundle. Recognition coordinates, confidence
+and image-page URLs remain review/citation provenance; model evidence includes
+the selected OCR text and minimal review attribution, without those numeric fields.
+
 ## Web acquisition
 
 Search multiple ICAO/model/manual queries and collect multiple examples, keeping per-result URL/title/query/provider provenance, deduplication and explicit failures. Fetch public documents and PDF links from public result pages using bounded, SSRF-resistant requests, honoring redirects only after revalidation. Do not bypass accounts/paywalls. Keep originals private, with publisher/source attribution and unknown rights explicit. Missing search credentials/provider failure is an unavailable search, never zero known manuals. Background work is persistent, inspectable and bounded per request; users can extend discovery with further batches.

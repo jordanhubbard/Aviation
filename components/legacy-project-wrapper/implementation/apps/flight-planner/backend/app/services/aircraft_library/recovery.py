@@ -35,18 +35,24 @@ class _Snapshot:
         return value
 
     def passages(self, identifiers):
-        return [
+        from .ocr_reviews import enrich_passages
+
+        rows = [
             dict(r)
             for r in self.connection.execute(
                 "SELECT rowid AS passage_id,* FROM passages WHERE document_id=? ORDER BY rowid",
                 (identifiers[0],),
             )
         ]
+        return enrich_passages(self.connection, rows, source_order=True)
 
 
 def _passage_key(passage):
-    return tuple(
+    native = tuple(
         passage[key] for key in ("document_id", "page", "label", "offset", "text", "method")
+    )
+    return native + (
+        (json.dumps(passage["ocr_review"], sort_keys=True),) if passage.get("ocr_review") else ()
     )
 
 
@@ -115,8 +121,11 @@ def recover_distillation(store, models, identifier, snapshot_path):
         if previous and previous.get("evidence_identity") == current_fingerprint:
             current_plan = distillation_plan(current_roots, previous.get("batch_plan"))
             current_prefix = validated_prefix(previous, current_plan)
+
             # Retain current work whenever it covers at least as much exact evidence.
-            covered = lambda batches, count: sum(len(b) for b in batches[:count])
+            def covered(batches, count):
+                return sum(len(b) for b in batches[:count])
+
             if covered(current_plan, len(current_prefix)) >= covered(plan, len(recovered)):
                 return {
                     "status": "unchanged",
