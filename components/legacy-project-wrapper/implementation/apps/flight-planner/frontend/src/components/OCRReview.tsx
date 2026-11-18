@@ -1,4 +1,7 @@
-import { AircraftLibraryOCRClient } from '@aviation/shared-sdk/aviation/aircraft-library'
+import {
+  AircraftLibraryOCRClient,
+  type AircraftOCRMode,
+} from '@aviation/shared-sdk/aviation/aircraft-library'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import {
   Alert,
@@ -73,7 +76,7 @@ export default function OCRReview({
 }: Props) {
   const [context, setContext] = useState<Context | null>(null)
   const [pages, setPages] = useState('')
-  const [mode, setMode] = useState<'normal' | 'sparse'>('sparse')
+  const [mode, setMode] = useState<AircraftOCRMode>('sparse')
   const [preview, setPreview] = useState<Preview | null>(null)
   const [number, setNumber] = useState(0)
   const [image, setImage] = useState('')
@@ -254,10 +257,11 @@ export default function OCRReview({
               label="OCR layout"
               value={mode}
               disabled={disabled}
-              onChange={(e) => setMode(e.target.value as 'normal' | 'sparse')}
+              onChange={(e) => setMode(e.target.value as AircraftOCRMode)}
             >
               <MenuItem value="sparse">Sparse labels and diagrams</MenuItem>
               <MenuItem value="normal">Normal page layout</MenuItem>
+              <MenuItem value="table">Table grid suppression</MenuItem>
             </TextField>
             <Button
               disabled={disabled || !pages.trim()}
@@ -307,6 +311,12 @@ export default function OCRReview({
               {preview.engine_version} · {preview.mode} layout · {preview.status}. OCR confidence
               reflects recognition uncertainty.
             </Typography>
+            {preview.mode === 'table' && (
+              <Alert severity="info">
+                Long table rules were suppressed for recognition. The review image is the untouched
+                original page. Suppression can damage text; compare every selected fragment with it.
+              </Alert>
+            )}
             <Typography variant="caption" sx={{ overflowWrap: 'anywhere' }}>
               Original SHA-256 {preview.source_sha256}. Source association:{' '}
               {String(preview.source_metadata?.icao || 'unknown type')}, variant{' '}

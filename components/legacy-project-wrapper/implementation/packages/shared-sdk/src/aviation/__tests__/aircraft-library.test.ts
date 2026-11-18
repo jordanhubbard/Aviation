@@ -55,3 +55,46 @@ describe("private OCR transport", () => {
     expect(transport).not.toHaveBeenCalled();
   });
 });
+
+describe("explicit table preview", () => {
+  it("preserves selected mode, private transport and preprocessing provenance", async () => {
+    const value = {
+      mode: "table" as const,
+      pages: [7],
+      expected_sha256: "a".repeat(64),
+      expected_index_identity: "b".repeat(64),
+    };
+    const preview = {
+      mode: "table",
+      pages: [
+        {
+          page: 7,
+          image_sha256: "c".repeat(64),
+          ocr_input_sha256: "d".repeat(64),
+          ocr_preprocessing: {
+            method: "straight-rules-v1",
+            dark_threshold: 100,
+            horizontal_min_run: 120,
+            vertical_min_run: 80,
+          },
+        },
+      ],
+    };
+    const transport = vi.fn(async () => preview);
+    const client = new AircraftLibraryOCRClient(transport);
+    await client.queuePreview("doc_test", value);
+    expect(transport).toHaveBeenCalledWith(
+      "/documents/doc_test/ocr-previews",
+      expect.objectContaining({
+        method: "POST",
+        cache: "no-store",
+        redirect: "error",
+        body: JSON.stringify(value),
+      }),
+    );
+    expect(await client.preview("doc_test", "ocr_preview_test")).toEqual(
+      preview,
+    );
+    expect(transport).toHaveBeenCalledTimes(2);
+  });
+});

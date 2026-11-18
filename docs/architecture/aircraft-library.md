@@ -265,7 +265,8 @@ Performance questions must retain units, weight/configuration, source revision a
 
 Mixed text/diagram pages may receive an explicitly requested supplemental OCR
 preview even when native text extraction succeeded (#523). Preview at most ten
-distinct physical pages using only `normal` (Tesseract PSM 3) or `sparse` (PSM 11).
+distinct physical pages using `normal` (Tesseract PSM 3), `sparse` (PSM 11), or
+explicitly selected `table` (PSM 11 with straight-rule suppression, #539).
 Keep the original PDF, native page text, native passages, vectors and summaries
 unchanged during preview. Pin each immutable candidate to the original SHA-256,
 metadata and exact index identity. Retain PDFium-rendered page images, image
@@ -275,6 +276,22 @@ confidence. Confidence is recognition metadata, not approval. Bound renders to
 to 600 seconds, candidate JSON to 512 KiB and retained images to 24 MiB per preview.
 Reject resource-limit failures without silently truncating evidence. The child
 process tree must be killed and reaped on cancellation or deadline.
+
+Table previews keep the untouched PDFium page rendering as the retained review
+image. A separate grayscale OCR input suppresses only contiguous horizontal dark
+runs of at least `max(120, width // 10)` pixels and vertical runs of at least
+`max(80, height // 24)` pixels, measured independently against the original
+grayscale pixels below intensity 100. Replace only those pixels with white;
+never add strokes, change coordinates or rewrite recognized text. The fixed
+`straight-rules-v1` preprocessing identity, threshold, run lengths and SHA-256 of
+the actual processed OCR input belong to the immutable page candidate. Bound
+processed images to the same pixel limit and at most another 24 MiB per preview.
+Keep the complete operation inside the existing supervised child deadline and
+resource bounds. Existing modes, defaults and old previews remain compatible.
+Display that table rules were suppressed for recognition, while review uses the
+original page. Rule suppression can also damage text; every selected fragment
+still requires literal comparison with the original image. No automatic review,
+value inference or performance-data approval follows from this mode.
 
 An explicit reviewed application selects at most 100 candidate fragments, names
 the reviewer and attests that those selected fragments match the original page

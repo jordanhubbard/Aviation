@@ -278,7 +278,7 @@ class OCRProvenance(BaseModel):
     source_metadata: DocumentMetadata
     engine: str
     engine_version: str
-    mode: Literal["normal", "sparse"]
+    mode: Literal["normal", "sparse", "table"]
     confidence: float
     bbox: list[int]
     image_url: str
@@ -292,7 +292,7 @@ class OCRIdentityRequest(BaseModel):
 
 class OCRPreviewRequest(OCRIdentityRequest):
     pages: list[int] = Field(min_length=1, max_length=10)
-    mode: Literal["normal", "sparse"] = "normal"
+    mode: Literal["normal", "sparse", "table"] = "normal"
 
 
 class OCRSelection(BaseModel):
@@ -315,7 +315,7 @@ class OCRContext(BaseModel):
     index_identity: str
     source_metadata: DocumentMetadata
     page_count: int
-    modes: list[Literal["normal", "sparse"]]
+    modes: list[Literal["normal", "sparse", "table"]]
     max_pages: int
 
 
@@ -327,6 +327,13 @@ class OCRFragment(BaseModel):
     confidence: float
 
 
+class OCRPreprocessing(BaseModel):
+    method: Literal["straight-rules-v1"]
+    dark_threshold: Literal[100]
+    horizontal_min_run: int = Field(ge=120)
+    vertical_min_run: int = Field(ge=80)
+
+
 class OCRPreviewPage(BaseModel):
     page: int
     label: str
@@ -335,6 +342,8 @@ class OCRPreviewPage(BaseModel):
     scale: float | None = None
     image_sha256: str
     tsv_sha256: str | None = None
+    ocr_input_sha256: str | None = Field(default=None, pattern=r"^[a-f0-9]{64}$")
+    ocr_preprocessing: OCRPreprocessing | None = None
     fragments: list[OCRFragment]
     error: str | None
 
@@ -350,7 +359,7 @@ class OCRPreview(BaseModel):
     integrity_sha256: str
     source_current: bool
     page_count: int
-    mode: Literal["normal", "sparse"]
+    mode: Literal["normal", "sparse", "table"]
     engine: str
     engine_version: str
     renderer: str
@@ -383,7 +392,7 @@ class OCRReview(BaseModel):
     fragments: list[OCRReviewedFragment]
     engine: str
     engine_version: str
-    mode: Literal["normal", "sparse"]
+    mode: Literal["normal", "sparse", "table"]
     active: bool
     source_current: bool
 

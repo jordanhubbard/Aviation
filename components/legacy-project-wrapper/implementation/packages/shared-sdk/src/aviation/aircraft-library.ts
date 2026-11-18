@@ -2,6 +2,15 @@
  * Credentials belong to the caller's private transport, never PDF metadata or jobs.
  * Poll only a job explicitly requested by the operator. Images require HTTP for >4 MiB.
  */
+export type AircraftOCRMode = "normal" | "sparse" | "table";
+
+export interface AircraftOCRPreprocessing {
+  method: "straight-rules-v1";
+  dark_threshold: 100;
+  horizontal_min_run: number;
+  vertical_min_run: number;
+}
+
 export interface AircraftOCRIdentity {
   expected_sha256: string;
   expected_index_identity: string;
@@ -23,7 +32,7 @@ export interface AircraftOCRContext {
   index_identity: string;
   source_metadata: Record<string, unknown>;
   page_count: number;
-  modes: ("normal" | "sparse")[];
+  modes: AircraftOCRMode[];
   max_pages: number;
 }
 export interface AircraftOCRFragment {
@@ -41,6 +50,8 @@ export interface AircraftOCRPage {
   fragments: AircraftOCRFragment[];
   error: string | null;
   image_sha256: string;
+  ocr_input_sha256?: string | null;
+  ocr_preprocessing?: AircraftOCRPreprocessing | null;
 }
 export interface AircraftOCRPreview extends Omit<
   AircraftOCRContext,
@@ -50,7 +61,7 @@ export interface AircraftOCRPreview extends Omit<
   job_id: string;
   integrity_sha256: string;
   source_current: boolean;
-  mode: "normal" | "sparse";
+  mode: AircraftOCRMode;
   engine: string;
   engine_version: string;
   renderer: string;
@@ -128,7 +139,7 @@ export class AircraftLibraryOCRClient {
   }
   queuePreview(
     document: string,
-    value: AircraftOCRIdentity & { pages: number[]; mode: "normal" | "sparse" },
+    value: AircraftOCRIdentity & { pages: number[]; mode: AircraftOCRMode },
   ): Promise<AircraftLibraryJob> {
     return this.post(this.document(document) + "/ocr-previews", value);
   }

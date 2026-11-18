@@ -5,7 +5,7 @@ the library Bearer credential, no-store responses, bounded bodies and no redirec
 No credential, provider or model is inferred from a PDF. Jobs are never polled here.
 """
 
-from typing import Any, Literal, Protocol, TypedDict
+from typing import Any, Literal, NotRequired, Protocol, TypedDict
 import re
 
 
@@ -21,7 +21,7 @@ class OCRSelection(TypedDict):
 
 class OCRPreviewRequest(OCRIdentity):
     pages: list[int]
-    mode: Literal["normal", "sparse"]
+    mode: Literal["normal", "sparse", "table"]
 
 
 class OCRApplyRequest(OCRIdentity):
@@ -46,8 +46,15 @@ class OCRContext(TypedDict):
     index_identity: str
     source_metadata: dict[str, Any]
     page_count: int
-    modes: list[Literal["normal", "sparse"]]
+    modes: list[Literal["normal", "sparse", "table"]]
     max_pages: int
+
+
+class OCRPreprocessing(TypedDict):
+    method: Literal["straight-rules-v1"]
+    dark_threshold: Literal[100]
+    horizontal_min_run: int
+    vertical_min_run: int
 
 
 class OCRPage(TypedDict):
@@ -58,6 +65,8 @@ class OCRPage(TypedDict):
     fragments: list[OCRFragment]
     error: str | None
     image_sha256: str
+    ocr_input_sha256: NotRequired[str | None]
+    ocr_preprocessing: NotRequired[OCRPreprocessing | None]
 
 
 class OCRPreview(TypedDict):
@@ -69,7 +78,7 @@ class OCRPreview(TypedDict):
     integrity_sha256: str
     source_current: bool
     engine_version: str
-    mode: Literal["normal", "sparse"]
+    mode: Literal["normal", "sparse", "table"]
     approved: Literal[False]
     status: Literal["preview", "partial"]
     pages: list[OCRPage]

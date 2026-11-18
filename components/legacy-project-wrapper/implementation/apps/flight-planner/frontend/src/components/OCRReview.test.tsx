@@ -179,3 +179,30 @@ it('clears selections and attestation after a source conflict', async () => {
   expect(screen.getByLabelText('−36')).not.toBeChecked()
   expect(screen.getByRole('button', { name: 'Apply selected OCR fragments' })).toBeDisabled()
 })
+
+it('selects table OCR explicitly and reviews the unchanged original image before any apply', async () => {
+  const original = request.getMockImplementation()!
+  request.mockImplementation(async (...args: Parameters<typeof original>) => {
+    const value = await original(...args)
+    if (args[0].endsWith('/ocr-previews/ocr_preview_test') && !args[1]?.method)
+      return { ...value, mode: 'table' }
+    return value
+  })
+  render(component())
+  fireEvent.click(screen.getByText('Review OCR for diagram labels'))
+  fireEvent.click(screen.getByRole('button', { name: 'Prepare OCR preview' }))
+  fireEvent.change(await screen.findByLabelText('Physical PDF pages (comma separated)'), {
+    target: { value: '1' },
+  })
+  fireEvent.mouseDown(screen.getByLabelText('OCR layout'))
+  fireEvent.click(await screen.findByRole('option', { name: 'Table grid suppression' }))
+  fireEvent.click(screen.getByRole('button', { name: 'Generate selected-page preview' }))
+  await screen.findByAltText('Original PDF page 1, label i')
+  expect(await screen.findByText(/Long table rules were suppressed for recognition/)).toBeVisible()
+  const call = request.mock.calls.find(
+    ([path, options]) => path.endsWith('/ocr-previews') && options?.method === 'POST',
+  )!
+  expect(JSON.parse(call[1]!.body as string).mode).toBe('table')
+  expect(screen.getByRole('button', { name: 'Apply selected OCR fragments' })).toBeDisabled()
+  expect(request.mock.calls.some(([path]) => path.endsWith('/ocr-reviews'))).toBe(false)
+})

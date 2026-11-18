@@ -217,6 +217,19 @@ def make_library(tmp_path, monkeypatch):
                     "width": 100,
                     "height": 100,
                     "error": None,
+                    **(
+                        {
+                            "ocr_input_sha256": "4" * 64,
+                            "ocr_preprocessing": {
+                                "method": "straight-rules-v1",
+                                "dark_threshold": 100,
+                                "horizontal_min_run": 120,
+                                "vertical_min_run": 80,
+                            },
+                        }
+                        if kwargs["mode"] == "table"
+                        else {}
+                    ),
                     "fragments": [
                         {
                             "id": "fragment_1",

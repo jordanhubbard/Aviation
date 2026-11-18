@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Aircraft library: add an explicit table OCR preview mode that suppresses long grid rules for recognition while retaining the untouched page image for fragment review.
+
 - Aircraft library: compare explicit Unicode and ASCII half percentages with their decimal value while retaining exact original quotations and signs.
 
 - Aircraft library: recognize complete frequency measurements joined to ordinary PDF prose while preserving original quotations, signs, units and identifier exclusions.

@@ -277,7 +277,8 @@ def test_corrupt_applied_text_fails_closed(library):
         store.passages([identifier])
 
 
-def test_authenticated_typed_preview_apply_search_and_history_http(library, monkeypatch):
+@pytest.mark.parametrize("mode", ["sparse", "table"])
+def test_authenticated_typed_preview_apply_search_and_history_http(library, monkeypatch, mode):
     from aviation.aircraft_library import AircraftLibraryOCRClient
 
     store, identifier = library
@@ -302,8 +303,10 @@ def test_authenticated_typed_preview_apply_search_and_history_http(library, monk
         assert result.status_code == 401 and result.headers["cache-control"] == "private, no-store"
     context = client.get(base + "/ocr", headers=headers)
     assert context.status_code == 200
+    assert "table" in context.json()["modes"]
     assert sdk.context(identifier)["document_id"] == identifier
     values = preview_request(store, identifier)
+    values["mode"] = mode
     queued = client.post(base + "/ocr-previews", json=values, headers=headers)
     assert queued.status_code == 202
     assert client.post(base + "/jobs/index", headers=headers).status_code == 409
@@ -316,6 +319,13 @@ def test_authenticated_typed_preview_apply_search_and_history_http(library, monk
     assert image.status_code == 200 and image.headers["content-type"] == "image/png"
     assert image.headers["cache-control"] == "private, no-store"
     detail = preview.json()
+    assert detail["mode"] == mode
+    if mode == "table":
+        assert detail["pages"][0]["ocr_input_sha256"] == "4" * 64
+        assert detail["pages"][0]["ocr_preprocessing"]["method"] == "straight-rules-v1"
+    schema = app.openapi()["components"]["schemas"]
+    assert "table" in schema["OCRPreviewRequest"]["properties"]["mode"]["enum"]
+    assert "ocr_input_sha256" in schema["OCRPreviewPage"]["properties"]
     body = {
         "expected_sha256": detail["source_sha256"],
         "expected_index_identity": detail["index_identity"],
@@ -343,6 +353,7 @@ def test_authenticated_typed_preview_apply_search_and_history_http(library, monk
     review_id = store.job(apply.json()["id"])["result"]["review_id"]
     review = client.get(base + "/ocr-reviews/" + review_id, headers=headers)
     assert review.status_code == 200 and review.json()["active"]
+    assert review.json()["mode"] == mode
     assert review.json()["fragments"][0]["text"] == "−36"
     assert sdk.review(identifier, review_id)["fragments"][0]["text"] == "−36"
     assert sdk.job(apply.json()["id"])["state"] == "completed"
@@ -357,6 +368,7 @@ def test_authenticated_typed_preview_apply_search_and_history_http(library, monk
     assert found.status_code == 200
     derived = next(p for p in found.json()["passages"] if p.get("ocr_review"))
     assert derived["ocr_review"]["review_id"] == review_id
+    assert derived["ocr_review"]["mode"] == mode
     history = client.get(base + "/ocr-reviews?limit=1", headers=headers)
     assert history.status_code == 200 and history.json()["items"][0]["id"] == review_id
     assert client.get(base + "/ocr-reviews?limit=0", headers=headers).status_code == 422

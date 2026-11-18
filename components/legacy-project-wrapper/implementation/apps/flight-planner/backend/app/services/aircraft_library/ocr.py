@@ -22,7 +22,7 @@ MAX_CANDIDATE_BYTES = 512 * 1024
 MAX_IMAGE_BYTES = 24 * 1024 * 1024
 MAX_TSV_BYTES = 4 * 1024 * 1024
 MAX_FRAGMENTS = 500
-MODES = {"normal": 3, "sparse": 11}
+MODES = {"normal": 3, "sparse": 11, "table": 11}
 
 
 class OCRError(ValueError):
@@ -31,7 +31,7 @@ class OCRError(ValueError):
 
 def selection(pages, mode):
     if not isinstance(mode, str) or mode not in MODES:
-        raise OCRError("OCR mode must be normal or sparse")
+        raise OCRError("OCR mode must be normal, sparse or table")
     if (
         not isinstance(pages, list)
         or not 1 <= len(pages) <= MAX_PAGES
@@ -125,6 +125,56 @@ def fragments(tsv: str, width: int, height: int):
         raise OCRError("OCR returned invalid or excessive fragment data") from error
 
 
+def _table_policy(width, height):
+    if (
+        type(width) is not int
+        or type(height) is not int
+        or min(width, height) < 1
+        or width * height > MAX_PIXELS
+    ):
+        raise OCRError("Table OCR input exceeds pixel limit")
+    return {
+        "method": "straight-rules-v1",
+        "dark_threshold": 100,
+        "horizontal_min_run": max(120, width // 10),
+        "vertical_min_run": max(80, height // 24),
+    }
+
+
+def _table_image(image):
+    """Whiten long straight dark runs; never modify the original review image."""
+    from PIL import Image
+
+    width, height = image.size
+    policy = _table_policy(width, height)
+    with image.convert("L") as grayscale:
+        source = grayscale.tobytes()
+    result = bytearray(source)
+    horizontal, vertical = policy["horizontal_min_run"], policy["vertical_min_run"]
+    for y in range(height):
+        offset, start = y * width, None
+        for x in range(width + 1):
+            dark = x < width and source[offset + x] < 100
+            if dark and start is None:
+                start = x
+            elif not dark and start is not None:
+                if x - start >= horizontal:
+                    result[offset + start : offset + x] = b"\xff" * (x - start)
+                start = None
+    for x in range(width):
+        start = None
+        for y in range(height + 1):
+            dark = y < height and source[y * width + x] < 100
+            if dark and start is None:
+                start = y
+            elif not dark and start is not None:
+                if y - start >= vertical:
+                    for row in range(start, y):
+                        result[row * width + x] = 255
+                start = None
+    return Image.frombytes("L", image.size, bytes(result)), policy
+
+
 def _generate(path: Path, output: Path, pages: list[int], mode: str):
     """Child only: parse/render/OCR; parent owns the process-tree deadline."""
     from pypdf import PdfReader
@@ -166,7 +216,7 @@ def _generate(path: Path, output: Path, pages: list[int], mode: str):
         "pages": [],
     }
     labels = reader.page_labels
-    total_images = 0
+    total_images = total_inputs = 0
     with pdfium.PdfDocument(data) as document:
         for number in pages:
             record = {"page": number, "label": str(labels[number - 1]), "fragments": []}
@@ -204,10 +254,28 @@ def _generate(path: Path, output: Path, pages: list[int], mode: str):
                 }
             )
             base = output / f"ocr-{number}"
+            input_path = image_path
+            if mode == "table":
+                from PIL import Image
+
+                with Image.open(image_path) as original:
+                    processed, policy = _table_image(original)
+                input_path = output / f"ocr-input-{number}.png"
+                try:
+                    processed.save(input_path)
+                finally:
+                    processed.close()
+                total_inputs += input_path.stat().st_size
+                if total_inputs > MAX_IMAGE_BYTES:
+                    raise OCRError("Processed OCR inputs exceed image size limit")
+                record.update(
+                    ocr_preprocessing=policy,
+                    ocr_input_sha256=digest(input_path.read_bytes()),
+                )
             with open(os.devnull, "wb") as log:
                 try:
                     run = subprocess.run(
-                        [executable, str(image_path), str(base), "--psm", str(MODES[mode]), "tsv"],
+                        [executable, str(input_path), str(base), "--psm", str(MODES[mode]), "tsv"],
                         stdout=log,
                         stderr=log,
                         timeout=45,
@@ -286,7 +354,9 @@ def extract_selected(path: Path, pages, *, mode="normal", timeout=600, cancelled
         if candidate_path.stat().st_size > MAX_CANDIDATE_BYTES:
             raise OCRError("OCR preview exceeds candidate size limit")
         candidate = json.loads(candidate_path.read_bytes())
-        images, size = {}, 0
+        images, size, input_size = {}, 0, 0
+        if candidate.get("mode") != mode:
+            raise OCRError("OCR preview does not match requested mode")
         if [page["page"] for page in candidate["pages"]] != pages:
             raise OCRError("OCR preview does not match requested pages")
         for page in candidate["pages"]:
@@ -297,6 +367,19 @@ def extract_selected(path: Path, pages, *, mode="normal", timeout=600, cancelled
             data = image_path.read_bytes()
             if digest(data) != page["image_sha256"]:
                 raise OCRError("OCR page image integrity failure")
+            if mode == "table":
+                if page.get("ocr_preprocessing") != _table_policy(page["width"], page["height"]):
+                    raise OCRError("Table OCR preprocessing identity mismatch")
+                input_path = output / f"ocr-input-{page['page']}.png"
+                try:
+                    input_size += input_path.stat().st_size
+                    if input_size > MAX_IMAGE_BYTES:
+                        raise OCRError("Processed OCR inputs exceed image size limit")
+                    input_hash = digest(input_path.read_bytes())
+                except OSError as error:
+                    raise OCRError("Processed OCR input is unavailable") from error
+                if input_hash != page.get("ocr_input_sha256"):
+                    raise OCRError("Processed OCR input integrity failure")
             images[page["page"]] = data
         return candidate, images
 
