@@ -11,6 +11,8 @@ import sqlite3
 
 from .models import (
     LEGACY_DISTILLATION_EVIDENCE,
+    LEGACY_CORRECTION_POLICY,
+    CORRECTION_POLICY,
     ModelUnavailable,
     _distillation_settings,
     distillation_context,
@@ -90,7 +92,13 @@ def _snapshot_context(source, models, identifier):
     saved = source.get(identifier)["artifacts"].get("distillation", {})
     policy = saved.get("evidence_policy", LEGACY_DISTILLATION_EVIDENCE)
     try:
-        result = distillation_context(source, models, identifier, evidence_policy=policy)
+        result = distillation_context(
+            source,
+            models,
+            identifier,
+            evidence_policy=policy,
+            correction_policy=saved.get("correction_policy", LEGACY_CORRECTION_POLICY),
+        )
         settings = _distillation_settings(models, [p for b in result[1] for p in b], policy)
     except ModelUnavailable as error:
         raise ValueError("Snapshot distillation evidence settings are invalid") from error
@@ -163,6 +171,8 @@ def recover_distillation(store, models, identifier, snapshot_path):
         source = _Snapshot(connection)
         old, roots, _, fingerprint = _snapshot_context(source, models, identifier)
         saved = old["artifacts"].get("distillation", {})
+        if saved.get("correction_policy", LEGACY_CORRECTION_POLICY) != CORRECTION_POLICY:
+            raise ValueError("Recovery cannot change the completion correction policy")
         if (
             saved.get("status") not in {"partial", "complete"}
             or saved.get("evidence_identity") != fingerprint
@@ -357,6 +367,8 @@ def _recover_reviewed_prefix(
         source = _Snapshot(connection)
         old, old_roots, _, fingerprint = _snapshot_context(source, models, identifier)
         saved = old["artifacts"].get("distillation", {})
+        if saved.get("correction_policy", LEGACY_CORRECTION_POLICY) != CORRECTION_POLICY:
+            raise ValueError("Recovery cannot change the completion correction policy")
         if (
             saved.get("status") not in {"partial", "complete"}
             or saved.get("evidence_identity") != fingerprint

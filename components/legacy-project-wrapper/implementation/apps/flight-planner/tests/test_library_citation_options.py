@@ -1,4 +1,4 @@
-"""Possible numeric evidence must guide correction without admitting a claim."""
+"""Legacy numeric-citation-only-v1 remains exactly replayable, never a new-policy default."""
 
 import copy
 import json
@@ -9,12 +9,17 @@ import pytest
 
 from app.services.aircraft_library.models import (
     ModelUnavailable,
+    LEGACY_CORRECTION_POLICY,
     _numeric_excerpt_options,
     citation_excerpts,
-    verified_completion,
+    verified_completion as _verified_completion,
 )
 from .test_library_correction_schema import model, response
 from .test_library_numeric_layout import source
+
+
+def verified_completion(*args, **kwargs):
+    return _verified_completion(*args, correction_policy=LEGACY_CORRECTION_POLICY, **kwargs)
 
 
 @pytest.mark.parametrize("mode", ["correct", "reason_only", "wrong_fact", "shrink"])

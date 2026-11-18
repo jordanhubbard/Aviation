@@ -7,6 +7,7 @@ import pytest
 from app.services.aircraft_library import ocr_reviews, transcriptions
 from app.services.aircraft_library.models import (
     LEGACY_DISTILLATION_EVIDENCE,
+    CORRECTION_POLICY,
     NATIVE_DISTILLATION_EVIDENCE,
     REVIEWED_DISTILLATION_EVIDENCE,
     Models,
@@ -300,8 +301,10 @@ def legacy_result(store, identifier, provider):
         }
         for batch in roots
     ]
+    # This fixture changes evidence packing only, retaining the current correction policy.
     return {
         "status": "complete",
+        "correction_policy": CORRECTION_POLICY,
         "evidence_identity": fp,
         "sections": sections,
         "completed_batches": len(roots),

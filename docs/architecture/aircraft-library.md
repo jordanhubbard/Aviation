@@ -345,15 +345,29 @@ citation slots are occupied, replace redundant citations with relevant ones rath
 than claiming in prose to have added an omitted reference. Never add a citation
 automatically, persist an edited counterfactual, weaken validation or increase the
 three-candidate budget. Initial generation inputs and identities stay unchanged.
-When those options cover every rejected numeric token in a claim, correction is
-citation-only: keep that claim's exact text and repair its citations. This mode
-protects potentially supported assertions from silent contraction; it does not
-prove that the assertion is true. If the original assertion cannot be supported,
-leave it unresolved. Enforce exact text server-side even for legacy adapters and
-plain JSON output. Structured requests may additionally constrain replacement
-text to the original strings using an isolated per-request schema; still enforce
-the original position of each string after the response. Unsupported numbers
-without candidate evidence retain the general correction path.
+New completions use `rejected-assertion-repair-v2` (#567). Numeric occurrence
+hints never make rejected text immutable: an unrelated page reference, identifier,
+or measurement cannot establish the assertion's meaning. The model may correct an
+unsupported rejected assertion to the literal supplied source form, keeping its
+topic, supported facts, conditions and qualifiers. Preserve every validated claim
+byte-for-byte, require exactly one replacement per rejected position in order, and
+revalidate the complete merged answer. Never silently drop a failed claim, inject a
+server-written answer, increase attempts, convert printed decimal notation into
+clock notation, or infer semantic support from matching numbers. Changed rejected
+text remains an untrusted model candidate subject to all existing checks; numeric
+validation alone does not prove semantic applicability.
+
+Record this correction policy in new distillation artifacts, diagnostic records
+and generation fingerprints. Changing correction behavior creates a new generation;
+archive prior artifacts unchanged and do not silently resume or recover an old-policy
+prefix under the new policy. The initial question, SYSTEM, evidence selection,
+model/provider profile, numeric/source validators and three-candidate limit remain
+unchanged. Explicit internal reconstruction with `numeric-citation-only-v1` retains
+the previous fingerprint and correction wire behavior; missing policy on historical
+artifacts means that legacy policy. Unknown policies fail closed before provider
+calls. Legacy numeric hints covering every rejected token continue to enforce exact
+citation-only replacement text, including isolated structured-schema enums, solely
+for explicit replay. They are not the new completion default.
 
 Search filters include ICAO, registration, document IDs, variant and revision. Retrieval combines full-text ranking with semantic vectors when the configured embedding provider is available; stored vectors identify their provider endpoint, model and embedding mode. Symmetric OpenAI-compatible embeddings remain the default. An explicitly configured query/passage mode sends `input_type=passage` for document indexing and `input_type=query` for questions; incompatible providers, models or modes must not reuse one another's vectors. Existing vectors without this identity require reindexing. Operators may bound embedding batches from 1 to 32 passages for provider limits; every passage is still indexed, and a batch failure preserves previously completed work without claiming a complete index. Provider configuration is operator-owned and must not silently select a remote model. Distillation covers document sections using page-cited evidence and marks missing extraction. Operators may bound distillation batches from 2,000 to 18,000 text characters for a provider context/token budget; every readable passage must still be included, with the batching/evidence identity preventing reuse across changed batches. Each batch summarizes supported facts actually present; topics absent from a batch do not invalidate supported facts in that batch. Preserve qualifiers and footnotes, and never invent content for missing topics. Requests include an explicit cited JSON shape and a bounded completion budget; truncated or malformed generation cannot establish a completed distillation. At most three candidate completions may correct citation/schema/numeric validation failures, using the failed candidate and validation reason as feedback against the same evidence. Correction feedback distinguishes a non-array claims value from an over-limit array, reporting the actual count and the maximum of 12; it never silently drops excess claims. Numeric rejection identifies the one-based failing claim and asks for supporting excerpts or removal of unsupported assertions, without echoing document text or numeric values into the error. The bounded correction loop still revalidates the whole answer. Every admitted candidate passes the unchanged evidence checks; exhausted correction attempts preserve a partial artifact. A retry resumes only a validated prefix of a partial distillation whose provider, model, prompt, metadata and exact evidence fingerprint still match; provider rate limits must not discard completed batches. Batches with insufficient evidence remain unresolved, so they cannot establish a complete distillation. Provider HTTP failures are not retried by this correction loop. An explicit per-process minimum interval may pace chat-completion start times across foreground answers and background distillation, including failed requests. The default adds no delay; operator-configured pacing does not alter evidence or completion coverage. It never presents an extractive index as an LLM summary. A configured LLM answers from retrieved original-page evidence, returns document/page citations with exact original-text spans (model-normalized whitespace may be resolved back to a contiguous original span; changed words or punctuation remain invalid), and states insufficient evidence rather than inventing figures or applicability. Document text is untrusted evidence, never instructions. Conflicting editions/variants remain separate and visible; unknown applicability is not approval for a particular aircraft. Generated answers and summaries are derived artifacts distinct from original text.
 
