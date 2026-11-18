@@ -968,7 +968,8 @@ export default function AircraftLibraryPage() {
                             Historical summary. Its source metadata and extraction may differ from
                             the current document. It is ineligible for current-generation resume and
                             does not establish current applicability. Page links open the current
-                            extraction; retained quotations below are historical.
+                            extraction; retained quotations below are historical. Historical claims
+                            are retained as generated and may fail current evidence checks.
                           </Alert>
                           <Typography>
                             Retained source: {historical.source_metadata.title} ·{' '}

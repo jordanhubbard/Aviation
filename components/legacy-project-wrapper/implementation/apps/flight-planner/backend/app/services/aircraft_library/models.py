@@ -618,23 +618,97 @@ def _comparison_half_percentages(text):
     return _HALF_PERCENT.sub(convert, text)
 
 
-_MASS_UNIT = r"(?i:pounds?|lbs?|kilograms?|kg)"
-_MASS_DECIMAL_FACTOR = re.compile(
+_CONVERSION_UNIT = (
+    r"(?i:"
+    r"(?:square|cubic|sq\.?|cu\.?)[ \t]*"
+    r"(?:inches|inch|in|feet|foot|ft|centimet(?:er|re)s?|cm|met(?:er|re)s?|m)|"
+    r"(?:(?:statute|nautical)[ \t]*)?miles?[ \t]*"
+    r"(?:/[ \t]*(?:hours?|hrs?|h)|per[ \t]*hours?)|"
+    r"kilomet(?:er|re)s?[ \t]*(?:/[ \t]*(?:hours?|hrs?|h)|per[ \t]*hours?)|"
+    r"(?:(?:U\.[ \t]*S\.|US|imperial|imp\.)[ \t]*)?gallons?|"
+    r"pounds?|lbs?|kilograms?|kg|(?:(?:statute|nautical)[ \t]*)?miles?|"
+    r"kilomet(?:er|re)s?|km|nm|nmi|inches|inch|feet|foot|"
+    r"centimet(?:er|re)s?|millimet(?:er|re)s?|met(?:er|re)s?|"
+    r"(?:in|ft|cm|mm|m)[²³]?|lit(?:er|re)s?|l|gal|quarts?|qt|"
+    r"knots?|kts?|mph|kph|Celsius|Centigrade|Fahrenheit|°[CF]|"
+    r"horsepower|hp|kilowatts?|kW|watts?|W|psi|hPa|mbar|in\.?[ \t]*Hg"
+    r")"
+)
+_CONVERSION_FACTOR = re.compile(
     r"(?<![\w.,/+\-\N{MINUS SIGN}\N{EN DASH}\N{EM DASH}])"
-    r"(?P<unit>" + _MASS_UNIT + r")[ \t]+(?P<operator>[x×])[ \t]*"
-    r"(?P<sign>[-+\N{MINUS SIGN}\N{EN DASH}]?)(?P<value>\.\d+)"
-    r"(?=[ \t]*=[ \t]*" + _MASS_UNIT + r"(?![\w./+\-\N{MINUS SIGN}\N{EN DASH}\N{EM DASH}]))"
+    r"(?P<left>" + _CONVERSION_UNIT + r")[ \t]*(?P<operator>[x×])[ \t]*"
+    r"(?P<factor>(?P<sign>[-+\N{MINUS SIGN}\N{EN DASH}]?)"
+    r"(?P<value>(?:\d{1,3}(?:[ \t]*,\d{3})+|\d+)(?:[ \t]*\.[ \t]*\d+)?|\.\d+))"
+    r"[ \t]*=[ \t]*(?P<right>" + _CONVERSION_UNIT + r")"
+    r"(?![\w/+\-\N{MINUS SIGN}\N{EN DASH}\N{EM DASH}]|\.\w)"
+)
+_CONVERSION_CODE_LABEL = re.compile(
+    r"(?i)(?<!\w)(?:serial(?:[ \t]+(?:no\.?|number|\#))?|S/N|registration|"
+    r"tail(?:[ \t]+number)?|ref(?:erence)?\.?)\s*(?:[:#]\s*)?$"
+)
+_CONVERSION_COMPOUND_PREFIX = re.compile(
+    r"(?i)(?<!\w)(?:nautical|statute|square|cubic|U\.\s*S\.|US|imperial|imp\.|sq\.?|cu\.?)\s*$"
 )
 
 
-def _comparison_mass_decimal_factors(text):
+def _comparison_conversion_factors(text):
     def separate(match):
         prefix = text[: match.start()].rstrip(" \t(")
-        if _QUANTITY_CODE_LABEL.search(prefix) or _DECIMAL_REFERENCE_LABEL.search(prefix):
+        suffix = text[match.end() :]
+        if (
+            _QUANTITY_CODE_LABEL.search(prefix)
+            or _DECIMAL_REFERENCE_LABEL.search(prefix)
+            or _CONVERSION_CODE_LABEL.search(prefix)
+            or _CONVERSION_COMPOUND_PREFIX.search(prefix)
+            or re.search(r"[x×=][ \t]*$", prefix)
+            or re.match(r"[ \t]*(?:[x×=]|(?i:per\b|squared\b|cubed\b))", suffix)
+        ):
             return match[0]
-        return match["unit"] + " " + match["operator"] + " " + match["sign"] + "0" + match["value"]
+        value = re.sub(r"[ \t]*\.[ \t]*", ".", match["value"])
+        if value.startswith("."):
+            value = "0" + value
+        start, end = match.start("factor") - match.start(), match.end("factor") - match.start()
+        boundary = "" if match[0][start - 1] in " \t" else " "
+        return match[0][:start] + boundary + match["sign"] + value + match[0][end:]
 
-    return _MASS_DECIMAL_FACTOR.sub(separate, text)
+    return _CONVERSION_FACTOR.sub(separate, text)
+
+
+_DELIMITED_LEADING_DECIMAL = re.compile(
+    r"(?<![\w.,/*+\-\N{MINUS SIGN}\N{EN DASH}\N{EM DASH}])"
+    r"(?P<sign>[-+\N{MINUS SIGN}\N{EN DASH}]?)(?P<value>\.\d+)"
+    r"(?![\w/*+\-\N{MINUS SIGN}\N{EN DASH}\N{EM DASH}]|\.[\w.]|,\d)"
+)
+_CONVERSION_FACTOR_PREFIX = re.compile(
+    r"(?<![\w.,/+\-\N{MINUS SIGN}\N{EN DASH}\N{EM DASH}])" + _CONVERSION_UNIT + r"[ \t]*[x×][ \t]*$"
+)
+_BINARY_NUMERIC_OPERATOR = re.compile(
+    r"(?<![\w.])[-+\N{MINUS SIGN}]?\d[\d,]*(?:\.\d+)?[ \t]+" r"[-+\N{MINUS SIGN}\N{EN DASH}][ \t]+$"
+)
+
+
+def _comparison_leading_decimals(text):
+    def expose(match):
+        prefix = text[: match.start()]
+        if re.search(r"[-+\N{MINUS SIGN}\N{EN DASH}]\s+$", prefix) and not (
+            _BINARY_NUMERIC_OPERATOR.search(prefix)
+        ):
+            return match[0]
+        if not match["sign"] and re.search(r"\d[\d,]*\s+$", prefix):
+            return match[0]
+        label = prefix.rstrip(" \t(")
+        factor = _CONVERSION_FACTOR_PREFIX.search(label)
+        if factor:
+            label = label[: factor.start()].rstrip(" \t(")
+        if (
+            _QUANTITY_CODE_LABEL.search(label)
+            or _DECIMAL_REFERENCE_LABEL.search(label)
+            or _CONVERSION_CODE_LABEL.search(label)
+        ):
+            return match[0]
+        return match["sign"] + "0" + match["value"]
+
+    return _DELIMITED_LEADING_DECIMAL.sub(expose, text)
 
 
 def numbers(text):
@@ -642,7 +716,8 @@ def numbers(text):
     # continuation. Keep the source quotation and the complete signed token.
     # A prose/quantity boundary requires an explicit unit. Do not extract
     # arbitrary identifier suffixes or change the retained source quotation.
-    text = _comparison_mass_decimal_factors(text)
+    text = _comparison_conversion_factors(text)
+    text = _comparison_leading_decimals(text)
     text = _comparison_half_percentages(text)
     text = _comparison_isa_temperature_offsets(text)
     text = _comparison_frequency_quantities(text)

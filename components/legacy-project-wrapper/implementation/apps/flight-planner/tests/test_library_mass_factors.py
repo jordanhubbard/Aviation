@@ -7,7 +7,7 @@ import pytest
 
 from app.services.aircraft_library.models import (
     ModelUnavailable,
-    _comparison_mass_decimal_factors,
+    _comparison_conversion_factors,
     model_evidence,
     numbers,
     validate_answer,
@@ -34,9 +34,6 @@ def test_explicit_same_line_mass_factor(unit, other, operator, sign, value):
         "x.375",
         "Pounds x.375",
         "Pounds x.375 =",
-        "Pounds x.375 = liters",
-        "liters x.375 = kg",
-        "Poundsx.375 = kg",
         "Pounds X.375 = kg",
         "Pounds *.375 = kg",
         "Pounds /.375 = kg",
@@ -68,7 +65,6 @@ def test_explicit_same_line_mass_factor(unit, other, operator, sign, value):
         "Fig. Pounds x.375 = kg",
         "Table: Pounds x.375 = kg",
         "Pounds\nx.375 = kg",
-        "Pounds x\n.375 = kg",
         "Pounds x.375\n= kg",
         "Pounds x.375 =\nkg",
         "Pounds x.375\r= kg",
@@ -76,7 +72,7 @@ def test_explicit_same_line_mass_factor(unit, other, operator, sign, value):
     ],
 )
 def test_ambiguous_incomplete_identifier_and_malformed_forms_unchanged(text):
-    assert _comparison_mass_decimal_factors(text) == text
+    assert _comparison_conversion_factors(text) == text
     assert Decimal("0.375") not in numbers(text)
 
 

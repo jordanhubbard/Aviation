@@ -157,18 +157,49 @@ ambiguous. Exact original source/quote/claim bytes, model inputs, generation
 identities and previously admitted artifacts stay intact; audit retained claims
 explicitly when comparison changes.
 
-An explicitly printed mass conversion relation (#544) can attach a leading-dot
-decimal coefficient to `x` or `×`. In temporary numeric comparison only, recognize
-`pound(s)`, `lb(s)`, `kilogram(s)` or `kg`, a horizontal separator, the multiplication
-marker, optional horizontal spacing, an optional adjacent sign and a leading-dot
-decimal, `=`, and another complete mass unit. Unit names are case insensitive;
-every separator is horizontal. Preserve the sign and decimal precision while
-exposing only the printed coefficient as its zero-prefixed decimal value. Do not
-calculate a conversion, infer a missing coefficient or create a unit equivalence.
-Reject code/reference labels, attached identifier prefixes/suffixes, incomplete or
-chained factors, percentages, exponents, detached signs and line joining. Original
-source, quotations, prompts, fingerprints, correction budgets and all other
-evidence admission checks remain unchanged.
+An explicitly printed conversion relation (#546) can join a complete known unit
+name to `x` or `×`, a signed coefficient, `=`, and another complete known unit.
+Recognize spelled-out or conventional abbreviated mass, distance, length, volume,
+area, speed, temperature, power and pressure units. Fixed compound names such as
+`statute Miles`, `Nautical Miles` and `U.S. Gallons` may lose their internal
+horizontal separators; arbitrary identifier suffixes remain excluded. The
+coefficient may be an integer, grouped integer, ordinary decimal or leading-dot
+decimal. Horizontal gaps around a decimal point between digits may be removed;
+a leading dot still requires immediately following fractional digits. Insert only
+a temporary numeric-comparison boundary after the multiplication marker and a
+leading zero where needed. Preserve adjacent signs and precision. Every part of
+the relation must remain on one line, with complete unit/token boundaries; reject
+code/reference labels, chained expressions, exponents, percentages, malformed
+grouping and detached signs. Existing mass-only exclusions for other recognized
+units and tight multiplication boundaries are superseded by this complete-relation
+grammar. This recognizes printed literals only: it does not evaluate a conversion,
+verify physical unit equivalence, infer a coefficient or replace OCR letters with
+digits. In particular, a corrupted coefficient remains unsupported even when a
+known conversion constant could be guessed. Source/model input bytes, quotations,
+generation profiles, fingerprints, correction budgets and scope coverage remain
+unchanged; audit all retained current and historical claims after parser changes.
+
+Ordinary delimited leading decimals such as `.375` are numeric literals independent
+of the spelling of neighboring unit words. Compare them with `0.375`, preserving
+an adjacent sign, without changing quotation bytes or repairing OCR text. Require
+complete literal boundaries, reject identifier/reference labels and malformed
+decimal chains, and never turn a detached sign into positive numeric support.
+An explicit preceding numeric operand on the same line makes a spaced operator
+binary; a following literal retains its own adjacent sign. Count-dash list rows
+have this same lexical form. An unsigned fractional tail immediately after a
+number and whitespace remains ambiguous and is not exposed as a standalone value.
+A delimited literal on a separate line remains a literal on that line; recognizing
+it does not join an equation across lines. A decimal attached directly to `x` still
+requires the complete known-unit relation above. No missing digits, OCR letters,
+fraction conversions or unit equivalences are inferred.
+
+Historical summaries preserve their original generated claims and quotations,
+including claims that can fail stricter current comparison rules. The history
+view states that retained claims may fail current evidence checks. A qualification
+audit validates all current claims and reports any exact unvalidated historical
+claim separately; it must not silently edit that archive, reclassify it as current
+evidence or claim that the entire historical corpus passed. Historical artifacts
+remain ineligible for current-generation resume.
 
 Explicit standalone half percentages (#538), written `½%`, `1/2%` or with
 horizontal whitespace around the ASCII slash or before `%`, compare as `0.5%`.

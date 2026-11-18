@@ -244,6 +244,9 @@ it('loads historical summaries only explicitly, retains old source context and c
   )
   await screen.findByText('Retained source claim.')
   expect(screen.getByText(/Historical summary\. Its source metadata/)).toBeInTheDocument()
+  expect(
+    screen.getByText(/Historical claims are retained as generated and may fail current/),
+  ).toBeInTheDocument()
   expect(screen.getByText(/retained edition/)).toBeInTheDocument()
   expect(screen.getByText('<script>historical quote</script>')).toBeInTheDocument()
   expect(window.document.querySelector('script')).toBeNull()

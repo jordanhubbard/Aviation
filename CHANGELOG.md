@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Aircraft library: recognize complete printed conversion coefficients and delimited leading decimals without changing source quotations, reject corrupted values, and clarify that retained historical claims may fail current evidence checks.
+
 - Aircraft library: recognize explicitly printed leading-decimal mass conversion coefficients during numeric comparison while preserving exact quotations, signs and identifier exclusions.
 
 - Aircraft library: review individual recognized OCR words and explicitly recover fully revalidated unchanged batch scopes after approved source additions, preserving historical generations and unresolved new evidence.
