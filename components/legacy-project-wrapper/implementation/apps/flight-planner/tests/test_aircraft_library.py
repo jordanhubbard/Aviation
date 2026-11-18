@@ -1016,22 +1016,30 @@ def test_indexed_excerpts_preserve_all_original_characters(length):
         assert "text" not in evidence
 
 
-def test_provider_excerpt_references_return_exact_public_quotes(store):
+@pytest.mark.parametrize("label", ["107", "8-5"])
+def test_provider_excerpt_references_return_exact_public_quotes(store, label):
     document = put(store)
     passage = {
         **store.passages([document["id"]])[0],
-        "text": "Fuel capacity\n     19.8 US Gallons\nUse conditions apply.",
+        "page": 107,
+        "label": label,
+        "metadata": document["metadata"],
+        "text": "Fuel capacity\n     19.8 US Gallons\nPrinted page 8-5. Use conditions apply.",
     }
 
     def provider(request):
         context = json.loads(json.loads(request.content)["messages"][1]["content"])
         assert context["evidence"][0]["excerpts"][0]["text"] == passage["text"]
         assert context["evidence"][0]["document_id"] == document["id"]
+        assert "page" not in context["evidence"][0]
+        assert "label" not in context["evidence"][0]
+        assert context["evidence"][0]["metadata"] == document["metadata"]
+        assert context["evidence"][0]["method"] == passage["method"]
         value = {
             "insufficient_evidence": False,
             "claims": [
                 {
-                    "text": "Fuel capacity is 19.8 US Gallons.",
+                    "text": "Printed page 8-5 gives fuel capacity as 19.8 US Gallons.",
                     "citations": [{"passage_id": passage["passage_id"], "excerpt_id": 0}],
                 }
             ],
@@ -1049,6 +1057,8 @@ def test_provider_excerpt_references_return_exact_public_quotes(store):
     citation = result["claims"][0]["citations"][0]
     assert citation["quote"] == passage["text"]
     assert citation["document_id"] == document["id"]
+    assert citation["page"] == 107 and citation["label"] == label
+    assert passage["page"] == 107 and passage["label"] == label
     assert "excerpt_id" not in citation
 
 
@@ -1069,17 +1079,20 @@ def test_invalid_excerpt_references_cannot_establish_citations(store, reference)
         validate_answer(candidate, [passage])
 
 
-def test_excerpt_references_cannot_override_numeric_or_source_checks(store):
+@pytest.mark.parametrize("unsupported", ["9999", "107"])
+def test_excerpt_references_cannot_override_numeric_or_source_checks(store, unsupported):
     document = put(store)
     passage = {
         **store.passages([document["id"]])[0],
+        "page": 107,
+        "label": "107",
         "text": "Fuel capacity 19.8 US Gallons. Conditions apply.",
     }
     candidate = {
         "insufficient_evidence": False,
         "claims": [
             {
-                "text": "Fuel capacity is 9999 US Gallons.",
+                "text": f"Fuel capacity is {unsupported} US Gallons.",
                 "citations": [{"passage_id": passage["passage_id"], "excerpt_id": 0}],
             }
         ],

@@ -215,6 +215,16 @@
         "types": "./dist/*.d.ts",
         "default": "./dist/*.js"
       }
+    },
+    "./aviation/aircraft-library": {
+      "import": {
+        "types": "./dist-esm/aviation/aircraft-library.d.ts",
+        "default": "./dist-esm/aviation/aircraft-library.js"
+      },
+      "require": {
+        "types": "./dist/aviation/aircraft-library.d.ts",
+        "default": "./dist/aviation/aircraft-library.js"
+      }
     }
   },
   "scripts": {

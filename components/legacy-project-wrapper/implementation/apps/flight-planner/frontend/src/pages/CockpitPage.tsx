@@ -37,6 +37,7 @@ function Report({
       <Chip
         size="small"
         color={fresh ? 'success' : 'warning'}
+        sx={report.kind === 'fisb_text' ? { bgcolor: '#9a3412', color: '#fff' } : undefined}
         label={
           report.kind === 'fisb_text'
             ? 'Product validity unassessed'
@@ -252,7 +253,8 @@ export default function CockpitPage() {
       </Typography>
       <Alert severity="warning">
         Advisory receiver reports only. Traffic coverage is incomplete; this page supplies no
-        navigation or collision-avoidance guidance. Receiver weather decoding is unavailable.
+        navigation or collision-avoidance guidance. Complete FIS-B text weather is supported;
+        graphical and segmented products are unavailable. Product validity is unassessed.
       </Alert>
       <Typography>
         Run the local bridge with this page’s origin in its allowlist. Use HTTPS, or loopback HTTP

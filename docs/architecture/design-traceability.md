@@ -1,6 +1,6 @@
 # Design traceability
 
-<!-- literate-ai:authority-reviewed sha256:29236c5a95a5cc2299c8da6ea435e1b65b2b17d3aa6eb20dd26fe99c73c66864 -->
+<!-- literate-ai:authority-reviewed sha256:521f99c8271a4a5f3eab3b7f5857c87cabe74c37008f14c250fa8ea539e80f1b -->
 
 [Project guide](../README.md) → design traceability
 
@@ -86,3 +86,20 @@ outcomes. Meta discovers and forwards those typed operations with explicit clien
 authentication; its public aviation CORS list excludes private filing. Contract
 fixtures establish deterministic behavior, while actual vendor lab and operational
 approval remain separate admission requirements.
+
+Flight Planner owns the private [aircraft-library source channels](aircraft-library.md).
+Native PDF extraction, unchanged reviewed machine OCR and explicitly reviewed
+page transcriptions remain distinct evidence with retained original images and
+reviewer attribution. Source changes archive prior summaries; explicit recovery
+admits only fully validated unchanged scopes. Operator transcriptions, including
+identified agent reviews, do not confer independent human or performance-data
+approval. Typed HTTP/MCP, private SDK transports and desktop/mobile review controls
+share those source, privacy, history and failure semantics.
+
+Flight Planner also owns reviewed source-use restrictions for layout-dependent
+native extraction. Immutable image/reviewer receipts and document anchors survive
+reindexing and metadata edits. Original/search text remains available, while
+restricted native excerpts cannot support model claims. Literal reviewed text is
+independent evidence; numeric presence alone never establishes a diagram
+relationship. Coverage and typed HTTP/MCP/SDK/browser views expose unresolved
+pages, and explicit unchanged-scope recovery stops before affected evidence.

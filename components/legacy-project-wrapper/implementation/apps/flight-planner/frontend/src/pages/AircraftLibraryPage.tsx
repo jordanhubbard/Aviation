@@ -1,4 +1,5 @@
 import BlankPageReview from '../components/BlankPageReview'
+import OCRReview from '../components/OCRReview'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import {
   Alert,
@@ -31,7 +32,15 @@ type Metadata = {
   scope: string
   notes: string
 }
-type Citation = { document_id: string; page: number; label: string; quote: string; method: string }
+type Citation = {
+  document_id: string
+  page: number
+  label: string
+  quote: string
+  method: string
+  ocr_review?: { reviewer: string; reviewed_at: string } | null
+  transcription_review?: { reviewer: string; created_at: string } | null
+}
 type Claim = { text: string; citations: Citation[] }
 type Answer = {
   insufficient_evidence: boolean
@@ -40,6 +49,7 @@ type Answer = {
   model?: string
   applicability?: string
   warnings?: string[]
+  source_limits?: { document_id: string; page: number; reason: string; review_id: string }[]
 }
 type Document = {
   id: string
@@ -49,6 +59,7 @@ type Document = {
   status: string
   error: string | null
   original_url: string
+  source_limits?: { id: string; page: number }[]
   extraction: { page_count: number; incomplete_pages: number[] } | null
   sources: { filename: string; url: string | null; retrieved_at: string }[]
   artifacts: {
@@ -58,7 +69,16 @@ type Document = {
         { status: string; pages: { page: number; label: string; excerpt: string }[] }
       >
     }
-    distillation?: { status: string; sections: (Answer & { pages: number[] })[] }
+    distillation?: {
+      status: string
+      unresolved_source_pages?: number[]
+      sections: (Answer & { pages: number[] })[]
+      recovery?: {
+        kind?: string
+        recovered_batches: number
+        recovered_claims: number
+      }
+    }
   }
 }
 type Job = {
@@ -105,6 +125,12 @@ const jobKinds = new Map<string, string>([
   ['distill', 'Distill manual'],
   ['discover', 'Find web examples'],
   ['acquire', 'Acquire manuals'],
+  ['ocr_preview', 'Preview diagram OCR'],
+  ['ocr_apply', 'Apply reviewed OCR'],
+  ['ocr_embed', 'Index reviewed OCR'],
+  ['transcription_apply', 'Retain reviewed page transcription'],
+  ['transcription_embed', 'Index reviewed page transcription'],
+  ['source_limit_review', 'Review native page source use'],
 ])
 const activeJob = (job: Job) => job.state === 'queued' || job.state === 'running'
 const validJob = (job: Job) =>
@@ -148,15 +174,21 @@ export default function AircraftLibraryPage() {
   const [jobNextOffset, setJobNextOffset] = useState<number | null>(null)
   const [question, setQuestion] = useState('')
   const [answer, setAnswer] = useState<Answer | null>(null)
-  const [passages, setPassages] = useState<{ document_id: string; page: number; text: string }[]>(
-    [],
-  )
+  const [passages, setPassages] = useState<
+    {
+      document_id: string
+      page: number
+      text: string
+      source_limit?: { original_image_only: boolean } | null
+    }[]
+  >([])
   const [page, setPage] = useState<{
     document_id: string
     page: number
     label: string
     text: string
     method: string
+    source_limit?: { original_image_only: boolean } | null
   } | null>(null)
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
@@ -403,6 +435,13 @@ export default function AircraftLibraryPage() {
         {value.insufficient_evidence && (
           <Alert severity="info">Insufficient evidence: {value.reason}</Alert>
         )}
+        {!!value.source_limits?.length && (
+          <Alert severity="warning">
+            Some matching native text requires original-image interpretation. Affected PDF pages:{' '}
+            {value.source_limits.map((r) => r.page).join(', ')}. Generated claims do not use that
+            text.
+          </Alert>
+        )}
         {value.claims.map((claim, index) => (
           <Box key={index}>
             <Typography>{claim.text}</Typography>
@@ -425,6 +464,23 @@ export default function AircraftLibraryPage() {
                   </Typography>
                 </Box>
                 {citation.method === 'ocr' && <Chip size="small" label="OCR — check original" />}
+                {citation.ocr_review && (
+                  <Typography variant="caption" display="block">
+                    Supplemental OCR reviewed by {citation.ocr_review.reviewer} ·{' '}
+                    {citation.ocr_review.reviewed_at}. Retained page images are available in the
+                    document’s OCR review history.
+                  </Typography>
+                )}
+                {citation.method === 'operator_transcription' && (
+                  <Chip size="small" label="Operator transcription — check original" />
+                )}
+                {citation.transcription_review && (
+                  <Typography variant="caption" display="block">
+                    Page transcription reviewed by {citation.transcription_review.reviewer} ·{' '}
+                    {citation.transcription_review.created_at}. Compare the retained text and image
+                    in the document’s page transcription history.
+                  </Typography>
+                )}
               </Box>
             ))}
           </Box>
@@ -766,6 +822,13 @@ export default function AircraftLibraryPage() {
                         Incomplete pages: {doc.extraction.incomplete_pages.join(', ')}
                       </Alert>
                     )}
+                    {!!doc.source_limits?.length && (
+                      <Alert severity="warning">
+                        Original-image-only native text on PDF pages{' '}
+                        {doc.source_limits.map((r) => r.page).join(', ')}. Originals and searchable
+                        text are retained; generated coverage remains partial.
+                      </Alert>
+                    )}
                     <Stack direction="row" flexWrap="wrap" gap={1}>
                       <Button
                         onClick={() => {
@@ -822,6 +885,18 @@ export default function AircraftLibraryPage() {
                       download={() => download(doc)}
                       onReviewed={refresh}
                     />
+                    <OCRReview
+                      documentId={doc.id}
+                      sourceSha256={doc.sha256}
+                      sourceLimits={doc.source_limits}
+                      locked={
+                        busy ||
+                        jobs.some((job) => activeJob(job) && job.subject?.document_id === doc.id)
+                      }
+                      request={request}
+                      download={() => download(doc)}
+                      onReviewed={refresh}
+                    />
                     <details>
                       <summary>Source history and applicability</summary>
                       <Typography variant="body2">
@@ -864,10 +939,25 @@ export default function AircraftLibraryPage() {
                     {doc.artifacts.distillation && (
                       <details>
                         <summary>LLM distillation ({doc.artifacts.distillation.status})</summary>
+                        {!!doc.artifacts.distillation.unresolved_source_pages?.length && (
+                          <Alert severity="warning">
+                            Original-image interpretation remains unresolved on PDF pages{' '}
+                            {doc.artifacts.distillation.unresolved_source_pages.join(', ')}.
+                          </Alert>
+                        )}
+                        {doc.artifacts.distillation.recovery?.kind === 'reviewed_ocr_prefix' && (
+                          <Alert severity="info">
+                            Previously validated sections reused after source review:{' '}
+                            {doc.artifacts.distillation.recovery.recovered_batches} batches and{' '}
+                            {doc.artifacts.distillation.recovery.recovered_claims} claims.
+                            {doc.artifacts.distillation.status === 'partial' &&
+                              ' Additional evidence remains unresolved until further distillation.'}
+                          </Alert>
+                        )}
                         {doc.artifacts.distillation.sections.map((s, i) => (
                           <Box key={i} sx={{ my: 2 }}>
                             <Typography variant="subtitle2">
-                              Reviewed PDF pages {s.pages.join(', ')}
+                              Source PDF pages {s.pages.join(', ')}
                             </Typography>
                             {claims(s)}
                           </Box>
@@ -922,7 +1012,8 @@ export default function AircraftLibraryPage() {
                             Historical summary. Its source metadata and extraction may differ from
                             the current document. It is ineligible for current-generation resume and
                             does not establish current applicability. Page links open the current
-                            extraction; retained quotations below are historical.
+                            extraction; retained quotations below are historical. Historical claims
+                            are retained as generated and may fail current evidence checks.
                           </Alert>
                           <Typography>
                             Retained source: {historical.source_metadata.title} ·{' '}
@@ -1016,6 +1107,11 @@ export default function AircraftLibraryPage() {
                     PDF page {p.page} · {p.document_id.slice(-8)}
                   </Button>
                   <Typography sx={{ whiteSpace: 'pre-wrap' }}>{p.text}</Typography>
+                  {p.source_limit?.original_image_only && (
+                    <Alert severity="warning">
+                      Original-image-only native text; unavailable as generated claim evidence.
+                    </Alert>
+                  )}
                 </CardContent>
               </Card>
             ))}
@@ -1029,6 +1125,12 @@ export default function AircraftLibraryPage() {
                 <Typography variant="caption">
                   {page.method} · {page.document_id}
                 </Typography>
+                {page.source_limit?.original_image_only && (
+                  <Alert severity="warning">
+                    Read the original page image for diagram relationships; this native text cannot
+                    support generated claims.
+                  </Alert>
+                )}
                 <Box component="pre" sx={{ whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}>
                   {page.text}
                 </Box>

@@ -156,6 +156,34 @@ try {
       await page.getByRole('button', { name: 'Refresh snapshot', exact: true }).click()
       await page.getByRole('heading', { name: 'Receivers (2)', exact: true }).waitFor()
       await page.getByRole('heading', { name: 'Receiver weather (10)', exact: true }).waitFor()
+      assert.equal(
+        await page.getByText('Receiver weather decoding is unavailable.', { exact: false }).count(),
+        0,
+      )
+      await page.getByText('Complete FIS-B text weather is supported;', { exact: false }).waitFor()
+      const badge = page.getByText('Product validity unassessed', { exact: true }).first()
+      const badgeColors = await badge.evaluate((element) => {
+        const style = getComputedStyle(element.closest('.MuiChip-root'))
+        return { foreground: style.color, background: style.backgroundColor }
+      })
+      const luminance = (css) => {
+        const [r, g, b] = css
+          .match(/[0-9.]+/g)
+          .slice(0, 3)
+          .map(Number)
+          .map((n) => {
+            const value = n / 255
+            return value <= 0.04045 ? value / 12.92 : ((value + 0.055) / 1.055) ** 2.4
+          })
+        return 0.2126 * r + 0.7152 * g + 0.0722 * b
+      }
+      const contrast =
+        (luminance(badgeColors.foreground) + 0.05) / (luminance(badgeColors.background) + 0.05)
+      assert.ok(
+        Math.max(contrast, 1 / contrast) >= 4.5,
+        'Unassessed validity text must be readable',
+      )
+
       assert.equal(await page.getByText('Product validity unassessed', { exact: true }).count(), 10)
       await page
         .getByText('Report time (as received): ' + fisb.expected_report_time, { exact: true })

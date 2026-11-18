@@ -151,6 +151,42 @@ class Store:
                 CREATE TABLE IF NOT EXISTS job_checkpoints (
                     job_id TEXT PRIMARY KEY REFERENCES jobs(id), value TEXT NOT NULL
                 );
+                CREATE TABLE IF NOT EXISTS ocr_previews (
+                    id TEXT PRIMARY KEY, document_id TEXT NOT NULL REFERENCES documents(id),
+                    job_id TEXT NOT NULL UNIQUE REFERENCES jobs(id), value TEXT NOT NULL,
+                    integrity_sha256 TEXT NOT NULL, created_at TEXT NOT NULL
+                );
+                CREATE TABLE IF NOT EXISTS ocr_preview_images (
+                    preview_id TEXT NOT NULL REFERENCES ocr_previews(id), page INTEGER NOT NULL,
+                    image BLOB NOT NULL, sha256 TEXT NOT NULL,
+                    PRIMARY KEY(preview_id,page)
+                );
+                CREATE TABLE IF NOT EXISTS ocr_reviews (
+                    id TEXT PRIMARY KEY, document_id TEXT NOT NULL REFERENCES documents(id),
+                    preview_id TEXT NOT NULL UNIQUE REFERENCES ocr_previews(id),
+                    job_id TEXT NOT NULL UNIQUE REFERENCES jobs(id), value TEXT NOT NULL,
+                    integrity_sha256 TEXT NOT NULL, created_at TEXT NOT NULL
+                );
+                CREATE TABLE IF NOT EXISTS ocr_passages (
+                    passage_id INTEGER PRIMARY KEY, document_id TEXT NOT NULL REFERENCES documents(id),
+                    review_id TEXT NOT NULL REFERENCES ocr_reviews(id),
+                    page INTEGER NOT NULL, fragment_id TEXT NOT NULL,
+                    UNIQUE(review_id,page,fragment_id)
+                );
+                CREATE TABLE IF NOT EXISTS page_transcriptions (
+                    id TEXT PRIMARY KEY, document_id TEXT NOT NULL REFERENCES documents(id),
+                    preview_id TEXT NOT NULL REFERENCES ocr_previews(id),
+                    page INTEGER NOT NULL, passage_id INTEGER NOT NULL UNIQUE,
+                    job_id TEXT NOT NULL UNIQUE REFERENCES jobs(id), value TEXT NOT NULL,
+                    integrity_sha256 TEXT NOT NULL, created_at TEXT NOT NULL
+                );
+                CREATE TABLE IF NOT EXISTS page_source_limits (
+                    id TEXT PRIMARY KEY, document_id TEXT NOT NULL REFERENCES documents(id),
+                    preview_id TEXT NOT NULL REFERENCES ocr_previews(id),
+                    page INTEGER NOT NULL, action TEXT NOT NULL,
+                    job_id TEXT NOT NULL UNIQUE REFERENCES jobs(id), value TEXT NOT NULL,
+                    integrity_sha256 TEXT NOT NULL, created_at TEXT NOT NULL
+                );
                 PRAGMA user_version=1;
             """)
             if "worker" not in {r[1] for r in connection.execute("PRAGMA table_info(jobs)")}:
@@ -215,7 +251,61 @@ class Store:
             "SELECT rowid,* FROM passages WHERE document_id=? ORDER BY rowid", (identifier,)
         ).fetchall()
         value = [list(document) if document else None, [list(p) for p in passages]]
+        from .source_limits import identity as source_use_identity
+
+        decisions = source_use_identity(connection, identifier) if document else []
+        if decisions:
+            value.append(["page_source_limits", decisions])
         return hashlib.sha256(json.dumps(value, separators=(",", ":")).encode()).hexdigest()
+
+    def recovery_identity(self, identifier, *, connection=None):
+        """Bind recovery to native/review records as well as the live text index."""
+        if connection is None:
+            with self.connection() as connection:
+                connection.execute("BEGIN")
+                return self.recovery_identity(identifier, connection=connection)
+        digest = hashlib.sha256(self.index_identity(identifier, connection=connection).encode())
+        queries = (
+            "SELECT * FROM pages WHERE document_id=? ORDER BY page",
+            "SELECT * FROM blank_page_reviews WHERE document_id=? ORDER BY review_id",
+            "SELECT * FROM ocr_previews WHERE document_id=? ORDER BY id",
+            "SELECT * FROM ocr_reviews WHERE document_id=? ORDER BY id",
+            "SELECT * FROM ocr_passages WHERE document_id=? ORDER BY passage_id",
+            "SELECT i.* FROM ocr_preview_images i JOIN ocr_previews p ON p.id=i.preview_id "
+            "WHERE p.document_id=? ORDER BY i.preview_id,i.page",
+        )
+        for query in queries:
+            digest.update(query.encode())
+            for row in connection.execute(query, (identifier,)):
+                # Stream rows; do not materialize all retained image blobs together.
+                values = [
+                    (
+                        ["bytes", len(v), hashlib.sha256(v).hexdigest()]
+                        if isinstance(v, bytes)
+                        else [type(v).__name__, v]
+                    )
+                    for v in row
+                ]
+                encoded = json.dumps(values, separators=(",", ":"), allow_nan=False).encode()
+                digest.update(len(encoded).to_bytes(8, "big"))
+                digest.update(encoded)
+        # Do not change recovery identities for libraries without this channel.
+        if connection.execute(
+            "SELECT 1 FROM sqlite_master WHERE type='table' AND name='page_transcriptions'"
+        ).fetchone():
+            rows = connection.execute(
+                "SELECT * FROM page_transcriptions WHERE document_id=? ORDER BY id", (identifier,)
+            ).fetchall()
+            if rows:
+                digest.update(b"page_transcriptions")
+                digest.update(json.dumps([list(r) for r in rows], separators=(",", ":")).encode())
+        from .source_limits import events as source_use_events
+
+        decisions = source_use_events(connection, identifier)
+        if decisions:
+            digest.update(b"page_source_limits")
+            digest.update(json.dumps(decisions, sort_keys=True, separators=(",", ":")).encode())
+        return digest.hexdigest()
 
     def ingest(
         self,
@@ -294,6 +384,11 @@ class Store:
                 )
             }
             value["original_url"] = f"/api/aircraft-library/documents/{identifier}/original"
+            from .source_limits import active as active_source_limits
+
+            limitations = active_source_limits(connection, identifier)
+            if limitations:
+                value["source_limits"] = limitations
             return value
 
     def select(
@@ -330,6 +425,7 @@ class Store:
         values = metadata(values)
         with self.connection() as connection:
             connection.execute("BEGIN IMMEDIATE")
+            self._assert_no_ocr_job(connection, identifier)
             row = connection.execute(
                 "SELECT metadata FROM documents WHERE id=?", (identifier,)
             ).fetchone()
@@ -351,6 +447,8 @@ class Store:
         return self.get(identifier)
 
     def index(self, identifier: str, *, ocr=True, checkpoint_job=None):
+        with self.connection() as connection:
+            self._assert_no_ocr_job(connection, identifier)
         original = self.original(identifier)
         if original is None:
             raise ValueError("Document not found")
@@ -358,7 +456,9 @@ class Store:
             result = pdf.extract_file(original, ocr=ocr)
             with self.connection() as connection:
                 connection.execute("BEGIN IMMEDIATE")
+                self._assert_no_ocr_job(connection, identifier)
                 self._archive_distillation(connection, identifier, "source_reindexed")
+                connection.execute("DELETE FROM ocr_passages WHERE document_id=?", (identifier,))
                 connection.execute(
                     "DELETE FROM vectors WHERE passage_id IN (SELECT rowid FROM passages WHERE document_id=?)",
                     (identifier,),
@@ -381,6 +481,16 @@ class Store:
                     ],
                 )
                 info = {key: value for key, value in result.items() if key != "pages"}
+                from .source_limits import CHANNEL as source_limit_channel
+
+                previous = connection.execute(
+                    "SELECT extraction FROM documents WHERE id=?", (identifier,)
+                ).fetchone()
+                anchored_reviews = json.loads(previous["extraction"] or "{}").get(
+                    source_limit_channel, []
+                )
+                if anchored_reviews:
+                    info[source_limit_channel] = anchored_reviews
                 connection.execute(
                     "UPDATE documents SET status=?,extraction=?,error=NULL WHERE id=?",
                     (result["status"], json.dumps(info), identifier),
@@ -405,7 +515,15 @@ class Store:
             row = connection.execute(
                 "SELECT * FROM pages WHERE document_id=? AND page=?", (identifier, number)
             ).fetchone()
-            return dict(row) if row else None
+            if row is None:
+                return None
+            value = dict(row)
+            from .source_limits import latest, provenance
+
+            decision = latest(connection, identifier).get(number)
+            if decision:
+                value["source_limit"] = provenance(decision)
+            return value
 
     def blank_pages(self, identifier, *, limit=100, offset=0):
         from .blank_pages import candidates
@@ -476,9 +594,26 @@ class Store:
         expected_metadata=None,
         expected_index_identity=None,
         expected_previous=_UNSET,
+        expected_idle=False,
+        expected_recovery_identity=None,
     ):
         with self.connection() as connection:
             connection.execute("BEGIN IMMEDIATE")
+            if (
+                expected_recovery_identity is not None
+                and self.recovery_identity(identifier, connection=connection)
+                != expected_recovery_identity
+            ):
+                raise ValueError("Native or reviewed source records changed during recovery; retry")
+            if (
+                expected_idle
+                and connection.execute(
+                    "SELECT 1 FROM jobs WHERE state IN ('queued','running') "
+                    "AND json_extract(request,'$.document_id')=? LIMIT 1",
+                    (identifier,),
+                ).fetchone()
+            ):
+                raise ValueError("Document work is queued or running; recovery requires idle work")
             if (
                 expected_index_identity is not None
                 and self.index_identity(identifier, connection=connection)
@@ -598,25 +733,77 @@ class Store:
                 f"SELECT rowid AS passage_id,document_id,page,label,offset,text,method,bm25(passages) AS rank FROM passages WHERE passages MATCH ? AND document_id IN ({placeholders}) ORDER BY rank LIMIT ?",
                 (expression, *identifiers, min(max(limit, 1), 50)),
             ).fetchall()
-        return [dict(row) for row in rows]
+            from .ocr_reviews import enrich_passages
+
+            return enrich_passages(connection, [dict(row) for row in rows])
+
+    def reviewed_context(self, passages):
+        pairs = list(dict.fromkeys((p["document_id"], p["page"]) for p in passages))
+        if not pairs:
+            return []
+        conditions = " OR ".join("(document_id=? AND page=?)" for _ in pairs)
+        with self.connection() as connection:
+            rows = [
+                dict(row)
+                for row in connection.execute(
+                    "SELECT rowid AS passage_id,* FROM passages WHERE "
+                    + conditions
+                    + " ORDER BY document_id,page,rowid",
+                    tuple(value for pair in pairs for value in pair),
+                )
+            ]
+            from .ocr_reviews import enrich_passages
+
+            return [
+                row
+                for row in enrich_passages(connection, rows, source_order=True)
+                if row.get("ocr_review") or row.get("transcription_review")
+            ]
 
     def passages(self, identifiers: list[str]):
         if not identifiers:
             return []
         placeholders = ",".join("?" for _ in identifiers)
         with self.connection() as connection:
-            return [
+            rows = [
                 dict(r)
                 for r in connection.execute(
                     f"SELECT rowid AS passage_id,* FROM passages WHERE document_id IN ({placeholders})",
                     identifiers,
                 )
             ]
+            from .ocr_reviews import enrich_passages
+
+            return enrich_passages(connection, rows, source_order=True)
+
+    def _assert_no_ocr_job(self, connection, identifier):
+        from .ocr_reviews import OCRConflict
+
+        lease = getattr(self._scope, "lease", None)
+        if connection.execute(
+            "SELECT 1 FROM jobs WHERE state IN ('queued','running') "
+            "AND kind IN ('ocr_preview','ocr_apply','ocr_embed','transcription_apply',"
+            "'transcription_embed','source_limit_review') "
+            "AND json_extract(request,'$.document_id')=? AND id!=? LIMIT 1",
+            (identifier, lease[0] if lease else ""),
+        ).fetchone():
+            raise OCRConflict("Document has queued or running OCR work")
 
     def create_job(self, kind: str, request: dict):
+        if kind in {
+            "ocr_preview",
+            "ocr_apply",
+            "ocr_embed",
+            "transcription_apply",
+            "transcription_embed",
+            "source_limit_review",
+        }:
+            raise ValueError("OCR jobs require the source-pinned review operation")
         identifier = "job_" + uuid.uuid4().hex
         with self.connection() as connection:
             connection.execute("BEGIN IMMEDIATE")
+            if request.get("document_id"):
+                self._assert_no_ocr_job(connection, request["document_id"])
             existing = None
             if kind in {"index", "embed", "distill"} and set(request) == {"document_id"}:
                 existing = connection.execute(

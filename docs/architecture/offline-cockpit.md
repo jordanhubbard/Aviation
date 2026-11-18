@@ -251,6 +251,9 @@ expose these same typed records and limits. Capabilities name product 413 and th
 unsupported segmented/graphical coverage. Hosted gateway isolation is unchanged.
 The Cockpit page shows received text, report type/location/time, source and receipt
 age in plain escaped text, including an explicit product-age/validity limitation.
+The page-wide advisory SHALL agree with the decoder capabilities: complete text
+weather is supported while graphical and segmented products remain unavailable.
+The unassessed-validity badge SHALL retain at least 4.5:1 text contrast.
 It preserves current private-session and opt-in refresh controls; no report enters
 the public Internet-weather cache or general AI context. Qualification requires the
 FAA section 5.2.4 five-TAF wire example in both language bindings, adversarial framing
