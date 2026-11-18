@@ -618,11 +618,31 @@ def _comparison_half_percentages(text):
     return _HALF_PERCENT.sub(convert, text)
 
 
+_MASS_UNIT = r"(?i:pounds?|lbs?|kilograms?|kg)"
+_MASS_DECIMAL_FACTOR = re.compile(
+    r"(?<![\w.,/+\-\N{MINUS SIGN}\N{EN DASH}\N{EM DASH}])"
+    r"(?P<unit>" + _MASS_UNIT + r")[ \t]+(?P<operator>[x×])[ \t]*"
+    r"(?P<sign>[-+\N{MINUS SIGN}\N{EN DASH}]?)(?P<value>\.\d+)"
+    r"(?=[ \t]*=[ \t]*" + _MASS_UNIT + r"(?![\w./+\-\N{MINUS SIGN}\N{EN DASH}\N{EM DASH}]))"
+)
+
+
+def _comparison_mass_decimal_factors(text):
+    def separate(match):
+        prefix = text[: match.start()].rstrip(" \t(")
+        if _QUANTITY_CODE_LABEL.search(prefix) or _DECIMAL_REFERENCE_LABEL.search(prefix):
+            return match[0]
+        return match["unit"] + " " + match["operator"] + " " + match["sign"] + "0" + match["value"]
+
+    return _MASS_DECIMAL_FACTOR.sub(separate, text)
+
+
 def numbers(text):
     # Normalize comparison text only: PDF leaders are layout, not a decimal
     # continuation. Keep the source quotation and the complete signed token.
     # A prose/quantity boundary requires an explicit unit. Do not extract
     # arbitrary identifier suffixes or change the retained source quotation.
+    text = _comparison_mass_decimal_factors(text)
     text = _comparison_half_percentages(text)
     text = _comparison_isa_temperature_offsets(text)
     text = _comparison_frequency_quantities(text)

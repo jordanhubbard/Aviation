@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Aircraft library: recognize explicitly printed leading-decimal mass conversion coefficients during numeric comparison while preserving exact quotations, signs and identifier exclusions.
+
 - Aircraft library: review individual recognized OCR words and explicitly recover fully revalidated unchanged batch scopes after approved source additions, preserving historical generations and unresolved new evidence.
 
 - Aircraft library: add an explicit table OCR preview mode that suppresses long grid rules for recognition while retaining the untouched page image for fragment review.

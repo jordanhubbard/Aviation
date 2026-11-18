@@ -157,6 +157,19 @@ ambiguous. Exact original source/quote/claim bytes, model inputs, generation
 identities and previously admitted artifacts stay intact; audit retained claims
 explicitly when comparison changes.
 
+An explicitly printed mass conversion relation (#544) can attach a leading-dot
+decimal coefficient to `x` or `×`. In temporary numeric comparison only, recognize
+`pound(s)`, `lb(s)`, `kilogram(s)` or `kg`, a horizontal separator, the multiplication
+marker, optional horizontal spacing, an optional adjacent sign and a leading-dot
+decimal, `=`, and another complete mass unit. Unit names are case insensitive;
+every separator is horizontal. Preserve the sign and decimal precision while
+exposing only the printed coefficient as its zero-prefixed decimal value. Do not
+calculate a conversion, infer a missing coefficient or create a unit equivalence.
+Reject code/reference labels, attached identifier prefixes/suffixes, incomplete or
+chained factors, percentages, exponents, detached signs and line joining. Original
+source, quotations, prompts, fingerprints, correction budgets and all other
+evidence admission checks remain unchanged.
+
 Explicit standalone half percentages (#538), written `½%`, `1/2%` or with
 horizontal whitespace around the ASCII slash or before `%`, compare as `0.5%`.
 Preserve an immediately adjacent sign. Require the complete percent unit and
