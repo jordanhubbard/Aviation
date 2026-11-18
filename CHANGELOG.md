@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Aircraft library: include verified same-page OCR and transcription context in bounded question retrieval, retaining filters, provenance and explicit evidence-limit warnings.
+
 - Aircraft library: preserve signed temperature thresholds joined to condition words during numeric comparison, without rewriting source quotations or admitting identifier suffixes as measurements.
 
 - Aircraft library: retain image-reviewed source-use restrictions without editing originals, exclude unsuitable native diagram text from generated claims, keep unresolved coverage visible, and expose explicit review/release history through private API/MCP, SDK and page-review controls.

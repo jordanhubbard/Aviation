@@ -737,6 +737,29 @@ class Store:
 
             return enrich_passages(connection, [dict(row) for row in rows])
 
+    def reviewed_context(self, passages):
+        pairs = list(dict.fromkeys((p["document_id"], p["page"]) for p in passages))
+        if not pairs:
+            return []
+        conditions = " OR ".join("(document_id=? AND page=?)" for _ in pairs)
+        with self.connection() as connection:
+            rows = [
+                dict(row)
+                for row in connection.execute(
+                    "SELECT rowid AS passage_id,* FROM passages WHERE "
+                    + conditions
+                    + " ORDER BY document_id,page,rowid",
+                    tuple(value for pair in pairs for value in pair),
+                )
+            ]
+            from .ocr_reviews import enrich_passages
+
+            return [
+                row
+                for row in enrich_passages(connection, rows, source_order=True)
+                if row.get("ocr_review") or row.get("transcription_review")
+            ]
+
     def passages(self, identifiers: list[str]):
         if not identifiers:
             return []

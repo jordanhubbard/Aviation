@@ -6,6 +6,8 @@ index, not an independently maintained task list. Use `gh issue` and `gh pr`.
 
 ## Current work and requests
 
+- [#554 — Include verified same-page context in manual questions](https://github.com/jordanhubbard/Aviation/issues/554): [retrieval behavior](../architecture/aircraft-library.md); preserve source provenance, filters, limits and distillation identities.
+
 - [#552 — Preserve signs in joined temperature thresholds](https://github.com/jordanhubbard/Aviation/issues/552): [numeric comparison contract](../architecture/aircraft-library.md); exact original quotations and source-use restrictions remain unchanged.
 
 - [#550 — Reviewed limitations for layout-dependent aircraft source evidence](https://github.com/jordanhubbard/Aviation/issues/550): [behavior contract](../architecture/aircraft-library.md#reviewed-source-limitations).

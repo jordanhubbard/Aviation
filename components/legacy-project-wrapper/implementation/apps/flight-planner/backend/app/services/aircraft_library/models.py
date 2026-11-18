@@ -410,6 +410,14 @@ def cosine(a, b):
     return sum(x * y for x, y in zip(a, b)) / denominator if denominator else 0
 
 
+EMBEDDING_FALLBACK_WARNINGS = frozenset(
+    {
+        "No vectors for this model/scope; using full-text retrieval",
+        "Embedding provider unavailable; using full-text retrieval",
+    }
+)
+
+
 def retrieve(store: Store, models: Models, code: str, question: str, *, limit=12, **filters):
     lexical = store.search(code, question, limit=limit * 2, **filters)
     warnings = []
@@ -442,8 +450,23 @@ def retrieve(store: Store, models: Models, code: str, question: str, *, limit=12
             key = row["passage_id"]
             scores[key] = scores.get(key, 0) + 1 / (60 + position)
             passages[key] = row
-    selected = sorted(scores, key=scores.get, reverse=True)[:limit]
-    return [passages[key] for key in selected], warnings
+    selected = [passages[key] for key in sorted(scores, key=scores.get, reverse=True)[:limit]]
+    context = {}
+    for row in store.reviewed_context(selected):
+        context.setdefault((row["document_id"], row["page"]), []).append(row)
+    expanded, seen = [], set()
+    for row in selected:
+        for candidate in [row, *context.get((row["document_id"], row["page"]), [])]:
+            key = candidate["passage_id"]
+            if key not in seen:
+                expanded.append(candidate)
+                seen.add(key)
+    if len(expanded) > limit:
+        warnings.append(
+            "Some ranked evidence or reviewed same-page context exceeds the retrieval limit; "
+            "review original pages or narrow the question"
+        )
+    return expanded[:limit], warnings
 
 
 _PRINTED_REFERENCE = re.compile(
@@ -1416,7 +1439,12 @@ def ask(store: Store, models: Models, code: str, question: str, **filters):
         )
     if any(identities.get(key) != store.index_identity(key) for key in documents):
         raise ModelUnavailable("Document source use changed during generation; retry the question")
-    retrieval = "hybrid" if models.capabilities()["embeddings"] and not warnings else "full_text"
+    retrieval = (
+        "hybrid"
+        if models.capabilities()["embeddings"]
+        and not EMBEDDING_FALLBACK_WARNINGS.intersection(warnings)
+        else "full_text"
+    )
     incomplete = [d["id"] for d in documents.values() if d["status"] != "indexed"]
     if incomplete:
         warnings.append("Some retrieved documents have incomplete extraction")

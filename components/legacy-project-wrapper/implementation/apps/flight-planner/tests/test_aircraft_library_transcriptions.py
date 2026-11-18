@@ -12,10 +12,15 @@ from app.services.aircraft_library.models import (
     ModelUnavailable,
     model_evidence,
     validate_answer,
+    ask,
+    retrieve,
+    distillation_context,
 )
 from app.services.aircraft_library.worker import Worker
 from .test_aircraft_library_ocr import make_library, preview_request
 from .test_aircraft_library_resume import Provider, ProcessKilled, expire
+from .test_aircraft_library import manual
+from .test_aircraft_library_ocr_apply import applied as apply_ocr
 
 
 @pytest.fixture
@@ -48,6 +53,142 @@ def apply(store, identifier, values=None, models=None):
     job = transcriptions.queue_apply(store, identifier, values)
     assert Worker(store, models or Models({})).run_one()
     return store.job(job["id"])
+
+
+class ContextProvider(Models):
+    def __init__(self, mode=None):
+        super().__init__({})
+        self.embedding_identity = "context-fixture"
+        self.mode, self.received = mode, []
+
+    def capabilities(self):
+        return {"llm": True, "embeddings": self.mode is not None}
+
+    def embed(self, texts, *, input_type="passage"):
+        if self.mode == "failed":
+            raise ModelUnavailable("Fixture embedding outage")
+        return [[1.0, 0.5] for _ in texts]
+
+    def complete(self, evidence, question, **options):
+        self.received.append(evidence)
+        source = evidence[0]
+        return {
+            "insufficient_evidence": False,
+            "reason": "",
+            "claims": [
+                {
+                    "text": source["text"],
+                    "citations": [{"passage_id": source["passage_id"], "excerpt_id": 0}],
+                }
+            ],
+        }
+
+
+@pytest.mark.parametrize("mode", [None, "working", "failed"])
+def test_questions_include_nonmatching_reviewed_footer_and_preserve_source(library, mode):
+    store, identifier = library
+    apply(store, identifier, ready(store, identifier, text="5-10\tDec 1/97"))
+    apply_ocr(store, identifier)
+    sources = store.passages([identifier])
+    native = next(p for p in sources if p["page"] == 1 and p["method"] == "text")
+    with store.connection() as c:
+        c.execute(
+            "INSERT INTO vectors VALUES (?,?,?)",
+            (native["passage_id"], "context-fixture", "[1.0,0.5]"),
+        )
+    models = ContextProvider(mode)
+    fingerprint = distillation_context(store, models, identifier)[-1]
+    document, original = store.get(identifier), store.original(identifier).read_bytes()
+    result = ask(store, models, "C172", "signed", document_ids=[identifier])
+    rows = models.received[0]
+    assert rows[0]["passage_id"] == native["passage_id"]
+    assert any(p.get("transcription_review") and p["text"] == "5-10\tDec 1/97" for p in rows)
+    assert any(p.get("ocr_review") for p in rows)
+    assert [p["passage_id"] for p in rows[1:]] == [
+        p["passage_id"] for p in sources if p.get("ocr_review") or p.get("transcription_review")
+    ]
+    assert all(p["document_id"] == identifier and p["page"] == 1 for p in rows)
+    assert len({p["passage_id"] for p in rows}) == len(rows)
+    assert result["retrieval"] == ("hybrid" if mode == "working" else "full_text")
+    assert bool(result["warnings"]) == (mode == "failed")
+    assert store.get(identifier) == document
+    assert store.original(identifier).read_bytes() == original
+    assert store.passages([identifier]) == sources
+    assert distillation_context(store, models, identifier)[-1] == fingerprint
+
+
+@pytest.mark.parametrize("mode", [None, "working", "failed"])
+def test_reviewed_context_limit_warning_does_not_misreport_embedding_strategy(library, mode):
+    store, identifier = library
+    apply(store, identifier, ready(store, identifier, text="5-10\tDec 1/97"))
+    native = next(p for p in store.passages([identifier]) if p["method"] == "text")
+    with store.connection() as c:
+        c.execute(
+            "INSERT INTO vectors VALUES (?,?,?)",
+            (native["passage_id"], "context-fixture", "[1.0,0.5]"),
+        )
+    models = ContextProvider(mode)
+    result = ask(store, models, "C172", "signed", limit=1, document_ids=[identifier])
+    assert len(models.received[0]) == 1
+    assert any("exceeds the retrieval limit" in w for w in result["warnings"])
+    assert result["retrieval"] == ("hybrid" if mode == "working" else "full_text")
+
+
+def test_reviewed_context_keeps_document_page_registration_and_revision_scope(library):
+    store, identifier = library
+    apply(store, identifier, ready(store, identifier, text="5-10\tDec 1/97"))
+    other = store.ingest(
+        manual("Native signed private aircraft material."),
+        {"icao": "C172", "scope": "aircraft", "tails": ["N123AB"], "revision": "private"},
+    )
+    apply(store, other["id"], ready(store, other["id"], text="Private footer 2030"))
+    for filters in (
+        {},
+        {"document_ids": [identifier]},
+        {"revision": ""},
+        {"registration": "N999AB"},
+    ):
+        rows, warnings = retrieve(store, ContextProvider(), "C172", "signed", **filters)
+        assert warnings == []
+        assert {p["document_id"] for p in rows} == {identifier}
+        assert {p["page"] for p in rows} == {1}
+    rows, _ = retrieve(store, ContextProvider(), "C172", "Second original")
+    assert rows and all(p["page"] == 2 and not p.get("transcription_review") for p in rows)
+    rows, _ = retrieve(store, ContextProvider(), "C172", "Native", revision="private")
+    assert rows == []
+    rows, _ = retrieve(
+        store, ContextProvider(), "C172", "Native", revision="private", registration="N123AB"
+    )
+    assert {p["document_id"] for p in rows} == {other["id"]}
+
+
+def test_reviewed_search_hit_is_not_duplicated_and_ordinary_ranking_is_unchanged(library):
+    store, identifier = library
+    before = store.search("C172", "signed")
+    rows, warnings = retrieve(store, ContextProvider(), "C172", "signed")
+    assert rows == before and warnings == []
+    apply(store, identifier, ready(store, identifier, text="Specialfooter 2030"))
+    rows, warnings = retrieve(store, ContextProvider(), "C172", "Specialfooter")
+    assert len(rows) == 1 and rows[0].get("transcription_review") and warnings == []
+
+
+@pytest.mark.parametrize("tamper", ["passage", "ledger", "inactive"])
+def test_question_context_cannot_grant_corrupt_or_inactive_review_provenance(library, tamper):
+    store, identifier = library
+    job = apply(store, identifier, ready(store, identifier, text="5-10\tDec 1/97"))
+    rid = job["result"]["transcription_id"]
+    with store.connection() as c:
+        if tamper == "passage":
+            c.execute("UPDATE passages SET text='bad footer' WHERE method='operator_transcription'")
+        elif tamper == "ledger":
+            c.execute("UPDATE page_transcriptions SET value='{}' WHERE id=?", (rid,))
+        else:
+            c.execute(
+                "UPDATE documents SET extraction=json_set(extraction,'$.page_transcription_reviews',json('[]')) WHERE id=?",
+                (identifier,),
+            )
+    with pytest.raises(ValueError):
+        retrieve(store, ContextProvider(), "C172", "signed")
 
 
 def test_transcription_is_separate_attributed_literal_source_and_archives_summary(library):
