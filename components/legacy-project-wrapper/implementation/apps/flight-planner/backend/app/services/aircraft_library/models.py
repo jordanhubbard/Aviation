@@ -498,9 +498,38 @@ def _comparison_unary_dashes(text):
     return _UNARY_EN_DASH.sub(convert, text)
 
 
+_QUANTITY_VALUE = r"[-\N{MINUS SIGN}\N{EN DASH}+]?" r"(?:\d{1,3}(?:[ \t]*,\d{3})+|\d+)(?:\.\d+)?"
+_QUANTITY_RANGE = r"(?:[ \t]*[-\N{EN DASH}\N{EM DASH}][ \t]*|[ \t]+(?:to|through)[ \t]+)"
+_PROSE_QUANTITY = re.compile(
+    r"(?<![\w./\-\N{EN DASH}\N{EM DASH}])"
+    r"(at|At|from|From|to|To|of|Of|than|Than|between|Between|and|And)"
+    r"(?=" + _QUANTITY_VALUE + r"(?:" + _QUANTITY_RANGE + _QUANTITY_VALUE + r")?"
+    r"[ \t]+(?i:KIAS|KCAS|KTAS|knots?|kts?|RPM|ft|feet|foot|lbs?|pounds?|gallons?|gal|GPH|"
+    r"hours?|hrs?|minutes?|mins?|seconds?|secs?|\N{DEGREE SIGN}[CF])\b)"
+)
+
+
+_QUANTITY_CODE_LABEL = re.compile(
+    r"(?i)(?<!\w)(?:P/N|PN|part[ \t]+(?:no\.?|number|\#)|model|code|identifier|ref\.|reference)"
+    r"\s*(?:[:#]\s*)?$"
+)
+
+
+def _comparison_prose_quantities(text):
+    def separate(match):
+        if _QUANTITY_CODE_LABEL.search(text[: match.start()]):
+            return match[0]
+        return match[0] + " "
+
+    return _PROSE_QUANTITY.sub(separate, text)
+
+
 def numbers(text):
     # Normalize comparison text only: PDF leaders are layout, not a decimal
     # continuation. Keep the source quotation and the complete signed token.
+    # A prose/quantity boundary requires an explicit unit. Do not extract
+    # arbitrary identifier suffixes or change the retained source quotation.
+    text = _comparison_prose_quantities(text)
     text = _comparison_unary_dashes(text)
     text = re.sub(r"\.{3,}(?=-?\d)", " ", text.replace("\N{MINUS SIGN}", "-"))
     text = re.sub(

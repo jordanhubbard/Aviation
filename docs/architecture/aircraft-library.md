@@ -121,6 +121,25 @@ rules or other ambiguous forms. Apply this only to temporary comparison text in
 both claim and quote; keep their original characters, model inputs and generation
 identity unchanged. A definite unary negative cannot use positive-only evidence.
 
+PDF layout extraction can join ordinary prose directly to a quantity (#526).
+For numeric comparison only, recognize lowercase or title-case `at`, `from`,
+`to`, `of`, `than`, `between` and `and` joined to a signed scalar or numeric range
+when the complete expression is followed on the same line by horizontal
+whitespace and an explicit supported physical unit: KIAS, KCAS, KTAS, knot(s),
+kt(s), RPM, ft, feet, foot, lb(s), pound(s), gallon(s), gal, GPH, hour(s), hr(s),
+minute(s), min(s), second(s), sec(s), or a degree-marked Celsius/Fahrenheit unit.
+Unit case may vary. A recognized word must start at a prose boundary; do not
+split uppercase identifiers, embedded/hyphenated/slashed codes, bare word/digit
+strings without a unit, or identifier-like corrupted table headings. Require a
+complete unit token, not a prefix of an identifier. An explicit identifier label
+(`P/N`, `PN`, `part no.`, `part number`, `part #`, `model`, `code`, `identifier`,
+`ref.` or `reference`, optionally followed by a colon or hash) immediately before
+the joined token prevents this split, including across layout whitespace. Preserve signed endpoints,
+decimal/grouped values and ranges. This introduces only a temporary comparison
+boundary after the prose word, before existing sign/grouping processing; never
+rewrite original bytes, extracted passages, citations, model evidence, applicability
+or generation identities. Missing quantities and wrong signs remain rejected.
+
 PDF spacing can make a hyphenated printed reference look like a signed scalar.
 When a numeric value would otherwise fail, discount it only if every occurrence
 in the claim belongs to a complete printed reference also present in an exact
