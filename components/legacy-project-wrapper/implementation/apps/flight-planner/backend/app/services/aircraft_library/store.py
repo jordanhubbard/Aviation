@@ -151,6 +151,16 @@ class Store:
                 CREATE TABLE IF NOT EXISTS job_checkpoints (
                     job_id TEXT PRIMARY KEY REFERENCES jobs(id), value TEXT NOT NULL
                 );
+                CREATE TABLE IF NOT EXISTS ocr_previews (
+                    id TEXT PRIMARY KEY, document_id TEXT NOT NULL REFERENCES documents(id),
+                    job_id TEXT NOT NULL UNIQUE REFERENCES jobs(id), value TEXT NOT NULL,
+                    integrity_sha256 TEXT NOT NULL, created_at TEXT NOT NULL
+                );
+                CREATE TABLE IF NOT EXISTS ocr_preview_images (
+                    preview_id TEXT NOT NULL REFERENCES ocr_previews(id), page INTEGER NOT NULL,
+                    image BLOB NOT NULL, sha256 TEXT NOT NULL,
+                    PRIMARY KEY(preview_id,page)
+                );
                 PRAGMA user_version=1;
             """)
             if "worker" not in {r[1] for r in connection.execute("PRAGMA table_info(jobs)")}:
@@ -330,6 +340,7 @@ class Store:
         values = metadata(values)
         with self.connection() as connection:
             connection.execute("BEGIN IMMEDIATE")
+            self._assert_no_ocr_job(connection, identifier)
             row = connection.execute(
                 "SELECT metadata FROM documents WHERE id=?", (identifier,)
             ).fetchone()
@@ -351,6 +362,8 @@ class Store:
         return self.get(identifier)
 
     def index(self, identifier: str, *, ocr=True, checkpoint_job=None):
+        with self.connection() as connection:
+            self._assert_no_ocr_job(connection, identifier)
         original = self.original(identifier)
         if original is None:
             raise ValueError("Document not found")
@@ -358,6 +371,7 @@ class Store:
             result = pdf.extract_file(original, ocr=ocr)
             with self.connection() as connection:
                 connection.execute("BEGIN IMMEDIATE")
+                self._assert_no_ocr_job(connection, identifier)
                 self._archive_distillation(connection, identifier, "source_reindexed")
                 connection.execute(
                     "DELETE FROM vectors WHERE passage_id IN (SELECT rowid FROM passages WHERE document_id=?)",
@@ -613,10 +627,26 @@ class Store:
                 )
             ]
 
+    def _assert_no_ocr_job(self, connection, identifier):
+        from .ocr_reviews import OCRConflict
+
+        lease = getattr(self._scope, "lease", None)
+        if connection.execute(
+            "SELECT 1 FROM jobs WHERE state IN ('queued','running') "
+            "AND kind IN ('ocr_preview','ocr_apply') "
+            "AND json_extract(request,'$.document_id')=? AND id!=? LIMIT 1",
+            (identifier, lease[0] if lease else ""),
+        ).fetchone():
+            raise OCRConflict("Document has queued or running OCR work")
+
     def create_job(self, kind: str, request: dict):
+        if kind in {"ocr_preview", "ocr_apply"}:
+            raise ValueError("OCR jobs require the source-pinned review operation")
         identifier = "job_" + uuid.uuid4().hex
         with self.connection() as connection:
             connection.execute("BEGIN IMMEDIATE")
+            if request.get("document_id"):
+                self._assert_no_ocr_job(connection, request["document_id"])
             existing = None
             if kind in {"index", "embed", "distill"} and set(request) == {"document_id"}:
                 existing = connection.execute(

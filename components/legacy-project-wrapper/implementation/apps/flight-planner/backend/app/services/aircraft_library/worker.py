@@ -31,6 +31,10 @@ class Worker:
 
     def execute(self, job):
         request = job["request"]
+        if job["kind"] == "ocr_preview":
+            from .ocr_reviews import generate_preview
+
+            return generate_preview(self.store, job, cancelled=self.stop.is_set)
         if job["kind"] == "index":
             identifier = request["document_id"]
             checkpoint = self.store.checkpoint(job["id"])

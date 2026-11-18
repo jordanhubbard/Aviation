@@ -162,6 +162,61 @@ Search filters include ICAO, registration, document IDs, variant and revision. R
 
 Performance questions must retain units, weight/configuration, source revision and applicability. No LLM-derived number becomes a planning dataset without separate review and independent numerical acceptance under #494. Maintenance information can be retrieved from relevant manuals but no inferred service interval or return-to-service authority is fabricated.
 
+## Supplemental OCR review
+
+Mixed text/diagram pages may receive an explicitly requested supplemental OCR
+preview even when native text extraction succeeded (#523). Preview at most ten
+distinct physical pages using only `normal` (Tesseract PSM 3) or `sparse` (PSM 11).
+Keep the original PDF, native page text, native passages, vectors and summaries
+unchanged during preview. Pin each immutable candidate to the original SHA-256,
+metadata and exact index identity. Retain PDFium-rendered page images, image
+hashes, engine/version/mode, dimensions and OCR fragments with bounding boxes and
+confidence. Confidence is recognition metadata, not approval. Bound renders to
+12 million pixels, each OCR invocation to 45 seconds, the supervised extraction
+to 600 seconds, candidate JSON to 512 KiB and retained images to 24 MiB per preview.
+Reject resource-limit failures without silently truncating evidence. The child
+process tree must be killed and reaped on cancellation or deadline.
+
+An explicit reviewed application selects at most 100 candidate fragments, names
+the reviewer and attests that those selected fragments match the original page
+image. No fragment is selected automatically. Accept fragment IDs, never edited
+text, arbitrary OCR arguments or an assertion that a desired numeric value is
+correct. The source/index/metadata must still match the preview, and document
+work must be exclusively owned. Reject stale, duplicate or conflicting applies;
+resume a committed apply through its durable job checkpoint without appending
+the same passages twice. Preview, application and semantic indexing are durable,
+inspectable bounded jobs. A failed embedding stage retains its applied review and
+new source passages, and can resume only pending vectors under the configured
+embedding identity. Applying OCR never chooses a model or invokes an LLM.
+
+Keep applied OCR fragments separate from native page text and separately
+attributed in search, retrieval and citations. Their offsets refer to the OCR
+candidate channel. Order them immediately after native passages on the same
+physical page without changing existing native IDs or vectors; leave ordering
+and generation identity unchanged for documents without supplemental OCR. Archive
+the affected document's old distillation before changing its evidence identity.
+Retain source images, selected fragment text, original source/applicability,
+reviewer, before/after identities and integrity hashes for historical inspection.
+Reindexing is a new source version and invalidates prior active supplements;
+historical reviews remain inspectable. Never clear native extraction errors or
+mark unreadable/blank pages resolved merely because selected OCR text was approved.
+
+Short diagram labels may be retained as complete reviewed OCR fragments. Only
+server-verified applied OCR provenance permits citing such a whole fragment below
+the ordinary eight-character quotation minimum; arbitrary short substrings and
+unreviewed/native short text retain the existing guard. Numeric sign, applicability
+and whole-answer checks remain unchanged. OCR remains derived, fallible evidence,
+distinct from an independently reviewed performance dataset.
+
+Expose typed private HTTP operations and their OpenAPI/MCP discovery, plus SDK
+and desktop/mobile controls for preview jobs, original-image comparison, fragment
+selection, reviewed application and retained review inspection. Require the same
+library credential and no-store policy. Context/credential changes abandon stale
+requests, revoke image URLs and clear private state. Source conflicts require a
+fresh preview. Keep generated text inert and display both recognition uncertainty
+and source provenance. An explicit operation may poll only its owned job until
+terminal state; no background provider polling is introduced.
+
 ## Web acquisition
 
 Search multiple ICAO/model/manual queries and collect multiple examples, keeping per-result URL/title/query/provider provenance, deduplication and explicit failures. Fetch public documents and PDF links from public result pages using bounded, SSRF-resistant requests, honoring redirects only after revalidation. Do not bypass accounts/paywalls. Keep originals private, with publisher/source attribution and unknown rights explicit. Missing search credentials/provider failure is an unavailable search, never zero known manuals. Background work is persistent, inspectable and bounded per request; users can extend discovery with further batches.
