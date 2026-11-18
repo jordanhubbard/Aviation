@@ -6,6 +6,8 @@ index, not an independently maintained task list. Use `gh issue` and `gh pr`.
 
 ## Current work and requests
 
+- [#561 — Explicit page-reference layout equivalence](https://github.com/jordanhubbard/Aviation/issues/561): [paired reference comparison contract](../architecture/aircraft-library.md); retain complete page identities, exact quotes and signed measurement checks.
+
 - [#558 — Printed leading-decimal measurements attached to units](https://github.com/jordanhubbard/Aviation/issues/558): [comparison and source-layout contract](../architecture/aircraft-library.md); keep exact quotations, identifier exclusions and independently reviewed source relationships.
 
 - [#556 — Keep reviewed context available in distillation requests](https://github.com/jordanhubbard/Aviation/issues/556): [request and recovery contract](../architecture/aircraft-library.md); preserve bounded input, honest generation identities and unique primary coverage.

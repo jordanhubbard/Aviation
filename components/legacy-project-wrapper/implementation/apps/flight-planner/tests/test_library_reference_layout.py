@@ -147,3 +147,78 @@ def test_matching_reference_does_not_consume_the_correction_budget():
     models = Provider()
     result = verified_completion(models, [source(original)], "Summarize")
     assert len(result["claims"]) == 1 and models.calls == 1
+
+
+@pytest.mark.parametrize(
+    "original,claim",
+    [
+        ("Title (B7 -2)", "See Page B7-2."),
+        ("Title  (B7\t- 2)", "See pages B7-2."),
+        ("TITLE (B7 -2)", "See p.B7-2."),
+        ("Title (b7 -2)", "See pp. B7-2."),
+        ("Title (A -2)", "See Page A-2."),
+        ("Title (17 -04)", "See Page 17-04."),
+        ("Title (B7 -2 -03)", "See Page B7-2-03."),
+        ("Title (AFM7B -2)", "See Page AFM7B-2."),
+        ("See Page B7 -2.", "See pages B7-2."),
+        ("See pp. B7 -2.", "See p. B7-2."),
+        ("See Page B7-2.", "Title (B7 -2)"),
+        ("Title (B7-2)", "See Page B7 -2."),
+    ],
+)
+def test_explicit_page_reference_preserves_its_complete_identity_and_quote(original, claim):
+    result = validate_answer(answer(claim), [source(original)])
+    assert result["claims"][0]["text"] == claim
+    assert result["claims"][0]["citations"][0]["quote"] == original
+
+
+@pytest.mark.parametrize(
+    "original,claim",
+    [
+        ("Title (B7 -2)", "See Page B7-3."),
+        ("Title (B7 -2)", "See Page B8-2."),
+        ("Title (B7 -2)", "See Page B7-02."),
+        ("Title (B7 -02)", "See Page B7-2."),
+        ("Title (B7 −2)", "See Page B7-2."),
+        ("Title (B7\n-2)", "See Page B7-2."),
+        ("Title (B7\u00a0-2)", "See Page B7-2."),
+        ("Title (B7 -2)", "The part is B7-2."),
+        ("Title (B7 -2)", "The version is B7-2."),
+        ("Title (N7 -2)", "The registration is N7-2."),
+        ("Model B7 -2", "See Page B7-2."),
+        ("PageB7 -2", "See Page B7-2."),
+        ("Title (B7 -2 without a closing delimiter", "See Page B7-2."),
+        ("Title (B7 -2A)", "See Page B7-2."),
+        ("Title (B7 -2.1)", "See Page B7-2."),
+        ("Title (B7 -2/3)", "See Page B7-2."),
+        ("Page B7 -2A", "See Page B7-2."),
+        ("Page B7 -2/3", "See Page B7-2."),
+        ("Title (B7 -2)", "See Page B7-2.pdf."),
+        ("Title (B7 -2)", "See Page B7-2\u200bpart."),
+        ("Title (B7 -2)", "See Page B7-2 -A."),
+    ],
+)
+def test_unmatched_unmarked_or_partial_page_identifier_cannot_mask_a_quantity(original, claim):
+    with pytest.raises(ModelUnavailable, match="numeric values"):
+        validate_answer(answer(claim), [source(original)])
+
+
+@pytest.mark.parametrize("scalar", ["2", "-2", "7"])
+def test_matched_page_reference_components_need_independent_quantity_support(scalar):
+    original = "Title (B7 -2)."
+    claim = f"See Page B7-2. Temperature is {scalar} C."
+    with pytest.raises(ModelUnavailable, match="numeric values"):
+        validate_answer(answer(claim), [source(original)])
+    original += f" Temperature is {scalar} C."
+    assert validate_answer(answer(claim), [source(original)])["claims"]
+
+
+def test_page_title_reference_cannot_be_joined_across_separate_cited_quotes():
+    original = "Title (B7 -2) describes the switch location."
+    value = answer("See Page B7-2 for the switch location.")
+    value["claims"][0]["citations"] = [
+        {"passage_id": 1, "quote": "Title (B7"},
+        {"passage_id": 1, "quote": "-2) describes the switch location."},
+    ]
+    with pytest.raises(ModelUnavailable, match="numeric values"):
+        validate_answer(value, [source(original)])

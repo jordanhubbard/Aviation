@@ -297,6 +297,17 @@ When a numeric value would otherwise fail, discount it only if every occurrence
 in the claim belongs to a complete printed reference also present in an exact
 cited quote. Recognized references are numeric `SL`/`SB` service codes and
 hyphenated Figure, Table or Section numbers (including Fig. and Sec. labels).
+Explicit page references (#561) also include a complete hyphenated identifier
+introduced by Page/Pages or p./pp., or enclosed by a Title (...) entry. The first
+component may be numeric or an alphanumeric page prefix; subsequent components
+are numeric. Treat these page/title contexts as the same reference kind only
+when their entire identifiers match, including every digit and leading zero.
+Horizontal spacing around the hyphens may differ. Require the complete title
+parentheses in one cited span, and never infer a page marker for a bare code,
+model, version or registration. Newlines, Unicode dash/minus substitutions,
+partial identifiers and digit changes are not layout equivalences. The paired
+mask must remove the same complete reference from claim and quote, so neither
+its positive nor signed components can support a separate measurement.
 Only horizontal spacing and label case/abbreviations are equivalent; preserve
 hyphens and all digits, including leading zeros. Match references separately in
 each quoted span, never metadata, uncited neighbors or combined partial quotes.
