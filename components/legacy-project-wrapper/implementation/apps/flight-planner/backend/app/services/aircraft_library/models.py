@@ -524,6 +524,24 @@ def _comparison_prose_quantities(text):
     return _PROSE_QUANTITY.sub(separate, text)
 
 
+_TEMPERATURE_THRESHOLD = re.compile(
+    r"(?<![\w./+\-\N{MINUS SIGN}\N{EN DASH}\N{EM DASH}])"
+    r"(above|Above|below|Below)"
+    r"(?=" + _QUANTITY_VALUE + r"[ \t]*\N{DEGREE SIGN}[cCfF]\b"
+    r"(?![\w/\-\N{EN DASH}\N{EM DASH}]|\.\w))"
+)
+
+
+def _comparison_temperature_thresholds(text):
+    def separate(match):
+        prefix = text[: match.start()]
+        if _QUANTITY_CODE_LABEL.search(prefix) or _DECIMAL_REFERENCE_LABEL.search(prefix):
+            return match[0]
+        return match[0] + " "
+
+    return _TEMPERATURE_THRESHOLD.sub(separate, text)
+
+
 _DECIMAL_MEASURE_VALUE = (
     r"[-\N{MINUS SIGN}\N{EN DASH}+]?" r"(?:\d{1,3}(?:[ \t]*,\d{3})+|\d+)(?:[ \t]*\.[ \t]*\d+)?"
 )
@@ -722,6 +740,7 @@ def numbers(text):
     text = _comparison_isa_temperature_offsets(text)
     text = _comparison_frequency_quantities(text)
     text = _comparison_prose_quantities(text)
+    text = _comparison_temperature_thresholds(text)
     text = _comparison_spaced_decimals(text)
     text = _comparison_unary_dashes(text)
     text = re.sub(r"\.{3,}(?=-?\d)", " ", text.replace("\N{MINUS SIGN}", "-"))

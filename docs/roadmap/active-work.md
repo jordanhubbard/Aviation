@@ -6,6 +6,8 @@ index, not an independently maintained task list. Use `gh issue` and `gh pr`.
 
 ## Current work and requests
 
+- [#552 — Preserve signs in joined temperature thresholds](https://github.com/jordanhubbard/Aviation/issues/552): [numeric comparison contract](../architecture/aircraft-library.md); exact original quotations and source-use restrictions remain unchanged.
+
 - [#550 — Reviewed limitations for layout-dependent aircraft source evidence](https://github.com/jordanhubbard/Aviation/issues/550): [behavior contract](../architecture/aircraft-library.md#reviewed-source-limitations).
 
 - [#548 — Reviewed original-page transcriptions](https://github.com/jordanhubbard/Aviation/issues/548): [distinct provenance contract](../architecture/aircraft-library.md#reviewed-original-page-transcriptions); literal operator review remains separate from unchanged machine OCR.

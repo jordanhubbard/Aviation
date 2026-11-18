@@ -249,6 +249,23 @@ boundary after the prose word, before existing sign/grouping processing; never
 rewrite original bytes, extracted passages, citations, model evidence, applicability
 or generation identities. Missing quantities and wrong signs remain rejected.
 
+For joined temperature thresholds (#552), recognize lowercase or title-case
+`above` and `below` immediately followed by a complete signed integer/decimal
+(including the existing grouped-integer form) and an explicit degree-marked
+Celsius/Fahrenheit unit. The unit may touch the number or follow horizontal
+whitespace; its letter is case-insensitive. Insert only a temporary comparison
+boundary after the condition word. Preserve the complete scalar's sign and
+precision; a recognized negative must not also supply its positive magnitude.
+
+Require ordinary prose and complete unit boundaries. Exclude embedded,
+hyphenated, slashed or dotted identifiers; uppercase condition-like codes;
+explicit part/model/code/reference or Section/Figure/Table labels; unit-like
+identifier suffixes; missing units; detached signs; malformed numeric chains;
+and line joins. Do not extend other prose-prefix/unit grammar, infer digits,
+convert units or change original text, exact quotes, model evidence, generation
+identities or reviewed-source restrictions. Audit current and historical claims
+for any changed numeric support and retain existing failures explicitly.
+
 PDF spacing can make a hyphenated printed reference look like a signed scalar.
 When a numeric value would otherwise fail, discount it only if every occurrence
 in the claim belongs to a complete printed reference also present in an exact

@@ -124,3 +124,95 @@ def test_original_joined_source_is_quoted_unchanged_and_wire_stays_exact():
 def test_wrong_sign_absent_values_and_corrupted_identifiers_still_fail(source, claim):
     with pytest.raises(ModelUnavailable, match="numeric values absent"):
         validate_answer(answer(claim), [evidence(source)])
+
+
+@pytest.mark.parametrize(
+    "text,expected",
+    [
+        ("Below-12°c (10°F)", {"-12", "10"}),
+        ("Below-12 °C", {"-12"}),
+        ("below−12.5°f", {"-12.5"}),
+        ("below–12.5 °F", {"-12.5"}),
+        ("Above27°C", {"27"}),
+        ("above+27.5\t°c", {"27.5"}),
+        ("above-1,200.5°C", {"-1200.5"}),
+        ("Use the selected model and stay below-12°C.", {"-12"}),
+    ],
+)
+def test_joined_temperature_thresholds_preserve_the_complete_signed_scalar(text, expected):
+    assert numbers(text) == {Decimal(value) for value in expected}
+
+
+@pytest.mark.parametrize(
+    "text",
+    [
+        "P/N Below-12°C",
+        "PN: below-12°C",
+        "Part No. Below-12°C",
+        "part number # below-12°C",
+        "Part # below-12°C",
+        "Model below-12°C",
+        "code below-12°C",
+        "identifier: Below-12°C",
+        "reference # below-12°C",
+        "ref. below-12°C",
+        "Figure Below-12°C",
+        "Sec. Below-12°C",
+        "Table below-12°C",
+        "P/N\nbelow-12°C",
+        "Section\nbelow-12°C",
+        "BELOW-12°C",
+        "prefixbelow-12°C",
+        "prefix-Below-12°C",
+        "prefix/Below-12°C",
+        "prefix.Below-12°C",
+        "below-12.5.6°C",
+        "below-12e3°C",
+        "below-12-14°C",
+        "below-12",
+        "below-12C",
+        "below-12°C_model",
+        "below-12°C12",
+        "below-12°Celsius",
+        "below-12°C/x",
+        "below-12°C-model",
+        "below-12°C.code",
+        "below-12\n°C",
+        "below- 12°C",
+        "below-12° C",
+        "at-12°C",
+        "from-12°C",
+    ],
+)
+def test_threshold_boundary_does_not_admit_identifiers_or_extend_other_prose_grammar(text):
+    assert Decimal(-12) not in numbers(text)
+
+
+@pytest.mark.parametrize("suffix", ["--12°C", "+-12°C", "- 12°C"])
+def test_malformed_or_detached_signs_keep_the_preexisting_non_threshold_behavior(suffix):
+    assert numbers("below" + suffix) == numbers("prefix" + suffix)
+
+
+def test_joined_threshold_validation_preserves_the_exact_source_and_provider_evidence():
+    import copy
+
+    source = evidence("A synthetic table states Below-12°c (10°F): grade 20.")
+    before = copy.deepcopy(source)
+    wire = copy.deepcopy(model_evidence([source]))
+    result = validate_answer(answer("Below -12°C, the synthetic grade is 20."), [source])
+    assert result["claims"][0]["citations"][0]["quote"] == before["text"]
+    assert source == before and model_evidence([source]) == wire
+
+
+@pytest.mark.parametrize(
+    "source,claim",
+    [
+        ("The synthetic threshold is Below-12°C.", "The threshold is below 12°C."),
+        ("The synthetic threshold is Below12°C.", "The threshold is below -12°C."),
+        ("The synthetic threshold is Below-12°C.", "The threshold is below -13°C."),
+        ("The synthetic label is Model Below-12°C.", "The threshold is below -12°C."),
+    ],
+)
+def test_thresholds_cannot_supply_wrong_signs_missing_values_or_identifier_support(source, claim):
+    with pytest.raises(ModelUnavailable, match="numeric values absent"):
+        validate_answer(answer(claim), [evidence(source)])
