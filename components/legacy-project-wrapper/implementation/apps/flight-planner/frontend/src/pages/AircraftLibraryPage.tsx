@@ -39,6 +39,7 @@ type Citation = {
   quote: string
   method: string
   ocr_review?: { reviewer: string; reviewed_at: string } | null
+  transcription_review?: { reviewer: string; created_at: string } | null
 }
 type Claim = { text: string; citations: Citation[] }
 type Answer = {
@@ -124,6 +125,8 @@ const jobKinds = new Map<string, string>([
   ['ocr_preview', 'Preview diagram OCR'],
   ['ocr_apply', 'Apply reviewed OCR'],
   ['ocr_embed', 'Index reviewed OCR'],
+  ['transcription_apply', 'Retain reviewed page transcription'],
+  ['transcription_embed', 'Index reviewed page transcription'],
 ])
 const activeJob = (job: Job) => job.state === 'queued' || job.state === 'running'
 const validJob = (job: Job) =>
@@ -449,6 +452,16 @@ export default function AircraftLibraryPage() {
                     Supplemental OCR reviewed by {citation.ocr_review.reviewer} ·{' '}
                     {citation.ocr_review.reviewed_at}. Retained page images are available in the
                     document’s OCR review history.
+                  </Typography>
+                )}
+                {citation.method === 'operator_transcription' && (
+                  <Chip size="small" label="Operator transcription — check original" />
+                )}
+                {citation.transcription_review && (
+                  <Typography variant="caption" display="block">
+                    Page transcription reviewed by {citation.transcription_review.reviewer} ·{' '}
+                    {citation.transcription_review.created_at}. Compare the retained text and image
+                    in the document’s page transcription history.
                   </Typography>
                 )}
               </Box>

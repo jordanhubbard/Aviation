@@ -51,8 +51,18 @@ def _passage_key(passage):
     native = tuple(
         passage[key] for key in ("document_id", "page", "label", "offset", "text", "method")
     )
-    return native + (
-        (json.dumps(passage["ocr_review"], sort_keys=True),) if passage.get("ocr_review") else ()
+    return (
+        native
+        + (
+            (json.dumps(passage["ocr_review"], sort_keys=True),)
+            if passage.get("ocr_review")
+            else ()
+        )
+        + (
+            (json.dumps(passage["transcription_review"], sort_keys=True),)
+            if passage.get("transcription_review")
+            else ()
+        )
     )
 
 
@@ -165,7 +175,12 @@ def recover_distillation(store, models, identifier, snapshot_path):
 def _verify_review_images(connection, identifier, passages):
     from .ocr_reviews import _preview
 
-    images = {(p["ocr_review"]["preview_id"], p["page"]) for p in passages if p.get("ocr_review")}
+    images = {
+        (p[key]["preview_id"], p["page"])
+        for p in passages
+        for key in ("ocr_review", "transcription_review")
+        if p.get(key)
+    }
     for preview_id, page in sorted(images):
         candidate = _preview(connection, identifier, preview_id)
         expected = next(p["image_sha256"] for p in candidate["pages"] if p["page"] == page)
@@ -183,7 +198,17 @@ def _verify_review_images(connection, identifier, passages):
 
 def recover_reviewed_ocr_prefix(store, models, identifier, snapshot_path):
     """Explicitly admit unchanged leading scopes after verified additive OCR only."""
+    return _recover_reviewed_prefix(store, models, identifier, snapshot_path, transcriptions=False)
+
+
+def recover_reviewed_page_text_prefix(store, models, identifier, snapshot_path):
+    """Explicitly admit unchanged scopes after verified OCR/transcription additions."""
+    return _recover_reviewed_prefix(store, models, identifier, snapshot_path, transcriptions=True)
+
+
+def _recover_reviewed_prefix(store, models, identifier, snapshot_path, *, transcriptions):
     from .ocr_reviews import VerifiedOCR
+    from .transcriptions import CHANNEL, VerifiedTranscription
 
     with store.connection() as live:
         if live.execute(
@@ -226,18 +251,33 @@ def recover_reviewed_ocr_prefix(store, models, identifier, snapshot_path):
         )
         old_reviews = old_extraction.pop("supplemental_ocr_reviews", [])
         reviews = current_extraction.pop("supplemental_ocr_reviews", [])
+        old_transcriptions = old_extraction.pop(CHANNEL, []) if transcriptions else []
+        new_transcriptions = current_extraction.pop(CHANNEL, []) if transcriptions else []
+
+        def appended(old_ids, current_ids):
+            return (
+                isinstance(old_ids, list)
+                and isinstance(current_ids, list)
+                and all(isinstance(r, str) for r in old_ids + current_ids)
+                and len(set(old_ids)) == len(old_ids)
+                and len(set(current_ids)) == len(current_ids)
+                and current_ids[: len(old_ids)] == old_ids
+            )
+
         if (
             old_extraction != current_extraction
-            or not isinstance(old_reviews, list)
-            or not isinstance(reviews, list)
-            or any(not isinstance(r, str) for r in old_reviews + reviews)
-            or len(set(old_reviews)) != len(old_reviews)
-            or len(set(reviews)) != len(reviews)
-            or reviews[: len(old_reviews)] != old_reviews
-            or len(reviews) <= len(old_reviews)
+            or not appended(old_reviews, reviews)
+            or not appended(old_transcriptions, new_transcriptions)
+            or len(reviews) + len(new_transcriptions) <= len(old_reviews) + len(old_transcriptions)
         ):
-            raise ValueError("Recovery permits only appended supplemental OCR reviews")
-        added = set(reviews[len(old_reviews) :])
+            raise ValueError(
+                "Recovery permits only appended reviewed page text"
+                if transcriptions
+                else "Recovery permits only appended supplemental OCR reviews"
+            )
+        added_ocr = set(reviews[len(old_reviews) :])
+        added_transcriptions = set(new_transcriptions[len(old_transcriptions) :])
+        added = added_ocr | added_transcriptions
         with store.connection() as live:
             live.execute("BEGIN")
             for table in ("pages", "blank_page_reviews"):
@@ -255,10 +295,15 @@ def recover_reviewed_ocr_prefix(store, models, identifier, snapshot_path):
         retained, seen = [], set()
         for passage in passages:
             provenance = passage.get("ocr_review")
-            if provenance and provenance.get("review_id") in added:
+            transcription = passage.get("transcription_review")
+            if provenance and provenance.get("review_id") in added_ocr:
                 if not isinstance(provenance, VerifiedOCR):
                     raise ValueError("Additional OCR lacks verified provenance")
                 seen.add(provenance["review_id"])
+            elif transcription and transcription.get("id") in added_transcriptions:
+                if not isinstance(transcription, VerifiedTranscription):
+                    raise ValueError("Additional transcription lacks verified provenance")
+                seen.add(transcription["id"])
             else:
                 retained.append(passage)
         if seen != added or [_passage_key(p) for p in old_passages] != [
@@ -323,7 +368,7 @@ def recover_reviewed_ocr_prefix(store, models, identifier, snapshot_path):
             if hashlib.file_digest(stream, "sha256").hexdigest() != snapshot_digest:
                 raise ValueError("Snapshot changed during recovery")
         receipt = {
-            "kind": "reviewed_ocr_prefix",
+            "kind": "reviewed_page_text_prefix" if transcriptions else "reviewed_ocr_prefix",
             "snapshot_sha256": snapshot_digest,
             "source_evidence_identity": fingerprint,
             "source_generated_at": saved.get("generated_at"),
@@ -339,6 +384,11 @@ def recover_reviewed_ocr_prefix(store, models, identifier, snapshot_path):
             "recovered_claims": sum(len(s["claims"]) for s in recovered),
             "new_model_completions": 0,
         }
+        if transcriptions:
+            receipt.update(
+                added_ocr_review_ids=sorted(added_ocr),
+                added_transcription_ids=sorted(added_transcriptions),
+            )
         value = {
             **saved,
             "status": "partial",

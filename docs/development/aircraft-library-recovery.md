@@ -42,6 +42,16 @@ nothing in that case. An active/newly queued job, changed source or concurrent
 artifact update rejects publication. This operator function exposes no filesystem
 path through the HTTP/MCP API and makes no inference calls.
 
+After adding explicitly reviewed original-page transcriptions, use
+`recover_reviewed_page_text_prefix(store, models, document_id, backup_file)`.
+It permits only appended server-verified OCR/transcription reviews and preserves
+the same original, metadata, profile, unchanged-scope, full-claim validation,
+image-integrity and idle/compare-and-swap requirements. Its
+`reviewed_page_text_prefix` receipt lists new OCR and transcription IDs separately.
+The OCR-only function rejects transcription additions; exact-source recovery
+retains its existing boundary. A new transcription never grants coverage to an
+old summary of that page. Rehearse on a private copy before using the live corpus.
+
 After verifying the recovery result, enqueue **distillation**, rather than a new
 index run, to continue inference. A new index request intentionally refreshes
 extraction and derived work. Reclaimed leases belonging to the same index job now

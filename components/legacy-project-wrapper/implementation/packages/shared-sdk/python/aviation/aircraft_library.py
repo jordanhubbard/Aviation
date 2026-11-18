@@ -1,4 +1,4 @@
-"""Typed private OCR operations through a caller-owned authenticated transport.
+"""Typed private image-review operations through an authenticated transport.
 
 Transport paths are relative to /api/aircraft-library. The transport must enforce
 the library Bearer credential, no-store responses, bounded bodies and no redirects.
@@ -30,6 +30,45 @@ class OCRApplyRequest(OCRIdentity):
     selections: list[OCRSelection]
     reviewer: str
     attest_matches_image: Literal[True]
+
+
+class TranscriptionRequest(OCRIdentity):
+    preview_id: str
+    preview_integrity_sha256: str
+    page: int
+    image_sha256: str
+    text: str
+    reviewer: str
+    attest_matches_image: Literal[True]
+
+
+class TranscriptionProvenance(TypedDict):
+    id: str
+    preview_id: str
+    page: int
+    image_sha256: str
+    source_sha256: str
+    source_metadata: dict[str, Any]
+    reviewer: str
+    created_at: str
+    integrity_sha256: str
+    image_url: str
+
+
+class PageTranscription(TranscriptionProvenance):
+    document_id: str
+    preview_integrity_sha256: str
+    label: str
+    offset: int
+    passage_id: int
+    job_id: str
+    text: str
+    attest_matches_image: Literal[True]
+    method: Literal["operator_transcription"]
+    before_index_identity: str
+    after_index_identity: str
+    active: bool
+    source_current: bool
 
 
 class OCRFragment(TypedDict):
@@ -172,3 +211,23 @@ class AircraftLibraryOCRClient:
 
     def job(self, job: str) -> OCRJob:
         return self._request(f"/jobs/{_id(job)}")
+
+    def transcribe(self, document: str, value: TranscriptionRequest) -> OCRJob:
+        return self._request(
+            f"/documents/{_id(document)}/transcriptions", method="POST", json=value
+        )
+
+    def transcription(self, document: str, review: str) -> PageTranscription:
+        return self._request(f"/documents/{_id(document)}/transcriptions/{_id(review)}")
+
+    def transcriptions(self, document: str, offset: int = 0) -> OCRHistory:
+        if type(offset) is not int or not 0 <= offset <= 1_000_000:
+            raise ValueError("Invalid transcription history page")
+        return self._request(f"/documents/{_id(document)}/transcriptions?limit=20&offset={offset}")
+
+    def embed_transcription(self, document: str, review: str, value: OCRIdentity) -> OCRJob:
+        return self._request(
+            f"/documents/{_id(document)}/transcriptions/{_id(review)}/embeddings",
+            method="POST",
+            json=value,
+        )

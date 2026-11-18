@@ -1,6 +1,7 @@
 import {
   AircraftLibraryOCRClient,
   type AircraftOCRMode,
+  type AircraftPageTranscription,
 } from '@aviation/shared-sdk/aviation/aircraft-library'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import {
@@ -29,6 +30,7 @@ type Page = {
   height: number
   fragments: Fragment[]
   error: string | null
+  image_sha256: string
 }
 type Preview = Context & {
   source_metadata?: Record<string, unknown>
@@ -55,7 +57,12 @@ type Job = {
   id: string
   state: string
   error: string | null
-  result: { preview_id?: string; review_id?: string; embeddings?: string } | null
+  result: {
+    preview_id?: string
+    review_id?: string
+    transcription_id?: string
+    embeddings?: string
+  } | null
 }
 type Props = {
   documentId: string
@@ -86,8 +93,14 @@ export default function OCRReview({
   const [reviewer, setReviewer] = useState('')
   const [attested, setAttested] = useState(false)
   const [history, setHistory] = useState<History | null>(null)
-  const [historyKind, setHistoryKind] = useState<'ocr-previews' | 'ocr-reviews'>('ocr-previews')
+  const [historyKind, setHistoryKind] = useState<'ocr-previews' | 'ocr-reviews' | 'transcriptions'>(
+    'ocr-previews',
+  )
   const [review, setReview] = useState<Review | null>(null)
+  const [draft, setDraft] = useState('')
+  const [transcriptionReviewer, setTranscriptionReviewer] = useState('')
+  const [transcriptionAttested, setTranscriptionAttested] = useState(false)
+  const [transcription, setTranscription] = useState<AircraftPageTranscription | null>(null)
   const [busy, setBusy] = useState(false)
   const [status, setStatus] = useState('')
   const [error, setError] = useState('')
@@ -101,6 +114,9 @@ export default function OCRReview({
     if (imageURL.current) URL.revokeObjectURL(imageURL.current)
     imageURL.current = ''
     setImage('')
+    setDraft('')
+    setTranscriptionReviewer('')
+    setTranscriptionAttested(false)
   }
   useEffect(() => {
     invalidate()
@@ -113,6 +129,10 @@ export default function OCRReview({
     setAttested(false)
     setHistory(null)
     setReview(null)
+    setDraft('')
+    setTranscriptionReviewer('')
+    setTranscriptionAttested(false)
+    setTranscription(null)
     setStatus('')
     setError('')
     setBusy(false)
@@ -138,6 +158,8 @@ export default function OCRReview({
         setSelected([])
         setWordFilter('')
         setAttested(false)
+        setDraft('')
+        setTranscriptionAttested(false)
         setContext(null)
         setPreview((value) => (value ? { ...value, source_current: false } : null))
       }
@@ -155,7 +177,7 @@ export default function OCRReview({
     imageURL.current = URL.createObjectURL(blob)
     setImage(imageURL.current)
   }
-  async function loadPreview(id: string, current: number) {
+  async function loadPreview(id: string, current: number, physicalPage?: number) {
     releaseImage()
     setPreview(null)
     setSelected([])
@@ -171,12 +193,12 @@ export default function OCRReview({
     )
       throw new Error('OCR preview source does not match this document')
     setPreview(value)
-    await loadImage(value, value.pages[0].page, current)
+    await loadImage(value, physicalPage ?? value.pages[0].page, current)
   }
-  async function waitForJob(initial: Job, current: number) {
+  async function waitForJob(initial: Job, current: number, channel = 'OCR') {
     let job = initial
     while (current === epoch.current && ['queued', 'running'].includes(job.state)) {
-      setStatus(`OCR job ${job.state}`)
+      setStatus(`${channel} job ${job.state}`)
       await new Promise((resolve) => setTimeout(resolve, 1000))
       if (current !== epoch.current) return null
       job = await client.job(job.id)
@@ -186,12 +208,15 @@ export default function OCRReview({
     if (job.state !== 'completed')
       throw new Error(
         (job.error || 'OCR job did not complete') +
-          '. If this was an application, inspect OCR review history before retrying: its source stage may already be retained.',
+          `. If this was an application, inspect ${channel === 'OCR' ? 'OCR review' : 'page transcription'} history before retrying: its source stage may already be retained.`,
       )
     return job
   }
   async function loadHistory(kind: typeof historyKind, current: number, offset = 0) {
-    const value = await client.history(documentId, kind, offset)
+    const value =
+      kind === 'transcriptions'
+        ? await client.transcriptions(documentId, offset)
+        : await client.history(documentId, kind, offset)
     if (current !== epoch.current) return
     setHistoryKind(kind)
     setHistory(offset ? { ...value, items: [...(history?.items || []), ...value.items] } : value)
@@ -200,7 +225,7 @@ export default function OCRReview({
   const disabled = busy || locked
   return (
     <Box component="details" sx={{ mt: 2 }}>
-      <summary>Review OCR for diagram labels</summary>
+      <summary>Review page OCR and transcriptions</summary>
       <Stack spacing={2} sx={{ mt: 2, minWidth: 0 }}>
         <Alert severity="warning">
           OCR can misread signs, labels and drawing lines. Compare each selected fragment with the
@@ -227,7 +252,7 @@ export default function OCRReview({
               })
             }
           >
-            Prepare OCR preview
+            Prepare page review
           </Button>
           <Button disabled={disabled} onClick={() => void run(() => download())}>
             Download original PDF
@@ -243,6 +268,12 @@ export default function OCRReview({
             onClick={() => void run((e) => loadHistory('ocr-reviews', e))}
           >
             OCR review history
+          </Button>
+          <Button
+            disabled={disabled}
+            onClick={() => void run((e) => loadHistory('transcriptions', e))}
+          >
+            Page transcription history
           </Button>
         </Stack>
         {context && (
@@ -413,6 +444,118 @@ export default function OCRReview({
                   )}
                 </Box>
                 <Stack spacing={1}>
+                  <Box component="details">
+                    <summary>Transcribe visible page text</summary>
+                    <Stack spacing={2} sx={{ mt: 2 }}>
+                      <Alert severity="info">
+                        Type only content visible on this original page, preserving signs, units and
+                        table layout. This is operator transcription, separate from machine OCR. It
+                        does not approve performance data or aircraft applicability.
+                      </Alert>
+                      <TextField
+                        label="Literal page transcription"
+                        multiline
+                        minRows={4}
+                        value={draft}
+                        disabled={disabled || !image || !preview.source_current}
+                        inputProps={{ maxLength: 12000 }}
+                        helperText="8–12,000 characters. Do not infer values or add explanations."
+                        onChange={(e) => {
+                          setDraft(e.target.value)
+                          setTranscriptionAttested(false)
+                        }}
+                      />
+                      <TextField
+                        label="Transcription reviewer name"
+                        helperText="Identify yourself; label agent reviews as such."
+                        value={transcriptionReviewer}
+                        disabled={disabled || !image || !preview.source_current}
+                        inputProps={{ maxLength: 200 }}
+                        onChange={(e) => {
+                          setTranscriptionReviewer(e.target.value)
+                          setTranscriptionAttested(false)
+                        }}
+                      />
+                      <FormControlLabel
+                        control={
+                          <Checkbox
+                            checked={transcriptionAttested}
+                            disabled={
+                              disabled ||
+                              !image ||
+                              !preview.source_current ||
+                              draft.trim().length < 8
+                            }
+                            onChange={(e) => setTranscriptionAttested(e.target.checked)}
+                          />
+                        }
+                        label="I compared this transcription with the original page image and confirm it contains only matching visible content."
+                      />
+                      <Button
+                        disabled={
+                          disabled ||
+                          !image ||
+                          !preview.source_current ||
+                          !currentPage.image_sha256 ||
+                          draft.trim().length < 8 ||
+                          draft.length > 12000 ||
+                          !transcriptionReviewer.trim() ||
+                          !transcriptionAttested
+                        }
+                        onClick={() =>
+                          void run(async (current) => {
+                            const queued = await client.transcribe(documentId, {
+                              expected_sha256: preview.source_sha256,
+                              expected_index_identity: preview.index_identity,
+                              preview_id: preview.id,
+                              preview_integrity_sha256: preview.integrity_sha256,
+                              page: currentPage.page,
+                              image_sha256: currentPage.image_sha256,
+                              text: draft,
+                              reviewer: transcriptionReviewer,
+                              attest_matches_image: true,
+                            })
+                            if (current !== epoch.current) return
+                            const done = await waitForJob(queued, current, 'Transcription')
+                            if (!done) return
+                            if (!done.result?.transcription_id)
+                              throw new Error(
+                                'Transcription receipt unavailable; inspect the job before retrying',
+                              )
+                            const value = await client.transcription(
+                              documentId,
+                              done.result.transcription_id,
+                            )
+                            if (current !== epoch.current) return
+                            if (
+                              value.document_id !== documentId ||
+                              value.source_sha256 !== sourceSha256 ||
+                              value.preview_id !== preview.id ||
+                              value.page !== currentPage.page ||
+                              value.image_sha256 !== currentPage.image_sha256 ||
+                              value.text !== draft
+                            )
+                              throw new Error(
+                                'Transcription receipt does not match the reviewed page and text',
+                              )
+                            setTranscription(value)
+                            setDraft('')
+                            setTranscriptionAttested(false)
+                            setSelected([])
+                            setAttested(false)
+                            setContext(null)
+                            setPreview({ ...preview, source_current: false })
+                            setStatus(
+                              `Reviewed page transcription retained. Semantic indexing: ${done.result.embeddings || 'inspect job'}. Generate a new distillation explicitly when ready.`,
+                            )
+                            await onReviewed()
+                          })
+                        }
+                      >
+                        Save reviewed page transcription
+                      </Button>
+                    </Stack>
+                  </Box>
                   {currentPage.error && <Alert severity="warning">{currentPage.error}</Alert>}
                   {!currentPage.fragments.length && (
                     <Typography>
@@ -566,7 +709,13 @@ export default function OCRReview({
                 disabled={disabled}
                 onClick={() =>
                   void run(async (current) => {
-                    if (historyKind === 'ocr-previews') await loadPreview(item.id, current)
+                    if (historyKind === 'transcriptions') {
+                      const value = await client.transcription(documentId, item.id)
+                      if (current !== epoch.current) return
+                      if (value.document_id !== documentId)
+                        throw new Error('Transcription document changed')
+                      setTranscription(value)
+                    } else if (historyKind === 'ocr-previews') await loadPreview(item.id, current)
                     else {
                       const value = await client.review(documentId, item.id)
                       if (current === epoch.current) setReview(value)
@@ -574,12 +723,24 @@ export default function OCRReview({
                   })
                 }
               >
-                Inspect {historyKind === 'ocr-previews' ? 'preview' : 'review'} · {item.created_at}
+                Inspect{' '}
+                {historyKind === 'transcriptions'
+                  ? 'transcription'
+                  : historyKind === 'ocr-previews'
+                    ? 'preview'
+                    : 'review'}{' '}
+                · {item.created_at}
               </Button>
             ))}
             {!history.items.length && (
               <Typography>
-                No retained {historyKind === 'ocr-previews' ? 'previews' : 'reviews'}.
+                No retained{' '}
+                {historyKind === 'transcriptions'
+                  ? 'transcriptions'
+                  : historyKind === 'ocr-previews'
+                    ? 'previews'
+                    : 'reviews'}
+                .
               </Typography>
             )}
             {history.next_offset !== null && (
@@ -590,6 +751,71 @@ export default function OCRReview({
                 More OCR history
               </Button>
             )}
+          </Stack>
+        )}
+        {transcription && (
+          <Stack spacing={1}>
+            <Typography>
+              Operator transcription ·{' '}
+              {transcription.active ? 'Active supplement' : 'Historical review'} · reviewed by{' '}
+              {transcription.reviewer} · {transcription.created_at}
+            </Typography>
+            <Typography variant="body2" sx={{ overflowWrap: 'anywhere' }}>
+              PDF page {transcription.page} (label {transcription.label}). Original SHA-256{' '}
+              {transcription.source_sha256}. Source association:{' '}
+              {String(transcription.source_metadata.icao || 'unknown type')}, variant{' '}
+              {String(transcription.source_metadata.variant || 'unknown')}, revision{' '}
+              {String(transcription.source_metadata.revision || 'unknown')}.
+            </Typography>
+            {!transcription.source_current && (
+              <Alert severity="info">
+                The source index has changed since this review. Inspect its active status and
+                original image before reuse.
+              </Alert>
+            )}
+            <Typography
+              sx={{
+                whiteSpace: 'pre-wrap',
+                overflowWrap: 'anywhere',
+                maxHeight: '40vh',
+                overflow: 'auto',
+              }}
+            >
+              {transcription.text}
+            </Typography>
+            <Button
+              disabled={disabled}
+              onClick={() =>
+                void run((e) => loadPreview(transcription.preview_id, e, transcription.page))
+              }
+            >
+              Compare transcription with original page image
+            </Button>
+            <Button
+              disabled={disabled || !transcription.active}
+              onClick={() =>
+                void run(async (current) => {
+                  const value = await client.context(documentId)
+                  if (current !== epoch.current) return
+                  if (value.source_sha256 !== sourceSha256)
+                    throw new Error('Transcription source changed')
+                  const queued = await client.embedTranscription(documentId, transcription.id, {
+                    expected_sha256: value.source_sha256,
+                    expected_index_identity: value.index_identity,
+                  })
+                  if (current !== epoch.current) return
+                  const done = await waitForJob(queued, current, 'Transcription')
+                  if (done && done.result?.embeddings !== 'indexed')
+                    throw new Error('Inspect transcription indexing job result before retrying')
+                  if (done) {
+                    setStatus('Semantic indexing completed for this transcription.')
+                    await onReviewed()
+                  }
+                })
+              }
+            >
+              Retry semantic indexing for this transcription
+            </Button>
           </Stack>
         )}
         {review && (

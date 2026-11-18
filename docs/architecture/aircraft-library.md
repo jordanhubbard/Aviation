@@ -405,6 +405,70 @@ integrations do not enter the browser bundle. Recognition coordinates, confidenc
 and image-page URLs remain review/citation provenance; model evidence includes
 the selected OCR text and minimal review attribution, without those numeric fields.
 
+## Reviewed original-page transcriptions
+
+When recognition is inaccurate, an operator may explicitly transcribe visible
+page content through a separate provenance channel (#548). This does not relax
+the unchanged-fragment OCR contract. Require a retained immutable preview and its
+integrity hash, one physical page and its original image hash, the exact original
+and index identities, 8 to 12,000 characters of literal text, a named reviewer and
+an explicit image-match attestation. Preserve the submitted text exactly;
+reject blank/control-only text, invalid controls and size violations. Transcribe
+visible words, punctuation, signs, units and table layout; do not supply inferred
+relationships, computed values or numeric answers absent from the visible source.
+The service never requests model transcriptions or accepts proposed text
+automatically. Every caller, including an authorized agent, must explicitly
+compare the text with the pinned image and record its reviewer identity. Identify
+agent reviews as such; they are not independent human review or performance-data
+approval. Neither a preview nor a draft transcription changes source evidence.
+Bound active transcripts to 500 per document; retain inactive historical receipts.
+
+Application is an exclusively owned durable job. Revalidate original bytes,
+metadata, index, preview and image integrity when queueing and when committing.
+Atomically archive the prior distillation, append a separate
+`operator_transcription` passage, retain an integrity-checked review with the
+exact text, page/image/preview pins, reviewer and before/after identities, and
+checkpoint the job. Replaying a committed job returns the same review without
+duplicating passages. Reject a duplicate active transcription of the same page
+and exact text, stale identities, conflicts and forged provenance. Preserve all
+native extraction errors, blank-page decisions, native text, machine OCR,
+existing vectors, unrelated documents and originals. A later native reindex
+invalidates active transcriptions while preserving their historical ledgers.
+
+Expose distinct inspectable review/history and pending-vector retry operations.
+Applying text invokes no chat model. Embedding failure retains the committed
+transcription and leaves indexing visibly pending. Retrieval, citations and
+inspection must identify operator transcription and its image/reviewer receipt,
+without an OCR engine or recognition-confidence claim. Only server-verified
+ledger provenance may acquire this attribution. Keep the ordinary quotation and
+numeric-evidence checks; no automatic performance-data approval follows. Model
+evidence includes the literal text and minimal channel attribution, excluding
+reviewer names, hashes, image coordinates and page locators as factual numbers.
+
+An explicit additive-transcription recovery operation may preserve only complete
+unchanged leading scopes from a separately retained snapshot. Verify original,
+metadata, generation profile, native/previous OCR/transcription records and image
+bytes, and the new server-verified transcription ledger. Revalidate every prior
+claim and publish with idle/source/recovery compare-and-swap guards. Never edit
+history or relabel an old section that now contains additional source as reviewed.
+Existing exact-source and OCR-only recovery keep their existing boundaries.
+
+Keep HTTP/OpenAPI/MCP, Python/TypeScript SDKs and desktop/mobile controls in sync.
+Show the original page beside a separately labeled editable transcription draft,
+with reviewer identity and explicit attestation; never prefill a draft from an
+LLM, select approval or submit automatically. Display failure, pending indexing,
+retained text and historical/inactive status distinctly. Keep text inert, require
+the private library credential and no-store policy, and clear drafts, attestation,
+image URLs and stale requests on document/context/credential changes or locking.
+Poll only the explicitly submitted owned job until terminal state.
+
+The existing private `AircraftLibraryOCRClient` adapters expose distinct
+`transcribe`, `transcription`, `transcriptions` and `embedTranscription`
+(`embed_transcription` in Python) methods. Their existing preview/image/job
+operations provide the retained page image; OCR application still accepts only
+candidate fragment IDs. Transcription methods never poll or infer provider/model
+selection and use the same caller-owned private transport.
+
 ## Web acquisition
 
 Search multiple ICAO/model/manual queries and collect multiple examples, keeping per-result URL/title/query/provider provenance, deduplication and explicit failures. Fetch public documents and PDF links from public result pages using bounded, SSRF-resistant requests, honoring redirects only after revalidation. Do not bypass accounts/paywalls. Keep originals private, with publisher/source attribution and unknown rights explicit. Missing search credentials/provider failure is an unavailable search, never zero known manuals. Background work is persistent, inspectable and bounded per request; users can extend discovery with further batches.

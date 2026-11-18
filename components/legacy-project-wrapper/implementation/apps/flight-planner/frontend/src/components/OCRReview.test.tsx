@@ -25,6 +25,7 @@ const preview = {
       width: 100,
       height: 100,
       error: null,
+      image_sha256: '4'.repeat(64),
       fragments: [
         { id: 'fragment_1', text: '−36', offset: 0, bbox: [1, 1, 20, 10], confidence: 70 },
         {
@@ -88,7 +89,7 @@ function component(locked = false) {
   )
 }
 async function generate() {
-  fireEvent.click(screen.getByRole('button', { name: 'Prepare OCR preview' }))
+  fireEvent.click(screen.getByRole('button', { name: 'Prepare page review' }))
   fireEvent.change(await screen.findByLabelText('Physical PDF pages (comma separated)'), {
     target: { value: '1' },
   })
@@ -97,7 +98,7 @@ async function generate() {
 }
 it('loads only on explicit action and applies exact selected IDs after image review', async () => {
   render(component())
-  fireEvent.click(screen.getByText('Review OCR for diagram labels'))
+  fireEvent.click(screen.getByText('Review page OCR and transcriptions'))
   expect(request).not.toHaveBeenCalled()
   await generate()
   expect(screen.getByLabelText('−36')).not.toBeChecked()
@@ -132,13 +133,129 @@ it('loads only on explicit action and applies exact selected IDs after image rev
 })
 it('revokes private images and clears selected text on locking', async () => {
   const view = render(component())
-  fireEvent.click(screen.getByText('Review OCR for diagram labels'))
+  fireEvent.click(screen.getByText('Review page OCR and transcriptions'))
   await generate()
   fireEvent.click(screen.getByLabelText('−36'))
   view.rerender(component(true))
   expect(URL.revokeObjectURL).toHaveBeenCalledWith('blob:private-image')
   expect(screen.queryByAltText(/Original PDF page/)).not.toBeInTheDocument()
   expect(screen.queryByText('<script>noise</script>')).not.toBeInTheDocument()
+})
+
+const transcriptionReceipt = {
+  id: 'transcription_test',
+  document_id: 'doc_test',
+  preview_id: preview.id,
+  page: 1,
+  label: 'i',
+  source_sha256: sha,
+  source_metadata: { icao: 'C172' },
+  reviewer: 'Page reviewer',
+  created_at: 'now',
+  active: true,
+  source_current: true,
+  method: 'operator_transcription',
+  text: 'Literal <script>page text</script> −36 psi.',
+  image_sha256: '4'.repeat(64),
+}
+function transcriptionTransport() {
+  const original = request.getMockImplementation()!
+  let saved = structuredClone(transcriptionReceipt)
+  request.mockImplementation(async (...args) => {
+    if (args[0].endsWith('/transcriptions') && args[1]?.method === 'POST') {
+      saved = { ...transcriptionReceipt, text: JSON.parse(args[1].body as string).text }
+      return {
+        id: 'job_transcription',
+        state: 'completed',
+        result: { transcription_id: transcriptionReceipt.id, embeddings: 'unavailable' },
+      }
+    }
+    if (args[0].endsWith('/transcriptions/' + transcriptionReceipt.id))
+      return structuredClone(saved)
+    return original(...args)
+  })
+}
+async function draftTranscription() {
+  fireEvent.click(screen.getByText('Transcribe visible page text'))
+  fireEvent.change(screen.getByLabelText('Literal page transcription'), {
+    target: { value: transcriptionReceipt.text },
+  })
+  fireEvent.change(screen.getByLabelText('Transcription reviewer name'), {
+    target: { value: 'Page reviewer' },
+  })
+}
+const transcriptionAttestation =
+  'I compared this transcription with the original page image and confirm it contains only matching visible content.'
+
+it('submits explicit literal transcription through a separate image-pinned channel', async () => {
+  transcriptionTransport()
+  render(component())
+  fireEvent.click(screen.getByText('Review page OCR and transcriptions'))
+  await generate()
+  expect(screen.getByLabelText('Literal page transcription')).toHaveValue('')
+  expect(screen.getByLabelText(transcriptionAttestation)).not.toBeChecked()
+  await draftTranscription()
+  const submit = screen.getByRole('button', { name: 'Save reviewed page transcription' })
+  expect(submit).toBeDisabled()
+  fireEvent.click(screen.getByLabelText(transcriptionAttestation))
+  expect(submit).toBeEnabled()
+  fireEvent.change(screen.getByLabelText('Literal page transcription'), {
+    target: { value: transcriptionReceipt.text + '\n' },
+  })
+  expect(screen.getByLabelText(transcriptionAttestation)).not.toBeChecked()
+  fireEvent.click(screen.getByLabelText(transcriptionAttestation))
+  fireEvent.click(submit)
+  await waitFor(() => expect(onReviewed).toHaveBeenCalledOnce())
+  const call = request.mock.calls.find(
+    ([path, options]) => path.endsWith('/transcriptions') && options?.method === 'POST',
+  )!
+  expect(JSON.parse(call[1]!.body as string)).toEqual({
+    expected_sha256: sha,
+    expected_index_identity: identity,
+    preview_id: preview.id,
+    preview_integrity_sha256: preview.integrity_sha256,
+    page: 1,
+    image_sha256: '4'.repeat(64),
+    text: transcriptionReceipt.text + '\n',
+    reviewer: 'Page reviewer',
+    attest_matches_image: true,
+  })
+  expect(request.mock.calls.some(([path]) => path.endsWith('/ocr-reviews'))).toBe(false)
+  expect(screen.getByText(transcriptionReceipt.text)).toBeVisible()
+  expect(document.querySelector('script')).toBeNull()
+  expect(screen.getByText(/Reviewed page transcription retained.*unavailable/)).toBeInTheDocument()
+})
+
+it('clears private transcription drafts and image URLs when locked', async () => {
+  const view = render(component())
+  fireEvent.click(screen.getByText('Review page OCR and transcriptions'))
+  await generate()
+  await draftTranscription()
+  fireEvent.click(screen.getByLabelText(transcriptionAttestation))
+  view.rerender(component(true))
+  expect(screen.queryByLabelText('Literal page transcription')).not.toBeInTheDocument()
+  expect(screen.queryByText(transcriptionReceipt.text)).not.toBeInTheDocument()
+  expect(URL.revokeObjectURL).toHaveBeenCalledWith('blob:private-image')
+})
+
+it('shows retained-source guidance after a transcription embedding-stage failure', async () => {
+  const original = request.getMockImplementation()!
+  request.mockImplementation(async (...args) =>
+    args[0].endsWith('/transcriptions') && args[1]?.method === 'POST'
+      ? { id: 'job_transcription', state: 'failed', error: 'Provider unavailable', result: null }
+      : original(...args),
+  )
+  render(component())
+  fireEvent.click(screen.getByText('Review page OCR and transcriptions'))
+  await generate()
+  await draftTranscription()
+  fireEvent.click(screen.getByLabelText(transcriptionAttestation))
+  fireEvent.click(screen.getByRole('button', { name: 'Save reviewed page transcription' }))
+  await screen.findByText(/inspect page transcription history before retrying/)
+  expect(screen.getByLabelText('Literal page transcription')).toHaveValue('')
+  expect(screen.getByLabelText(transcriptionAttestation)).not.toBeChecked()
+  expect(screen.getByRole('button', { name: 'Save reviewed page transcription' })).toBeDisabled()
+  expect(onReviewed).not.toHaveBeenCalled()
 })
 it('cannot apply a stale retained preview', async () => {
   const original = request.getMockImplementation()!
@@ -149,7 +266,7 @@ it('cannot apply a stale retained preview', async () => {
       : result
   })
   render(component())
-  fireEvent.click(screen.getByText('Review OCR for diagram labels'))
+  fireEvent.click(screen.getByText('Review page OCR and transcriptions'))
   await generate()
   expect(screen.getByLabelText('−36')).toBeDisabled()
   expect(screen.getByRole('button', { name: 'Apply selected OCR fragments' })).toBeDisabled()
@@ -163,7 +280,7 @@ it('clears selections and attestation after a source conflict', async () => {
     return original(...args)
   })
   render(component())
-  fireEvent.click(screen.getByText('Review OCR for diagram labels'))
+  fireEvent.click(screen.getByText('Review page OCR and transcriptions'))
   await generate()
   fireEvent.click(screen.getByLabelText('−36'))
   fireEvent.change(screen.getByLabelText('OCR reviewer name'), {
@@ -198,8 +315,8 @@ it.each([
       return value
     })
     render(component())
-    fireEvent.click(screen.getByText('Review OCR for diagram labels'))
-    fireEvent.click(screen.getByRole('button', { name: 'Prepare OCR preview' }))
+    fireEvent.click(screen.getByText('Review page OCR and transcriptions'))
+    fireEvent.click(screen.getByRole('button', { name: 'Prepare page review' }))
     fireEvent.change(await screen.findByLabelText('Physical PDF pages (comma separated)'), {
       target: { value: '1' },
     })

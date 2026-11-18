@@ -173,6 +173,13 @@ class Store:
                     page INTEGER NOT NULL, fragment_id TEXT NOT NULL,
                     UNIQUE(review_id,page,fragment_id)
                 );
+                CREATE TABLE IF NOT EXISTS page_transcriptions (
+                    id TEXT PRIMARY KEY, document_id TEXT NOT NULL REFERENCES documents(id),
+                    preview_id TEXT NOT NULL REFERENCES ocr_previews(id),
+                    page INTEGER NOT NULL, passage_id INTEGER NOT NULL UNIQUE,
+                    job_id TEXT NOT NULL UNIQUE REFERENCES jobs(id), value TEXT NOT NULL,
+                    integrity_sha256 TEXT NOT NULL, created_at TEXT NOT NULL
+                );
                 PRAGMA user_version=1;
             """)
             if "worker" not in {r[1] for r in connection.execute("PRAGMA table_info(jobs)")}:
@@ -270,6 +277,16 @@ class Store:
                 encoded = json.dumps(values, separators=(",", ":"), allow_nan=False).encode()
                 digest.update(len(encoded).to_bytes(8, "big"))
                 digest.update(encoded)
+        # Do not change recovery identities for libraries without this channel.
+        if connection.execute(
+            "SELECT 1 FROM sqlite_master WHERE type='table' AND name='page_transcriptions'"
+        ).fetchone():
+            rows = connection.execute(
+                "SELECT * FROM page_transcriptions WHERE document_id=? ORDER BY id", (identifier,)
+            ).fetchall()
+            if rows:
+                digest.update(b"page_transcriptions")
+                digest.update(json.dumps([list(r) for r in rows], separators=(",", ":")).encode())
         return digest.hexdigest()
 
     def ingest(

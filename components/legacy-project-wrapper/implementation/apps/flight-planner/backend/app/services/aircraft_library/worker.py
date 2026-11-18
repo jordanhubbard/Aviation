@@ -31,6 +31,31 @@ class Worker:
 
     def execute(self, job):
         request = job["request"]
+        if job["kind"] in {"transcription_apply", "transcription_embed"}:
+            from .transcriptions import apply_review, embedding_review
+
+            review = (
+                apply_review(self.store, job)
+                if job["kind"] == "transcription_apply"
+                else embedding_review(self.store, job)
+            )
+            result = {
+                "document_id": request["document_id"],
+                "transcription_id": review["id"],
+                "applied": True,
+                "embeddings": "unavailable",
+            }
+            if self.models.capabilities()["embeddings"]:
+                result["vectors"] = index_vectors(
+                    self.store,
+                    [request["document_id"]],
+                    self.models,
+                    passage_ids=[review["passage_id"]],
+                )
+                result["embeddings"] = "indexed"
+            elif job["kind"] == "transcription_embed":
+                raise ValueError("Embedding provider is not configured; transcription retained")
+            return result
         if job["kind"] == "ocr_preview":
             from .ocr_reviews import generate_preview
 

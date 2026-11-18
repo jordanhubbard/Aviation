@@ -785,6 +785,12 @@ def citation_excerpts(text):
 
 def source_excerpts(source):
     from .ocr_reviews import VerifiedOCR
+    from .transcriptions import VerifiedTranscription
+
+    if source.get("transcription_review") and not isinstance(
+        source["transcription_review"], VerifiedTranscription
+    ):
+        raise ModelUnavailable("Unverified page transcription provenance")
 
     text = source["text"]
     if 0 < len(text) < 8 and isinstance(source.get("ocr_review"), VerifiedOCR):
@@ -794,6 +800,12 @@ def source_excerpts(source):
 
 def source_quote(source, quote):
     from .ocr_reviews import VerifiedOCR
+    from .transcriptions import VerifiedTranscription
+
+    if source.get("transcription_review") and not isinstance(
+        source["transcription_review"], VerifiedTranscription
+    ):
+        raise ModelUnavailable("Unverified page transcription provenance")
 
     if (
         isinstance(source.get("ocr_review"), VerifiedOCR)
@@ -819,6 +831,11 @@ def model_evidence(evidence):
                 key: source["ocr_review"][key]
                 for key in ("review_id", "fragment_id", "engine", "mode")
                 if key in source["ocr_review"]
+            }
+        if source.get("transcription_review"):
+            row["transcription_review"] = {
+                "id": source["transcription_review"]["id"],
+                "method": "operator_transcription",
             }
         row["excerpts"] = [
             {"excerpt_id": index, "text": text} for index, text in enumerate(excerpts)
@@ -891,6 +908,11 @@ def validate_answer(answer, evidence):
                     **(
                         {"ocr_review": dict(source["ocr_review"])}
                         if source.get("ocr_review")
+                        else {}
+                    ),
+                    **(
+                        {"transcription_review": dict(source["transcription_review"])}
+                        if source.get("transcription_review")
                         else {}
                     ),
                 }

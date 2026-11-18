@@ -48,6 +48,28 @@ legacy-tree identity as the corresponding direct Phase 1 baseline stage recorded
 
 The retained application API requirements are specified in [General aviation API and MCP](../../docs/architecture/general-aviation-api.md).
 
+### Requirement: Retain distinct reviewed aircraft-document source channels
+
+The private aircraft-document service SHALL preserve originals and distinguish
+native extraction, unchanged reviewed machine OCR and explicitly reviewed
+original-page transcriptions as specified in the
+[aircraft-library contract](../../docs/architecture/aircraft-library.md).
+Each source channel SHALL retain verifiable provenance and expose synchronized
+typed HTTP/MCP, SDK and desktop/mobile behavior without weakening numeric evidence
+checks or source-generation history.
+
+#### Scenario: Review page text that machine recognition misreads
+
+- **WHEN** an authenticated operator explicitly transcribes a retained original
+  page image and attests that its literal text matches
+- **THEN** the service retains image/source pins and the named reviewer in a
+  distinct transcription ledger without editing native text or machine OCR
+- **AND** HTTP/MCP, SDK and desktop/mobile clients expose that same provenance,
+  pending indexing, history and failure state
+- **AND** earlier summaries remain historical unless explicit recovery validates
+  complete unchanged scopes; neither the transcript nor its review approves
+  aircraft performance data
+
 ### Requirement: Retained GA domain data is discoverable through HTTP and MCP
 
 The retained planner SHALL expose weather, airport details and facilities, terrain,

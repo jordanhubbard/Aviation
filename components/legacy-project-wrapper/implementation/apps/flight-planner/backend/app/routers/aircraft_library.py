@@ -18,6 +18,7 @@ from starlette.concurrency import run_in_threadpool
 
 from ..services.aircraft_library import pdf
 from ..services.aircraft_library import ocr_reviews
+from ..services.aircraft_library import transcriptions
 from ..services.aircraft_library.models import Models, ModelUnavailable, ask
 from ..services.aircraft_library.store import BlankReviewConflict, Store, metadata
 from ..services.aircraft_library.worker import Worker
@@ -141,6 +142,7 @@ class Extraction(BaseModel):
     encryption: str | None = None
     blank_pages: list[BlankVerification] = Field(default_factory=list)
     supplemental_ocr_reviews: list[str] = Field(default_factory=list)
+    page_transcription_reviews: list[str] = Field(default_factory=list)
 
 
 class BlankPageCandidate(BaseModel):
@@ -408,6 +410,45 @@ class OCRHistory(BaseModel):
     next_offset: int | None
 
 
+class TranscriptionRequest(OCRIdentityRequest):
+    preview_id: str = Field(min_length=1, max_length=100)
+    preview_integrity_sha256: str = Field(pattern=r"^[a-f0-9]{64}$")
+    page: int = Field(ge=1, le=1500)
+    image_sha256: str = Field(pattern=r"^[a-f0-9]{64}$")
+    text: str = Field(min_length=8, max_length=12_000)
+    reviewer: str = Field(min_length=1, max_length=200)
+    attest_matches_image: StrictBool
+
+
+class TranscriptionProvenance(BaseModel):
+    id: str
+    preview_id: str
+    page: int
+    image_sha256: str
+    source_sha256: str
+    source_metadata: DocumentMetadata
+    reviewer: str
+    created_at: str
+    integrity_sha256: str
+    image_url: str
+
+
+class TranscriptionRecord(TranscriptionProvenance):
+    document_id: str
+    preview_integrity_sha256: str
+    label: str
+    offset: int
+    passage_id: int
+    job_id: str
+    text: str
+    attest_matches_image: Literal[True]
+    method: Literal["operator_transcription"]
+    before_index_identity: str
+    after_index_identity: str
+    active: bool
+    source_current: bool
+
+
 class Passage(BaseModel):
     passage_id: int
     document_id: str
@@ -418,6 +459,7 @@ class Passage(BaseModel):
     method: str
     rank: float | None = None
     ocr_review: OCRProvenance | None = None
+    transcription_review: TranscriptionProvenance | None = None
 
 
 class SearchResult(BaseModel):
@@ -433,6 +475,7 @@ class Citation(BaseModel):
     method: str
     original_url: str
     ocr_review: OCRProvenance | None = None
+    transcription_review: TranscriptionProvenance | None = None
 
 
 class Claim(BaseModel):
@@ -586,6 +629,58 @@ def install(app, *, store=None, models=None, worker_enabled=True):
     @router.get("/documents/{document_id}", response_model=DocumentRecord)
     def document(document_id: str, current: Store = Depends(library)):
         return required(current, document_id)
+
+    @router.post(
+        "/documents/{document_id}/transcriptions",
+        response_model=JobRecord,
+        status_code=202,
+        operation_id="aircraft_library_transcription_apply",
+    )
+    def transcription_apply(
+        document_id: str, body: TranscriptionRequest, current: Store = Depends(library)
+    ):
+        required(current, document_id)
+        return transcriptions.queue_apply(current, document_id, body.model_dump())
+
+    @router.get(
+        "/documents/{document_id}/transcriptions",
+        response_model=OCRHistory,
+        operation_id="aircraft_library_transcription_history",
+    )
+    def transcription_history(
+        document_id: str,
+        limit: int = Query(default=20, ge=1, le=100),
+        offset: int = Query(default=0, ge=0, le=1_000_000),
+        current: Store = Depends(library),
+    ):
+        required(current, document_id)
+        return transcriptions.records(current, document_id, limit=limit, offset=offset)
+
+    @router.get(
+        "/documents/{document_id}/transcriptions/{review_id}",
+        response_model=TranscriptionRecord,
+        operation_id="aircraft_library_transcription_detail",
+    )
+    def transcription_detail(document_id: str, review_id: str, current: Store = Depends(library)):
+        required(current, document_id)
+        return transcriptions.review(current, document_id, review_id)
+
+    @router.post(
+        "/documents/{document_id}/transcriptions/{review_id}/embeddings",
+        response_model=JobRecord,
+        status_code=202,
+        operation_id="aircraft_library_transcription_embed",
+    )
+    def transcription_embed(
+        document_id: str,
+        review_id: str,
+        body: OCRIdentityRequest,
+        current: Store = Depends(library),
+    ):
+        required(current, document_id)
+        if not state["models"].capabilities()["embeddings"]:
+            raise HTTPException(503, "Embedding provider is not configured; transcription retained")
+        return transcriptions.queue_embedding(current, document_id, review_id, body.model_dump())
 
     @router.get(
         "/documents/{document_id}/ocr",

@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Aircraft library: retain explicitly reviewed page transcriptions with image/source pins and distinct operator provenance, provide private HTTP/MCP, SDK and desktop/mobile controls, and recover only unchanged scopes after additive reviews.
+
 - Aircraft library: recognize complete printed conversion coefficients and delimited leading decimals without changing source quotations, reject corrupted values, and clarify that retained historical claims may fail current evidence checks.
 
 - Aircraft library: recognize explicitly printed leading-decimal mass conversion coefficients during numeric comparison while preserving exact quotations, signs and identifier exclusions.

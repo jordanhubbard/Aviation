@@ -1,6 +1,6 @@
 # Design traceability
 
-<!-- literate-ai:authority-reviewed sha256:c31ce1dec57e021573d1a16a9520d6ee9323a951dc97f2892c6cbf05645c25a6 -->
+<!-- literate-ai:authority-reviewed sha256:c9a934897640722b8d0c53d5a191a5e5d9154acb45fb44ab2cf2e64c8499dafc -->
 
 [Project guide](../README.md) → design traceability
 
@@ -86,3 +86,12 @@ outcomes. Meta discovers and forwards those typed operations with explicit clien
 authentication; its public aviation CORS list excludes private filing. Contract
 fixtures establish deterministic behavior, while actual vendor lab and operational
 approval remain separate admission requirements.
+
+Flight Planner owns the private [aircraft-library source channels](aircraft-library.md).
+Native PDF extraction, unchanged reviewed machine OCR and explicitly reviewed
+page transcriptions remain distinct evidence with retained original images and
+reviewer attribution. Source changes archive prior summaries; explicit recovery
+admits only fully validated unchanged scopes. Operator transcriptions, including
+identified agent reviews, do not confer independent human or performance-data
+approval. Typed HTTP/MCP, private SDK transports and desktop/mobile review controls
+share those source, privacy, history and failure semantics.

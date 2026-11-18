@@ -1,4 +1,4 @@
-/** Private manual-library OCR operations. Supply the authenticated library transport.
+/** Private manual-library image review operations. Supply the authenticated transport.
  * Credentials belong to the caller's private transport, never PDF metadata or jobs.
  * Poll only a job explicitly requested by the operator. Images require HTTP for >4 MiB.
  */
@@ -25,6 +25,43 @@ export interface AircraftOCRApply extends AircraftOCRIdentity {
   selections: AircraftOCRSelection[];
   reviewer: string;
   attest_matches_image: true;
+}
+/** Operator-authored literal page text, separate from unchanged machine OCR. */
+export interface AircraftTranscriptionApply extends AircraftOCRIdentity {
+  preview_id: string;
+  preview_integrity_sha256: string;
+  page: number;
+  image_sha256: string;
+  text: string;
+  reviewer: string;
+  attest_matches_image: true;
+}
+export interface AircraftTranscriptionProvenance {
+  id: string;
+  preview_id: string;
+  page: number;
+  image_sha256: string;
+  source_sha256: string;
+  source_metadata: Record<string, unknown>;
+  reviewer: string;
+  created_at: string;
+  integrity_sha256: string;
+  image_url: string;
+}
+export interface AircraftPageTranscription extends AircraftTranscriptionProvenance {
+  document_id: string;
+  preview_integrity_sha256: string;
+  label: string;
+  offset: number;
+  passage_id: number;
+  job_id: string;
+  text: string;
+  attest_matches_image: true;
+  method: "operator_transcription";
+  before_index_identity: string;
+  after_index_identity: string;
+  active: boolean;
+  source_current: boolean;
 }
 export interface AircraftOCRContext {
   document_id: string;
@@ -95,6 +132,7 @@ export interface AircraftLibraryJob {
   result: {
     preview_id?: string;
     review_id?: string;
+    transcription_id?: string;
     embeddings?: string;
   } | null;
 }
@@ -197,5 +235,34 @@ export class AircraftLibraryOCRClient {
   }
   job(job: string): Promise<AircraftLibraryJob> {
     return this.get(`/jobs/${id(job)}`);
+  }
+  transcribe(
+    document: string,
+    value: AircraftTranscriptionApply,
+  ): Promise<AircraftLibraryJob> {
+    return this.post(this.document(document) + "/transcriptions", value);
+  }
+  transcription(
+    document: string,
+    review: string,
+  ): Promise<AircraftPageTranscription> {
+    return this.get(this.document(document) + `/transcriptions/${id(review)}`);
+  }
+  transcriptions(document: string, offset = 0): Promise<AircraftOCRHistory> {
+    if (!Number.isInteger(offset) || offset < 0 || offset > 1_000_000)
+      throw new Error("Invalid transcription history page");
+    return this.get(
+      this.document(document) + `/transcriptions?limit=20&offset=${offset}`,
+    );
+  }
+  embedTranscription(
+    document: string,
+    review: string,
+    value: AircraftOCRIdentity,
+  ): Promise<AircraftLibraryJob> {
+    return this.post(
+      this.document(document) + `/transcriptions/${id(review)}/embeddings`,
+      value,
+    );
   }
 }

@@ -8,14 +8,18 @@ import sqlite3
 
 import pytest
 
-from app.services.aircraft_library import ocr, ocr_reviews
+from app.services.aircraft_library import ocr, ocr_reviews, transcriptions
 from app.services.aircraft_library.models import (
     distill,
     distillation_context,
     distillation_plan,
     ModelUnavailable,
 )
-from app.services.aircraft_library.recovery import recover_distillation, recover_reviewed_ocr_prefix
+from app.services.aircraft_library.recovery import (
+    recover_distillation,
+    recover_reviewed_ocr_prefix,
+    recover_reviewed_page_text_prefix,
+)
 from app.services.aircraft_library.store import Store
 from app.services.aircraft_library.worker import Worker
 from .test_aircraft_library import manual
@@ -419,3 +423,80 @@ def test_live_database_is_not_a_recovery_snapshot(library, tmp_path):
     store, identifier, provider, _, _, _ = prepare(library, tmp_path)
     with pytest.raises(ValueError, match="separate read-only snapshot"):
         recover_reviewed_ocr_prefix(store, provider, identifier, store.db)
+
+
+@pytest.mark.parametrize("page", [4, 8])
+def test_distinct_transcription_recovery_preserves_only_unchanged_scopes(library, tmp_path, page):
+    store, identifier, provider = library
+    old = copy.deepcopy(distill(store, provider, identifier))
+    backup = snapshot(store, tmp_path / "before-transcription.sqlite3")
+    before_hash = hashlib.sha256(backup.read_bytes()).hexdigest()
+    context = ocr_reviews.context(store, identifier)
+    queued = ocr_reviews.queue_preview(
+        store,
+        identifier,
+        {
+            "expected_sha256": context["source_sha256"],
+            "expected_index_identity": context["index_identity"],
+            "pages": [page],
+            "mode": "normal",
+        },
+    )
+    from app.services.aircraft_library.models import Models
+
+    assert Worker(store, Models({})).run_one()
+    preview = ocr_reviews.preview(
+        store, identifier, store.job(queued["id"])["result"]["preview_id"]
+    )
+    job = transcriptions.queue_apply(
+        store,
+        identifier,
+        {
+            "expected_sha256": context["source_sha256"],
+            "expected_index_identity": context["index_identity"],
+            "preview_id": preview["id"],
+            "preview_integrity_sha256": preview["integrity_sha256"],
+            "page": page,
+            "image_sha256": preview["pages"][0]["image_sha256"],
+            "text": "Literal visible maintenance label −36.",
+            "reviewer": "Image reviewer",
+            "attest_matches_image": True,
+        },
+    )
+    assert Worker(store, Models({})).run_one()
+    rid = store.job(job["id"])["result"]["transcription_id"]
+    calls, embeds = len(provider.calls), len(provider.embeds)
+    with pytest.raises(ValueError, match="extraction differs"):
+        recover_distillation(store, provider, identifier, backup)
+    with pytest.raises(ValueError, match="appended supplemental OCR"):
+        recover_reviewed_ocr_prefix(store, provider, identifier, backup)
+    result = recover_reviewed_page_text_prefix(store, provider, identifier, backup)
+    assert result["kind"] == "reviewed_page_text_prefix"
+    assert result["added_transcription_ids"] == [rid] and result["added_ocr_review_ids"] == []
+    assert result["new_model_completions"] == result["model_calls"] == 0
+    current = store.get(identifier)["artifacts"]["distillation"]
+    count = result["recovered_batches"]
+    assert count > 0 and current["sections"] == old["sections"][:count]
+    if page == 8:
+        assert count == old["completed_batches"]
+    else:
+        assert count < old["completed_batches"]
+    assert current["status"] == "partial" and current["unresolved_batches"] > 0
+    assert len(provider.calls) == calls and len(provider.embeds) == embeds
+    assert hashlib.sha256(backup.read_bytes()).hexdigest() == before_hash
+    assert (
+        recover_reviewed_page_text_prefix(store, provider, identifier, backup)["status"]
+        == "unchanged"
+    )
+    original = store.historical_distillation(
+        identifier, store.distillations(identifier)["items"][0]["revision_id"]
+    )
+    assert (
+        original["artifact"] == old
+        and original["historical"]
+        and not original["eligible_for_resume"]
+    )
+    complete = distill(store, provider, identifier)
+    assert (
+        complete["status"] == "complete" and complete["sections"][:count] == old["sections"][:count]
+    )

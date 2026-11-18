@@ -502,13 +502,15 @@ def enrich_passages(connection, passages, *, source_order=False):
     Snapshot readers may predate these additive tables. Unaffected source objects,
     ordering and generation fingerprints must remain byte-for-byte equivalent.
     """
+    from .transcriptions import enrich_passages as enrich_transcriptions
+
     if (
         not passages
         or not connection.execute(
             "SELECT 1 FROM sqlite_master WHERE type='table' AND name='ocr_passages'"
         ).fetchone()
     ):
-        return passages
+        return enrich_transcriptions(connection, passages, source_order=source_order)
     documents, reviews, candidates, expected_reviews, affected = {}, {}, {}, {}, set()
     for passage in passages:
         identifier = passage["document_id"]
@@ -610,5 +612,5 @@ def enrich_passages(connection, passages, *, source_order=False):
                     )
                 )
                 emitted.add(identifier)
-        return ordered
-    return passages
+        return enrich_transcriptions(connection, ordered, source_order=source_order)
+    return enrich_transcriptions(connection, passages, source_order=source_order)
