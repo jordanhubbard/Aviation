@@ -2,6 +2,54 @@
 
 ## Unreleased
 
+- Aircraft library: supply verified same-page review context in bounded distillation requests, retain unique primary coverage and explicit generation policies, and recover only unchanged historical request scopes.
+
+- Aircraft library: include verified same-page OCR and transcription context in bounded question retrieval, retaining filters, provenance and explicit evidence-limit warnings.
+
+- Aircraft library: preserve signed temperature thresholds joined to condition words during numeric comparison, without rewriting source quotations or admitting identifier suffixes as measurements.
+
+- Aircraft library: retain image-reviewed source-use restrictions without editing originals, exclude unsuitable native diagram text from generated claims, keep unresolved coverage visible, and expose explicit review/release history through private API/MCP, SDK and page-review controls.
+
+- Aircraft library: retain explicitly reviewed page transcriptions with image/source pins and distinct operator provenance, provide private HTTP/MCP, SDK and desktop/mobile controls, and recover only unchanged scopes after additive reviews.
+
+- Aircraft library: recognize complete printed conversion coefficients and delimited leading decimals without changing source quotations, reject corrupted values, and clarify that retained historical claims may fail current evidence checks.
+
+- Aircraft library: recognize explicitly printed leading-decimal mass conversion coefficients during numeric comparison while preserving exact quotations, signs and identifier exclusions.
+
+- Aircraft library: review individual recognized OCR words and explicitly recover fully revalidated unchanged batch scopes after approved source additions, preserving historical generations and unresolved new evidence.
+
+- Aircraft library: add an explicit table OCR preview mode that suppresses long grid rules for recognition while retaining the untouched page image for fragment review.
+
+- Aircraft library: compare explicit Unicode and ASCII half percentages with their decimal value while retaining exact original quotations and signs.
+
+- Aircraft library: recognize complete frequency measurements joined to ordinary PDF prose while preserving original quotations, signs, units and identifier exclusions.
+
+- Aircraft library: preserve signed ISA temperature offsets when horizontal PDF spacing separates the sign from the measured value, without changing original quotations or model inputs.
+
+- Aircraft library: recognize measured decimals split by horizontal PDF spacing while preserving original quotations, signs, precision and identifier exclusions.
+
+- Aircraft library: give failed citation repairs bounded request-scoped excerpt-availability hints without changing accepted claims, source evidence or validation rules.
+
+- Aircraft library: recognize quoted quantities joined to ordinary prose when explicit physical-unit context is present, preserving exact source text, negative signs, ranges and identifier exclusions.
+
+- Aircraft library: preview selected PDF pages with bounded OCR, compare fragments with retained page images, and explicitly apply reviewed text with source provenance, resumable semantic indexing and separately attributed citations while preserving native evidence and history.
+
+- Aircraft library: retain negative values written with definite unary en dashes during comparison, while preserving numeric ranges and exact source quotations.
+
+- Aircraft library: identify bounded possible excerpt locations for rejected numbers during correction; preserve exact claim text during citation-only repairs so supported ranges and qualifiers cannot silently shrink.
+
+- Aircraft library: compare matching printed reference codes independently of PDF spacing; the fallback removes the same references from claim and quote comparisons so their signed components cannot support separate measurements.
+
+- Aircraft library: constrain structured correction responses to the required replacement count while retaining full evidence validation and per-request schema isolation.
+
+- Aircraft library: preserve complete signed thousands values when PDF extraction inserts horizontal spaces before grouping commas, without joining comma-space lists or rewriting source quotations.
+
+- Aircraft library: recognize attached footnote delay values when the same cited excerpt contains their matching numeric reference, preserving exact quotes and signed limits.
+
+- Aircraft library: keep PDF page locators in verified citations instead of model evidence, preserving source text and historical generations while reducing uncited page-number assertions.
+
+- Add opt-in private bounded diagnostics for rejected manual claims and correction attempts without changing evidence admission or model generation identities.
+
 - Flight Planner: add private ICAO filing drafts and explicit provider lifecycle review, confirmation, receipts and uncertain-outcome handling; vendor access and operational acceptance remain separately required.
 
 - Aircraft library: recognize PDF dotted leaders during numeric evidence checks, retaining exact quotations and negative signs so valid cited figures do not stall distillation.

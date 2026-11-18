@@ -31,6 +31,72 @@ class Worker:
 
     def execute(self, job):
         request = job["request"]
+        if job["kind"] == "source_limit_review":
+            from .source_limits import apply_review
+
+            review = apply_review(self.store, job)
+            return {
+                "document_id": request["document_id"],
+                "source_limit_review_id": review["id"],
+                "applied": True,
+                "action": review["action"],
+            }
+        if job["kind"] in {"transcription_apply", "transcription_embed"}:
+            from .transcriptions import apply_review, embedding_review
+
+            review = (
+                apply_review(self.store, job)
+                if job["kind"] == "transcription_apply"
+                else embedding_review(self.store, job)
+            )
+            result = {
+                "document_id": request["document_id"],
+                "transcription_id": review["id"],
+                "applied": True,
+                "embeddings": "unavailable",
+            }
+            if self.models.capabilities()["embeddings"]:
+                result["vectors"] = index_vectors(
+                    self.store,
+                    [request["document_id"]],
+                    self.models,
+                    passage_ids=[review["passage_id"]],
+                )
+                result["embeddings"] = "indexed"
+            elif job["kind"] == "transcription_embed":
+                raise ValueError("Embedding provider is not configured; transcription retained")
+            return result
+        if job["kind"] == "ocr_preview":
+            from .ocr_reviews import generate_preview
+
+            return generate_preview(self.store, job, cancelled=self.stop.is_set)
+        if job["kind"] in {"ocr_apply", "ocr_embed"}:
+            from .ocr_reviews import apply_review, embedding_review
+
+            review = (
+                apply_review(self.store, job)
+                if job["kind"] == "ocr_apply"
+                else embedding_review(self.store, job)
+            )
+            result = {
+                "document_id": request["document_id"],
+                "review_id": review["id"],
+                "applied": True,
+                "embeddings": "unavailable",
+            }
+            if self.models.capabilities()["embeddings"]:
+                result["vectors"] = index_vectors(
+                    self.store,
+                    [request["document_id"]],
+                    self.models,
+                    passage_ids=[f["passage_id"] for f in review["fragments"]],
+                )
+                result["embeddings"] = "indexed"
+            elif job["kind"] == "ocr_embed":
+                raise ValueError(
+                    "Aircraft library embedding provider is not configured; OCR review retained"
+                )
+            return result
         if job["kind"] == "index":
             identifier = request["document_id"]
             checkpoint = self.store.checkpoint(job["id"])

@@ -6,6 +6,40 @@ index, not an independently maintained task list. Use `gh issue` and `gh pr`.
 
 ## Current work and requests
 
+- [#556 — Keep reviewed context available in distillation requests](https://github.com/jordanhubbard/Aviation/issues/556): [request and recovery contract](../architecture/aircraft-library.md); preserve bounded input, honest generation identities and unique primary coverage.
+
+- [#554 — Include verified same-page context in manual questions](https://github.com/jordanhubbard/Aviation/issues/554): [retrieval behavior](../architecture/aircraft-library.md); preserve source provenance, filters, limits and distillation identities.
+
+- [#552 — Preserve signs in joined temperature thresholds](https://github.com/jordanhubbard/Aviation/issues/552): [numeric comparison contract](../architecture/aircraft-library.md); exact original quotations and source-use restrictions remain unchanged.
+
+- [#550 — Reviewed limitations for layout-dependent aircraft source evidence](https://github.com/jordanhubbard/Aviation/issues/550): [behavior contract](../architecture/aircraft-library.md#reviewed-source-limitations).
+
+- [#548 — Reviewed original-page transcriptions](https://github.com/jordanhubbard/Aviation/issues/548): [distinct provenance contract](../architecture/aircraft-library.md#reviewed-original-page-transcriptions); literal operator review remains separate from unchanged machine OCR.
+
+- [#546 — Complete printed conversion notation](https://github.com/jordanhubbard/Aviation/issues/546): [numeric comparison contract](../architecture/aircraft-library.md); faithfully printed coefficients and independently reviewed source additions remain separate evidence requirements.
+
+- [#544 — Explicit leading-decimal mass conversion coefficients](https://github.com/jordanhubbard/Aviation/issues/544): [numeric comparison contract](../architecture/aircraft-library.md); captured-source validation, native continuation and landing remain evidence gated.
+
+- [#542 — Literal word review and unchanged-scope admission](https://github.com/jordanhubbard/Aviation/issues/542): [library contract](../architecture/aircraft-library.md) and [operator recovery](../development/aircraft-library-recovery.md).
+
+- [#539 — Reviewed table OCR previews](https://github.com/jordanhubbard/Aviation/issues/539): [behavior contract](../architecture/aircraft-library.md); explicit grid suppression preserves original review images and source-generation history.
+
+- [#538 — Explicit half-percent numeric comparison](https://github.com/jordanhubbard/Aviation/issues/538): [behavior contract](../architecture/aircraft-library.md); native continuation and landing remain subject to #520 and #522.
+
+- [#536 — Frequency measurements joined to PDF prose](https://github.com/jordanhubbard/Aviation/issues/536): [numeric comparison contract](../architecture/aircraft-library.md).
+
+- [#533 — Preserve signs in ISA temperature offsets](https://github.com/jordanhubbard/Aviation/issues/533): [numeric comparison contract](../architecture/aircraft-library.md).
+
+- [#532 — Comparison of horizontally split decimal measurements](https://github.com/jordanhubbard/Aviation/issues/532): [numeric comparison contract](../architecture/aircraft-library.md).
+
+- [#529 — Bounded excerpt-availability feedback for manual repairs](https://github.com/jordanhubbard/Aviation/issues/529): [citation correction contract](../architecture/aircraft-library.md).
+
+- [#526 — Preserve quoted quantities joined to prose by PDF extraction](https://github.com/jordanhubbard/Aviation/issues/526): [numeric comparison contract](../architecture/aircraft-library.md).
+
+- [#523 — Reviewed supplemental OCR for mixed text/diagram pages](https://github.com/jordanhubbard/Aviation/issues/523): [source and review contract](../architecture/aircraft-library.md#supplemental-ocr-review).
+
+- [#520 — Diagnose manual distillation correction failures](https://github.com/jordanhubbard/Aviation/issues/520): [aircraft library contract](../architecture/aircraft-library.md).
+
 - [#492 — Flight Service filing and lifecycle](https://github.com/jordanhubbard/Aviation/issues/492): [behavior contract](../architecture/flight-service-filing.md).
 
 - [#493 — Offline packages and cockpit connectivity](https://github.com/jordanhubbard/Aviation/issues/493): [behavior contract](../architecture/offline-cockpit.md).

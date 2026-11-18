@@ -48,6 +48,49 @@ legacy-tree identity as the corresponding direct Phase 1 baseline stage recorded
 
 The retained application API requirements are specified in [General aviation API and MCP](../../docs/architecture/general-aviation-api.md).
 
+### Requirement: Retain distinct reviewed aircraft-document source channels
+
+The private aircraft-document service SHALL preserve originals and distinguish
+native extraction, unchanged reviewed machine OCR and explicitly reviewed
+original-page transcriptions as specified in the
+[aircraft-library contract](../../docs/architecture/aircraft-library.md).
+Each source channel SHALL retain verifiable provenance and expose synchronized
+typed HTTP/MCP, SDK and desktop/mobile behavior without weakening numeric evidence
+checks or source-generation history.
+
+#### Scenario: Review page text that machine recognition misreads
+
+- **WHEN** an authenticated operator explicitly transcribes a retained original
+  page image and attests that its literal text matches
+- **THEN** the service retains image/source pins and the named reviewer in a
+  distinct transcription ledger without editing native text or machine OCR
+- **AND** HTTP/MCP, SDK and desktop/mobile clients expose that same provenance,
+  pending indexing, history and failure state
+- **AND** earlier summaries remain historical unless explicit recovery validates
+  complete unchanged scopes; neither the transcript nor its review approves
+  aircraft performance data
+
+### Requirement: Preserve reviewed limitations on aircraft source evidence
+
+The aircraft library SHALL preserve original, searchable page text while enforcing
+explicit image-pinned source-use limitations as specified in the
+[aircraft library contract](../../docs/architecture/aircraft-library.md#reviewed-source-limitations).
+Restricted native text SHALL NOT support model claims or silently regain evidence
+eligibility after a metadata edit or reindex. Reviewed literal sources remain
+distinct; unresolved diagram interpretation SHALL remain visible in coverage.
+
+#### Scenario: Reviewed diagram text cannot justify an unsupported relationship
+
+- **GIVEN** a retained original page whose flattened native extraction does not establish
+  diagram relationships and a separately image-verified literal table
+- **WHEN** a named reviewer explicitly restricts the native page text after comparing
+  its immutable original image
+- **THEN** native text and originals remain searchable and preserved, model evidence
+  excludes that restricted text, and a claim citing it fails even if its numbers match
+- **AND** the literal table remains usable with distinct provenance, coverage stays
+  partial, prior generated material remains historical and ineligible, and a new
+  explicit image-pinned review is required before releasing the restriction
+
 ### Requirement: Retained GA domain data is discoverable through HTTP and MCP
 
 The retained planner SHALL expose weather, airport details and facilities, terrain,
