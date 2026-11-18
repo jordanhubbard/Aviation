@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Cockpit: decode bounded FIS-B text weather from local GDL90 receivers, retaining source and receipt provenance, explicit product-validity limits, private desktop/mobile display and typed HTTP/MCP access.
+
 - Flight Planner: add private ICAO filing drafts and explicit provider lifecycle review, confirmation, receipts and uncertain-outcome handling; vendor access and operational acceptance remain separately required.
 
 - Aircraft library: recognize PDF dotted leaders during numeric evidence checks, retaining exact quotations and negative signs so valid cited figures do not stall distillation.

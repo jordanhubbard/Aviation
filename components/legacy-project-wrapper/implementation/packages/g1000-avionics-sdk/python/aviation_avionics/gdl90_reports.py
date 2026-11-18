@@ -53,9 +53,7 @@ class GeometricAltitudeReport(ReportHeader):
     kind: Literal["geometric_altitude"]
     geometric_altitude_ft: int
     datum: Literal["WGS84_ellipsoid", "MSL"] | None
-    datum_source: Literal[
-        "gdl90_standard", "foreflight_device_id", "unknown_receiver_profile"
-    ]
+    datum_source: Literal["gdl90_standard", "foreflight_device_id", "unknown_receiver_profile"]
     vertical_warning: bool
     vertical_figure_of_merit_m: int | None
     vertical_figure_of_merit_lower_bound: bool
@@ -75,6 +73,34 @@ class DeviceIdReport(ReportHeader):
 
 
 @dataclass(frozen=True)
+class FisbTextRecord:
+    product_id: Literal[413]
+    raw_text: str
+    report_type: str
+    location_id: str
+    report_time: str
+    body: str
+
+
+@dataclass(frozen=True)
+class UplinkReport(ReportHeader):
+    kind: Literal["uplink"]
+    time_of_reception_ns: int | None
+    application_data_valid: bool
+    records: list[FisbTextRecord]
+    unsupported_frames: int
+    unsupported_products: list[int]
+    errors: list[str]
+
+
+@dataclass(frozen=True)
+class FisbTextReport(ReportHeader, FisbTextRecord):
+    kind: Literal["fisb_text"]
+    product_age_seconds: None
+    validity: Literal["unassessed"]
+
+
+@dataclass(frozen=True)
 class UnsupportedReport(ReportHeader):
     kind: Literal["unsupported"]
     supported: Literal[False]
@@ -86,4 +112,6 @@ Gdl90Report = (
     | GeometricAltitudeReport
     | DeviceIdReport
     | UnsupportedReport
+    | UplinkReport
+    | FisbTextReport
 )

@@ -6,6 +6,8 @@ index, not an independently maintained task list. Use `gh issue` and `gh pr`.
 
 ## Current work and requests
 
+- [#528 — Receiver FIS-B text weather](https://github.com/jordanhubbard/Aviation/issues/528): [wire, retention and UI contract](../architecture/offline-cockpit.md#receiver-fis-b-text-products-528).
+
 - [#492 — Flight Service filing and lifecycle](https://github.com/jordanhubbard/Aviation/issues/492): [behavior contract](../architecture/flight-service-filing.md).
 
 - [#493 — Offline packages and cockpit connectivity](https://github.com/jordanhubbard/Aviation/issues/493): [behavior contract](../architecture/offline-cockpit.md).

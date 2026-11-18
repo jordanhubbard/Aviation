@@ -90,7 +90,8 @@ must never remain labeled live. Preserve separate receiver sources and session I
 ownship GPS validity, traffic identity/address type and quality/reference fields.
 Pressure altitude and geometric altitude/datum stay explicitly distinct, with
 unknown/invalid values visible. Keep full normalized report details accessible.
-Receiver reports are advisory and incomplete; weather decoding remains unavailable.
+Receiver reports are advisory and incomplete; supported receiver text weather is
+separately attributed and never implies current product validity.
 Private receiver telemetry is excluded from general AI explanations and shell caches.
 Desktop/mobile verification must exercise explicit connection, refresh, start/stop,
 opt-in polling, disconnection and stale/invalid/error states, without claiming
@@ -194,6 +195,67 @@ weather stale independently, age out tracks with bounded history, and retain use
 last-known values with their timestamps. Transport connection alone does not prove
 valid GPS, complete traffic coverage or current weather. Never invent a receiver
 connection from test fixtures or an internet flight-tracking source.
+
+## Receiver FIS-B text products (#528)
+
+The shared portable decoder recognizes the exact 436-byte GDL90 message 7 after
+ordinary framing/FCS verification. TOR is a little-endian fractional second in
+80 ns units: expose nanoseconds only for values below 12,500,000, otherwise null;
+it supplies no calendar date. Preserve the original payload hex. The eight-byte
+UAT header must declare application data valid (byte 6 bit 5, zero-based within
+the UAT payload) before its fixed 424-byte application field is interpreted.
+
+Each information-frame length is nine bits excluding its two-byte header. Zero
+length ends the zero-filled field; a final single zero is padding. Reject an
+out-of-bounds length or nonzero reserved/padding fields without publishing partial
+results from that uplink. Bound traversal to the 141 nonempty frames physically
+possible in 424 bytes. Non-FIS-B frame types and unsupported product IDs remain
+explicit diagnostic coverage, without establishing decoded weather.
+
+For product 413, support complete independent generic text APDUs with the normal
+or extended time-option header sizes. Header time is unused for this product:
+retain actual text-record time rather than infer product age from the APDU or TOR.
+Optional product-descriptor flags and segmented APDUs remain explicitly unsupported;
+never interpret their bytes as a complete report. Decode the DLAC six-bit alphabet
+MSB first, including bounded tab expansion and LF. Ignore the DLAC null character
+(NC); reject unsupported change-cipher (CC) and embedded ETX controls. Require each nonempty record's
+RS delimiter and zero fill to the following byte boundary, with zero-only trailing
+padding. Reject a truncated record, dangling tab, nonzero fill, invalid control or
+more than 4,096 expanded characters / 128 records in one uplink. A malformed APDU
+contributes a bounded diagnostic and no partial records; independent valid APDUs
+in the same structurally valid uplink remain usable.
+
+Expose an `uplink` report with `application_data_valid`, nullable
+`time_of_reception_ns`, complete `records`, `unsupported_frames`, unique
+`unsupported_products` and bounded `errors`. Each record carries `product_id=413`,
+`raw_text`, `report_type`, `location_id`, `report_time` and `body`. Preserve raw text
+and report body exactly after protocol DLAC decoding; single-space-delimited type,
+location and time fields are required (each at most 32 characters). METAR, TAF,
+optional SP/AM markers, NIL= and unfamiliar generic text types remain visible
+without turning text into a numeric planning authority or silently rewriting it.
+
+The bridge derives `fisb_text` envelopes from complete records, with the original
+uplink payload and source/session attribution. Bound retained weather to 128
+content-deduplicated reports, keyed by sender and exact raw record; count duplicate
+receptions, evictions and expiry. A repeated record updates only its receipt
+observation. Remove reports 900 seconds after their latest receipt using the same
+monotonic/wall-clock maximum-age rule as traffic. Stopping keeps last-known reports;
+restarting and an identified device replacement clear previous-source reports.
+Unsupported or empty uplinks do not establish a receiver connection. Reports from
+different senders are never fused. Product age and validity remain unassessed:
+`product_age_seconds=null`, `validity=unassessed`, and `live=false` for derived
+weather envelopes. Receipt age is independent of product freshness.
+
+Authenticated HTTP/OpenAPI and the explicitly launched local HTTP/MCP gateway
+expose these same typed records and limits. Capabilities name product 413 and the
+unsupported segmented/graphical coverage. Hosted gateway isolation is unchanged.
+The Cockpit page shows received text, report type/location/time, source and receipt
+age in plain escaped text, including an explicit product-age/validity limitation.
+It preserves current private-session and opt-in refresh controls; no report enters
+the public Internet-weather cache or general AI context. Qualification requires the
+FAA section 5.2.4 five-TAF wire example in both language bindings, adversarial framing
+and product cases, actual local UDP/HTTP/MCP and built desktop/mobile evidence.
+Loopback packets do not establish physical receiver/RF or graphical weather support.
 
 ## Applications and discovery
 

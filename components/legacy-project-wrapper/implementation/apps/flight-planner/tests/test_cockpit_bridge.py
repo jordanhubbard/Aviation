@@ -11,15 +11,11 @@ import pytest
 from app.cockpit_bridge import create_bridge_app
 from app.services.cockpit_bridge import ReceiverBridge, ReceiverSettings, ReceiverState
 
-VECTORS = json.loads(
-    (Path(__file__).parents[3] / "conformance/aviation-gdl90.json").read_text()
-)
+VECTORS = json.loads((Path(__file__).parents[3] / "conformance/aviation-gdl90.json").read_text())
 HEARTBEAT = bytes.fromhex(VECTORS["reports"][0]["frame_hex"])
 TRAFFIC = bytes.fromhex(VECTORS["reports"][1]["payload_hex"])
 DEVICE_ID = bytes.fromhex(
-    next(row for row in VECTORS["reports"] if row["id"] == "extension-id-msl-serial64")[
-        "frame_hex"
-    ]
+    next(row for row in VECTORS["reports"] if row["id"] == "extension-id-msl-serial64")["frame_hex"]
 )
 TOKEN = "fixture-operator-token-" + "x" * 32
 
@@ -176,24 +172,18 @@ def test_http_auth_origin_schema_and_body_ordering():
             },
         )
         assert response.status_code == 200
-        assert (
-            response.headers["access-control-allow-origin"] == "https://planner.example"
-        )
+        assert response.headers["access-control-allow-origin"] == "https://planner.example"
         response = client.get("/api/cockpit/state", headers=headers)
         assert response.status_code == 200 and response.json()["receivers"] == []
         assert response.headers["cache-control"] == "private, no-store"
         schema = client.get("/api/openapi.json").json()
         assert TOKEN not in json.dumps(schema)
         assert (
-            schema["components"]["schemas"]["ReportEnvelope"]["properties"][
-                "received_at"
-            ]["format"]
+            schema["components"]["schemas"]["ReportEnvelope"]["properties"]["received_at"]["format"]
             == "date-time"
         )
         assert (
-            schema["components"]["schemas"]["BridgeSnapshot"]["properties"]["traffic"][
-                "maxItems"
-            ]
+            schema["components"]["schemas"]["BridgeSnapshot"]["properties"]["traffic"]["maxItems"]
             == 500
         )
         assert "503" in schema["paths"]["/api/cockpit/start"]["post"]["responses"]
@@ -222,18 +212,13 @@ def test_http_auth_origin_schema_and_body_ordering():
                 break
         assert snapshot["traffic"][0]["report"]["pressure_altitude_ft"] == 5000
         assert snapshot["receivers"][0]["ownship"]["gps_fix_valid"] is True
-        assert (
-            snapshot["receivers"][0]["geometric_altitude"]["report"]["datum"] == "MSL"
-        )
+        assert snapshot["receivers"][0]["geometric_altitude"]["report"]["datum"] == "MSL"
         assert snapshot["receivers"][0]["device_profile_valid"] is True
         assert (
             snapshot["receivers"][0]["device_id"]["report"]["serial_number_hex"]
             == "FEDCBA9876543210"
         )
-        assert (
-            client.post("/api/cockpit/stop", headers=headers).json()["listening"]
-            is False
-        )
+        assert client.post("/api/cockpit/stop", headers=headers).json()["listening"] is False
     assert bridge.transport is None
 
 
@@ -261,10 +246,7 @@ def test_byte_rate_limit_and_immutable_snapshot_view():
     state.ingest(HEARTBEAT, ("127.0.0.1", 1000))
     snapshot = state.snapshot()
     snapshot["receivers"][0]["heartbeat"]["report"]["gps_position_valid"] = False
-    assert (
-        state.snapshot()["receivers"][0]["heartbeat"]["report"]["gps_position_valid"]
-        is True
-    )
+    assert state.snapshot()["receivers"][0]["heartbeat"]["report"]["gps_position_valid"] is True
 
 
 def test_suspend_and_clock_corrections_cannot_rejuvenate_reports():
@@ -427,10 +409,7 @@ def test_device_profile_is_sender_scoped_and_does_not_relabel_old_geometry():
     state.ingest(geo, b)
     snapshot = state.snapshot()
     assert snapshot["receivers"][0]["geometric_altitude"]["report"]["datum"] == "MSL"
-    assert (
-        snapshot["receivers"][1]["geometric_altitude"]["report"]["datum"]
-        == "WGS84_ellipsoid"
-    )
+    assert snapshot["receivers"][1]["geometric_altitude"]["report"]["datum"] == "WGS84_ellipsoid"
     assert snapshot["receivers"][0]["ownship"]["report"]["pressure_altitude_ft"] == 5000
     assert snapshot["receivers"][1]["device_profile_valid"] is None
 
@@ -456,22 +435,13 @@ def test_profile_survives_continuous_telemetry_but_requires_new_id_after_gap():
     assert snapshot["geometric_altitude"]["report"] == original["report"]
     assert snapshot["geometric_altitude"]["age_seconds"] == 6
     state.ingest(geo, source)
-    assert (
-        state.snapshot()["receivers"][0]["geometric_altitude"]["report"]["datum"]
-        is None
-    )
+    assert state.snapshot()["receivers"][0]["geometric_altitude"]["report"]["datum"] is None
     clock.value += 1
     state.ingest(DEVICE_ID, source)
     assert state.snapshot()["receivers"][0]["geometric_altitude"]["age_seconds"] == 1
-    assert (
-        state.snapshot()["receivers"][0]["geometric_altitude"]["report"]["datum"]
-        is None
-    )
+    assert state.snapshot()["receivers"][0]["geometric_altitude"]["report"]["datum"] is None
     state.ingest(geo, source)
-    assert (
-        state.snapshot()["receivers"][0]["geometric_altitude"]["report"]["datum"]
-        == "MSL"
-    )
+    assert state.snapshot()["receivers"][0]["geometric_altitude"]["report"]["datum"] == "MSL"
     state.stopped()
     state.listening(4001)
     state.ingest(geo, source)
@@ -495,9 +465,7 @@ def test_unknown_id_invalidates_profile_without_claiming_connection_or_refreshin
     assert snapshot["receivers"][0]["geometric_altitude"]["age_seconds"] == 6
     state.ingest(HEARTBEAT + geo, source)
     report = state.snapshot()["receivers"][0]["geometric_altitude"]["report"]
-    assert (
-        report["datum"] is None and report["datum_source"] == "unknown_receiver_profile"
-    )
+    assert report["datum"] is None and report["datum_source"] == "unknown_receiver_profile"
     state.stopped()
     state.listening(4001)
     state.ingest(frame(bytes.fromhex("650002")), source)
@@ -511,11 +479,9 @@ def test_changed_receiver_serial_does_not_inherit_another_devices_gps_validity_o
     source = ("127.0.0.1", 1000)
     state.ingest(DEVICE_ID + HEARTBEAT + OWNSHIP + frame(TRAFFIC), source)
     payload = bytearray.fromhex(
-        next(
-            row
-            for row in VECTORS["reports"]
-            if row["id"] == "extension-id-msl-serial64"
-        )["payload_hex"]
+        next(row for row in VECTORS["reports"] if row["id"] == "extension-id-msl-serial64")[
+            "payload_hex"
+        ]
     )
     payload[3:11] = bytes.fromhex("1234567890ABCDEF")
     state.ingest(frame(payload), source)
@@ -524,3 +490,127 @@ def test_changed_receiver_serial_does_not_inherit_another_devices_gps_validity_o
     assert snapshot["receivers"][0]["ownship"] is None
     state.ingest(OWNSHIP, source)
     assert state.snapshot()["receivers"][0]["ownship"]["gps_fix_valid"] is None
+
+
+FISB = json.loads((Path(__file__).parents[3] / "conformance/aviation-fisb.json").read_text())
+FISB_FRAME = bytes.fromhex(FISB["frame_hex"])
+
+
+def test_fisb_reports_preserve_sources_and_unassessed_product_validity():
+    clock = Clock()
+    state = receiver(clock=clock)
+    state.listening(4000)
+    state.ingest(FISB_FRAME, ("127.0.0.1", 1000))
+    snapshot = state.snapshot()
+    assert snapshot["connected"] and len(snapshot["weather"]) == 5
+    assert snapshot["capabilities"]["weather_product_ids"] == [413]
+    for report, location in zip(snapshot["weather"], FISB["expected_locations"]):
+        assert report["source_id"] == "127.0.0.1:1000"
+        assert report["age_seconds"] == 0 and not report["live"]
+        assert report["report"]["location_id"] == location
+        assert report["report"]["validity"] == "unassessed"
+        assert report["report"]["product_age_seconds"] is None
+        assert report["report"]["report_time"] == FISB["expected_report_time"]
+    assert snapshot["receivers"][0]["ownship"] is None
+    clock.value += 2
+    state.ingest(FISB_FRAME, ("127.0.0.1", 1000))
+    assert len(state.snapshot()["weather"]) == 5
+    assert state.snapshot()["counters"]["duplicate_weather"] == 5
+    state.ingest(FISB_FRAME, ("127.0.0.1", 2000))
+    assert len(state.snapshot()["weather"]) == 10
+    state.stopped()
+    assert len(state.snapshot()["weather"]) == 10
+    state.listening(4001)
+    assert not state.snapshot()["weather"]
+
+
+def test_fisb_age_cannot_move_backwards_and_expires_independently():
+    clock = Clock()
+    state = receiver(clock=clock)
+    state.listening(4000)
+    state.ingest(FISB_FRAME, ("127.0.0.1", 1000))
+    clock.value += 899
+    assert state.snapshot()["weather"][0]["age_seconds"] == 899
+    assert not state.snapshot()["connected"]
+    clock.value -= 50
+    assert state.snapshot()["weather"][0]["age_seconds"] == 899
+    clock.value += 52
+    assert not state.snapshot()["weather"]
+    assert state.snapshot()["counters"]["expired_weather"] == 5
+
+
+@pytest.mark.parametrize(
+    "identifier", ["application-invalid", "unknown-product", "segmented", "incomplete-text"]
+)
+def test_fisb_incomplete_or_unsupported_data_cannot_establish_connection(identifier):
+    state = receiver()
+    state.listening(4000)
+    vector = next(v for v in FISB["cases"] if v["id"] == identifier)
+    state.ingest(bytes.fromhex(vector["frame_hex"]), ("127.0.0.1", 1000))
+    snapshot = state.snapshot()
+    assert not snapshot["weather"] and not snapshot["connected"] and not snapshot["receivers"]
+    assert snapshot["recent_reports"][0]["report"]["kind"] == "uplink"
+
+
+def test_fisb_device_replacement_only_clears_its_own_weather():
+    state = receiver()
+    state.listening(4000)
+    state.ingest(DEVICE_ID, ("127.0.0.1", 1000))
+    state.ingest(FISB_FRAME, ("127.0.0.1", 1000))
+    state.ingest(FISB_FRAME, ("127.0.0.1", 2000))
+    original = next(row for row in VECTORS["reports"] if row["id"] == "extension-id-msl-serial64")
+    replacement = bytearray.fromhex(original["payload_hex"])
+    replacement[3] ^= 1
+    state.ingest(frame(replacement), ("127.0.0.1", 1000))
+    weather = state.snapshot()["weather"]
+    assert len(weather) == 5 and all(row["source_id"] == "127.0.0.1:2000" for row in weather)
+
+
+def test_fisb_private_http_schema_serializes_actual_udp_reports():
+    import time
+
+    bridge = ReceiverBridge(receiver())
+    app = create_bridge_app(bridge, token=TOKEN, origins=("http://localhost:5173",))
+    with TestClient(app) as client, socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as sender:
+        headers = {"Authorization": "Bearer " + TOKEN, "Origin": "http://localhost:5173"}
+        start = client.post("/api/cockpit/start", headers=headers)
+        assert start.status_code == 200
+        sender.sendto(FISB_FRAME, ("127.0.0.1", start.json()["udp_port"]))
+        deadline = time.monotonic() + 2
+        while True:
+            response = client.get("/api/cockpit/state", headers=headers)
+            assert response.status_code == 200, response.text
+            if response.json()["weather"]:
+                break
+            assert time.monotonic() < deadline
+            time.sleep(0.01)
+        assert len(response.json()["weather"]) == 5
+        assert response.headers["cache-control"] == "private, no-store"
+        assert client.get("/api/cockpit/state").status_code == 401
+        schema = client.get("/api/openapi.json").json()["components"]["schemas"]
+        assert "FisbTextReport" in schema and "UplinkReport" in schema
+        assert "weather" in schema["BridgeSnapshot"]["properties"]
+
+
+def test_fisb_retention_is_bounded_and_evicts_oldest_complete_record():
+    alphabet = "\x03ABCDEFGHIJKLMNOPQRSTUVWXYZ\x1a\t\x1e\n| !\"#$%&'()*+,-./0123456789:;<=>?"
+    clock = Clock()
+    state = receiver(clock=clock)
+    state.listening(4000)
+    for index in range(130):
+        raw = f"METAR TEST NIL= FIXTURE{index:03}="
+        bits = "".join(format(alphabet.index(c), "06b") for c in raw + "\x1e")
+        data = int(bits.ljust((len(bits) + 7) // 8 * 8, "0"), 2).to_bytes(
+            (len(bits) + 7) // 8, "big"
+        )
+        apdu = b"\x06\x74\x00\x00" + data
+        application = bytes([len(apdu) >> 1, (len(apdu) & 1) << 7]) + apdu
+        payload = (
+            b"\x07" + b"\xff" * 3 + b"\x00" * 6 + b"\x20\x00" + application.ljust(424, b"\x00")
+        )
+        clock.value += 0.01
+        state.ingest(frame(payload), ("127.0.0.1", 1000))
+    snapshot = state.snapshot()
+    assert len(snapshot["weather"]) == 128
+    assert snapshot["counters"]["evicted_weather"] == 2
+    assert snapshot["weather"][0]["report"]["body"] == "FIXTURE002="
