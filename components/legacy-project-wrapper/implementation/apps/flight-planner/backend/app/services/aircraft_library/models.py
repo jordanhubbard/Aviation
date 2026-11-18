@@ -558,11 +558,31 @@ def _comparison_spaced_decimals(text):
     return _SPACED_DECIMAL_MEASURE.sub(combine, text)
 
 
+_ISA_TEMPERATURE_OFFSET = re.compile(
+    r"(?<![\w./+\-\N{MINUS SIGN}\N{EN DASH}\N{EM DASH}])"
+    r"ISA[ \t]+(?P<sign>[-+\N{MINUS SIGN}\N{EN DASH}])[ \t]+"
+    r"(?P<value>(?:\d{1,3}(?:[ \t]*,\d{3})+|\d+)(?:[ \t]*\.[ \t]*\d+)?)"
+    r"(?=[ \t]*(?i:\N{DEGREE SIGN}[CF])\b"
+    r"(?![\w/\-\N{EN DASH}\N{EM DASH}]|\.\w))"
+)
+
+
+def _comparison_isa_temperature_offsets(text):
+    def combine(match):
+        prefix = text[: match.start()]
+        if _QUANTITY_CODE_LABEL.search(prefix) or _DECIMAL_REFERENCE_LABEL.search(prefix):
+            return match[0]
+        return "ISA " + match["sign"] + match["value"]
+
+    return _ISA_TEMPERATURE_OFFSET.sub(combine, text)
+
+
 def numbers(text):
     # Normalize comparison text only: PDF leaders are layout, not a decimal
     # continuation. Keep the source quotation and the complete signed token.
     # A prose/quantity boundary requires an explicit unit. Do not extract
     # arbitrary identifier suffixes or change the retained source quotation.
+    text = _comparison_isa_temperature_offsets(text)
     text = _comparison_prose_quantities(text)
     text = _comparison_spaced_decimals(text)
     text = _comparison_unary_dashes(text)

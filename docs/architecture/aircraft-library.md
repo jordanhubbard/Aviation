@@ -143,6 +143,20 @@ quote and claim bytes, model evidence and generation identities. A previously
 unsupported rounded integer component must not survive as false numeric support
 when the exact measured decimal is recognized; audit retained artifacts explicitly.
 
+An explicit uppercase `ISA` temperature-offset heading (#533) disambiguates a
+horizontal gap between its sign and measured magnitude. In temporary numeric
+comparison text only, join a hyphen/minus, mathematical minus, en dash or plus to
+its complete integer/decimal magnitude when `ISA`, sign, magnitude and a complete
+degree-marked Celsius/Fahrenheit unit occur on the same line. Preserve the sign,
+precision and existing grouped-integer/decimal-gap rules; never retain the detached
+positive magnitude as additional support for a recognized negative offset.
+Require ordinary token boundaries and exclude part/model/code/reference labels,
+embedded identifiers, doubled signs, shared-unit ranges and unit-like suffixes.
+Other separated signs, arbitrary subtraction, missing units and line breaks remain
+ambiguous. Exact original source/quote/claim bytes, model inputs, generation
+identities and previously admitted artifacts stay intact; audit retained claims
+explicitly when comparison changes.
+
 PDF layout extraction can join ordinary prose directly to a quantity (#526).
 For numeric comparison only, recognize lowercase or title-case `at`, `from`,
 `to`, `of`, `than`, `between` and `and` joined to a signed scalar or numeric range

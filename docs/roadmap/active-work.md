@@ -6,6 +6,8 @@ index, not an independently maintained task list. Use `gh issue` and `gh pr`.
 
 ## Current work and requests
 
+- [#533 — Preserve signs in ISA temperature offsets](https://github.com/jordanhubbard/Aviation/issues/533): [numeric comparison contract](../architecture/aircraft-library.md).
+
 - [#532 — Comparison of horizontally split decimal measurements](https://github.com/jordanhubbard/Aviation/issues/532): [numeric comparison contract](../architecture/aircraft-library.md).
 
 - [#529 — Bounded excerpt-availability feedback for manual repairs](https://github.com/jordanhubbard/Aviation/issues/529): [citation correction contract](../architecture/aircraft-library.md).
