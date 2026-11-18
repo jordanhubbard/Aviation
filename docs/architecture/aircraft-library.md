@@ -193,6 +193,32 @@ it does not join an equation across lines. A decimal attached directly to `x` st
 requires the complete known-unit relation above. No missing digits, OCR letters,
 fraction conversions or unit equivalences are inferred.
 
+Complete leading-decimal measurements attached to a recognized physical unit
+(#558), such as `.375nm`, compare with their leading-zero spelling. Use the
+existing physical-measurement, frequency and conversion-unit vocabulary and require a
+complete unit boundary. Preserve adjacent unary signs and precision. Explicit
+`to`/`through` ranges may contain independently complete measurements; this does
+not introduce a new parser for joined ranges or detached signs.
+
+Keep identifier, part/model/code/reference, Section/Figure/Table, serial/tail and
+version/revision labels outside this new recognition, including labels followed
+by `=`, `:` or `#`. Do not expose suffixes of embedded, dotted, slashed or
+hyphenated identifiers, unknown or corrupted units, chained decimals, detached
+signs or mixed-number tails. Require a prose/delimiter boundary before the value
+and a complete punctuation/whitespace boundary after its unit. Unicode identifier
+separators and unsupported dash/minus glyphs must not expose a positive value.
+Keep existing delimited-literal behavior unchanged.
+This changes temporary comparison text only; preserve quotations, model evidence,
+source hashes, generation identities and immutable failed output. Audit all saved
+current and historical claims before a fresh configured-provider continuation.
+
+A successful numeric comparison does not establish layout-dependent semantic
+relationships. Independently review the original image where native extraction
+scrambles labelled values. Apply any restriction/transcription through the
+canonical image-pinned source channels and admit only unchanged validated prefix
+scopes. Never admit a previously rejected interpretation merely because its
+numbers now compare.
+
 Historical summaries preserve their original generated claims and quotations,
 including claims that can fail stricter current comparison rules. The history
 view states that retained claims may fail current evidence checks. A qualification

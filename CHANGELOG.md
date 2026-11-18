@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Aircraft library: recognize complete printed leading-decimal measurements attached to physical units during numeric comparison, preserving exact quotes and source-layout review requirements.
+
 - Aircraft library: supply verified same-page review context in bounded distillation requests, retain unique primary coverage and explicit generation policies, and recover only unchanged historical request scopes.
 
 - Aircraft library: include verified same-page OCR and transcription context in bounded question retrieval, retaining filters, provenance and explicit evidence-limit warnings.
