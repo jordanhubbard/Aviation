@@ -12,6 +12,7 @@ from decimal import Decimal, InvalidOperation
 import re
 import threading
 import time
+import unicodedata
 from urllib.parse import urlsplit
 
 import httpx
@@ -568,6 +569,11 @@ def _comparison_temperature_thresholds(text):
 _DECIMAL_MEASURE_VALUE = (
     r"[-\N{MINUS SIGN}\N{EN DASH}+]?" r"(?:\d{1,3}(?:[ \t]*,\d{3})+|\d+)(?:[ \t]*\.[ \t]*\d+)?"
 )
+_DECIMAL_MEASURE_UNIT = (
+    r"(?i:(?:g|KIAS|KCAS|KTAS|knots?|kts?|RPM|ft|feet|foot|lbs?|pounds?|"
+    r"gallons?|gal|GPH|hours?|hrs?|minutes?|mins?|seconds?|secs?|\N{DEGREE SIGN}[CF]|"
+    r"psi|inHg|hPa|mbar|kg|cm|mm|inches|inch)\b|%)"
+)
 _SPACED_DECIMAL_MEASURE = re.compile(
     r"(?<![\w.,/+\-\N{MINUS SIGN}\N{EN DASH}\N{EM DASH}])"
     + _DECIMAL_MEASURE_VALUE
@@ -575,10 +581,7 @@ _SPACED_DECIMAL_MEASURE = re.compile(
     + _QUANTITY_RANGE
     + _DECIMAL_MEASURE_VALUE
     + r")?"
-    r"(?=[ \t]*(?i:(?:g|KIAS|KCAS|KTAS|knots?|kts?|RPM|ft|feet|foot|lbs?|pounds?|"
-    r"gallons?|gal|GPH|hours?|hrs?|minutes?|mins?|seconds?|secs?|\N{DEGREE SIGN}[CF]|"
-    r"psi|inHg|hPa|mbar|kg|cm|mm|inches|inch)\b|%)"
-    r"(?![\w/\-\N{EN DASH}\N{EM DASH}]|\.\w))"
+    r"(?=[ \t]*" + _DECIMAL_MEASURE_UNIT + r"(?![\w/\-\N{EN DASH}\N{EM DASH}]|\.\w))"
 )
 _DECIMAL_REFERENCE_LABEL = re.compile(
     r"(?i)(?<!\w)(?:Section|Sec\.?|Figure|Fig\.?|Table)\s*(?:[:#]\s*)?$"
@@ -618,11 +621,12 @@ def _comparison_isa_temperature_offsets(text):
     return _ISA_TEMPERATURE_OFFSET.sub(combine, text)
 
 
+_FREQUENCY_UNIT = r"(?i:GHz|MHz|kHz|Hz)"
 _FREQUENCY_PROSE_QUANTITY = re.compile(
     r"(?<![\w./+\-\N{MINUS SIGN}\N{EN DASH}\N{EM DASH}])"
     r"(at|At|from|From|to|To|of|Of|than|Than|between|Between|and|And|in|In)"
     r"(?=" + _QUANTITY_VALUE + r"(?:" + _QUANTITY_RANGE + _QUANTITY_VALUE + r")?"
-    r"(?:[ \t]+|[ \t]*-[ \t]*)(?i:GHz|MHz|kHz|Hz)\b"
+    r"(?:[ \t]+|[ \t]*-[ \t]*)" + _FREQUENCY_UNIT + r"\b"
     r"(?![\w/\-\N{EN DASH}\N{EM DASH}]|\.\w))"
 )
 
@@ -718,7 +722,19 @@ def _comparison_conversion_factors(text):
 _DELIMITED_LEADING_DECIMAL = re.compile(
     r"(?<![\w.,/*+\-\N{MINUS SIGN}\N{EN DASH}\N{EM DASH}])"
     r"(?P<sign>[-+\N{MINUS SIGN}\N{EN DASH}]?)(?P<value>\.\d+)"
-    r"(?![\w/*+\-\N{MINUS SIGN}\N{EN DASH}\N{EM DASH}]|\.[\w.]|,\d)"
+    r"(?:(?=\w)(?=(?P<unit>"
+    + _DECIMAL_MEASURE_UNIT
+    + "|"
+    + _FREQUENCY_UNIT
+    + "|"
+    + _CONVERSION_UNIT
+    + r")"
+    r"(?=$|\s|[()\[\]{};:!?\"'\N{RIGHT DOUBLE QUOTATION MARK}\N{RIGHT SINGLE QUOTATION MARK}]"
+    r"|\.(?![\w.])|,(?!\d)))"
+    r"|(?![\w/*+\-\N{MINUS SIGN}\N{EN DASH}\N{EM DASH}]|\.[\w.]|,\d))"
+)
+_LEADING_MEASURE_CODE_LABEL = re.compile(
+    r"(?i)(?<!\w)(?:version|revision|rev\.?|part|chapter|appendix)\s*(?:[:#]\s*)?$"
 )
 _CONVERSION_FACTOR_PREFIX = re.compile(
     r"(?<![\w.,/+\-\N{MINUS SIGN}\N{EN DASH}\N{EM DASH}])" + _CONVERSION_UNIT + r"[ \t]*[x×][ \t]*$"
@@ -738,6 +754,22 @@ def _comparison_leading_decimals(text):
         if not match["sign"] and re.search(r"\d[\d,]*\s+$", prefix):
             return match[0]
         label = prefix.rstrip(" \t(")
+        if match["unit"]:
+            if prefix and not (prefix[-1].isspace() or prefix[-1] in "([{=:;,!?\"'“‘<>≤≥"):
+                return match[0]
+            preceding = prefix.rstrip()
+            if (
+                preceding
+                and not _BINARY_NUMERIC_OPERATOR.search(prefix)
+                and (
+                    unicodedata.category(preceding[-1]) == "Pd"
+                    or "MINUS" in unicodedata.name(preceding[-1], "")
+                )
+            ):
+                return match[0]
+            label = label.rstrip(" \t=:\"'“‘(")
+            if _LEADING_MEASURE_CODE_LABEL.search(label):
+                return match[0]
         factor = _CONVERSION_FACTOR_PREFIX.search(label)
         if factor:
             label = label[: factor.start()].rstrip(" \t(")
