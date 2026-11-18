@@ -26,8 +26,7 @@ from .test_aircraft_library import manual
 from .test_aircraft_library_resume import Provider, snapshot
 
 
-@pytest.fixture
-def library(tmp_path, monkeypatch):
+def make_recovery_library(tmp_path, monkeypatch):
     store = Store(tmp_path / "library")
     doc = store.ingest(
         manual(
@@ -77,6 +76,11 @@ def library(tmp_path, monkeypatch):
     return store, doc["id"], provider
 
 
+@pytest.fixture
+def library(tmp_path, monkeypatch):
+    return make_recovery_library(tmp_path, monkeypatch)
+
+
 def review(store, identifier, page):
     worker = Worker(store, Provider())
     context = ocr_reviews.context(store, identifier)
@@ -119,7 +123,7 @@ def prepare(library, tmp_path, page=8):
     return store, identifier, provider, old, backup, approved
 
 
-def test_tail_addition_retains_every_old_scope_but_never_covers_new_words(library, tmp_path):
+def test_tail_addition_reexecutes_the_page_receiving_new_request_context(library, tmp_path):
     store, identifier, provider, old, backup, approved = prepare(library, tmp_path)
     history = store.distillations(identifier)
     digest = hashlib.sha256(backup.read_bytes()).hexdigest()
@@ -127,24 +131,26 @@ def test_tail_addition_retains_every_old_scope_but_never_covers_new_words(librar
     with pytest.raises(ValueError, match="extraction differs"):
         recover_distillation(store, provider, identifier, backup)
     result = recover_reviewed_ocr_prefix(store, provider, identifier, backup)
-    assert result["recovered_batches"] == old["completed_batches"] and result["model_calls"] == 0
+    count = old["completed_batches"] - 1
+    assert result["recovered_batches"] == count and result["model_calls"] == 0
     assert result["source_generation_changed"] and result["new_model_completions"] == 0
     current = store.get(identifier)["artifacts"]["distillation"]
     assert current["status"] == "partial" and current["unresolved_batches"] == 1
-    assert current["sections"] == old["sections"]
+    assert current["sections"] == old["sections"][:count]
     assert current["evidence_identity"] != old["evidence_identity"]
     assert current["recovery"]["source_evidence_identity"] == old["evidence_identity"]
     assert current["recovery"]["snapshot_sha256"] == digest
     new_id = approved["fragments"][0]["passage_id"]
     assert all(new_id not in b for b in current["batch_plan"][: current["completed_batches"]])
-    assert current["batch_plan"][-1] == [new_id]
+    assert new_id in current["batch_plan"][-1] and len(current["batch_plan"][-1]) > 1
     assert len(provider.calls) == calls and len(provider.embeds) == embeds
     assert store.distillations(identifier) == history
     assert hashlib.sha256(backup.read_bytes()).hexdigest() == digest
     assert recover_reviewed_ocr_prefix(store, provider, identifier, backup)["status"] == "unchanged"
     complete = distill(store, provider, identifier)
     assert complete["status"] == "complete" and len(provider.calls) == calls + 1
-    assert complete["sections"][: len(old["sections"])] == old["sections"]
+    assert complete["sections"][:count] == old["sections"][:count]
+    assert new_id in provider.calls[-1]
     assert complete["recovery"] == current["recovery"]
 
 
@@ -196,10 +202,11 @@ def test_existing_refined_partitions_survive_only_as_exact_current_scope_prefix(
     backup = snapshot(store, tmp_path / "refined.sqlite3")
     review(store, identifier, 8)
     result = recover_reviewed_ocr_prefix(store, provider, identifier, backup)
-    assert result["recovered_batches"] == len(refined)
+    count = len(refined) - 1
+    assert result["recovered_batches"] == count
     current = store.get(identifier)["artifacts"]["distillation"]
     assert current["batch_plan"][:2] == saved["batch_plan"][:2]
-    assert current["sections"] == saved["sections"] and current["unresolved_batches"] == 1
+    assert current["sections"] == saved["sections"][:count] and current["unresolved_batches"] == 1
 
 
 @pytest.mark.parametrize(
@@ -406,9 +413,10 @@ def test_identical_native_evidence_can_remap_ids_after_reindex_before_review(lib
     review(store, identifier, 8)
     result = recover_reviewed_ocr_prefix(store, provider, identifier, backup)
     current = store.get(identifier)["artifacts"]["distillation"]
-    assert result["recovered_batches"] == old["completed_batches"]
+    count = old["completed_batches"] - 1
+    assert result["recovered_batches"] == count
     assert [c["text"] for s in current["sections"] for c in s["claims"]] == [
-        c["text"] for s in old["sections"] for c in s["claims"]
+        c["text"] for s in old["sections"][:count] for c in s["claims"]
     ]
     ids = {p["passage_id"] for p in store.passages([identifier])}
     assert all(
@@ -478,7 +486,7 @@ def test_distinct_transcription_recovery_preserves_only_unchanged_scopes(library
     count = result["recovered_batches"]
     assert count > 0 and current["sections"] == old["sections"][:count]
     if page == 8:
-        assert count == old["completed_batches"]
+        assert count == old["completed_batches"] - 1
     else:
         assert count < old["completed_batches"]
     assert current["status"] == "partial" and current["unresolved_batches"] > 0

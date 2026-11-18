@@ -1466,21 +1466,80 @@ def ask(store: Store, models: Models, code: str, question: str, **filters):
     return answer
 
 
-def distillation_context(store: Store, models: Models, identifier: str):
+LEGACY_DISTILLATION_EVIDENCE = "ordered-passages-v1"
+REVIEWED_DISTILLATION_EVIDENCE = "reviewed-page-context-v1"
+
+
+def _distillation_settings(models, passages, policy=None):
+    reviewed = any(p.get("ocr_review") or p.get("transcription_review") for p in passages)
+    if policy is None:
+        policy = REVIEWED_DISTILLATION_EVIDENCE if reviewed else LEGACY_DISTILLATION_EVIDENCE
+    if policy == LEGACY_DISTILLATION_EVIDENCE:
+        return {}
+    if policy != REVIEWED_DISTILLATION_EVIDENCE:
+        raise ModelUnavailable("Unknown distillation evidence policy")
+    limit = getattr(models, "distillation_batch_chars", 18_000)
+    if type(limit) is not int or not 2000 <= limit <= 18_000:
+        raise ModelUnavailable("Invalid distillation context budget")
+    return {"evidence_policy": policy, "context_limit_chars": limit}
+
+
+def _distillation_review_context(passages):
+    context = {}
+    for row in passages:
+        if row.get("ocr_review") or row.get("transcription_review"):
+            source_excerpts(row)  # Verify provenance before granting contextual quotation.
+            context.setdefault((row["document_id"], row["page"]), []).append(row)
+    return context
+
+
+def _with_distillation_context(batch, context):
+    evidence, seen = list(batch), {p["passage_id"] for p in batch}
+    for row in batch:
+        for reviewed in context.get((row["document_id"], row["page"]), []):
+            if reviewed["passage_id"] not in seen:
+                evidence.append(reviewed)
+                seen.add(reviewed["passage_id"])
+    return evidence
+
+
+def distillation_request_evidence(batch, batches, artifact):
+    """Reconstruct the artifact's actual request policy, never widening legacy evidence."""
+    policy = artifact.get("evidence_policy", LEGACY_DISTILLATION_EVIDENCE)
+    if policy == LEGACY_DISTILLATION_EVIDENCE:
+        return batch
+    if policy != REVIEWED_DISTILLATION_EVIDENCE:
+        raise ModelUnavailable("Unknown distillation evidence policy")
+    limit = artifact.get("context_limit_chars")
+    if type(limit) is not int or not 2000 <= limit <= 18_000:
+        raise ModelUnavailable("Invalid distillation context budget")
+    context = _distillation_review_context([p for group in batches for p in group])
+    evidence = _with_distillation_context(batch, context)
+    if sum(len(p["text"]) for p in evidence) > limit:
+        raise ModelUnavailable("Reviewed page context exceeds the distillation input budget")
+    return evidence
+
+
+def distillation_context(store: Store, models: Models, identifier: str, *, evidence_policy=None):
     doc = store.get(identifier)
     if doc is None:
         raise ValueError("Document not found")
-    passages = store.passages([identifier])
+    passages = [{**p, "metadata": doc["metadata"]} for p in store.passages([identifier])]
     if not passages:
         raise ValueError("Document has no readable pages")
+    settings = _distillation_settings(models, passages, evidence_policy)
+    context = _distillation_review_context(passages) if settings else {}
     batches, batch, size = [], [], 0
     for passage in passages:
-        if batch and size + len(passage["text"]) > getattr(
-            models, "distillation_batch_chars", 18_000
-        ):
+        candidate_size = (
+            sum(len(p["text"]) for p in _with_distillation_context(batch + [passage], context))
+            if settings
+            else size + len(passage["text"])
+        )
+        if batch and candidate_size > getattr(models, "distillation_batch_chars", 18_000):
             batches.append(batch)
             batch, size = [], 0
-        batch.append({**passage, "metadata": doc["metadata"]})
+        batch.append(passage)
         size += len(passage["text"])
     if batch:
         batches.append(batch)
@@ -1504,6 +1563,7 @@ def distillation_context(store: Store, models: Models, identifier: str):
                 "question": question,
                 "batches": batches,
                 "citation_format": CITATION_FORMAT,
+                **settings,
                 **(
                     {"generation_options": models.generation_options}
                     if getattr(models, "generation_options", {})
@@ -1543,7 +1603,8 @@ def validated_prefix(existing, batches):
     summaries = []
     for saved, batch in zip(existing.get("sections", []), batches):
         try:
-            verified = validate_answer(saved, batch)
+            evidence = distillation_request_evidence(batch, batches, existing)
+            verified = validate_answer(saved, evidence)
             if verified["insufficient_evidence"]:
                 break
             summaries.append({"pages": sorted({p["page"] for p in batch}), **verified})
@@ -1555,11 +1616,18 @@ def validated_prefix(existing, batches):
 def distill(store: Store, models: Models, identifier: str):
     identity = store.index_identity(identifier)
     doc, roots, question, fingerprint = distillation_context(store, models, identifier)
+    settings = _distillation_settings(models, [p for batch in roots for p in batch])
     summaries, batches = [], roots
     existing = doc["artifacts"].get("distillation", {})
+    reuse_recovery = False
     if existing.get("status") == "partial" and existing.get("evidence_identity") == fingerprint:
+        if existing.get("evidence_policy", LEGACY_DISTILLATION_EVIDENCE) != settings.get(
+            "evidence_policy", LEGACY_DISTILLATION_EVIDENCE
+        ) or (settings and existing.get("context_limit_chars") != settings["context_limit_chars"]):
+            raise ModelUnavailable("Distillation evidence settings do not match its generation")
         batches = distillation_plan(roots, existing.get("batch_plan"))
         summaries = validated_prefix(existing, batches)
+        reuse_recovery = len(summaries) == len(existing.get("sections", []))
 
     def persist():
         limited_pages = {r["page"] for r in doc.get("source_limits", [])}
@@ -1568,6 +1636,7 @@ def distill(store: Store, models: Models, identifier: str):
             "model": models.model,
             "generated_at": now(),
             "generation_options": getattr(models, "generation_options", {}),
+            **settings,
             "status": (
                 "complete"
                 if len(summaries) == len(batches)
@@ -1592,7 +1661,7 @@ def distill(store: Store, models: Models, identifier: str):
         if limited_pages:
             value["unresolved_source_pages"] = sorted(limited_pages)
             value["source_limits"] = doc["source_limits"]
-        if existing.get("recovery"):
+        if reuse_recovery and existing.get("recovery"):
             value["recovery"] = existing["recovery"]
         store.artifact(
             identifier,
@@ -1607,6 +1676,7 @@ def distill(store: Store, models: Models, identifier: str):
     while len(summaries) < len(batches):
         position = len(summaries)
         batch = batches[position]
+        evidence = distillation_request_evidence(batch, batches, value)
         try:
             result = (
                 {
@@ -1614,10 +1684,10 @@ def distill(store: Store, models: Models, identifier: str):
                     "reason": "Native page text requires original-image interpretation",
                     "claims": [],
                 }
-                if all(source_restricted(row) for row in batch)
+                if all(source_restricted(row) for row in evidence)
                 else verified_completion(
                     models,
-                    batch,
+                    evidence,
                     question,
                     trace_context={
                         "operation": "distillation",
@@ -1626,6 +1696,7 @@ def distill(store: Store, models: Models, identifier: str):
                         "index_identity": identity,
                         "evidence_identity": fingerprint,
                         "batch_position": position,
+                        **settings,
                     },
                 )
             )

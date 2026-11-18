@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Aircraft library: supply verified same-page review context in bounded distillation requests, retain unique primary coverage and explicit generation policies, and recover only unchanged historical request scopes.
+
 - Aircraft library: include verified same-page OCR and transcription context in bounded question retrieval, retaining filters, provenance and explicit evidence-limit warnings.
 
 - Aircraft library: preserve signed temperature thresholds joined to condition words during numeric comparison, without rewriting source quotations or admitting identifier suffixes as measurements.

@@ -9,7 +9,16 @@ import json
 from pathlib import Path
 import sqlite3
 
-from .models import distillation_context, distillation_plan, validated_prefix, validate_answer
+from .models import (
+    LEGACY_DISTILLATION_EVIDENCE,
+    ModelUnavailable,
+    _distillation_settings,
+    distillation_context,
+    distillation_plan,
+    distillation_request_evidence,
+    validated_prefix,
+    validate_answer,
+)
 from .store import now
 
 
@@ -76,8 +85,66 @@ def _passage_key(passage, *, include_source_limits=True):
     )
 
 
+def _snapshot_context(source, models, identifier):
+    saved = source.get(identifier)["artifacts"].get("distillation", {})
+    policy = saved.get("evidence_policy", LEGACY_DISTILLATION_EVIDENCE)
+    try:
+        result = distillation_context(source, models, identifier, evidence_policy=policy)
+        settings = _distillation_settings(models, [p for b in result[1] for p in b], policy)
+    except ModelUnavailable as error:
+        raise ValueError("Snapshot distillation evidence settings are invalid") from error
+    if settings and saved.get("context_limit_chars") != settings["context_limit_chars"]:
+        raise ValueError("Snapshot context budget does not match configuration")
+    return result
+
+
+def _request_keys(batch, plan, artifact):
+    return [_passage_key(p) for p in distillation_request_evidence(batch, plan, artifact)]
+
+
+def _requests_unchanged(old_batch, old_plan, saved, batch, roots, settings):
+    old_keys = _request_keys(old_batch, old_plan, saved)
+    try:
+        return old_keys == _request_keys(batch, roots, settings)
+    except ModelUnavailable:
+        return False
+
+
+def _remaining_plan(roots, kept, cursor):
+    tail, offset = [], 0
+    for batch in roots:
+        end = offset + len(batch)
+        if end > cursor:
+            tail.append(batch[max(0, cursor - offset) :])
+        offset = end
+    return distillation_plan(roots, [[p["passage_id"] for p in batch] for batch in kept + tail])
+
+
+def _retain_source_limits(value, current, plan, recovered):
+    limited = {r["page"] for r in current.get("source_limits", [])}
+    if limited:
+        value["source_limits"] = current["source_limits"]
+        value["unresolved_source_pages"] = sorted(limited)
+    else:
+        value.pop("source_limits", None)
+        value.pop("unresolved_source_pages", None)
+    value["unresolved_batches"] = sum(
+        i >= len(recovered)
+        or recovered[i]["insufficient_evidence"]
+        or any(p["page"] in limited for p in batch)
+        for i, batch in enumerate(plan)
+    )
+
+
 def recover_distillation(store, models, identifier, snapshot_path):
     """Require exact source identity, remap only identical passages, then compare-and-swap."""
+    with store.connection() as live:
+        if live.execute(
+            "SELECT 1 FROM jobs WHERE state IN ('queued','running') "
+            "AND json_extract(request,'$.document_id')=? LIMIT 1",
+            (identifier,),
+        ).fetchone():
+            raise ValueError("Document work is queued or running; recovery requires idle work")
     path = Path(snapshot_path).resolve(strict=True)
     # Never open the live database as its own recovery candidate.
     if path.samefile(store.db):
@@ -92,7 +159,7 @@ def recover_distillation(store, models, identifier, snapshot_path):
         connection.execute("PRAGMA query_only=ON")
         connection.execute("BEGIN")
         source = _Snapshot(connection)
-        old, roots, _, fingerprint = distillation_context(source, models, identifier)
+        old, roots, _, fingerprint = _snapshot_context(source, models, identifier)
         saved = old["artifacts"].get("distillation", {})
         if (
             saved.get("status") not in {"partial", "complete"}
@@ -104,6 +171,7 @@ def recover_distillation(store, models, identifier, snapshot_path):
         if not prefix or len(prefix) != len(saved.get("sections", [])):
             raise ValueError("Snapshot prefix did not fully validate")
         identity = store.index_identity(identifier)
+        source_guard = store.recovery_identity(identifier)
         current, current_roots, _, current_fingerprint = distillation_context(
             store, models, identifier
         )
@@ -125,20 +193,44 @@ def recover_distillation(store, models, identifier, snapshot_path):
             old_p["passage_id"]: new_p["passage_id"]
             for old_p, new_p in zip(old_passages, current_passages)
         }
-        plan = distillation_plan(
-            current_roots, [[remap[p["passage_id"]] for p in batch] for batch in old_plan]
-        )
-        recovered = []
-        for section, batch in zip(prefix, plan):
+        settings = _distillation_settings(models, current_passages)
+        boundaries, count = set(), 0
+        for group in current_roots:
+            count += len(group)
+            boundaries.add(count)
+        recovered, kept, cursor = [], [], 0
+        for section, old_batch in zip(prefix, old_plan):
+            end = cursor + len(old_batch)
+            batch = current_passages[cursor:end]
+            if any(cursor < boundary < end for boundary in boundaries) or not (
+                _requests_unchanged(old_batch, old_plan, saved, batch, current_roots, settings)
+            ):
+                break
             candidate = copy.deepcopy(section)
             for claim in candidate["claims"]:
                 for citation in claim["citations"]:
                     citation["passage_id"] = remap[citation["passage_id"]]
             recovered.append(
-                {"pages": sorted({p["page"] for p in batch}), **validate_answer(candidate, batch)}
+                {
+                    "pages": sorted({p["page"] for p in batch}),
+                    **validate_answer(
+                        candidate, distillation_request_evidence(batch, current_roots, settings)
+                    ),
+                }
             )
+            kept.append(batch)
+            cursor = end
+        if not recovered:
+            raise ValueError("No unchanged leading request scopes remain")
+        try:
+            plan = distillation_plan(
+                current_roots, [[remap[p["passage_id"]] for p in batch] for batch in old_plan]
+            )
+        except ModelUnavailable:
+            plan = _remaining_plan(current_roots, kept, cursor)
         previous = current["artifacts"].get("distillation")
         if previous and previous.get("evidence_identity") == current_fingerprint:
+            _snapshot_context(store, models, identifier)
             current_plan = distillation_plan(current_roots, previous.get("batch_plan"))
             current_prefix = validated_prefix(previous, current_plan)
 
@@ -154,6 +246,7 @@ def recover_distillation(store, models, identifier, snapshot_path):
                 }
         value = {
             **saved,
+            **settings,
             "status": "partial",
             "generated_at": now(),
             "completed_batches": len(recovered),
@@ -169,8 +262,16 @@ def recover_distillation(store, models, identifier, snapshot_path):
                 "recovered_at": now(),
                 "recovered_batches": len(recovered),
                 "recovered_claims": sum(len(s["claims"]) for s in recovered),
+                "request_scopes_unchanged": True,
+                "source_evidence_policy": saved.get(
+                    "evidence_policy", LEGACY_DISTILLATION_EVIDENCE
+                ),
+                "target_evidence_policy": settings.get(
+                    "evidence_policy", LEGACY_DISTILLATION_EVIDENCE
+                ),
             },
         }
+        _retain_source_limits(value, current, plan, recovered)
         store.artifact(
             identifier,
             "distillation",
@@ -178,6 +279,8 @@ def recover_distillation(store, models, identifier, snapshot_path):
             expected_metadata=current["metadata"],
             expected_index_identity=identity,
             expected_previous=previous,
+            expected_idle=True,
+            expected_recovery_identity=source_guard,
         )
         return {"status": "recovered", **value["recovery"], "model_calls": 0}
 
@@ -250,7 +353,7 @@ def _recover_reviewed_prefix(
         connection.execute("PRAGMA query_only=ON")
         connection.execute("BEGIN")
         source = _Snapshot(connection)
-        old, old_roots, _, fingerprint = distillation_context(source, models, identifier)
+        old, old_roots, _, fingerprint = _snapshot_context(source, models, identifier)
         saved = old["artifacts"].get("distillation", {})
         if (
             saved.get("status") not in {"partial", "complete"}
@@ -334,6 +437,7 @@ def _recover_reviewed_prefix(
                 raise ValueError("Current original bytes do not match snapshot identity")
         old_passages = [p for batch in old_roots for p in batch]
         passages = [p for batch in roots for p in batch]
+        settings = _distillation_settings(models, passages)
         retained, seen = [], set()
         for passage in passages:
             provenance = passage.get("ocr_review")
@@ -369,6 +473,8 @@ def _recover_reviewed_prefix(
                 _passage_key(p) for p in candidate_batch
             ] or any(cursor < boundary < end for boundary in boundaries):
                 break
+            if not _requests_unchanged(batch, old_plan, saved, candidate_batch, roots, settings):
+                break
             candidate = copy.deepcopy(section)
             for claim in candidate["claims"]:
                 for citation in claim["citations"]:
@@ -376,31 +482,34 @@ def _recover_reviewed_prefix(
             recovered.append(
                 {
                     "pages": sorted({p["page"] for p in candidate_batch}),
-                    **validate_answer(candidate, candidate_batch),
+                    **validate_answer(
+                        candidate,
+                        distillation_request_evidence(candidate_batch, roots, settings),
+                    ),
                 }
             )
             kept.append(candidate_batch)
             cursor = end
         if not recovered:
             raise ValueError("No unchanged leading batch scopes remain")
-        tail, offset = [], 0
-        for batch in roots:
-            end = offset + len(batch)
-            if end > cursor:
-                tail.append(batch[max(0, cursor - offset) :])
-            offset = end
-        plan = distillation_plan(roots, [[p["passage_id"] for p in batch] for batch in kept + tail])
+        plan = _remaining_plan(roots, kept, cursor)
         previous = current["artifacts"].get("distillation")
         if previous:
-            if previous.get("evidence_identity") != current_fingerprint or previous.get(
+            _, previous_roots, _, previous_fingerprint = _snapshot_context(
+                store, models, identifier
+            )
+            if previous.get("evidence_identity") != previous_fingerprint or previous.get(
                 "status"
             ) not in {"partial", "complete"}:
                 raise ValueError("Current distillation belongs to another generation or state")
-            previous_plan = distillation_plan(roots, previous.get("batch_plan"))
+            previous_plan = distillation_plan(previous_roots, previous.get("batch_plan"))
             previous_prefix = validated_prefix(previous, previous_plan)
             if len(previous_prefix) != len(previous.get("sections", [])):
                 raise ValueError("Current prefix did not fully validate")
-            if sum(len(b) for b in previous_plan[: len(previous_prefix)]) >= cursor:
+            if (
+                previous_fingerprint == current_fingerprint
+                and sum(len(b) for b in previous_plan[: len(previous_prefix)]) >= cursor
+            ):
                 return {
                     "status": "unchanged",
                     "completed_batches": len(previous_prefix),
@@ -429,6 +538,16 @@ def _recover_reviewed_prefix(
             "recovered_batches": len(recovered),
             "recovered_claims": sum(len(s["claims"]) for s in recovered),
             "new_model_completions": 0,
+            "request_scopes_unchanged": True,
+            "source_evidence_policy": saved.get("evidence_policy", LEGACY_DISTILLATION_EVIDENCE),
+            "target_evidence_policy": settings.get("evidence_policy", LEGACY_DISTILLATION_EVIDENCE),
+            "unchanged_request_sha256": hashlib.sha256(
+                json.dumps(
+                    [_request_keys(batch, roots, settings) for batch in kept],
+                    sort_keys=True,
+                    allow_nan=False,
+                ).encode()
+            ).hexdigest(),
         }
         if transcriptions:
             receipt.update(
@@ -439,6 +558,7 @@ def _recover_reviewed_prefix(
             receipt["added_source_limit_review_ids"] = sorted(added_source_use)
         value = {
             **saved,
+            **settings,
             "status": "partial",
             "generated_at": now(),
             "evidence_identity": current_fingerprint,
@@ -450,20 +570,7 @@ def _recover_reviewed_prefix(
             "document_extraction": current["extraction"],
             "recovery": receipt,
         }
-        if source_use:
-            limited_pages = {r["page"] for r in current.get("source_limits", [])}
-            if limited_pages:
-                value["source_limits"] = current["source_limits"]
-                value["unresolved_source_pages"] = sorted(limited_pages)
-            else:
-                value.pop("source_limits", None)
-                value.pop("unresolved_source_pages", None)
-            value["unresolved_batches"] = sum(
-                i >= len(recovered)
-                or recovered[i]["insufficient_evidence"]
-                or any(p["page"] in limited_pages for p in batch)
-                for i, batch in enumerate(plan)
-            )
+        _retain_source_limits(value, current, plan, recovered)
         store.artifact(
             identifier,
             "distillation",

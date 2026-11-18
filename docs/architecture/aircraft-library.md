@@ -334,6 +334,41 @@ Ordinary pages without reviewed context retain their exact ranking. This questio
 retrieval behavior does not change source text, stored vectors, distillation
 inputs, generation identities or the source-use restrictions in #550.
 
+### Reviewed context in distillation requests (#556)
+
+For documents with active verified OCR or operator transcriptions, new distillations
+use the `reviewed-page-context-v1` evidence policy. Primary batches remain a complete,
+ordered, unique partition of readable passages. Each actual request also includes
+missing verified reviewed passages from its primary pages, in deterministic source
+order, without adding another document or page. Repeated context does not grant
+primary coverage. Original quotations, provenance and source-use restrictions apply
+equally to primary and contextual evidence.
+
+Pack primary batches against all supplied source text, including reviewed context,
+within the configured source-character budget. This retains the existing character
+unit rather than counting JSON, metadata or prompt overhead as source text.
+Refinements after output truncation use the same context rule. If a single primary
+passage and required review context cannot fit,
+retain an explicitly partial artifact and fail with a context-budget error before
+calling the model; never drop context or silently exceed the budget.
+
+Record the evidence policy and context limit in the artifact and generation identity.
+Documents without reviewed passages retain their exact legacy identities and requests.
+Artifacts without an evidence-policy field use their original ordered-passage evidence;
+never retroactively validate their claims against newly supplied context. Unknown or
+invalid policies cannot establish a validated prefix. Historical artifacts remain
+immutable and failed archived claims stay failed.
+
+Canonical snapshot recovery must reconstruct the snapshot's recorded policy, verify
+its original fingerprint and every saved claim, and compare old and new complete
+request evidence before admitting an unchanged leading scope. Stop at the first changed
+scope; do not skip ahead or relabel old generations. Preserve the old artifact in
+history when admitting a new identity, retain a recovery receipt and use the existing
+source/lease/compare-and-swap guards. New source additions and a changed request policy
+do not grant completion to unprocessed material. Carry a recovery receipt only while
+resuming its fully validated prefix; a fresh run or invalidated prefix must not inherit
+an older admission receipt.
+
 Performance questions must retain units, weight/configuration, source revision and applicability. No LLM-derived number becomes a planning dataset without separate review and independent numerical acceptance under #494. Maintenance information can be retrieved from relevant manuals but no inferred service interval or return-to-service authority is fabricated.
 
 ## Supplemental OCR review
