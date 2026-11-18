@@ -49,6 +49,7 @@ type Answer = {
   model?: string
   applicability?: string
   warnings?: string[]
+  source_limits?: { document_id: string; page: number; reason: string; review_id: string }[]
 }
 type Document = {
   id: string
@@ -58,6 +59,7 @@ type Document = {
   status: string
   error: string | null
   original_url: string
+  source_limits?: { id: string; page: number }[]
   extraction: { page_count: number; incomplete_pages: number[] } | null
   sources: { filename: string; url: string | null; retrieved_at: string }[]
   artifacts: {
@@ -69,6 +71,7 @@ type Document = {
     }
     distillation?: {
       status: string
+      unresolved_source_pages?: number[]
       sections: (Answer & { pages: number[] })[]
       recovery?: {
         kind?: string
@@ -127,6 +130,7 @@ const jobKinds = new Map<string, string>([
   ['ocr_embed', 'Index reviewed OCR'],
   ['transcription_apply', 'Retain reviewed page transcription'],
   ['transcription_embed', 'Index reviewed page transcription'],
+  ['source_limit_review', 'Review native page source use'],
 ])
 const activeJob = (job: Job) => job.state === 'queued' || job.state === 'running'
 const validJob = (job: Job) =>
@@ -170,15 +174,21 @@ export default function AircraftLibraryPage() {
   const [jobNextOffset, setJobNextOffset] = useState<number | null>(null)
   const [question, setQuestion] = useState('')
   const [answer, setAnswer] = useState<Answer | null>(null)
-  const [passages, setPassages] = useState<{ document_id: string; page: number; text: string }[]>(
-    [],
-  )
+  const [passages, setPassages] = useState<
+    {
+      document_id: string
+      page: number
+      text: string
+      source_limit?: { original_image_only: boolean } | null
+    }[]
+  >([])
   const [page, setPage] = useState<{
     document_id: string
     page: number
     label: string
     text: string
     method: string
+    source_limit?: { original_image_only: boolean } | null
   } | null>(null)
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
@@ -424,6 +434,13 @@ export default function AircraftLibraryPage() {
       <Stack spacing={2}>
         {value.insufficient_evidence && (
           <Alert severity="info">Insufficient evidence: {value.reason}</Alert>
+        )}
+        {!!value.source_limits?.length && (
+          <Alert severity="warning">
+            Some matching native text requires original-image interpretation. Affected PDF pages:{' '}
+            {value.source_limits.map((r) => r.page).join(', ')}. Generated claims do not use that
+            text.
+          </Alert>
         )}
         {value.claims.map((claim, index) => (
           <Box key={index}>
@@ -805,6 +822,13 @@ export default function AircraftLibraryPage() {
                         Incomplete pages: {doc.extraction.incomplete_pages.join(', ')}
                       </Alert>
                     )}
+                    {!!doc.source_limits?.length && (
+                      <Alert severity="warning">
+                        Original-image-only native text on PDF pages{' '}
+                        {doc.source_limits.map((r) => r.page).join(', ')}. Originals and searchable
+                        text are retained; generated coverage remains partial.
+                      </Alert>
+                    )}
                     <Stack direction="row" flexWrap="wrap" gap={1}>
                       <Button
                         onClick={() => {
@@ -864,6 +888,7 @@ export default function AircraftLibraryPage() {
                     <OCRReview
                       documentId={doc.id}
                       sourceSha256={doc.sha256}
+                      sourceLimits={doc.source_limits}
                       locked={
                         busy ||
                         jobs.some((job) => activeJob(job) && job.subject?.document_id === doc.id)
@@ -914,6 +939,12 @@ export default function AircraftLibraryPage() {
                     {doc.artifacts.distillation && (
                       <details>
                         <summary>LLM distillation ({doc.artifacts.distillation.status})</summary>
+                        {!!doc.artifacts.distillation.unresolved_source_pages?.length && (
+                          <Alert severity="warning">
+                            Original-image interpretation remains unresolved on PDF pages{' '}
+                            {doc.artifacts.distillation.unresolved_source_pages.join(', ')}.
+                          </Alert>
+                        )}
                         {doc.artifacts.distillation.recovery?.kind === 'reviewed_ocr_prefix' && (
                           <Alert severity="info">
                             Previously validated sections reused after source review:{' '}
@@ -926,7 +957,7 @@ export default function AircraftLibraryPage() {
                         {doc.artifacts.distillation.sections.map((s, i) => (
                           <Box key={i} sx={{ my: 2 }}>
                             <Typography variant="subtitle2">
-                              Reviewed PDF pages {s.pages.join(', ')}
+                              Source PDF pages {s.pages.join(', ')}
                             </Typography>
                             {claims(s)}
                           </Box>
@@ -1076,6 +1107,11 @@ export default function AircraftLibraryPage() {
                     PDF page {p.page} · {p.document_id.slice(-8)}
                   </Button>
                   <Typography sx={{ whiteSpace: 'pre-wrap' }}>{p.text}</Typography>
+                  {p.source_limit?.original_image_only && (
+                    <Alert severity="warning">
+                      Original-image-only native text; unavailable as generated claim evidence.
+                    </Alert>
+                  )}
                 </CardContent>
               </Card>
             ))}
@@ -1089,6 +1125,12 @@ export default function AircraftLibraryPage() {
                 <Typography variant="caption">
                   {page.method} · {page.document_id}
                 </Typography>
+                {page.source_limit?.original_image_only && (
+                  <Alert severity="warning">
+                    Read the original page image for diagram relationships; this native text cannot
+                    support generated claims.
+                  </Alert>
+                )}
                 <Box component="pre" sx={{ whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}>
                   {page.text}
                 </Box>

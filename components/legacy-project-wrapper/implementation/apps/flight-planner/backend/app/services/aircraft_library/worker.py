@@ -31,6 +31,16 @@ class Worker:
 
     def execute(self, job):
         request = job["request"]
+        if job["kind"] == "source_limit_review":
+            from .source_limits import apply_review
+
+            review = apply_review(self.store, job)
+            return {
+                "document_id": request["document_id"],
+                "source_limit_review_id": review["id"],
+                "applied": True,
+                "action": review["action"],
+            }
         if job["kind"] in {"transcription_apply", "transcription_embed"}:
             from .transcriptions import apply_review, embedding_review
 

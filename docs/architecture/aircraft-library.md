@@ -469,6 +469,77 @@ operations provide the retained page image; OCR application still accepts only
 candidate fragment IDs. Transcription methods never poll or infer provider/model
 selection and use the same caller-owned private transport.
 
+## Reviewed source limitations
+
+For [#550](https://github.com/jordanhubbard/Aviation/issues/550), exact quotations
+and matching numbers do not establish a diagram's label-to-value or spatial
+relationships. A named reviewer may mark a physical page's native extraction as
+`original_image_only` after comparing its retained original image. This is a
+source-use limitation, not a correction of original text or approval of any
+generated interpretation. Agent reviews identify the agent explicitly; they do
+not claim independent human review or performance-data approval.
+
+Use the current source/index identity and an immutable, integrity-checked page
+preview. Require the original SHA, preview integrity, physical page/image hash,
+named reviewer, explicit image-comparison attestation and a fixed
+`layout_relationships_unavailable` reason. A draft or preview changes nothing.
+Apply/release a limitation through bounded, exclusive durable jobs with the same
+ownership, stale-source, original-image and idempotent-commit guards as source
+reviews. Application is atomic with archiving the previous distillation and
+advancing the source-use identity. No inference or embedding request is implicit.
+An explicit release requires a new current-image comparison and named attestation
+that native text is suitable evidence; retain both decisions immutably.
+
+Preserve original bytes, native pages/text, passages, existing vectors, reviewed
+OCR/transcriptions, jobs and historical artifacts. Active restrictions follow the
+same original page across metadata edits and reindexing; neither operation may
+silently restore excluded evidence. Original download, page-image viewing and
+full-text search remain available and show the source-use limitation. Verified
+literal operator transcriptions and separately reviewed OCR remain distinct
+sources. A literal table does not authorize interpreting an adjacent diagram.
+
+Native passages from a restricted page remain in the extraction/coverage ledger,
+but their text/excerpts must not enter factual model evidence or support a claim.
+Require server-verified provenance for every restriction; forged dictionary flags,
+altered ledgers, missing images or a changed original fail closed. A model candidate
+that cites restricted native text remains rejected even when every number occurs
+in its quotations. If retrieval supplies only restricted text, return honest
+insufficient evidence and the affected original-page references without a chat
+completion request. Configured semantic retrieval retains its explicit embedding
+query behavior. Do not infer a corrected value, add unrelated numeric citations or
+rewrite the generated claim to make validation pass.
+
+Expose active source limitations on search results, answers, document detail and
+distillation coverage. Distillation remains partial while any reviewed page still
+requires original-image interpretation, including when all otherwise usable text
+batches have been processed. Preserve the ordered passage/coverage plan; do not
+delete excluded passages or call reduced input complete coverage. An explicit
+recovery operation may retain only completely unchanged leading scopes after
+verifying the original, profile, prior source/review records and restriction
+ledger. It must stop before the first affected scope. A known rejected
+interpretation remains archived and ineligible for current-source resume/admission;
+do not waive additional historical validation failures.
+
+Documents with no source-limit reviews retain their current generation identities,
+model wire inputs, numeric grammar, prompt/profile and behavior. A release is a
+new reviewed source-use generation; it never automatically admits a previously
+rejected interpretation or retroactively certifies an old artifact.
+
+Expose typed private apply, release, detail and paginated-history operations through
+native HTTP/OpenAPI, planning HTTP/MCP and TypeScript/Python SDKs. Preserve
+authentication, no-store and safe conflict/failure behavior. Page-review UI keeps
+the compared original visible, starts unapproved, identifies the reviewer,
+displays the active restriction and unresolved coverage, and supports explicit
+current-image release and inspectable history. Clear review drafts and private
+state when document, ICAO/tail, credential or library context changes. Historical
+generated material is visibly ineligible, not silently removed.
+
+Qualification includes the privately pinned actual diagram paraphrase that passed
+numeric/citation checks but failed original-image review. Reject that exact case,
+preserve the original and archived candidate, verify the literal table remains
+usable, and obtain a separate actual configured-provider outcome. Synthetic
+controls or source-only recovery are not new native completion evidence.
+
 ## Web acquisition
 
 Search multiple ICAO/model/manual queries and collect multiple examples, keeping per-result URL/title/query/provider provenance, deduplication and explicit failures. Fetch public documents and PDF links from public result pages using bounded, SSRF-resistant requests, honoring redirects only after revalidation. Do not bypass accounts/paywalls. Keep originals private, with publisher/source attribution and unknown rights explicit. Missing search credentials/provider failure is an unavailable search, never zero known manuals. Background work is persistent, inspectable and bounded per request; users can extend discovery with further batches.

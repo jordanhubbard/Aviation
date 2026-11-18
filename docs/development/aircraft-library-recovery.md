@@ -52,6 +52,23 @@ The OCR-only function rejects transcription additions; exact-source recovery
 retains its existing boundary. A new transcription never grants coverage to an
 old summary of that page. Rehearse on a private copy before using the live corpus.
 
+After an explicit image-pinned source-use restriction or release, use the separate
+`recover_reviewed_source_limit_prefix(store, models, document_id, backup_file)`
+operation. It permits only appended verified source-use reviews, with unchanged
+original, applicability, model/profile, native text, previous OCR/transcriptions
+and all prior review/image records. It revalidates fully unchanged leading scopes
+and stops before the first scope whose source-use decision changed. A claim whose
+numbers occur in a restricted native quotation is still ineligible; do not bypass
+this boundary with exact-source or additive-text recovery.
+
+The `reviewed_source_limit_prefix` receipt makes zero new model completions and
+lists the new decision IDs. Restricted pages remain explicit unresolved coverage,
+even if every other text batch has been processed. A later release requires a new
+current-image review and a new source-use generation; it cannot automatically
+admit the old rejected interpretation. Preserve archived failed claims and any
+rejected mixed-citation candidate as generated. A table-only citation-reselection
+control is not a fresh configured-provider outcome or permission to alter history.
+
 After verifying the recovery result, enqueue **distillation**, rather than a new
 index run, to continue inference. A new index request intentionally refreshes
 extraction and derived work. Reclaimed leases belonging to the same index job now

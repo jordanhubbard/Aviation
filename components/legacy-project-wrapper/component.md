@@ -70,6 +70,27 @@ checks or source-generation history.
   complete unchanged scopes; neither the transcript nor its review approves
   aircraft performance data
 
+### Requirement: Preserve reviewed limitations on aircraft source evidence
+
+The aircraft library SHALL preserve original, searchable page text while enforcing
+explicit image-pinned source-use limitations as specified in the
+[aircraft library contract](../../docs/architecture/aircraft-library.md#reviewed-source-limitations).
+Restricted native text SHALL NOT support model claims or silently regain evidence
+eligibility after a metadata edit or reindex. Reviewed literal sources remain
+distinct; unresolved diagram interpretation SHALL remain visible in coverage.
+
+#### Scenario: Reviewed diagram text cannot justify an unsupported relationship
+
+- **GIVEN** a retained original page whose flattened native extraction does not establish
+  diagram relationships and a separately image-verified literal table
+- **WHEN** a named reviewer explicitly restricts the native page text after comparing
+  its immutable original image
+- **THEN** native text and originals remain searchable and preserved, model evidence
+  excludes that restricted text, and a claim citing it fails even if its numbers match
+- **AND** the literal table remains usable with distinct provenance, coverage stays
+  partial, prior generated material remains historical and ineligible, and a new
+  explicit image-pinned review is required before releasing the restriction
+
 ### Requirement: Retained GA domain data is discoverable through HTTP and MCP
 
 The retained planner SHALL expose weather, airport details and facilities, terrain,

@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Aircraft library: retain image-reviewed source-use restrictions without editing originals, exclude unsuitable native diagram text from generated claims, keep unresolved coverage visible, and expose explicit review/release history through private API/MCP, SDK and page-review controls.
+
 - Aircraft library: retain explicitly reviewed page transcriptions with image/source pins and distinct operator provenance, provide private HTTP/MCP, SDK and desktop/mobile controls, and recover only unchanged scopes after additive reviews.
 
 - Aircraft library: recognize complete printed conversion coefficients and delimited leading decimals without changing source quotations, reject corrupted values, and clarify that retained historical claims may fail current evidence checks.

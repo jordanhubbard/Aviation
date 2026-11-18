@@ -1,6 +1,6 @@
 # Design traceability
 
-<!-- literate-ai:authority-reviewed sha256:c9a934897640722b8d0c53d5a191a5e5d9154acb45fb44ab2cf2e64c8499dafc -->
+<!-- literate-ai:authority-reviewed sha256:009d7844c1045258f2e55a35d2c15e5e3474e5a43637cfb741bf84e8e2abe3ab -->
 
 [Project guide](../README.md) → design traceability
 
@@ -95,3 +95,11 @@ admits only fully validated unchanged scopes. Operator transcriptions, including
 identified agent reviews, do not confer independent human or performance-data
 approval. Typed HTTP/MCP, private SDK transports and desktop/mobile review controls
 share those source, privacy, history and failure semantics.
+
+Flight Planner also owns reviewed source-use restrictions for layout-dependent
+native extraction. Immutable image/reviewer receipts and document anchors survive
+reindexing and metadata edits. Original/search text remains available, while
+restricted native excerpts cannot support model claims. Literal reviewed text is
+independent evidence; numeric presence alone never establishes a diagram
+relationship. Coverage and typed HTTP/MCP/SDK/browser views expose unresolved
+pages, and explicit unchanged-scope recovery stops before affected evidence.

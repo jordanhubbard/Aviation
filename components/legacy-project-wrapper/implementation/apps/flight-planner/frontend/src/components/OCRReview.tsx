@@ -2,6 +2,7 @@ import {
   AircraftLibraryOCRClient,
   type AircraftOCRMode,
   type AircraftPageTranscription,
+  type AircraftSourceLimitRecord,
 } from '@aviation/shared-sdk/aviation/aircraft-library'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import {
@@ -61,12 +62,14 @@ type Job = {
     preview_id?: string
     review_id?: string
     transcription_id?: string
+    source_limit_review_id?: string
     embeddings?: string
   } | null
 }
 type Props = {
   documentId: string
   sourceSha256: string
+  sourceLimits?: { id: string; page: number }[]
   locked: boolean
   request: (path: string, options?: RequestInit, binary?: boolean) => Promise<unknown>
   download: () => Promise<void>
@@ -76,6 +79,7 @@ type Props = {
 export default function OCRReview({
   documentId,
   sourceSha256,
+  sourceLimits = [],
   locked,
   request,
   download,
@@ -93,14 +97,17 @@ export default function OCRReview({
   const [reviewer, setReviewer] = useState('')
   const [attested, setAttested] = useState(false)
   const [history, setHistory] = useState<History | null>(null)
-  const [historyKind, setHistoryKind] = useState<'ocr-previews' | 'ocr-reviews' | 'transcriptions'>(
-    'ocr-previews',
-  )
+  const [historyKind, setHistoryKind] = useState<
+    'ocr-previews' | 'ocr-reviews' | 'transcriptions' | 'source-limits'
+  >('ocr-previews')
   const [review, setReview] = useState<Review | null>(null)
   const [draft, setDraft] = useState('')
   const [transcriptionReviewer, setTranscriptionReviewer] = useState('')
   const [transcriptionAttested, setTranscriptionAttested] = useState(false)
   const [transcription, setTranscription] = useState<AircraftPageTranscription | null>(null)
+  const [sourceReviewer, setSourceReviewer] = useState('')
+  const [sourceAttested, setSourceAttested] = useState(false)
+  const [sourceReview, setSourceReview] = useState<AircraftSourceLimitRecord | null>(null)
   const [busy, setBusy] = useState(false)
   const [status, setStatus] = useState('')
   const [error, setError] = useState('')
@@ -117,6 +124,8 @@ export default function OCRReview({
     setDraft('')
     setTranscriptionReviewer('')
     setTranscriptionAttested(false)
+    setSourceReviewer('')
+    setSourceAttested(false)
   }
   useEffect(() => {
     invalidate()
@@ -133,6 +142,9 @@ export default function OCRReview({
     setTranscriptionReviewer('')
     setTranscriptionAttested(false)
     setTranscription(null)
+    setSourceReviewer('')
+    setSourceAttested(false)
+    setSourceReview(null)
     setStatus('')
     setError('')
     setBusy(false)
@@ -160,6 +172,7 @@ export default function OCRReview({
         setAttested(false)
         setDraft('')
         setTranscriptionAttested(false)
+        setSourceAttested(false)
         setContext(null)
         setPreview((value) => (value ? { ...value, source_current: false } : null))
       }
@@ -208,7 +221,7 @@ export default function OCRReview({
     if (job.state !== 'completed')
       throw new Error(
         (job.error || 'OCR job did not complete') +
-          `. If this was an application, inspect ${channel === 'OCR' ? 'OCR review' : 'page transcription'} history before retrying: its source stage may already be retained.`,
+          `. If this was an application, inspect ${channel === 'OCR' ? 'OCR review' : channel === 'Source use' ? 'source-use review' : 'page transcription'} history before retrying: its source stage may already be retained.`,
       )
     return job
   }
@@ -216,12 +229,15 @@ export default function OCRReview({
     const value =
       kind === 'transcriptions'
         ? await client.transcriptions(documentId, offset)
-        : await client.history(documentId, kind, offset)
+        : kind === 'source-limits'
+          ? await client.sourceLimits(documentId, offset)
+          : await client.history(documentId, kind, offset)
     if (current !== epoch.current) return
     setHistoryKind(kind)
     setHistory(offset ? { ...value, items: [...(history?.items || []), ...value.items] } : value)
   }
   const currentPage = preview?.pages.find((p) => p.page === number)
+  const pageLimited = sourceLimits.some((r) => r.page === number)
   const disabled = busy || locked
   return (
     <Box component="details" sx={{ mt: 2 }}>
@@ -274,6 +290,12 @@ export default function OCRReview({
             onClick={() => void run((e) => loadHistory('transcriptions', e))}
           >
             Page transcription history
+          </Button>
+          <Button
+            disabled={disabled}
+            onClick={() => void run((e) => loadHistory('source-limits', e))}
+          >
+            Source-use review history
           </Button>
         </Stack>
         {context && (
@@ -444,6 +466,122 @@ export default function OCRReview({
                   )}
                 </Box>
                 <Stack spacing={1}>
+                  <Box component="details">
+                    <summary>Limit native text for this page</summary>
+                    <Stack spacing={2} sx={{ mt: 2 }}>
+                      <Alert severity={pageLimited ? 'warning' : 'info'}>
+                        {pageLimited
+                          ? 'Native text from this page is original-image-only. It remains searchable, but cannot support generated claims. Compare a fresh page image before re-enabling it.'
+                          : 'Flattened diagrams can associate numbers with the wrong labels. Mark native text as original-image-only when it cannot establish the relationships. Originals and reviewed literal sources are preserved; coverage remains partial.'}
+                      </Alert>
+                      <TextField
+                        label="Source-use reviewer name"
+                        helperText="Identify yourself; label agent reviews as such."
+                        value={sourceReviewer}
+                        inputProps={{ maxLength: 200 }}
+                        disabled={disabled || !image || !preview.source_current}
+                        onChange={(e) => {
+                          setSourceReviewer(e.target.value)
+                          setSourceAttested(false)
+                        }}
+                      />
+                      <FormControlLabel
+                        control={
+                          <Checkbox
+                            checked={sourceAttested}
+                            disabled={
+                              disabled ||
+                              !image ||
+                              !preview.source_current ||
+                              !sourceReviewer.trim()
+                            }
+                            onChange={(e) => setSourceAttested(e.target.checked)}
+                          />
+                        }
+                        label={
+                          pageLimited
+                            ? 'I compared the current original image and confirm that native page text is suitable source evidence.'
+                            : 'I compared the original image and confirm that native text cannot establish its diagram relationships.'
+                        }
+                      />
+                      <Button
+                        disabled={
+                          disabled ||
+                          !image ||
+                          !preview.source_current ||
+                          !sourceReviewer.trim() ||
+                          !sourceAttested
+                        }
+                        onClick={() =>
+                          void run(async (current) => {
+                            const source = await client.context(documentId)
+                            if (current !== epoch.current) return
+                            if (
+                              source.index_identity !== preview.index_identity ||
+                              source.source_sha256 !== preview.source_sha256
+                            )
+                              throw new Error('Source changed; prepare a fresh page review')
+                            const decision = pageLimited
+                              ? {
+                                  action: 'release' as const,
+                                  reason: 'original_text_reviewed' as const,
+                                }
+                              : {
+                                  action: 'restrict' as const,
+                                  reason: 'layout_relationships_unavailable' as const,
+                                }
+                            const queued = await client.reviewSourceUse(documentId, {
+                              ...decision,
+                              expected_sha256: source.source_sha256,
+                              expected_index_identity: source.index_identity,
+                              preview_id: preview.id,
+                              preview_integrity_sha256: preview.integrity_sha256,
+                              page: currentPage.page,
+                              image_sha256: currentPage.image_sha256,
+                              reviewer: sourceReviewer,
+                              attest_matches_image: true,
+                            })
+                            if (current !== epoch.current) return
+                            const done = await waitForJob(queued, current, 'Source use')
+                            if (!done?.result?.source_limit_review_id) return
+                            const value = await client.sourceLimit(
+                              documentId,
+                              done.result.source_limit_review_id,
+                            )
+                            if (current !== epoch.current) return
+                            if (
+                              value.document_id !== documentId ||
+                              value.page !== currentPage.page ||
+                              value.action !== decision.action ||
+                              value.source_sha256 !== sourceSha256 ||
+                              value.image_sha256 !== currentPage.image_sha256 ||
+                              value.before_index_identity !== preview.index_identity
+                            )
+                              throw new Error('Source-use receipt does not match the reviewed page')
+                            setSourceReview(value)
+                            setSourceReviewer('')
+                            setSourceAttested(false)
+                            setSelected([])
+                            setAttested(false)
+                            setDraft('')
+                            setTranscriptionAttested(false)
+                            setContext(null)
+                            setPreview({ ...preview, source_current: false })
+                            setStatus(
+                              decision.action === 'restrict'
+                                ? 'Native page text marked original-image-only. Generated coverage remains partial; inspect historical summaries before using them.'
+                                : 'Native page text re-enabled by explicit review. Generate a new distillation when ready; old interpretations are not automatically admitted.',
+                            )
+                            await onReviewed()
+                          })
+                        }
+                      >
+                        {pageLimited
+                          ? 'Re-enable native page text'
+                          : 'Use original image only for this page'}
+                      </Button>
+                    </Stack>
+                  </Box>
                   <Box component="details">
                     <summary>Transcribe visible page text</summary>
                     <Stack spacing={2} sx={{ mt: 2 }}>
@@ -715,6 +853,9 @@ export default function OCRReview({
                       if (value.document_id !== documentId)
                         throw new Error('Transcription document changed')
                       setTranscription(value)
+                    } else if (historyKind === 'source-limits') {
+                      const value = await client.sourceLimit(documentId, item.id)
+                      if (current === epoch.current) setSourceReview(value)
                     } else if (historyKind === 'ocr-previews') await loadPreview(item.id, current)
                     else {
                       const value = await client.review(documentId, item.id)
@@ -726,9 +867,11 @@ export default function OCRReview({
                 Inspect{' '}
                 {historyKind === 'transcriptions'
                   ? 'transcription'
-                  : historyKind === 'ocr-previews'
-                    ? 'preview'
-                    : 'review'}{' '}
+                  : historyKind === 'source-limits'
+                    ? 'source-use review'
+                    : historyKind === 'ocr-previews'
+                      ? 'preview'
+                      : 'review'}{' '}
                 · {item.created_at}
               </Button>
             ))}
@@ -737,9 +880,11 @@ export default function OCRReview({
                 No retained{' '}
                 {historyKind === 'transcriptions'
                   ? 'transcriptions'
-                  : historyKind === 'ocr-previews'
-                    ? 'previews'
-                    : 'reviews'}
+                  : historyKind === 'source-limits'
+                    ? 'source-use reviews'
+                    : historyKind === 'ocr-previews'
+                      ? 'previews'
+                      : 'reviews'}
                 .
               </Typography>
             )}
@@ -748,9 +893,34 @@ export default function OCRReview({
                 disabled={disabled}
                 onClick={() => void run((e) => loadHistory(historyKind, e, history.next_offset!))}
               >
-                More OCR history
+                {historyKind === 'source-limits' ? 'More source-use history' : 'More OCR history'}
               </Button>
             )}
+          </Stack>
+        )}
+        {sourceReview && (
+          <Stack spacing={1}>
+            <Typography>
+              Source-use review ·{' '}
+              {sourceReview.active
+                ? 'Active original-image-only restriction'
+                : sourceReview.current
+                  ? 'Native text re-enabled'
+                  : 'Historical decision'}
+            </Typography>
+            <Typography variant="body2" sx={{ overflowWrap: 'anywhere' }}>
+              PDF page {sourceReview.page} · reviewed by {sourceReview.reviewer} ·{' '}
+              {sourceReview.created_at}. This review does not approve generated interpretations or
+              performance data.
+            </Typography>
+            <Button
+              disabled={disabled}
+              onClick={() =>
+                void run((e) => loadPreview(sourceReview.preview_id, e, sourceReview.page))
+              }
+            >
+              Compare source-use review with original page image
+            </Button>
           </Stack>
         )}
         {transcription && (

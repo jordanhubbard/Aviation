@@ -19,6 +19,7 @@ from starlette.concurrency import run_in_threadpool
 from ..services.aircraft_library import pdf
 from ..services.aircraft_library import ocr_reviews
 from ..services.aircraft_library import transcriptions
+from ..services.aircraft_library import source_limits
 from ..services.aircraft_library.models import Models, ModelUnavailable, ask
 from ..services.aircraft_library.store import BlankReviewConflict, Store, metadata
 from ..services.aircraft_library.worker import Worker
@@ -143,6 +144,7 @@ class Extraction(BaseModel):
     blank_pages: list[BlankVerification] = Field(default_factory=list)
     supplemental_ocr_reviews: list[str] = Field(default_factory=list)
     page_transcription_reviews: list[str] = Field(default_factory=list)
+    source_limit_reviews: list[str] = Field(default_factory=list)
 
 
 class BlankPageCandidate(BaseModel):
@@ -219,6 +221,7 @@ class DocumentRecord(BaseModel):
     sources: list[AcquisitionSource]
     artifacts: dict[str, Any]
     original_url: str
+    source_limits: list[SourceLimitRecord] = Field(default_factory=list)
 
 
 class DocumentList(BaseModel):
@@ -261,6 +264,7 @@ class UploadResult(BaseModel):
 
 
 class DocumentPage(BaseModel):
+    source_limit: SourceLimitProvenance | None = None
     document_id: str
     page: int
     label: str
@@ -420,6 +424,69 @@ class TranscriptionRequest(OCRIdentityRequest):
     attest_matches_image: StrictBool
 
 
+class SourceLimitRequest(OCRIdentityRequest):
+    preview_id: str = Field(min_length=1, max_length=100)
+    preview_integrity_sha256: str = Field(pattern=r"^[a-f0-9]{64}$")
+    page: int = Field(strict=True, ge=1, le=1500)
+    image_sha256: str = Field(pattern=r"^[a-f0-9]{64}$")
+    action: Literal["restrict", "release"]
+    reason: Literal["layout_relationships_unavailable", "original_text_reviewed"]
+    reviewer: str = Field(min_length=1, max_length=200)
+    attest_matches_image: StrictBool
+
+
+class SourceLimitProvenance(BaseModel):
+    id: str
+    page: int
+    preview_id: str
+    reason: Literal["layout_relationships_unavailable", "original_text_reviewed"]
+    original_image_only: bool
+    source_sha256: str
+    image_sha256: str
+    integrity_sha256: str
+    image_url: str
+    reviewer: str
+
+
+class SourceLimitRecord(BaseModel):
+    id: str
+    document_id: str
+    page: int
+    preview_id: str
+    preview_integrity_sha256: str
+    action: Literal["restrict", "release"]
+    reason: Literal["layout_relationships_unavailable", "original_text_reviewed"]
+    source_sha256: str
+    source_metadata: DocumentMetadata
+    image_sha256: str
+    integrity_sha256: str
+    image_url: str
+    reviewer: str
+    attest_matches_image: Literal[True]
+    created_at: str
+    job_id: str
+    previous_review_id: str | None
+    before_index_identity: str
+    after_index_identity: str
+    current: bool
+    active: bool
+
+
+class SourceLimitHistory(BaseModel):
+    items: list[SourceLimitRecord]
+    total: int
+    offset: int
+    limit: int
+    next_offset: int | None
+
+
+class AnswerSourceLimit(BaseModel):
+    document_id: str
+    page: int
+    reason: str
+    review_id: str
+
+
 class TranscriptionProvenance(BaseModel):
     id: str
     preview_id: str
@@ -460,6 +527,7 @@ class Passage(BaseModel):
     rank: float | None = None
     ocr_review: OCRProvenance | None = None
     transcription_review: TranscriptionProvenance | None = None
+    source_limit: SourceLimitProvenance | None = None
 
 
 class SearchResult(BaseModel):
@@ -493,6 +561,7 @@ class Answer(BaseModel):
     retrieval: Literal["no_evidence", "full_text", "hybrid"]
     documents: list[dict[str, Any]] = Field(default_factory=list)
     applicability: str | None = None
+    source_limits: list[AnswerSourceLimit] = Field(default_factory=list)
 
 
 class DistillationSection(BaseModel):
@@ -629,6 +698,41 @@ def install(app, *, store=None, models=None, worker_enabled=True):
     @router.get("/documents/{document_id}", response_model=DocumentRecord)
     def document(document_id: str, current: Store = Depends(library)):
         return required(current, document_id)
+
+    @router.post(
+        "/documents/{document_id}/source-limits",
+        response_model=JobRecord,
+        status_code=202,
+        operation_id="aircraft_library_source_limit_review",
+    )
+    def source_limit_review(
+        document_id: str, body: SourceLimitRequest, current: Store = Depends(library)
+    ):
+        required(current, document_id)
+        return source_limits.queue_review(current, document_id, body.model_dump())
+
+    @router.get(
+        "/documents/{document_id}/source-limits",
+        response_model=SourceLimitHistory,
+        operation_id="aircraft_library_source_limit_history",
+    )
+    def source_limit_history(
+        document_id: str,
+        limit: int = Query(default=20, ge=1, le=100),
+        offset: int = Query(default=0, ge=0, le=1_000_000),
+        current: Store = Depends(library),
+    ):
+        required(current, document_id)
+        return source_limits.records(current, document_id, limit=limit, offset=offset)
+
+    @router.get(
+        "/documents/{document_id}/source-limits/{review_id}",
+        response_model=SourceLimitRecord,
+        operation_id="aircraft_library_source_limit_detail",
+    )
+    def source_limit_detail(document_id: str, review_id: str, current: Store = Depends(library)):
+        required(current, document_id)
+        return source_limits.review(current, document_id, review_id)
 
     @router.post(
         "/documents/{document_id}/transcriptions",

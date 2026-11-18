@@ -76,11 +76,12 @@ afterEach(() => {
   cleanup()
   vi.unstubAllGlobals()
 })
-function component(locked = false) {
+function component(locked = false, sourceLimits: { id: string; page: number }[] = []) {
   return (
     <OCRReview
       documentId="doc_test"
       sourceSha256={sha}
+      sourceLimits={sourceLimits}
       locked={locked}
       request={request}
       download={vi.fn()}
@@ -96,6 +97,122 @@ async function generate() {
   fireEvent.click(screen.getByRole('button', { name: 'Generate selected-page preview' }))
   await screen.findByAltText('Original PDF page 1, label i')
 }
+const sourceAttestation =
+  'I compared the original image and confirm that native text cannot establish its diagram relationships.'
+it('requires image comparison and a named explicit source-use decision, then clears private review state', async () => {
+  const original = request.getMockImplementation()!
+  request.mockImplementation(async (...args) => {
+    if (args[0].endsWith('/source-limits') && args[1]?.method === 'POST')
+      return {
+        id: 'job_source',
+        state: 'completed',
+        result: { source_limit_review_id: 'source_limit_test' },
+      }
+    if (args[0].endsWith('/source-limits/source_limit_test'))
+      return {
+        id: 'source_limit_test',
+        document_id: 'doc_test',
+        page: 1,
+        preview_id: preview.id,
+        source_sha256: sha,
+        image_sha256: preview.pages[0].image_sha256,
+        before_index_identity: identity,
+        action: 'restrict',
+        active: true,
+        current: true,
+        reviewer: 'Codex (AI image review)',
+        created_at: 'now',
+      }
+    return original(...args)
+  })
+  const view = render(component())
+  fireEvent.click(screen.getByText('Review page OCR and transcriptions'))
+  expect(request).not.toHaveBeenCalled()
+  await generate()
+  fireEvent.click(screen.getByText('Limit native text for this page'))
+  const save = screen.getByRole('button', { name: 'Use original image only for this page' })
+  expect(save).toBeDisabled()
+  fireEvent.change(screen.getByLabelText('Source-use reviewer name'), {
+    target: { value: 'Codex (AI image review)' },
+  })
+  expect(save).toBeDisabled()
+  fireEvent.click(screen.getByLabelText(sourceAttestation))
+  fireEvent.click(save)
+  await screen.findByText(/Native page text marked original-image-only/)
+  await waitFor(() => expect(onReviewed).toHaveBeenCalledTimes(1))
+  const call = request.mock.calls.find(
+    ([path, options]) => path.endsWith('/source-limits') && options?.method === 'POST',
+  )!
+  expect(JSON.parse(call[1]!.body as string)).toEqual({
+    action: 'restrict',
+    reason: 'layout_relationships_unavailable',
+    expected_sha256: sha,
+    expected_index_identity: identity,
+    preview_id: preview.id,
+    preview_integrity_sha256: preview.integrity_sha256,
+    page: 1,
+    image_sha256: preview.pages[0].image_sha256,
+    reviewer: 'Codex (AI image review)',
+    attest_matches_image: true,
+  })
+  expect(request.mock.calls.some(([path]) => path.endsWith('/embeddings'))).toBe(false)
+  expect(save).toBeDisabled()
+  expect(screen.getByLabelText('Source-use reviewer name')).toHaveValue('')
+  view.rerender(component(true))
+  expect(screen.queryByText('Codex (AI image review)')).not.toBeInTheDocument()
+  expect(screen.queryByLabelText('Source-use reviewer name')).not.toBeInTheDocument()
+})
+
+it('re-enables restricted native text only after a fresh image and a distinct release attestation', async () => {
+  const original = request.getMockImplementation()!
+  request.mockImplementation(async (...args) => {
+    if (args[0].endsWith('/source-limits') && args[1]?.method === 'POST')
+      return {
+        id: 'job_release',
+        state: 'completed',
+        result: { source_limit_review_id: 'source_limit_release' },
+      }
+    if (args[0].endsWith('/source-limits/source_limit_release'))
+      return {
+        id: 'source_limit_release',
+        document_id: 'doc_test',
+        page: 1,
+        preview_id: preview.id,
+        source_sha256: sha,
+        image_sha256: preview.pages[0].image_sha256,
+        before_index_identity: identity,
+        action: 'release',
+        active: false,
+        current: true,
+        reviewer: 'Image reviewer',
+        created_at: 'now',
+      }
+    return original(...args)
+  })
+  render(component(false, [{ id: 'source_limit_previous', page: 1 }]))
+  fireEvent.click(screen.getByText('Review page OCR and transcriptions'))
+  await generate()
+  fireEvent.click(screen.getByText('Limit native text for this page'))
+  const release = screen.getByRole('button', { name: 'Re-enable native page text' })
+  expect(release).toBeDisabled()
+  fireEvent.change(screen.getByLabelText('Source-use reviewer name'), {
+    target: { value: 'Image reviewer' },
+  })
+  fireEvent.click(
+    screen.getByLabelText(
+      'I compared the current original image and confirm that native page text is suitable source evidence.',
+    ),
+  )
+  fireEvent.click(release)
+  await screen.findByText(/Native page text re-enabled by explicit review/)
+  const call = request.mock.calls.find(
+    ([path, options]) => path.endsWith('/source-limits') && options?.method === 'POST',
+  )!
+  expect(JSON.parse(call[1]!.body as string)).toMatchObject({
+    action: 'release',
+    reason: 'original_text_reviewed',
+  })
+})
 it('loads only on explicit action and applies exact selected IDs after image review', async () => {
   render(component())
   fireEvent.click(screen.getByText('Review page OCR and transcriptions'))

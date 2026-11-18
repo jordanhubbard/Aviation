@@ -2,6 +2,46 @@ import { describe, expect, it, vi } from "vitest";
 import { AircraftLibraryOCRClient } from "../aircraft-library.js";
 
 describe("private OCR transport", () => {
+  it("requires explicit source-use decisions and retains private typed history paths", async () => {
+    const transport = vi.fn(async () => ({}));
+    const client = new AircraftLibraryOCRClient(transport);
+    expect(transport).not.toHaveBeenCalled();
+    const value = {
+      expected_sha256: "a".repeat(64),
+      expected_index_identity: "b".repeat(64),
+      preview_id: "ocr_preview_test",
+      preview_integrity_sha256: "c".repeat(64),
+      page: 2,
+      image_sha256: "d".repeat(64),
+      action: "restrict" as const,
+      reason: "layout_relationships_unavailable" as const,
+      reviewer: "Image reviewer",
+      attest_matches_image: true as const,
+    };
+    await client.reviewSourceUse("doc_test", value);
+    expect(transport).toHaveBeenLastCalledWith(
+      "/documents/doc_test/source-limits",
+      expect.objectContaining({
+        method: "POST",
+        cache: "no-store",
+        redirect: "error",
+        body: JSON.stringify(value),
+      }),
+    );
+    await client.sourceLimit("doc_test", "source_limit_test");
+    expect(transport).toHaveBeenLastCalledWith(
+      "/documents/doc_test/source-limits/source_limit_test",
+      expect.objectContaining({ cache: "no-store" }),
+    );
+    await client.sourceLimits("doc_test", 20);
+    expect(transport).toHaveBeenLastCalledWith(
+      "/documents/doc_test/source-limits?limit=20&offset=20",
+      expect.any(Object),
+    );
+    expect(() => client.sourceLimit("doc_test", "../private")).toThrow();
+    expect(() => client.sourceLimits("doc_test", -1)).toThrow();
+    expect(transport).toHaveBeenCalledTimes(3);
+  });
   it("keeps literal transcriptions separate with private explicit operations", async () => {
     const transport = vi.fn(async () => ({}));
     const client = new AircraftLibraryOCRClient(transport);

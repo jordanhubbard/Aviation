@@ -6,6 +6,8 @@ index, not an independently maintained task list. Use `gh issue` and `gh pr`.
 
 ## Current work and requests
 
+- [#550 — Reviewed limitations for layout-dependent aircraft source evidence](https://github.com/jordanhubbard/Aviation/issues/550): [behavior contract](../architecture/aircraft-library.md#reviewed-source-limitations).
+
 - [#548 — Reviewed original-page transcriptions](https://github.com/jordanhubbard/Aviation/issues/548): [distinct provenance contract](../architecture/aircraft-library.md#reviewed-original-page-transcriptions); literal operator review remains separate from unchanged machine OCR.
 
 - [#546 — Complete printed conversion notation](https://github.com/jordanhubbard/Aviation/issues/546): [numeric comparison contract](../architecture/aircraft-library.md); faithfully printed coefficients and independently reviewed source additions remain separate evidence requirements.

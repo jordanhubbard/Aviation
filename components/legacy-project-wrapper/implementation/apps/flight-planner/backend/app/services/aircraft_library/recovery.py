@@ -32,6 +32,11 @@ class _Snapshot:
                 "SELECT kind,value FROM artifacts WHERE document_id=?", (identifier,)
             )
         }
+        from .source_limits import active as active_source_limits
+
+        limitations = active_source_limits(self.connection, identifier)
+        if limitations:
+            value["source_limits"] = limitations
         return value
 
     def passages(self, identifiers):
@@ -47,7 +52,7 @@ class _Snapshot:
         return enrich_passages(self.connection, rows, source_order=True)
 
 
-def _passage_key(passage):
+def _passage_key(passage, *, include_source_limits=True):
     native = tuple(
         passage[key] for key in ("document_id", "page", "label", "offset", "text", "method")
     )
@@ -61,6 +66,11 @@ def _passage_key(passage):
         + (
             (json.dumps(passage["transcription_review"], sort_keys=True),)
             if passage.get("transcription_review")
+            else ()
+        )
+        + (
+            (json.dumps(passage["source_limit"], sort_keys=True),)
+            if include_source_limits and passage.get("source_limit")
             else ()
         )
     )
@@ -206,9 +216,19 @@ def recover_reviewed_page_text_prefix(store, models, identifier, snapshot_path):
     return _recover_reviewed_prefix(store, models, identifier, snapshot_path, transcriptions=True)
 
 
-def _recover_reviewed_prefix(store, models, identifier, snapshot_path, *, transcriptions):
+def recover_reviewed_source_limit_prefix(store, models, identifier, snapshot_path):
+    """Recover unchanged leading scopes only, never a newly restricted interpretation."""
+    return _recover_reviewed_prefix(
+        store, models, identifier, snapshot_path, transcriptions=True, source_use=True
+    )
+
+
+def _recover_reviewed_prefix(
+    store, models, identifier, snapshot_path, *, transcriptions, source_use=False
+):
     from .ocr_reviews import VerifiedOCR
     from .transcriptions import CHANNEL, VerifiedTranscription
+    from .source_limits import CHANNEL as SOURCE_LIMIT_CHANNEL, events as source_use_events
 
     with store.connection() as live:
         if live.execute(
@@ -253,6 +273,8 @@ def _recover_reviewed_prefix(store, models, identifier, snapshot_path, *, transc
         reviews = current_extraction.pop("supplemental_ocr_reviews", [])
         old_transcriptions = old_extraction.pop(CHANNEL, []) if transcriptions else []
         new_transcriptions = current_extraction.pop(CHANNEL, []) if transcriptions else []
+        old_source_use = old_extraction.pop(SOURCE_LIMIT_CHANNEL, []) if source_use else []
+        new_source_use = current_extraction.pop(SOURCE_LIMIT_CHANNEL, []) if source_use else []
 
         def appended(old_ids, current_ids):
             return (
@@ -268,18 +290,38 @@ def _recover_reviewed_prefix(store, models, identifier, snapshot_path, *, transc
             old_extraction != current_extraction
             or not appended(old_reviews, reviews)
             or not appended(old_transcriptions, new_transcriptions)
-            or len(reviews) + len(new_transcriptions) <= len(old_reviews) + len(old_transcriptions)
+            or (
+                (
+                    not appended(old_source_use, new_source_use)
+                    or len(new_source_use) <= len(old_source_use)
+                    or old_reviews != reviews
+                    or old_transcriptions != new_transcriptions
+                )
+                if source_use
+                else len(reviews) + len(new_transcriptions)
+                <= len(old_reviews) + len(old_transcriptions)
+            )
         ):
             raise ValueError(
-                "Recovery permits only appended reviewed page text"
-                if transcriptions
-                else "Recovery permits only appended supplemental OCR reviews"
+                "Recovery permits only appended source-use reviews"
+                if source_use
+                else (
+                    "Recovery permits only appended reviewed page text"
+                    if transcriptions
+                    else "Recovery permits only appended supplemental OCR reviews"
+                )
             )
         added_ocr = set(reviews[len(old_reviews) :])
         added_transcriptions = set(new_transcriptions[len(old_transcriptions) :])
         added = added_ocr | added_transcriptions
+        added_source_use = set(new_source_use[len(old_source_use) :])
         with store.connection() as live:
             live.execute("BEGIN")
+            if source_use:
+                old_events = source_use_events(connection, identifier)
+                new_events = source_use_events(live, identifier)
+                if new_events[: len(old_events)] != old_events:
+                    raise ValueError("Prior source-use ledger changed")
             for table in ("pages", "blank_page_reviews"):
                 order = "page" if table == "pages" else "review_id"
                 query = "SELECT * FROM " + table + " WHERE document_id=? ORDER BY " + order
@@ -306,9 +348,9 @@ def _recover_reviewed_prefix(store, models, identifier, snapshot_path, *, transc
                 seen.add(transcription["id"])
             else:
                 retained.append(passage)
-        if seen != added or [_passage_key(p) for p in old_passages] != [
-            _passage_key(p) for p in retained
-        ]:
+        if seen != added or [
+            _passage_key(p, include_source_limits=not source_use) for p in old_passages
+        ] != [_passage_key(p, include_source_limits=not source_use) for p in retained]:
             raise ValueError("Native or prior OCR passage text, order or provenance differs")
         _verify_review_images(connection, identifier, old_passages)
         with store.connection() as live:
@@ -368,12 +410,16 @@ def _recover_reviewed_prefix(store, models, identifier, snapshot_path, *, transc
             if hashlib.file_digest(stream, "sha256").hexdigest() != snapshot_digest:
                 raise ValueError("Snapshot changed during recovery")
         receipt = {
-            "kind": "reviewed_page_text_prefix" if transcriptions else "reviewed_ocr_prefix",
+            "kind": (
+                "reviewed_source_limit_prefix"
+                if source_use
+                else "reviewed_page_text_prefix" if transcriptions else "reviewed_ocr_prefix"
+            ),
             "snapshot_sha256": snapshot_digest,
             "source_evidence_identity": fingerprint,
             "source_generated_at": saved.get("generated_at"),
             "source_generation_changed": True,
-            "added_review_ids": sorted(added),
+            "added_review_ids": sorted(added | added_source_use),
             "unchanged_scope_sha256": hashlib.sha256(
                 json.dumps(
                     [[_passage_key(p) for p in b] for b in kept], sort_keys=True, allow_nan=False
@@ -389,6 +435,8 @@ def _recover_reviewed_prefix(store, models, identifier, snapshot_path, *, transc
                 added_ocr_review_ids=sorted(added_ocr),
                 added_transcription_ids=sorted(added_transcriptions),
             )
+        if source_use:
+            receipt["added_source_limit_review_ids"] = sorted(added_source_use)
         value = {
             **saved,
             "status": "partial",
@@ -402,6 +450,20 @@ def _recover_reviewed_prefix(store, models, identifier, snapshot_path, *, transc
             "document_extraction": current["extraction"],
             "recovery": receipt,
         }
+        if source_use:
+            limited_pages = {r["page"] for r in current.get("source_limits", [])}
+            if limited_pages:
+                value["source_limits"] = current["source_limits"]
+                value["unresolved_source_pages"] = sorted(limited_pages)
+            else:
+                value.pop("source_limits", None)
+                value.pop("unresolved_source_pages", None)
+            value["unresolved_batches"] = sum(
+                i >= len(recovered)
+                or recovered[i]["insufficient_evidence"]
+                or any(p["page"] in limited_pages for p in batch)
+                for i, batch in enumerate(plan)
+            )
         store.artifact(
             identifier,
             "distillation",

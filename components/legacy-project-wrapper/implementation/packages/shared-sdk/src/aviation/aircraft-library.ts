@@ -36,6 +36,41 @@ export interface AircraftTranscriptionApply extends AircraftOCRIdentity {
   reviewer: string;
   attest_matches_image: true;
 }
+export type AircraftSourceUseReview = Omit<AircraftTranscriptionApply, "text"> &
+  (
+    | { action: "restrict"; reason: "layout_relationships_unavailable" }
+    | { action: "release"; reason: "original_text_reviewed" }
+  );
+export interface AircraftSourceLimitRecord {
+  id: string;
+  document_id: string;
+  page: number;
+  preview_id: string;
+  preview_integrity_sha256: string;
+  image_sha256: string;
+  image_url: string;
+  source_sha256: string;
+  source_metadata: Record<string, unknown>;
+  action: "restrict" | "release";
+  reason: "layout_relationships_unavailable" | "original_text_reviewed";
+  reviewer: string;
+  attest_matches_image: true;
+  job_id: string;
+  created_at: string;
+  integrity_sha256: string;
+  previous_review_id: string | null;
+  before_index_identity: string;
+  after_index_identity: string;
+  current: boolean;
+  active: boolean;
+}
+export interface AircraftSourceLimitHistory {
+  items: AircraftSourceLimitRecord[];
+  total: number;
+  offset: number;
+  limit: number;
+  next_offset: number | null;
+}
 export interface AircraftTranscriptionProvenance {
   id: string;
   preview_id: string;
@@ -263,6 +298,28 @@ export class AircraftLibraryOCRClient {
     return this.post(
       this.document(document) + `/transcriptions/${id(review)}/embeddings`,
       value,
+    );
+  }
+  reviewSourceUse(
+    document: string,
+    value: AircraftSourceUseReview,
+  ): Promise<AircraftLibraryJob> {
+    return this.post(this.document(document) + "/source-limits", value);
+  }
+  sourceLimit(
+    document: string,
+    review: string,
+  ): Promise<AircraftSourceLimitRecord> {
+    return this.get(this.document(document) + `/source-limits/${id(review)}`);
+  }
+  sourceLimits(
+    document: string,
+    offset = 0,
+  ): Promise<AircraftSourceLimitHistory> {
+    if (!Number.isInteger(offset) || offset < 0 || offset > 1_000_000)
+      throw new Error("Invalid source-limit history page");
+    return this.get(
+      this.document(document) + `/source-limits?limit=20&offset=${offset}`,
     );
   }
 }

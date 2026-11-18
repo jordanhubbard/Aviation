@@ -180,6 +180,13 @@ class Store:
                     job_id TEXT NOT NULL UNIQUE REFERENCES jobs(id), value TEXT NOT NULL,
                     integrity_sha256 TEXT NOT NULL, created_at TEXT NOT NULL
                 );
+                CREATE TABLE IF NOT EXISTS page_source_limits (
+                    id TEXT PRIMARY KEY, document_id TEXT NOT NULL REFERENCES documents(id),
+                    preview_id TEXT NOT NULL REFERENCES ocr_previews(id),
+                    page INTEGER NOT NULL, action TEXT NOT NULL,
+                    job_id TEXT NOT NULL UNIQUE REFERENCES jobs(id), value TEXT NOT NULL,
+                    integrity_sha256 TEXT NOT NULL, created_at TEXT NOT NULL
+                );
                 PRAGMA user_version=1;
             """)
             if "worker" not in {r[1] for r in connection.execute("PRAGMA table_info(jobs)")}:
@@ -244,6 +251,11 @@ class Store:
             "SELECT rowid,* FROM passages WHERE document_id=? ORDER BY rowid", (identifier,)
         ).fetchall()
         value = [list(document) if document else None, [list(p) for p in passages]]
+        from .source_limits import identity as source_use_identity
+
+        decisions = source_use_identity(connection, identifier) if document else []
+        if decisions:
+            value.append(["page_source_limits", decisions])
         return hashlib.sha256(json.dumps(value, separators=(",", ":")).encode()).hexdigest()
 
     def recovery_identity(self, identifier, *, connection=None):
@@ -287,6 +299,12 @@ class Store:
             if rows:
                 digest.update(b"page_transcriptions")
                 digest.update(json.dumps([list(r) for r in rows], separators=(",", ":")).encode())
+        from .source_limits import events as source_use_events
+
+        decisions = source_use_events(connection, identifier)
+        if decisions:
+            digest.update(b"page_source_limits")
+            digest.update(json.dumps(decisions, sort_keys=True, separators=(",", ":")).encode())
         return digest.hexdigest()
 
     def ingest(
@@ -366,6 +384,11 @@ class Store:
                 )
             }
             value["original_url"] = f"/api/aircraft-library/documents/{identifier}/original"
+            from .source_limits import active as active_source_limits
+
+            limitations = active_source_limits(connection, identifier)
+            if limitations:
+                value["source_limits"] = limitations
             return value
 
     def select(
@@ -458,6 +481,16 @@ class Store:
                     ],
                 )
                 info = {key: value for key, value in result.items() if key != "pages"}
+                from .source_limits import CHANNEL as source_limit_channel
+
+                previous = connection.execute(
+                    "SELECT extraction FROM documents WHERE id=?", (identifier,)
+                ).fetchone()
+                anchored_reviews = json.loads(previous["extraction"] or "{}").get(
+                    source_limit_channel, []
+                )
+                if anchored_reviews:
+                    info[source_limit_channel] = anchored_reviews
                 connection.execute(
                     "UPDATE documents SET status=?,extraction=?,error=NULL WHERE id=?",
                     (result["status"], json.dumps(info), identifier),
@@ -482,7 +515,15 @@ class Store:
             row = connection.execute(
                 "SELECT * FROM pages WHERE document_id=? AND page=?", (identifier, number)
             ).fetchone()
-            return dict(row) if row else None
+            if row is None:
+                return None
+            value = dict(row)
+            from .source_limits import latest, provenance
+
+            decision = latest(connection, identifier).get(number)
+            if decision:
+                value["source_limit"] = provenance(decision)
+            return value
 
     def blank_pages(self, identifier, *, limit=100, offset=0):
         from .blank_pages import candidates
@@ -718,14 +759,22 @@ class Store:
         lease = getattr(self._scope, "lease", None)
         if connection.execute(
             "SELECT 1 FROM jobs WHERE state IN ('queued','running') "
-            "AND kind IN ('ocr_preview','ocr_apply','ocr_embed') "
+            "AND kind IN ('ocr_preview','ocr_apply','ocr_embed','transcription_apply',"
+            "'transcription_embed','source_limit_review') "
             "AND json_extract(request,'$.document_id')=? AND id!=? LIMIT 1",
             (identifier, lease[0] if lease else ""),
         ).fetchone():
             raise OCRConflict("Document has queued or running OCR work")
 
     def create_job(self, kind: str, request: dict):
-        if kind in {"ocr_preview", "ocr_apply", "ocr_embed"}:
+        if kind in {
+            "ocr_preview",
+            "ocr_apply",
+            "ocr_embed",
+            "transcription_apply",
+            "transcription_embed",
+            "source_limit_review",
+        }:
             raise ValueError("OCR jobs require the source-pinned review operation")
         identifier = "job_" + uuid.uuid4().hex
         with self.connection() as connection:

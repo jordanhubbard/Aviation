@@ -783,6 +783,17 @@ def citation_excerpts(text):
     return excerpts
 
 
+def source_restricted(source):
+    from .source_limits import VerifiedSourceLimit
+
+    if "source_limit" not in source:
+        return False
+    decision = source["source_limit"]
+    if not isinstance(decision, VerifiedSourceLimit):
+        raise ModelUnavailable("Unverified source-use restriction provenance")
+    return decision["original_image_only"]
+
+
 def source_excerpts(source):
     from .ocr_reviews import VerifiedOCR
     from .transcriptions import VerifiedTranscription
@@ -792,6 +803,8 @@ def source_excerpts(source):
     ):
         raise ModelUnavailable("Unverified page transcription provenance")
 
+    if source_restricted(source):
+        return []
     text = source["text"]
     if 0 < len(text) < 8 and isinstance(source.get("ocr_review"), VerifiedOCR):
         return [text]
@@ -807,6 +820,8 @@ def source_quote(source, quote):
     ):
         raise ModelUnavailable("Unverified page transcription provenance")
 
+    if source_restricted(source):
+        return None
     if (
         isinstance(source.get("ocr_review"), VerifiedOCR)
         and 0 < len(source["text"]) < 8
@@ -824,6 +839,10 @@ def model_evidence(evidence):
         # A label may simply repeat the physical ordinal; retain printed numbers
         # in the unchanged source excerpts instead.
         row = {key: value for key, value in source.items() if key not in {"text", "page", "label"}}
+        if "source_limit" in source:
+            row["source_limit"] = {
+                key: source["source_limit"][key] for key in ("id", "reason", "original_image_only")
+            }
         if source.get("ocr_review"):
             # Recognition coordinates/confidence and image-page locators are
             # provenance for the reviewer, never numerical factual evidence.
@@ -840,7 +859,7 @@ def model_evidence(evidence):
         row["excerpts"] = [
             {"excerpt_id": index, "text": text} for index, text in enumerate(excerpts)
         ]
-        if not excerpts:
+        if not excerpts and not source_restricted(source):
             row["text"] = source["text"]
         result.append(row)
     return result
@@ -1312,6 +1331,10 @@ def verified_completion(models, evidence, question, *, max_attempts=3, trace_con
 def ask(store: Store, models: Models, code: str, question: str, **filters):
     if not question.strip() or len(question) > 4000:
         raise ValueError("Question must contain 1 to 4000 characters")
+    identities = {
+        identifier: store.index_identity(identifier)
+        for identifier in store.select(code, **{k: v for k, v in filters.items() if k != "limit"})
+    }
     evidence, warnings = retrieve(store, models, code, question, **filters)
     if not evidence:
         return {
@@ -1323,28 +1346,48 @@ def ask(store: Store, models: Models, code: str, question: str, **filters):
         }
     documents = {row["document_id"]: store.get(row["document_id"]) for row in evidence}
     context = [{**row, "metadata": documents[row["document_id"]]["metadata"]} for row in evidence]
-    answer = verified_completion(
-        models,
-        context,
-        question,
-        max_attempts=2,
-        trace_context=(
-            (
-                lambda: {
-                    "operation": "question",
-                    "documents": [
-                        {
-                            "document_id": key,
-                            "source_sha256": doc["sha256"],
-                            "index_identity_observed_at_trace": store.index_identity(key),
-                        }
-                        for key, doc in documents.items()
-                    ],
-                }
-            )
-            if getattr(models, "validation_trace", None) is not None
-            else None
-        ),
+    limitations = {
+        (row["document_id"], row["page"]): {
+            "document_id": row["document_id"],
+            "page": row["page"],
+            "reason": row["source_limit"]["reason"],
+            "review_id": row["source_limit"]["id"],
+        }
+        for row in context
+        if source_restricted(row)
+    }
+    if any(identities.get(key) != store.index_identity(key) for key in documents):
+        raise ModelUnavailable("Document source use changed during retrieval; retry the question")
+    answer = (
+        {
+            "insufficient_evidence": True,
+            "reason": "Matching native page text requires original-image interpretation",
+            "claims": [],
+        }
+        if all(source_restricted(row) for row in context)
+        else verified_completion(
+            models,
+            context,
+            question,
+            max_attempts=2,
+            trace_context=(
+                (
+                    lambda: {
+                        "operation": "question",
+                        "documents": [
+                            {
+                                "document_id": key,
+                                "source_sha256": doc["sha256"],
+                                "index_identity_observed_at_trace": store.index_identity(key),
+                            }
+                            for key, doc in documents.items()
+                        ],
+                    }
+                )
+                if getattr(models, "validation_trace", None) is not None
+                else None
+            ),
+        )
     )
     if any(
         store.get(key)["metadata"] != document["metadata"] for key, document in documents.items()
@@ -1352,6 +1395,8 @@ def ask(store: Store, models: Models, code: str, question: str, **filters):
         raise ModelUnavailable(
             "Document applicability changed during generation; retry the question"
         )
+    if any(identities.get(key) != store.index_identity(key) for key in documents):
+        raise ModelUnavailable("Document source use changed during generation; retry the question")
     retrieval = "hybrid" if models.capabilities()["embeddings"] and not warnings else "full_text"
     incomplete = [d["id"] for d in documents.values() if d["status"] != "indexed"]
     if incomplete:
@@ -1369,6 +1414,8 @@ def ask(store: Store, models: Models, code: str, question: str, **filters):
             "applicability": "Document associations and applicability are unverified; review original revision, variant, serial number and supplements.",
         }
     )
+    if limitations:
+        answer["source_limits"] = list(limitations.values())
     return answer
 
 
@@ -1468,6 +1515,7 @@ def distill(store: Store, models: Models, identifier: str):
         summaries = validated_prefix(existing, batches)
 
     def persist():
+        limited_pages = {r["page"] for r in doc.get("source_limits", [])}
         value = {
             "kind": "llm_distillation",
             "model": models.model,
@@ -1478,18 +1526,25 @@ def distill(store: Store, models: Models, identifier: str):
                 if len(summaries) == len(batches)
                 and doc["status"] == "indexed"
                 and not any(section["insufficient_evidence"] for section in summaries)
+                and not limited_pages
                 else "partial"
             ),
             "completed_batches": len(summaries),
             "evidence_identity": fingerprint,
-            "unresolved_batches": sum(section["insufficient_evidence"] for section in summaries)
-            + len(batches)
-            - len(summaries),
+            "unresolved_batches": sum(
+                i >= len(summaries)
+                or summaries[i]["insufficient_evidence"]
+                or any(p["page"] in limited_pages for p in batch)
+                for i, batch in enumerate(batches)
+            ),
             "total_batches": len(batches),
             "document_extraction": doc["extraction"],
             "batch_plan": [[p["passage_id"] for p in batch] for batch in batches],
             "sections": summaries,
         }
+        if limited_pages:
+            value["unresolved_source_pages"] = sorted(limited_pages)
+            value["source_limits"] = doc["source_limits"]
         if existing.get("recovery"):
             value["recovery"] = existing["recovery"]
         store.artifact(
@@ -1506,18 +1561,26 @@ def distill(store: Store, models: Models, identifier: str):
         position = len(summaries)
         batch = batches[position]
         try:
-            result = verified_completion(
-                models,
-                batch,
-                question,
-                trace_context={
-                    "operation": "distillation",
-                    "document_id": identifier,
-                    "source_sha256": doc["sha256"],
-                    "index_identity": identity,
-                    "evidence_identity": fingerprint,
-                    "batch_position": position,
-                },
+            result = (
+                {
+                    "insufficient_evidence": True,
+                    "reason": "Native page text requires original-image interpretation",
+                    "claims": [],
+                }
+                if all(source_restricted(row) for row in batch)
+                else verified_completion(
+                    models,
+                    batch,
+                    question,
+                    trace_context={
+                        "operation": "distillation",
+                        "document_id": identifier,
+                        "source_sha256": doc["sha256"],
+                        "index_identity": identity,
+                        "evidence_identity": fingerprint,
+                        "batch_position": position,
+                    },
+                )
             )
         except ModelTruncated:
             if len(batch) < 2:

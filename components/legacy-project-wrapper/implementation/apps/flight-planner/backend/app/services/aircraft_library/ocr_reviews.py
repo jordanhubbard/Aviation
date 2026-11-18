@@ -502,7 +502,11 @@ def enrich_passages(connection, passages, *, source_order=False):
     Snapshot readers may predate these additive tables. Unaffected source objects,
     ordering and generation fingerprints must remain byte-for-byte equivalent.
     """
-    from .transcriptions import enrich_passages as enrich_transcriptions
+    from .transcriptions import enrich_passages as transcriptions
+    from .source_limits import enrich_passages as source_limits
+
+    def enrich_transcriptions(connection, rows, **options):
+        return source_limits(connection, transcriptions(connection, rows, **options))
 
     if (
         not passages

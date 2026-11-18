@@ -55,6 +55,49 @@ class TranscriptionProvenance(TypedDict):
     image_url: str
 
 
+class SourceUseReview(OCRIdentity):
+    preview_id: str
+    preview_integrity_sha256: str
+    page: int
+    image_sha256: str
+    action: Literal["restrict", "release"]
+    reason: Literal["layout_relationships_unavailable", "original_text_reviewed"]
+    reviewer: str
+    attest_matches_image: Literal[True]
+
+
+class SourceLimitRecord(TypedDict):
+    id: str
+    document_id: str
+    page: int
+    preview_id: str
+    preview_integrity_sha256: str
+    image_sha256: str
+    image_url: str
+    source_sha256: str
+    source_metadata: dict[str, Any]
+    action: Literal["restrict", "release"]
+    reason: Literal["layout_relationships_unavailable", "original_text_reviewed"]
+    reviewer: str
+    attest_matches_image: Literal[True]
+    job_id: str
+    created_at: str
+    integrity_sha256: str
+    previous_review_id: str | None
+    before_index_identity: str
+    after_index_identity: str
+    current: bool
+    active: bool
+
+
+class SourceLimitHistory(TypedDict):
+    items: list[SourceLimitRecord]
+    total: int
+    offset: int
+    limit: int
+    next_offset: int | None
+
+
 class PageTranscription(TranscriptionProvenance):
     document_id: str
     preview_integrity_sha256: str
@@ -231,3 +274,14 @@ class AircraftLibraryOCRClient:
             method="POST",
             json=value,
         )
+
+    def review_source_use(self, document: str, value: SourceUseReview) -> OCRJob:
+        return self._request(f"/documents/{_id(document)}/source-limits", method="POST", json=value)
+
+    def source_limit(self, document: str, review: str) -> SourceLimitRecord:
+        return self._request(f"/documents/{_id(document)}/source-limits/{_id(review)}")
+
+    def source_limits(self, document: str, offset: int = 0) -> SourceLimitHistory:
+        if type(offset) is not int or not 0 <= offset <= 1_000_000:
+            raise ValueError("Invalid source-limit history page")
+        return self._request(f"/documents/{_id(document)}/source-limits?limit=20&offset={offset}")
