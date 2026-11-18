@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Aircraft library: give failed citation repairs bounded request-scoped excerpt-availability hints without changing accepted claims, source evidence or validation rules.
+
 - Aircraft library: recognize quoted quantities joined to ordinary prose when explicit physical-unit context is present, preserving exact source text, negative signs, ranges and identifier exclusions.
 
 - Aircraft library: preview selected PDF pages with bounded OCR, compare fragments with retained page images, and explicitly apply reviewed text with source provenance, resumable semantic indexing and separately attributed citations while preserving native evidence and history.

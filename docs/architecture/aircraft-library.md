@@ -156,6 +156,21 @@ This comparison-only disambiguation leaves ordinary numeric parsing, negative
 measurements, original claim/quote text, model evidence and generation identity
 unchanged. Existing passing claims retain their validation behavior.
 
+For unavailable or conflicting citation references (#529), private correction
+feedback may identify the failed citation position, bounded integer proposed IDs,
+and the exact request's provided/quotable excerpt IDs. Limit this to eight failed
+citations per claim, eight excerpt IDs per list and, for an unknown passage only,
+eight available passage IDs. Include actual availability counts and explicit
+truncation when a list is longer. Never echo arbitrary malformed ID values,
+source text, quotes, credentials or metadata as reference hints. A quotable excerpt
+only meets the existing exact-source quotation form; it does not prove a claim's
+meaning, quantities or applicability. Unavailable, conflicting and unquotable
+references remain rejected by the unchanged validator. Do not decrement, relabel,
+replace or otherwise silently repair references. Preserve accepted claims and
+existing fixed-position/citation-only correction constraints, model evidence,
+initial question, generation identity and public error messages. The provider must
+choose supported citations from the original supplied evidence or remain unresolved.
+
 For a numeric citation rejection, private correction feedback may identify possible
 supporting excerpts from the same supplied evidence. Compare complete signed tokens;
 metadata and passages outside that request cannot supply options. Return at most

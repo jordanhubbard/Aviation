@@ -746,6 +746,71 @@ def _numeric_excerpt_options(values, evidence):
     return {"matches": options[:8], "limited": len(options) > 8 or len(values) > 32}
 
 
+def _reference_options(claim, evidence):
+    if not isinstance(claim, dict):
+        return None
+    citations = claim.get("citations")
+    if not isinstance(citations, list) or not 1 <= len(citations) <= 8:
+        return None
+
+    def identifier(value):
+        return value if type(value) is int and 0 <= value < 2**63 else None
+
+    by_id = {
+        row["passage_id"]: row for row in evidence if identifier(row.get("passage_id")) is not None
+    }
+    options = []
+    for position, citation in enumerate(citations):
+        if not isinstance(citation, dict):
+            continue
+        passage_id = identifier(citation.get("passage_id"))
+        source = by_id.get(passage_id)
+        excerpts = source_excerpts(source) if source else []
+        proposed = identifier(citation.get("excerpt_id"))
+        if source is None:
+            reason = "unavailable_passage"
+        elif "excerpt_id" in citation:
+            if proposed is None or proposed >= len(excerpts):
+                reason = "unavailable_excerpt"
+            elif source_quote(source, excerpts[proposed]) is None:
+                reason = "unquotable_excerpt"
+            elif (
+                "quote" in citation
+                and source_quote(source, citation["quote"]) != excerpts[proposed]
+            ):
+                reason = "conflicting_quote"
+            else:
+                continue
+        elif source_quote(source, citation.get("quote")) is None:
+            reason = "unquotable_quote"
+        else:
+            continue
+        quotable = [
+            index
+            for index, excerpt in enumerate(excerpts)
+            if source_quote(source, excerpt) is not None
+        ]
+        option = {
+            "citation_number": position + 1,
+            "passage_id": passage_id,
+            "proposed_excerpt_id": proposed,
+            "reason": reason,
+            "available_excerpt_count": len(excerpts),
+            "provided_excerpt_ids": list(range(min(8, len(excerpts)))),
+            "quotable_excerpt_ids": quotable[:8],
+            "truncated": len(excerpts) > 8,
+        }
+        if source is None:
+            available = list(by_id)
+            option.update(
+                available_passage_ids=available[:8],
+                available_passage_count=len(available),
+                passages_truncated=len(available) > 8,
+            )
+        options.append(option)
+    return options or None
+
+
 def _rejected_claims(candidate, evidence):
     if not isinstance(candidate, dict) or candidate.get("insufficient_evidence") is not False:
         return None
@@ -760,6 +825,9 @@ def _rejected_claims(candidate, evidence):
             )
         except ModelUnavailable as error:
             feedback = dict(error.feedback or {})
+            references = _reference_options(claim, evidence)
+            if references:
+                feedback["citation_reference_options"] = references
             if feedback.get("unsupported_numeric_values"):
                 feedback["numeric_evidence_options"] = _numeric_excerpt_options(
                     feedback["unsupported_numeric_values"], evidence
@@ -988,6 +1056,9 @@ def verified_completion(models, evidence, question, *, max_attempts=3, trace_con
                     "already accepted claims, drop a listed claim, or add a new topic. "
                     "Select all excerpts supporting the complete replacement, including conditions, units "
                     "and identifiers; neighboring excerpts require their own citations. "
+                    "Citation reference options identify only provided/quotable excerpts in this request. "
+                    "Quotable means the existing source-quotation form is usable, not that a claim's "
+                    "meaning, quantities or applicability are supported. Read the excerpt before selecting it. "
                     "Numeric evidence options identify possible locations in this same evidence, not proof "
                     "of the claim or its applicability; read each excerpt before selecting it. "
                     "Put every selected citation in the replacement JSON, not only the reason text. "
