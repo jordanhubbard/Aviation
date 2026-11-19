@@ -344,8 +344,9 @@ Corrections must put their citations in the actual replacement JSON. When eight
 citation slots are occupied, replace redundant citations with relevant ones rather
 than claiming in prose to have added an omitted reference. Never add a citation
 automatically, persist an edited counterfactual, weaken validation or increase the
-three-candidate budget. Initial generation inputs and identities stay unchanged.
-New completions use `rejected-assertion-repair-v2` (#567). Numeric occurrence
+three-candidate budget. Citation-location hints do not change initial model-request bytes;
+correction-policy versioning below owns generation identity.
+Policy `rejected-assertion-repair-v2` (#567) ensures numeric occurrence
 hints never make rejected text immutable: an unrelated page reference, identifier,
 or measurement cannot establish the assertion's meaning. The model may correct an
 unsupported rejected assertion to the literal supplied source form, keeping its
@@ -357,13 +358,46 @@ clock notation, or infer semantic support from matching numbers. Changed rejecte
 text remains an untrusted model candidate subject to all existing checks; numeric
 validation alone does not prove semantic applicability.
 
+New completions use `signed-source-feedback-v4` (#569), retaining the assertion
+repair and fixed-position replacement rules above. For an unsupported positive
+numeric value, private correction feedback may identify a different signed value
+already present in that claim's actual, permitted cited source spans. Resolve
+indexed citations and valid legacy quoted spans through the existing source
+provenance and quotation checks. Do not search other passages or uncited excerpts,
+use metadata, include explicitly marked identifier/reference components, or
+expose restricted/unverified source channels. Report only positive rejected values
+whose negative counterpart occurs in those cited spans, with at most eight
+citation/value pairs covering at most 32 rejected values; mark truncation explicitly.
+Include citation locators and numeric diagnostics, never copied source text or a
+server-written replacement. These signed-source diagnostics explicitly do not
+support the rejected positive value or prove meaning, conditions or applicability.
+
+The signed-source correction instruction explains that an unsigned operand in a
+subtraction expression remains distinct from a printed negative amount. The model
+must describe the signed amount in its source form or replace the unsupported
+expression with supported literal facts, preserving its topic, conditions and
+qualifiers. Neither the validator nor feedback evaluates arithmetic, removes signs,
+normalizes letters, changes stored candidates/source text, expands evidence or
+admits a rejected claim. The complete replacement still passes the unchanged
+numeric/source validator within the existing correction budget. Add this diagnostic
+and instruction only for signed-source policies when such a mismatch is present. Version 4
+excludes explicitly marked identifiers across ordinary, minus-sign and en-dash
+typography, including spaced signs, compound codes and page/figure references.
+Identifier masks must preserve unrelated genuine signed amounts in the same span.
+Version-4 counterpart comparisons are exact and independent of Decimal precision
+or rounding context; rounded nearby values are not signed counterparts.
+Version 3 is retained only for exact replay of its stopped private generation;
+its earlier identifier diagnostics never constitute evidence for admission.
+
 Record this correction policy in new distillation artifacts, diagnostic records
 and generation fingerprints. Changing correction behavior creates a new generation;
 archive prior artifacts unchanged and do not silently resume or recover an old-policy
 prefix under the new policy. The initial question, SYSTEM, evidence selection,
 model/provider profile, numeric/source validators and three-candidate limit remain
-unchanged. Explicit internal reconstruction with `numeric-citation-only-v1` retains
-the previous fingerprint and correction wire behavior; missing policy on historical
+unchanged. Explicit internal reconstruction with `numeric-citation-only-v1` and
+`rejected-assertion-repair-v2` and the stopped private
+`signed-source-feedback-v3` generation preserves each predecessor fingerprint, initial request
+and complete correction wire behavior; missing policy on historical
 artifacts means that legacy policy. Unknown policies fail closed before provider
 calls. Legacy numeric hints covering every rejected token continue to enforce exact
 citation-only replacement text, including isolated structured-schema enums, solely

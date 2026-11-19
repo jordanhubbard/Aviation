@@ -12,6 +12,7 @@ import pytest
 
 from app.services.aircraft_library import diagnostics
 from app.services.aircraft_library.models import (
+    CORRECTION_POLICY,
     Models,
     ModelTruncated,
     ModelUnavailable,
@@ -267,9 +268,9 @@ def test_worker_trace_binds_real_original_batch_and_index_without_leaking_into_j
         "index_identity": source_identity,
         "evidence_identity": fingerprint,
         "batch_position": 0,
-        "correction_policy": "rejected-assertion-repair-v2",
+        "correction_policy": CORRECTION_POLICY,
     }
-    assert recorded[-1]["correction_policy"] == "rejected-assertion-repair-v2"
+    assert recorded[-1]["correction_policy"] == CORRECTION_POLICY
     public = store.job(job["id"])
     assert public["state"] == "failed"
     assert "numeric values" in public["error"]

@@ -38,13 +38,15 @@ class ModelTruncated(ModelUnavailable):
 
 CITATION_FORMAT = "indexed-excerpts-v2"
 LEGACY_CORRECTION_POLICY = "numeric-citation-only-v1"
-CORRECTION_POLICY = "rejected-assertion-repair-v2"
+ASSERTION_CORRECTION_POLICY = "rejected-assertion-repair-v2"
+SIGNED_CORRECTION_POLICY = "signed-source-feedback-v3"
+CORRECTION_POLICY = "signed-source-feedback-v4"
 
 
 def _correction_settings(policy):
     if policy == LEGACY_CORRECTION_POLICY:
         return {}
-    if policy != CORRECTION_POLICY:
+    if policy not in (ASSERTION_CORRECTION_POLICY, SIGNED_CORRECTION_POLICY, CORRECTION_POLICY):
         raise ModelUnavailable("Unknown completion correction policy")
     return {"correction_policy": policy}
 
@@ -1076,6 +1078,106 @@ def _numeric_excerpt_options(values, evidence):
     return {"matches": options[:8], "limited": len(options) > 8 or len(values) > 32}
 
 
+_SIGN_DIAGNOSTIC_IDENTIFIER = re.compile(
+    r"(?i)(?:" + _QUANTITY_CODE_LABEL.pattern.removeprefix("(?i)").removesuffix("$")
+    + "|" + _CONVERSION_CODE_LABEL.pattern.removeprefix("(?i)").removesuffix("$")
+    + r")[-+\N{MINUS SIGN}]?(?a:[A-Z0-9]+"
+    r"(?:(?:[ \t]*[/:_+\-\N{MINUS SIGN}]+[ \t]*|\.)[A-Z0-9]+)*)"
+)
+
+
+def _diagnostic_identifier_label(pattern):
+    return pattern.pattern.removeprefix("(?i)").removesuffix("$") + r"(?!\w)"
+
+
+_SIGN_DIAGNOSTIC_DASHES = r"\-+\N{MINUS SIGN}\N{EN DASH}\N{EM DASH}"
+_SIGN_DIAGNOSTIC_REFERENCE = (
+    r"(?<!\w)(?:fig(?:ure)?s?\.?|tables?|sections?|secs?\.?|pages?|pp?\.|"
+    r"notes?|chapters?|appendi(?:x|ces))\s*(?:[:#]\s*)?(?!\w)"
+)
+_SIGN_DIAGNOSTIC_FIELD = (
+    r"(?<!\w)(?:ID|P/N|S/N|PN|SN|part|serial|reg(?:istration)?|tail|model|code|"
+    r"ident(?:ifier|ification)|ref(?:erence)?|fig(?:ure)?s?|tables?|sections?|secs?|"
+    r"pages?|pp?\.|notes?|chapters?|appendi(?:x|ces))\.?"
+    r"(?:[ \t]*(?:no\.?|number|#))?\s*(?:[:#]\s*)?"
+    r"(?:(?:no\.?|number)\s*)?(?!\w)"
+)
+_SIGN_DIAGNOSTIC_IDENTIFIER_V4 = re.compile(
+    r"(?i)(?:" + _SIGN_DIAGNOSTIC_FIELD
+    + "|" + _diagnostic_identifier_label(_QUANTITY_CODE_LABEL)
+    + "|" + _diagnostic_identifier_label(_CONVERSION_CODE_LABEL)
+    + "|" + _SIGN_DIAGNOSTIC_REFERENCE
+    + r")(?:is[ \t]+|=[ \t]*)?[" + _SIGN_DIAGNOSTIC_DASHES
+    + r"]?[ \t]*(?a:[A-Z0-9]+(?:(?:[./:_" + _SIGN_DIAGNOSTIC_DASHES
+    + r"]+|[ \t]*[/:_" + _SIGN_DIAGNOSTIC_DASHES + r"]+[ \t]*)[A-Z0-9]+)*)"
+)
+
+
+def _signed_source_diagnostics(values, claim, evidence, *, correction_policy=CORRECTION_POLICY):
+    """Explain sign mismatches in cited spans; never supply numeric support."""
+    wanted = set()
+    for value in values[:32]:
+        try:
+            number = Decimal(value) if isinstance(value, str) else None
+            if number is not None and number.is_finite() and number > 0:
+                wanted.add(number)
+        except InvalidOperation:
+            continue
+    if not wanted or not isinstance(claim, dict):
+        return None
+    citations = claim.get("citations")
+    if not isinstance(citations, list):
+        return None
+    sources = {
+        row["passage_id"]: row for row in evidence
+        if type(row.get("passage_id")) is int and row["passage_id"] > 0
+    }
+    options, seen = [], set()
+    for position, citation in enumerate(citations[:8]):
+        if not isinstance(citation, dict) or type(citation.get("passage_id")) is not int:
+            continue
+        source = sources.get(citation["passage_id"])
+        if source is None:
+            continue
+        location = {"citation_number": position + 1, "passage_id": source["passage_id"]}
+        try:
+            if "excerpt_id" in citation:
+                index = citation["excerpt_id"]
+                excerpts = source_excerpts(source)
+                if type(index) is not int or not 0 <= index < len(excerpts):
+                    continue
+                quote = source_quote(source, excerpts[index])
+                if "quote" in citation and source_quote(source, citation["quote"]) != quote:
+                    continue
+                location["excerpt_id"] = index
+            else:
+                quote = source_quote(source, citation.get("quote"))
+        except ModelUnavailable:
+            continue
+        if quote is None:
+            continue
+        # Identifiers and explicit page/figure references are not amount diagnostics.
+        identifiers = (
+            _SIGN_DIAGNOSTIC_IDENTIFIER
+            if correction_policy == SIGNED_CORRECTION_POLICY
+            else _SIGN_DIAGNOSTIC_IDENTIFIER_V4
+        )
+        compared = identifiers.sub(" ", _PRINTED_REFERENCE.sub(" ", quote))
+        signed = {number for number in numbers(compared) if number < 0}
+        for value in sorted(wanted):
+            counterpart = -value if correction_policy == SIGNED_CORRECTION_POLICY else value.copy_negate()
+            if counterpart not in signed or (source["passage_id"], quote, value) in seen:
+                continue
+            seen.add((source["passage_id"], quote, value))
+            observed = next(number for number in signed if number == counterpart)
+            options.append({**location, "rejected_numeric_value": str(value),
+                            "cited_signed_numeric_value": str(observed)})
+    if not options:
+        return None
+    return {"matches": options[:8], "limited": len(options) > 8 or len(values) > 32,
+            "supports_rejected_values": False}
+
+
 def _reference_options(claim, evidence):
     if not isinstance(claim, dict):
         return None
@@ -1168,6 +1270,13 @@ def _rejected_claims(candidate, evidence, *, correction_policy=CORRECTION_POLICY
                     for option in feedback["numeric_evidence_options"]["matches"]
                     for value in option["numeric_values"]
                 }
+                if correction_policy in (SIGNED_CORRECTION_POLICY, CORRECTION_POLICY):
+                    signed = _signed_source_diagnostics(
+                        feedback["unsupported_numeric_values"], claim, evidence,
+                        correction_policy=correction_policy,
+                    )
+                    if signed:
+                        feedback["signed_source_diagnostics"] = signed
                 if correction_policy == LEGACY_CORRECTION_POLICY:
                     feedback["citation_only"] = {
                         Decimal(value) for value in feedback["unsupported_numeric_values"]
@@ -1435,6 +1544,17 @@ def verified_completion(
                     "from factual claims while retaining actual source facts, conditions and references. "
                     "Do not weaken or omit a supported fact merely to avoid selecting its supporting excerpt. "
                 )
+                if correction_policy in (SIGNED_CORRECTION_POLICY, CORRECTION_POLICY) and any(
+                    failure.get("signed_source_diagnostics") for failure in failures
+                ):
+                    instruction += (
+                        "Signed-source diagnostics identify different signed amounts in the cited spans, "
+                        "not support for rejected positive operands. A subtraction expression still "
+                        "contains an unsigned operand; it does not quote a printed negative amount. "
+                        "Describe each signed source amount directly or replace the unsupported "
+                        "expression with supported literal facts. Do not evaluate arithmetic, remove "
+                        "signs, normalize source text or infer applicability from these diagnostics. "
+                    )
                 feedback = {"validation_failure": str(error), "rejected_claims": failures}
             else:
                 repair_base, repair_positions, repair_texts = None, None, {}
