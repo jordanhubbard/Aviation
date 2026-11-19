@@ -45,7 +45,8 @@ CONDITIONAL_V5_CORRECTION_POLICY = "conditional-source-feedback-v5"
 CONDITIONAL_V6_CORRECTION_POLICY = "conditional-source-forms-v6"
 SOURCE_SCOPE_V7_CORRECTION_POLICY = "source-scope-feedback-v7"
 PROCEDURE_V8_CORRECTION_POLICY = "procedure-source-feedback-v8"
-CORRECTION_POLICY = "symbol-quote-feedback-v9"
+GLOSSARY_V9_CORRECTION_POLICY = "symbol-quote-feedback-v9"
+CORRECTION_POLICY = "definition-quote-feedback-v10"
 
 
 def _correction_settings(policy):
@@ -59,6 +60,7 @@ def _correction_settings(policy):
         CONDITIONAL_V6_CORRECTION_POLICY,
         SOURCE_SCOPE_V7_CORRECTION_POLICY,
         PROCEDURE_V8_CORRECTION_POLICY,
+        GLOSSARY_V9_CORRECTION_POLICY,
         CORRECTION_POLICY,
     ):
         raise ModelUnavailable("Unknown completion correction policy")
@@ -1242,6 +1244,28 @@ _AIRSPEED_GLOSSARY_CONCEPTS = {
 }
 
 
+# Bounded source-concept coverage, not proof of definitions or chart relations.
+_DEFINITION_QUOTE_CONCEPTS = {
+    "definition_bhp": r"\b(?:bhp|brake horsepower)\b",
+    "conversion_pounds": r"\b(?:lbs?|pounds?)\b",
+    "conversion_kilograms": r"\b(?:kg|kilograms?)\b",
+}
+
+
+def _conversion_quote_scope(assertion, context):
+    named_units = all(
+        re.search(_DEFINITION_QUOTE_CONCEPTS[name], assertion)
+        for name in ("conversion_pounds", "conversion_kilograms")
+    )
+    return bool(
+        (named_units or re.search(r"\b(?:conversions?|charts?|tables?|scales?)\b", assertion))
+        and re.search(
+            r"\b(?:weight conversions?|pounds into kilograms|kilograms into pounds)\b",
+            context,
+        )
+    )
+
+
 def _procedure_scope(text, topic):
     """Keep an asserted procedure separate from other procedure/normal clauses."""
     topics = (
@@ -1345,9 +1369,16 @@ def _fraction_literals(text):
     }
 
 
-def _procedure_feedback(text, cited_sources, evidence, supporting, previous=None, *, include_glossary=False):
+def _procedure_feedback(
+    text, cited_sources, evidence, supporting, previous=None, *,
+    include_glossary=False, include_definitions=False,
+):
     """Reject bounded source-relationship gaps; this is not entailment approval."""
-    concepts = {**_PROCEDURE_CONCEPTS, **(_AIRSPEED_GLOSSARY_CONCEPTS if include_glossary else {})}
+    concepts = {
+        **_PROCEDURE_CONCEPTS,
+        **(_AIRSPEED_GLOSSARY_CONCEPTS if include_glossary else {}),
+        **(_DEFINITION_QUOTE_CONCEPTS if include_definitions else {}),
+    }
     normalized = _condition_text(text)
     by_id = {source["passage_id"]: source for source in evidence}
     frozen_documents = {
@@ -1385,7 +1416,10 @@ def _procedure_feedback(text, cited_sources, evidence, supporting, previous=None
         for topic, pattern in _PROCEDURE_TOPICS.items():
             if re.search(pattern, normalized) and re.search(pattern, discovery):
                 requirements["topics"].add(topic)
+        conversion_scope = include_definitions and _conversion_quote_scope(normalized, discovery)
         for concept, pattern in concepts.items():
+            if concept.startswith("conversion_") and not conversion_scope:
+                continue
             if re.search(pattern, normalized) and re.search(pattern, discovery):
                 requirements["concepts"].add(concept)
         if (
@@ -1571,12 +1605,13 @@ def validate_answer(
             CONDITIONAL_V6_CORRECTION_POLICY,
             SOURCE_SCOPE_V7_CORRECTION_POLICY,
             PROCEDURE_V8_CORRECTION_POLICY,
+            GLOSSARY_V9_CORRECTION_POLICY,
             CORRECTION_POLICY,
         ):
             requirements = (applicability_requirements or {}).get(claim_number - 1)
             discovered = (
                 _scope_requirements(claim["text"], cited_sources, evidence)
-                if correction_policy in (SOURCE_SCOPE_V7_CORRECTION_POLICY, PROCEDURE_V8_CORRECTION_POLICY, CORRECTION_POLICY)
+                if correction_policy in (SOURCE_SCOPE_V7_CORRECTION_POLICY, PROCEDURE_V8_CORRECTION_POLICY, GLOSSARY_V9_CORRECTION_POLICY, CORRECTION_POLICY)
                 else _certification_requirements(
                     claim["text"], cited_sources, evidence, correction_policy=correction_policy
                 )
@@ -1590,7 +1625,7 @@ def validate_answer(
                 requirements = requirements or discovered
         scope_feedback = (
             _scope_feedback(claim["text"], requirements, cited_sources, evidence, supporting)
-            if correction_policy in (SOURCE_SCOPE_V7_CORRECTION_POLICY, PROCEDURE_V8_CORRECTION_POLICY, CORRECTION_POLICY)
+            if correction_policy in (SOURCE_SCOPE_V7_CORRECTION_POLICY, PROCEDURE_V8_CORRECTION_POLICY, GLOSSARY_V9_CORRECTION_POLICY, CORRECTION_POLICY)
             else {}
         )
         procedure_feedback = (
@@ -1600,9 +1635,10 @@ def validate_answer(
                 evidence,
                 supporting,
                 (procedure_requirements or {}).get(claim_number - 1),
-                include_glossary=correction_policy == CORRECTION_POLICY,
+                include_glossary=correction_policy in (GLOSSARY_V9_CORRECTION_POLICY, CORRECTION_POLICY),
+                include_definitions=correction_policy == CORRECTION_POLICY,
             )
-            if correction_policy in (PROCEDURE_V8_CORRECTION_POLICY, CORRECTION_POLICY)
+            if correction_policy in (PROCEDURE_V8_CORRECTION_POLICY, GLOSSARY_V9_CORRECTION_POLICY, CORRECTION_POLICY)
             else {}
         )
         if procedure_feedback:
@@ -1632,7 +1668,7 @@ def validate_answer(
                     **procedure_feedback,
                 },
             )
-        if correction_policy in (SOURCE_SCOPE_V7_CORRECTION_POLICY, PROCEDURE_V8_CORRECTION_POLICY, CORRECTION_POLICY):
+        if correction_policy in (SOURCE_SCOPE_V7_CORRECTION_POLICY, PROCEDURE_V8_CORRECTION_POLICY, GLOSSARY_V9_CORRECTION_POLICY, CORRECTION_POLICY):
             if scope_feedback.get("missing_applicability_conditions") or scope_feedback.get("missing_applicability_citation_conditions"):
                 raise ModelUnavailable(
                     f"Model omitted source applicability conditions in claim {claim_number}; "
@@ -1893,6 +1929,7 @@ def _rejected_claims(
                     CONDITIONAL_V6_CORRECTION_POLICY,
                     SOURCE_SCOPE_V7_CORRECTION_POLICY,
                     PROCEDURE_V8_CORRECTION_POLICY,
+                    GLOSSARY_V9_CORRECTION_POLICY,
                     CORRECTION_POLICY,
                 ):
                     signed = _signed_source_diagnostics(
@@ -2208,6 +2245,7 @@ def verified_completion(
                     CONDITIONAL_V6_CORRECTION_POLICY,
                     SOURCE_SCOPE_V7_CORRECTION_POLICY,
                     PROCEDURE_V8_CORRECTION_POLICY,
+                    GLOSSARY_V9_CORRECTION_POLICY,
                     CORRECTION_POLICY,
                 ) and any(failure.get("signed_source_diagnostics") for failure in failures):
                     instruction += (
@@ -2225,6 +2263,7 @@ def verified_completion(
                         CONDITIONAL_V6_CORRECTION_POLICY,
                         SOURCE_SCOPE_V7_CORRECTION_POLICY,
                         PROCEDURE_V8_CORRECTION_POLICY,
+                        GLOSSARY_V9_CORRECTION_POLICY,
                         CORRECTION_POLICY,
                     )
                     and applicability_requirements
@@ -2237,7 +2276,7 @@ def verified_completion(
                         "Never turn an example into current-aircraft certification. "
                     )
                 if (
-                    correction_policy in (SOURCE_SCOPE_V7_CORRECTION_POLICY, PROCEDURE_V8_CORRECTION_POLICY, CORRECTION_POLICY)
+                    correction_policy in (SOURCE_SCOPE_V7_CORRECTION_POLICY, PROCEDURE_V8_CORRECTION_POLICY, GLOSSARY_V9_CORRECTION_POLICY, CORRECTION_POLICY)
                     and applicability_requirements
                 ):
                     instruction += (
@@ -2251,7 +2290,7 @@ def verified_completion(
                         "to support the complete assertion. Cite both the operating qualification and other "
                         "retained facts; a numeric match in a later excerpt does not support earlier equipment. "
                     )
-                if correction_policy in (PROCEDURE_V8_CORRECTION_POLICY, CORRECTION_POLICY) and procedure_requirements:
+                if correction_policy in (PROCEDURE_V8_CORRECTION_POLICY, GLOSSARY_V9_CORRECTION_POLICY, CORRECTION_POLICY) and procedure_requirements:
                     instruction += (
                         "Procedure requirements preserve the rejected source operating topic and its "
                         "supported action, phase, remediation relationship and literal fraction. "
@@ -2263,7 +2302,7 @@ def verified_completion(
                         "fraction. Procedure excerpt options repeat bounded untrusted source "
                         "already provided; cite their IDs only after reading their actual support. "
                     )
-                if correction_policy == CORRECTION_POLICY and any(
+                if correction_policy in (GLOSSARY_V9_CORRECTION_POLICY, CORRECTION_POLICY) and any(
                     any(name.startswith("airspeed_") for name in requirement.get("concepts", []))
                     for requirement in procedure_requirements.values()
                 ):
@@ -2276,6 +2315,23 @@ def verified_completion(
                         "symbols and expanded names, an unrelated definition, a foreign manual or "
                         "reason text alone cannot repair its missing quoted support. These bounded "
                         "witnesses locate source, not general semantic approval. "
+                    )
+                if correction_policy == CORRECTION_POLICY and any(
+                    any(name.startswith(("definition_", "conversion_"))
+                        for name in requirement.get("concepts", []))
+                    for requirement in procedure_requirements.values()
+                ):
+                    instruction += (
+                        "Definition and conversion requirements retain each originally asserted BHP "
+                        "or unit concept and its bound provided manual context. Select the supplied "
+                        "excerpt naming BHP/brake horsepower or each asserted pounds/kilograms label; "
+                        "a nearby engine entry or scale footer does not supply a missing definition "
+                        "or unit header. BHP and brake horsepower are known aliases; general horsepower "
+                        "alone is not brake horsepower. lb/lbs/pound/pounds and kg/kilogram/kilograms "
+                        "retain their respective unit families. Dropping a concept, moving it to reason "
+                        "text, unrelated facts or a foreign manual cannot repair missing quoted support. "
+                        "Use only the existing shared bounded witnesses. Their word coverage is not "
+                        "general semantic, mathematical, dimensional or chart-relationship approval. "
                     )
                 feedback = {"validation_failure": str(error), "rejected_claims": failures}
             else:

@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Aircraft library: require selected BHP and weight-conversion unit support, preserve recognized source concepts through bounded repairs, and retain exact predecessor validation with a fresh versioned generation.
+
 - Aircraft library: require quoted support for recognized airspeed glossary entries, retain asserted concepts through bounded repairs, and preserve recorded validation under a new generation policy.
 
 - Aircraft library: retain recognized procedure phase and remediation constraints, require complete supporting excerpts and fraction support, and version the new validation while preserving recorded predecessor behavior and fresh-generation boundaries.

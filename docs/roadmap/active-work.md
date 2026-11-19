@@ -6,6 +6,10 @@ index, not an independently maintained task list. Use `gh issue` and `gh pr`.
 
 ## Current work and requests
 
+- [#589 — BHP and conversion-unit quotation coverage](https://github.com/jordanhubbard/Aviation/issues/589): [bounded quotation contract](../architecture/aircraft-library.md#bhp-and-conversion-unit-quotation-coverage-589). Whole third v9 batch review found two missing selected source concepts. Preserve exact recorded v4-v9 behavior, shared feedback bounds and zero-start generation boundaries. Actual admission follows source #588 and normal green software delivery.
+
+- [#588 — Literal conversion operators and source boundaries](https://github.com/jordanhubbard/Aviation/issues/588): canonical image-pinned partial header/footer reviews preserve original operators and unsafe native rows, without admitting table/graph values. Original-image acceptance of fresh actual output remains required after #589; qualification source changes do not import a database into production.
+
 - [#586 — Airspeed glossary quotation coverage](https://github.com/jordanhubbard/Aviation/issues/586): [bounded quotation contract](../architecture/aircraft-library.md#airspeed-glossary-quotation-coverage-586). Actual v8 output names VNE/VS/VSO while selecting only the preceding excerpt; their supporting excerpt was supplied. Preserve the failed batch and recorded v4-v8 behavior, implement versioned bounded feedback without changing source/model/budgets, qualify software through normal delivery, then begin v9 actual generation at zero and compare every final claim with originals.
 
 - [#585 — Image-reviewed source identifiers](https://github.com/jordanhubbard/Aviation/issues/585): canonical literal source reviews and independently audited unchanged-scope recovery preserve all seven originals and historical claims. The latest actual two-batch scope retains its first accepted section; whole second-batch acceptance is pending #586. Further procedure and page-111 acceptance remain open.

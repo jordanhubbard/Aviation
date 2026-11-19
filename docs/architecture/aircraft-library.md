@@ -1071,8 +1071,8 @@ Prospective controls precede implementation:
 
 ### Airspeed glossary quotation coverage (#586)
 
-New answers and distillations use `symbol-quote-feedback-v9`, inheriting the v8
-procedure guards and adding a bounded negative check for asserted, source-provided
+The `symbol-quote-feedback-v9` policy inherits the v8
+procedure guards and adds a bounded negative check for asserted, source-provided
 airspeed glossary concepts. A literal quote from the same page does not cover
 recognized definitions in a neighboring excerpt that was not selected. In
 particular, naming VNE, VS and VSO while quoting only the preceding KCAS-through-VNO
@@ -1133,6 +1133,76 @@ Prospective controls precede implementation:
 | Procedure and glossary witnesses coexist | Keep the existing shared six-witness bound and original IDs/text |
 | Historical v4-v8 wire or recovered generation is replayed with its recorded policy | Exact predecessor behavior |
 | Actual generation changes from v8 to v9 | Archive old claims/receipt unchanged; start at zero; no prefix graft |
+
+### BHP and conversion-unit quotation coverage (#589)
+
+New answers and distillations use `definition-quote-feedback-v10`, retaining the
+recorded v9 airspeed checks. In addition, discover the recognized BHP/brake
+horsepower concept from the assertion and actually supplied quotable context on
+its cited manual page. Require its selected quotations to retain that concept;
+`horsepower` or `HP` alone is not an unambiguous substitute for brake horsepower.
+
+For an asserted conversion/chart/table/scale relationship whose supplied same-page
+source identifies weight conversions, recognize only the asserted pounds and
+kilograms unit families. `lb`, `lbs` and `pound(s)` identify the former; `kg` and
+`kilogram(s)` identify the latter. Require each asserted unit family in selected
+quotations from the bound manual context. A supported partial statement may omit
+unasserted labels. Do not impose conversion-label requirements on ordinary weight
+statements or infer labels from absent, restricted, foreign-manual or unrelated-page
+context. These are bounded negative coverage checks, not general definition,
+operator, dimension or chart-relationship entailment approval.
+
+The observed actual v9 BHP claim selected only the Static RPM/manifold-pressure
+excerpt, while its BHP witness was supplied in the earlier excerpt. The observed
+chart claim selected the scale footer without its supplied pounds/kilograms
+headers. Both require selected source support; correct prose, numeric matches,
+metadata and a citation to the same physical page do not establish it.
+
+Retain rejected-position concept/source obligations through numeric and citation
+repairs, including a numeric error reported first. Known aliases may preserve a
+concept; dropping it, placing it only in the reason, changing to unrelated facts or
+borrowing a foreign manual cannot evade repair. Preserve all accepted claims
+exactly. Feedback may repeat only already supplied source witnesses within the
+existing shared six-option limit, 1,200-character quotation limit, correction
+attempts, citation limits and diagnostic bounds. The new families share that same
+budget with procedure and airspeed requirements.
+
+Preserve exact recorded v4-v9 settings, validation, feedback, wire replay and
+historical receipts. Give v10 a distinct generation identity. Archive prior
+artifacts/claims/legitimate receipts unchanged and start actual generation at zero;
+never graft an old-policy prefix or use controls, edited output, diagnostics or
+browser state as factual source. Keep numeric extraction, literal quotes, excerpt
+boundaries, source budgets, model/profile/settings and retrieval unchanged. No
+public HTTP/MCP/SDK/UI schema changes are needed for this internal feedback.
+
+A corrupted printed operator or unsafe table/graph extraction belongs to the
+image-reviewed source boundary (#588), not to numeric normalization or generated
+claim editing. Preserve the actual failed output and native text. Restrict unsafe
+native use and add only literally reviewed source through the canonical image-pinned
+APIs. Partial header/footer transcriptions do not establish table-cell or graph
+values, and pending vectors remain visible. After source and software admission,
+compare every final claim of each entire fresh affected canonical batch with its
+original images before admission or more inference. Unchanged stochastic reruns,
+embedding or FAA retries and qualification-database production imports are outside
+this correction change.
+
+Prospective controls precede implementation:
+
+| Source/assertion case | Required result |
+| --- | --- |
+| BHP/expanded name is provided but absent from selected quote | Reject with bounded same-source witness |
+| Selected quote retains BHP or its unambiguous expansion | Accept this negative coverage check only |
+| Conversion assertion names both units but quotes only footer or one unit | Reject missing asserted unit labels |
+| Conversion assertion uses recognized lb/lbs/kg aliases | Preserve the same unit obligations |
+| Supported partial conversion assertion names one unit | Do not require the unasserted unit |
+| Ordinary weight statement lacks conversion context | Do not invent conversion-label obligations |
+| Original concept/label is dropped, moved to reason or foreign source during repair | Reject evasion |
+| Numeric failure precedes the quotation failure | Keep both obligations and accepted claims |
+| Unprovided/restricted/foreign-page context contains a label | Do not discover obligations from it |
+| Procedure, airspeed and definition witnesses coexist | One shared six-option bound |
+| Historical v4-v9 wire or receipt is revalidated | Exact recorded behavior |
+| Actual generation changes to v10 | Archive prior state unchanged; start zero |
+
 
 ## Historical distillations
 
