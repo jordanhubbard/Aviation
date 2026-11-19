@@ -880,7 +880,7 @@ Test deterministic PDFs, duplicate bytes/acquisitions, persistence, wrong-type/t
 
 ### Conditional certification assertions (#576)
 
-New answers and distillations use `conditional-source-feedback-v5`. In addition to
+New answers and distillations use `conditional-source-forms-v6`. In addition to
 all existing quotation, source-use and numeric checks, reject a positive
 flight-operation certification or authorization assertion when its supplied cited
 source explicitly frames that operating entry as an equipment-dependent example
@@ -893,7 +893,11 @@ invent evidence, borrow another manual's conditions, or use metadata as proof.
 A faithful description of a conditional example must keep its example/as-equipped
 scope and historical-certificate qualification when present. A generic research
 caveat, a recommendation to check the manual, or the word "placard" alone does not
-retain those conditions. Distinguish a qualified report from current-aircraft
+retain those conditions. Recognize the bounded equivalent forms "vary", "varies"
+and "varying" in both supplied conditions and their faithful reporting; negated
+forms such as "not varying" or "never varying" do not retain an affirmative
+equipment-dependent condition. Matching remains whole-word and keeps the required
+example and equipment cues. Distinguish a qualified report from current-aircraft
 certification. Unrelated facts sharing a page, explicit prohibitions, and assertions
 supported by unconditional source statements must not become conditional merely
 because certification vocabulary occurs elsewhere. This bounded source-cue check
@@ -911,9 +915,11 @@ raw source text, private condition diagnostics or provider contents.
 
 The new policy participates in every distillation fingerprint. A policy change
 starts a fresh generation; do not graft an older accepted prefix into it or relabel
-saved partitions/history. Explicit versions 1 through 4 retain their exact prior
+saved partitions/history. Explicit versions 1 through 5 retain their exact prior
 requests, correction behavior and validation semantics for reconstruction. Their
 known unsupported assertions remain preserved and unapproved under the new policy.
+In particular, v5 retains its recorded rejection of "varying"; do not retroactively
+revalidate, relabel or graft a v5 prefix under the expanded v6 recognizer.
 Source originals, native/OCR/transcription identities, numeric grammar, provider,
 model, system/question, budgets, API/SDK/UI shapes and embedding behavior remain
 unchanged. Qualification requires the actual retained failure plus independent
