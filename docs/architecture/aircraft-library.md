@@ -925,7 +925,7 @@ Test deterministic PDFs, duplicate bytes/acquisitions, persistence, wrong-type/t
 
 ### Conditional certification assertions (#576)
 
-New answers and distillations use `source-scope-feedback-v7`. In addition to
+Generations recorded under `source-scope-feedback-v7` apply the following rules. In addition to
 all existing quotation, source-use and numeric checks, reject a positive
 flight-operation certification or authorization assertion when its supplied cited
 source explicitly frames that operating entry as an equipment-dependent example
@@ -994,6 +994,80 @@ model, system/question, budgets, API/SDK/UI shapes and embedding behavior remain
 unchanged. Qualification requires the actual retained failure plus independent
 controls and a finite changed-policy canonical generation whose complete affected
 batches are compared claim by claim with their original page images.
+
+### Procedure qualifications and quoted support (#583)
+
+New answers and distillations use `procedure-source-feedback-v8`, retaining the
+recorded v7 behavior above and adding bounded procedure checks. A valid quotation
+from a passage does not establish support for every assertion about that passage.
+Inspect only quotable, actually supplied source and its available same-page
+context. Never obtain requirements from another manual, unprovided pages,
+restricted native text, page locators, reviewer metadata, capitalization as a
+proxy for bold, or an inferred operating rule.
+
+When a claim reports an action governed by an explicitly supplied limiting phase,
+retain that limitation and cite its supporting excerpt. In particular, a source
+instruction permitting flap use only as required for final approach and touchdown
+cannot become unrestricted "flaps only as required." Associate the source action
+and its procedure context before requiring its qualification; unrelated uses of
+the same component elsewhere do not inherit that procedure's limitation.
+
+Preserve the source's distinction between required inspection followed by
+remediation and genuine alternatives. Where the supplied procedure says to
+inspect, repair damage or replace damaged components before another flight,
+"inspect or repair" is not equivalent. A supported partial statement about
+inspection alone does not assert that inspection substitutes for remediation;
+do not require a summary to reproduce every checklist item or call it complete.
+
+Reject definite quoted-support gaps in asserted procedure topics, actions and
+qualifications when their supporting supplied neighboring excerpt was not
+selected. Keep passage and excerpt identities distinct: an overlapping warning
+or a quotation from the same page does not cover an omitted wing-fire action,
+flap-use phase, or icing condition. A literal fraction such as `1/4 inch` needs
+its complete fraction in selected source support; independent printed checklist
+step numbers `1` and `4` do not establish it. This additional check preserves
+literal source forms and does not calculate or invent fraction equivalences.
+The existing explicitly recognized half-percent comparison remains unchanged;
+this policy adds no new conversions and never rewrites a claim or quotation.
+These are negative admission guards for recognized source relationships, not a
+word-overlap test that approves arbitrary paraphrases or general entailment.
+
+Private rejected-claim feedback identifies the missing source-derived relationship
+and up to six actually provided supporting excerpt witnesses within the existing
+quotation bound. Retain the rejected operating topic, qualifications and every
+unaffected accepted claim. A replacement cannot evade a rejected restriction by
+dropping the operating entry, adding unrelated qualifying words, negating the
+original assertion, or silently omitting a rejected position. Apply full source,
+numeric and procedure validation to the merged answer within existing claim,
+citation, evidence, diagnostic and completion bounds. Public errors continue to
+exclude private source text and feedback. No API/SDK schema or provider settings
+change merely to add this internal validation policy.
+
+Keep recorded v4-v7 validation, feedback, exact actual-wire replay and recovery
+behavior fixed. The v8 policy has its own generation identity: archive preceding
+artifacts unchanged and start an actual changed-policy generation at zero. Never
+graft an old-policy prefix or use controls, diagnostics, browser output, edited
+claims or model responses as source evidence. Original-image comparison of every
+final claim in the complete affected canonical scope remains mandatory; a narrow
+guard or a passing numeric validator does not complete semantic acceptance.
+
+Prospective controls precede implementation:
+
+| Source and claim relationship | Required result |
+| --- | --- |
+| Action retains its limiting phase and selects the actual supporting excerpt | Allow, subject to other validation |
+| Action drops final-approach/touchdown scope or borrows it from an unrelated assertion | Reject |
+| Phase is retained but only a neighboring warning is cited | Reject |
+| Similar component appears in an unrelated procedure/manual or an unasserted topic | Do not import its restriction |
+| Inspection followed by repair/replacement becomes inspection **or** repair | Reject |
+| Source explicitly offers genuine alternatives, or claim reports supported inspection alone | Do not invent a conjunction or completeness obligation |
+| Wing-fire or icing assertion omits its actually supplied supporting excerpt | Reject; require that source support |
+| Claimed fraction is supported only by separate checklist numerals | Reject |
+| Complete literal fraction is quoted with its actual condition | Allow, subject to other validation |
+| Source has unknown emphasis, or only metadata supplies a cue | Do not infer typography or factual support |
+| Rejected-claim correction repairs support/qualification while preserving accepted claims | Admit only after complete revalidation |
+| Correction drops the topic, qualification, claim position, or an accepted claim | Reject |
+| Actual recorded v4-v7 exchange is replayed under its recorded policy | Exact predecessor behavior |
 
 ## Historical distillations
 

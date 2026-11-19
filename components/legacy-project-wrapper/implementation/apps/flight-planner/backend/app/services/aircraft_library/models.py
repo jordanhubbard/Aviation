@@ -43,13 +43,22 @@ SIGNED_CORRECTION_POLICY = "signed-source-feedback-v3"
 SIGNED_V4_CORRECTION_POLICY = "signed-source-feedback-v4"
 CONDITIONAL_V5_CORRECTION_POLICY = "conditional-source-feedback-v5"
 CONDITIONAL_V6_CORRECTION_POLICY = "conditional-source-forms-v6"
-CORRECTION_POLICY = "source-scope-feedback-v7"
+SOURCE_SCOPE_V7_CORRECTION_POLICY = "source-scope-feedback-v7"
+CORRECTION_POLICY = "procedure-source-feedback-v8"
 
 
 def _correction_settings(policy):
     if policy == LEGACY_CORRECTION_POLICY:
         return {}
-    if policy not in (ASSERTION_CORRECTION_POLICY, SIGNED_CORRECTION_POLICY, SIGNED_V4_CORRECTION_POLICY, CONDITIONAL_V5_CORRECTION_POLICY, CONDITIONAL_V6_CORRECTION_POLICY, CORRECTION_POLICY):
+    if policy not in (
+        ASSERTION_CORRECTION_POLICY,
+        SIGNED_CORRECTION_POLICY,
+        SIGNED_V4_CORRECTION_POLICY,
+        CONDITIONAL_V5_CORRECTION_POLICY,
+        CONDITIONAL_V6_CORRECTION_POLICY,
+        SOURCE_SCOPE_V7_CORRECTION_POLICY,
+        CORRECTION_POLICY,
+    ):
         raise ModelUnavailable("Unknown completion correction policy")
     return {"correction_policy": policy}
 
@@ -1198,8 +1207,269 @@ def _scope_feedback(text, requirements, cited_sources, evidence, supporting):
     }
 
 
+_PROCEDURE_TOPICS = {
+    "wing_fire": r"\bwing fire\b",
+    "engine_fire_in_flight": r"\bengine fire in flight\b",
+    "icing": r"\b(?:inadvertent )?icing(?: encounter)?\b",
+}
+_PROCEDURE_CONCEPTS = {
+    **_PROCEDURE_TOPICS,
+    "incombustible_mixture": r"\bincombustible mixture\b",
+    "forced_landing": r"\bforced landing\b",
+    "strobe_light": r"\bstrobe(?: light)?\b",
+    "flaps_retracted": r"\b(?:wing )?flaps (?:remain |are |be )?retracted\b",
+    "fire_damage": r"\bfire damage\b",
+}
+
+
+def _procedure_scope(text, topic):
+    """Keep an asserted procedure separate from other procedure/normal clauses."""
+    topics = (
+        r"\b(?:wing fire|engine fire in flight|(?:inadvertent )?icing(?: encounter)?|"
+        r"electrical fire(?: in flight)?|cabin fire|normal landing)\b"
+    )
+    # Explicit labels and short printed headings delimit context. This does not
+    # infer bold or turn headings into additional source facts.
+    lines = []
+    for line in text.splitlines():
+        words = line.strip().split()
+        heading = (
+            0 < len(words) <= 8
+            and line.strip().isupper()
+            and re.fullmatch(r"[A-Z][A-Z /()\-]*", line.strip())
+            and line.strip() not in {"NOTE", "WARNING", "CAUTION"}
+        )
+        lines.append(("\x00 " if heading else "") + line)
+    text = re.sub(
+        r"(?:^|(?<=[.;]))\s*[A-Za-z][A-Za-z /]{0,60}:",
+        lambda match: ("" if re.search(topics, _condition_text(match.group())) else "\x00 ")
+        + match.group(),
+        "\n".join(lines),
+    )
+    normalized = _condition_text(text)
+    matches = list(re.finditer(r"\x00|" + topics, normalized))
+    return " ".join(
+        normalized[
+            match.end() : matches[i + 1].start() if i + 1 < len(matches) else len(normalized)
+        ]
+        for i, match in enumerate(matches)
+        if re.fullmatch(_PROCEDURE_TOPICS[topic], match.group())
+    )
+
+
+def _flap_phase_retained(text):
+    # A phase attached to the strobe, another assertion, or a negated limit
+    # cannot qualify flap use. This view recognizes source relations only.
+    for clause in re.split(r"[.;]", _condition_text(text)):
+        if re.search(r"\b(?:not|never) (?:only|limit\w*|restrict\w*)\b", clause):
+            continue
+        if re.search(
+            r"\b(?:not|never|don't|mustn't|cannot|can't) "
+            r"(?:(?:use |extend )?(?:wing )?flaps only|only (?:use|extend))\b",
+            clause,
+        ):
+            continue
+        if re.search(
+            r"\bflaps (?:may be |can be |are |be )?(?:used |extended )?"
+            r"(?:only |except )(?:as (?:required|needed|necessary) )?"
+            r"(?:for|during|on|in) (?:the )?final approach and touchdown\b",
+            clause,
+        ):
+            return True
+        if re.search(
+            r"\bflaps (?:as (?:required|needed|necessary) )only "
+            r"(?:for|during|on|in) (?:the )?final approach and touchdown\b",
+            clause,
+        ):
+            return True
+        if re.search(
+            r"\bonly (?:use|extend) (?:wing )?flaps (?:as (?:required|needed|necessary) )?"
+            r"(?:for|during|on|in) (?:the )?final approach and touchdown\b",
+            clause,
+        ):
+            return True
+    return False
+
+
+def _inspection_alternative(text):
+    return bool(
+        re.search(r"\binspect(?:ion)?\s+or\s+(?:repair|replac\w*)\b", _condition_text(text))
+    )
+
+
+def _inspection_remediation(text):
+    text = _condition_text(text)
+    return bool(
+        re.search(r"\binspect(?:ion)?\b", text)
+        and re.search(r"\b(?:repair|replac\w*)\b", text)
+        and re.search(
+            r"\b(?:before (?:conducting )?(?:another |the next |further )?flight|prior to (?:another |the next |further )?flight)\b",
+            text,
+        )
+        and not _inspection_alternative(text)
+        and not re.search(
+            r"\b(?:not|never|don't|mustn't|cannot|can't) (?:inspect|repair|replac\w*)\b", text
+        )
+    )
+
+
+def _fraction_literals(text):
+    # Do not assemble a fraction from independent numbered steps or calculate
+    # equivalents. Retain signs and literal fraction forms; ignore date triples.
+    # Existing explicit half-percent comparison already treats the whole
+    # quantity atomically; this guard must not replace that established rule.
+    text = _comparison_half_percentages(text)
+    return {
+        re.sub(r"\s+", "", match.group())
+        for match in re.finditer(r"(?<![\w/])(?:[+\-−]\s*)?\d+\s*/\s*\d+(?![\w/])|[¼½¾⅐-⅞]", text)
+    }
+
+
+def _procedure_feedback(text, cited_sources, evidence, supporting, previous=None):
+    """Reject bounded source-relationship gaps; this is not entailment approval."""
+    normalized = _condition_text(text)
+    by_id = {source["passage_id"]: source for source in evidence}
+    frozen_documents = {
+        by_id[pid]["document_id"]
+        for pid in (previous or {}).get("source_passages", [])
+        if pid in by_id
+    }
+    pages = {(source["document_id"], source["page"]) for source in cited_sources}
+    pages.update(
+        (by_id[pid]["document_id"], by_id[pid]["page"])
+        for pid in (previous or {}).get("source_passages", [])
+        if pid in by_id
+    )
+    sources = [
+        source
+        for source in evidence
+        if (source["document_id"], source["page"]) in pages
+        and (not frozen_documents or source["document_id"] in frozen_documents)
+    ]
+    excerpts = [
+        (source, index, excerpt)
+        for source in sources
+        for index, excerpt in enumerate(source_excerpts(source))
+    ]
+    fields = ("topics", "concepts", "conditions", "fractions")
+    requirements = {key: set((previous or {}).get(key, [])) for key in fields}
+    # Do not infer which manual a compound cross-document assertion describes.
+    # Existing obligations still bind their original provided document context.
+    cited_documents = {source["document_id"] for source in cited_sources}
+    if len(cited_documents) == 1:
+        discovery_text = " ".join(
+            excerpt for source, _, excerpt in excerpts if source["document_id"] in cited_documents
+        )
+        discovery = _condition_text(discovery_text)
+        for topic, pattern in _PROCEDURE_TOPICS.items():
+            if re.search(pattern, normalized) and re.search(pattern, discovery):
+                requirements["topics"].add(topic)
+        for concept, pattern in _PROCEDURE_CONCEPTS.items():
+            if re.search(pattern, normalized) and re.search(pattern, discovery):
+                requirements["concepts"].add(concept)
+        if (
+            "wing_fire" in requirements["topics"]
+            and re.search(r"\bflaps\b", _procedure_scope(text, "wing_fire"))
+            and _flap_phase_retained(_procedure_scope(discovery_text, "wing_fire"))
+        ):
+            requirements["conditions"].add("flaps_final_approach_touchdown")
+        if (
+            re.search(r"\bdamag\w*\b", normalized)
+            and _inspection_alternative(text)
+            and re.search(r"\binspect\s*,\s*repair damage or replace\b", discovery)
+            and _inspection_remediation(discovery)
+        ):
+            requirements["conditions"].add("inspection_then_remediation")
+    available_fractions = set().union(*(_fraction_literals(excerpt) for _, _, excerpt in excerpts))
+    claimed_fractions = _fraction_literals(text)
+    requirements["fractions"].update(claimed_fractions & available_fractions)
+    if not any(requirements.values()) and not claimed_fractions:
+        return {}
+    context_ids = set((previous or {}).get("source_passages", []))
+    context_ids.update(source["passage_id"] for source in sources)
+    documents = {by_id[pid]["document_id"] for pid in context_ids if pid in by_id}
+    quotations = " ".join(
+        quote
+        for source, quote in zip(cited_sources, supporting)
+        if source["document_id"] in documents
+    )
+    quote_view = _condition_text(quotations)
+    missing, gaps = [], []
+    for topic in sorted(requirements["topics"]):
+        if not re.search(_PROCEDURE_TOPICS[topic], normalized):
+            missing.append(topic + "_operating_entry")
+    for concept in sorted(requirements["concepts"]):
+        if not re.search(_PROCEDURE_CONCEPTS[concept], normalized):
+            missing.append(concept + "_assertion")
+        if not re.search(_PROCEDURE_CONCEPTS[concept], quote_view):
+            gaps.append(concept)
+    for condition in sorted(requirements["conditions"]):
+        if condition == "flaps_final_approach_touchdown":
+            retained = _flap_phase_retained(_procedure_scope(text, "wing_fire"))
+            quoted = _flap_phase_retained(quotations)
+        elif condition == "inspection_then_remediation":
+            retained, quoted = _inspection_remediation(text), _inspection_remediation(quotations)
+        else:
+            raise ModelUnavailable("Unknown source procedure qualification")
+        if not retained:
+            missing.append(condition)
+        if not quoted:
+            gaps.append(condition)
+    quoted_fractions = _fraction_literals(quotations)
+    missing.extend(
+        "fraction:" + value for value in sorted(requirements["fractions"] - claimed_fractions)
+    )
+    gaps.extend(
+        "fraction:" + value
+        for value in sorted((claimed_fractions | requirements["fractions"]) - quoted_fractions)
+    )
+    options = []
+    for source, index, excerpt in excerpts:
+        view = _condition_text(excerpt)
+        witnesses = [
+            name
+            for name in sorted(requirements["concepts"])
+            if re.search(_PROCEDURE_CONCEPTS[name], view)
+        ]
+        if "flaps_final_approach_touchdown" in requirements["conditions"] and _flap_phase_retained(
+            excerpt
+        ):
+            witnesses.append("flaps_final_approach_touchdown")
+        if "inspection_then_remediation" in requirements["conditions"] and _inspection_remediation(
+            excerpt
+        ):
+            witnesses.append("inspection_then_remediation")
+        witnesses.extend(
+            "fraction:" + value
+            for value in sorted(requirements["fractions"] & _fraction_literals(excerpt))
+        )
+        if witnesses and len(excerpt) <= 1200 and len(options) < 6:
+            options.append(
+                {
+                    "passage_id": source["passage_id"],
+                    "excerpt_id": index,
+                    "requirements": witnesses,
+                    "text": excerpt,
+                }
+            )
+    return {
+        "procedure_requirements": {
+            **{key: sorted(value) for key, value in requirements.items()},
+            "source_passages": sorted(context_ids),
+        },
+        "missing_procedure_conditions": sorted(set(missing)),
+        "missing_procedure_citation_conditions": sorted(set(gaps)),
+        "procedure_excerpt_options": options,
+    }
+
+
 def validate_answer(
-    answer, evidence, *, correction_policy=CORRECTION_POLICY, applicability_requirements=None
+    answer,
+    evidence,
+    *,
+    correction_policy=CORRECTION_POLICY,
+    applicability_requirements=None,
+    procedure_requirements=None,
 ):
     _correction_settings(correction_policy)
     if not isinstance(answer, dict) or type(answer.get("insufficient_evidence")) is not bool:
@@ -1275,11 +1545,17 @@ def validate_answer(
             supporting.append(quote)
             cited_sources.append(source)
         requirements = None
-        if correction_policy in (CONDITIONAL_V5_CORRECTION_POLICY, CONDITIONAL_V6_CORRECTION_POLICY, CORRECTION_POLICY):
+        if correction_policy in (
+            CONDITIONAL_V5_CORRECTION_POLICY,
+            CONDITIONAL_V6_CORRECTION_POLICY,
+            SOURCE_SCOPE_V7_CORRECTION_POLICY,
+            CORRECTION_POLICY,
+        ):
             requirements = (applicability_requirements or {}).get(claim_number - 1)
             discovered = (
                 _scope_requirements(claim["text"], cited_sources, evidence)
-                if correction_policy == CORRECTION_POLICY else _certification_requirements(
+                if correction_policy in (SOURCE_SCOPE_V7_CORRECTION_POLICY, CORRECTION_POLICY)
+                else _certification_requirements(
                     claim["text"], cited_sources, evidence, correction_policy=correction_policy
                 )
             )
@@ -1292,8 +1568,25 @@ def validate_answer(
                 requirements = requirements or discovered
         scope_feedback = (
             _scope_feedback(claim["text"], requirements, cited_sources, evidence, supporting)
-            if correction_policy == CORRECTION_POLICY else {}
+            if correction_policy in (SOURCE_SCOPE_V7_CORRECTION_POLICY, CORRECTION_POLICY)
+            else {}
         )
+        procedure_feedback = (
+            _procedure_feedback(
+                claim["text"],
+                cited_sources,
+                evidence,
+                supporting,
+                (procedure_requirements or {}).get(claim_number - 1),
+            )
+            if correction_policy == CORRECTION_POLICY
+            else {}
+        )
+        if procedure_feedback:
+            remaining = max(0, 6 - len(scope_feedback.get("qualification_excerpt_options", [])))
+            procedure_feedback["procedure_excerpt_options"] = procedure_feedback[
+                "procedure_excerpt_options"
+            ][:remaining]
         cited_numbers = set().union(*(numbers(quote) for quote in supporting))
         unsupported = numbers(claim["text"]) - cited_numbers
         if unsupported:
@@ -1307,21 +1600,37 @@ def validate_answer(
                 feedback={
                     "unsupported_numeric_values": sorted(str(value) for value in unsupported),
                     "cited_numeric_values": sorted(str(value) for value in cited_numbers),
-                    **({"applicability_requirements": copy.deepcopy(requirements)}
-                       if requirements else {}),
+                    **(
+                        {"applicability_requirements": copy.deepcopy(requirements)}
+                        if requirements
+                        else {}
+                    ),
                     **scope_feedback,
+                    **procedure_feedback,
                 },
             )
-        if correction_policy == CORRECTION_POLICY:
+        if correction_policy in (SOURCE_SCOPE_V7_CORRECTION_POLICY, CORRECTION_POLICY):
             if scope_feedback.get("missing_applicability_conditions") or scope_feedback.get("missing_applicability_citation_conditions"):
                 raise ModelUnavailable(
                     f"Model omitted source applicability conditions in claim {claim_number}; "
                     "retain the conditional operating entry and cite its source qualifications",
-                    feedback=scope_feedback,
+                    feedback=(
+                        {**scope_feedback, **procedure_feedback}
+                        if procedure_feedback
+                        else scope_feedback
+                    ),
                 )
         else:
             _validate_certification_conditions(
                 claim["text"], requirements, claim_number, correction_policy=correction_policy
+            )
+        if procedure_feedback.get("missing_procedure_conditions") or procedure_feedback.get(
+            "missing_procedure_citation_conditions"
+        ):
+            raise ModelUnavailable(
+                f"Model omitted source procedure qualifications or quoted support in claim {claim_number}; "
+                "retain its procedure and select the supporting source excerpts",
+                feedback=procedure_feedback,
             )
         clean.append({"text": claim["text"], "citations": verified})
     return {
@@ -1517,7 +1826,12 @@ def _reference_options(claim, evidence):
 
 
 def _rejected_claims(
-    candidate, evidence, *, correction_policy=CORRECTION_POLICY, applicability_requirements=None
+    candidate,
+    evidence,
+    *,
+    correction_policy=CORRECTION_POLICY,
+    applicability_requirements=None,
+    procedure_requirements=None,
 ):
     _correction_settings(correction_policy)
     if not isinstance(candidate, dict) or candidate.get("insufficient_evidence") is not False:
@@ -1529,9 +1843,11 @@ def _rejected_claims(
     for index, claim in enumerate(claims):
         try:
             validate_answer(
-                {"insufficient_evidence": False, "reason": "", "claims": [claim]}, evidence,
+                {"insufficient_evidence": False, "reason": "", "claims": [claim]},
+                evidence,
                 correction_policy=correction_policy,
                 applicability_requirements={0: (applicability_requirements or {}).get(index)},
+                procedure_requirements={0: (procedure_requirements or {}).get(index)},
             )
         except ModelUnavailable as error:
             feedback = dict(error.feedback or {})
@@ -1547,7 +1863,14 @@ def _rejected_claims(
                     for option in feedback["numeric_evidence_options"]["matches"]
                     for value in option["numeric_values"]
                 }
-                if correction_policy in (SIGNED_CORRECTION_POLICY, SIGNED_V4_CORRECTION_POLICY, CONDITIONAL_V5_CORRECTION_POLICY, CONDITIONAL_V6_CORRECTION_POLICY, CORRECTION_POLICY):
+                if correction_policy in (
+                    SIGNED_CORRECTION_POLICY,
+                    SIGNED_V4_CORRECTION_POLICY,
+                    CONDITIONAL_V5_CORRECTION_POLICY,
+                    CONDITIONAL_V6_CORRECTION_POLICY,
+                    SOURCE_SCOPE_V7_CORRECTION_POLICY,
+                    CORRECTION_POLICY,
+                ):
                     signed = _signed_source_diagnostics(
                         feedback["unsupported_numeric_values"], claim, evidence,
                         correction_policy=correction_policy,
@@ -1584,6 +1907,7 @@ def _trace_rejection(
     event="claim_validation",
     correction_policy=CORRECTION_POLICY,
     applicability_requirements=None,
+    procedure_requirements=None,
 ):
     observer = getattr(models, "trace_validation", None)
     if callable(observer) and getattr(models, "validation_trace", None) is not None:
@@ -1660,8 +1984,11 @@ def _trace_rejection(
                         {key: value for key, value in failure.items() if key != "claim"}
                         for failure in (
                             _rejected_claims(
-                                candidate, evidence, correction_policy=correction_policy,
+                                candidate,
+                                evidence,
+                                correction_policy=correction_policy,
                                 applicability_requirements=applicability_requirements,
+                                procedure_requirements=procedure_requirements,
                             )
                             or []
                         )
@@ -1690,6 +2017,7 @@ def verified_completion(
     prompt = question
     repair_base, repair_positions, repair_texts = None, None, {}
     applicability_requirements = {}
+    procedure_requirements = {}
     for attempt in range(max_attempts):
         try:
             replacements = getattr(models, "complete_replacements", None)
@@ -1723,6 +2051,7 @@ def verified_completion(
                 event="truncation",
                 correction_policy=correction_policy,
                 applicability_requirements=applicability_requirements,
+                procedure_requirements=procedure_requirements,
             )
             if attempt:
                 # A rejected candidate already exists: do not evade its assertions
@@ -1765,8 +2094,11 @@ def verified_completion(
             if correction_error is not None:
                 raise correction_error
             return validate_answer(
-                candidate, evidence, correction_policy=correction_policy,
+                candidate,
+                evidence,
+                correction_policy=correction_policy,
                 applicability_requirements=applicability_requirements,
+                procedure_requirements=procedure_requirements,
             )
         except ModelUnavailable as error:
             _trace_rejection(
@@ -1782,18 +2114,27 @@ def verified_completion(
                 trace_context,
                 correction_policy=correction_policy,
                 applicability_requirements=applicability_requirements,
+                procedure_requirements=procedure_requirements,
             )
             if attempt + 1 == max_attempts:
                 raise
             failures = _rejected_claims(
-                candidate, evidence, correction_policy=correction_policy,
+                candidate,
+                evidence,
+                correction_policy=correction_policy,
                 applicability_requirements=applicability_requirements,
+                procedure_requirements=procedure_requirements,
             )
             if failures:
                 for failure in failures:
                     requirements = failure.get("applicability_requirements")
                     if requirements:
                         applicability_requirements[failure["claim_number"] - 1] = copy.deepcopy(requirements)
+                    procedure = failure.get("procedure_requirements")
+                    if procedure:
+                        procedure_requirements[failure["claim_number"] - 1] = copy.deepcopy(
+                            procedure
+                        )
                 repair_base = candidate
                 repair_positions = [failure["claim_number"] - 1 for failure in failures]
                 repair_texts = {
@@ -1836,9 +2177,14 @@ def verified_completion(
                     "from factual claims while retaining actual source facts, conditions and references. "
                     "Do not weaken or omit a supported fact merely to avoid selecting its supporting excerpt. "
                 )
-                if correction_policy in (SIGNED_CORRECTION_POLICY, SIGNED_V4_CORRECTION_POLICY, CONDITIONAL_V5_CORRECTION_POLICY, CONDITIONAL_V6_CORRECTION_POLICY, CORRECTION_POLICY) and any(
-                    failure.get("signed_source_diagnostics") for failure in failures
-                ):
+                if correction_policy in (
+                    SIGNED_CORRECTION_POLICY,
+                    SIGNED_V4_CORRECTION_POLICY,
+                    CONDITIONAL_V5_CORRECTION_POLICY,
+                    CONDITIONAL_V6_CORRECTION_POLICY,
+                    SOURCE_SCOPE_V7_CORRECTION_POLICY,
+                    CORRECTION_POLICY,
+                ) and any(failure.get("signed_source_diagnostics") for failure in failures):
                     instruction += (
                         "Signed-source diagnostics identify different signed amounts in the cited spans, "
                         "not support for rejected positive operands. A subtraction expression still "
@@ -1847,7 +2193,16 @@ def verified_completion(
                         "expression with supported literal facts. Do not evaluate arithmetic, remove "
                         "signs, normalize source text or infer applicability from these diagnostics. "
                     )
-                if correction_policy in (CONDITIONAL_V5_CORRECTION_POLICY, CONDITIONAL_V6_CORRECTION_POLICY, CORRECTION_POLICY) and applicability_requirements:
+                if (
+                    correction_policy
+                    in (
+                        CONDITIONAL_V5_CORRECTION_POLICY,
+                        CONDITIONAL_V6_CORRECTION_POLICY,
+                        SOURCE_SCOPE_V7_CORRECTION_POLICY,
+                        CORRECTION_POLICY,
+                    )
+                    and applicability_requirements
+                ):
                     instruction += (
                         "Applicability requirements identify explicit conditions in the supplied source. "
                         "Keep every listed flight-operation label and report the equipment-dependent "
@@ -1855,7 +2210,10 @@ def verified_completion(
                         "unrelated prohibitions or omitting the operating entry do not repair it. "
                         "Never turn an example into current-aircraft certification. "
                     )
-                if correction_policy == CORRECTION_POLICY and applicability_requirements:
+                if (
+                    correction_policy in (SOURCE_SCOPE_V7_CORRECTION_POLICY, CORRECTION_POLICY)
+                    and applicability_requirements
+                ):
                     instruction += (
                         "Missing applicability components name the specific scope still absent from the claim. "
                         "Restore each named component in claim text: example_scope must explicitly describe "
@@ -1866,6 +2224,18 @@ def verified_completion(
                         "in this request. Read their exact conditions and select their passage_id/excerpt_id "
                         "to support the complete assertion. Cite both the operating qualification and other "
                         "retained facts; a numeric match in a later excerpt does not support earlier equipment. "
+                    )
+                if correction_policy == CORRECTION_POLICY and procedure_requirements:
+                    instruction += (
+                        "Procedure requirements preserve the rejected source operating topic and its "
+                        "supported action, phase, remediation relationship and literal fraction. "
+                        "Restore the qualification in that action's own clause; another procedure, "
+                        "a negated restriction, a generic caution or reason text cannot repair it. "
+                        "Select every needed provided excerpt; a nearby warning does not cover "
+                        "an omitted procedure action. Inspection cannot substitute for required "
+                        "repair or replacement. Separate checklist numerals cannot establish a "
+                        "fraction. Procedure excerpt options repeat bounded untrusted source "
+                        "already provided; cite their IDs only after reading their actual support. "
                     )
                 feedback = {"validation_failure": str(error), "rejected_claims": failures}
             else:
