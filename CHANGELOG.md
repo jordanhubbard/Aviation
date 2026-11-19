@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Cockpit: decode bounded FIS-B text weather from local GDL90 receivers, retaining source and receipt provenance, explicit product-validity limits, private desktop/mobile display and typed HTTP/MCP access.
+
 - Aircraft library: compare matching explicitly marked page references across horizontal PDF layout spacing without borrowing their components as measurement evidence.
 
 - Aircraft library: recognize complete printed leading-decimal measurements attached to physical units during numeric comparison, preserving exact quotes and source-layout review requirements.

@@ -47,6 +47,9 @@ class Capabilities(BaseModel):
     geometric_altitude: bool
     device_id: bool
     weather_decoding: bool
+    weather_product_ids: list[Literal[413]]
+    weather_segmented: Literal[False]
+    weather_graphical: Literal[False]
 
 
 class BridgeStatus(BaseModel):
@@ -66,6 +69,7 @@ class BridgeSnapshot(BridgeStatus):
     receivers: list[SenderState] = Field(max_length=8)
     traffic: list[ReportEnvelope] = Field(max_length=500)
     recent_reports: list[ReportEnvelope] = Field(max_length=128)
+    weather: list[ReportEnvelope] = Field(max_length=128)
 
 
 class BridgeError(BaseModel):

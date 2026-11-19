@@ -18,10 +18,14 @@ def _report(data: bytes) -> dict:
     if identifier > 127:
         raise ValueError("invalid-message-id")
     result = {"message_id": identifier, "payload_hex": data.hex()}
-    sizes = {0: 7, 10: 28, 20: 28, 11: 5}
+    sizes = {0: 7, 7: 436, 10: 28, 20: 28, 11: 5}
     if identifier in sizes and len(data) != sizes[identifier]:
         raise ValueError("invalid-message-length")
-    if identifier == 0:
+    if identifier == 7:
+        from .gdl90_fisb import decode_uplink
+
+        result.update(decode_uplink(data))
+    elif identifier == 0:
         seconds = ((data[2] & 0x80) << 9) | int.from_bytes(data[3:5], "little")
         result.update(
             kind="heartbeat",
@@ -95,20 +99,12 @@ def _report(data: bytes) -> dict:
             result.update(
                 kind="device_id",
                 version=1,
-                serial_number_hex=(
-                    None if data[3:11] == b"\xff" * 8 else data[3:11].hex().upper()
-                ),
-                device_name=data[11:19]
-                .decode("utf-8", errors="replace")
-                .rstrip("\x00 "),
-                device_long_name=data[19:35]
-                .decode("utf-8", errors="replace")
-                .rstrip("\x00 "),
+                serial_number_hex=(None if data[3:11] == b"\xff" * 8 else data[3:11].hex().upper()),
+                device_name=data[11:19].decode("utf-8", errors="replace").rstrip("\x00 "),
+                device_long_name=data[19:35].decode("utf-8", errors="replace").rstrip("\x00 "),
                 capabilities_mask=mask,
                 geometric_altitude_datum="MSL" if mask & 1 else "WGS84_ellipsoid",
-                internet_policy=("unrestricted", "expensive", "disallowed", None)[
-                    (mask >> 1) & 3
-                ],
+                internet_policy=("unrestricted", "expensive", "disallowed", None)[(mask >> 1) & 3],
                 reserved_capabilities_mask=mask & 0xFFFFFFF8,
             )
     elif identifier == 0x65 and len(data) == 1:
@@ -157,11 +153,7 @@ class Gdl90Decoder:
 
         for byte in chunk:
             if byte == 0x7E:
-                if (
-                    self._started
-                    and not self._discard
-                    and (self._pending or self._escaped)
-                ):
+                if self._started and not self._discard and (self._pending or self._escaped):
                     frame = bytes(self._pending)
                     if self._escaped:
                         error("incomplete-escape")

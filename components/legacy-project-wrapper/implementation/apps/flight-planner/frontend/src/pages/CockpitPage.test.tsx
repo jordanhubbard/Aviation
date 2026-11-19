@@ -174,3 +174,49 @@ it('aborts a pending request on disconnect and cannot resurrect cleared reports'
   expect(screen.getByLabelText('Bridge operator token')).toHaveValue('')
   expect(screen.queryByText(/Session 7/)).toBeNull()
 })
+
+it('shows received text with explicit validity and receipt semantics and clears private weather', async () => {
+  const snapshot = state()
+  snapshot.capabilities = {
+    weather_decoding: true,
+    weather_product_ids: [413],
+    weather_segmented: false,
+    weather_graphical: false,
+  }
+  snapshot.weather = [
+    {
+      source_id: '127.0.0.1:4567',
+      received_at: new Date().toISOString(),
+      age_seconds: 2,
+      live: false,
+      stale: false,
+      report: {
+        kind: 'fisb_text',
+        message_id: 7,
+        payload_hex: '07' + '00'.repeat(435),
+        product_id: 413,
+        report_type: 'TAF',
+        location_id: 'KSFO',
+        report_time: '181200ZAM',
+        body: 'NIL= <SCRIPT>ALERT</SCRIPT>',
+        raw_text: 'TAF KSFO 181200ZAM NIL= <SCRIPT>ALERT</SCRIPT>',
+        product_age_seconds: null,
+        validity: 'unassessed',
+      },
+    },
+  ]
+  const fetch = vi.fn().mockImplementation(async () => new Response(JSON.stringify(snapshot)))
+  vi.stubGlobal('fetch', fetch)
+  const view = render(<CockpitPage />)
+  await connect()
+  expect(screen.getByText('Receiver weather (1)')).toBeTruthy()
+  expect(screen.getByText('Product validity unassessed')).toBeTruthy()
+  expect(screen.getByText(/Report time \(as received\): 181200ZAM/)).toBeTruthy()
+  expect(screen.getByText('NIL= <SCRIPT>ALERT</SCRIPT>')).toBeTruthy()
+  expect(view.container.querySelector('script')).toBeNull()
+  expect(fetch).toHaveBeenCalledTimes(1)
+  expect(localStorage.length).toBe(0)
+  expect(sessionStorage.length).toBe(0)
+  fireEvent.click(screen.getByRole('button', { name: 'Disconnect and clear' }))
+  expect(screen.queryByText('Receiver weather (1)')).toBeNull()
+})

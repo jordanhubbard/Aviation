@@ -1,7 +1,17 @@
 /** Bounded, transport-free GDL90 input (Public ICD Rev A). */
+import { decodeUplink } from './fisb';
+import type { FisbTextRecord, UplinkReport } from './fisb';
+export type { FisbTextRecord, UplinkReport } from './fisb';
+export type FisbTextReport = Base &
+  FisbTextRecord & {
+    kind: 'fisb_text';
+    product_age_seconds: null;
+    validity: 'unassessed';
+  };
 type Base = { message_id: number; payload_hex: string };
 export type Gdl90Message = Base &
   (
+    | UplinkReport
     | {
         kind: 'heartbeat';
         gps_position_valid: boolean;
@@ -86,9 +96,10 @@ function report(data: Uint8Array): Gdl90Message {
   const identifier = data[0];
   if (identifier > 127) throw new Error('invalid-message-id');
   const base: Base = { message_id: identifier, payload_hex: hex(data) };
-  const sizes: Record<number, number> = { 0: 7, 10: 28, 20: 28, 11: 5 };
+  const sizes: Record<number, number> = { 0: 7, 7: 436, 10: 28, 20: 28, 11: 5 };
   if (sizes[identifier] && data.length !== sizes[identifier])
     throw new Error('invalid-message-length');
+  if (identifier === 7) return { ...base, ...decodeUplink(data) };
   if (identifier === 0) {
     const seconds = ((data[2] & 0x80) << 9) | data[3] | (data[4] << 8);
     return {
@@ -176,7 +187,8 @@ function report(data: Uint8Array): Gdl90Message {
       throw new Error('invalid-message-length');
     if (data[1] === 0 && data[2] === 1) {
       const mask =
-        (data[35] * 2 ** 24 + (data[36] << 16) + (data[37] << 8) + data[38]) >>> 0;
+        (data[35] * 2 ** 24 + (data[36] << 16) + (data[37] << 8) + data[38]) >>>
+        0;
       const serial = data.slice(3, 11);
       const name = (start: number, end: number) =>
         new TextDecoder('utf-8', { ignoreBOM: true })
@@ -193,9 +205,9 @@ function report(data: Uint8Array): Gdl90Message {
         device_long_name: name(19, 35),
         capabilities_mask: mask,
         geometric_altitude_datum: mask & 1 ? 'MSL' : 'WGS84_ellipsoid',
-        internet_policy: (['unrestricted', 'expensive', 'disallowed', null] as const)[
-          (mask >>> 1) & 3
-        ],
+        internet_policy: (
+          ['unrestricted', 'expensive', 'disallowed', null] as const
+        )[(mask >>> 1) & 3],
         reserved_capabilities_mask: (mask & 0xfffffff8) >>> 0,
       };
     }
@@ -210,7 +222,10 @@ export function resolveGeometricAltitude(
 ): Extract<Gdl90Message, { kind: 'geometric_altitude' }> {
   if (report.kind !== 'geometric_altitude')
     throw new Error('Expected a geometric-altitude report');
-  if (deviceId != null && (deviceId.kind !== 'device_id' || deviceId.version !== 1))
+  if (
+    deviceId != null &&
+    (deviceId.kind !== 'device_id' || deviceId.version !== 1)
+  )
     throw new Error('Expected a supported device-ID report');
   if (profileUnknown)
     return { ...report, datum: null, datum_source: 'unknown_receiver_profile' };
@@ -220,7 +235,11 @@ export function resolveGeometricAltitude(
       datum: deviceId.geometric_altitude_datum,
       datum_source: 'foreflight_device_id',
     };
-  return { ...report, datum: 'WGS84_ellipsoid', datum_source: 'gdl90_standard' };
+  return {
+    ...report,
+    datum: 'WGS84_ellipsoid',
+    datum_source: 'gdl90_standard',
+  };
 }
 
 export class Gdl90Decoder {

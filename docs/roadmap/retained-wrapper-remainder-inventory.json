@@ -5,7 +5,7 @@
   "boundary": "This inventory classifies the retained wrapper's top-level ownership boundaries. It does not turn repository configuration, documentation, plans, examples, deployment policy, runtime state, or application-private source into common Aviation SDK Components.",
   "topLevelDirectories": [
     {"path":"apps","classification":"application-private-source","coverage":"application-state-contracts-and-workspace-package-graph"},
-    {"path":"conformance","classification":"retained-component-conformance-vectors","coverage":"path-manifest","fileCount":2,"pathsSha256":"b434885d6461b2f9a7a71caf5f249129573f0d4ce00d4d3cf25b4dd4464fa75a"},
+    {"path":"conformance","classification":"retained-component-conformance-vectors","coverage":"path-manifest","fileCount":3,"pathsSha256":"0681db1e0fa36de8b6308d53d7b7406c0a837c35f1d9331dce08bdfeab538e32"},
     {"path":"deploy","classification":"repository-harness","coverage":"repository-harness-inventory"},
     {"path":"docs","classification":"retained-documentation-corpus","coverage":"path-manifest","fileCount":70,"pathsSha256":"8d9409bb6e074bd5d5533066abdd46f73db9e3f164160ea3672ab3713b31e891"},
     {"path":"examples","classification":"repository-documentation-example","coverage":"path-manifest","fileCount":1,"pathsSha256":"2d180f9c8f08015dc386d6bbade8372c30b4e0f686b262425bf74deda1fd272b"},

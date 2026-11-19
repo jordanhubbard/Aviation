@@ -37,7 +37,14 @@ function Report({
       <Chip
         size="small"
         color={fresh ? 'success' : 'warning'}
-        label={fresh ? 'Fresh receipt' : 'Last known / stale'}
+        sx={report.kind === 'fisb_text' ? { bgcolor: '#9a3412', color: '#fff' } : undefined}
+        label={
+          report.kind === 'fisb_text'
+            ? 'Product validity unassessed'
+            : fresh
+              ? 'Fresh receipt'
+              : 'Last known / stale'
+        }
       />
       <Typography variant="body2">
         Received {stamp(envelope.received_at)} · age {number(age, 1)} seconds
@@ -108,6 +115,24 @@ function Report({
             Declared datum: {report.geometric_altitude_datum} · internet policy:{' '}
             {report.internet_policy ?? 'Unknown'}
           </Typography>
+        </>
+      )}
+      {report.kind === 'fisb_text' && (
+        <>
+          <Typography>
+            {report.report_type} · {report.location_id} · FIS-B product {report.product_id}
+          </Typography>
+          <Typography>Report time (as received): {report.report_time}</Typography>
+          <Typography variant="body2">
+            Receipt age does not establish product age or validity.
+          </Typography>
+          {age > 900 && <Typography>Receipt retention expired; refresh the snapshot.</Typography>}
+          <Box
+            component="pre"
+            sx={{ whiteSpace: 'pre-wrap', overflowWrap: 'anywhere', fontFamily: 'monospace' }}
+          >
+            {report.body}
+          </Box>
         </>
       )}
       {report.kind === 'heartbeat' && (
@@ -228,7 +253,8 @@ export default function CockpitPage() {
       </Typography>
       <Alert severity="warning">
         Advisory receiver reports only. Traffic coverage is incomplete; this page supplies no
-        navigation or collision-avoidance guidance. Receiver weather decoding is unavailable.
+        navigation or collision-avoidance guidance. Complete FIS-B text weather is supported;
+        graphical and segmented products are unavailable. Product validity is unassessed.
       </Alert>
       <Typography>
         Run the local bridge with this page’s origin in its allowlist. Use HTTPS, or loopback HTTP
@@ -337,6 +363,31 @@ export default function CockpitPage() {
               </CardContent>
             </Card>
           ))}
+          <Box component="section" aria-label="Receiver weather">
+            <Typography variant="h5" component="h2">
+              Receiver weather ({snapshot.weather?.length ?? 0})
+            </Typography>
+            <Typography variant="body2">
+              {snapshot.capabilities.weather_decoding
+                ? 'Received FIS-B text product 413. Graphical and segmented products are unavailable; product validity is unassessed.'
+                : 'This bridge does not decode receiver weather.'}
+            </Typography>
+            {!snapshot.weather?.length && (
+              <Typography>
+                No receiver weather reports retained; this does not establish weather coverage.
+              </Typography>
+            )}
+            {snapshot.weather?.map((weather, index) => (
+              <Card key={`${weather.source_id}-weather-${index}`}>
+                <CardContent>
+                  <Typography sx={{ overflowWrap: 'anywhere' }}>
+                    Source {weather.source_id}
+                  </Typography>
+                  <Report envelope={weather} localAge={localAge} available={available} />
+                </CardContent>
+              </Card>
+            ))}
+          </Box>
           <Typography variant="h5" component="h2">
             Traffic ({snapshot.traffic.length})
           </Typography>

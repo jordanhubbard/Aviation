@@ -6,6 +6,8 @@ index, not an independently maintained task list. Use `gh issue` and `gh pr`.
 
 ## Current work and requests
 
+- [#528 — Receiver FIS-B text weather](https://github.com/jordanhubbard/Aviation/issues/528): [wire, retention and UI contract](../architecture/offline-cockpit.md#receiver-fis-b-text-products-528).
+
 - [#561 — Explicit page-reference layout equivalence](https://github.com/jordanhubbard/Aviation/issues/561): [paired reference comparison contract](../architecture/aircraft-library.md); retain complete page identities, exact quotes and signed measurement checks.
 
 - [#558 — Printed leading-decimal measurements attached to units](https://github.com/jordanhubbard/Aviation/issues/558): [comparison and source-layout contract](../architecture/aircraft-library.md); keep exact quotations, identifier exclusions and independently reviewed source relationships.
