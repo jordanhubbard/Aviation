@@ -168,7 +168,7 @@ def test_glossary_obligation_survives_numeric_failure_and_preserves_accepted_cla
     assert len(calls) == 2
 
 
-def test_v9_archives_v8_claims_and_receipt_verbatim_then_starts_at_zero(tmp_path):
+def test_current_policy_archives_v8_claims_and_receipt_verbatim_then_starts_at_zero(tmp_path):
     from app.services.aircraft_library.models import CORRECTION_POLICY, distillation_context, distill
     from app.services.aircraft_library.store import Store
     from .test_aircraft_library import manual
@@ -191,7 +191,7 @@ def test_v9_archives_v8_claims_and_receipt_verbatim_then_starts_at_zero(tmp_path
         distill(store, provider, doc['id'])
     fresh = store.get(doc['id'])['artifacts']['distillation']
     assert fresh['completed_batches'] == 0 and fresh['sections'] == []
-    assert fresh['correction_policy'] == CORRECTION_POLICY == 'symbol-quote-feedback-v9'
+    assert fresh['correction_policy'] == CORRECTION_POLICY == 'definition-quote-feedback-v10'
     assert fresh['evidence_identity'] != fingerprint and 'recovery' not in fresh
     assert provider.calls == [[r['passage_id'] for r in roots[0]]]
     assert any(store.historical_distillation(doc['id'], r['revision_id'])['artifact'] == old for r in store.distillations(doc['id'])['items'])
