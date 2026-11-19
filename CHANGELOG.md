@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Aircraft library: identify missing operating-scope components and supporting excerpts in bounded repairs, retain as-delivered equipment scope, and require its citation coverage under a new versioned policy.
+
 - Aircraft library: recognize "varying" in equipment-dependent example qualifications under a new generation policy, retaining negation checks and exact historical validation.
 
 - Aircraft library: retain explicit equipment-dependent example and original-certificate conditions in flight-operation certification claims, with bounded correction obligations and a fresh versioned generation.

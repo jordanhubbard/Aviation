@@ -880,7 +880,7 @@ Test deterministic PDFs, duplicate bytes/acquisitions, persistence, wrong-type/t
 
 ### Conditional certification assertions (#576)
 
-New answers and distillations use `conditional-source-forms-v6`. In addition to
+New answers and distillations use `source-scope-feedback-v7`. In addition to
 all existing quotation, source-use and numeric checks, reject a positive
 flight-operation certification or authorization assertion when its supplied cited
 source explicitly frames that operating entry as an equipment-dependent example
@@ -903,8 +903,29 @@ supported by unconditional source statements must not become conditional merely
 because certification vocabulary occurs elsewhere. This bounded source-cue check
 does not establish general semantic entailment or operational approval.
 
+Affirmative flight-operation equipment assertions also retain an explicit
+"as delivered" configuration scope supplied in their cited page's quotable source.
+The selected quotation must cover that equipment assertion and its delivery scope;
+a later fuel or placard excerpt cannot supply support for an earlier equipment
+statement merely because its numbers match. Explicitly negative and hypothetical
+equipment statements do not assert the current configuration. Do not import a
+configuration condition from another page, document, metadata or restricted text.
+A delivery phrase in an unrelated assertion cannot qualify an unscoped equipment
+assertion; a negative or hypothetical replacement cannot erase a rejected affirmative
+operating assertion. Keep each retained operating entry under its supplied scope.
+
 Condition failures identify the one-based rejected claim and private source-derived
-condition requirements. Correct only rejected claims against the same evidence,
+condition requirements. New-policy feedback distinguishes missing example scope,
+equipment scope, equipment dependence, original-certificate date, as-delivered
+scope and quotation coverage where applicable. It may identify at most six
+provided same-page qualification excerpts, each retaining its provided passage and
+excerpt IDs and exact text within the existing 1,200-character quotation bound.
+The six-excerpt limit applies per rejected claim. These are existing request
+evidence, never a new source or permission to invent a
+condition. Source text remains untrusted data. Preserve this feedback even when a
+numeric failure is detected first. A repair of the retained operating assertion
+must restore its specific missing scope and cite its supporting excerpt; a reason
+string claiming that a condition was restored does not substitute for claim text. Correct only rejected claims against the same evidence,
 keep already validated claims unchanged, and require every rejected certification
 assertion's operating-entry obligations and supplied qualifications in its repair.
 An unrelated replacement, a dropped operating assertion, an empty repair, or a
@@ -915,11 +936,14 @@ raw source text, private condition diagnostics or provider contents.
 
 The new policy participates in every distillation fingerprint. A policy change
 starts a fresh generation; do not graft an older accepted prefix into it or relabel
-saved partitions/history. Explicit versions 1 through 5 retain their exact prior
+saved partitions/history. Explicit versions 1 through 6 retain their exact prior
 requests, correction behavior and validation semantics for reconstruction. Their
 known unsupported assertions remain preserved and unapproved under the new policy.
 In particular, v5 retains its recorded rejection of "varying"; do not retroactively
-revalidate, relabel or graft a v5 prefix under the expanded v6 recognizer.
+revalidate, relabel or graft a v5 prefix under a newer recognizer. Version 6 retains
+its prior equipment-admission and correction-feedback behavior for reconstruction;
+known failures remain unapproved. The new qualification feedback and equipment
+scope checks apply only to version 7.
 Source originals, native/OCR/transcription identities, numeric grammar, provider,
 model, system/question, budgets, API/SDK/UI shapes and embedding behavior remain
 unchanged. Qualification requires the actual retained failure plus independent
