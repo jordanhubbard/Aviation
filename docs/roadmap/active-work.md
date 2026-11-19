@@ -6,6 +6,8 @@ index, not an independently maintained task list. Use `gh issue` and `gh pr`.
 
 ## Current work and requests
 
+- [#592 — Quoted chart-sheet/date associations](https://github.com/jordanhubbard/Aviation/issues/592): [bounded association contract](../architecture/aircraft-library.md#quoted-chart-sheet-date-associations-592). Preserve the complete failed v10 batch and exact recorded behavior; author prospective controls, version software through normal delivery, then begin actual v11 at zero. Source-only #591 corrected ten further chart pages and canonically preserved 36 admitted claims; the next whole batch failed a missing first-sheet quotation.
+
 - [#589 — BHP and conversion-unit quotation coverage](https://github.com/jordanhubbard/Aviation/issues/589): [bounded quotation contract](../architecture/aircraft-library.md#bhp-and-conversion-unit-quotation-coverage-589). Whole third v9 batch review found two missing selected source concepts. Preserve exact recorded v4-v9 behavior, shared feedback bounds and zero-start generation boundaries. Actual admission follows source #588 and normal green software delivery.
 
 - [#588 — Literal conversion operators and source boundaries](https://github.com/jordanhubbard/Aviation/issues/588): canonical image-pinned partial header/footer reviews preserve original operators and unsafe native rows, without admitting table/graph values. Original-image acceptance of fresh actual output remains required after #589; qualification source changes do not import a database into production.

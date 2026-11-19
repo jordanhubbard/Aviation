@@ -1204,6 +1204,71 @@ Prospective controls precede implementation:
 | Actual generation changes to v10 | Archive prior state unchanged; start zero |
 
 
+### Quoted chart-sheet date associations (#592)
+
+New answers and distillations use `chart-date-feedback-v11`. They retain v10
+checks and add a bounded negative check for a named figure/chart sheet and a
+printed date. A repeated date in a different sheet's quotation is not support
+for the claimed association. This does not prove a chart's values or general
+semantic entailment.
+
+Discover an obligation only from one provided manual, an explicitly asserted
+figure identifier, an asserted date, and a quotable provided page that contains
+that figure/sheet/date association. Figure/Fig. identifiers and Sheet 1 of 2,
+Sheet 2, sheets 1 and 2, both sheets and plural sheets are recognized literal
+forms. A plural sheet assertion binds each matching provided sheet, while an
+explicit single-sheet partial assertion binds only that sheet. Unsheeted named
+figures may bind their own provided date. Do not infer absent sheets, unasserted
+dates, chart cells, revision status, or associations from foreign manuals,
+restricted text, metadata or unprovided pages. Recognize literal named-month
+US dates and their unambiguous expanded month/day/year aliases; do not calculate
+or reinterpret ambiguous numeric dates. Existing numeric validation still rejects
+an expanded year absent from selected source; these aliases never bypass it.
+Separate contrast clauses so dates for
+one chart are not assigned to another by token co-occurrence. Ambiguous clauses
+are outside discovery rather than guessed associations.
+
+Each bound association must be supported by selected quotations on its original
+provided manual page, retaining its figure, sheet when present, and date. Separate
+selected excerpts on that same page may collectively retain these fields; the
+same date on another page cannot replace them. Known rejected-position
+associations remain frozen through numeric/citation repairs. Dropping or changing
+the figure, sheet or date, moving them to reason, negating the original fact or
+borrowing a foreign manual does not repair the rejected claim. All accepted
+claims remain exact. Only already supplied excerpts may be returned as witnesses;
+all source concept families share the existing six-option/1,200-character bounds,
+eight citations per claim, diagnostics and normal attempt limits.
+
+Preserve exact recorded v4-v10 policy/settings/validation/feedback, all 71 actual
+historical provider exchanges and legitimate recovery receipts. A new actual v11
+generation starts at zero and archives all prior output unchanged. Do not graft
+old prefixes, modify correct source to fix a quotation gap, rerun an unchanged
+failed contract, narrow the canonical question, change source budgets or model
+settings, retry embeddings/FAA access, or import qualification data to production.
+HTTP/MCP/SDK/UI schemas remain unchanged for this private feedback refinement.
+After software delivery and admitted source lineage, compare every final claim
+of each entire naturally generated affected canonical scope with all originals
+before admission or more inference. Later procedure and page-111 acceptance
+remain separate open requirements.
+
+Prospective controls precede implementation:
+
+| Case | Required result |
+| --- | --- |
+| Both Figure 1-3 sheets asserted dated Nov 15/00; only Sheet 2 quoted | Reject missing Sheet 1 association with supplied footer witness |
+| Both sheets' figure/sheet/date support selected | Pass this negative coverage check |
+| Only Sheet 2 asserted and quoted; Sheet 1 date unasserted | Do not invent the omitted obligation |
+| Date/figure labels split across selected same-page excerpts | Preserve collective same-page support |
+| Date matches only another page/figure, or source is foreign/restricted | No borrowed association support |
+| Named-month/date and figure/sheet aliases | Preserve the same literal association |
+| Contrasting clauses assign different dates | Bind only the explicit unambiguous clause date |
+| Numeric error is repaired first, or association is dropped/changed/negated/moved to reason | Keep the original association and accepted claims |
+| Missing page was not actually supplied or no date asserted | No fabricated witness or obligation |
+| Procedure/glossary/definition and chart-date witnesses coexist | Existing shared six-option bound |
+| Recorded v4-v10 actual wires or receipt | Exact predecessor behavior |
+| New v11 actual generation | Start zero, archive prior output and receipts verbatim |
+
+
 ## Historical distillations
 
 Changing generation settings changes the evidence identity; an earlier summary
