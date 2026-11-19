@@ -5,7 +5,7 @@ from itertools import product
 
 import pytest
 
-from app.services.aircraft_library import ocr_reviews, transcriptions
+from app.services.aircraft_library import ocr_reviews, pdf, transcriptions
 from app.services.aircraft_library.models import (
     LEGACY_DISTILLATION_EVIDENCE,
     CORRECTION_POLICY,
@@ -18,6 +18,7 @@ from app.services.aircraft_library.models import (
     distillation_context,
     distillation_plan,
     distillation_request_evidence,
+    model_evidence,
     validate_answer,
     validated_prefix,
     _smaller_distillation_split,
@@ -648,13 +649,24 @@ class PageTruncationProvider(ContextProvider):
 
 @pytest.mark.parametrize("long_page_first", [True, False])
 def test_truncation_selects_a_smaller_page_boundary_and_resumes_its_saved_partition(
-    library, long_page_first
+    library, long_page_first, monkeypatch
 ):
     store, _, _ = library
-    pages = ["Native systems description. " * 130, "Following page description."]
+    ocr_calls = []
+
+    def unavailable_ocr(*args, **kwargs):
+        ocr_calls.append(1)
+        raise RuntimeError("Synthetic unavailable OCR")
+
+    monkeypatch.setattr(pdf, "ocr_page", unavailable_ocr)
+    pages = [
+        "Native systems description. " * 130,
+        "Following page description with sufficient native text.",
+    ]
     if not long_page_first:
         pages.reverse()
     identifier = store.ingest(manual(*pages), {"icao": "C182"})["id"]
+    assert store.get(identifier)["status"] == "indexed" and ocr_calls == []
     original = store.original(identifier).read_bytes()
     before = store.passages([identifier])
     assert [sum(p["page"] == page for p in before) for page in (1, 2)] == (
@@ -686,6 +698,7 @@ def test_truncation_selects_a_smaller_page_boundary_and_resumes_its_saved_partit
     assert result["evidence_identity"] == fingerprint
     assert store.original(identifier).read_bytes() == original
     assert store.passages([identifier]) == before
+    assert ocr_calls == []
 
 
 def test_ineffective_native_split_preserves_the_accepted_prefix_and_original_partition(library):
@@ -722,6 +735,43 @@ def test_reviewed_context_is_not_removed_to_force_a_smaller_retry(library):
     assert result["status"] == "partial" and result["completed_batches"] == 0
     assert result["total_batches"] == 1 and len(provider.calls) == 1
     assert review["passage_id"] in provider.calls[0]
+    assert store.passages([identifier]) == before
+
+
+def test_restricted_native_text_cannot_make_unchanged_quotable_context_look_smaller(library):
+    from .test_aircraft_library_source_limits import apply as restrict
+
+    store, _, _ = library
+    identifier = store.ingest(
+        manual("Native systems description. " * 200), {"icao": "C182"}
+    )["id"]
+    review = transcribe(store, identifier, 1, "Literal reviewed pressure is 37 psi.")
+    restrict(store, identifier, reason="native_text_inaccurate")
+    before = store.passages([identifier])
+    provider = PageTruncationProvider(1, budget=4000)
+    _, roots, _, fingerprint = distillation_context(store, provider, identifier)
+    assert len(roots) == 2 and len(roots[0]) == 2
+    artifact = {"evidence_policy": NATIVE_DISTILLATION_EVIDENCE, "context_limit_chars": 4000}
+    parent = distillation_request_evidence(roots[0], roots, artifact)
+    children = [distillation_request_evidence([row], roots, artifact) for row in roots[0]]
+
+    def quote_text(rows):
+        return [
+            excerpt["text"] for row in model_evidence(rows) for excerpt in row["excerpts"]
+        ]
+
+    assert quote_text(parent) == [review["text"]]
+    assert all(quote_text(child) == quote_text(parent) for child in children)
+    assert all(
+        sum(len(p["text"]) for p in child) < sum(len(p["text"]) for p in parent)
+        for child in children
+    )
+    with pytest.raises(ModelTruncated, match="required page context prevents a smaller"):
+        distill(store, provider, identifier)
+    result = store.get(identifier)["artifacts"]["distillation"]
+    assert result["completed_batches"] == 0 and result["total_batches"] == 2
+    assert result["evidence_identity"] == fingerprint and len(provider.calls) == 1
+    assert result["batch_plan"] == [[p["passage_id"] for p in batch] for batch in roots]
     assert store.passages([identifier]) == before
 
 

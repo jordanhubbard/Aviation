@@ -749,7 +749,9 @@ When a first candidate is explicitly truncated, distillation may bisect its
 contiguous passage batch, durably recording the complete ordered partition before
 continuing. Both child requests must supply strictly less source text and a proper
 subset of the parent's supplied passages after applying the unchanged page-context
-policy. Retain the primary midpoint when it meets these conditions; otherwise use
+policy. Measure source text in the actual provider projection; retained native
+text excluded by a source-use restriction cannot count as a reduction. Retain the
+primary midpoint when it meets these conditions; otherwise use
 the nearest effective contiguous boundary, preferring the lower boundary on a tie.
 Search is bounded logarithmically in the primary passage count because supplied
 context grows monotonically with a prefix and shrinks with a suffix. Required

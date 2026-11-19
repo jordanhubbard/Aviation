@@ -1770,18 +1770,22 @@ def distillation_request_evidence(batch, batches, artifact):
 
 def _smaller_distillation_split(batch, batches, artifact, evidence):
     """Find the nearest midpoint cut whose two actual requests both shrink."""
-    parent_ids = {p["passage_id"] for p in evidence}
-    parent_chars = sum(len(p["text"]) for p in evidence)
+    def scope(supplied):
+        projected = model_evidence(supplied)
+        return {p["passage_id"] for p in projected}, sum(
+            len(p.get("text", "")) + sum(len(excerpt["text"]) for excerpt in p["excerpts"])
+            for p in projected
+        )
+
+    parent_ids, parent_chars = scope(evidence)
 
     def candidate(cut):
         parts = [batch[:cut], batch[cut:]]
         smaller = []
         for part in parts:
             supplied = distillation_request_evidence(part, batches, artifact)
-            smaller.append(
-                {p["passage_id"] for p in supplied} < parent_ids
-                and sum(len(p["text"]) for p in supplied) < parent_chars
-            )
+            supplied_ids, supplied_chars = scope(supplied)
+            smaller.append(supplied_ids < parent_ids and supplied_chars < parent_chars)
         return parts, smaller
 
     middle = len(batch) // 2
