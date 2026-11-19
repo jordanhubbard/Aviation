@@ -164,3 +164,250 @@ def test_invalid_replacement_count_never_reaches_provider(count):
 
     with pytest.raises(ValueError, match="one to twelve"):
         model(provider).complete_replacements(EVIDENCE, "Summarize", count)
+
+
+# The retained provider failure cited a complete example placard but discarded
+# its equipment and original-certificate conditions. These are functional,
+# non-aircraft-specific controls; private actual wires remain outside the tree.
+CONDITIONAL_OPERATIONS = {
+    'passage_id': 2, 'document_id': 'doc_correction', 'page': 2, 'label': '2',
+    'method': 'text', 'metadata': {'scope': 'type'},
+    'text': ('The DAY-NIGHT-VFR-IFR entry shown in this example varies as the airplane is equipped. '
+             'This airplane is certified for DAY-NIGHT-VFR-IFR operations as of the date of '
+             'the original airworthiness certificate. No aerobatic maneuvers are approved.'),
+}
+UNQUALIFIED_CERTIFICATION = 'The airplane is certified for DAY-NIGHT-VFR-IFR operations.'
+QUALIFIED_CERTIFICATION = (
+    'The manual shows an example DAY-NIGHT-VFR-IFR entry that varies as the airplane is equipped; '
+    'its certification statement is as of the date of the original airworthiness certificate.'
+)
+
+
+def operation_claim(text):
+    return {'text': text, 'citations': [{'passage_id': 2, 'excerpt_id': 0}]}
+
+
+def operation_answer(text):
+    return {'insufficient_evidence': False, 'claims': [operation_claim(text)]}
+
+
+def test_equipment_dependent_historical_certification_cannot_lose_conditions():
+    from app.services.aircraft_library.models import validate_answer
+    with pytest.raises(ModelUnavailable, match='applicability conditions') as failure:
+        validate_answer(operation_answer(UNQUALIFIED_CERTIFICATION), [CONDITIONAL_OPERATIONS])
+    assert failure.value.feedback['applicability_requirements'] == {
+        'flight_operations': ['day', 'ifr', 'night', 'vfr'],
+        'conditions': ['equipment_dependent_example', 'original_certificate_date'],
+    }
+    assert CONDITIONAL_OPERATIONS['text'] not in str(failure.value)
+
+
+@pytest.mark.parametrize('text', [
+    QUALIFIED_CERTIFICATION,
+    'The example DAY-NIGHT-VFR-IFR entry depends on installed equipment; certification is as of the original airworthiness certificate issuance.',
+    'No aerobatic maneuvers, including spins, are approved.',
+    'Night IFR operations are not approved.',
+    'The airplane is not certified for night IFR operations.',
+])
+def test_example_reporting_and_explicit_prohibitions_do_not_assert_current_approval(text):
+    from app.services.aircraft_library.models import validate_answer
+    result = validate_answer(operation_answer(text), [CONDITIONAL_OPERATIONS])
+    assert result['claims'][0]['text'] == text
+
+
+@pytest.mark.parametrize('text', [
+    'Placards state the airplane is certified for DAY-NIGHT-VFR-IFR operations.',
+    'The airplane is approved for DAY-NIGHT-VFR-IFR operations; consult the manual.',
+    'The example airplane is certified for DAY-NIGHT-VFR-IFR operations.',
+    'The airplane is certified for DAY-NIGHT-VFR-IFR operations as equipped.',
+    'The example entry varies as equipped; the airplane is certified for DAY-NIGHT-VFR-IFR operations.',
+])
+def test_generic_disclaimer_or_one_qualification_does_not_replace_all_source_conditions(text):
+    from app.services.aircraft_library.models import validate_answer
+    with pytest.raises(ModelUnavailable, match='applicability conditions'):
+        validate_answer(operation_answer(text), [CONDITIONAL_OPERATIONS])
+
+
+def test_unconditional_statement_does_not_borrow_other_page_or_document_conditions():
+    from app.services.aircraft_library.models import validate_answer
+    source = {**CONDITIONAL_OPERATIONS, 'text': UNQUALIFIED_CERTIFICATION}
+    for other in [
+        {**CONDITIONAL_OPERATIONS, 'passage_id': 3, 'page': 3},
+        {**CONDITIONAL_OPERATIONS, 'passage_id': 3, 'document_id': 'other'},
+    ]:
+        assert validate_answer(operation_answer(UNQUALIFIED_CERTIFICATION), [source, other])['claims']
+    source['text'] += ' A fuel-pump example varies with installed equipment.'
+    assert validate_answer(operation_answer(UNQUALIFIED_CERTIFICATION), [source])['claims']
+
+
+def test_selecting_shorter_excerpt_cannot_hide_available_same_page_conditions():
+    from app.services.aircraft_library.models import validate_answer, source_excerpts
+    source = {**CONDITIONAL_OPERATIONS, 'text': UNQUALIFIED_CERTIFICATION}
+    context = {**CONDITIONAL_OPERATIONS, 'passage_id': 3}
+    assert source_excerpts(source)
+    with pytest.raises(ModelUnavailable, match='applicability conditions'):
+        validate_answer(operation_answer(UNQUALIFIED_CERTIFICATION), [source, context])
+
+
+@pytest.mark.parametrize('policy', [
+    'numeric-citation-only-v1', 'rejected-assertion-repair-v2',
+    'signed-source-feedback-v3', 'signed-source-feedback-v4',
+])
+def test_predecessor_policy_reconstructs_original_conditional_claim_behavior(policy):
+    requests = []
+    def provider(request):
+        requests.append(json.loads(request.content))
+        return response([operation_claim(UNQUALIFIED_CERTIFICATION)])
+    accepted = verified_completion(model(provider), [CONDITIONAL_OPERATIONS], 'Summarize',
+                                   correction_policy=policy)
+    assert accepted['claims'][0]['text'] == UNQUALIFIED_CERTIFICATION
+    assert len(requests) == 1
+
+
+def test_bounded_condition_repair_preserves_accepted_claim_and_failed_operating_entry():
+    requests = []
+    retained = claim('Power limit is 100 hp.')
+    evidence = EVIDENCE + [CONDITIONAL_OPERATIONS]
+    def provider(request):
+        payload = json.loads(request.content)
+        requests.append(payload)
+        if len(requests) == 1:
+            return response([retained, operation_claim(UNQUALIFIED_CERTIFICATION)])
+        feedback = json.loads(payload['messages'][1]['content'])['question']
+        assert 'applicability_requirements' in feedback
+        assert 'equipment_dependent_example' in feedback
+        assert 'original_certificate_date' in feedback
+        assert 'Power limit is 100 hp.' not in feedback
+        assert properties(payload)['claims']['maxItems'] == 1
+        if len(requests) == 2:
+            return response([operation_claim('No aerobatic maneuvers are approved.')])
+        return response([operation_claim(QUALIFIED_CERTIFICATION)])
+    result = verified_completion(model(provider), evidence, 'Summarize')
+    assert len(requests) == 3
+    assert [c['text'] for c in result['claims']] == [retained['text'], QUALIFIED_CERTIFICATION]
+
+
+@pytest.mark.parametrize('replacement', [
+    'No aerobatic maneuvers are approved.',
+    'The manual shows an example VFR entry that varies as equipped, as of the original airworthiness certificate.',
+    'The manual shows DAY-NIGHT-VFR-IFR operations; check the source before use.',
+])
+def test_topic_or_operating_label_dropping_cannot_launder_condition_failure(replacement):
+    calls = []
+    def provider(request):
+        calls.append(json.loads(request.content))
+        return response([operation_claim(UNQUALIFIED_CERTIFICATION if len(calls) == 1 else replacement)])
+    with pytest.raises(ModelUnavailable, match='applicability conditions'):
+        verified_completion(model(provider), [CONDITIONAL_OPERATIONS], 'Summarize')
+    assert len(calls) == 3
+
+
+@pytest.mark.parametrize('text', [
+    'The example DAY-NIGHT-VFR-IFR entry does not vary as equipped; certification is as of the original airworthiness certificate issuance.',
+    'There is no example DAY-NIGHT-VFR-IFR entry; it varies as equipped and certification is as of the original airworthiness certificate date.',
+    'The example DAY-NIGHT-VFR-IFR entry varies as equipped, but certification is not as of the date of the original airworthiness certificate.',
+])
+def test_negated_qualification_cannot_satisfy_repair_obligations(text):
+    calls = []
+    def provider(request):
+        calls.append(json.loads(request.content))
+        return response([operation_claim(UNQUALIFIED_CERTIFICATION if len(calls) == 1 else text)])
+    with pytest.raises(ModelUnavailable, match='applicability conditions'):
+        verified_completion(model(provider), [CONDITIONAL_OPERATIONS], 'Summarize')
+    assert len(calls) == 3
+
+
+def test_conditional_job_failure_preserves_prefix_and_resumes_with_same_source(tmp_path):
+    from app.services.aircraft_library.models import source_excerpts
+    from app.services.aircraft_library.store import Store
+    from app.services.aircraft_library.worker import Worker
+    from .test_aircraft_library import manual
+    from .test_aircraft_library_resume import Provider
+
+    store = Store(tmp_path / 'library')
+    raw = manual('General inspection notes. ' + 'Inspect engine controls before servicing. ' * 43,
+                 CONDITIONAL_OPERATIONS['text'])
+    doc = store.ingest(raw, {'icao': 'C172'})
+    identifier = doc['id']
+    before = copy.deepcopy(store.passages([identifier]))
+
+    class ConditionalProvider(Provider):
+        fail = True
+        def complete(self, evidence, question):
+            conditional = next((p for p in evidence if 'DAY-NIGHT' in p['text']), None)
+            if conditional is None:
+                return super().complete(evidence, question)
+            self.calls.append([p['passage_id'] for p in evidence])
+            text = UNQUALIFIED_CERTIFICATION if self.fail else QUALIFIED_CERTIFICATION
+            assert source_excerpts(conditional)
+            return {'insufficient_evidence': False, 'claims': [{
+                'text': text, 'citations': [{'passage_id': conditional['passage_id'], 'excerpt_id': 0}],
+            }]}
+
+    provider = ConditionalProvider()
+    worker = Worker(store, provider)
+    try:
+        job = store.create_job('distill', {'document_id': identifier})
+        assert worker.run_one()
+        failed = store.job(job['id'])
+        assert failed['state'] == 'failed' and 'applicability conditions' in failed['error']
+        assert CONDITIONAL_OPERATIONS['text'] not in failed['error']
+        partial = copy.deepcopy(store.get(identifier)['artifacts']['distillation'])
+        assert partial['status'] == 'partial' and partial['completed_batches'] == 1
+        assert len(provider.calls) == 4  # one accepted scope, then three rejected candidates
+        provider.calls.clear()
+        provider.fail = False
+        resumed = store.create_job('distill', {'document_id': identifier})
+        assert worker.run_one()
+        assert store.job(resumed['id'])['state'] == 'completed'
+        final = store.get(identifier)['artifacts']['distillation']
+        assert final['completed_batches'] == final['total_batches'] == 2
+        assert final['sections'][:1] == partial['sections']
+        assert final['evidence_identity'] == partial['evidence_identity']
+        assert len(provider.calls) == 1
+        assert store.passages([identifier]) == before
+        assert (store.objects / (doc['sha256'] + '.pdf')).read_bytes() == raw
+        assert store.job(job['id'])['state'] == 'failed'
+    finally:
+        worker.close()
+
+
+def test_numeric_rejection_does_not_lose_conditional_operating_assertion_obligations():
+    calls = []
+    def provider(request):
+        calls.append(json.loads(request.content))
+        if len(calls) == 1:
+            return response([operation_claim(UNQUALIFIED_CERTIFICATION + ' Fuel capacity is 999 gallons.')])
+        if len(calls) == 2:
+            return response([operation_claim('No aerobatic maneuvers are approved.')])
+        return response([operation_claim(QUALIFIED_CERTIFICATION)])
+    accepted = verified_completion(model(provider), [CONDITIONAL_OPERATIONS], 'Summarize')
+    assert len(calls) == 3
+    assert accepted['claims'][0]['text'] == QUALIFIED_CERTIFICATION
+
+
+@pytest.mark.parametrize('text', [
+    'No aerobatic maneuvers are approved, and the airplane is certified for DAY-NIGHT-VFR-IFR operations.',
+    'No changes are needed, and this aircraft is authorized for DAY-NIGHT-VFR-IFR operations.',
+    'The airplane has approval for DAY-NIGHT-VFR-IFR operations.',
+    'The airplane holds current certification for DAY-NIGHT-VFR-IFR operations.',
+    'The airplane carries authorization for DAY-NIGHT-VFR-IFR operations.',
+])
+def test_prohibition_in_another_clause_and_noun_authorizations_do_not_hide_positive_assertion(text):
+    from app.services.aircraft_library.models import validate_answer
+    with pytest.raises(ModelUnavailable, match='applicability conditions'):
+        validate_answer(operation_answer(text), [CONDITIONAL_OPERATIONS])
+
+
+@pytest.mark.parametrize('text', [
+    'No night IFR operations, including training flights, are approved.',
+    'The airplane is not certified and approved for night IFR operations.',
+    'Neither day nor night IFR operations are approved.',
+    "The airplane isn't certified for night IFR operations.",
+    "The airplane isn’t certified for night IFR operations.",
+    "The airplane can’t be approved for night IFR operations.",
+    'The airplane cannot be approved for night IFR operations.',
+])
+def test_negative_authorizations_keep_their_own_negation_scope(text):
+    from app.services.aircraft_library.models import validate_answer
+    assert validate_answer(operation_answer(text), [CONDITIONAL_OPERATIONS])['claims'][0]['text'] == text

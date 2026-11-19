@@ -9,7 +9,7 @@ import pytest
 
 from app.services.aircraft_library.models import (
     ASSERTION_CORRECTION_POLICY, CITATION_FORMAT, CORRECTION_POLICY,
-    LEGACY_CORRECTION_POLICY, SIGNED_CORRECTION_POLICY, SYSTEM,
+    LEGACY_CORRECTION_POLICY, SIGNED_CORRECTION_POLICY, SIGNED_V4_CORRECTION_POLICY, SYSTEM,
     ModelUnavailable, _signed_source_diagnostics, distill, distillation_context,
     source_excerpts, validate_answer, verified_completion,
 )
@@ -265,8 +265,10 @@ def test_v3_replay_retains_its_old_rounding_diagnostic_without_admitting_a_claim
             validate_answer(answer([claim("Adjustment is 137 feet.")]), evidence)
 
 
-@pytest.mark.parametrize("policy", [ASSERTION_CORRECTION_POLICY, SIGNED_CORRECTION_POLICY])
-def test_predecessor_generation_is_reconstructed_but_never_recovered_as_v4(
+@pytest.mark.parametrize("policy", [
+    ASSERTION_CORRECTION_POLICY, SIGNED_CORRECTION_POLICY, SIGNED_V4_CORRECTION_POLICY,
+])
+def test_predecessor_generation_is_reconstructed_but_never_recovered_as_current(
     tmp_path, monkeypatch, policy,
 ):
     store, identifier, provider = make_recovery_library(tmp_path, monkeypatch)
@@ -292,6 +294,8 @@ def test_predecessor_generation_is_reconstructed_but_never_recovered_as_v4(
     provider.calls.clear()
     new = distill(store, provider, identifier)
     assert new["correction_policy"] == CORRECTION_POLICY and provider.calls
+    assert provider.calls[0] == [p["passage_id"] for p in current[1][0]]
+    assert len(provider.calls) == new["total_batches"]
     assert new["evidence_identity"] != old["evidence_identity"]
     assert any(store.historical_distillation(identifier, row["revision_id"])["artifact"] == old
                for row in store.distillations(identifier)["items"])

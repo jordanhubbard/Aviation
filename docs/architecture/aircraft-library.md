@@ -358,8 +358,8 @@ clock notation, or infer semantic support from matching numbers. Changed rejecte
 text remains an untrusted model candidate subject to all existing checks; numeric
 validation alone does not prove semantic applicability.
 
-New completions use `signed-source-feedback-v4` (#569), retaining the assertion
-repair and fixed-position replacement rules above. For an unsupported positive
+Policy `signed-source-feedback-v4` (#569), inherited by the version-5 condition
+policy below, retains the assertion repair and fixed-position replacement rules above. For an unsupported positive
 numeric value, private correction feedback may identify a different signed value
 already present in that claim's actual, permitted cited source spans. Resolve
 indexed citations and valid legacy quoted spans through the existing source
@@ -389,14 +389,14 @@ or rounding context; rounded nearby values are not signed counterparts.
 Version 3 is retained only for exact replay of its stopped private generation;
 its earlier identifier diagnostics never constitute evidence for admission.
 
-Record this correction policy in new distillation artifacts, diagnostic records
+Record the applicable correction version in distillation artifacts, diagnostic records
 and generation fingerprints. Changing correction behavior creates a new generation;
 archive prior artifacts unchanged and do not silently resume or recover an old-policy
 prefix under the new policy. The initial question, SYSTEM, evidence selection,
 model/provider profile, numeric/source validators and three-candidate limit remain
-unchanged. Explicit internal reconstruction with `numeric-citation-only-v1` and
-`rejected-assertion-repair-v2` and the stopped private
-`signed-source-feedback-v3` generation preserves each predecessor fingerprint, initial request
+unchanged for those predecessor policies. Explicit internal reconstruction with
+`numeric-citation-only-v1`, `rejected-assertion-repair-v2`, the stopped private
+`signed-source-feedback-v3`, and `signed-source-feedback-v4` preserves each predecessor fingerprint, initial request
 and complete correction wire behavior; missing policy on historical
 artifacts means that legacy policy. Unknown policies fail closed before provider
 calls. Legacy numeric hints covering every rejected token continue to enforce exact
@@ -877,6 +877,48 @@ weaken citation validation. Worker leases continue to heartbeat during inference
 All document data and search/LLM operations require the operator's library bearer credential. Missing configuration disables private routes instead of opening them publicly. The UI shell exposes no private content before authentication and keeps credentials out of URLs and persistent browser storage. Separate original file download from rendered text; original downloads use attachment/nosniff and private no-store. UI report strings use text rendering. Browser selection changes discard stale data.
 
 Test deterministic PDFs, duplicate bytes/acquisitions, persistence, wrong-type/tail isolation, malformed/encrypted/scanned pages, partial extraction, citation validation, absent evidence, conflicting metadata, provider failures, SSRF redirects/addresses, authentication and desktop/mobile flows. Real PDF extraction/rendering and configured LLM/provider acceptance are separate from fixture tests. Full completion requires current authority/receipt/CI plus exact-image deployment and live HTTP/MCP/UI checks; no fixture proves live model or provider access.
+
+### Conditional certification assertions (#576)
+
+New answers and distillations use `conditional-source-feedback-v5`. In addition to
+all existing quotation, source-use and numeric checks, reject a positive
+flight-operation certification or authorization assertion when its supplied cited
+source explicitly frames that operating entry as an equipment-dependent example
+or as a statement at original airworthiness-certificate issuance, and the claim
+omits the corresponding qualification. Inspect the quotable excerpts of the
+provided cited source, including its available same-page context; selecting a
+shorter excerpt cannot conceal an explicitly supplied condition. Never fetch or
+invent evidence, borrow another manual's conditions, or use metadata as proof.
+
+A faithful description of a conditional example must keep its example/as-equipped
+scope and historical-certificate qualification when present. A generic research
+caveat, a recommendation to check the manual, or the word "placard" alone does not
+retain those conditions. Distinguish a qualified report from current-aircraft
+certification. Unrelated facts sharing a page, explicit prohibitions, and assertions
+supported by unconditional source statements must not become conditional merely
+because certification vocabulary occurs elsewhere. This bounded source-cue check
+does not establish general semantic entailment or operational approval.
+
+Condition failures identify the one-based rejected claim and private source-derived
+condition requirements. Correct only rejected claims against the same evidence,
+keep already validated claims unchanged, and require every rejected certification
+assertion's operating-entry obligations and supplied qualifications in its repair.
+An unrelated replacement, a dropped operating assertion, an empty repair, or a
+non-specific caveat cannot silently erase it. Revalidate the complete merged
+answer; at most three total candidate calls remain available. Exhaustion retains
+partial work with the existing public failure shapes. Public errors never include
+raw source text, private condition diagnostics or provider contents.
+
+The new policy participates in every distillation fingerprint. A policy change
+starts a fresh generation; do not graft an older accepted prefix into it or relabel
+saved partitions/history. Explicit versions 1 through 4 retain their exact prior
+requests, correction behavior and validation semantics for reconstruction. Their
+known unsupported assertions remain preserved and unapproved under the new policy.
+Source originals, native/OCR/transcription identities, numeric grammar, provider,
+model, system/question, budgets, API/SDK/UI shapes and embedding behavior remain
+unchanged. Qualification requires the actual retained failure plus independent
+controls and a finite changed-policy canonical generation whose complete affected
+batches are compared claim by claim with their original page images.
 
 ## Historical distillations
 

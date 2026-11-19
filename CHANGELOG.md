@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Aircraft library: retain explicit equipment-dependent example and original-certificate conditions in flight-operation certification claims, with bounded correction obligations and a fresh versioned generation.
+
 - Aircraft library: require truncation splits to reduce supplied page context, choose a smaller complete partition when possible, and stop explicitly when required context prevents a useful split.
 
 - Aircraft library: explain signed source amounts in versioned correction feedback, exclude Unicode identifier references, and preserve strict validation and exact predecessor replay.

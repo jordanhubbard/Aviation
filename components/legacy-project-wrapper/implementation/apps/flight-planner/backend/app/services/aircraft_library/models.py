@@ -40,13 +40,14 @@ CITATION_FORMAT = "indexed-excerpts-v2"
 LEGACY_CORRECTION_POLICY = "numeric-citation-only-v1"
 ASSERTION_CORRECTION_POLICY = "rejected-assertion-repair-v2"
 SIGNED_CORRECTION_POLICY = "signed-source-feedback-v3"
-CORRECTION_POLICY = "signed-source-feedback-v4"
+SIGNED_V4_CORRECTION_POLICY = "signed-source-feedback-v4"
+CORRECTION_POLICY = "conditional-source-feedback-v5"
 
 
 def _correction_settings(policy):
     if policy == LEGACY_CORRECTION_POLICY:
         return {}
-    if policy not in (ASSERTION_CORRECTION_POLICY, SIGNED_CORRECTION_POLICY, CORRECTION_POLICY):
+    if policy not in (ASSERTION_CORRECTION_POLICY, SIGNED_CORRECTION_POLICY, SIGNED_V4_CORRECTION_POLICY, CORRECTION_POLICY):
         raise ModelUnavailable("Unknown completion correction policy")
     return {"correction_policy": policy}
 
@@ -963,7 +964,113 @@ def model_evidence(evidence):
     return result
 
 
-def validate_answer(answer, evidence):
+def _condition_text(text):
+    # Only recognize source qualifications; never normalize quotations, numeric
+    # evidence or identifiers through this view.
+    text = text.casefold().replace("’", "'")
+    return re.sub(r"\s+", " ", re.sub(r"[-‐‑‒–—]", " ", text)).strip()
+
+
+def _flight_operations(text):
+    return set(re.findall(r"\b(?:day|night|vfr|ifr)\b", text))
+
+
+def _equipment_example(text):
+    return (
+        bool(re.search(r"\bexample\b", text))
+        and bool(re.search(r"\bequip(?:ped|ment)\b", text))
+        and bool(re.search(r"\b(?:var(?:y|ies)|depend(?:s|ent|ing)?|changes?)\b", text))
+        and not re.search(r"\b(?:no\s+(?:\w+\s+){0,2}|not\s+(?:an?\s+)?)example\b", text)
+        and not re.search(
+            r"(?:\b(?:not|never)\s+(?:\w+\s+){0,2}|n't\s+)"
+            r"(?:var(?:y|ies)|depend(?:s|ent|ing)?|changes?)\b", text
+        )
+    )
+
+
+def _original_certificate(text):
+    return (
+        bool(re.search(r"\boriginal\s+airworthiness\s+certificate\b", text))
+        and bool(re.search(r"\b(?:as of|date|issuance|issued)\b", text))
+        and not re.search(
+            r"\b(?:not|never)\s+(?:as of|(?:the\s+)?date|"
+            r"(?:the\s+)?original\s+airworthiness\s+certificate)\b", text
+        )
+    )
+
+
+def _certification_requirements(text, cited_sources, evidence):
+    text = _condition_text(text)
+    operations = _flight_operations(text)
+    if not operations:
+        return None
+    positive = False
+    assertions = (
+        r"\b(?:certified|certificated|approved|authori[sz]ed|"
+        r"(?:has|holds|carries)\s+(?:(?:an?|current)\s+)?"
+        r"(?:certification|approval|authori[sz]ation))\b"
+    )
+    for match in re.finditer(assertions, text):
+        # A new subject after a conjunction starts its own assertion. Preserve
+        # shared negation in e.g. "not certified and approved", and commas in
+        # prohibitions such as "No IFR operations, including training, ...".
+        clause = re.split(
+            r"[;.!?]|\bbut\b|\band\s+(?=(?:the|this|that|it|an?|our|your)\b)",
+            text[:match.start()],
+        )[-1]
+        if not re.search(r"\b(?:not|no|never|neither|cannot)\b|n't\b", clause):
+            positive = True
+            break
+    if not positive:
+        return None
+    pages = {(p["document_id"], p["page"]) for p in cited_sources}
+    conditions = set()
+    for source in evidence:
+        if (source["document_id"], source["page"]) not in pages:
+            continue
+        # Consider only quotable, provided same-page evidence. Restricted native
+        # text and metadata cannot create conditions or conceal source defects.
+        available = _condition_text(" ".join(source_excerpts(source)))
+        for clause in re.split(r"[.!?;]", available):
+            if not operations.intersection(_flight_operations(clause)):
+                continue
+            if _equipment_example(clause) and not re.search(r"\b(?:not|never)\b", clause):
+                conditions.add("equipment_dependent_example")
+            if _original_certificate(clause) and re.search(r"\bcertif(?:ied|icated|ication)\b", clause):
+                conditions.add("original_certificate_date")
+    return {"flight_operations": sorted(operations), "conditions": sorted(conditions)} if conditions else None
+
+
+def _validate_certification_conditions(text, requirements, claim_number):
+    if not requirements:
+        return
+    normalized = _condition_text(text)
+    missing = []
+    if not set(requirements["flight_operations"]) <= _flight_operations(normalized):
+        missing.append("operating_entry_obligation")
+    for condition in requirements["conditions"]:
+        retained = (
+            _equipment_example(normalized)
+            if condition == "equipment_dependent_example"
+            else _original_certificate(normalized)
+        )
+        if not retained:
+            missing.append(condition)
+    if missing:
+        raise ModelUnavailable(
+            f"Model omitted source applicability conditions in claim {claim_number}; "
+            "retain the conditional operating entry and its source qualifications",
+            feedback={
+                "applicability_requirements": copy.deepcopy(requirements),
+                "missing_applicability_conditions": missing,
+            },
+        )
+
+
+def validate_answer(
+    answer, evidence, *, correction_policy=CORRECTION_POLICY, applicability_requirements=None
+):
+    _correction_settings(correction_policy)
     if not isinstance(answer, dict) or type(answer.get("insufficient_evidence")) is not bool:
         raise ModelUnavailable("Model answer lacks evidence status")
     claims = answer.get("claims")
@@ -995,7 +1102,7 @@ def validate_answer(answer, evidence):
         citations = claim.get("citations")
         if not isinstance(citations, list) or not 1 <= len(citations) <= 8:
             raise ModelUnavailable("Every claim requires source citations")
-        verified, supporting = [], []
+        verified, supporting, cited_sources = [], [], []
         for citation in citations:
             if not isinstance(citation, dict) or type(citation.get("passage_id")) is not int:
                 raise ModelUnavailable("Invalid model citation")
@@ -1035,6 +1142,18 @@ def validate_answer(answer, evidence):
                 }
             )
             supporting.append(quote)
+            cited_sources.append(source)
+        requirements = None
+        if correction_policy == CORRECTION_POLICY:
+            requirements = (applicability_requirements or {}).get(claim_number - 1)
+            discovered = _certification_requirements(claim["text"], cited_sources, evidence)
+            if requirements and discovered:
+                requirements = {
+                    key: sorted(set(requirements[key]) | set(discovered[key]))
+                    for key in ("flight_operations", "conditions")
+                }
+            else:
+                requirements = requirements or discovered
         cited_numbers = set().union(*(numbers(quote) for quote in supporting))
         unsupported = numbers(claim["text"]) - cited_numbers
         if unsupported:
@@ -1048,8 +1167,11 @@ def validate_answer(answer, evidence):
                 feedback={
                     "unsupported_numeric_values": sorted(str(value) for value in unsupported),
                     "cited_numeric_values": sorted(str(value) for value in cited_numbers),
+                    **({"applicability_requirements": copy.deepcopy(requirements)}
+                       if requirements else {}),
                 },
             )
+        _validate_certification_conditions(claim["text"], requirements, claim_number)
         clean.append({"text": claim["text"], "citations": verified})
     return {
         "insufficient_evidence": False,
@@ -1243,7 +1365,9 @@ def _reference_options(claim, evidence):
     return options or None
 
 
-def _rejected_claims(candidate, evidence, *, correction_policy=CORRECTION_POLICY):
+def _rejected_claims(
+    candidate, evidence, *, correction_policy=CORRECTION_POLICY, applicability_requirements=None
+):
     _correction_settings(correction_policy)
     if not isinstance(candidate, dict) or candidate.get("insufficient_evidence") is not False:
         return None
@@ -1254,7 +1378,9 @@ def _rejected_claims(candidate, evidence, *, correction_policy=CORRECTION_POLICY
     for index, claim in enumerate(claims):
         try:
             validate_answer(
-                {"insufficient_evidence": False, "reason": "", "claims": [claim]}, evidence
+                {"insufficient_evidence": False, "reason": "", "claims": [claim]}, evidence,
+                correction_policy=correction_policy,
+                applicability_requirements={0: (applicability_requirements or {}).get(index)},
             )
         except ModelUnavailable as error:
             feedback = dict(error.feedback or {})
@@ -1270,7 +1396,7 @@ def _rejected_claims(candidate, evidence, *, correction_policy=CORRECTION_POLICY
                     for option in feedback["numeric_evidence_options"]["matches"]
                     for value in option["numeric_values"]
                 }
-                if correction_policy in (SIGNED_CORRECTION_POLICY, CORRECTION_POLICY):
+                if correction_policy in (SIGNED_CORRECTION_POLICY, SIGNED_V4_CORRECTION_POLICY, CORRECTION_POLICY):
                     signed = _signed_source_diagnostics(
                         feedback["unsupported_numeric_values"], claim, evidence,
                         correction_policy=correction_policy,
@@ -1306,6 +1432,7 @@ def _trace_rejection(
     *,
     event="claim_validation",
     correction_policy=CORRECTION_POLICY,
+    applicability_requirements=None,
 ):
     observer = getattr(models, "trace_validation", None)
     if callable(observer) and getattr(models, "validation_trace", None) is not None:
@@ -1382,7 +1509,8 @@ def _trace_rejection(
                         {key: value for key, value in failure.items() if key != "claim"}
                         for failure in (
                             _rejected_claims(
-                                candidate, evidence, correction_policy=correction_policy
+                                candidate, evidence, correction_policy=correction_policy,
+                                applicability_requirements=applicability_requirements,
                             )
                             or []
                         )
@@ -1410,6 +1538,7 @@ def verified_completion(
         raise ValueError("Citation correction requires one to three completion attempts")
     prompt = question
     repair_base, repair_positions, repair_texts = None, None, {}
+    applicability_requirements = {}
     for attempt in range(max_attempts):
         try:
             replacements = getattr(models, "complete_replacements", None)
@@ -1442,6 +1571,7 @@ def verified_completion(
                 trace_context,
                 event="truncation",
                 correction_policy=correction_policy,
+                applicability_requirements=applicability_requirements,
             )
             if attempt:
                 # A rejected candidate already exists: do not evade its assertions
@@ -1483,7 +1613,10 @@ def verified_completion(
         try:
             if correction_error is not None:
                 raise correction_error
-            return validate_answer(candidate, evidence)
+            return validate_answer(
+                candidate, evidence, correction_policy=correction_policy,
+                applicability_requirements=applicability_requirements,
+            )
         except ModelUnavailable as error:
             _trace_rejection(
                 models,
@@ -1497,11 +1630,19 @@ def verified_completion(
                 error,
                 trace_context,
                 correction_policy=correction_policy,
+                applicability_requirements=applicability_requirements,
             )
             if attempt + 1 == max_attempts:
                 raise
-            failures = _rejected_claims(candidate, evidence, correction_policy=correction_policy)
+            failures = _rejected_claims(
+                candidate, evidence, correction_policy=correction_policy,
+                applicability_requirements=applicability_requirements,
+            )
             if failures:
+                for failure in failures:
+                    requirements = failure.get("applicability_requirements")
+                    if requirements:
+                        applicability_requirements[failure["claim_number"] - 1] = copy.deepcopy(requirements)
                 repair_base = candidate
                 repair_positions = [failure["claim_number"] - 1 for failure in failures]
                 repair_texts = {
@@ -1544,7 +1685,7 @@ def verified_completion(
                     "from factual claims while retaining actual source facts, conditions and references. "
                     "Do not weaken or omit a supported fact merely to avoid selecting its supporting excerpt. "
                 )
-                if correction_policy in (SIGNED_CORRECTION_POLICY, CORRECTION_POLICY) and any(
+                if correction_policy in (SIGNED_CORRECTION_POLICY, SIGNED_V4_CORRECTION_POLICY, CORRECTION_POLICY) and any(
                     failure.get("signed_source_diagnostics") for failure in failures
                 ):
                     instruction += (
@@ -1554,6 +1695,14 @@ def verified_completion(
                         "Describe each signed source amount directly or replace the unsupported "
                         "expression with supported literal facts. Do not evaluate arithmetic, remove "
                         "signs, normalize source text or infer applicability from these diagnostics. "
+                    )
+                if correction_policy == CORRECTION_POLICY and applicability_requirements:
+                    instruction += (
+                        "Applicability requirements identify explicit conditions in the supplied source. "
+                        "Keep every listed flight-operation label and report the equipment-dependent "
+                        "example and original-certificate scope when required. Generic cautions, "
+                        "unrelated prohibitions or omitting the operating entry do not repair it. "
+                        "Never turn an example into current-aircraft certification. "
                     )
                 feedback = {"validation_failure": str(error), "rejected_claims": failures}
             else:
@@ -1911,10 +2060,15 @@ def distillation_plan(batches, saved=None):
 
 def validated_prefix(existing, batches):
     summaries = []
+    correction_policy = existing.get("correction_policy", LEGACY_CORRECTION_POLICY)
+    try:
+        _correction_settings(correction_policy)
+    except ModelUnavailable:
+        return summaries
     for saved, batch in zip(existing.get("sections", []), batches):
         try:
             evidence = distillation_request_evidence(batch, batches, existing)
-            verified = validate_answer(saved, evidence)
+            verified = validate_answer(saved, evidence, correction_policy=correction_policy)
             if verified["insufficient_evidence"]:
                 break
             summaries.append({"pages": sorted({p["page"] for p in batch}), **verified})
