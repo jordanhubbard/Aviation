@@ -600,6 +600,51 @@ agent reviews as such; they are not independent human review or performance-data
 approval. Neither a preview nor a draft transcription changes source evidence.
 Bound active transcripts to 500 per document; retain inactive historical receipts.
 
+### Reviewed bold emphasis (#581)
+
+An optional `presentation` on a page transcription records visually reviewed bold
+emphasis separately from its unchanged literal `text`. It contains at most 128
+`bold_spans`, each with `start`, exclusive `end` (Unicode code-point offsets), and
+the exact nonblank `text` at that range, plus its own `attest_matches_image: true`.
+Spans must be ordered, nonoverlapping and within that transcription. Reject unknown
+fields, coerced indices/attestations, mismatched text, stale image/index pins and
+forged ledger provenance at queueing and application. The separate attestation
+confirms all bold within the transcribed text was marked and all unmarked text
+was reviewed as not bold. An explicitly reviewed empty list means no bold in the
+transcribed text; absence means unknown, never an inferred negative. Capitalization,
+OCR confidence, list numbers and reviewer explanations do not establish emphasis.
+Literal transcription preserves printed checklist order; presentation cannot invent
+an order, change words or inject markup into literal text.
+
+Retain presentation in the same immutable image/reviewer-bound ledger and verified
+passage/citation provenance. Same text with a different reviewed presentation is a
+distinct addition, with previous reviews and contradictory observations retained;
+an exact active text/presentation duplicate is rejected. All source/recovery,
+history, leases and compare-and-swap protections still apply. Plain historical
+transcriptions, model wires and generation identities remain unchanged. New
+presentation is source evidence: its identity participates in changed-generation
+and unchanged-scope checks; it is never silently grafted onto an old generation.
+
+Only server-verified presentation reaches the model. For each existing quotable
+excerpt, expose ordered literal `text`/`bold` runs covering exactly that excerpt,
+alongside its unchanged literal text. Clip runs at excerpt boundaries without
+borrowing words or emphasis from other pages, sources or omitted excerpts. Do not
+send span offsets, review hashes or reviewer annotations as factual evidence.
+Concatenated runs must equal the excerpt exactly; no extra source text or automatic
+OCR/style interpretation is admitted. The existing 18,000-character literal-source
+budget, quotation/numeric validators and three-candidate correction bound remain.
+This supports observing which words are bold; it does not claim general semantic
+entailment or approval of a generated procedure.
+
+HTTP/OpenAPI/MCP and Python/TypeScript SDKs expose the same optional typed structure.
+Desktop/mobile review keeps the pinned original beside a literal text editor,
+allows marking/removing bold selections without modifying the text, previews the
+emphasis safely, and requires the separate complete-emphasis attestation. Changing
+text clears spans and attestation; changing page/document/image, locking, stale
+responses and failed requests clear pending presentation state. Historical detail
+distinguishes unknown emphasis from reviewed emphasis and shows it with the original.
+No private source or access key is persisted in browser storage.
+
 Application is an exclusively owned durable job. Revalidate original bytes,
 metadata, index, preview and image integrity when queueing and when committing.
 Atomically archive the prior distillation, append a separate

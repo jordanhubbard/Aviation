@@ -361,9 +361,12 @@ def test_numeric_guards_and_minimal_model_provenance_remain_enforced(library):
         validate_answer(answer, [forged])
 
 
-def test_embedding_process_loss_resumes_committed_text_without_duplicate_or_chat(library):
+@pytest.mark.parametrize("styled", [False, True])
+def test_embedding_process_loss_resumes_committed_text_without_duplicate_or_chat(library, styled):
     store, identifier = library
     values = ready(store, identifier)
+    if styled:
+        values["presentation"] = presentation(values["text"], ["Pressure"])
 
     class Interrupted(Provider):
         def embed(self, texts):
@@ -382,6 +385,10 @@ def test_embedding_process_loss_resumes_committed_text_without_duplicate_or_chat
     assert store.job(job["id"])["state"] == "completed"
     assert store.index_identity(identifier) == after
     assert provider.embeds == [values["text"]] and provider.calls == []
+    rid = store.job(job["id"])["result"]["transcription_id"]
+    assert transcriptions.review(store, identifier, rid).get("presentation") == values.get(
+        "presentation"
+    )
     with store.connection() as c:
         assert c.execute("SELECT count(*) FROM page_transcriptions").fetchone()[0] == 1
 
@@ -438,3 +445,242 @@ def test_private_typed_http_discovery_and_retrieval_preserve_distinct_provenance
         },
     )
     assert unavailable.status_code == 503 and "no-store" in unavailable.headers["cache-control"]
+
+
+def presentation(text, marked):
+    spans = []
+    for literal in marked:
+        start = text.index(literal)
+        spans.append({"start": start, "end": start + len(literal), "text": literal})
+    return {
+        "bold_spans": sorted(spans, key=lambda span: span["start"]),
+        "attest_matches_image": True,
+    }
+
+
+def test_reviewed_emphasis_preserves_literal_order_and_is_not_native_ocr(library):
+    store, identifier = library
+    text = "🛩 Checklist: bold items are immediate actions.\n1. Throttle -- IDLE.\n2. Brakes -- APPLY.\n3. Flaps -- RETRACT.\n4. Mixture -- IDLE CUT OFF."
+    bold = presentation(text, ["Throttle -- IDLE.", "Brakes -- APPLY."])
+    original = store.original(identifier).read_bytes()
+    values = ready(store, identifier, text=text, presentation=bold)
+    job = apply(store, identifier, values)
+    assert job["state"] == "completed"
+    record = transcriptions.review(store, identifier, job["result"]["transcription_id"])
+    assert record["text"] == text and record["presentation"] == bold
+    source = next(p for p in store.passages([identifier]) if p.get("transcription_review"))
+    wire = model_evidence([source])[0]
+    runs = wire["excerpts"][0]["presentation"]["runs"]
+    assert "".join(r["text"] for r in runs) == text
+    assert [r["text"] for r in runs if r["bold"]] == ["Throttle -- IDLE.", "Brakes -- APPLY."]
+    assert wire["transcription_review"] == {"id": record["id"], "method": "operator_transcription"}
+    assert all("start" not in r and "end" not in r for r in runs)
+    assert store.original(identifier).read_bytes() == original
+    answer = validate_answer(
+        {
+            "insufficient_evidence": False,
+            "claims": [
+                {
+                    "text": "Throttle -- IDLE.",
+                    "citations": [{"passage_id": source["passage_id"], "excerpt_id": 0}],
+                }
+            ],
+        },
+        [source],
+    )
+    assert answer["claims"][0]["citations"][0]["transcription_review"]["presentation"] == bold
+    forged = {**source, "transcription_review": dict(source["transcription_review"])}
+    with pytest.raises(ModelUnavailable, match="Unverified"):
+        model_evidence([forged])
+
+
+@pytest.mark.parametrize(
+    "bad",
+    [
+        None,
+        {},
+        {"bold_spans": [], "attest_matches_image": False},
+        {"bold_spans": [], "attest_matches_image": 1},
+        {"bold_spans": [], "attest_matches_image": True, "page": 2},
+        {"bold_spans": "words", "attest_matches_image": True},
+        {"bold_spans": [{"start": True, "end": 4, "text": "Text"}], "attest_matches_image": True},
+        {"bold_spans": [{"start": 0, "end": "4", "text": "Text"}], "attest_matches_image": True},
+        {"bold_spans": [{"start": -1, "end": 4, "text": "Text"}], "attest_matches_image": True},
+        {"bold_spans": [{"start": 0, "end": 400, "text": "Text"}], "attest_matches_image": True},
+        {"bold_spans": [{"start": 0, "end": 4, "text": "FAKE"}], "attest_matches_image": True},
+        {"bold_spans": [{"start": 4, "end": 5, "text": " "}], "attest_matches_image": True},
+        {
+            "bold_spans": [
+                {"start": 0, "end": 4, "text": "Text"},
+                {"start": 0, "end": 4, "text": "Text"},
+            ],
+            "attest_matches_image": True,
+        },
+        {
+            "bold_spans": [
+                {"start": 5, "end": 10, "text": "words"},
+                {"start": 0, "end": 4, "text": "Text"},
+            ],
+            "attest_matches_image": True,
+        },
+        {
+            "bold_spans": [{"start": 0, "end": 4, "text": "Text", "style": "bold"}],
+            "attest_matches_image": True,
+        },
+        {
+            "bold_spans": [{"start": 0, "end": 4, "text": "Text"}] * 129,
+            "attest_matches_image": True,
+        },
+    ],
+)
+def test_invalid_emphasis_cannot_queue_or_change_source(library, bad):
+    store, identifier = library
+    values = ready(store, identifier, text="Text words are visible.", presentation=bad)
+    before = store.index_identity(identifier)
+    with pytest.raises(ValueError):
+        transcriptions.queue_apply(store, identifier, values)
+    assert store.index_identity(identifier) == before
+    with store.connection() as c:
+        assert c.execute("select count(*) from page_transcriptions").fetchone()[0] == 0
+
+
+def test_emphasis_clips_to_provided_excerpts_and_does_not_admit_offset_numbers(library):
+    store, identifier = library
+    text = "A" * 950 + "B" * 200 + "C" * 500
+    job = apply(
+        store,
+        identifier,
+        ready(store, identifier, text=text, presentation=presentation(text, ["B" * 200])),
+    )
+    assert job["state"] == "completed"
+    source = next(p for p in store.passages([identifier]) if p.get("transcription_review"))
+    wire = model_evidence([source])[0]
+    assert len(wire["excerpts"]) == 2
+    for excerpt in wire["excerpts"]:
+        runs = excerpt["presentation"]["runs"]
+        assert "".join(r["text"] for r in runs) == excerpt["text"]
+        assert all(set(r) == {"text", "bold"} for r in runs)
+    assert (
+        "".join(r["text"] for e in wire["excerpts"] for r in e["presentation"]["runs"] if r["bold"])
+        == "B" * 200
+    )
+    with pytest.raises(ModelUnavailable, match="numeric"):
+        validate_answer(
+            {
+                "insufficient_evidence": False,
+                "claims": [
+                    {
+                        "text": "The limit is 950.",
+                        "citations": [{"passage_id": source["passage_id"], "excerpt_id": 0}],
+                    }
+                ],
+            },
+            [source],
+        )
+
+
+def test_unknown_and_reviewed_no_bold_are_distinct_and_change_generation(library):
+    store, identifier = library
+    text = "Unchanged ordinary source text."
+    plain = apply(store, identifier, ready(store, identifier, text=text))
+    assert plain["state"] == "completed"
+    first = distillation_context(store, Models({}), identifier)[-1]
+    old_source = next(p for p in store.passages([identifier]) if p.get("transcription_review"))
+    before_wire = model_evidence([old_source])
+    assert "presentation" not in before_wire[0]["excerpts"][0]
+    empty = {"bold_spans": [], "attest_matches_image": True}
+    second = apply(store, identifier, ready(store, identifier, text=text, presentation=empty))
+    assert second["state"] == "completed"
+    assert distillation_context(store, Models({}), identifier)[-1] != first
+    sources = [p for p in store.passages([identifier]) if p.get("transcription_review")]
+    assert model_evidence([sources[0]]) == before_wire
+    assert model_evidence([sources[1]])[0]["excerpts"][0]["presentation"]["runs"] == [
+        {"text": text, "bold": False}
+    ]
+    with pytest.raises(ValueError, match="already active"):
+        transcriptions.queue_apply(
+            store, identifier, ready(store, identifier, text=text, presentation=empty)
+        )
+
+
+def test_queued_presentation_is_revalidated_before_commit(library):
+    import json
+
+    store, identifier = library
+    text = "Literal source with bold words."
+    values = ready(store, identifier, text=text, presentation=presentation(text, ["bold"]))
+    job = transcriptions.queue_apply(store, identifier, values)
+    broken = copy.deepcopy(job["request"])
+    broken["presentation"]["bold_spans"][0]["text"] = "invented"
+    before = store.index_identity(identifier)
+    with store.connection() as c:
+        c.execute("update jobs set request=? where id=?", (json.dumps(broken), job["id"]))
+    assert Worker(store, Models({})).run_one()
+    assert store.job(job["id"])["state"] == "failed"
+    assert store.index_identity(identifier) == before
+    with store.connection() as c:
+        assert c.execute("select count(*) from page_transcriptions").fetchone()[0] == 0
+
+
+def test_invalid_rehashed_presentation_ledger_cannot_acquire_verified_provenance(library):
+    import json
+    from app.services.aircraft_library import ocr
+
+    store, identifier = library
+    text = "Literal source with bold words."
+    job = apply(
+        store,
+        identifier,
+        ready(store, identifier, text=text, presentation=presentation(text, ["bold"])),
+    )
+    rid = job["result"]["transcription_id"]
+    with store.connection() as c:
+        value = json.loads(
+            c.execute("select value from page_transcriptions where id=?", (rid,)).fetchone()[0]
+        )
+        value["presentation"]["bold_spans"][0]["text"] = "elsewhere"
+        raw = ocr.encoded(value)
+        c.execute(
+            "update page_transcriptions set value=?,integrity_sha256=? where id=?",
+            (raw.decode(), ocr.digest(raw), rid),
+        )
+    with pytest.raises(ValueError, match="literal text ranges"):
+        store.passages([identifier])
+
+
+def test_http_and_python_sdk_roundtrip_reviewed_presentation(library, monkeypatch):
+    from aviation.aircraft_library import AircraftLibraryOCRClient
+
+    store, identifier = library
+    text = "1. Throttle -- IDLE.\n2. Flaps -- RETRACT."
+    values = ready(
+        store, identifier, text=text, presentation=presentation(text, ["Throttle -- IDLE."])
+    )
+    monkeypatch.setenv("AIRCRAFT_LIBRARY_TOKEN", "t" * 40)
+    app = FastAPI()
+    install(app, store=store, models=Models({}), worker_enabled=False)
+    client = TestClient(app)
+    headers = {"Authorization": "Bearer " + "t" * 40}
+
+    def transport(path, *, method="GET", json=None, binary=False):
+        r = client.request(method, "/api/aircraft-library" + path, headers=headers, json=json)
+        r.raise_for_status()
+        assert "no-store" in r.headers["cache-control"]
+        return r.json()
+
+    sdk = AircraftLibraryOCRClient(transport)
+    queued = sdk.transcribe(identifier, values)
+    assert Worker(store, Models({})).run_one()
+    rid = store.job(queued["id"])["result"]["transcription_id"]
+    assert sdk.transcription(identifier, rid)["presentation"] == values["presentation"]
+    schemas = app.openapi()["components"]["schemas"]
+    assert schemas["TranscriptionBoldSpan"]["properties"]["start"]["type"] == "integer"
+    assert schemas["TranscriptionPresentation"]["properties"]["bold_spans"]["maxItems"] == 128
+    assert schemas["TranscriptionPresentation"]["additionalProperties"] is False
+    url = f"/api/aircraft-library/documents/{identifier}/transcriptions"
+    for invalid in [
+        None,
+        {"bold_spans": [{"start": True, "end": 3, "text": "1. "}], "attest_matches_image": True},
+    ]:
+        bad = ready(store, identifier, text=text, presentation=invalid)
+        assert client.post(url, headers=headers, json=bad).status_code == 422

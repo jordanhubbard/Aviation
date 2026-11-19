@@ -960,6 +960,22 @@ def model_evidence(evidence):
         row["excerpts"] = [
             {"excerpt_id": index, "text": text} for index, text in enumerate(excerpts)
         ]
+        presentation = source.get("transcription_review", {}).get("presentation")
+        if presentation is not None and excerpts:
+            from .transcriptions import presentation_runs
+
+            cursor = 0
+            for excerpt in row["excerpts"]:
+                start = source["text"].find(excerpt["text"], cursor)
+                if start < 0:
+                    raise ModelUnavailable("Presentation excerpt does not match literal source")
+                cursor = start + len(excerpt["text"])
+                excerpt["presentation"] = {
+                    "bold_review": "complete_for_excerpt",
+                    "runs": presentation_runs(
+                        source["text"], presentation, start=start, end=cursor
+                    ),
+                }
         if not excerpts and not source_restricted(source):
             row["text"] = source["text"]
         result.append(row)

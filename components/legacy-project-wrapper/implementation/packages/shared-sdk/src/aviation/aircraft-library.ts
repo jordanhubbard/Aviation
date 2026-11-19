@@ -26,6 +26,16 @@ export interface AircraftOCRApply extends AircraftOCRIdentity {
   reviewer: string;
   attest_matches_image: true;
 }
+/** Offsets count Unicode code points, not JavaScript UTF-16 code units. */
+export interface AircraftTranscriptionBoldSpan {
+  start: number;
+  end: number;
+  text: string;
+}
+export interface AircraftTranscriptionPresentation {
+  bold_spans: AircraftTranscriptionBoldSpan[];
+  attest_matches_image: true;
+}
 /** Operator-authored literal page text, separate from unchanged machine OCR. */
 export interface AircraftTranscriptionApply extends AircraftOCRIdentity {
   preview_id: string;
@@ -33,10 +43,14 @@ export interface AircraftTranscriptionApply extends AircraftOCRIdentity {
   page: number;
   image_sha256: string;
   text: string;
+  presentation?: AircraftTranscriptionPresentation;
   reviewer: string;
   attest_matches_image: true;
 }
-export type AircraftSourceUseReview = Omit<AircraftTranscriptionApply, "text"> &
+export type AircraftSourceUseReview = Omit<
+  AircraftTranscriptionApply,
+  "text" | "presentation"
+> &
   (
     | {
         action: "restrict";
@@ -88,6 +102,7 @@ export interface AircraftTranscriptionProvenance {
   created_at: string;
   integrity_sha256: string;
   image_url: string;
+  presentation?: AircraftTranscriptionPresentation | null;
 }
 export interface AircraftPageTranscription extends AircraftTranscriptionProvenance {
   document_id: string;

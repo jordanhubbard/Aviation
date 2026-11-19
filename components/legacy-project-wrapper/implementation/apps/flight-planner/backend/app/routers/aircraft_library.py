@@ -414,6 +414,19 @@ class OCRHistory(BaseModel):
     next_offset: int | None
 
 
+class TranscriptionBoldSpan(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    start: int = Field(strict=True, ge=0, le=12_000)
+    end: int = Field(strict=True, ge=1, le=12_000)
+    text: str = Field(min_length=1, max_length=12_000)
+
+
+class TranscriptionPresentation(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    bold_spans: list[TranscriptionBoldSpan] = Field(max_length=128)
+    attest_matches_image: StrictBool
+
+
 class TranscriptionRequest(OCRIdentityRequest):
     preview_id: str = Field(min_length=1, max_length=100)
     preview_integrity_sha256: str = Field(pattern=r"^[a-f0-9]{64}$")
@@ -422,6 +435,8 @@ class TranscriptionRequest(OCRIdentityRequest):
     text: str = Field(min_length=8, max_length=12_000)
     reviewer: str = Field(min_length=1, max_length=200)
     attest_matches_image: StrictBool
+    # Omission preserves unknown emphasis; an explicit null is not a review.
+    presentation: TranscriptionPresentation = Field(default=None)
 
 
 class SourceLimitRequest(OCRIdentityRequest):
@@ -504,6 +519,7 @@ class TranscriptionProvenance(BaseModel):
     created_at: str
     integrity_sha256: str
     image_url: str
+    presentation: TranscriptionPresentation | None = None
 
 
 class TranscriptionRecord(TranscriptionProvenance):
@@ -750,7 +766,7 @@ def install(app, *, store=None, models=None, worker_enabled=True):
         document_id: str, body: TranscriptionRequest, current: Store = Depends(library)
     ):
         required(current, document_id)
-        return transcriptions.queue_apply(current, document_id, body.model_dump())
+        return transcriptions.queue_apply(current, document_id, body.model_dump(exclude_unset=True))
 
     @router.get(
         "/documents/{document_id}/transcriptions",

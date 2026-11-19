@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, expect, it, vi } from 'vitest'
-import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import OCRReview from './OCRReview'
 
 const sha = '1'.repeat(64),
@@ -303,7 +303,12 @@ function transcriptionTransport() {
   let saved = structuredClone(transcriptionReceipt)
   request.mockImplementation(async (...args) => {
     if (args[0].endsWith('/transcriptions') && args[1]?.method === 'POST') {
-      saved = { ...transcriptionReceipt, text: JSON.parse(args[1].body as string).text }
+      const posted = JSON.parse(args[1].body as string)
+      saved = {
+        ...transcriptionReceipt,
+        text: posted.text,
+        ...(posted.presentation ? { presentation: posted.presentation } : {}),
+      }
       return {
         id: 'job_transcription',
         state: 'completed',
@@ -522,4 +527,62 @@ it('rejects a source-use receipt for a different reason', async () => {
   fireEvent.click(screen.getByRole('button', { name: 'Use original image only for this page' }))
   await screen.findByText('Source-use receipt does not match the reviewed page')
   expect(onReviewed).not.toHaveBeenCalled()
+})
+
+const boldAttestation =
+  'I compared all bold emphasis with the original image; every bold span in this transcription is marked and unmarked text is not bold.'
+
+it('keeps Unicode literal words separate from explicitly attested bold selections', async () => {
+  transcriptionTransport()
+  render(component())
+  fireEvent.click(screen.getByText('Review page OCR and transcriptions'))
+  await generate()
+  await draftTranscription()
+  const text = '🛩 Literal <script>page</script> text.'
+  const editor = screen.getByLabelText('Literal page transcription') as HTMLTextAreaElement
+  fireEvent.change(editor, { target: { value: text } })
+  fireEvent.click(screen.getByLabelText('Review bold emphasis in this transcription'))
+  editor.setSelectionRange(text.indexOf('page'), text.indexOf('page') + 4)
+  fireEvent.click(screen.getByRole('button', { name: 'Mark selection as bold' }))
+  const preview = screen.getByLabelText('Reviewed emphasis preview')
+  expect(within(preview).getByText('page').tagName).toBe('STRONG')
+  expect(preview.textContent).toBe(text)
+  expect(preview.querySelector('script')).toBeNull()
+  fireEvent.click(screen.getByLabelText(transcriptionAttestation))
+  const save = screen.getByRole('button', { name: 'Save reviewed page transcription' })
+  expect(save).toBeDisabled()
+  fireEvent.click(screen.getByLabelText(boldAttestation))
+  expect(save).toBeEnabled()
+  fireEvent.click(save)
+  await screen.findByText('Bold emphasis: reviewed with original image.')
+  const [, options] = request.mock.calls.find(
+    ([path, options]) => path.endsWith('/transcriptions') && options?.method === 'POST',
+  )!
+  const sent = JSON.parse(options!.body as string)
+  expect(sent.text).toBe(text)
+  const start = Array.from(text.slice(0, text.indexOf('page'))).length
+  expect(sent.presentation).toEqual({
+    bold_spans: [{ start, end: start + 4, text: 'page' }],
+    attest_matches_image: true,
+  })
+  expect(localStorage.length + sessionStorage.length).toBe(0)
+})
+
+it('requires reattestation after text edits and clears emphasis state on lock', async () => {
+  const view = render(component())
+  fireEvent.click(screen.getByText('Review page OCR and transcriptions'))
+  await generate()
+  await draftTranscription()
+  fireEvent.click(screen.getByLabelText('Review bold emphasis in this transcription'))
+  const editor = screen.getByLabelText('Literal page transcription') as HTMLTextAreaElement
+  editor.setSelectionRange(0, 7)
+  fireEvent.click(screen.getByRole('button', { name: 'Mark selection as bold' }))
+  fireEvent.click(screen.getByLabelText(boldAttestation))
+  fireEvent.change(editor, { target: { value: transcriptionReceipt.text + ' changed' } })
+  expect(screen.getByLabelText(boldAttestation)).not.toBeChecked()
+  expect(screen.queryByRole('button', { name: /Remove bold:/ })).not.toBeInTheDocument()
+  expect(screen.getByRole('button', { name: 'Save reviewed page transcription' })).toBeDisabled()
+  view.rerender(component(true))
+  expect(screen.queryByLabelText('Reviewed emphasis preview')).not.toBeInTheDocument()
+  expect(screen.queryByLabelText(boldAttestation)).not.toBeInTheDocument()
 })

@@ -48,53 +48,64 @@ describe("private OCR transport", () => {
       expect(transport).toHaveBeenCalledTimes(3);
     },
   );
-  it("keeps literal transcriptions separate with private explicit operations", async () => {
-    const transport = vi.fn(async () => ({}));
-    const client = new AircraftLibraryOCRClient(transport);
-    const value = {
-      expected_sha256: "a".repeat(64),
-      expected_index_identity: "b".repeat(64),
-      preview_id: "ocr_preview_test",
-      preview_integrity_sha256: "c".repeat(64),
-      page: 1,
-      image_sha256: "d".repeat(64),
-      text: "Literal visible page text.",
-      reviewer: "Image reviewer",
-      attest_matches_image: true as const,
-    };
-    expect(transport).not.toHaveBeenCalled();
-    await client.transcribe("doc_test", value);
-    expect(transport).toHaveBeenLastCalledWith(
-      "/documents/doc_test/transcriptions",
-      expect.objectContaining({
-        method: "POST",
-        cache: "no-store",
-        redirect: "error",
-        body: JSON.stringify(value),
-      }),
-    );
-    await client.transcription("doc_test", "transcription_test");
-    expect(transport).toHaveBeenLastCalledWith(
-      "/documents/doc_test/transcriptions/transcription_test",
-      expect.objectContaining({ cache: "no-store", redirect: "error" }),
-    );
-    await client.transcriptions("doc_test", 20);
-    expect(transport).toHaveBeenLastCalledWith(
-      "/documents/doc_test/transcriptions?limit=20&offset=20",
-      expect.any(Object),
-    );
-    await client.embedTranscription("doc_test", "transcription_test", {
-      expected_sha256: value.expected_sha256,
-      expected_index_identity: value.expected_index_identity,
-    });
-    expect(transport).toHaveBeenLastCalledWith(
-      "/documents/doc_test/transcriptions/transcription_test/embeddings",
-      expect.objectContaining({ method: "POST" }),
-    );
-    expect(() => client.transcriptions("doc_test", -1)).toThrow();
-    expect(() => client.transcription("doc_test", "../private")).toThrow();
-    expect(transport).toHaveBeenCalledTimes(4);
-  });
+  it.each([false, true])(
+    "keeps literal transcriptions and optional emphasis separate with private operations (%s)",
+    async (reviewedBold) => {
+      const transport = vi.fn(async () => ({}));
+      const client = new AircraftLibraryOCRClient(transport);
+      const value = {
+        expected_sha256: "a".repeat(64),
+        expected_index_identity: "b".repeat(64),
+        preview_id: "ocr_preview_test",
+        preview_integrity_sha256: "c".repeat(64),
+        page: 1,
+        image_sha256: "d".repeat(64),
+        text: "Literal visible page text.",
+        ...(reviewedBold
+          ? {
+              presentation: {
+                bold_spans: [{ start: 0, end: 7, text: "Literal" }],
+                attest_matches_image: true as const,
+              },
+            }
+          : {}),
+        reviewer: "Image reviewer",
+        attest_matches_image: true as const,
+      };
+      expect(transport).not.toHaveBeenCalled();
+      await client.transcribe("doc_test", value);
+      expect(transport).toHaveBeenLastCalledWith(
+        "/documents/doc_test/transcriptions",
+        expect.objectContaining({
+          method: "POST",
+          cache: "no-store",
+          redirect: "error",
+          body: JSON.stringify(value),
+        }),
+      );
+      await client.transcription("doc_test", "transcription_test");
+      expect(transport).toHaveBeenLastCalledWith(
+        "/documents/doc_test/transcriptions/transcription_test",
+        expect.objectContaining({ cache: "no-store", redirect: "error" }),
+      );
+      await client.transcriptions("doc_test", 20);
+      expect(transport).toHaveBeenLastCalledWith(
+        "/documents/doc_test/transcriptions?limit=20&offset=20",
+        expect.any(Object),
+      );
+      await client.embedTranscription("doc_test", "transcription_test", {
+        expected_sha256: value.expected_sha256,
+        expected_index_identity: value.expected_index_identity,
+      });
+      expect(transport).toHaveBeenLastCalledWith(
+        "/documents/doc_test/transcriptions/transcription_test/embeddings",
+        expect.objectContaining({ method: "POST" }),
+      );
+      expect(() => client.transcriptions("doc_test", -1)).toThrow();
+      expect(() => client.transcription("doc_test", "../private")).toThrow();
+      expect(transport).toHaveBeenCalledTimes(4);
+    },
+  );
   it("has no implicit reads and forwards selected IDs with source identities", async () => {
     const transport = vi.fn(async () => ({ id: "job_owned" }));
     const client = new AircraftLibraryOCRClient(transport);
