@@ -6,6 +6,8 @@ index, not an independently maintained task list. Use `gh issue` and `gh pr`.
 
 ## Current work and requests
 
+- [#572 — Require smaller truncation requests](https://github.com/jordanhubbard/Aviation/issues/572): [partition and recovery contract](../architecture/aircraft-library.md#access-and-lifecycle); preserve mandatory page context and complete primary coverage, select an effective contiguous split, and reject unchanged retries without altering validators or historical generations.
+
 - [#569 — Explain signed source literals](https://github.com/jordanhubbard/Aviation/issues/569): [versioned correction contract](../architecture/aircraft-library.md); bounded cited-source sign diagnostics, unchanged numeric validation and exact predecessor replay. Local evidence: 2,313 backend checks, 800 identifier controls, 63 actual-source predecessor reconstructions and eight complete predecessor wire controls pass; numeric/source validation remains unchanged. The stopped version-3 run preserves eight accepted batches without feature acceptance; version 4 also requires Unicode identifier controls and a fresh generation.
 
 - [#567 — Correct unsupported rejected assertions](https://github.com/jordanhubbard/Aviation/issues/567): [versioned correction contract](../architecture/aircraft-library.md); preserve accepted claims, strict validation and legacy replay while removing numeric-occurrence text locks from new generations.

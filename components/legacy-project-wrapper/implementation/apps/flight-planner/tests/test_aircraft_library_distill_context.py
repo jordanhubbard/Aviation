@@ -1,6 +1,7 @@
 """Complete request evidence is bounded separately from unique primary coverage."""
 
 import copy
+from itertools import product
 
 import pytest
 
@@ -19,6 +20,7 @@ from app.services.aircraft_library.models import (
     distillation_request_evidence,
     validate_answer,
     validated_prefix,
+    _smaller_distillation_split,
 )
 from app.services.aircraft_library.recovery import recover_distillation
 from app.services.aircraft_library.worker import Worker
@@ -610,10 +612,16 @@ def test_short_page_keeps_verified_review_and_all_native_passages(library, trunc
     before = copy.deepcopy(store.passages([identifier]))
     assert len([p for p in before if not p.get("transcription_review")]) > 1
     provider = ContextProvider(truncate=truncate)
-    result = distill(store, provider, identifier)
-    assert (
-        result["status"] == "complete" and result["evidence_policy"] == NATIVE_DISTILLATION_EVIDENCE
-    )
+    if truncate:
+        with pytest.raises(ModelTruncated, match="required page context prevents a smaller"):
+            distill(store, provider, identifier)
+        result = store.get(identifier)["artifacts"]["distillation"]
+        assert result["status"] == "partial" and result["completed_batches"] == 0
+        assert result["total_batches"] == 1 and len(provider.calls) == 1
+    else:
+        result = distill(store, provider, identifier)
+        assert result["status"] == "complete"
+    assert result["evidence_policy"] == NATIVE_DISTILLATION_EVIDENCE
     assert "unresolved_context_pages" not in result and "context_warnings" not in result
     assert provider.truncated == truncate
     for evidence in provider.received:
@@ -621,6 +629,146 @@ def test_short_page_keeps_verified_review_and_all_native_passages(library, trunc
         assert sum(len(p["text"]) for p in evidence) <= 4000
         assert any(p["passage_id"] == review["passage_id"] for p in evidence)
     assert store.passages([identifier]) == before
+
+
+class PageTruncationProvider(ContextProvider):
+    def __init__(self, page, *, budget=18000):
+        super().__init__()
+        self.truncate_page = page
+        self.distillation_batch_chars = budget
+
+    def complete(self, evidence, question):
+        if not self.truncated and any(p["page"] == self.truncate_page for p in evidence):
+            self.truncated = True
+            self.calls.append([p["passage_id"] for p in evidence])
+            self.received.append(copy.deepcopy(evidence))
+            raise ModelTruncated("Synthetic first-candidate truncation")
+        return super().complete(evidence, question)
+
+
+@pytest.mark.parametrize("long_page_first", [True, False])
+def test_truncation_selects_a_smaller_page_boundary_and_resumes_its_saved_partition(
+    library, long_page_first
+):
+    store, _, _ = library
+    pages = ["Native systems description. " * 130, "Following page description."]
+    if not long_page_first:
+        pages.reverse()
+    identifier = store.ingest(manual(*pages), {"icao": "C182"})["id"]
+    original = store.original(identifier).read_bytes()
+    before = store.passages([identifier])
+    assert [sum(p["page"] == page for p in before) for page in (1, 2)] == (
+        [3, 1] if long_page_first else [1, 3]
+    )
+    provider = PageTruncationProvider(1)
+    provider.kill_at = 3
+    _, roots, _, fingerprint = distillation_context(store, provider, identifier)
+    assert len(roots) == 1
+    with pytest.raises(ProcessKilled):
+        distill(store, provider, identifier)
+    partial = copy.deepcopy(store.get(identifier)["artifacts"]["distillation"])
+    assert partial["status"] == "partial" and partial["completed_batches"] == 1
+    assert partial["total_batches"] == 2 and partial["evidence_identity"] == fingerprint
+    assert partial["batch_plan"] == [
+        [p["passage_id"] for p in before if p["page"] == page] for page in (1, 2)
+    ]
+    supplied = [set(ids) for ids in provider.calls]
+    assert supplied[1] < supplied[0] and supplied[2] < supplied[0]
+    assert supplied[1] | supplied[2] == supplied[0]
+    assert all(len({p["page"] for p in rows}) == 1 for rows in provider.received[1:])
+    resumed = ContextProvider()
+    resumed.distillation_batch_chars = 18000
+    result = distill(store, resumed, identifier)
+    assert result["status"] == "complete" and result["unresolved_batches"] == 0
+    assert result["batch_plan"] == partial["batch_plan"]
+    assert result["sections"][:1] == partial["sections"]
+    assert resumed.calls == [partial["batch_plan"][1]]
+    assert result["evidence_identity"] == fingerprint
+    assert store.original(identifier).read_bytes() == original
+    assert store.passages([identifier]) == before
+
+
+def test_ineffective_native_split_preserves_the_accepted_prefix_and_original_partition(library):
+    store, _, _ = library
+    identifier = store.ingest(
+        manual("Introduction. " * 120, "Native systems description. " * 80),
+        {"icao": "C182"},
+    )["id"]
+    provider = PageTruncationProvider(2, budget=4000)
+    before = store.passages([identifier])
+    _, roots, _, fingerprint = distillation_context(store, provider, identifier)
+    assert len(roots) == 2 and len(roots[1]) == 2
+    with pytest.raises(ModelTruncated, match="required page context prevents a smaller"):
+        distill(store, provider, identifier)
+    result = store.get(identifier)["artifacts"]["distillation"]
+    assert result["status"] == "partial" and result["completed_batches"] == 1
+    assert result["total_batches"] == 2 and len(provider.calls) == 2
+    assert result["batch_plan"] == [[p["passage_id"] for p in batch] for batch in roots]
+    assert result["evidence_identity"] == fingerprint
+    assert len(validated_prefix(result, roots)) == 1
+    assert store.passages([identifier]) == before
+
+
+def test_reviewed_context_is_not_removed_to_force_a_smaller_retry(library):
+    store, _, _ = library
+    identifier = store.ingest(manual("Native system description."), {"icao": "C182"})["id"]
+    review = transcribe(store, identifier, 1, "Literal reviewed pressure is 37 psi.")
+    before = store.passages([identifier])
+    provider = PageTruncationProvider(1)
+    with pytest.raises(ModelTruncated, match="required page context prevents a smaller"):
+        distill(store, provider, identifier)
+    result = store.get(identifier)["artifacts"]["distillation"]
+    assert result["evidence_policy"] == REVIEWED_DISTILLATION_EVIDENCE
+    assert result["status"] == "partial" and result["completed_batches"] == 0
+    assert result["total_batches"] == 1 and len(provider.calls) == 1
+    assert review["passage_id"] in provider.calls[0]
+    assert store.passages([identifier]) == before
+
+
+def test_a_single_truncated_passage_keeps_its_original_explicit_failure(library):
+    store, _, _ = library
+    identifier = store.ingest(manual("Native system description."), {"icao": "C182"})["id"]
+    provider = PageTruncationProvider(1)
+    with pytest.raises(ModelTruncated, match="Synthetic first-candidate truncation"):
+        distill(store, provider, identifier)
+    result = store.get(identifier)["artifacts"]["distillation"]
+    assert result["status"] == "partial" and result["completed_batches"] == 0
+    assert result["total_batches"] == len(provider.calls) == 1
+
+
+def test_split_search_matches_exhaustive_coverage_choices_without_linear_request_probes(monkeypatch):
+    import app.services.aircraft_library.models as module
+
+    original = module.distillation_request_evidence
+    probes = []
+
+    def counted(*args):
+        probes.append(1)
+        return original(*args)
+
+    monkeypatch.setattr(module, "distillation_request_evidence", counted)
+    for policy in (LEGACY_DISTILLATION_EVIDENCE, NATIVE_DISTILLATION_EVIDENCE):
+        artifact = {"evidence_policy": policy, "context_limit_chars": 18000}
+        for size in range(2, 9):
+            for pages in product((1, 2), repeat=size):
+                rows = [NativeBoundaryStore.row(i, page, "Source text.") for i, page in enumerate(pages)]
+                evidence = original(rows, [rows], artifact)
+                parent_ids = {p["passage_id"] for p in evidence}
+                parent_chars = sum(len(p["text"]) for p in evidence)
+                choices = []
+                for cut in range(1, size):
+                    parts = [rows[:cut], rows[cut:]]
+                    supplied = [original(part, [rows], artifact) for part in parts]
+                    if all(
+                        {p["passage_id"] for p in request} < parent_ids
+                        and sum(len(p["text"]) for p in request) < parent_chars
+                        for request in supplied
+                    ):
+                        choices.append((abs(2 * cut - size), cut, parts))
+                expected = min(choices, default=(0, 0, None))[-1]
+                probes.clear()
+                assert _smaller_distillation_split(rows, [rows], artifact, evidence) == expected
+                assert len(probes) <= 2 * (size.bit_length() + 1)
 
 
 def test_policy_migration_refuses_changed_first_request_without_relabelling(library, tmp_path):

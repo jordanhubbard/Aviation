@@ -747,8 +747,19 @@ job state. Checkpoints and accepted distillation batches survive provider failur
 
 When a first candidate is explicitly truncated, distillation may bisect its
 contiguous passage batch, durably recording the complete ordered partition before
-continuing. Every original passage remains covered exactly once. A single passage
-that still truncates fails explicitly; splitting is bounded by the passage count.
+continuing. Both child requests must supply strictly less source text and a proper
+subset of the parent's supplied passages after applying the unchanged page-context
+policy. Retain the primary midpoint when it meets these conditions; otherwise use
+the nearest effective contiguous boundary, preferring the lower boundary on a tie.
+Search is bounded logarithmically in the primary passage count because supplied
+context grows monotonically with a prefix and shrinks with a suffix. Required
+native-page and reviewed context must never be dropped to make a split fit.
+If no effective boundary exists, fail explicitly without changing the partition
+or making another provider request. Every original primary passage remains covered
+exactly once. A single passage that still truncates fails explicitly; successful
+splitting remains bounded by the passage count. This changes retry partitioning,
+not evidence policies, generation identities, validators or correction limits;
+compatible saved partitions and their validated prefixes remain resumable.
 Never split a rejected correction to evade unresolved assertions. HTTP failures,
 schema errors and numeric failures retain their existing bounded correction rules.
 An explicitly truncated correction may consume the remaining correction attempt

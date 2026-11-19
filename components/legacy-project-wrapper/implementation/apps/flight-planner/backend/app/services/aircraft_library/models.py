@@ -1768,6 +1768,51 @@ def distillation_request_evidence(batch, batches, artifact):
     return evidence
 
 
+def _smaller_distillation_split(batch, batches, artifact, evidence):
+    """Find the nearest midpoint cut whose two actual requests both shrink."""
+    parent_ids = {p["passage_id"] for p in evidence}
+    parent_chars = sum(len(p["text"]) for p in evidence)
+
+    def candidate(cut):
+        parts = [batch[:cut], batch[cut:]]
+        smaller = []
+        for part in parts:
+            supplied = distillation_request_evidence(part, batches, artifact)
+            smaller.append(
+                {p["passage_id"] for p in supplied} < parent_ids
+                and sum(len(p["text"]) for p in supplied) < parent_chars
+            )
+        return parts, smaller
+
+    middle = len(batch) // 2
+    parts, (left, right) = candidate(middle)
+    if left and right:
+        return parts
+    if not left and not right:
+        return None
+    # Context is fixed by the complete partition: a larger primary prefix cannot
+    # supply less evidence, and a smaller suffix cannot supply more. Search only
+    # toward the side that can reduce the non-shrinking child, retaining the
+    # effective boundary nearest the midpoint.
+    toward_left = not left
+    low, high = (1, middle - 1) if toward_left else (middle + 1, len(batch) - 1)
+    best = None
+    while low <= high:
+        cut = (low + high) // 2
+        parts, (left, right) = candidate(cut)
+        if not left:
+            high = cut - 1
+        elif not right:
+            low = cut + 1
+        else:
+            best = parts
+            if toward_left:
+                low = cut + 1
+            else:
+                high = cut - 1
+    return best
+
+
 def distillation_context(
     store: Store,
     models: Models,
@@ -1973,11 +2018,16 @@ def distill(store: Store, models: Models, identifier: str):
                     },
                 )
             )
-        except ModelTruncated:
+        except ModelTruncated as error:
             if len(batch) < 2:
                 raise
-            middle = len(batch) // 2
-            batches[position : position + 1] = [batch[:middle], batch[middle:]]
+            parts = _smaller_distillation_split(batch, batches, value, evidence)
+            if parts is None:
+                raise ModelTruncated(
+                    "Model output was truncated; required page context prevents "
+                    "a smaller distillation request"
+                ) from error
+            batches[position : position + 1] = parts
             value = persist()
             continue
         summaries.append({"pages": sorted({p["page"] for p in batch}), **result})
