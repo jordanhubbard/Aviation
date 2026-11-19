@@ -41,13 +41,14 @@ LEGACY_CORRECTION_POLICY = "numeric-citation-only-v1"
 ASSERTION_CORRECTION_POLICY = "rejected-assertion-repair-v2"
 SIGNED_CORRECTION_POLICY = "signed-source-feedback-v3"
 SIGNED_V4_CORRECTION_POLICY = "signed-source-feedback-v4"
-CORRECTION_POLICY = "conditional-source-feedback-v5"
+CONDITIONAL_V5_CORRECTION_POLICY = "conditional-source-feedback-v5"
+CORRECTION_POLICY = "conditional-source-forms-v6"
 
 
 def _correction_settings(policy):
     if policy == LEGACY_CORRECTION_POLICY:
         return {}
-    if policy not in (ASSERTION_CORRECTION_POLICY, SIGNED_CORRECTION_POLICY, SIGNED_V4_CORRECTION_POLICY, CORRECTION_POLICY):
+    if policy not in (ASSERTION_CORRECTION_POLICY, SIGNED_CORRECTION_POLICY, SIGNED_V4_CORRECTION_POLICY, CONDITIONAL_V5_CORRECTION_POLICY, CORRECTION_POLICY):
         raise ModelUnavailable("Unknown completion correction policy")
     return {"correction_policy": policy}
 
@@ -975,15 +976,17 @@ def _flight_operations(text):
     return set(re.findall(r"\b(?:day|night|vfr|ifr)\b", text))
 
 
-def _equipment_example(text):
+def _equipment_example(text, *, correction_policy=CORRECTION_POLICY):
+    variation = (r"var(?:y|ies)" if correction_policy == CONDITIONAL_V5_CORRECTION_POLICY
+                 else r"var(?:y(?:ing)?|ies)")
     return (
         bool(re.search(r"\bexample\b", text))
         and bool(re.search(r"\bequip(?:ped|ment)\b", text))
-        and bool(re.search(r"\b(?:var(?:y|ies)|depend(?:s|ent|ing)?|changes?)\b", text))
+        and bool(re.search(rf"\b(?:{variation}|depend(?:s|ent|ing)?|changes?)\b", text))
         and not re.search(r"\b(?:no\s+(?:\w+\s+){0,2}|not\s+(?:an?\s+)?)example\b", text)
         and not re.search(
             r"(?:\b(?:not|never)\s+(?:\w+\s+){0,2}|n't\s+)"
-            r"(?:var(?:y|ies)|depend(?:s|ent|ing)?|changes?)\b", text
+            rf"(?:{variation}|depend(?:s|ent|ing)?|changes?)\b", text
         )
     )
 
@@ -999,7 +1002,7 @@ def _original_certificate(text):
     )
 
 
-def _certification_requirements(text, cited_sources, evidence):
+def _certification_requirements(text, cited_sources, evidence, *, correction_policy=CORRECTION_POLICY):
     text = _condition_text(text)
     operations = _flight_operations(text)
     if not operations:
@@ -1034,14 +1037,14 @@ def _certification_requirements(text, cited_sources, evidence):
         for clause in re.split(r"[.!?;]", available):
             if not operations.intersection(_flight_operations(clause)):
                 continue
-            if _equipment_example(clause) and not re.search(r"\b(?:not|never)\b", clause):
+            if _equipment_example(clause, correction_policy=correction_policy) and not re.search(r"\b(?:not|never)\b", clause):
                 conditions.add("equipment_dependent_example")
             if _original_certificate(clause) and re.search(r"\bcertif(?:ied|icated|ication)\b", clause):
                 conditions.add("original_certificate_date")
     return {"flight_operations": sorted(operations), "conditions": sorted(conditions)} if conditions else None
 
 
-def _validate_certification_conditions(text, requirements, claim_number):
+def _validate_certification_conditions(text, requirements, claim_number, *, correction_policy=CORRECTION_POLICY):
     if not requirements:
         return
     normalized = _condition_text(text)
@@ -1050,7 +1053,7 @@ def _validate_certification_conditions(text, requirements, claim_number):
         missing.append("operating_entry_obligation")
     for condition in requirements["conditions"]:
         retained = (
-            _equipment_example(normalized)
+            _equipment_example(normalized, correction_policy=correction_policy)
             if condition == "equipment_dependent_example"
             else _original_certificate(normalized)
         )
@@ -1144,9 +1147,11 @@ def validate_answer(
             supporting.append(quote)
             cited_sources.append(source)
         requirements = None
-        if correction_policy == CORRECTION_POLICY:
+        if correction_policy in (CONDITIONAL_V5_CORRECTION_POLICY, CORRECTION_POLICY):
             requirements = (applicability_requirements or {}).get(claim_number - 1)
-            discovered = _certification_requirements(claim["text"], cited_sources, evidence)
+            discovered = _certification_requirements(
+                claim["text"], cited_sources, evidence, correction_policy=correction_policy
+            )
             if requirements and discovered:
                 requirements = {
                     key: sorted(set(requirements[key]) | set(discovered[key]))
@@ -1171,7 +1176,9 @@ def validate_answer(
                        if requirements else {}),
                 },
             )
-        _validate_certification_conditions(claim["text"], requirements, claim_number)
+        _validate_certification_conditions(
+            claim["text"], requirements, claim_number, correction_policy=correction_policy
+        )
         clean.append({"text": claim["text"], "citations": verified})
     return {
         "insufficient_evidence": False,
@@ -1396,7 +1403,7 @@ def _rejected_claims(
                     for option in feedback["numeric_evidence_options"]["matches"]
                     for value in option["numeric_values"]
                 }
-                if correction_policy in (SIGNED_CORRECTION_POLICY, SIGNED_V4_CORRECTION_POLICY, CORRECTION_POLICY):
+                if correction_policy in (SIGNED_CORRECTION_POLICY, SIGNED_V4_CORRECTION_POLICY, CONDITIONAL_V5_CORRECTION_POLICY, CORRECTION_POLICY):
                     signed = _signed_source_diagnostics(
                         feedback["unsupported_numeric_values"], claim, evidence,
                         correction_policy=correction_policy,
@@ -1685,7 +1692,7 @@ def verified_completion(
                     "from factual claims while retaining actual source facts, conditions and references. "
                     "Do not weaken or omit a supported fact merely to avoid selecting its supporting excerpt. "
                 )
-                if correction_policy in (SIGNED_CORRECTION_POLICY, SIGNED_V4_CORRECTION_POLICY, CORRECTION_POLICY) and any(
+                if correction_policy in (SIGNED_CORRECTION_POLICY, SIGNED_V4_CORRECTION_POLICY, CONDITIONAL_V5_CORRECTION_POLICY, CORRECTION_POLICY) and any(
                     failure.get("signed_source_diagnostics") for failure in failures
                 ):
                     instruction += (
@@ -1696,7 +1703,7 @@ def verified_completion(
                         "expression with supported literal facts. Do not evaluate arithmetic, remove "
                         "signs, normalize source text or infer applicability from these diagnostics. "
                     )
-                if correction_policy == CORRECTION_POLICY and applicability_requirements:
+                if correction_policy in (CONDITIONAL_V5_CORRECTION_POLICY, CORRECTION_POLICY) and applicability_requirements:
                     instruction += (
                         "Applicability requirements identify explicit conditions in the supplied source. "
                         "Keep every listed flight-operation label and report the equipment-dependent "

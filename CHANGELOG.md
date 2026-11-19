@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Aircraft library: recognize "varying" in equipment-dependent example qualifications under a new generation policy, retaining negation checks and exact historical validation.
+
 - Aircraft library: retain explicit equipment-dependent example and original-certificate conditions in flight-operation certification claims, with bounded correction obligations and a fresh versioned generation.
 
 - Aircraft library: require truncation splits to reduce supplied page context, choose a smaller complete partition when possible, and stop explicitly when required context prevents a useful split.

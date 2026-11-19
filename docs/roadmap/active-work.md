@@ -6,7 +6,7 @@ index, not an independently maintained task list. Use `gh issue` and `gh pr`.
 
 ## Current work and requests
 
-- [#576 — Preserve conditional certification statements](https://github.com/jordanhubbard/Aviation/issues/576): [claim-condition contract](../architecture/aircraft-library.md#conditional-certification-assertions-576); reject omitted equipment-dependent example/certificate qualifications, preserve bounded correction obligations and version fresh generations. Actual retained admission is reproduced and the condition guard is implemented locally; full qualification and delivery remain pending.
+- [#576 — Preserve conditional certification statements](https://github.com/jordanhubbard/Aviation/issues/576): [claim-condition contract](../architecture/aircraft-library.md#conditional-certification-assertions-576); reject omitted equipment-dependent example/certificate qualifications, preserve bounded correction obligations and version fresh generations. The v5 guard is merged and deployed in PR #577 with all software and hosted gates passing. Actual generation remains partial (5/47): a final qualified correction exposed a false rejection of "varying". Next: preserve exact v5 reconstruction while implementing the distinct v6 form-recognition contract; complete affected-batch canonical original-image qualification before closure.
 
 - [#572 — Require smaller truncation requests](https://github.com/jordanhubbard/Aviation/issues/572): [partition and recovery contract](../architecture/aircraft-library.md#access-and-lifecycle); preserve mandatory page context and complete primary coverage, select an effective contiguous split, and reject unchanged retries without altering validators or historical generations.
 

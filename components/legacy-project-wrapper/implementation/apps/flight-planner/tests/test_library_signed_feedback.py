@@ -8,7 +8,7 @@ from decimal import localcontext
 import pytest
 
 from app.services.aircraft_library.models import (
-    ASSERTION_CORRECTION_POLICY, CITATION_FORMAT, CORRECTION_POLICY,
+    ASSERTION_CORRECTION_POLICY, CITATION_FORMAT, CONDITIONAL_V5_CORRECTION_POLICY, CORRECTION_POLICY,
     LEGACY_CORRECTION_POLICY, SIGNED_CORRECTION_POLICY, SIGNED_V4_CORRECTION_POLICY, SYSTEM,
     ModelUnavailable, _signed_source_diagnostics, distill, distillation_context,
     source_excerpts, validate_answer, verified_completion,
@@ -267,6 +267,7 @@ def test_v3_replay_retains_its_old_rounding_diagnostic_without_admitting_a_claim
 
 @pytest.mark.parametrize("policy", [
     ASSERTION_CORRECTION_POLICY, SIGNED_CORRECTION_POLICY, SIGNED_V4_CORRECTION_POLICY,
+    CONDITIONAL_V5_CORRECTION_POLICY,
 ])
 def test_predecessor_generation_is_reconstructed_but_never_recovered_as_current(
     tmp_path, monkeypatch, policy,

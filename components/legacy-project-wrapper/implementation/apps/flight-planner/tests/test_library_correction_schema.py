@@ -411,3 +411,93 @@ def test_prohibition_in_another_clause_and_noun_authorizations_do_not_hide_posit
 def test_negative_authorizations_keep_their_own_negation_scope(text):
     from app.services.aircraft_library.models import validate_answer
     assert validate_answer(operation_answer(text), [CONDITIONAL_OPERATIONS])['claims'][0]['text'] == text
+
+
+@pytest.mark.parametrize('form', ['can vary', 'varies', 'is varying'])
+def test_equipment_example_forms_retain_both_supplied_qualifications(form):
+    from app.services.aircraft_library.models import validate_answer
+    text = ('The airplane is certified for DAY-NIGHT-VFR-IFR operations as of the date '
+            'of the original airworthiness certificate; the example entry is shown '
+            f'and {form} as the airplane is equipped.')
+    assert validate_answer(operation_answer(text), [CONDITIONAL_OPERATIONS])['claims'][0]['text'] == text
+
+
+@pytest.mark.parametrize('qualification', [
+    'not varying', 'never varying', "isn't varying", 'isn’t varying', 'unvarying',
+])
+def test_negated_or_embedded_variation_cannot_satisfy_conditional_repair(qualification):
+    calls = []
+    text = ('The example DAY-NIGHT-VFR-IFR entry is ' + qualification + ' as equipped; '
+            'certification is as of the original airworthiness certificate date.')
+    def provider(request):
+        calls.append(json.loads(request.content))
+        return response([operation_claim(UNQUALIFIED_CERTIFICATION if len(calls) == 1 else text)])
+    with pytest.raises(ModelUnavailable, match='applicability conditions'):
+        verified_completion(model(provider), [CONDITIONAL_OPERATIONS], 'Summarize')
+    assert len(calls) == 3
+
+
+def test_varying_source_creates_equipment_obligation_without_changing_v5():
+    from app.services.aircraft_library.models import validate_answer
+    evidence = [{**CONDITIONAL_OPERATIONS,
+                 'text': CONDITIONAL_OPERATIONS['text'].replace('varies', 'is varying')}]
+    for policy, expected in [
+        ('conditional-source-feedback-v5', ['original_certificate_date']),
+        ('conditional-source-forms-v6', ['equipment_dependent_example', 'original_certificate_date']),
+    ]:
+        with pytest.raises(ModelUnavailable, match='applicability conditions') as failure:
+            validate_answer(operation_answer(UNQUALIFIED_CERTIFICATION), evidence, correction_policy=policy)
+        assert failure.value.feedback['applicability_requirements']['conditions'] == expected
+
+
+@pytest.mark.parametrize('policy,accepted,calls_expected', [
+    ('conditional-source-feedback-v5', False, 3),
+    ('conditional-source-forms-v6', True, 2),
+])
+def test_bounded_variation_repair_preserves_original_claims_and_recorded_v5(policy, accepted, calls_expected):
+    calls = []
+    retained = claim('Power limit is 100 hp.')
+    repaired = ('No aerobatic maneuvers are approved; and the airplane is certified for '
+                'DAY-NIGHT-VFR-IFR operations as of date of original airworthiness certificate, '
+                'with the example entry varying as the airplane is equipped.')
+    def provider(request):
+        calls.append(json.loads(request.content))
+        if len(calls) == 1:
+            return response([retained, operation_claim(UNQUALIFIED_CERTIFICATION)])
+        return response([operation_claim(repaired)])
+    def run():
+        return verified_completion(model(provider), EVIDENCE + [CONDITIONAL_OPERATIONS],
+                                   'Summarize', correction_policy=policy)
+    if accepted:
+        result = run()
+        assert [c['text'] for c in result['claims']] == [retained['text'], repaired]
+    else:
+        with pytest.raises(ModelUnavailable, match='applicability conditions'):
+            run()
+    assert len(calls) == calls_expected
+
+
+@pytest.mark.parametrize('kind,expected', [
+    ('qualified', 'df344c9f4a1126dab290fce0431ab80e3231eccc4200d09d1b7ebb0a864411ad'),
+    ('varying', 'e71443924757b80af315f48fb84e05280113b97bca6741f8642c45e99e6cf802'),
+])
+def test_recorded_v5_condition_repair_wires_remain_exact(kind, expected):
+    import hashlib
+    calls = []
+    def provider(request):
+        calls.append(json.loads(request.content))
+        text = UNQUALIFIED_CERTIFICATION if len(calls) == 1 else QUALIFIED_CERTIFICATION
+        if kind == 'varying':
+            text = text.replace('varies', 'is varying')
+        return response([operation_claim(text)])
+    def run():
+        return verified_completion(model(provider), [CONDITIONAL_OPERATIONS], 'Summarize',
+                                   correction_policy='conditional-source-feedback-v5')
+    if kind == 'varying':
+        with pytest.raises(ModelUnavailable, match='applicability conditions'):
+            run()
+        assert len(calls) == 3
+    else:
+        assert run()['claims'][0]['text'] == QUALIFIED_CERTIFICATION
+        assert len(calls) == 2
+    assert hashlib.sha256(json.dumps(calls, sort_keys=True, separators=(',', ':')).encode()).hexdigest() == expected
