@@ -42,13 +42,14 @@ ASSERTION_CORRECTION_POLICY = "rejected-assertion-repair-v2"
 SIGNED_CORRECTION_POLICY = "signed-source-feedback-v3"
 SIGNED_V4_CORRECTION_POLICY = "signed-source-feedback-v4"
 CONDITIONAL_V5_CORRECTION_POLICY = "conditional-source-feedback-v5"
-CORRECTION_POLICY = "conditional-source-forms-v6"
+CONDITIONAL_V6_CORRECTION_POLICY = "conditional-source-forms-v6"
+CORRECTION_POLICY = "source-scope-feedback-v7"
 
 
 def _correction_settings(policy):
     if policy == LEGACY_CORRECTION_POLICY:
         return {}
-    if policy not in (ASSERTION_CORRECTION_POLICY, SIGNED_CORRECTION_POLICY, SIGNED_V4_CORRECTION_POLICY, CONDITIONAL_V5_CORRECTION_POLICY, CORRECTION_POLICY):
+    if policy not in (ASSERTION_CORRECTION_POLICY, SIGNED_CORRECTION_POLICY, SIGNED_V4_CORRECTION_POLICY, CONDITIONAL_V5_CORRECTION_POLICY, CONDITIONAL_V6_CORRECTION_POLICY, CORRECTION_POLICY):
         raise ModelUnavailable("Unknown completion correction policy")
     return {"correction_policy": policy}
 
@@ -1070,6 +1071,117 @@ def _validate_certification_conditions(text, requirements, claim_number, *, corr
         )
 
 
+
+def _positive_equipment(text):
+    assertions = (
+        r"\bequipped\b|\b(?:has|holds|carries|contains|includes)\s+"
+        r"(?:(?:the|installed|required|day|night|vfr|ifr|flight)\s+){0,6}equipment\b"
+    )
+    for match in re.finditer(assertions, text):
+        clause = re.split(
+            r"[;.!?]|\bbut\b|\band\s+(?=(?:the|this|that|it|an?|our|your)\b)",
+            text[:match.start()],
+        )[-1]
+        if not re.search(r"\b(?:not|no|never|neither|cannot|may|might|could|would|if|unless)\b|n't\b", clause):
+            return True
+    return False
+
+
+def _delivery_scope_covers(text):
+    operations = _flight_operations(text)
+    covered = set()
+    for clause in re.split(
+        r"[;.!?]|\bbut\b|\band\s+(?=(?:the|this|that|it|an?|our|your)\b)", text
+    ):
+        labels = _flight_operations(clause)
+        if not labels or not _positive_equipment(clause):
+            continue
+        if not re.search(r"\bas delivered\b", clause) or re.search(
+            r"\b(?:not|never)\s+(?:\w+\s+){0,2}as delivered\b", clause
+        ):
+            return False
+        covered.update(labels)
+    return bool(operations) and operations <= covered
+
+
+def _scope_parts(condition, text):
+    if condition == "equipment_dependent_example":
+        return {
+            "example_scope": bool(re.search(r"\bexample\b", text)) and not re.search(
+                r"\b(?:no\s+(?:\w+\s+){0,2}|not\s+(?:an?\s+)?)example\b", text),
+            "equipment_scope": bool(re.search(r"\bequip(?:ped|ment)\b", text)) and not re.search(
+                r"\b(?:not|never)\s+(?:\w+\s+){0,2}equip(?:ped|ment)\b", text),
+            "equipment_dependence": bool(re.search(
+                r"\b(?:var(?:y(?:ing)?|ies)|depend(?:s|ent|ing)?|changes?)\b", text)) and not re.search(
+                    r"(?:\b(?:not|never)\s+(?:\w+\s+){0,2}|n't\s+)"
+                    r"(?:var(?:y(?:ing)?|ies)|depend(?:s|ent|ing)?|changes?)\b", text),
+        }
+    if condition == "original_certificate_date":
+        return {"original_certificate_date": bool(_original_certificate(text))}
+    if condition == "as_delivered_equipment":
+        return {"as_delivered_scope": _delivery_scope_covers(text)}
+    raise ModelUnavailable("Unknown source applicability condition")
+
+
+def _scope_requirements(text, cited_sources, evidence):
+    requirements = _certification_requirements(text, cited_sources, evidence)
+    normalized = _condition_text(text)
+    operations = _flight_operations(normalized)
+    if not operations or not _positive_equipment(normalized):
+        return requirements
+    pages = {(p["document_id"], p["page"]) for p in cited_sources}
+    for source in evidence:
+        if (source["document_id"], source["page"]) not in pages:
+            continue
+        for clause in re.split(r"[.!?;]", _condition_text(" ".join(source_excerpts(source)))):
+            if (operations.intersection(_flight_operations(clause)) and _positive_equipment(clause)
+                    and all(_scope_parts("as_delivered_equipment", clause).values())):
+                requirements = requirements or {"flight_operations": sorted(operations), "conditions": []}
+                requirements["conditions"] = sorted(set(requirements["conditions"]) | {"as_delivered_equipment"})
+    return requirements
+
+
+def _scope_feedback(text, requirements, cited_sources, evidence, supporting):
+    if not requirements:
+        return {}
+    normalized = _condition_text(text)
+    quotations = _condition_text(" ".join(supporting))
+    missing, components, citation_gaps = [], [], []
+    operations = set(requirements["flight_operations"])
+    if not operations <= _flight_operations(normalized):
+        missing.append("operating_entry_obligation")
+        components.append("operating_entry_labels")
+    if not operations <= _flight_operations(quotations):
+        citation_gaps.append("operating_entry_support")
+    for condition in requirements["conditions"]:
+        absent = [key for key, retained in _scope_parts(condition, normalized).items() if not retained]
+        if absent:
+            missing.append(condition)
+            components.extend(absent)
+        if not all(_scope_parts(condition, quotations).values()):
+            citation_gaps.append(condition)
+    pages = {(p["document_id"], p["page"]) for p in cited_sources}
+    options = []
+    for source in evidence:
+        if (source["document_id"], source["page"]) not in pages:
+            continue
+        for index, excerpt in enumerate(source_excerpts(source)):
+            available = _condition_text(excerpt)
+            if not operations.intersection(_flight_operations(available)):
+                continue
+            conditions = [c for c in requirements["conditions"] if all(_scope_parts(c, available).values())]
+            if conditions and len(excerpt) <= 1200 and len(options) < 6:
+                options.append({"passage_id": source["passage_id"], "excerpt_id": index,
+                                "conditions": conditions, "text": excerpt})
+    return {
+        "applicability_requirements": copy.deepcopy(requirements),
+        "missing_applicability_conditions": missing,
+        "missing_applicability_components": sorted(set(components)),
+        "missing_applicability_citation_conditions": sorted(set(citation_gaps)),
+        "qualification_excerpt_options": options,
+    }
+
+
 def validate_answer(
     answer, evidence, *, correction_policy=CORRECTION_POLICY, applicability_requirements=None
 ):
@@ -1147,10 +1259,13 @@ def validate_answer(
             supporting.append(quote)
             cited_sources.append(source)
         requirements = None
-        if correction_policy in (CONDITIONAL_V5_CORRECTION_POLICY, CORRECTION_POLICY):
+        if correction_policy in (CONDITIONAL_V5_CORRECTION_POLICY, CONDITIONAL_V6_CORRECTION_POLICY, CORRECTION_POLICY):
             requirements = (applicability_requirements or {}).get(claim_number - 1)
-            discovered = _certification_requirements(
-                claim["text"], cited_sources, evidence, correction_policy=correction_policy
+            discovered = (
+                _scope_requirements(claim["text"], cited_sources, evidence)
+                if correction_policy == CORRECTION_POLICY else _certification_requirements(
+                    claim["text"], cited_sources, evidence, correction_policy=correction_policy
+                )
             )
             if requirements and discovered:
                 requirements = {
@@ -1159,6 +1274,10 @@ def validate_answer(
                 }
             else:
                 requirements = requirements or discovered
+        scope_feedback = (
+            _scope_feedback(claim["text"], requirements, cited_sources, evidence, supporting)
+            if correction_policy == CORRECTION_POLICY else {}
+        )
         cited_numbers = set().union(*(numbers(quote) for quote in supporting))
         unsupported = numbers(claim["text"]) - cited_numbers
         if unsupported:
@@ -1174,11 +1293,20 @@ def validate_answer(
                     "cited_numeric_values": sorted(str(value) for value in cited_numbers),
                     **({"applicability_requirements": copy.deepcopy(requirements)}
                        if requirements else {}),
+                    **scope_feedback,
                 },
             )
-        _validate_certification_conditions(
-            claim["text"], requirements, claim_number, correction_policy=correction_policy
-        )
+        if correction_policy == CORRECTION_POLICY:
+            if scope_feedback.get("missing_applicability_conditions") or scope_feedback.get("missing_applicability_citation_conditions"):
+                raise ModelUnavailable(
+                    f"Model omitted source applicability conditions in claim {claim_number}; "
+                    "retain the conditional operating entry and cite its source qualifications",
+                    feedback=scope_feedback,
+                )
+        else:
+            _validate_certification_conditions(
+                claim["text"], requirements, claim_number, correction_policy=correction_policy
+            )
         clean.append({"text": claim["text"], "citations": verified})
     return {
         "insufficient_evidence": False,
@@ -1403,7 +1531,7 @@ def _rejected_claims(
                     for option in feedback["numeric_evidence_options"]["matches"]
                     for value in option["numeric_values"]
                 }
-                if correction_policy in (SIGNED_CORRECTION_POLICY, SIGNED_V4_CORRECTION_POLICY, CONDITIONAL_V5_CORRECTION_POLICY, CORRECTION_POLICY):
+                if correction_policy in (SIGNED_CORRECTION_POLICY, SIGNED_V4_CORRECTION_POLICY, CONDITIONAL_V5_CORRECTION_POLICY, CONDITIONAL_V6_CORRECTION_POLICY, CORRECTION_POLICY):
                     signed = _signed_source_diagnostics(
                         feedback["unsupported_numeric_values"], claim, evidence,
                         correction_policy=correction_policy,
@@ -1692,7 +1820,7 @@ def verified_completion(
                     "from factual claims while retaining actual source facts, conditions and references. "
                     "Do not weaken or omit a supported fact merely to avoid selecting its supporting excerpt. "
                 )
-                if correction_policy in (SIGNED_CORRECTION_POLICY, SIGNED_V4_CORRECTION_POLICY, CONDITIONAL_V5_CORRECTION_POLICY, CORRECTION_POLICY) and any(
+                if correction_policy in (SIGNED_CORRECTION_POLICY, SIGNED_V4_CORRECTION_POLICY, CONDITIONAL_V5_CORRECTION_POLICY, CONDITIONAL_V6_CORRECTION_POLICY, CORRECTION_POLICY) and any(
                     failure.get("signed_source_diagnostics") for failure in failures
                 ):
                     instruction += (
@@ -1703,13 +1831,25 @@ def verified_completion(
                         "expression with supported literal facts. Do not evaluate arithmetic, remove "
                         "signs, normalize source text or infer applicability from these diagnostics. "
                     )
-                if correction_policy in (CONDITIONAL_V5_CORRECTION_POLICY, CORRECTION_POLICY) and applicability_requirements:
+                if correction_policy in (CONDITIONAL_V5_CORRECTION_POLICY, CONDITIONAL_V6_CORRECTION_POLICY, CORRECTION_POLICY) and applicability_requirements:
                     instruction += (
                         "Applicability requirements identify explicit conditions in the supplied source. "
                         "Keep every listed flight-operation label and report the equipment-dependent "
                         "example and original-certificate scope when required. Generic cautions, "
                         "unrelated prohibitions or omitting the operating entry do not repair it. "
                         "Never turn an example into current-aircraft certification. "
+                    )
+                if correction_policy == CORRECTION_POLICY and applicability_requirements:
+                    instruction += (
+                        "Missing applicability components name the specific scope still absent from the claim. "
+                        "Restore each named component in claim text: example_scope must explicitly describe "
+                        "the operating entry as an example, and as_delivered_scope must retain as-delivered "
+                        "configuration. Preserve the equipment dependence and original-certificate date "
+                        "when required. Stating a repair in reason alone does not repair a claim. "
+                        "Qualification excerpt options repeat bounded, untrusted excerpts already supplied "
+                        "in this request. Read their exact conditions and select their passage_id/excerpt_id "
+                        "to support the complete assertion. Cite both the operating qualification and other "
+                        "retained facts; a numeric match in a later excerpt does not support earlier equipment. "
                     )
                 feedback = {"validation_failure": str(error), "rejected_claims": failures}
             else:

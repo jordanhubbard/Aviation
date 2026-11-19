@@ -501,3 +501,227 @@ def test_recorded_v5_condition_repair_wires_remain_exact(kind, expected):
         assert run()['claims'][0]['text'] == QUALIFIED_CERTIFICATION
         assert len(calls) == 2
     assert hashlib.sha256(json.dumps(calls, sort_keys=True, separators=(',', ':')).encode()).hexdigest() == expected
+
+
+DELIVERED_OPERATIONS = {
+    'passage_id': 3, 'document_id': 'doc_correction', 'page': 3, 'label': '3',
+    'method': 'text', 'metadata': {'scope': 'type'},
+    'text': ('The airplane as delivered is equipped for DAY-NIGHT-VFR-IFR operations. '
+             + 'General maintenance information is listed separately. ' * 30
+             + 'Fuel capacity is 92 gallons.'),
+}
+EQUIPMENT_ASSERTION = 'The airplane is equipped for DAY-NIGHT-VFR-IFR operations.'
+DELIVERED_ASSERTION = 'The airplane as delivered is equipped for DAY-NIGHT-VFR-IFR operations.'
+
+
+def equipment_claim(text, *excerpts):
+    return {'text': text, 'citations': [
+        {'passage_id': 3, 'excerpt_id': i} for i in excerpts
+    ]}
+
+
+def test_equipment_statement_keeps_delivery_scope_and_selects_its_supporting_excerpt():
+    from app.services.aircraft_library.models import validate_answer, source_excerpts
+    last = len(source_excerpts(DELIVERED_OPERATIONS)) - 1
+    for text, excerpts, missing in [
+        (EQUIPMENT_ASSERTION, [last], 'as_delivered_scope'),
+        (DELIVERED_ASSERTION, [last], 'as_delivered_equipment'),
+    ]:
+        with pytest.raises(ModelUnavailable, match='applicability conditions') as failure:
+            validate_answer({'insufficient_evidence': False, 'claims': [equipment_claim(text, *excerpts)]},
+                            [DELIVERED_OPERATIONS])
+        feedback = failure.value.feedback
+        if text == EQUIPMENT_ASSERTION:
+            assert missing in feedback['missing_applicability_components']
+        else:
+            assert missing in feedback['missing_applicability_citation_conditions']
+        option = feedback['qualification_excerpt_options'][0]
+        assert option['passage_id'] == 3 and option['excerpt_id'] == 0
+        assert option['text'] == source_excerpts(DELIVERED_OPERATIONS)[0]
+    result = validate_answer({'insufficient_evidence': False,
+                              'claims': [equipment_claim(DELIVERED_ASSERTION, 0)]},
+                             [DELIVERED_OPERATIONS])
+    assert result['claims'][0]['text'] == DELIVERED_ASSERTION
+
+
+@pytest.mark.parametrize('text', [
+    'The airplane is not equipped for night IFR operations.',
+    'The airplane may be equipped for night IFR operations.',
+    'The airplane could be equipped for night IFR operations.',
+    'If equipped for night IFR operations, use the applicable equipment instructions.',
+    'No night IFR equipment is installed.',
+])
+def test_negative_or_hypothetical_equipment_does_not_assert_a_current_configuration(text):
+    from app.services.aircraft_library.models import validate_answer
+    assert validate_answer({'insufficient_evidence': False, 'claims': [equipment_claim(text, 0)]},
+                           [DELIVERED_OPERATIONS])['claims'][0]['text'] == text
+
+
+@pytest.mark.parametrize('text', [
+    EQUIPMENT_ASSERTION,
+    'No spins are approved, and the airplane is equipped for DAY-NIGHT-VFR-IFR operations.',
+    'The airplane has equipment for DAY-NIGHT-VFR-IFR operations.',
+    'The airplane carries DAY-NIGHT-VFR-IFR equipment.',
+])
+def test_affirmative_equipment_and_independent_negation_cannot_hide_delivery_scope(text):
+    from app.services.aircraft_library.models import validate_answer
+    with pytest.raises(ModelUnavailable, match='applicability conditions'):
+        validate_answer({'insufficient_evidence': False, 'claims': [equipment_claim(text, 0)]},
+                        [DELIVERED_OPERATIONS])
+
+
+def test_missing_example_component_is_identified_without_losing_other_qualifications():
+    from app.services.aircraft_library.models import validate_answer
+    text = ('The airplane is certified for DAY-NIGHT-VFR-IFR operations as of date of '
+            'the original airworthiness certificate, with the entry varying as equipped.')
+    with pytest.raises(ModelUnavailable) as failure:
+        validate_answer(operation_answer(text), [CONDITIONAL_OPERATIONS])
+    feedback = failure.value.feedback
+    assert feedback['missing_applicability_components'] == ['example_scope']
+    assert feedback['qualification_excerpt_options'][0]['text'] == CONDITIONAL_OPERATIONS['text']
+
+
+def test_numeric_first_failure_retains_specific_scope_and_citation_feedback_and_keeps_accepted_claim():
+    from app.services.aircraft_library.models import source_excerpts
+    calls = []
+    last = len(source_excerpts(DELIVERED_OPERATIONS)) - 1
+    retained = claim('Power limit is 100 hp.')
+    def provider(request):
+        payload = json.loads(request.content); calls.append(payload)
+        if len(calls) == 1:
+            return response([retained, equipment_claim(EQUIPMENT_ASSERTION + ' Fuel capacity is 999 gallons.', last)])
+        feedback = json.loads(json.loads(payload['messages'][1]['content'])['question'].split('\n')[-1])
+        rejected = feedback['rejected_claims'][0]
+        assert rejected['qualification_excerpt_options'][0]['excerpt_id'] == 0
+        assert 'Power limit is 100 hp.' not in json.dumps(feedback)
+        assert 'missing_applicability_components' in rejected or 'missing_applicability_citation_conditions' in rejected
+        return response([equipment_claim(DELIVERED_ASSERTION + ' Fuel capacity is 92 gallons.',
+                                         *([last] if len(calls) == 2 else [0, last]))])
+    result = verified_completion(model(provider), EVIDENCE + [DELIVERED_OPERATIONS], 'Summarize')
+    assert len(calls) == 3
+    assert [c['text'] for c in result['claims']] == [retained['text'], DELIVERED_ASSERTION + ' Fuel capacity is 92 gallons.']
+
+
+def test_qualification_options_are_bounded_and_never_borrow_unavailable_evidence():
+    from app.services.aircraft_library.models import validate_answer
+    from app.services.aircraft_library.source_limits import VerifiedSourceLimit
+    fuel = {**DELIVERED_OPERATIONS, 'text': 'Fuel capacity is 92 gallons.'}
+    hidden = {**DELIVERED_OPERATIONS, 'passage_id': 4,
+              'source_limit': VerifiedSourceLimit(original_image_only=True)}
+    for unrelated in [hidden,
+                      {**DELIVERED_OPERATIONS, 'passage_id': 4, 'page': 4},
+                      {**DELIVERED_OPERATIONS, 'passage_id': 4, 'document_id': 'other'}]:
+        assert validate_answer({'insufficient_evidence': False,
+                                'claims': [equipment_claim(EQUIPMENT_ASSERTION, 0)]},
+                               [fuel, unrelated])['claims']
+    many = [{**DELIVERED_OPERATIONS, 'passage_id': i} for i in range(3, 20)]
+    with pytest.raises(ModelUnavailable) as failure:
+        validate_answer({'insufficient_evidence': False, 'claims': [equipment_claim(EQUIPMENT_ASSERTION, 0)]}, many)
+    options = failure.value.feedback['qualification_excerpt_options']
+    assert len(options) == 6 and all(len(x['text']) <= 1200 for x in options)
+    assert all(x['excerpt_id'] == 0 for x in options)
+
+
+@pytest.mark.parametrize('replacement', [
+    'The manual discusses as delivered equipment. The airplane is equipped for DAY-NIGHT-VFR-IFR operations.',
+    'As delivered, the airplane is not equipped for DAY-NIGHT-VFR-IFR operations.',
+    'As delivered, the airplane may be equipped for DAY-NIGHT-VFR-IFR operations.',
+    'As delivered, the airplane is equipped for DAY-VFR; the airplane is equipped for NIGHT-IFR.',
+    'As delivered, the airplane is equipped for DAY-NIGHT-VFR-IFR; the airplane is currently equipped for DAY-NIGHT-VFR-IFR.',
+])
+def test_unrelated_delivery_caveat_or_weakened_assertion_cannot_launder_repair(replacement):
+    calls = []
+    def provider(request):
+        calls.append(json.loads(request.content))
+        return response([equipment_claim(EQUIPMENT_ASSERTION if len(calls) == 1 else replacement, 0)])
+    with pytest.raises(ModelUnavailable, match='applicability conditions'):
+        verified_completion(model(provider), [DELIVERED_OPERATIONS], 'Summarize')
+    assert len(calls) == 3
+
+
+@pytest.mark.parametrize('kind,expected,calls_expected', [
+    ('qualified', 'df344c9f4a1126dab290fce0431ab80e3231eccc4200d09d1b7ebb0a864411ad', 2),
+    ('varying', 'df344c9f4a1126dab290fce0431ab80e3231eccc4200d09d1b7ebb0a864411ad', 2),
+    ('missing_example', '97fb7c8e28d6e67bca52a7d613a24db0705ac0d0d01fee87be4ccd42415acc15', 3),
+])
+def test_recorded_v6_scope_wires_preserve_exact_requests_and_original_outcome(kind, expected, calls_expected):
+    import hashlib
+    calls = []
+    def provider(request):
+        calls.append(json.loads(request.content))
+        text = UNQUALIFIED_CERTIFICATION if len(calls) == 1 else QUALIFIED_CERTIFICATION
+        if len(calls) > 1 and kind == 'varying':
+            text = text.replace('varies', 'is varying')
+        if len(calls) > 1 and kind == 'missing_example':
+            text = ('The airplane is certified for DAY-NIGHT-VFR-IFR operations as of date of '
+                    'the original airworthiness certificate, with the entry varying as equipped.')
+        return response([operation_claim(text)])
+    def run():
+        return verified_completion(model(provider), [CONDITIONAL_OPERATIONS], 'Summarize',
+                                   correction_policy='conditional-source-forms-v6')
+    if kind == 'missing_example':
+        with pytest.raises(ModelUnavailable, match='applicability conditions'):
+            run()
+    else:
+        assert run()['claims'][0]['text'] == QUALIFIED_CERTIFICATION.replace(
+            'varies', 'is varying' if kind == 'varying' else 'varies')
+    assert len(calls) == calls_expected
+    assert hashlib.sha256(json.dumps(calls, sort_keys=True, separators=(',', ':')).encode()).hexdigest() == expected
+
+
+def test_recorded_v6_equipment_admission_is_preserved_without_becoming_new_policy_approval():
+    from app.services.aircraft_library.models import validate_answer, source_excerpts
+    last = len(source_excerpts(DELIVERED_OPERATIONS)) - 1
+    candidate = {'insufficient_evidence': False, 'claims': [equipment_claim(EQUIPMENT_ASSERTION, last)]}
+    assert validate_answer(candidate, [DELIVERED_OPERATIONS],
+                           correction_policy='conditional-source-forms-v6')['claims'][0]['text'] == EQUIPMENT_ASSERTION
+    with pytest.raises(ModelUnavailable, match='applicability conditions'):
+        validate_answer(candidate, [DELIVERED_OPERATIONS])
+
+
+def test_equipment_job_failure_preserves_scope_and_source_then_resumes_only_validated_prefix(tmp_path):
+    from app.services.aircraft_library.models import source_excerpts
+    from app.services.aircraft_library.store import Store
+    from app.services.aircraft_library.worker import Worker
+    from .test_aircraft_library import manual
+    from .test_aircraft_library_resume import Provider
+    store = Store(tmp_path / 'library')
+    raw = manual('General inspection notes. ' + 'Inspect engine controls before servicing. ' * 43,
+                 DELIVERED_OPERATIONS['text'])
+    doc = store.ingest(raw, {'icao': 'C172'}); identifier = doc['id']
+    before = copy.deepcopy(store.passages([identifier]))
+    class EquipmentProvider(Provider):
+        fail = True
+        def complete(self, evidence, question):
+            target = next((p for p in evidence if 'as delivered' in ' '.join(p['text'].split())), None)
+            if target is None:
+                return super().complete(evidence, question)
+            self.calls.append([p['passage_id'] for p in evidence])
+            excerpts = source_excerpts(target)
+            return {'insufficient_evidence': False, 'claims': [{
+                'text': EQUIPMENT_ASSERTION if self.fail else DELIVERED_ASSERTION,
+                'citations': [{'passage_id': target['passage_id'],
+                               'excerpt_id': len(excerpts) - 1 if self.fail else 0}],
+            }]}
+    provider = EquipmentProvider(); worker = Worker(store, provider)
+    try:
+        job = store.create_job('distill', {'document_id': identifier})
+        assert worker.run_one()
+        assert store.job(job['id'])['state'] == 'failed'
+        assert 'applicability conditions' in store.job(job['id'])['error']
+        partial = copy.deepcopy(store.get(identifier)['artifacts']['distillation'])
+        completed = partial['completed_batches']
+        assert completed > 0 and partial['total_batches'] - completed == 1
+        assert len(provider.calls) == completed + 3
+        provider.fail = False; provider.calls.clear()
+        resumed = store.create_job('distill', {'document_id': identifier})
+        assert worker.run_one() and store.job(resumed['id'])['state'] == 'completed'
+        final = store.get(identifier)['artifacts']['distillation']
+        assert final['completed_batches'] == final['total_batches'] == partial['total_batches']
+        assert final['sections'][:completed] == partial['sections']
+        assert final['evidence_identity'] == partial['evidence_identity'] and len(provider.calls) == 1
+        assert store.passages([identifier]) == before
+        assert (store.objects / (doc['sha256'] + '.pdf')).read_bytes() == raw
+        assert store.job(job['id'])['state'] == 'failed'
+    finally:
+        worker.close()
