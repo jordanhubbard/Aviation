@@ -1073,7 +1073,7 @@ def test_procedure_unrelated_labeled_assertion_does_not_qualify_flap_use():
         validate_answer(procedure_answer(text), [procedure_source(WING_PHASE_SOURCE)])
 
 
-def test_procedure_failed_job_preserves_prefix_then_resumes_same_v8_generation(tmp_path):
+def test_procedure_failed_job_preserves_prefix_then_resumes_same_current_generation(tmp_path):
     from app.services.aircraft_library.models import CORRECTION_POLICY
     from app.services.aircraft_library.store import Store
     from app.services.aircraft_library.worker import Worker
@@ -1122,7 +1122,7 @@ def test_procedure_failed_job_preserves_prefix_then_resumes_same_v8_generation(t
         assert WING_PHASE_SOURCE not in failed["error"]
         partial = copy.deepcopy(store.get(identifier)["artifacts"]["distillation"])
         assert partial["completed_batches"] == 1 and partial["total_batches"] == 2
-        assert partial["correction_policy"] == CORRECTION_POLICY == "procedure-source-feedback-v8"
+        assert partial["correction_policy"] == CORRECTION_POLICY == "symbol-quote-feedback-v9"
         assert len(provider.calls) == 4
         provider.calls.clear()
         provider.fail = False
@@ -1141,7 +1141,7 @@ def test_procedure_failed_job_preserves_prefix_then_resumes_same_v8_generation(t
         worker.close()
 
 
-def test_procedure_policy_archives_v7_verbatim_and_starts_v8_at_zero(tmp_path):
+def test_procedure_policy_archives_v7_verbatim_and_starts_current_at_zero(tmp_path):
     from app.services.aircraft_library.models import (
         SOURCE_SCOPE_V7_CORRECTION_POLICY,
         CORRECTION_POLICY,
@@ -1195,7 +1195,7 @@ def test_procedure_policy_archives_v7_verbatim_and_starts_v8_at_zero(tmp_path):
         distill(store, provider, identifier)
     fresh = store.get(identifier)["artifacts"]["distillation"]
     assert fresh["completed_batches"] == 0 and fresh["sections"] == []
-    assert fresh["correction_policy"] == CORRECTION_POLICY == "procedure-source-feedback-v8"
+    assert fresh["correction_policy"] == CORRECTION_POLICY == "symbol-quote-feedback-v9"
     assert fresh["evidence_identity"] != fingerprint and "recovery" not in fresh
     assert provider.calls == [[row["passage_id"] for row in roots[0]]]
     history = store.distillations(identifier)["items"]

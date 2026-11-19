@@ -997,8 +997,8 @@ batches are compared claim by claim with their original page images.
 
 ### Procedure qualifications and quoted support (#583)
 
-New answers and distillations use `procedure-source-feedback-v8`, retaining the
-recorded v7 behavior above and adding bounded procedure checks. A valid quotation
+The `procedure-source-feedback-v8` policy retains the recorded v7 behavior above
+and adds bounded procedure checks. A valid quotation
 from a passage does not establish support for every assertion about that passage.
 Inspect only quotable, actually supplied source and its available same-page
 context. Never obtain requirements from another manual, unprovided pages,
@@ -1068,6 +1068,71 @@ Prospective controls precede implementation:
 | Rejected-claim correction repairs support/qualification while preserving accepted claims | Admit only after complete revalidation |
 | Correction drops the topic, qualification, claim position, or an accepted claim | Reject |
 | Actual recorded v4-v7 exchange is replayed under its recorded policy | Exact predecessor behavior |
+
+### Airspeed glossary quotation coverage (#586)
+
+New answers and distillations use `symbol-quote-feedback-v9`, inheriting the v8
+procedure guards and adding a bounded negative check for asserted, source-provided
+airspeed glossary concepts. A literal quote from the same page does not cover
+recognized definitions in a neighboring excerpt that was not selected. In
+particular, naming VNE, VS and VSO while quoting only the preceding KCAS-through-VNO
+excerpt must fail when their actual definitions were provided separately.
+
+Recognize only a fixed airspeed glossary vocabulary: KCAS, KIAS, KTAS, VA, VFE,
+VNO, VNE, VS, VSO, Vx and Vy. An unambiguous printed expanded name, such as
+"Never Exceed Speed," may identify the same concept without its abbreviation.
+Do not treat overlapping generic stall-speed wording as interchangeable VS/VSO
+support. Discover a requirement only when the claim asserts that concept and its
+same-document, same-page, actually supplied quotable context establishes the
+concept. Never derive glossary facts from another manual, an unprovided page,
+restricted native text, provenance metadata, or a guessed definition. Ambiguous
+cross-document assertions do not create invented source associations.
+
+A supported partial glossary summary need not assert unmentioned entries. The
+check detects absent selected support for recognized asserted concepts; a matching
+word is not proof of an arbitrary definition or general semantic entailment.
+Every claim must still pass the existing source, quotation, numeric, applicability,
+procedure and fraction checks, followed by original-image comparison of the whole
+affected canonical scope. This policy does not approve operating data or make a
+partial research summary a complete operating or maintenance procedure.
+
+Carry the rejected claim's original concept and provided-source obligations across
+all bounded repairs, including when a numeric error was reported first. Replacing
+missing definitions with a shorter unrelated summary, moving them into reason
+text, dropping their symbols and expanded names, or borrowing a quotation from a
+foreign manual cannot repair known missing support. Keep unaffected accepted
+claims exact. Private feedback may repeat only already provided quotable excerpt
+witnesses, within the existing shared maximum of six witnesses and 1,200 characters
+per quote. Completion, evidence, citation and diagnostic bounds remain unchanged;
+source text, quote boundaries and configured model/profile settings are not
+altered to make a candidate pass. Public errors contain no private source text.
+
+Preserve exact recorded v4-v8 validation, feedback, actual-wire replay and recovery
+behavior. Give v9 its own generation identity: archive the prior v8 artifact,
+claims and legitimate recovery receipt verbatim and start actual v9 generation
+at zero. Do not graft an old-policy prefix or use controls, diagnostics, browser
+output, edited claims or model responses as factual source. No unchanged
+stochastic rerun, embedding retry, FAA authentication retry or production corpus
+import is authorized by this validation change. No public API/SDK/UI schema
+change is needed for internal feedback alone.
+
+Prospective controls precede implementation:
+
+| Source and asserted relationship | Required result |
+| --- | --- |
+| Complete asserted glossary concepts select their actual supporting excerpts | Allow, subject to other validation |
+| VNE/VS/VSO asserted but only the preceding glossary excerpt selected | Reject; identify missing quoted concepts and provided witness |
+| Supported partial summary asserts only KCAS/KIAS from their selected excerpt | Do not require unasserted later entries |
+| Unambiguous expanded name is quoted instead of its abbreviation | Allow the recognized equivalent concept |
+| Generic stall-speed wording is borrowed between VS and VSO | Do not treat it as interchangeable support |
+| No corresponding glossary concept in the supplied quotable source | Do not invent a glossary requirement or remembered fact |
+| Only restricted native text, metadata or an unrelated manual supplies a cue | Do not admit it as the source of an obligation or supporting quote |
+| A known rejected concept is dropped, disguised by an unrelated replacement, or moved only to reason | Reject evasion; retain the frozen source/concept obligation |
+| Numeric repair precedes glossary repair, or both fail in one claim | Preserve both obligations and all accepted claims within the existing bound |
+| A replacement cites a foreign manual instead of its frozen provided context | Reject evasion |
+| Procedure and glossary witnesses coexist | Keep the existing shared six-witness bound and original IDs/text |
+| Historical v4-v8 wire or recovered generation is replayed with its recorded policy | Exact predecessor behavior |
+| Actual generation changes from v8 to v9 | Archive old claims/receipt unchanged; start at zero; no prefix graft |
 
 ## Historical distillations
 

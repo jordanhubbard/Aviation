@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Aircraft library: require quoted support for recognized airspeed glossary entries, retain asserted concepts through bounded repairs, and preserve recorded validation under a new generation policy.
+
 - Aircraft library: retain recognized procedure phase and remediation constraints, require complete supporting excerpts and fraction support, and version the new validation while preserving recorded predecessor behavior and fresh-generation boundaries.
 
 - Aircraft library: review bold emphasis separately from literal page text, retain its image-bound provenance, and expose it through private APIs, SDKs, desktop/mobile review and cited model evidence without treating annotation offsets as source facts.

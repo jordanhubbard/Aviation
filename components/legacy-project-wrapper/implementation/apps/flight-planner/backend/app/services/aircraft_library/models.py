@@ -44,7 +44,8 @@ SIGNED_V4_CORRECTION_POLICY = "signed-source-feedback-v4"
 CONDITIONAL_V5_CORRECTION_POLICY = "conditional-source-feedback-v5"
 CONDITIONAL_V6_CORRECTION_POLICY = "conditional-source-forms-v6"
 SOURCE_SCOPE_V7_CORRECTION_POLICY = "source-scope-feedback-v7"
-CORRECTION_POLICY = "procedure-source-feedback-v8"
+PROCEDURE_V8_CORRECTION_POLICY = "procedure-source-feedback-v8"
+CORRECTION_POLICY = "symbol-quote-feedback-v9"
 
 
 def _correction_settings(policy):
@@ -57,6 +58,7 @@ def _correction_settings(policy):
         CONDITIONAL_V5_CORRECTION_POLICY,
         CONDITIONAL_V6_CORRECTION_POLICY,
         SOURCE_SCOPE_V7_CORRECTION_POLICY,
+        PROCEDURE_V8_CORRECTION_POLICY,
         CORRECTION_POLICY,
     ):
         raise ModelUnavailable("Unknown completion correction policy")
@@ -1222,6 +1224,24 @@ _PROCEDURE_CONCEPTS = {
 }
 
 
+# Recognized source concepts, not a general definition-entailment oracle. The
+# generic stall-speed label overlaps VS/VSO, so only their distinct symbols
+# identify those concepts here. Unambiguous expanded labels remain usable.
+_AIRSPEED_GLOSSARY_CONCEPTS = {
+    "airspeed_kcas": r"\b(?:kcas|knots calibrated airspeed)\b",
+    "airspeed_kias": r"\b(?:kias|knots indicated airspeed)\b",
+    "airspeed_ktas": r"\b(?:ktas|knots true airspeed)\b",
+    "airspeed_va": r"\b(?:va|maneuvering speed|manoeuvring speed)\b",
+    "airspeed_vfe": r"\b(?:vfe|maximum flap extended speed)\b",
+    "airspeed_vno": r"\b(?:vno|maximum structural cruising speed)\b",
+    "airspeed_vne": r"\b(?:vne|never exceed speed)\b",
+    "airspeed_vs": r"\bvs\b",
+    "airspeed_vso": r"\bvso\b",
+    "airspeed_vx": r"\b(?:vx|best angle of climb speed)\b",
+    "airspeed_vy": r"\b(?:vy|best rate of climb speed)\b",
+}
+
+
 def _procedure_scope(text, topic):
     """Keep an asserted procedure separate from other procedure/normal clauses."""
     topics = (
@@ -1325,8 +1345,9 @@ def _fraction_literals(text):
     }
 
 
-def _procedure_feedback(text, cited_sources, evidence, supporting, previous=None):
+def _procedure_feedback(text, cited_sources, evidence, supporting, previous=None, *, include_glossary=False):
     """Reject bounded source-relationship gaps; this is not entailment approval."""
+    concepts = {**_PROCEDURE_CONCEPTS, **(_AIRSPEED_GLOSSARY_CONCEPTS if include_glossary else {})}
     normalized = _condition_text(text)
     by_id = {source["passage_id"]: source for source in evidence}
     frozen_documents = {
@@ -1364,7 +1385,7 @@ def _procedure_feedback(text, cited_sources, evidence, supporting, previous=None
         for topic, pattern in _PROCEDURE_TOPICS.items():
             if re.search(pattern, normalized) and re.search(pattern, discovery):
                 requirements["topics"].add(topic)
-        for concept, pattern in _PROCEDURE_CONCEPTS.items():
+        for concept, pattern in concepts.items():
             if re.search(pattern, normalized) and re.search(pattern, discovery):
                 requirements["concepts"].add(concept)
         if (
@@ -1399,9 +1420,9 @@ def _procedure_feedback(text, cited_sources, evidence, supporting, previous=None
         if not re.search(_PROCEDURE_TOPICS[topic], normalized):
             missing.append(topic + "_operating_entry")
     for concept in sorted(requirements["concepts"]):
-        if not re.search(_PROCEDURE_CONCEPTS[concept], normalized):
+        if not re.search(concepts[concept], normalized):
             missing.append(concept + "_assertion")
-        if not re.search(_PROCEDURE_CONCEPTS[concept], quote_view):
+        if not re.search(concepts[concept], quote_view):
             gaps.append(concept)
     for condition in sorted(requirements["conditions"]):
         if condition == "flaps_final_approach_touchdown":
@@ -1429,7 +1450,7 @@ def _procedure_feedback(text, cited_sources, evidence, supporting, previous=None
         witnesses = [
             name
             for name in sorted(requirements["concepts"])
-            if re.search(_PROCEDURE_CONCEPTS[name], view)
+            if re.search(concepts[name], view)
         ]
         if "flaps_final_approach_touchdown" in requirements["conditions"] and _flap_phase_retained(
             excerpt
@@ -1549,12 +1570,13 @@ def validate_answer(
             CONDITIONAL_V5_CORRECTION_POLICY,
             CONDITIONAL_V6_CORRECTION_POLICY,
             SOURCE_SCOPE_V7_CORRECTION_POLICY,
+            PROCEDURE_V8_CORRECTION_POLICY,
             CORRECTION_POLICY,
         ):
             requirements = (applicability_requirements or {}).get(claim_number - 1)
             discovered = (
                 _scope_requirements(claim["text"], cited_sources, evidence)
-                if correction_policy in (SOURCE_SCOPE_V7_CORRECTION_POLICY, CORRECTION_POLICY)
+                if correction_policy in (SOURCE_SCOPE_V7_CORRECTION_POLICY, PROCEDURE_V8_CORRECTION_POLICY, CORRECTION_POLICY)
                 else _certification_requirements(
                     claim["text"], cited_sources, evidence, correction_policy=correction_policy
                 )
@@ -1568,7 +1590,7 @@ def validate_answer(
                 requirements = requirements or discovered
         scope_feedback = (
             _scope_feedback(claim["text"], requirements, cited_sources, evidence, supporting)
-            if correction_policy in (SOURCE_SCOPE_V7_CORRECTION_POLICY, CORRECTION_POLICY)
+            if correction_policy in (SOURCE_SCOPE_V7_CORRECTION_POLICY, PROCEDURE_V8_CORRECTION_POLICY, CORRECTION_POLICY)
             else {}
         )
         procedure_feedback = (
@@ -1578,8 +1600,9 @@ def validate_answer(
                 evidence,
                 supporting,
                 (procedure_requirements or {}).get(claim_number - 1),
+                include_glossary=correction_policy == CORRECTION_POLICY,
             )
-            if correction_policy == CORRECTION_POLICY
+            if correction_policy in (PROCEDURE_V8_CORRECTION_POLICY, CORRECTION_POLICY)
             else {}
         )
         if procedure_feedback:
@@ -1609,7 +1632,7 @@ def validate_answer(
                     **procedure_feedback,
                 },
             )
-        if correction_policy in (SOURCE_SCOPE_V7_CORRECTION_POLICY, CORRECTION_POLICY):
+        if correction_policy in (SOURCE_SCOPE_V7_CORRECTION_POLICY, PROCEDURE_V8_CORRECTION_POLICY, CORRECTION_POLICY):
             if scope_feedback.get("missing_applicability_conditions") or scope_feedback.get("missing_applicability_citation_conditions"):
                 raise ModelUnavailable(
                     f"Model omitted source applicability conditions in claim {claim_number}; "
@@ -1869,6 +1892,7 @@ def _rejected_claims(
                     CONDITIONAL_V5_CORRECTION_POLICY,
                     CONDITIONAL_V6_CORRECTION_POLICY,
                     SOURCE_SCOPE_V7_CORRECTION_POLICY,
+                    PROCEDURE_V8_CORRECTION_POLICY,
                     CORRECTION_POLICY,
                 ):
                     signed = _signed_source_diagnostics(
@@ -2183,6 +2207,7 @@ def verified_completion(
                     CONDITIONAL_V5_CORRECTION_POLICY,
                     CONDITIONAL_V6_CORRECTION_POLICY,
                     SOURCE_SCOPE_V7_CORRECTION_POLICY,
+                    PROCEDURE_V8_CORRECTION_POLICY,
                     CORRECTION_POLICY,
                 ) and any(failure.get("signed_source_diagnostics") for failure in failures):
                     instruction += (
@@ -2199,6 +2224,7 @@ def verified_completion(
                         CONDITIONAL_V5_CORRECTION_POLICY,
                         CONDITIONAL_V6_CORRECTION_POLICY,
                         SOURCE_SCOPE_V7_CORRECTION_POLICY,
+                        PROCEDURE_V8_CORRECTION_POLICY,
                         CORRECTION_POLICY,
                     )
                     and applicability_requirements
@@ -2211,7 +2237,7 @@ def verified_completion(
                         "Never turn an example into current-aircraft certification. "
                     )
                 if (
-                    correction_policy in (SOURCE_SCOPE_V7_CORRECTION_POLICY, CORRECTION_POLICY)
+                    correction_policy in (SOURCE_SCOPE_V7_CORRECTION_POLICY, PROCEDURE_V8_CORRECTION_POLICY, CORRECTION_POLICY)
                     and applicability_requirements
                 ):
                     instruction += (
@@ -2225,7 +2251,7 @@ def verified_completion(
                         "to support the complete assertion. Cite both the operating qualification and other "
                         "retained facts; a numeric match in a later excerpt does not support earlier equipment. "
                     )
-                if correction_policy == CORRECTION_POLICY and procedure_requirements:
+                if correction_policy in (PROCEDURE_V8_CORRECTION_POLICY, CORRECTION_POLICY) and procedure_requirements:
                     instruction += (
                         "Procedure requirements preserve the rejected source operating topic and its "
                         "supported action, phase, remediation relationship and literal fraction. "
@@ -2236,6 +2262,20 @@ def verified_completion(
                         "repair or replacement. Separate checklist numerals cannot establish a "
                         "fraction. Procedure excerpt options repeat bounded untrusted source "
                         "already provided; cite their IDs only after reading their actual support. "
+                    )
+                if correction_policy == CORRECTION_POLICY and any(
+                    any(name.startswith("airspeed_") for name in requirement.get("concepts", []))
+                    for requirement in procedure_requirements.values()
+                ):
+                    instruction += (
+                        "Airspeed glossary requirements retain each originally asserted source concept. "
+                        "Select the provided excerpt supporting every named definition, including later "
+                        "neighboring excerpts. An unambiguous expanded name may identify its symbol; "
+                        "generic stall-speed wording cannot interchange VS and VSO. Keep each known "
+                        "concept in the claim and bound to its original provided manual. Dropping "
+                        "symbols and expanded names, an unrelated definition, a foreign manual or "
+                        "reason text alone cannot repair its missing quoted support. These bounded "
+                        "witnesses locate source, not general semantic approval. "
                     )
                 feedback = {"validation_failure": str(error), "rejected_claims": failures}
             else:
