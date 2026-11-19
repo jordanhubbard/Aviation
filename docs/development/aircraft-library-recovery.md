@@ -69,6 +69,13 @@ admit the old rejected interpretation. Preserve archived failed claims and any
 rejected mixed-citation candidate as generated. A table-only citation-reselection
 control is not a fresh configured-provider outcome or permission to alter history.
 
+Recovery also requires the same completion correction policy. New completions use
+`rejected-assertion-repair-v2`; missing policy on an old artifact means
+`numeric-citation-only-v1`. A policy change creates a new generation and preserves
+the prior artifact in history. These recovery operations reject cross-policy prefix
+reuse; do not relabel an old artifact or edit its fingerprint. Explicit internal
+legacy reconstruction remains available for read-only auditing.
+
 After verifying the recovery result, enqueue **distillation**, rather than a new
 index run, to continue inference. A new index request intentionally refreshes
 extraction and derived work. Reclaimed leases belonging to the same index job now

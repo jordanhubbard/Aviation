@@ -345,15 +345,29 @@ citation slots are occupied, replace redundant citations with relevant ones rath
 than claiming in prose to have added an omitted reference. Never add a citation
 automatically, persist an edited counterfactual, weaken validation or increase the
 three-candidate budget. Initial generation inputs and identities stay unchanged.
-When those options cover every rejected numeric token in a claim, correction is
-citation-only: keep that claim's exact text and repair its citations. This mode
-protects potentially supported assertions from silent contraction; it does not
-prove that the assertion is true. If the original assertion cannot be supported,
-leave it unresolved. Enforce exact text server-side even for legacy adapters and
-plain JSON output. Structured requests may additionally constrain replacement
-text to the original strings using an isolated per-request schema; still enforce
-the original position of each string after the response. Unsupported numbers
-without candidate evidence retain the general correction path.
+New completions use `rejected-assertion-repair-v2` (#567). Numeric occurrence
+hints never make rejected text immutable: an unrelated page reference, identifier,
+or measurement cannot establish the assertion's meaning. The model may correct an
+unsupported rejected assertion to the literal supplied source form, keeping its
+topic, supported facts, conditions and qualifiers. Preserve every validated claim
+byte-for-byte, require exactly one replacement per rejected position in order, and
+revalidate the complete merged answer. Never silently drop a failed claim, inject a
+server-written answer, increase attempts, convert printed decimal notation into
+clock notation, or infer semantic support from matching numbers. Changed rejected
+text remains an untrusted model candidate subject to all existing checks; numeric
+validation alone does not prove semantic applicability.
+
+Record this correction policy in new distillation artifacts, diagnostic records
+and generation fingerprints. Changing correction behavior creates a new generation;
+archive prior artifacts unchanged and do not silently resume or recover an old-policy
+prefix under the new policy. The initial question, SYSTEM, evidence selection,
+model/provider profile, numeric/source validators and three-candidate limit remain
+unchanged. Explicit internal reconstruction with `numeric-citation-only-v1` retains
+the previous fingerprint and correction wire behavior; missing policy on historical
+artifacts means that legacy policy. Unknown policies fail closed before provider
+calls. Legacy numeric hints covering every rejected token continue to enforce exact
+citation-only replacement text, including isolated structured-schema enums, solely
+for explicit replay. They are not the new completion default.
 
 Search filters include ICAO, registration, document IDs, variant and revision. Retrieval combines full-text ranking with semantic vectors when the configured embedding provider is available; stored vectors identify their provider endpoint, model and embedding mode. Symmetric OpenAI-compatible embeddings remain the default. An explicitly configured query/passage mode sends `input_type=passage` for document indexing and `input_type=query` for questions; incompatible providers, models or modes must not reuse one another's vectors. Existing vectors without this identity require reindexing. Operators may bound embedding batches from 1 to 32 passages for provider limits; every passage is still indexed, and a batch failure preserves previously completed work without claiming a complete index. Provider configuration is operator-owned and must not silently select a remote model. Distillation covers document sections using page-cited evidence and marks missing extraction. Operators may bound distillation batches from 2,000 to 18,000 text characters for a provider context/token budget; every readable passage must still be included, with the batching/evidence identity preventing reuse across changed batches. Each batch summarizes supported facts actually present; topics absent from a batch do not invalidate supported facts in that batch. Preserve qualifiers and footnotes, and never invent content for missing topics. Requests include an explicit cited JSON shape and a bounded completion budget; truncated or malformed generation cannot establish a completed distillation. At most three candidate completions may correct citation/schema/numeric validation failures, using the failed candidate and validation reason as feedback against the same evidence. Correction feedback distinguishes a non-array claims value from an over-limit array, reporting the actual count and the maximum of 12; it never silently drops excess claims. Numeric rejection identifies the one-based failing claim and asks for supporting excerpts or removal of unsupported assertions, without echoing document text or numeric values into the error. The bounded correction loop still revalidates the whole answer. Every admitted candidate passes the unchanged evidence checks; exhausted correction attempts preserve a partial artifact. A retry resumes only a validated prefix of a partial distillation whose provider, model, prompt, metadata and exact evidence fingerprint still match; provider rate limits must not discard completed batches. Batches with insufficient evidence remain unresolved, so they cannot establish a complete distillation. Provider HTTP failures are not retried by this correction loop. An explicit per-process minimum interval may pace chat-completion start times across foreground answers and background distillation, including failed requests. The default adds no delay; operator-configured pacing does not alter evidence or completion coverage. It never presents an extractive index as an LLM summary. A configured LLM answers from retrieved original-page evidence, returns document/page citations with exact original-text spans (model-normalized whitespace may be resolved back to a contiguous original span; changed words or punctuation remain invalid), and states insufficient evidence rather than inventing figures or applicability. Document text is untrusted evidence, never instructions. Conflicting editions/variants remain separate and visible; unknown applicability is not approval for a particular aircraft. Generated answers and summaries are derived artifacts distinct from original text.
 
@@ -405,6 +419,32 @@ source/lease/compare-and-swap guards. New source additions and a changed request
 do not grant completion to unprocessed material. Carry a recovery receipt only while
 resuming its fully validated prefix; a fresh run or invalidated prefix must not inherit
 an older admission receipt.
+
+### Complete native-page context (#563)
+
+New distillations of documents with multiple native passages on a physical page
+use `native-page-context-v1`. Include all readable passages from each primary
+page when their total source characters fit the configured budget, including
+verified reviewed OCR/transcriptions. Pack against this complete request size;
+primary passages still form a unique ordered partition. Refinements use the same
+page context. A page larger than the budget uses bounded primary passages plus
+the existing mandatory reviewed context; never truncate a source passage. Retain
+`unresolved_context_pages` and an explicit warning for these pages, count their
+batches as unresolved and keep the artifact partial even after all primary batches
+finish. HTTP/MCP and SDK document artifacts retain these fields; current and
+historical summary views show the affected physical pages and context warning.
+If primary plus mandatory reviewed context exceeds the budget, fail before
+inference as before. Context repetition is not extra primary coverage.
+
+This versioned policy participates in generation identity. Documents without
+multiple native passages retain their existing default policy and identity.
+Explicit `ordered-passages-v1` and `reviewed-page-context-v1` reconstruction keeps
+the exact previous requests and fingerprints. Do not widen historical evidence,
+relabel a changed request or reuse a prefix merely because its claims would pass
+against new context. Snapshot admission compares complete ordered request evidence
+and stops at the first changed scope; preserve archived generations and failures.
+Source text, model/profile, question, system instructions and numeric validation
+remain unchanged. Context repair does not repair independently known table OCR.
 
 Performance questions must retain units, weight/configuration, source revision and applicability. No LLM-derived number becomes a planning dataset without separate review and independent numerical acceptance under #494. Maintenance information can be retrieved from relevant manuals but no inferred service interval or return-to-service authority is fabricated.
 
@@ -585,7 +625,12 @@ not claim independent human review or performance-data approval.
 Use the current source/index identity and an immutable, integrity-checked page
 preview. Require the original SHA, preview integrity, physical page/image hash,
 named reviewer, explicit image-comparison attestation and a fixed
-`layout_relationships_unavailable` reason. A draft or preview changes nothing.
+restriction reason: `layout_relationships_unavailable` for unrepresented spatial
+relationships, or `native_text_inaccurate` for image-confirmed incorrect native
+words, signs or numbers (#566). These are explicit reviewer decisions, never
+automatic OCR-confidence thresholds or inferred corrections. Keep existing
+layout decisions valid and retain the unchanged `original_text_reviewed` release
+reason. A draft or preview changes nothing.
 Apply/release a limitation through bounded, exclusive durable jobs with the same
 ownership, stale-source, original-image and idempotent-commit guards as source
 reviews. Application is atomic with archiving the previous distillation and
@@ -622,6 +667,16 @@ verifying the original, profile, prior source/review records and restriction
 ledger. It must stop before the first affected scope. A known rejected
 interpretation remains archived and ineligible for current-source resume/admission;
 do not waive additional historical validation failures.
+
+HTTP/OpenAPI/MCP discovery and both SDKs retain the exact reason. Desktop/mobile
+page review offers both restriction reasons, shows the chosen reason in history,
+and clears attestation when the reason changes. Reset the selection with the
+page/image/document/credential context. Require an image, named reviewer and
+unchecked explicit attestation for either reason. Reject unknown or mismatched
+action/reason combinations in requests and retained ledgers. A native-text
+restriction uses the existing exclusion, coverage, integrity and history rules;
+separately verified OCR/transcriptions remain independent usable sources without
+silently overriding contradictions or admitting performance data.
 
 Documents with no source-limit reviews retain their current generation identities,
 model wire inputs, numeric grammar, prompt/profile and behavior. A release is a
