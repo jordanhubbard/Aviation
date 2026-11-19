@@ -12,6 +12,7 @@ from .store import now
 
 MAX_TEXT = 12_000
 MAX_ACTIVE = 500
+MAX_BOLD_SPANS = 128
 METHOD = "operator_transcription"
 CHANNEL = "page_transcription_reviews"
 
@@ -29,7 +30,7 @@ def _plain(value):
 def _inputs(values):
     ocr_reviews._identities(values)
     if (
-        set(values)
+        set(values) - {"presentation"}
         != {
             "expected_sha256",
             "expected_index_identity",
@@ -59,6 +60,54 @@ def _inputs(values):
         raise ValueError(
             "Transcription requires literal page text, a reviewer and image attestation"
         )
+    if "presentation" in values:
+        _presentation(values["text"], values["presentation"])
+
+
+def _presentation(text, value):
+    if (
+        not isinstance(text, str)
+        or not isinstance(value, dict)
+        or set(value) != {"bold_spans", "attest_matches_image"}
+        or value["attest_matches_image"] is not True
+        or not isinstance(value["bold_spans"], list)
+        or len(value["bold_spans"]) > MAX_BOLD_SPANS
+    ):
+        raise ValueError("Bold emphasis requires bounded spans and separate image attestation")
+    previous = 0
+    for span in value["bold_spans"]:
+        if (
+            not isinstance(span, dict)
+            or set(span) != {"start", "end", "text"}
+            or type(span["start"]) is not int
+            or type(span["end"]) is not int
+            or not previous <= span["start"] < span["end"] <= len(text)
+            or not isinstance(span["text"], str)
+            or not span["text"].strip()
+            or text[span["start"] : span["end"]] != span["text"]
+        ):
+            raise ValueError("Bold spans must be ordered, disjoint exact literal text ranges")
+        previous = span["end"]
+
+
+def presentation_runs(text, presentation, *, start=0, end=None):
+    """Project only the provided literal range; metadata offsets never reach the model."""
+    _presentation(text, presentation)
+    end = len(text) if end is None else end
+    if not 0 <= start <= end <= len(text):
+        raise ValueError("Invalid presentation excerpt range")
+    runs, cursor = [], start
+    for span in presentation["bold_spans"]:
+        left, right = max(start, span["start"]), min(end, span["end"])
+        if left >= right:
+            continue
+        if cursor < left:
+            runs.append({"text": text[cursor:left], "bold": False})
+        runs.append({"text": text[left:right], "bold": True})
+        cursor = right
+    if cursor < end:
+        runs.append({"text": text[cursor:end], "bold": False})
+    return runs
 
 
 def _image(connection, identifier, preview_id, page, expected):
@@ -107,6 +156,8 @@ def _record(connection, identifier, review_id):
         for k in ("id", "document_id", "preview_id", "page", "passage_id", "job_id")
     ):
         raise ValueError("Page transcription ledger mapping mismatch")
+    if "presentation" in result:
+        _presentation(result.get("text"), result["presentation"])
     return {**result, "integrity_sha256": row["integrity_sha256"]}
 
 
@@ -128,7 +179,11 @@ def _candidate(store, connection, identifier, values):
         raise ValueError("Document transcription limit reached")
     for review_id in active:
         saved = _record(connection, identifier, review_id)
-        if saved["page"] == values["page"] and saved["text"] == values["text"]:
+        if (
+            saved["page"] == values["page"]
+            and saved["text"] == values["text"]
+            and saved.get("presentation") == values.get("presentation")
+        ):
             raise ocr_reviews.OCRConflict("This page transcription is already active")
     return row, candidate, page
 
@@ -168,6 +223,7 @@ def apply_review(store, job):
                 raise ocr_reviews.OCRConflict("Source changed after transcription application")
             _verify(connection, identifier, result)
             return result
+        _inputs({k: v for k, v in request.items() if k not in {"document_id", "source_metadata"}})
         row, candidate, page = _candidate(store, connection, identifier, request)
         review_id, timestamp = "transcription_" + uuid.uuid4().hex, now()
         store._archive_distillation(connection, identifier, "reviewed_page_transcription_added")
@@ -204,6 +260,8 @@ def apply_review(store, job):
             "before_index_identity": request["expected_index_identity"],
             "after_index_identity": store.index_identity(identifier, connection=connection),
         }
+        if "presentation" in request:
+            result["presentation"] = request["presentation"]
         value = ocr.encoded(result)
         connection.execute(
             "INSERT INTO page_transcriptions VALUES (?,?,?,?,?,?,?,?,?)",
@@ -245,6 +303,8 @@ def _verify(connection, identifier, result, *, images=None):
         or not 1 <= len(result["reviewer"].strip()) <= 200
     ):
         raise ValueError("Page transcription provenance mismatch")
+    if "presentation" in result:
+        _presentation(result["text"], result["presentation"])
     passage = connection.execute(
         "SELECT rowid,* FROM passages WHERE rowid=? AND document_id=?",
         (result["passage_id"], identifier),
@@ -373,6 +433,8 @@ def enrich_passages(connection, passages, *, source_order=False):
                 )
             }
         )
+        if "presentation" in result:
+            passage["transcription_review"]["presentation"] = result["presentation"]
         passage["transcription_review"][
             "image_url"
         ] = f"/api/aircraft-library/documents/{passage['document_id']}/ocr-previews/{result['preview_id']}/pages/{passage['page']}.png"

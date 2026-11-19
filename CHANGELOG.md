@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Aircraft library: review bold emphasis separately from literal page text, retain its image-bound provenance, and expose it through private APIs, SDKs, desktop/mobile review and cited model evidence without treating annotation offsets as source facts.
+
 - Aircraft library: identify missing operating-scope components and supporting excerpts in bounded repairs, retain as-delivered equipment scope, and require its citation coverage under a new versioned policy.
 
 - Aircraft library: recognize "varying" in equipment-dependent example qualifications under a new generation policy, retaining negation checks and exact historical validation.

@@ -3,6 +3,8 @@ import {
   type AircraftOCRMode,
   type AircraftPageTranscription,
   type AircraftSourceLimitRecord,
+  type AircraftTranscriptionBoldSpan,
+  type AircraftTranscriptionPresentation,
 } from '@aviation/shared-sdk/aviation/aircraft-library'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import {
@@ -83,6 +85,40 @@ const sourceReasonLabels: Record<AircraftSourceLimitRecord['reason'], string> = 
   original_text_reviewed: 'Native text reviewed and re-enabled',
 }
 
+function emphasizedText(text: string, spans: AircraftTranscriptionBoldSpan[]) {
+  const characters = Array.from(text)
+  const pieces = []
+  let cursor = 0
+  for (const span of spans) {
+    pieces.push(characters.slice(cursor, span.start).join(''))
+    pieces.push(
+      <strong key={`${span.start}-${span.end}`}>
+        {characters.slice(span.start, span.end).join('')}
+      </strong>,
+    )
+    cursor = span.end
+  }
+  pieces.push(characters.slice(cursor).join(''))
+  return pieces
+}
+
+function samePresentation(
+  saved: AircraftTranscriptionPresentation | null | undefined,
+  submitted: AircraftTranscriptionPresentation | undefined,
+) {
+  if (!submitted) return saved == null
+  return (
+    saved?.attest_matches_image === true &&
+    saved.bold_spans.length === submitted.bold_spans.length &&
+    saved.bold_spans.every((span, i) => {
+      const expected = submitted.bold_spans[i]
+      return (
+        span.start === expected.start && span.end === expected.end && span.text === expected.text
+      )
+    })
+  )
+}
+
 export default function OCRReview({
   documentId,
   sourceSha256,
@@ -111,6 +147,15 @@ export default function OCRReview({
   const [draft, setDraft] = useState('')
   const [transcriptionReviewer, setTranscriptionReviewer] = useState('')
   const [transcriptionAttested, setTranscriptionAttested] = useState(false)
+  const [reviewBold, setReviewBold] = useState(false)
+  const [boldSpans, setBoldSpans] = useState<AircraftTranscriptionBoldSpan[]>([])
+  const [boldAttested, setBoldAttested] = useState(false)
+  const draftInput = useRef<HTMLTextAreaElement>(null)
+  const resetPresentation = useCallback(() => {
+    setReviewBold(false)
+    setBoldSpans([])
+    setBoldAttested(false)
+  }, [])
   const [transcription, setTranscription] = useState<AircraftPageTranscription | null>(null)
   const [sourceReviewer, setSourceReviewer] = useState('')
   const [sourceReason, setSourceReason] = useState<RestrictionReason>(
@@ -132,6 +177,7 @@ export default function OCRReview({
     imageURL.current = ''
     setImage('')
     setDraft('')
+    resetPresentation()
     setTranscriptionReviewer('')
     setTranscriptionAttested(false)
     setSourceReviewer('')
@@ -150,6 +196,7 @@ export default function OCRReview({
     setHistory(null)
     setReview(null)
     setDraft('')
+    resetPresentation()
     setTranscriptionReviewer('')
     setTranscriptionAttested(false)
     setTranscription(null)
@@ -169,7 +216,7 @@ export default function OCRReview({
       if (imageURL.current) URL.revokeObjectURL(imageURL.current)
       imageURL.current = ''
     }
-  }, [documentId, sourceSha256, locked, invalidate])
+  }, [documentId, sourceSha256, locked, invalidate, resetPresentation])
   async function run(action: (current: number) => Promise<void>) {
     const current = ++epoch.current
     setBusy(true)
@@ -183,6 +230,7 @@ export default function OCRReview({
         setWordFilter('')
         setAttested(false)
         setDraft('')
+        resetPresentation()
         setTranscriptionAttested(false)
         setSourceAttested(false)
         setSourceReason('layout_relationships_unavailable')
@@ -635,14 +683,105 @@ export default function OCRReview({
                         multiline
                         minRows={4}
                         value={draft}
+                        inputRef={draftInput}
                         disabled={disabled || !image || !preview.source_current}
                         inputProps={{ maxLength: 12000 }}
                         helperText="8–12,000 characters. Do not infer values or add explanations."
                         onChange={(e) => {
                           setDraft(e.target.value)
+                          setBoldSpans([])
+                          setBoldAttested(false)
                           setTranscriptionAttested(false)
                         }}
                       />
+                      <FormControlLabel
+                        control={
+                          <Checkbox
+                            checked={reviewBold}
+                            disabled={disabled || !image || !preview.source_current}
+                            onChange={(e) => {
+                              setReviewBold(e.target.checked)
+                              setBoldSpans([])
+                              setBoldAttested(false)
+                            }}
+                          />
+                        }
+                        label="Review bold emphasis in this transcription"
+                      />
+                      {reviewBold && (
+                        <Stack spacing={1}>
+                          <Typography>
+                            Select literal text in the editor and mark the spans printed in bold.
+                            Mark all bold in the transcribed text; leave the words and checklist
+                            order unchanged.
+                          </Typography>
+                          <Button
+                            disabled={
+                              disabled ||
+                              !image ||
+                              !preview.source_current ||
+                              boldSpans.length >= 128
+                            }
+                            onClick={() => {
+                              const editor = draftInput.current
+                              if (!editor) return
+                              const start = Array.from(draft.slice(0, editor.selectionStart)).length
+                              const end = Array.from(draft.slice(0, editor.selectionEnd)).length
+                              const text = Array.from(draft).slice(start, end).join('')
+                              if (
+                                !text.trim() ||
+                                boldSpans.some((span) => start < span.end && end > span.start)
+                              ) {
+                                setStatus(
+                                  'Select nonblank text that does not overlap an existing bold span.',
+                                )
+                                return
+                              }
+                              setBoldSpans(
+                                [...boldSpans, { start, end, text }].sort(
+                                  (a, b) => a.start - b.start,
+                                ),
+                              )
+                              setBoldAttested(false)
+                            }}
+                          >
+                            Mark selection as bold
+                          </Button>
+                          {boldSpans.map((span, index) => (
+                            <Button
+                              key={`${span.start}-${span.end}`}
+                              disabled={disabled}
+                              onClick={() => {
+                                setBoldSpans(boldSpans.filter((_, i) => i !== index))
+                                setBoldAttested(false)
+                              }}
+                            >
+                              Remove bold: {span.text}
+                            </Button>
+                          ))}
+                          <Box
+                            aria-label="Reviewed emphasis preview"
+                            sx={{ whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}
+                          >
+                            {emphasizedText(draft, boldSpans)}
+                          </Box>
+                          <FormControlLabel
+                            control={
+                              <Checkbox
+                                checked={boldAttested}
+                                disabled={
+                                  disabled ||
+                                  !image ||
+                                  !preview.source_current ||
+                                  draft.trim().length < 8
+                                }
+                                onChange={(e) => setBoldAttested(e.target.checked)}
+                              />
+                            }
+                            label="I compared all bold emphasis with the original image; every bold span in this transcription is marked and unmarked text is not bold."
+                          />
+                        </Stack>
+                      )}
                       <TextField
                         label="Transcription reviewer name"
                         helperText="Identify yourself; label agent reviews as such."
@@ -652,6 +791,7 @@ export default function OCRReview({
                         onChange={(e) => {
                           setTranscriptionReviewer(e.target.value)
                           setTranscriptionAttested(false)
+                          setBoldAttested(false)
                         }}
                       />
                       <FormControlLabel
@@ -678,10 +818,15 @@ export default function OCRReview({
                           draft.trim().length < 8 ||
                           draft.length > 12000 ||
                           !transcriptionReviewer.trim() ||
-                          !transcriptionAttested
+                          !transcriptionAttested ||
+                          (reviewBold && !boldAttested)
                         }
                         onClick={() =>
                           void run(async (current) => {
+                            const presentation: AircraftTranscriptionPresentation | undefined =
+                              reviewBold
+                                ? { bold_spans: boldSpans, attest_matches_image: true }
+                                : undefined
                             const queued = await client.transcribe(documentId, {
                               expected_sha256: preview.source_sha256,
                               expected_index_identity: preview.index_identity,
@@ -690,6 +835,7 @@ export default function OCRReview({
                               page: currentPage.page,
                               image_sha256: currentPage.image_sha256,
                               text: draft,
+                              ...(presentation ? { presentation } : {}),
                               reviewer: transcriptionReviewer,
                               attest_matches_image: true,
                             })
@@ -711,13 +857,15 @@ export default function OCRReview({
                               value.preview_id !== preview.id ||
                               value.page !== currentPage.page ||
                               value.image_sha256 !== currentPage.image_sha256 ||
-                              value.text !== draft
+                              value.text !== draft ||
+                              !samePresentation(value.presentation, presentation)
                             )
                               throw new Error(
                                 'Transcription receipt does not match the reviewed page and text',
                               )
                             setTranscription(value)
                             setDraft('')
+                            resetPresentation()
                             setTranscriptionAttested(false)
                             setSelected([])
                             setAttested(false)
@@ -992,7 +1140,13 @@ export default function OCRReview({
                 overflow: 'auto',
               }}
             >
-              {transcription.text}
+              {transcription.presentation
+                ? emphasizedText(transcription.text, transcription.presentation.bold_spans)
+                : transcription.text}
+            </Typography>
+            <Typography variant="body2">
+              Bold emphasis:{' '}
+              {transcription.presentation ? 'reviewed with original image' : 'not reviewed'}.
             </Typography>
             <Button
               disabled={disabled}

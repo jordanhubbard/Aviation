@@ -42,6 +42,7 @@ async function fixture(t, options = {}) {
     if (req.url === '/protected' && req.headers.authorization !== 'Bearer child') { sendJson(res, 401, { error: 'unauthorized' }); return; }
     if (req.url === '/large') { res.writeHead(200); res.end(Buffer.alloc(4 * 1024 * 1024 + 1)); return; }
     if (req.url === '/new/v2/items') { sendJson(res, 200, { renamed: req.method === 'POST' ? JSON.parse(body).newField : 42 }); return; }
+    if (req.url.startsWith('/api/aircraft-library/')) res.setHeader('cache-control', 'private, no-store');
     sendJson(res, 200, { path: req.url, method: req.method, body: body.toString(), auth: req.headers.authorization || null, cookie: req.headers.cookie || null });
   });
   const gateway = createGateway({ bindings: { planning: { origin }, weather: { origin }, avionics: { origin } }, ...options });
@@ -482,5 +483,37 @@ test('cached NMS CORS admits only the three public GET operations and strips cre
   for (const path of ['/api/notams/admin', '/api/notams/other/detail']) {
     const response = await fetch(edge + '/api/v1/planning' + path, { method: 'OPTIONS', headers: { origin, 'access-control-request-method': 'GET' } });
     assert.equal(response.headers.get('access-control-allow-origin'), null);
+  }
+});
+
+test('reviewed literal presentation survives private HTTP and real MCP forwarding unchanged', async t => {
+  const { edge, calls } = await fixture(t);
+  const path = '/api/aircraft-library/documents/doc_test/transcriptions';
+  const body = {
+    expected_sha256: 'a'.repeat(64), expected_index_identity: 'b'.repeat(64),
+    preview_id: 'ocr_preview_test', preview_integrity_sha256: 'c'.repeat(64),
+    page: 1, image_sha256: 'd'.repeat(64), text: '1. Throttle -- IDLE.\n2. Flaps -- RETRACT.',
+    presentation: { bold_spans: [{ start: 3, end: 20, text: 'Throttle -- IDLE.' }], attest_matches_image: true },
+    reviewer: 'Fixture image reviewer', attest_matches_image: true,
+  };
+  const headers = { 'content-type': 'application/json', authorization: 'Bearer child' };
+  const http = await fetch(edge + '/api/v1/planning' + path, { method: 'POST', headers, body: JSON.stringify(body) });
+  assert.equal(http.status, 200);
+  assert.match(http.headers.get('cache-control'), /no-store/);
+  const viaHttp = await http.json();
+  assert.deepEqual(JSON.parse(viaHttp.body), body);
+  const client = new Client({ name: 'reviewed-presentation-forwarding', version: '1.0' });
+  await client.connect(new StreamableHTTPClientTransport(new URL(edge + '/mcp')));
+  t.after(() => client.close());
+  const result = await client.callTool({ name: 'v1.planning.request', arguments: { path, method: 'POST', headers, body: JSON.stringify(body) } });
+  assert.equal(result.isError, false);
+  assert.equal(result.structuredContent.status, 200);
+  assert.match(result.structuredContent.headers['cache-control'], /no-store/);
+  const raw = result.structuredContent.bodyEncoding === 'base64'
+    ? Buffer.from(result.structuredContent.body, 'base64').toString() : result.structuredContent.body;
+  assert.deepEqual(JSON.parse(raw), viaHttp);
+  for (const call of calls.filter(value => value.url === path)) {
+    assert.deepEqual(JSON.parse(call.body), body);
+    assert.equal(call.headers.authorization, 'Bearer child');
   }
 });

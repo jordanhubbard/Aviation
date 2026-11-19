@@ -32,12 +32,26 @@ class OCRApplyRequest(OCRIdentity):
     attest_matches_image: Literal[True]
 
 
+class TranscriptionBoldSpan(TypedDict):
+    """Half-open Unicode code-point range in unchanged literal transcription text."""
+
+    start: int
+    end: int
+    text: str
+
+
+class TranscriptionPresentation(TypedDict):
+    bold_spans: list[TranscriptionBoldSpan]
+    attest_matches_image: Literal[True]
+
+
 class TranscriptionRequest(OCRIdentity):
     preview_id: str
     preview_integrity_sha256: str
     page: int
     image_sha256: str
     text: str
+    presentation: NotRequired[TranscriptionPresentation]
     reviewer: str
     attest_matches_image: Literal[True]
 
@@ -53,6 +67,7 @@ class TranscriptionProvenance(TypedDict):
     created_at: str
     integrity_sha256: str
     image_url: str
+    presentation: NotRequired[TranscriptionPresentation | None]
 
 
 class SourceUseReview(OCRIdentity):
