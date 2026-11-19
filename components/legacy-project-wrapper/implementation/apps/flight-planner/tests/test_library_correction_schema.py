@@ -725,3 +725,540 @@ def test_equipment_job_failure_preserves_scope_and_source_then_resumes_only_vali
         assert store.job(job['id'])['state'] == 'failed'
     finally:
         worker.close()
+
+
+# #583: these source/claim controls precede the changed validation implementation.
+def procedure_source(text, *, identifier=1, document="doc_procedure", page=1):
+    return {
+        **EVIDENCE[0],
+        "passage_id": identifier,
+        "document_id": document,
+        "page": page,
+        "label": str(page),
+        "text": text,
+    }
+
+
+def procedure_answer(text, *, citations=None):
+    return {
+        "insufficient_evidence": False,
+        "reason": "",
+        "claims": [
+            {
+                "text": text,
+                "citations": citations or [{"passage_id": 1, "excerpt_id": 0}],
+            }
+        ],
+    }
+
+
+WING_PHASE_SOURCE = (
+    "WING FIRE\nLanding/Taxi Light Switches -- OFF.\nStrobe Light Switch -- OFF.\n"
+    "Perform a sideslip to keep flames away from the fuel tank and cabin. "
+    "Land as soon as possible using flaps only as required for final approach and touchdown."
+)
+REMEDIATION_SOURCE = (
+    "Fire Damage -- INSPECT, repair damage or replace damaged components or wiring "
+    "before conducting another flight."
+)
+
+
+@pytest.mark.parametrize(
+    "text",
+    [
+        "Wing fire: use flaps only as required for final approach and touchdown.",
+        "For wing fire, flaps may be used only as needed during final approach and touchdown.",
+        "Wing fire: do not use flaps except as required for final approach and touchdown.",
+    ],
+)
+def test_procedure_retains_action_bound_phase_with_selected_support(text):
+    from app.services.aircraft_library.models import validate_answer
+
+    accepted = validate_answer(procedure_answer(text), [procedure_source(WING_PHASE_SOURCE)])
+    assert accepted["claims"][0]["text"] == text
+
+
+@pytest.mark.parametrize(
+    "text",
+    [
+        "Wing fire: land as soon as possible using flaps only as required.",
+        "Wing fire: flaps may be used at any time as needed.",
+        "Wing fire: flaps are not limited to final approach and touchdown.",
+        "Wing fire: use flaps as needed. Normal landing: use flaps only for final approach and touchdown.",
+        "Wing fire: use flaps as needed; use the strobe only for final approach and touchdown.",
+    ],
+)
+def test_procedure_rejects_lost_negated_or_unrelated_phase(text):
+    from app.services.aircraft_library.models import validate_answer
+
+    with pytest.raises(ModelUnavailable, match="procedure"):
+        validate_answer(procedure_answer(text), [procedure_source(WING_PHASE_SOURCE)])
+
+
+def test_procedure_phase_requires_its_selected_neighboring_excerpt():
+    from app.services.aircraft_library.models import citation_excerpts, validate_answer
+
+    source = procedure_source(
+        "CABIN FIRE\nClose the vents.\n"
+        + "Background source words. " * 50
+        + "\n"
+        + WING_PHASE_SOURCE
+    )
+    excerpts = citation_excerpts(source["text"])
+    assert "final approach and touchdown" not in excerpts[0]
+    supporting = next(
+        i for i, text in enumerate(excerpts) if "final approach and touchdown" in text
+    )
+    text = "Wing fire: use flaps only as required for final approach and touchdown."
+    with pytest.raises(ModelUnavailable, match="procedure"):
+        validate_answer(procedure_answer(text), [source])
+    accepted = validate_answer(
+        procedure_answer(
+            text,
+            citations=[
+                {
+                    "passage_id": 1,
+                    "excerpt_id": supporting,
+                }
+            ],
+        ),
+        [source],
+    )
+    assert accepted["claims"][0]["text"] == text
+
+
+def test_procedure_does_not_import_other_context_or_manual_phase():
+    from app.services.aircraft_library.models import validate_answer
+
+    local = procedure_source("WING FIRE\nUse the flaps as required.")
+    foreign = procedure_source(WING_PHASE_SOURCE, identifier=2, document="doc_foreign")
+    text = "Wing fire: use the flaps as required."
+    assert validate_answer(procedure_answer(text), [local, foreign])["claims"][0]["text"] == text
+    normal = procedure_source("NORMAL LANDING\nUse flaps as required.\n" + WING_PHASE_SOURCE)
+    text = "Normal landing: use flaps as required."
+    assert validate_answer(procedure_answer(text), [normal])["claims"][0]["text"] == text
+
+
+@pytest.mark.parametrize(
+    "text",
+    [
+        "Fire damage: inspect or repair before another flight.",
+        "Inspect or repair fire damage before another flight.",
+        "Before another flight, either inspect or replace damaged components.",
+    ],
+)
+def test_procedure_inspection_cannot_substitute_for_required_remediation(text):
+    from app.services.aircraft_library.models import validate_answer
+
+    with pytest.raises(ModelUnavailable, match="procedure"):
+        validate_answer(procedure_answer(text), [procedure_source(REMEDIATION_SOURCE)])
+
+
+@pytest.mark.parametrize(
+    "source,text",
+    [
+        (
+            REMEDIATION_SOURCE,
+            "Inspect fire damage, and repair damage or replace damaged components before another flight.",
+        ),
+        (REMEDIATION_SOURCE, "Inspect for fire damage."),
+        ("Inspect or repair the cover as required.", "Inspect or repair the cover as required."),
+    ],
+)
+def test_procedure_keeps_real_alternatives_and_supported_partial_summaries(source, text):
+    from app.services.aircraft_library.models import validate_answer
+
+    assert (
+        validate_answer(procedure_answer(text), [procedure_source(source)])["claims"][0]["text"]
+        == text
+    )
+
+
+def test_procedure_incombustible_mixture_requires_the_actual_quoted_support():
+    from app.services.aircraft_library.models import citation_excerpts, validate_answer
+
+    source = procedure_source(
+        "ENGINE FIRE IN FLIGHT\nMixture -- IDLE CUT OFF.\n"
+        + "Background source words. " * 50
+        + "\nIncrease glide speed within airspeed limitations to provide an "
+        "incombustible mixture. Forced Landing -- EXECUTE."
+    )
+    excerpts = citation_excerpts(source["text"])
+    support = next(i for i, text in enumerate(excerpts) if "incombustible mixture" in text)
+    text = "Engine fire in flight: increase glide speed within airspeed limitations for an incombustible mixture, then execute forced landing."
+    with pytest.raises(ModelUnavailable, match="procedure"):
+        validate_answer(procedure_answer(text), [source])
+    citations = [{"passage_id": 1, "excerpt_id": 0}, {"passage_id": 1, "excerpt_id": support}]
+    assert (
+        validate_answer(procedure_answer(text, citations=citations), [source])["claims"][0]["text"]
+        == text
+    )
+
+
+def test_procedure_fraction_cannot_borrow_separate_checklist_numerals():
+    from app.services.aircraft_library.models import validate_answer
+
+    steps = procedure_source("1. Turn the switch ON.\n4. Watch for ice on the wing.")
+    fact = procedure_source(
+        "With ice accumulation of 1/4 inch or more on wing leading edges, "
+        "be prepared for significantly higher stall speed.",
+        identifier=2,
+    )
+    text = "Ice accumulation of 1/4 inch or more on wing leading edges means significantly higher stall speed."
+    with pytest.raises(ModelUnavailable, match="procedure"):
+        validate_answer(procedure_answer(text), [steps, fact])
+    citations = [{"passage_id": 2, "excerpt_id": 0}]
+    assert (
+        validate_answer(procedure_answer(text, citations=citations), [steps, fact])["claims"][0][
+            "text"
+        ]
+        == text
+    )
+
+
+@pytest.mark.parametrize(
+    "mode", ["faithful", "drop_topic", "drop_flaps", "negative", "reason_only", "foreign_manual"]
+)
+def test_procedure_local_correction_retains_topic_and_unaffected_claim(mode):
+    evidence = [
+        procedure_source(WING_PHASE_SOURCE),
+        procedure_source("Fuel capacity is 20 gallons.", identifier=2),
+        procedure_source(WING_PHASE_SOURCE, identifier=3, document="doc_foreign"),
+    ]
+    kept = {
+        "text": "Fuel capacity is 20 gallons.",
+        "citations": [{"passage_id": 2, "excerpt_id": 0}],
+    }
+    rejected = procedure_answer("Wing fire: use flaps as required.")["claims"][0]
+    calls = []
+
+    def provider(request):
+        payload = json.loads(request.content)
+        question = json.loads(payload["messages"][1]["content"])["question"]
+        calls.append(question)
+        if len(calls) == 1:
+            return response([kept, rejected])
+        packet = json.loads(question.rsplit("\n", 1)[-1])
+        assert [row["claim_number"] for row in packet["rejected_claims"]] == [2]
+        assert packet["rejected_claims"][0]["procedure_requirements"]
+        text = {
+            "faithful": "Wing fire: use flaps only as required for final approach and touchdown.",
+            "drop_topic": "Use flaps only as required for final approach and touchdown.",
+            "drop_flaps": "Wing fire: turn the strobe light switch off.",
+            "negative": "Wing fire: flap use is not restricted to final approach and touchdown.",
+            "reason_only": rejected["text"],
+            "foreign_manual": "Wing fire: use flaps only as required for final approach and touchdown.",
+        }[mode]
+        citations = [{"passage_id": 3, "excerpt_id": 0}] if mode == "foreign_manual" else None
+        result = response(procedure_answer(text, citations=citations)["claims"])
+        if mode == "reason_only":
+            value = result.json()
+            content = json.loads(value["choices"][0]["message"]["content"])
+            content["reason"] = "Flaps only as required for final approach and touchdown."
+            value["choices"][0]["message"]["content"] = json.dumps(content)
+            result = httpx.Response(200, json=value)
+        return result
+
+    if mode == "faithful":
+        accepted = verified_completion(model(provider), evidence, "Summarize", max_attempts=2)
+        assert accepted["claims"][0]["text"] == kept["text"]
+        assert accepted["claims"][1]["text"].endswith("final approach and touchdown.")
+    else:
+        with pytest.raises(ModelUnavailable, match="procedure"):
+            verified_completion(model(provider), evidence, "Summarize", max_attempts=2)
+    assert len(calls) == 2
+
+
+@pytest.mark.parametrize(
+    "text",
+    [
+        "Wing fire: never use flaps only as required for final approach and touchdown.",
+        "Wing fire: don't use flaps only as required for final approach and touchdown.",
+        "Wing fire: never use wing flaps only as required for final approach and touchdown.",
+        "Wing fire: don't only use flaps as required for final approach and touchdown.",
+    ],
+)
+def test_procedure_negating_the_qualified_action_is_not_a_repair(text):
+    from app.services.aircraft_library.models import validate_answer
+
+    with pytest.raises(ModelUnavailable, match="procedure"):
+        validate_answer(procedure_answer(text), [procedure_source(WING_PHASE_SOURCE)])
+
+
+def test_procedure_only_before_action_is_a_faithful_phase_form():
+    from app.services.aircraft_library.models import validate_answer
+
+    text = "Wing fire: only use flaps as required for final approach and touchdown."
+    assert (
+        validate_answer(procedure_answer(text), [procedure_source(WING_PHASE_SOURCE)])["claims"][0][
+            "text"
+        ]
+        == text
+    )
+
+
+def test_procedure_fraction_preserves_literal_unicode_and_does_not_parse_date_triples():
+    from app.services.aircraft_library.models import validate_answer, _fraction_literals
+
+    assert _fraction_literals("Revision 1/4/1997 remains printed.") == set()
+    assert _fraction_literals("Use 1 / 4 inch or ¼ inch.") == {"1/4", "¼"}
+    text = "Inspect with ¼ inch of ice present."
+    assert (
+        validate_answer(procedure_answer(text), [procedure_source(text)])["claims"][0]["text"]
+        == text
+    )
+    with pytest.raises(ModelUnavailable, match="procedure"):
+        validate_answer(procedure_answer(text), [procedure_source("Inspect with ice present.")])
+
+
+def test_procedure_witnesses_are_bounded_and_only_from_supplied_citable_context():
+    from app.services.aircraft_library.models import validate_answer, source_excerpts
+
+    evidence = [procedure_source(WING_PHASE_SOURCE, identifier=i) for i in range(1, 14)]
+    foreign = procedure_source(WING_PHASE_SOURCE, identifier=99, document="doc_foreign")
+    other_page = procedure_source(WING_PHASE_SOURCE, identifier=100, page=2)
+    with pytest.raises(ModelUnavailable, match="procedure") as caught:
+        validate_answer(
+            procedure_answer("Wing fire: use flaps as required."), [*evidence, foreign, other_page]
+        )
+    options = caught.value.feedback["procedure_excerpt_options"]
+    assert len(options) == 6
+    by_id = {row["passage_id"]: row for row in evidence}
+    for option in options:
+        assert option["passage_id"] not in {99, 100}
+        assert option["text"] == source_excerpts(by_id[option["passage_id"]])[option["excerpt_id"]]
+        assert len(option["text"]) <= 1200
+
+
+@pytest.mark.parametrize(
+    "policy",
+    [
+        "signed-source-feedback-v4",
+        "conditional-source-feedback-v5",
+        "conditional-source-forms-v6",
+        "source-scope-feedback-v7",
+    ],
+)
+def test_procedure_new_guard_preserves_explicit_recorded_predecessor_behavior(policy):
+    from app.services.aircraft_library.models import validate_answer
+
+    text = "Wing fire: use flaps as required."
+    assert (
+        validate_answer(
+            procedure_answer(text), [procedure_source(WING_PHASE_SOURCE)], correction_policy=policy
+        )["claims"][0]["text"]
+        == text
+    )
+
+
+def test_procedure_unrelated_source_heading_does_not_supply_a_phase_condition():
+    from app.services.aircraft_library.models import validate_answer
+
+    source = procedure_source(
+        "WING FIRE\nUse flaps as required.\n\nNORMAL OPERATIONS\n"
+        "Use flaps only as required for final approach and touchdown."
+    )
+    text = "Wing fire: use flaps as required."
+    assert validate_answer(procedure_answer(text), [source])["claims"][0]["text"] == text
+
+
+def test_procedure_unrelated_labeled_assertion_does_not_qualify_flap_use():
+    from app.services.aircraft_library.models import validate_answer
+
+    text = (
+        "Wing fire: use flaps as needed. Other operations: "
+        "use flaps only as required for final approach and touchdown."
+    )
+    with pytest.raises(ModelUnavailable, match="procedure"):
+        validate_answer(procedure_answer(text), [procedure_source(WING_PHASE_SOURCE)])
+
+
+def test_procedure_failed_job_preserves_prefix_then_resumes_same_v8_generation(tmp_path):
+    from app.services.aircraft_library.models import CORRECTION_POLICY
+    from app.services.aircraft_library.store import Store
+    from app.services.aircraft_library.worker import Worker
+    from .test_aircraft_library import manual
+    from .test_aircraft_library_resume import Provider
+
+    store = Store(tmp_path / "library")
+    raw = manual(
+        "General inspection notes. " + "Inspect engine controls before servicing. " * 45,
+        WING_PHASE_SOURCE,
+    )
+    doc = store.ingest(raw, {"icao": "C172"})
+    identifier = doc["id"]
+    sources = copy.deepcopy(store.passages([identifier]))
+
+    class ProcedureProvider(Provider):
+        fail = True
+
+        def complete(self, evidence, question):
+            source = next((row for row in evidence if "WING FIRE" in row["text"]), None)
+            if source is None:
+                return super().complete(evidence, question)
+            self.calls.append([row["passage_id"] for row in evidence])
+            text = (
+                "Wing fire: use flaps as required."
+                if self.fail
+                else "Wing fire: use flaps only as required for final approach and touchdown."
+            )
+            return procedure_answer(
+                text,
+                citations=[
+                    {
+                        "passage_id": source["passage_id"],
+                        "excerpt_id": 0,
+                    }
+                ],
+            )
+
+    provider = ProcedureProvider()
+    worker = Worker(store, provider)
+    try:
+        job = store.create_job("distill", {"document_id": identifier})
+        assert worker.run_one()
+        failed = store.job(job["id"])
+        assert failed["state"] == "failed" and "procedure" in failed["error"]
+        assert WING_PHASE_SOURCE not in failed["error"]
+        partial = copy.deepcopy(store.get(identifier)["artifacts"]["distillation"])
+        assert partial["completed_batches"] == 1 and partial["total_batches"] == 2
+        assert partial["correction_policy"] == CORRECTION_POLICY == "procedure-source-feedback-v8"
+        assert len(provider.calls) == 4
+        provider.calls.clear()
+        provider.fail = False
+        resumed = store.create_job("distill", {"document_id": identifier})
+        assert worker.run_one() and store.job(resumed["id"])["state"] == "completed"
+        final = store.get(identifier)["artifacts"]["distillation"]
+        assert final["completed_batches"] == 2 and len(provider.calls) == 1
+        assert final["sections"][:1] == partial["sections"]
+        assert final["evidence_identity"] == partial["evidence_identity"]
+        assert (
+            store.passages([identifier]) == sources
+            and store.original(identifier).read_bytes() == raw
+        )
+        assert provider.embeds == [] and store.job(job["id"])["state"] == "failed"
+    finally:
+        worker.close()
+
+
+def test_procedure_policy_archives_v7_verbatim_and_starts_v8_at_zero(tmp_path):
+    from app.services.aircraft_library.models import (
+        SOURCE_SCOPE_V7_CORRECTION_POLICY,
+        CORRECTION_POLICY,
+        distillation_context,
+        distill,
+        validate_answer,
+    )
+    from app.services.aircraft_library.store import Store
+    from .test_aircraft_library import manual
+    from .test_aircraft_library_resume import Provider, ProcessKilled
+
+    store = Store(tmp_path / "library")
+    raw = manual(
+        "General inspection notes. " + "Inspect engine controls before servicing. " * 45,
+        WING_PHASE_SOURCE,
+    )
+    doc = store.ingest(raw, {"icao": "C172"})
+    identifier = doc["id"]
+    provider = Provider()
+    _, roots, question, fingerprint = distillation_context(
+        store,
+        provider,
+        identifier,
+        correction_policy=SOURCE_SCOPE_V7_CORRECTION_POLICY,
+    )
+    assert len(roots) == 2
+    section = {
+        "pages": sorted({row["page"] for row in roots[0]}),
+        **validate_answer(
+            provider.complete(roots[0], question),
+            roots[0],
+            correction_policy=SOURCE_SCOPE_V7_CORRECTION_POLICY,
+        ),
+    }
+    old = {
+        "kind": "llm_distillation",
+        "status": "partial",
+        "correction_policy": SOURCE_SCOPE_V7_CORRECTION_POLICY,
+        "evidence_identity": fingerprint,
+        "sections": [section],
+        "completed_batches": 1,
+        "total_batches": 2,
+        "batch_plan": [[row["passage_id"] for row in batch] for batch in roots],
+        "recovery": {"state": "old-policy-fixture-receipt"},
+    }
+    store.artifact(identifier, "distillation", old)
+    sources = copy.deepcopy(store.passages([identifier]))
+    provider.calls.clear()
+    provider.kill_at = 1
+    with pytest.raises(ProcessKilled):
+        distill(store, provider, identifier)
+    fresh = store.get(identifier)["artifacts"]["distillation"]
+    assert fresh["completed_batches"] == 0 and fresh["sections"] == []
+    assert fresh["correction_policy"] == CORRECTION_POLICY == "procedure-source-feedback-v8"
+    assert fresh["evidence_identity"] != fingerprint and "recovery" not in fresh
+    assert provider.calls == [[row["passage_id"] for row in roots[0]]]
+    history = store.distillations(identifier)["items"]
+    assert any(
+        store.historical_distillation(identifier, row["revision_id"])["artifact"] == old
+        for row in history
+    )
+    assert (
+        store.passages([identifier]) == sources and store.original(identifier).read_bytes() == raw
+    )
+    assert provider.embeds == []
+
+
+@pytest.mark.parametrize("first_failure", ["numeric", "applicability"])
+@pytest.mark.parametrize("drop_procedure", [False, True])
+def test_procedure_obligation_survives_an_earlier_validation_failure(first_failure, drop_procedure):
+    conditional = {
+        **CONDITIONAL_OPERATIONS,
+        "document_id": "doc_procedure",
+        "passage_id": 2,
+        "page": 2,
+        "label": "2",
+    }
+    evidence = [procedure_source(WING_PHASE_SOURCE), conditional]
+    calls = []
+
+    def provider(request):
+        question = json.loads(json.loads(request.content)["messages"][1]["content"])["question"]
+        calls.append(question)
+        if len(calls) == 1:
+            text = "Wing fire: use flaps as required. " + (
+                "Airspeed is 999 KIAS." if first_failure == "numeric" else UNQUALIFIED_CERTIFICATION
+            )
+        else:
+            feedback = json.loads(question.rsplit("\n", 1)[-1])["rejected_claims"][0]
+            assert feedback["procedure_requirements"]["conditions"] == [
+                "flaps_final_approach_touchdown"
+            ]
+            assert (
+                len(feedback.get("qualification_excerpt_options", []))
+                + len(feedback["procedure_excerpt_options"])
+                <= 6
+            )
+            text = (
+                QUALIFIED_CERTIFICATION
+                if first_failure == "applicability"
+                else "The source describes a wing fire."
+            )
+            if not drop_procedure:
+                text += " Wing fire: use flaps only as required for final approach and touchdown."
+        return response(
+            procedure_answer(
+                text,
+                citations=[
+                    {"passage_id": 1, "excerpt_id": 0},
+                    {"passage_id": 2, "excerpt_id": 0},
+                ],
+            )["claims"]
+        )
+
+    if drop_procedure:
+        with pytest.raises(ModelUnavailable, match="procedure"):
+            verified_completion(model(provider), evidence, "Summarize", max_attempts=2)
+    else:
+        assert verified_completion(model(provider), evidence, "Summarize", max_attempts=2)["claims"]
+    assert len(calls) == 2
