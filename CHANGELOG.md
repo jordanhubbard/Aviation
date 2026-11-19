@@ -2,7 +2,7 @@
 
 ## Unreleased
 
-- Aircraft library: explain signed source amounts in versioned correction feedback while preserving strict validation and exact predecessor replay.
+- Aircraft library: explain signed source amounts in versioned correction feedback, exclude Unicode identifier references, and preserve strict validation and exact predecessor replay.
 
 - Aircraft library: allow unsupported rejected assertions to be repaired against the same evidence without freezing their text because unrelated numbers occur elsewhere; preserve validated claims and version the correction generation.
 

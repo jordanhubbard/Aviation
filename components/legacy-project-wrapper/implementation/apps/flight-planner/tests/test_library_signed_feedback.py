@@ -3,12 +3,13 @@
 import copy
 import hashlib
 import json
+from decimal import localcontext
 
 import pytest
 
 from app.services.aircraft_library.models import (
     ASSERTION_CORRECTION_POLICY, CITATION_FORMAT, CORRECTION_POLICY,
-    LEGACY_CORRECTION_POLICY, SYSTEM,
+    LEGACY_CORRECTION_POLICY, SIGNED_CORRECTION_POLICY, SYSTEM,
     ModelUnavailable, _signed_source_diagnostics, distill, distillation_context,
     source_excerpts, validate_answer, verified_completion,
 )
@@ -57,6 +58,39 @@ def test_explicit_predecessors_preserve_complete_wire_contract(policy, output, e
     assert len(calls) == 3
     encoded = json.dumps(calls, sort_keys=True, separators=(",", ":")).encode()
     assert hashlib.sha256(encoded).hexdigest() == expected
+
+
+@pytest.mark.parametrize("kind,output,expected", [
+    ("amount", "json_object",
+     "679da45e6449548c493d2ea4961b68c19238f7dbc3ccda5056ad70217118913e"),
+    ("amount", "json_schema",
+     "53e2278389b4ac7445ba0ffb2196c8b1a15ee82543b5ce7986df03be87b485a7"),
+    ("identifier", "json_object",
+     "26c96ffd56eb64c85647bae778e7053fdb7d49cc5f2f1a29a1b38155c0c05f66"),
+    ("identifier", "json_schema",
+     "621a295a60a0e59909e507463851623ce6f95c2079de31d84ea96bfceb51472d"),
+])
+def test_stopped_v3_preserves_its_complete_replay_including_identifier_diagnostics(
+    kind, output, expected,
+):
+    # Independently captured from frozen ea9a31dcf. Replaying the old diagnostic
+    # never makes its unsupported positive value admissible.
+    evidence = EVIDENCE if kind == "amount" else [source(
+        "P/N –137 feet. Real decrease -265 feet.")]
+    initial = [KEPT, FAILED] if kind == "amount" else [claim("Adjustment is 137 feet.")]
+    replacement = [FAILED] if kind == "amount" else initial
+    calls = []
+
+    def provider(request):
+        calls.append(json.loads(request.content))
+        return response(initial if len(calls) == 1 else replacement)
+
+    with pytest.raises(ModelUnavailable, match="numeric values"):
+        verified_completion(model(provider, output), evidence, "Summarize",
+                            correction_policy=SIGNED_CORRECTION_POLICY)
+    assert len(calls) == 3
+    assert hashlib.sha256(json.dumps(
+        calls, sort_keys=True, separators=(",", ":")).encode()).hexdigest() == expected
 
 
 @pytest.mark.parametrize("output", ["json_object", "json_schema"])
@@ -131,9 +165,53 @@ def test_diagnostics_use_actual_cited_spans_only():
     "P/N -137. Reference -265; positive 918 feet.",
     "Figure 5-137, Page 5-265; positive 918 feet.",
     "Part number -137. Serial number -265; positive 918 feet.",
+    "P/N –137 feet. Reference −265 feet.",
+    "Serial number – 137 feet. Registration –265 feet.",
+    "Figure –137 feet. Page – 265 feet.",
+    "Figures: –137 feet. pp. –265 feet.",
+    "P/N A.-137 feet. Reference 1055 – 265 feet.",
+    "Part number is –137 feet. Section: –265 feet.",
+    "Reference –137.5 feet. Serial number –265.5 feet.",
+    "ID –137 feet. Registration No. –265 feet.",
+    "Model No. –137 feet. Reference No. –265 feet.",
+    "Page No. –137 feet. P/N: No. –265 feet.",
 ])
 def test_identifier_components_do_not_become_signed_amount_diagnostics(text):
-    assert _signed_source_diagnostics(["137", "265"], FAILED, [source(text)]) is None
+    assert _signed_source_diagnostics(["137", "265", "137.5", "265.5"],
+                                      FAILED, [source(text)]) is None
+
+
+@pytest.mark.parametrize("text", [
+    "Decrease –137 feet.",
+    "Decrease −137 feet.",
+    "P/N -265. Decrease –137 feet.",
+    "Tailwind adjustment –137 feet.",
+    "Referenced adjustment –137 feet.",
+    "P –137 feet.",
+])
+def test_identifier_filter_preserves_genuine_signed_amounts_and_word_boundaries(text):
+    hints = _signed_source_diagnostics(["137", "265"], FAILED, [source(text)])
+    assert [row["cited_signed_numeric_value"] for row in hints["matches"]] == ["-137"]
+
+
+@pytest.mark.parametrize("output", ["json_object", "json_schema"])
+def test_v4_correction_never_instructs_a_signed_amount_from_an_identifier(output):
+    evidence = [source("P/N –137 feet. Real decrease -265 feet.")]
+    calls = []
+
+    def provider(request):
+        payload = json.loads(request.content)
+        calls.append(payload)
+        if len(calls) == 1:
+            return response([claim("Real decrease is 137 feet.")])
+        question = json.loads(payload["messages"][1]["content"])["question"]
+        assert "signed_source_diagnostics" not in question
+        assert "Signed-source diagnostics identify" not in question
+        return response([claim("Real decrease is -265 feet.")])
+
+    value = verified_completion(model(provider, output), evidence, "Summarize")
+    assert value == validate_answer(answer([claim("Real decrease is -265 feet.")]), evidence)
+    assert len(calls) == 2
 
 
 @pytest.mark.parametrize("extra", [
@@ -158,20 +236,52 @@ def test_diagnostics_are_bounded_deduplicated_and_not_arithmetic():
                                       [source("Corrected value 1055 - 137 feet.")]) is None
 
 
-def test_v2_generation_is_reconstructed_but_never_recovered_as_v3(tmp_path, monkeypatch):
+@pytest.mark.parametrize("precision,value,exact,nearby", [
+    (2, "137", "-137", "-140"),
+    (4, "123456", "-123456", "-123500"),
+    (28, "123456789012345678901234567890",
+     "-123456789012345678901234567890", "-123456789012345678901234567900"),
+])
+def test_signed_counterparts_are_exact_independent_of_decimal_context(
+    precision, value, exact, nearby,
+):
+    with localcontext() as context:
+        context.prec = precision
+        hints = _signed_source_diagnostics([value], FAILED, [source(f"Adjustment {exact} feet.")])
+        assert hints["matches"][0]["cited_signed_numeric_value"] == exact
+        assert _signed_source_diagnostics([value], FAILED,
+                                          [source(f"Adjustment {nearby} feet.")]) is None
+
+
+def test_v3_replay_retains_its_old_rounding_diagnostic_without_admitting_a_claim():
+    evidence = [source("Adjustment -140 feet.")]
+    with localcontext() as context:
+        context.prec = 2
+        hints = _signed_source_diagnostics(["137"], FAILED, evidence,
+                                            correction_policy=SIGNED_CORRECTION_POLICY)
+        assert hints["matches"][0]["cited_signed_numeric_value"] == "-140"
+        assert not hints["supports_rejected_values"]
+        with pytest.raises(ModelUnavailable, match="numeric values"):
+            validate_answer(answer([claim("Adjustment is 137 feet.")]), evidence)
+
+
+@pytest.mark.parametrize("policy", [ASSERTION_CORRECTION_POLICY, SIGNED_CORRECTION_POLICY])
+def test_predecessor_generation_is_reconstructed_but_never_recovered_as_v4(
+    tmp_path, monkeypatch, policy,
+):
     store, identifier, provider = make_recovery_library(tmp_path, monkeypatch)
     old_context = distillation_context(store, provider, identifier,
-                                      correction_policy=ASSERTION_CORRECTION_POLICY)
+                                      correction_policy=policy)
     current = distillation_context(store, provider, identifier)
     assert old_context[:3] == current[:3] and old_context[3] != current[3]
     expected = dict(provider=provider.base, model=provider.model, system=SYSTEM,
                     question=old_context[2], batches=old_context[1],
                     citation_format=CITATION_FORMAT,
-                    correction_policy="rejected-assertion-repair-v2")
+                    correction_policy=policy)
     assert old_context[3] == hashlib.sha256(json.dumps(
         expected, sort_keys=True, separators=(",", ":")).encode()).hexdigest()
     old = distill(store, provider, identifier)
-    old.update(correction_policy=ASSERTION_CORRECTION_POLICY,
+    old.update(correction_policy=policy,
                evidence_identity=old_context[3])
     store.artifact(identifier, "distillation", old)
     backup = snapshot(store, tmp_path / "v2.sqlite3")

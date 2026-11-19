@@ -39,13 +39,14 @@ class ModelTruncated(ModelUnavailable):
 CITATION_FORMAT = "indexed-excerpts-v2"
 LEGACY_CORRECTION_POLICY = "numeric-citation-only-v1"
 ASSERTION_CORRECTION_POLICY = "rejected-assertion-repair-v2"
-CORRECTION_POLICY = "signed-source-feedback-v3"
+SIGNED_CORRECTION_POLICY = "signed-source-feedback-v3"
+CORRECTION_POLICY = "signed-source-feedback-v4"
 
 
 def _correction_settings(policy):
     if policy == LEGACY_CORRECTION_POLICY:
         return {}
-    if policy not in (ASSERTION_CORRECTION_POLICY, CORRECTION_POLICY):
+    if policy not in (ASSERTION_CORRECTION_POLICY, SIGNED_CORRECTION_POLICY, CORRECTION_POLICY):
         raise ModelUnavailable("Unknown completion correction policy")
     return {"correction_policy": policy}
 
@@ -1085,7 +1086,34 @@ _SIGN_DIAGNOSTIC_IDENTIFIER = re.compile(
 )
 
 
-def _signed_source_diagnostics(values, claim, evidence):
+def _diagnostic_identifier_label(pattern):
+    return pattern.pattern.removeprefix("(?i)").removesuffix("$") + r"(?!\w)"
+
+
+_SIGN_DIAGNOSTIC_DASHES = r"\-+\N{MINUS SIGN}\N{EN DASH}\N{EM DASH}"
+_SIGN_DIAGNOSTIC_REFERENCE = (
+    r"(?<!\w)(?:fig(?:ure)?s?\.?|tables?|sections?|secs?\.?|pages?|pp?\.|"
+    r"notes?|chapters?|appendi(?:x|ces))\s*(?:[:#]\s*)?(?!\w)"
+)
+_SIGN_DIAGNOSTIC_FIELD = (
+    r"(?<!\w)(?:ID|P/N|S/N|PN|SN|part|serial|reg(?:istration)?|tail|model|code|"
+    r"ident(?:ifier|ification)|ref(?:erence)?|fig(?:ure)?s?|tables?|sections?|secs?|"
+    r"pages?|pp?\.|notes?|chapters?|appendi(?:x|ces))\.?"
+    r"(?:[ \t]*(?:no\.?|number|#))?\s*(?:[:#]\s*)?"
+    r"(?:(?:no\.?|number)\s*)?(?!\w)"
+)
+_SIGN_DIAGNOSTIC_IDENTIFIER_V4 = re.compile(
+    r"(?i)(?:" + _SIGN_DIAGNOSTIC_FIELD
+    + "|" + _diagnostic_identifier_label(_QUANTITY_CODE_LABEL)
+    + "|" + _diagnostic_identifier_label(_CONVERSION_CODE_LABEL)
+    + "|" + _SIGN_DIAGNOSTIC_REFERENCE
+    + r")(?:is[ \t]+|=[ \t]*)?[" + _SIGN_DIAGNOSTIC_DASHES
+    + r"]?[ \t]*(?a:[A-Z0-9]+(?:(?:[./:_" + _SIGN_DIAGNOSTIC_DASHES
+    + r"]+|[ \t]*[/:_" + _SIGN_DIAGNOSTIC_DASHES + r"]+[ \t]*)[A-Z0-9]+)*)"
+)
+
+
+def _signed_source_diagnostics(values, claim, evidence, *, correction_policy=CORRECTION_POLICY):
     """Explain sign mismatches in cited spans; never supply numeric support."""
     wanted = set()
     for value in values[:32]:
@@ -1129,13 +1157,19 @@ def _signed_source_diagnostics(values, claim, evidence):
         if quote is None:
             continue
         # Identifiers and explicit page/figure references are not amount diagnostics.
-        compared = _SIGN_DIAGNOSTIC_IDENTIFIER.sub(" ", _PRINTED_REFERENCE.sub(" ", quote))
+        identifiers = (
+            _SIGN_DIAGNOSTIC_IDENTIFIER
+            if correction_policy == SIGNED_CORRECTION_POLICY
+            else _SIGN_DIAGNOSTIC_IDENTIFIER_V4
+        )
+        compared = identifiers.sub(" ", _PRINTED_REFERENCE.sub(" ", quote))
         signed = {number for number in numbers(compared) if number < 0}
         for value in sorted(wanted):
-            if -value not in signed or (source["passage_id"], quote, value) in seen:
+            counterpart = -value if correction_policy == SIGNED_CORRECTION_POLICY else value.copy_negate()
+            if counterpart not in signed or (source["passage_id"], quote, value) in seen:
                 continue
             seen.add((source["passage_id"], quote, value))
-            observed = next(number for number in signed if number == -value)
+            observed = next(number for number in signed if number == counterpart)
             options.append({**location, "rejected_numeric_value": str(value),
                             "cited_signed_numeric_value": str(observed)})
     if not options:
@@ -1236,9 +1270,10 @@ def _rejected_claims(candidate, evidence, *, correction_policy=CORRECTION_POLICY
                     for option in feedback["numeric_evidence_options"]["matches"]
                     for value in option["numeric_values"]
                 }
-                if correction_policy == CORRECTION_POLICY:
+                if correction_policy in (SIGNED_CORRECTION_POLICY, CORRECTION_POLICY):
                     signed = _signed_source_diagnostics(
-                        feedback["unsupported_numeric_values"], claim, evidence
+                        feedback["unsupported_numeric_values"], claim, evidence,
+                        correction_policy=correction_policy,
                     )
                     if signed:
                         feedback["signed_source_diagnostics"] = signed
@@ -1509,7 +1544,7 @@ def verified_completion(
                     "from factual claims while retaining actual source facts, conditions and references. "
                     "Do not weaken or omit a supported fact merely to avoid selecting its supporting excerpt. "
                 )
-                if correction_policy == CORRECTION_POLICY and any(
+                if correction_policy in (SIGNED_CORRECTION_POLICY, CORRECTION_POLICY) and any(
                     failure.get("signed_source_diagnostics") for failure in failures
                 ):
                     instruction += (
