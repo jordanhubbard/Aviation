@@ -43,6 +43,8 @@ pass `acceptance/avionics.md` against `acceptance/vectors.json` without network 
 or a browser.
 
 GDL90 realizations additionally pass `acceptance/gdl90.json` in both bindings.
+Receiver text weather additionally passes `acceptance/fisb.json`, including the
+exact published FAA five-TAF application field and shared hostile wire cases.
 Python host schemas reuse the frozen decoded-report records exported by this
 Component while leaving socket ownership, authentication and freshness to hosts.
 
@@ -178,3 +180,12 @@ before middle before outer. No model performs audio or radio hardware I/O.
   intercom, music, or marker lamps
 - **THEN** it delegates state validation and transitions to the common avionics
   realization, retaining only application composition and elapsed-time policy
+
+### Receiver text weather
+
+GDL90 input also delegates bounded UAT/FIS-B product-413 DLAC decoding to the
+shared realization. It preserves complete raw records, source wire bytes and
+explicit unsupported/malformed coverage under the
+[receiver text contract](../../docs/architecture/offline-cockpit.md#receiver-fis-b-text-products-528).
+Header receipt time must never be reported as product freshness. Applications own
+source/session retention and presentation; physical receiver proof is separate.

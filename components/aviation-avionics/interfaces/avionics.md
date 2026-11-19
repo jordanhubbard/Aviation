@@ -148,3 +148,11 @@ freshness window requires a new ID before resolving new geometry; an unsupported
 ID version also invalidates the active profile. ID messages cannot refresh
 telemetry age or create a telemetry connection. A later ID never retroactively
 changes the datum or age of already received geometry. Restart clears profiles.
+
+## Receiver FIS-B text
+
+The GDL90 decoder's `uplink` record and `FisbTextRecord` follow the bounded
+[receiver text contract](../../../docs/architecture/offline-cockpit.md#receiver-fis-b-text-products-528).
+`FisbTextReport` is the source-attributed bridge projection of a complete record;
+it carries `kind=fisb_text`, the original GDL90 header/payload, nullable product age
+and explicit unassessed validity. Decoding raw bytes performs no network access.

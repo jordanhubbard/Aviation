@@ -28,17 +28,13 @@ class ReceiverSettings:
         ):
             raise ValueError("UDP port must be between 0 and 65535")
         if not self.allowed_sources:
-            raise ValueError(
-                "Configure at least one receiver source address or network"
-            )
+            raise ValueError("Configure at least one receiver source address or network")
         for source in self.allowed_sources:
             ipaddress.ip_network(source, strict=False)
 
 
 class ReceiverState:
-    def __init__(
-        self, settings: ReceiverSettings, *, clock=time.monotonic, wall_clock=time.time
-    ):
+    def __init__(self, settings: ReceiverSettings, *, clock=time.monotonic, wall_clock=time.time):
         self.settings, self.clock, self.wall_clock = settings, clock, wall_clock
         self.networks = tuple(
             ipaddress.ip_network(n, strict=False) for n in settings.allowed_sources
@@ -49,6 +45,7 @@ class ReceiverState:
         self.session = 0
         self.senders = OrderedDict()
         self.tracks = OrderedDict()
+        self.weather = OrderedDict()
         self.recent = deque(maxlen=128)
         self.counters, self.errors = Counter(), Counter()
         self.tokens, self.token_time = 100.0, clock()
@@ -61,6 +58,7 @@ class ReceiverState:
             self.session += 1
             self.senders.clear()
             self.tracks.clear()
+            self.weather.clear()
             self.recent.clear()
             self.counters.clear()
             self.errors.clear()
@@ -95,10 +93,7 @@ class ReceiverState:
 
     def _expire_profiles(self, elapsed_time):
         for sender in self.senders.values():
-            if (
-                sender.get("profile_active")
-                and elapsed_time - sender["profile_activity_at"] > 5
-            ):
+            if sender.get("profile_active") and elapsed_time - sender["profile_activity_at"] > 5:
                 sender["profile_active"] = False
                 sender["profile_unknown"] = True
 
@@ -108,6 +103,11 @@ class ReceiverState:
             if self._age(envelope, elapsed_time) > 60:
                 del self.tracks[key]
                 self.counters["expired_tracks"] += 1
+
+        for key, envelope in list(self.weather.items()):
+            if self._age(envelope, elapsed_time) > 900:
+                del self.weather[key]
+                self.counters["expired_weather"] += 1
 
     def ingest(self, data: bytes, address, *, session=None):
         with self.lock:
@@ -127,9 +127,7 @@ class ReceiverState:
             elapsed_time = self._observe_time(at, wall)
             elapsed = max(0, at - self.token_time)
             self.tokens = min(100.0, self.tokens + elapsed * 200)
-            self.byte_tokens = min(
-                256 * 1024.0, self.byte_tokens + elapsed * 1024 * 1024
-            )
+            self.byte_tokens = min(256 * 1024.0, self.byte_tokens + elapsed * 1024 * 1024)
             self.token_time = at
             if self.tokens < 1:
                 self.counters["rate_limited_datagrams"] += 1
@@ -143,9 +141,7 @@ class ReceiverState:
                 return
             self.byte_tokens -= len(data)
             sender_id = (
-                f"[{source}]:{address[1]}"
-                if source.version == 6
-                else f"{source}:{address[1]}"
+                f"[{source}]:{address[1]}" if source.version == 6 else f"{source}:{address[1]}"
             )
             self._expire(elapsed_time)
             if sender_id not in self.senders and len(self.senders) >= 8:
@@ -168,13 +164,33 @@ class ReceiverState:
                 }
                 self.recent.append(envelope)
                 kind = report["kind"]
+                if kind == "uplink":
+                    self.errors.update("uplink-" + code for code in report["errors"])
+                    self.counters["unsupported_weather_frames"] += report["unsupported_frames"]
+                    for record in report["records"]:
+                        key = (sender_id, record["raw_text"])
+                        if key in self.weather:
+                            self.counters["duplicate_weather"] += 1
+                        self.weather[key] = {
+                            **envelope,
+                            "report": {
+                                **record,
+                                "kind": "fisb_text",
+                                "message_id": 7,
+                                "payload_hex": report["payload_hex"],
+                                "product_age_seconds": None,
+                                "validity": "unassessed",
+                            },
+                        }
+                        self.weather.move_to_end(key)
+                        if len(self.weather) > 128:
+                            self.weather.popitem(last=False)
+                            self.counters["evicted_weather"] += 1
+                    if not report["records"]:
+                        continue
                 if kind == "unsupported":
-                    if report["message_id"] == 0x65 and report[
-                        "payload_hex"
-                    ].startswith("6500"):
-                        sender = self.senders.setdefault(
-                            sender_id, {"last_known": None}
-                        )
+                    if report["message_id"] == 0x65 and report["payload_hex"].startswith("6500"):
+                        sender = self.senders.setdefault(sender_id, {"last_known": None})
                         sender["profile_active"] = False
                         sender["profile_unknown"] = True
                     self.counters["unsupported_reports"] += 1
@@ -182,9 +198,7 @@ class ReceiverState:
                 sender = self.senders.setdefault(sender_id, {"last_known": None})
                 if kind == "device_id":
                     previous = sender.get("device_id")
-                    previous_serial = (
-                        previous["report"]["serial_number_hex"] if previous else None
-                    )
+                    previous_serial = previous["report"]["serial_number_hex"] if previous else None
                     if (
                         previous_serial is not None
                         and report["serial_number_hex"] is not None
@@ -196,6 +210,9 @@ class ReceiverState:
                         for key in list(self.tracks):
                             if key[0] == sender_id:
                                 del self.tracks[key]
+                        for key in list(self.weather):
+                            if key[0] == sender_id:
+                                del self.weather[key]
                     sender.update(
                         device_id=envelope,
                         profile_active=True,
@@ -204,11 +221,7 @@ class ReceiverState:
                     )
                     continue
                 if kind == "geometric_altitude":
-                    active_id = (
-                        sender.get("device_id")
-                        if sender.get("profile_active")
-                        else None
-                    )
+                    active_id = sender.get("device_id") if sender.get("profile_active") else None
                     envelope["report"] = resolve_geometric_altitude(
                         report,
                         active_id["report"] if active_id else None,
@@ -278,9 +291,7 @@ class ReceiverState:
                         ),
                         "heartbeat": heartbeat,
                         "ownship": ownship,
-                        "geometric_altitude": envelope(
-                            sender.get("geometric_altitude")
-                        ),
+                        "geometric_altitude": envelope(sender.get("geometric_altitude")),
                     }
                 )
             result = {
@@ -298,21 +309,27 @@ class ReceiverState:
                     "traffic": True,
                     "geometric_altitude": True,
                     "device_id": True,
-                    "weather_decoding": False,
+                    "weather_decoding": True,
+                    "weather_product_ids": [413],
+                    "weather_segmented": False,
+                    "weather_graphical": False,
                 },
                 "limitations": [
                     "Advisory receiver reports; coverage is not complete traffic surveillance.",
-                    "Weather products are not decoded by this bridge version.",
+                    "Receiver text product 413 only; segmented and graphical weather are not decoded.",
+                    "Weather receipt age does not establish product age or validity.",
                     "Receiver heartbeat time has no inferred calendar date.",
                 ],
             }
             if include_reports:
                 result.update(
                     receivers=receivers,
-                    traffic=[
-                        envelope(row, stale_after=15) for row in self.tracks.values()
-                    ],
+                    traffic=[envelope(row, stale_after=15) for row in self.tracks.values()],
                     recent_reports=[envelope(row) for row in self.recent],
+                    weather=[
+                        {**envelope(row, stale_after=900), "live": False}
+                        for row in self.weather.values()
+                    ],
                 )
             return result
 

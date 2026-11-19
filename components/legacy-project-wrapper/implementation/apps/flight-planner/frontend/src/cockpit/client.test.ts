@@ -99,3 +99,66 @@ describe('explicit local bridge client', () => {
     await rejected
   })
 })
+
+const weatherReport = {
+  kind: 'fisb_text' as const,
+  message_id: 7,
+  payload_hex: '07' + '00'.repeat(435),
+  product_id: 413 as const,
+  raw_text: 'TAF KSFO 181200Z NIL=',
+  report_type: 'TAF',
+  location_id: 'KSFO',
+  report_time: '181200Z',
+  body: 'NIL=',
+  product_age_seconds: null,
+  validity: 'unassessed' as const,
+}
+function weatherSnapshot(): Snapshot {
+  return {
+    ...emptySnapshot,
+    capabilities: {
+      weather_decoding: true,
+      weather_product_ids: [413],
+      weather_segmented: false,
+      weather_graphical: false,
+    },
+    weather: [
+      {
+        source_id: '127.0.0.1:4000',
+        received_at: '2026-11-18T01:00:00Z',
+        age_seconds: 0,
+        live: false,
+        stale: false,
+        report: { ...weatherReport },
+      },
+    ],
+  }
+}
+it('accepts bounded complete weather without asserting product validity', async () => {
+  const value = weatherSnapshot()
+  vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response(JSON.stringify(value))))
+  expect(
+    await bridgeClient('http://localhost:18190', 't'.repeat(40)).state(
+      new AbortController().signal,
+    ),
+  ).toEqual(value)
+})
+it.each(['live', 'age', 'body', 'count', 'coverage', 'kind'])(
+  'rejects malformed or falsely fresh receiver weather: %s',
+  async (failure) => {
+    const value = weatherSnapshot()
+    if (failure === 'live') value.weather![0].live = true
+    if (failure === 'age')
+      (value.weather![0].report as unknown as Record<string, unknown>).product_age_seconds = 0
+    if (failure === 'body')
+      (value.weather![0].report as unknown as Record<string, unknown>).body = 'OTHER'
+    if (failure === 'count') value.weather = Array(129).fill(value.weather![0])
+    if (failure === 'coverage') value.capabilities.weather_graphical = true
+    if (failure === 'kind')
+      (value.weather![0].report as unknown as Record<string, unknown>).kind = 'uplink'
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response(JSON.stringify(value))))
+    await expect(
+      bridgeClient('http://localhost:18190', 't'.repeat(40)).state(new AbortController().signal),
+    ).rejects.toThrow(/invalid report collection/)
+  },
+)

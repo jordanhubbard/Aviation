@@ -41,6 +41,10 @@ const artifact = (name) => join(evidence, name)
 const vectors = JSON.parse(
   readFileSync(new URL('../../../../conformance/aviation-gdl90.json', import.meta.url)),
 )
+const fisb = JSON.parse(
+  readFileSync(new URL('../../../../conformance/aviation-fisb.json', import.meta.url)),
+)
+const weather = Buffer.from(fisb.frame_hex, 'hex')
 const heart = Buffer.from(vectors.reports[0].frame_hex, 'hex'),
   traffic = Buffer.from(vectors.reports[1].payload_hex, 'hex'),
   device = Buffer.from(
@@ -130,17 +134,64 @@ try {
           sock.send(data, started.udp_port, '127.0.0.1', (e) => (e ? reject(e) : done())),
         )
       }
-      await send(a, Buffer.concat([device, heart, own, geo, frame(traffic)]))
-      await send(b, Buffer.concat([frame(invalid), own, geo]))
+      await send(a, Buffer.concat([device, heart, own, geo, frame(traffic), weather, weather]))
+      await send(b, Buffer.concat([frame(invalid), own, geo, weather]))
       let observed
       for (let n = 0; n < 30; n++) {
         observed = await state()
-        if (observed.receivers.length === 2) break
+        if (observed.receivers.length === 2 && observed.weather.length === 10) break
         await new Promise((r) => setTimeout(r, 50))
       }
       assert.equal(observed.receivers.length, 2)
+      assert.equal(observed.weather.length, 10)
+      assert.equal(observed.counters.duplicate_weather, 5)
+      assert.ok(
+        observed.weather.every(
+          (row) =>
+            !row.live &&
+            row.report.product_age_seconds === null &&
+            row.report.validity === 'unassessed',
+        ),
+      )
       await page.getByRole('button', { name: 'Refresh snapshot', exact: true }).click()
       await page.getByRole('heading', { name: 'Receivers (2)', exact: true }).waitFor()
+      await page.getByRole('heading', { name: 'Receiver weather (10)', exact: true }).waitFor()
+      assert.equal(
+        await page.getByText('Receiver weather decoding is unavailable.', { exact: false }).count(),
+        0,
+      )
+      await page.getByText('Complete FIS-B text weather is supported;', { exact: false }).waitFor()
+      const badge = page.getByText('Product validity unassessed', { exact: true }).first()
+      const badgeColors = await badge.evaluate((element) => {
+        const style = getComputedStyle(element.closest('.MuiChip-root'))
+        return { foreground: style.color, background: style.backgroundColor }
+      })
+      const luminance = (css) => {
+        const [r, g, b] = css
+          .match(/[0-9.]+/g)
+          .slice(0, 3)
+          .map(Number)
+          .map((n) => {
+            const value = n / 255
+            return value <= 0.04045 ? value / 12.92 : ((value + 0.055) / 1.055) ** 2.4
+          })
+        return 0.2126 * r + 0.7152 * g + 0.0722 * b
+      }
+      const contrast =
+        (luminance(badgeColors.foreground) + 0.05) / (luminance(badgeColors.background) + 0.05)
+      assert.ok(
+        Math.max(contrast, 1 / contrast) >= 4.5,
+        'Unassessed validity text must be readable',
+      )
+
+      assert.equal(await page.getByText('Product validity unassessed', { exact: true }).count(), 10)
+      await page
+        .getByText('Report time (as received): ' + fisb.expected_report_time, { exact: true })
+        .first()
+        .waitFor()
+      await page
+        .getByRole('region', { name: 'Receiver weather' })
+        .screenshot({ path: artifact('cockpit-weather-' + label + '.png') })
       await page.getByText('Ownship GPS fix: Valid', { exact: true }).waitFor()
       await page.getByText('Ownship GPS fix: Invalid', { exact: true }).waitFor()
       await page.getByText('Geometric altitude: -1000 ft · MSL', { exact: true }).waitFor()
@@ -191,6 +242,10 @@ try {
         no_startup_contact: true,
         explicit_native_start_stop: true,
         two_source_udp: true,
+        native_fisb_text: true,
+        weather_reports: observed.weather.length,
+        weather_deduplication: true,
+        product_validity_unassessed: true,
         ownship_validity_separate: true,
         distinct_altitude_datums: true,
         no_implicit_polling: true,
