@@ -46,7 +46,8 @@ CONDITIONAL_V6_CORRECTION_POLICY = "conditional-source-forms-v6"
 SOURCE_SCOPE_V7_CORRECTION_POLICY = "source-scope-feedback-v7"
 PROCEDURE_V8_CORRECTION_POLICY = "procedure-source-feedback-v8"
 GLOSSARY_V9_CORRECTION_POLICY = "symbol-quote-feedback-v9"
-CORRECTION_POLICY = "definition-quote-feedback-v10"
+DEFINITION_V10_CORRECTION_POLICY = "definition-quote-feedback-v10"
+CORRECTION_POLICY = "chart-date-feedback-v11"
 
 
 def _correction_settings(policy):
@@ -61,6 +62,7 @@ def _correction_settings(policy):
         SOURCE_SCOPE_V7_CORRECTION_POLICY,
         PROCEDURE_V8_CORRECTION_POLICY,
         GLOSSARY_V9_CORRECTION_POLICY,
+        DEFINITION_V10_CORRECTION_POLICY,
         CORRECTION_POLICY,
     ):
         raise ModelUnavailable("Unknown completion correction policy")
@@ -1369,9 +1371,155 @@ def _fraction_literals(text):
     }
 
 
+# Literal figure/footer associations, not chart-value or general entailment rules.
+_CHART_FIGURE = re.compile(r"\b(?:figure|fig\.?)\s*(\d+)\s*[-−–]\s*(\d+)\b", re.I)
+_CHART_MONTHS = {name: month for month, names in enumerate((
+    ("jan", "january"), ("feb", "february"), ("mar", "march"), ("apr", "april"),
+    ("may",), ("jun", "june"), ("jul", "july"), ("aug", "august"),
+    ("sep", "sept", "september"), ("oct", "october"), ("nov", "november"),
+    ("dec", "december"),
+), 1) for name in names}
+_CHART_DATE = re.compile(
+    r"\b(" + "|".join(sorted(_CHART_MONTHS, key=len, reverse=True))
+    + r")\.?\s*(\d{1,2})(?:\s*/\s*|\s*,\s*|\s+)(\d{4}|\d{2})\b", re.I
+)
+
+
+def _chart_dates(text):
+    dates = set()
+    for match in _CHART_DATE.finditer(text):
+        day, year = int(match[2]), int(match[3])
+        if not 1 <= day <= 31:
+            continue
+        if len(match[3]) == 2:
+            year += 2000 if year < 50 else 1900
+        dates.add(f"{year:04d}-{_CHART_MONTHS[match[1].lower()]:02d}-{day:02d}")
+    return dates
+
+
+def _chart_figure(match):
+    return f"{int(match[1])}-{int(match[2])}"
+
+
+def _chart_page_associations(evidence, documents):
+    pages = {}
+    for source in evidence:
+        if source["document_id"] in documents:
+            spans = source_excerpts(source)
+            if spans:
+                pages.setdefault((source["document_id"], source["page"]), []).append((source, spans))
+    associations = []
+    for (document, page), rows in pages.items():
+        text = "\n".join(span for _, spans in rows for span in spans)
+        figures = {_chart_figure(m) for m in _CHART_FIGURE.finditer(text)}
+        dates = _chart_dates(text)
+        sheets = {int(m[1]) for m in re.finditer(r"\bsheet\s+(\d+)\b", text, re.I)}
+        # Do not guess which footer date belongs to which chart on a complex page.
+        if len(figures) != 1 or len(dates) != 1 or len(sheets) > 1:
+            continue
+        associations.append({
+            "document_id": document, "page": page, "figure": next(iter(figures)),
+            "sheet": next(iter(sheets), None), "date": next(iter(dates)),
+            "source_passages": [row["passage_id"] for row, _ in rows],
+        })
+    return associations
+
+
+def _asserted_chart_dates(text):
+    associations = []
+    clauses = re.split(r";|\b(?:while|whereas|but)\b|(?<=[.!?])\s+(?=[A-Z])", text)
+    for clause in clauses:
+        dates = _chart_dates(clause)
+        if len(dates) != 1 or re.search(r"\b(?:not|never)\s+(?:dated|date[ds]?)\b", clause, re.I):
+            continue
+        figures = list(_CHART_FIGURE.finditer(clause))
+        for i, match in enumerate(figures):
+            end = figures[i + 1].start() if i + 1 < len(figures) else len(clause)
+            tail = clause[match.end():end]
+            date_match = _CHART_DATE.search(tail)
+            if date_match:
+                tail = tail[:date_match.start()]
+            sheet = re.search(r"\bsheets?\s+(\d+)(?:\s*(?:and|&|,)\s*(\d+))?", tail, re.I)
+            if sheet:
+                selected = [int(value) for value in sheet.groups() if value]
+            elif re.search(r"\bsheets\b", tail, re.I) or re.search(
+                r"\b(?:both\s+)?sheets\s+(?:of\s+)?$", clause[:match.start()], re.I
+            ):
+                selected = "all"
+            else:
+                selected = None
+            associations.append({"figure": _chart_figure(match), "sheets": selected,
+                                 "date": next(iter(dates))})
+    return associations
+
+
+def _chart_date_feedback(text, cited_sources, evidence, supporting, previous):
+    asserted = _asserted_chart_dates(text)
+    requirements = copy.deepcopy(previous or [])
+    documents = {source["document_id"] for source in cited_sources}
+    bound_documents = {r["document_id"] for r in requirements}
+    if len(documents) == 1 and (not bound_documents or documents <= bound_documents):
+        available = _chart_page_associations(evidence, documents)
+        for claim in asserted:
+            matches = [a for a in available if a["figure"] == claim["figure"] and a["date"] == claim["date"]]
+            if claim["sheets"] is None:
+                groups = [(None, matches)] if matches else []
+            else:
+                sheets = sorted({a["sheet"] for a in matches if a["sheet"] is not None})
+                if claim["sheets"] != "all":
+                    sheets = [sheet for sheet in sheets if sheet in claim["sheets"]]
+                groups = [(sheet, [a for a in matches if a["sheet"] == sheet]) for sheet in sheets]
+            for sheet, rows in groups:
+                item = {"document_id": next(iter(documents)), "figure": claim["figure"],
+                        "sheet": sheet, "date": claim["date"],
+                        "pages": sorted({a["page"] for a in rows}),
+                        "source_passages": sorted({pid for a in rows for pid in a["source_passages"]})}
+                # An earlier bound item keeps its original provided page alternatives.
+                identity = (item["document_id"], item["figure"], sheet, item["date"])
+                if not any((r["document_id"], r["figure"], r["sheet"], r["date"]) == identity for r in requirements):
+                    requirements.append(item)
+    quoted = {}
+    for source, quote in zip(cited_sources, supporting):
+        quoted.setdefault((source["document_id"], source["page"]), []).append(quote)
+    missing, gaps, options = [], [], []
+    for required in requirements:
+        tag = f"chart_date:{required['figure']}:{required['sheet']}:{required['date']}"
+        retained = any(
+            claim["figure"] == required["figure"] and claim["date"] == required["date"]
+            and (required["sheet"] is None or claim["sheets"] == "all"
+                 or isinstance(claim["sheets"], list) and required["sheet"] in claim["sheets"])
+            for claim in asserted
+        )
+        if not retained:
+            missing.append(tag)
+        supported = False
+        for page in required["pages"]:
+            quote = "\n".join(quoted.get((required["document_id"], page), []))
+            if (
+                required["figure"] in {_chart_figure(m) for m in _CHART_FIGURE.finditer(quote)}
+                and required["date"] in _chart_dates(quote)
+                and (required["sheet"] is None or re.search(r"\bsheet\s+" + str(required["sheet"]) + r"\b", quote, re.I))
+            ):
+                supported = True
+        if not supported:
+            gaps.append(tag)
+    for source in evidence:
+        relevant = [r for r in requirements if source["document_id"] == r["document_id"] and source["passage_id"] in r["source_passages"]]
+        for index, span in enumerate(source_excerpts(source)):
+            figures = {_chart_figure(m) for m in _CHART_FIGURE.finditer(span)}
+            dates = _chart_dates(span)
+            tags = [f"chart_date:{r['figure']}:{r['sheet']}:{r['date']}" for r in relevant
+                    if r["figure"] in figures or r["date"] in dates]
+            if tags and len(span) <= 1200 and len(options) < 6:
+                options.append({"passage_id": source["passage_id"], "excerpt_id": index,
+                                "requirements": sorted(set(tags)), "text": span})
+    return {"requirements": requirements, "missing": missing, "gaps": gaps, "options": options,
+            "source_passages": sorted({pid for r in requirements for pid in r["source_passages"]})}
+
+
 def _procedure_feedback(
     text, cited_sources, evidence, supporting, previous=None, *,
-    include_glossary=False, include_definitions=False,
+    include_glossary=False, include_definitions=False, include_chart_dates=False,
 ):
     """Reject bounded source-relationship gaps; this is not entailment approval."""
     concepts = {
@@ -1438,10 +1586,15 @@ def _procedure_feedback(
     available_fractions = set().union(*(_fraction_literals(excerpt) for _, _, excerpt in excerpts))
     claimed_fractions = _fraction_literals(text)
     requirements["fractions"].update(claimed_fractions & available_fractions)
-    if not any(requirements.values()) and not claimed_fractions:
+    chart_dates = (
+        _chart_date_feedback(text, cited_sources, evidence, supporting, (previous or {}).get("chart_dates"))
+        if include_chart_dates else {}
+    )
+    if not any(requirements.values()) and not claimed_fractions and not chart_dates.get("requirements"):
         return {}
     context_ids = set((previous or {}).get("source_passages", []))
     context_ids.update(source["passage_id"] for source in sources)
+    context_ids.update(chart_dates.get("source_passages", []))
     documents = {by_id[pid]["document_id"] for pid in context_ids if pid in by_id}
     quotations = " ".join(
         quote
@@ -1449,7 +1602,7 @@ def _procedure_feedback(
         if source["document_id"] in documents
     )
     quote_view = _condition_text(quotations)
-    missing, gaps = [], []
+    missing, gaps = list(chart_dates.get("missing", [])), list(chart_dates.get("gaps", []))
     for topic in sorted(requirements["topics"]):
         if not re.search(_PROCEDURE_TOPICS[topic], normalized):
             missing.append(topic + "_operating_entry")
@@ -1507,10 +1660,12 @@ def _procedure_feedback(
                     "text": excerpt,
                 }
             )
+    options.extend(chart_dates.get("options", [])[:max(0, 6 - len(options))])
     return {
         "procedure_requirements": {
             **{key: sorted(value) for key, value in requirements.items()},
             "source_passages": sorted(context_ids),
+            **({"chart_dates": chart_dates["requirements"]} if chart_dates.get("requirements") else {}),
         },
         "missing_procedure_conditions": sorted(set(missing)),
         "missing_procedure_citation_conditions": sorted(set(gaps)),
@@ -1606,12 +1761,13 @@ def validate_answer(
             SOURCE_SCOPE_V7_CORRECTION_POLICY,
             PROCEDURE_V8_CORRECTION_POLICY,
             GLOSSARY_V9_CORRECTION_POLICY,
+            DEFINITION_V10_CORRECTION_POLICY,
             CORRECTION_POLICY,
         ):
             requirements = (applicability_requirements or {}).get(claim_number - 1)
             discovered = (
                 _scope_requirements(claim["text"], cited_sources, evidence)
-                if correction_policy in (SOURCE_SCOPE_V7_CORRECTION_POLICY, PROCEDURE_V8_CORRECTION_POLICY, GLOSSARY_V9_CORRECTION_POLICY, CORRECTION_POLICY)
+                if correction_policy in (SOURCE_SCOPE_V7_CORRECTION_POLICY, PROCEDURE_V8_CORRECTION_POLICY, GLOSSARY_V9_CORRECTION_POLICY, DEFINITION_V10_CORRECTION_POLICY, CORRECTION_POLICY)
                 else _certification_requirements(
                     claim["text"], cited_sources, evidence, correction_policy=correction_policy
                 )
@@ -1625,7 +1781,7 @@ def validate_answer(
                 requirements = requirements or discovered
         scope_feedback = (
             _scope_feedback(claim["text"], requirements, cited_sources, evidence, supporting)
-            if correction_policy in (SOURCE_SCOPE_V7_CORRECTION_POLICY, PROCEDURE_V8_CORRECTION_POLICY, GLOSSARY_V9_CORRECTION_POLICY, CORRECTION_POLICY)
+            if correction_policy in (SOURCE_SCOPE_V7_CORRECTION_POLICY, PROCEDURE_V8_CORRECTION_POLICY, GLOSSARY_V9_CORRECTION_POLICY, DEFINITION_V10_CORRECTION_POLICY, CORRECTION_POLICY)
             else {}
         )
         procedure_feedback = (
@@ -1635,10 +1791,11 @@ def validate_answer(
                 evidence,
                 supporting,
                 (procedure_requirements or {}).get(claim_number - 1),
-                include_glossary=correction_policy in (GLOSSARY_V9_CORRECTION_POLICY, CORRECTION_POLICY),
-                include_definitions=correction_policy == CORRECTION_POLICY,
+                include_glossary=correction_policy in (GLOSSARY_V9_CORRECTION_POLICY, DEFINITION_V10_CORRECTION_POLICY, CORRECTION_POLICY),
+                include_definitions=correction_policy in (DEFINITION_V10_CORRECTION_POLICY, CORRECTION_POLICY),
+                include_chart_dates=correction_policy == CORRECTION_POLICY,
             )
-            if correction_policy in (PROCEDURE_V8_CORRECTION_POLICY, GLOSSARY_V9_CORRECTION_POLICY, CORRECTION_POLICY)
+            if correction_policy in (PROCEDURE_V8_CORRECTION_POLICY, GLOSSARY_V9_CORRECTION_POLICY, DEFINITION_V10_CORRECTION_POLICY, CORRECTION_POLICY)
             else {}
         )
         if procedure_feedback:
@@ -1668,7 +1825,7 @@ def validate_answer(
                     **procedure_feedback,
                 },
             )
-        if correction_policy in (SOURCE_SCOPE_V7_CORRECTION_POLICY, PROCEDURE_V8_CORRECTION_POLICY, GLOSSARY_V9_CORRECTION_POLICY, CORRECTION_POLICY):
+        if correction_policy in (SOURCE_SCOPE_V7_CORRECTION_POLICY, PROCEDURE_V8_CORRECTION_POLICY, GLOSSARY_V9_CORRECTION_POLICY, DEFINITION_V10_CORRECTION_POLICY, CORRECTION_POLICY):
             if scope_feedback.get("missing_applicability_conditions") or scope_feedback.get("missing_applicability_citation_conditions"):
                 raise ModelUnavailable(
                     f"Model omitted source applicability conditions in claim {claim_number}; "
@@ -1930,6 +2087,7 @@ def _rejected_claims(
                     SOURCE_SCOPE_V7_CORRECTION_POLICY,
                     PROCEDURE_V8_CORRECTION_POLICY,
                     GLOSSARY_V9_CORRECTION_POLICY,
+                    DEFINITION_V10_CORRECTION_POLICY,
                     CORRECTION_POLICY,
                 ):
                     signed = _signed_source_diagnostics(
@@ -2246,6 +2404,7 @@ def verified_completion(
                     SOURCE_SCOPE_V7_CORRECTION_POLICY,
                     PROCEDURE_V8_CORRECTION_POLICY,
                     GLOSSARY_V9_CORRECTION_POLICY,
+                    DEFINITION_V10_CORRECTION_POLICY,
                     CORRECTION_POLICY,
                 ) and any(failure.get("signed_source_diagnostics") for failure in failures):
                     instruction += (
@@ -2264,6 +2423,7 @@ def verified_completion(
                         SOURCE_SCOPE_V7_CORRECTION_POLICY,
                         PROCEDURE_V8_CORRECTION_POLICY,
                         GLOSSARY_V9_CORRECTION_POLICY,
+                        DEFINITION_V10_CORRECTION_POLICY,
                         CORRECTION_POLICY,
                     )
                     and applicability_requirements
@@ -2276,7 +2436,7 @@ def verified_completion(
                         "Never turn an example into current-aircraft certification. "
                     )
                 if (
-                    correction_policy in (SOURCE_SCOPE_V7_CORRECTION_POLICY, PROCEDURE_V8_CORRECTION_POLICY, GLOSSARY_V9_CORRECTION_POLICY, CORRECTION_POLICY)
+                    correction_policy in (SOURCE_SCOPE_V7_CORRECTION_POLICY, PROCEDURE_V8_CORRECTION_POLICY, GLOSSARY_V9_CORRECTION_POLICY, DEFINITION_V10_CORRECTION_POLICY, CORRECTION_POLICY)
                     and applicability_requirements
                 ):
                     instruction += (
@@ -2290,7 +2450,7 @@ def verified_completion(
                         "to support the complete assertion. Cite both the operating qualification and other "
                         "retained facts; a numeric match in a later excerpt does not support earlier equipment. "
                     )
-                if correction_policy in (PROCEDURE_V8_CORRECTION_POLICY, GLOSSARY_V9_CORRECTION_POLICY, CORRECTION_POLICY) and procedure_requirements:
+                if correction_policy in (PROCEDURE_V8_CORRECTION_POLICY, GLOSSARY_V9_CORRECTION_POLICY, DEFINITION_V10_CORRECTION_POLICY, CORRECTION_POLICY) and procedure_requirements:
                     instruction += (
                         "Procedure requirements preserve the rejected source operating topic and its "
                         "supported action, phase, remediation relationship and literal fraction. "
@@ -2302,7 +2462,7 @@ def verified_completion(
                         "fraction. Procedure excerpt options repeat bounded untrusted source "
                         "already provided; cite their IDs only after reading their actual support. "
                     )
-                if correction_policy in (GLOSSARY_V9_CORRECTION_POLICY, CORRECTION_POLICY) and any(
+                if correction_policy in (GLOSSARY_V9_CORRECTION_POLICY, DEFINITION_V10_CORRECTION_POLICY, CORRECTION_POLICY) and any(
                     any(name.startswith("airspeed_") for name in requirement.get("concepts", []))
                     for requirement in procedure_requirements.values()
                 ):
@@ -2316,7 +2476,7 @@ def verified_completion(
                         "reason text alone cannot repair its missing quoted support. These bounded "
                         "witnesses locate source, not general semantic approval. "
                     )
-                if correction_policy == CORRECTION_POLICY and any(
+                if correction_policy in (DEFINITION_V10_CORRECTION_POLICY, CORRECTION_POLICY) and any(
                     any(name.startswith(("definition_", "conversion_"))
                         for name in requirement.get("concepts", []))
                     for requirement in procedure_requirements.values()
@@ -2332,6 +2492,19 @@ def verified_completion(
                         "text, unrelated facts or a foreign manual cannot repair missing quoted support. "
                         "Use only the existing shared bounded witnesses. Their word coverage is not "
                         "general semantic, mathematical, dimensional or chart-relationship approval. "
+                    )
+                if correction_policy == CORRECTION_POLICY and any(
+                    requirement.get("chart_dates") for requirement in procedure_requirements.values()
+                ):
+                    instruction += (
+                        "Chart-date requirements retain each originally asserted figure, sheet and "
+                        "date association. Select its supplied original-page excerpts together: the "
+                        "same date in another sheet or figure is not its support. A plural-sheet "
+                        "assertion needs each bound provided sheet. Do not drop, change or negate "
+                        "the association, move it to reason or borrow a foreign manual. A supported "
+                        "single-sheet partial assertion does not require an unasserted sheet. "
+                        "Only the existing shared bounded witnesses are available; read and cite "
+                        "their actual figure/sheet/date support. They do not approve chart values. "
                     )
                 feedback = {"validation_failure": str(error), "rejected_claims": failures}
             else:

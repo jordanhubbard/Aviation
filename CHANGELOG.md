@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Aircraft library: require selected source support for asserted chart-sheet/date associations, retain those associations through bounded repairs, and preserve recorded validation under a fresh generation policy.
+
 - Aircraft library: require selected BHP and weight-conversion unit support, preserve recognized source concepts through bounded repairs, and retain exact predecessor validation with a fresh versioned generation.
 
 - Aircraft library: require quoted support for recognized airspeed glossary entries, retain asserted concepts through bounded repairs, and preserve recorded validation under a new generation policy.
