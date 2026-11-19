@@ -6,6 +6,8 @@ index, not an independently maintained task list. Use `gh issue` and `gh pr`.
 
 ## Current work and requests
 
+- [#569 — Explain signed source literals](https://github.com/jordanhubbard/Aviation/issues/569): [versioned correction contract](../architecture/aircraft-library.md); bounded cited-source sign diagnostics, unchanged numeric validation and exact predecessor replay. Local evidence: 2,282 backend checks and 16 focused checks pass; 42 actual-source predecessor reconstructions and all four complete predecessor wire controls pass without provider requests. Real-provider qualification remains required.
+
 - [#567 — Correct unsupported rejected assertions](https://github.com/jordanhubbard/Aviation/issues/567): [versioned correction contract](../architecture/aircraft-library.md); preserve accepted claims, strict validation and legacy replay while removing numeric-occurrence text locks from new generations.
 
 - [#566 — Explicit inaccurate-native-text restrictions](https://github.com/jordanhubbard/Aviation/issues/566): [source-use contract](../architecture/aircraft-library.md); preserve prior layout reviews, require pinned image review and synchronize API/SDK/UI reasons. Supports [#565](https://github.com/jordanhubbard/Aviation/issues/565)'s performance-summary source review.
