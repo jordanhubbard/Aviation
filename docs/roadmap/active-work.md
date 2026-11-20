@@ -6,6 +6,8 @@ index, not an independently maintained task list. Use `gh issue` and `gh pr`.
 
 ## Current work and requests
 
+- [#607 — Owned browser shutdown recurrence](https://github.com/jordanhubbard/Aviation/issues/607): [native macOS close contract](../development/browser-ci.md#macos-regular-chromium-termination-607-recurrence). PR#615deployment exposed two graceful-close timeouts and ownedSIGKILL recoveries despite successful startup targets. Preserve prior passing evidence and all new native controls. Qualify regular Chromium selection, owned native termination and observed-exit validation through all local, fresh-process, CI and deployment gates before closure.
+
 - [#614 — Copied catalog title support](https://github.com/jordanhubbard/Aviation/issues/614): [bounded title contract](../architecture/aircraft-library.md#copied-catalog-titles-and-selected-original-support-614). Preserve all59v19claims and seven actual requests; four whole batches/47claims accepted. Fifth whole-batch review rejects metadata title presented as an original manual fact. Version the bounded support guard through normal delivery before freshzero qualification. Full corpus and upstream dependencies stay open.
 
 - [#612 — Distinct-sheet date conflict status](https://github.com/jordanhubbard/Aviation/issues/612): [bounded date-status contract](../architecture/aircraft-library.md#distinct-sheet-dates-and-unsupported-conflict-status-612). Preserve all48v18claims and all6wires; three whole batches/36claims accepted. Wholebatch3 adds unsupported conflicting status to different dates on distinct sheets. Correct source stays unchanged; qualify a versioned guard and fresh generation from zero. Full49/52–58/111 gates remain open.

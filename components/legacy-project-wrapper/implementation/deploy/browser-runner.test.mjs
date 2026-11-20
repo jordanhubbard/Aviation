@@ -1,8 +1,128 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { spawnSync } from 'node:child_process';
+import { EventEmitter } from 'node:events';
 import { launchOwnedBrowser } from './browser-runner.mjs';
 import { supportedBrowserNode } from './browser-runtime.mjs';
+
+// #607 recurrence controls. These are ownership simulations, not native exit evidence.
+function nativeFixture({ nativeExit = [0, null], sdkExit = [0, null], stall = false,
+  executable = '/owned/Chromium.app/Contents/MacOS/Chromium', engine = 'chromium' } = {}) {
+  const events = [];
+  const child = Object.assign(new EventEmitter(), { pid: 12345, exitCode: null, signalCode: null, spawnfile: executable });
+  const server = Object.assign(new EventEmitter(), { process: () => child, wsEndpoint: () => 'ws://owned' });
+  const finish = (code, signal) => {
+    if (child.exitCode !== null || child.signalCode !== null) return;
+    child.exitCode = code;child.signalCode = signal;
+    child.emit('exit', code, signal);server.emit('close', code, signal);
+  };
+  child.kill = signal => { events.push(`native:${signal}`);if (!stall) queueMicrotask(() => finish(...nativeExit));return true; };
+  server.close = async () => { events.push('sdk:close');finish(...sdkExit); };
+  server.kill = async () => { events.push('sdk:kill');finish(null, 'SIGKILL'); };
+  let launchOptions;
+  const type = {
+    name: () => engine,
+    launchServer: async options => { launchOptions = options;return server; },
+    connect: async () => ({
+      browserType: () => ({ name: () => engine }),
+      close: async () => events.push('client:close'),
+      newBrowserCDPSession: async () => ({ send: async () => ({ targetId: 'owned-target' }), detach: async () => {} }),
+    }),
+  };
+  return { type, child, server, events, options: { platform: 'darwin', graceMs: 20, killMs: 20, report: e => events.push(e) }, launchOptions: () => launchOptions };
+}
+
+test('macOS headless default uses pinned regular Chromium and one owned graceful request', async () => {
+  const f = nativeFixture();const b = await launchOwnedBrowser(f.type, { headless: true }, f.options);
+  assert.equal(f.launchOptions().channel, 'chromium');
+  await Promise.all([b.close(), b.close()]);
+  assert.equal(f.events.filter(e => e === 'native:SIGTERM').length, 1);
+  assert.equal(f.events.filter(e => e === 'sdk:close').length, 1);
+  assert.ok(f.events.indexOf('client:close') < f.events.indexOf('native:SIGTERM'));
+  assert.ok(f.events.indexOf('native:SIGTERM') < f.events.indexOf('sdk:close'));
+  assert.ok(!f.events.includes('sdk:kill'));
+  assert.ok(!f.events.some(e => e.status === 'recovered'));
+});
+
+for (const options of [{ channel: 'chrome' }, { channel: 'chromium' }, { executablePath: '/explicit/browser' }, { headless: false }]) {
+  test(`explicit browser selection is preserved ${JSON.stringify(options)}`, async () => {
+    const f = nativeFixture();const b = await launchOwnedBrowser(f.type, options, f.options);
+    assert.equal(f.launchOptions().channel, options.channel);
+    assert.equal(f.launchOptions().executablePath, options.executablePath);
+    await b.close();
+  });
+}
+
+for (const platform of ['linux', 'win32']) {
+  test(`other platforms retain the SDK close path: ${platform}`, async () => {
+    const f = nativeFixture();const b = await launchOwnedBrowser(f.type, {}, { ...f.options, platform });
+    assert.equal(f.launchOptions().channel, undefined);await b.close();
+    assert.ok(!f.events.includes('native:SIGTERM'));assert.ok(f.events.includes('sdk:close'));
+  });
+}
+
+test('other browser engines retain their launch and close behavior', async () => {
+  const f = nativeFixture({ engine: 'firefox' });const b = await launchOwnedBrowser(f.type, {}, f.options);
+  assert.equal(f.launchOptions().channel, undefined);await b.close();assert.ok(!f.events.includes('native:SIGTERM'));
+});
+
+test('an explicitly chosen headless shell does not treat SIGTERM exit143 as normal', async () => {
+  const executable = '/owned/chrome-headless-shell';const f = nativeFixture({ executable, nativeExit: [143, null] });
+  const b = await launchOwnedBrowser(f.type, { executablePath: executable }, f.options);await b.close();
+  assert.ok(!f.events.includes('native:SIGTERM'));assert.ok(f.events.includes('sdk:close'));
+});
+
+for (const nativeExit of [[2, null], [143, null], [null, 'SIGTERM'], [0, 'SIGTERM']]) {
+  test(`non-normal native exit remains a failure: ${JSON.stringify(nativeExit)}`, async () => {
+    const f = nativeFixture({ nativeExit });const b = await launchOwnedBrowser(f.type, {}, f.options);
+    await assert.rejects(b.close(), /exit|signal|code/i);assert.ok(!f.events.some(e => e.status === 'recovered'));
+  });
+}
+
+test('SDK close fulfillment cannot approve a nonzero process exit', async () => {
+  const f = nativeFixture({ sdkExit: [2, null] });const b = await launchOwnedBrowser(f.type, {}, { ...f.options, platform: 'linux' });
+  await assert.rejects(b.close(), /exit|signal|code/i);assert.ok(!f.events.some(e => e.status === 'recovered'));
+});
+
+test('stalled native request preserves bounded owned recovery and concurrent sharing', async () => {
+  const f = nativeFixture({ stall: true });const b = await launchOwnedBrowser(f.type, {}, f.options);
+  await Promise.all([b.close(), b.close()]);
+  assert.equal(f.events.filter(e => e === 'native:SIGTERM').length, 1);
+  assert.equal(f.events.filter(e => e === 'sdk:kill').length, 1);
+  assert.equal(f.events.at(-1).status, 'recovered');
+});
+
+test('already ended owned handles are not signalled again', async () => {
+  const f = nativeFixture();f.child.exitCode = 0;
+  const b = await launchOwnedBrowser(f.type, {}, f.options);await b.close();
+  assert.ok(!f.events.includes('native:SIGTERM'));assert.ok(f.events.includes('sdk:close'));
+});
+
+test('invalid native PID metadata cannot select a process signal path', async () => {
+  const f = nativeFixture();f.child.pid = 0;const b = await launchOwnedBrowser(f.type, {}, f.options);await b.close();
+  assert.ok(!f.events.includes('native:SIGTERM'));
+});
+
+test('native signal errors clean up only that owner and remain failures', async () => {
+  const f = nativeFixture();f.child.kill = () => { throw new Error('signal denied'); };
+  const b = await launchOwnedBrowser(f.type, {}, f.options);
+  await assert.rejects(b.close(), /signal denied/);
+  assert.ok(f.events.includes('sdk:kill'));assert.ok(!f.events.some(e => e.status === 'recovered'));
+});
+
+test('a request racing an already closing process accepts only its observed normal exit', async () => {
+  const f = nativeFixture();const close = f.server.close;
+  f.child.kill = () => { queueMicrotask(() => close());return false; };
+  const b = await launchOwnedBrowser(f.type, {}, f.options);await b.close();
+  assert.ok(!f.events.includes('sdk:kill'));assert.ok(!f.events.some(e => e.status === 'recovered'));
+});
+
+test('native startup connection failure retains its error after normal owner cleanup', async () => {
+  const f = nativeFixture();f.type.connect = async () => { throw new Error('native connect failed'); };
+  await assert.rejects(launchOwnedBrowser(f.type, {}, f.options), /native connect failed/);
+  assert.equal(f.events.filter(e => e === 'native:SIGTERM').length, 1);
+  assert.ok(!f.events.includes('sdk:kill'));assert.ok(!f.events.some(e => e.status === 'recovered'));
+});
 
 test('browser workers accept tested LTS versions and reject Node 26', () => {
   for (const version of ['v22.23.4', 'v24.13.0']) assert.ok(supportedBrowserNode(version));
