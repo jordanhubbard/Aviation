@@ -1560,3 +1560,39 @@ citation limits. The new default changes generation identity; archive the comple
 old artifact before starting at zero. Do not edit correct source text to move its
 excerpt boundaries or graft an accepted prefix across policies. Every actual
 whole batch still requires comparison of all final claims with original images.
+
+## Distinct sheet dates and unsupported conflict status (#612)
+
+A figure's distinct sheets can carry different printed dates without those dates
+constituting a source-asserted conflict. Do not infer conflict, contradiction or
+inconsistency from that difference alone. Preserve the printed dates and allow
+neutral reporting that they differ. This rule does not decide revision currency,
+aircraft applicability, airworthiness or general semantic entailment.
+
+The next versioned correction policy adds a bounded negative check for explicit
+date-conflict wording attached to a single named figure and at least two asserted,
+provided, distinct sheet/date bindings from the originally cited manual/pages.
+Derive at most six unambiguous bindings from supplied individual page contexts;
+do not invent bindings from metadata, unavailable/restricted source, a foreign
+manual, ambiguous pages or unasserted dates. Recognize explicit sheet/date clauses
+with a shared figure reference, including the actual failed while-clause form.
+Status comparison treats ordinary and Unicode hyphens as separators only in its
+comparison view; literal source/quotes and numeric/figure parsers stay unchanged.
+
+Require selected support for both the literal bindings and a positive explicit
+date-conflict statement on their originally bound pages. A matching date elsewhere
+or unrelated conflict wording cannot supply that status. Source-explicit conflict
+statements and conflict assertions about conversion values remain independent.
+The check is lexical/source-relationship coverage, not a general conflict oracle.
+
+When rejecting unsupported conflict wording, permit a neutral difference statement
+that retains all originally supported sheet/date bindings and selected same-page
+support. Freeze those bindings through numeric, applicability and citation repairs.
+Dropping a date/sheet/figure, swapping bindings, negating dates, reason-only repair
+or switching manual/page cannot discharge an obligation. Preserve accepted siblings.
+Use only the existing shared six verbatim witnesses of at most 1,200 characters,
+three normal attempts, existing citation limits and unchanged provider/profile,
+18K-source and output/timeout budgets. Preserve exact historical v1–v18 behavior
+and unchanged core numeric/quotation/source-projection functions. Archive the full
+old 48-claim artifact and legitimate receipts before any changed generation starts
+at zero. All original-image comparisons remain required before each next batch.
