@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- NOTAMs: activate owner-authorized working access with an archived AIXM initial-load bootstrap, coordinated deltas and source-aware downloads (#503).
+
 - Browser qualification: use regular Chromium and observed native orderly termination on macOS; reject nonzero process exits while preserving bounded owned recovery (#607).
 
 - Aircraft library: reject complete catalog titles copied into factual claims without selected original-manual support; preserve supported source text and explicit historical validation policies (#614).
