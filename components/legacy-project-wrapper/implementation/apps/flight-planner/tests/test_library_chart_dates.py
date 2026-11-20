@@ -191,7 +191,7 @@ def test_new_policy_archives_v10_claims_and_receipt_then_starts_zero(tmp_path):
     with pytest.raises(ProcessKilled):
         distill(store, provider, doc['id'])
     fresh = store.get(doc['id'])['artifacts']['distillation']
-    assert CORRECTION_POLICY == fresh['correction_policy'] == 'option-noun-feedback-v15'
+    assert CORRECTION_POLICY == fresh['correction_policy'] == 'definition-subject-feedback-v16'
     assert fresh['completed_batches'] == 0 and fresh['sections'] == [] and 'recovery' not in fresh
     assert fresh['evidence_identity'] != fingerprint
     assert any(store.historical_distillation(doc['id'],r['revision_id'])['artifact'] == prior for r in store.distillations(doc['id'])['items'])

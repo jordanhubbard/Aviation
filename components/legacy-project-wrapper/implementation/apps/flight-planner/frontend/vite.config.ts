@@ -6,6 +6,8 @@ import { offlineShell } from './offline-shell'
 export default defineConfig({
   plugins: [react(), offlineShell()],
   test: {
+    // Keep JSDOM/import startup bounded on shared qualification workers (#605).
+    maxWorkers: 2,
     environment: 'jsdom',
     globals: true,
     setupFiles: ['./src/test/setup.ts'],

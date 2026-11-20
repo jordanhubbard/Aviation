@@ -13,3 +13,16 @@ frozen dependency graph, lifecycle cleanup, and complete browser tests. An
 unsupported-platform override or a skipped browser gate does not establish
 compatibility. Application container targets and jobs without managed Chromium
 remain governed by their own declared configuration.
+
+
+## Frontend unit-test worker bound (#605)
+
+Flight Planner runs its complete Vitest/JSDOM suite with at most two workers.
+Retained qualification on a 12-CPU Mac observed seven existing tests exceeding
+Vitest's five-second timeout with host-default parallelism, 130.59 seconds of
+aggregate imports and 75.70 seconds of aggregate environment startup. CPU/import
+contention is the working diagnosis, not evidence of a product startup failure.
+Keep all test cases, assertions and default timeouts; do not mask contention with
+retries or longer test deadlines. Run the full retained gate without another
+backend suite competing on the same worker, and preserve any failed run. Browser
+lifecycle cleanup and shutdown deadlines remain independently required.
