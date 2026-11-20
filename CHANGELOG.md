@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Aircraft library: require selected same-page table wording on pages with verified original-image-only restrictions, retain repair scope and preserve exact historical policies (#608).
+
 - Flight Planner tests: cap frontend workers at two to bound JSDOM/import contention during retained qualification (#605).
 
 - Aircraft library: require selected quotations to retain literal supplied definition subjects through bounded repairs (#604).

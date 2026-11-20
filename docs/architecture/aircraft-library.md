@@ -1498,3 +1498,28 @@ the new default policy changes the generation identity and archives the complete
 old artifact before starting at zero. Source projections and numeric/quotation
 validation remain unchanged. Every fresh whole batch still needs original-image
 comparison before advancement. #603 source admission is independent of this guard.
+
+
+## Selected tabular-layout wording (#608)
+
+The `restricted-layout-feedback-v17` correction policy requires explicit selected
+whole-word `table`, `tables` or `tabular` wording when a claim asserts that family
+while citing a page with verified original-image-only source restrictions.
+Derive affected original document/page pairs from cited pages and supplied verified
+restrictions. Reviewed header/footer text and conversion factors do not themselves
+supply layout. Metadata, unselected excerpts, restricted graphic text, and wording
+on another page or in another manual cannot discharge the requirement.
+
+Retain the original affected page pairs through numeric, applicability and citation
+repairs. Unsupported layout wording may be removed while preserving supported facts,
+formulas, original source obligations and siblings. Reason text cannot provide quoted
+support. Require selected wording on each bound page if the layout family remains.
+Use no new source text, guessed anchors, manual-specific names, or extra model calls.
+This negative lexical coverage does not prove a table's structure, relationships,
+values, meaning or applicability; original-image review remains mandatory.
+
+Preserve exact explicit v1–v16 behavior, numeric/quotation/source projection functions,
+the existing three attempts, 18,000 source characters, six shared 1,200-character
+witness bounds and configured model settings. The changed default creates a new
+generation identity: archive the complete old output and begin at zero. A source
+with no verified page restriction does not acquire one from metadata alone.

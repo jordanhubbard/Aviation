@@ -6,6 +6,8 @@ index, not an independently maintained task list. Use `gh issue` and `gh pr`.
 
 ## Current work and requests
 
+- [#608 — Quoted tabular-layout wording](https://github.com/jordanhubbard/Aviation/issues/608): [bounded restricted-page contract](../architecture/aircraft-library.md#selected-tabular-layout-wording-608). Preserve all48 generated v16 claims and receipts; only36 claims in three whole batches accepted. Fourth whole-batch image review rejects a table assertion over header-only source from a graduated scale. Version negative same-page layout coverage, preserve exact predecessor behavior and qualify software before changed generation starts at zero.
+
 - [#605 — Frontend test worker bound](https://github.com/jordanhubbard/Aviation/issues/605): [runner contract](../development/browser-ci.md#frontend-unit-test-worker-bound-605). Preserve the failed retained run with seven existing five-second frontend timeouts; bound the JSDOM pool to two workers and require the complete retained/local/CI/lifecycle gates without retries, exclusions or raised deadlines.
 
 - [#604 — Selected definition subjects](https://github.com/jordanhubbard/Aviation/issues/604): [bounded supplied-subject contract](../architecture/aircraft-library.md#selected-definition-subjects-604). Source-only #603 preserves the accepted24claims exactly, but the fresh whole third v15batch fails the center-of-gravity definition opening. Preserve all36claims/wires and derive bounded original subject/copula obligations; distinguish neighboring longer terms, retain v1–v15 behavior, pass all software gates and begin changed-policy actual qualification at zero. Full corpus and downstream52–58/111 remain open.
