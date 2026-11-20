@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Browser runner: retain an isolated Chromium startup target so owned servers exit gracefully after client disconnection, with bounded preparation and unchanged shutdown recovery (#607).
+
+- Aircraft library: require selected same-page quotations for asserted source-provided flap range and speed pairs, preserving original pairs through bounded repairs (#610).
+
 - Aircraft library: require selected same-page table wording on pages with verified original-image-only restrictions, retain repair scope and preserve exact historical policies (#608).
 
 - Flight Planner tests: cap frontend workers at two to bound JSDOM/import contention during retained qualification (#605).

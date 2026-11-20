@@ -1523,3 +1523,40 @@ the existing three attempts, 18,000 source characters, six shared 1,200-characte
 witness bounds and configured model settings. The changed default creates a new
 generation identity: archive the complete old output and begin at zero. A source
 with no verified page restriction does not acquire one from metadata alone.
+
+
+## Selected flap range and speed pairs (#610)
+
+The `flap-band-feedback-v18` correction policy derives at most six literal flap
+control-indicator range/speed pairs from an original assertion and supplied,
+quotable source on its originally cited manual/page. A supplied pair is one
+contiguous degree band followed by a KIAS value within an individual excerpt.
+The band has an explicit degree glyph or degree/deg wording, unsigned decimal
+endpoints (or `FULL` as upper endpoint), and `to` or a range dash. Assertion
+comparison also recognizes the reversed `speed KIAS for/at band` form. Case,
+whitespace, degree spellings and equivalent decimal spelling are comparison views
+only; quotations, source, number validation and identifiers remain untouched.
+
+Discover the indicator context only on provided cited pages with an unambiguous
+manual. Derive values from literal supplied text, not a manual-specific list,
+metadata, restricted native content, unseen rows, numeric matches in another
+subject, or a relationship assembled across excerpt boundaries. A bare flap
+angle range without a paired KIAS speed does not create this obligation.
+This bounded lexical check does not establish general table relationships,
+operational applicability, value correctness, unprovided pairs or entailment.
+
+For each asserted supplied pair, select an individual original-page excerpt
+containing that complete band and speed association. Preserve the original
+supported pairs, indicator topic and page/manual anchors through rejected-position
+numeric, applicability and citation repairs. Dropping, negating, moving to reason,
+changing a pair, or citing another page/manual cannot discharge it. Retain valid
+siblings and only supplied verbatim witnesses under the existing six shared
+1,200-character budget. Generic color/detent wording does not supply an unquoted
+range/speed row, and unrelated fuel-grade numbers do not establish a speed.
+
+Retain exact explicit v1–v17 behavior and the existing three attempts, 18,000 source
+characters, configured provider/profile/output/interval/read-timeout settings and
+citation limits. The new default changes generation identity; archive the complete
+old artifact before starting at zero. Do not edit correct source text to move its
+excerpt boundaries or graft an accepted prefix across policies. Every actual
+whole batch still requires comparison of all final claims with original images.
