@@ -6,6 +6,8 @@ index, not an independently maintained task list. Use `gh issue` and `gh pr`.
 
 ## Current work and requests
 
+- [#612 — Distinct-sheet date conflict status](https://github.com/jordanhubbard/Aviation/issues/612): [bounded date-status contract](../architecture/aircraft-library.md#distinct-sheet-dates-and-unsupported-conflict-status-612). Preserve all48v18claims and all6wires; three whole batches/36claims accepted. Wholebatch3 adds unsupported conflicting status to different dates on distinct sheets. Correct source stays unchanged; qualify a versioned guard and fresh generation from zero. Full49/52–58/111 gates remain open.
+
 - [#610 — Quoted flap range/speed pairs](https://github.com/jordanhubbard/Aviation/issues/610): [bounded supplied-pair contract](../architecture/aircraft-library.md#selected-flap-range-and-speed-pairs-610). Preserve all79generated v17claims and full wires; six whole batches/67claims accepted. Whole batch6 review finds the20-degree-to-FULL/100KIAS assertion without its supplied supporting excerpt. Version bounded same-page pair coverage without changing source or numeric validation, then qualify software and start changed generation at zero. Full corpus and52–58/111 remain open.
 
 - [#608 — Quoted tabular-layout wording](https://github.com/jordanhubbard/Aviation/issues/608): [bounded restricted-page contract](../architecture/aircraft-library.md#selected-tabular-layout-wording-608). Preserve all48 generated v16 claims and receipts; only36 claims in three whole batches accepted. Fourth whole-batch image review rejects a table assertion over header-only source from a graduated scale. Version negative same-page layout coverage, preserve exact predecessor behavior and qualify software before changed generation starts at zero.

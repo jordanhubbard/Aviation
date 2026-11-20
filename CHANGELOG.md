@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Aircraft library: reject unsupported date-conflict wording for distinct figure sheets, retain original sheet/date bindings through bounded repairs, and preserve historical policies (#612).
+
 - Browser runner: retain an isolated Chromium startup target so owned servers exit gracefully after client disconnection, with bounded preparation and unchanged shutdown recovery (#607).
 
 - Aircraft library: require selected same-page quotations for asserted source-provided flap range and speed pairs, preserving original pairs through bounded repairs (#610).
