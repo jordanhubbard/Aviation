@@ -1,6 +1,6 @@
 # Design traceability
 
-<!-- literate-ai:authority-reviewed sha256:6fa2c75c4c5ec2eba106a18d471c3bf9432db020cf79859198ef1aab90a75453 -->
+<!-- literate-ai:authority-reviewed sha256:549bfb612b68edf575f91acf4f04638d34252c29801b36a84aa37329cda29940 -->
 
 [Project guide](../README.md) → design traceability
 
@@ -64,8 +64,10 @@ code, not portable SDK contracts or evidence of live provider availability.
 Browser deployment qualification owns its launched browser server. After trace,
 context, and run-data cleanup, graceful browser shutdown has a five-second budget;
 a timeout kills only that server's process tree and must await confirmed exit.
-Failed process cleanup fails qualification. Signals retain a nonzero exit and
-close the owned server. Phase timings distinguish trace, context, native process,
+Failed process cleanup or a nonzero browser exit fails qualification. On macOS,
+the default uses regular managed Chromium and its owned native orderly termination
+request, with observed zero exit and SDK cleanup inside the same bound. Driver
+interruption signals retain a nonzero exit and close the owned server. Phase timings distinguish trace, context, native process,
 and driver boundaries. The enclosing 180-second isolated-run deadline and lease
 ownership checks remain required. Browser workers select tested Node 22/24 LTS
 runtimes before creating leases or fixtures and preserve interruption status

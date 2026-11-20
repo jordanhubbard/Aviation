@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Browser qualification: use regular Chromium and observed native orderly termination on macOS; reject nonzero process exits while preserving bounded owned recovery (#607).
+
 - Aircraft library: reject complete catalog titles copied into factual claims without selected original-manual support; preserve supported source text and explicit historical validation policies (#614).
 
 - Aircraft library: reject unsupported date-conflict wording for distinct figure sheets, retain original sheet/date bindings through bounded repairs, and preserve historical policies (#612).
