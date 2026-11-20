@@ -1388,6 +1388,30 @@ shows the retained metadata and original identity alongside page-cited claims,
 and labels the record historical. History responses and private tokens remain in
 memory, clear on type/tail/key changes, and cannot reappear from a stale request.
 
+## Selected optional-status support (#600)
+
+The `optional-status-feedback-v14` policy adds a bounded negative quotation
+coverage check. When a claim calls something optional or optionally installed,
+its selected, supplied quotations must contain explicit optional-status wording
+from its single bound manual. Listing alternative configurations alone does not
+establish optional status. Metadata, restricted/unquotable text, a foreign manual
+or an unselected excerpt cannot supply that coverage. Preserve the original
+manual context across numeric, applicability and quotation repairs.
+
+If optional wording has no selected support, reject the claim with private,
+actionable feedback. Permit removal of that unsupported status while preserving
+its supported subject, numbers and existing source obligations. Do not freeze an
+invented qualifier into a repair requirement or fabricate missing source anchors.
+Keep accepted sibling claims intact. Use the existing three-attempt, citation,
+source and output budgets without a separate verifier call.
+
+This lexical check cannot establish equipment relationships, applicability,
+negation or general entailment merely because an optional word occurs in a
+quotation. Whole-batch comparison with original images remains required. Literal
+source, quotations and numeric comparison stay unchanged; explicit v1–v13
+policies retain their recorded behavior. A changed-policy generation archives
+the entire preceding artifact and recovery receipt and starts at zero.
+
 ## Verified blank pages
 
 Empty extracted text remains unknown unless its blank state is verified. During

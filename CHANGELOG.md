@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Aircraft library: reject optional-status wording without selected supplied quotation support, and allow removing unsupported status within the existing bounded correction cycle (#600).
+
 - Aircraft library: detect missing selected support for bounded supplied source phrases, preserve existing aliases and semantic repairs, and retain exact historical behavior under a fresh generation policy.
 
 - Aircraft library: require selected original-page support for asserted flap-indicator colors, retain those labels through bounded repairs, and preserve recorded v11 validation under a fresh generation policy.

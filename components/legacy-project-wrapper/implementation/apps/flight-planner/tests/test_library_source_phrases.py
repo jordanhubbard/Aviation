@@ -133,7 +133,8 @@ def test_recorded_v12_is_not_revalidated_under_new_rules():
     assert validate_answer(answer(CLAIM,2),sources(),correction_policy='flap-color-feedback-v12')
 
 
-def test_new_policy_archives_v12_claims_and_receipt_then_starts_zero(tmp_path):
+@pytest.mark.parametrize("prior_policy", ["flap-color-feedback-v12", "source-phrase-feedback-v13"])
+def test_new_policy_archives_prior_claims_and_receipt_then_starts_zero(tmp_path, prior_policy):
     from app.services.aircraft_library.models import CORRECTION_POLICY, distillation_context, distill
     from app.services.aircraft_library.store import Store
     from .test_aircraft_library import manual
@@ -144,9 +145,9 @@ def test_new_policy_archives_v12_claims_and_receipt_then_starts_zero(tmp_path):
                  'Definitions supplied in the manual.')
     doc = store.ingest(raw, {'icao': 'C172'})
     provider = Provider()
-    _, roots, question, fingerprint = distillation_context(store, provider, doc['id'], correction_policy='flap-color-feedback-v12')
-    section = dict(pages=sorted({r['page'] for r in roots[0]}), **validate_answer(provider.complete(roots[0], question), roots[0], correction_policy='flap-color-feedback-v12'))
-    prior = dict(kind='llm_distillation', status='partial', correction_policy='flap-color-feedback-v12', evidence_identity=fingerprint,
+    _, roots, question, fingerprint = distillation_context(store, provider, doc['id'], correction_policy=prior_policy)
+    section = dict(pages=sorted({r['page'] for r in roots[0]}), **validate_answer(provider.complete(roots[0], question), roots[0], correction_policy=prior_policy))
+    prior = dict(kind='llm_distillation', status='partial', correction_policy=prior_policy, evidence_identity=fingerprint,
                  sections=[section], completed_batches=1, total_batches=len(roots), batch_plan=[[r['passage_id'] for r in b] for b in roots],
                  recovery={'kind': 'recorded-v12-control-receipt', 'request_scopes_unchanged': True})
     store.artifact(doc['id'], 'distillation', prior)
@@ -155,7 +156,7 @@ def test_new_policy_archives_v12_claims_and_receipt_then_starts_zero(tmp_path):
     with pytest.raises(ProcessKilled):
         distill(store, provider, doc['id'])
     fresh = store.get(doc['id'])['artifacts']['distillation']
-    assert CORRECTION_POLICY == fresh['correction_policy'] == 'source-phrase-feedback-v13'
+    assert CORRECTION_POLICY == fresh['correction_policy'] == 'optional-status-feedback-v14'
     assert fresh['completed_batches'] == 0 and fresh['sections'] == [] and 'recovery' not in fresh
     assert fresh['evidence_identity'] != fingerprint
     assert any(store.historical_distillation(doc['id'],r['revision_id'])['artifact'] == prior for r in store.distillations(doc['id'])['items'])
