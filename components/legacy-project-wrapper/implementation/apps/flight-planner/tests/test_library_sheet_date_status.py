@@ -26,7 +26,8 @@ def sources():
 @pytest.mark.parametrize('status', ['conflicting dates', 'inconsistent dates', 'contradictory dates',
                                    'conflicting revision dates', 'dates conflict', 'dates are inconsistent',
                                    'dates are in conflict', 'a conflict between the dates',
-                                   'dates appear to be in conflict', 'inconsistency among the revision dates'])
+                                   'dates appear to be in conflict', 'inconsistency among the revision dates',
+                                   'conflicting revision-dates', 'conflicting revision‑dates'])
 def test_distinct_source_dates_do_not_license_conflict_status(status):
     with pytest.raises(ModelUnavailable, match='support|conflict') as caught:
         validate_answer(answer(BAD.replace('conflicting dates', status), 1, 2), sources())
@@ -45,7 +46,8 @@ def test_neutral_dates_and_other_subject_conflicts_remain_independent(text):
 
 @pytest.mark.parametrize('wording', ['These are conflicting revision dates.', 'The dates are in conflict.',
     'There is a conflict between the dates.', 'The dates appear to be in conflict.',
-    'There is inconsistency among the revision dates.'])
+    'There is inconsistency among the revision dates.',
+    'These are conflicting revision-dates.', 'These are conflicting revision‑dates.'])
 def test_explicit_source_statement_can_supply_date_conflict_wording(wording):
     rows = sources();rows.append(source(4, 23, wording))
     assert validate_answer(answer(BAD, 1, 2, 4), rows)

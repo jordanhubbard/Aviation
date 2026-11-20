@@ -1576,6 +1576,8 @@ Derive at most six unambiguous bindings from supplied individual page contexts;
 do not invent bindings from metadata, unavailable/restricted source, a foreign
 manual, ambiguous pages or unasserted dates. Recognize explicit sheet/date clauses
 with a shared figure reference, including the actual failed while-clause form.
+Status comparison treats ordinary and Unicode hyphens as separators only in its
+comparison view; literal source/quotes and numeric/figure parsers stay unchanged.
 
 Require selected support for both the literal bindings and a positive explicit
 date-conflict statement on their originally bound pages. A matching date elsewhere

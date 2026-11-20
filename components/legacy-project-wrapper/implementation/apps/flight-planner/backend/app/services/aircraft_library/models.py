@@ -1538,6 +1538,7 @@ _DATE_CONFLICT_WORDING = re.compile(
 
 
 def _asserted_date_conflict(text):
+    text = re.sub(r"[-‐‑‒–—]", " ", text)
     for match in _DATE_CONFLICT_WORDING.finditer(text):
         if not re.search(r"\b(?:not|never|no|without)\b(?:\W+\w+){0,2}\W*$",
                          text[:match.start()], re.I):
