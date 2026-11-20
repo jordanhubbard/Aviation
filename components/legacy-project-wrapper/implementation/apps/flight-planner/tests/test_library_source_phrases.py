@@ -133,7 +133,7 @@ def test_recorded_v12_is_not_revalidated_under_new_rules():
     assert validate_answer(answer(CLAIM,2),sources(),correction_policy='flap-color-feedback-v12')
 
 
-@pytest.mark.parametrize("prior_policy", ["flap-color-feedback-v12", "source-phrase-feedback-v13"])
+@pytest.mark.parametrize("prior_policy", ["flap-color-feedback-v12", "source-phrase-feedback-v13", "optional-status-feedback-v14"])
 def test_new_policy_archives_prior_claims_and_receipt_then_starts_zero(tmp_path, prior_policy):
     from app.services.aircraft_library.models import CORRECTION_POLICY, distillation_context, distill
     from app.services.aircraft_library.store import Store
@@ -156,7 +156,7 @@ def test_new_policy_archives_prior_claims_and_receipt_then_starts_zero(tmp_path,
     with pytest.raises(ProcessKilled):
         distill(store, provider, doc['id'])
     fresh = store.get(doc['id'])['artifacts']['distillation']
-    assert CORRECTION_POLICY == fresh['correction_policy'] == 'optional-status-feedback-v14'
+    assert CORRECTION_POLICY == fresh['correction_policy'] == 'option-noun-feedback-v15'
     assert fresh['completed_batches'] == 0 and fresh['sections'] == [] and 'recovery' not in fresh
     assert fresh['evidence_identity'] != fingerprint
     assert any(store.historical_distillation(doc['id'],r['revision_id'])['artifact'] == prior for r in store.distillations(doc['id'])['items'])
