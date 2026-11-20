@@ -6,6 +6,8 @@ index, not an independently maintained task list. Use `gh issue` and `gh pr`.
 
 ## Current work and requests
 
+- [#614 — Copied catalog title support](https://github.com/jordanhubbard/Aviation/issues/614): [bounded title contract](../architecture/aircraft-library.md#copied-catalog-titles-and-selected-original-support-614). Preserve all59v19claims and seven actual requests; four whole batches/47claims accepted. Fifth whole-batch review rejects metadata title presented as an original manual fact. Version the bounded support guard through normal delivery before freshzero qualification. Full corpus and upstream dependencies stay open.
+
 - [#612 — Distinct-sheet date conflict status](https://github.com/jordanhubbard/Aviation/issues/612): [bounded date-status contract](../architecture/aircraft-library.md#distinct-sheet-dates-and-unsupported-conflict-status-612). Preserve all48v18claims and all6wires; three whole batches/36claims accepted. Wholebatch3 adds unsupported conflicting status to different dates on distinct sheets. Correct source stays unchanged; qualify a versioned guard and fresh generation from zero. Full49/52–58/111 gates remain open.
 
 - [#610 — Quoted flap range/speed pairs](https://github.com/jordanhubbard/Aviation/issues/610): [bounded supplied-pair contract](../architecture/aircraft-library.md#selected-flap-range-and-speed-pairs-610). Preserve all79generated v17claims and full wires; six whole batches/67claims accepted. Whole batch6 review finds the20-degree-to-FULL/100KIAS assertion without its supplied supporting excerpt. Version bounded same-page pair coverage without changing source or numeric validation, then qualify software and start changed generation at zero. Full corpus and52–58/111 remain open.

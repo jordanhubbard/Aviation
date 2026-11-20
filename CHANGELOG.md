@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Aircraft library: reject complete catalog titles copied into factual claims without selected original-manual support; preserve supported source text and explicit historical validation policies (#614).
+
 - Aircraft library: reject unsupported date-conflict wording for distinct figure sheets, retain original sheet/date bindings through bounded repairs, and preserve historical policies (#612).
 
 - Browser runner: retain an isolated Chromium startup target so owned servers exit gracefully after client disconnection, with bounded preparation and unchanged shutdown recovery (#607).

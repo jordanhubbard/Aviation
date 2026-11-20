@@ -1,6 +1,6 @@
 # Design traceability
 
-<!-- literate-ai:authority-reviewed sha256:991e5254721fe91b843741e031ea1d448197ffb39e587f922f8e5c8ac9240f51 -->
+<!-- literate-ai:authority-reviewed sha256:6fa2c75c4c5ec2eba106a18d471c3bf9432db020cf79859198ef1aab90a75453 -->
 
 [Project guide](../README.md) → design traceability
 
@@ -94,7 +94,8 @@ reviewer attribution. Source changes archive prior summaries; explicit recovery
 admits only fully validated unchanged scopes. Operator transcriptions, including
 identified agent reviews, do not confer independent human or performance-data
 approval. Typed HTTP/MCP, private SDK transports and desktop/mobile review controls
-share those source, privacy, history and failure semantics.
+share those source, privacy, history and failure semantics. Complete copied catalog
+titles require selected original-manual support under the versioned title guard.
 
 Flight Planner also owns reviewed source-use restrictions for layout-dependent
 native extraction. Immutable image/reviewer receipts and document anchors survive

@@ -191,7 +191,7 @@ def test_current_policy_archives_v8_claims_and_receipt_verbatim_then_starts_at_z
         distill(store, provider, doc['id'])
     fresh = store.get(doc['id'])['artifacts']['distillation']
     assert fresh['completed_batches'] == 0 and fresh['sections'] == []
-    assert fresh['correction_policy'] == CORRECTION_POLICY == 'sheet-date-status-feedback-v19'
+    assert fresh['correction_policy'] == CORRECTION_POLICY == 'catalog-title-feedback-v20'
     assert fresh['evidence_identity'] != fingerprint and 'recovery' not in fresh
     assert provider.calls == [[r['passage_id'] for r in roots[0]]]
     assert any(store.historical_distillation(doc['id'], r['revision_id'])['artifact'] == old for r in store.distillations(doc['id'])['items'])

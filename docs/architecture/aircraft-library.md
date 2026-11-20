@@ -1596,3 +1596,34 @@ three normal attempts, existing citation limits and unchanged provider/profile,
 and unchanged core numeric/quotation/source-projection functions. Archive the full
 old 48-claim artifact and legitimate receipts before any changed generation starts
 at zero. All original-image comparisons remain required before each next batch.
+
+
+### Copied catalog titles and selected original support (#614)
+
+Catalog metadata is a discovery label, not original-page evidence. New
+`catalog-title-feedback-v20` generations reject a complete catalog `title` copied
+into a factual claim when no selected literal excerpt from that title's originally
+cited manual contains the same word sequence. Comparison case-folds Unicode and
+ignores punctuation/whitespace only; it retains every alphanumeric identifier
+token and does not substitute OCR identities or measured values. No catalog value
+is rewritten or hidden from existing projections.
+
+This is a bounded exact catalog-title leakage check, not title recognition or
+general entailment. Partial paraphrases, invented values absent from metadata,
+semantic negation and arbitrary identity relationships still require original-page
+review. Derive obligations only from originally cited documents, keep those title
+bindings through ordinary numeric/applicability/citation repairs, and recheck them
+if their complete wording remains. Remove unsupported title wording, preserve
+other supported facts, or select a provided same-manual literal excerpt; another
+manual's quotation, metadata, restricted text or reason cannot supply support.
+Same-page title fragments may collectively support the literal word sequence;
+never assemble one across pages or manuals. Titles not asserted create no burden.
+
+Share the existing six verbatim witnesses of at most1200characters, eight citations,
+twelve claims and three ordinary attempts. Do not fetch new sources or call a
+verifier. Leave numeric/quote/projection functions, model/profile and all input/output/
+time limits unchanged. Preserve explicit v1–v19 validation behavior; a changed
+policy archives the complete59claim v19artifact and starts atzero, never grafting
+the47accepted claims. Every final claim in a whole batch must pass comparison
+against all originals before the next batch. Software delivery, scoped actual
+acceptance and full49batch/52–58/111/upstream acceptance remain distinct.
