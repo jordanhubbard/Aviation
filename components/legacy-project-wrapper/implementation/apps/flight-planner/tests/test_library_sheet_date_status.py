@@ -39,6 +39,7 @@ def test_distinct_source_dates_do_not_license_conflict_status(status):
 
 @pytest.mark.parametrize('text', [GOOD, GOOD.replace('different dates', 'different revision dates'),
     'Figure 1-2 Sheet 1 is dated Nov 15/00 while Sheet 2 is dated June 13/97.',
+    GOOD.replace('different dates', 'non-conflicting dates'),
     'Conversion factors conflict; Figure 1-2 Sheet 1 is dated Nov 15/00 while Sheet 2 is dated June 13/97.'])
 def test_neutral_dates_and_other_subject_conflicts_remain_independent(text):
     assert validate_answer(answer(text, 1, 2), sources())
@@ -54,7 +55,8 @@ def test_explicit_source_statement_can_supply_date_conflict_wording(wording):
 
 
 @pytest.mark.parametrize('where,wording', [('same', 'The conversion factors conflict.'),
-    ('same', 'These are not conflicting dates.'), ('other_page', 'These are conflicting dates.'),
+    ('same', 'These are not conflicting dates.'),
+    ('same', 'These are non-conflicting dates.'), ('same', 'These are non‑conflicting dates.'), ('other_page', 'These are conflicting dates.'),
     ('foreign', 'These are conflicting dates.')])
 def test_unrelated_negative_or_foreign_status_is_not_support(where, wording):
     rows = sources();rows.append(source(4, 25 if where == 'other_page' else 23, wording,
