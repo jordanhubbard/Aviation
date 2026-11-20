@@ -1470,3 +1470,31 @@ an unchecked attestation before saving. Render returned blank/unknown states and
 provenance, show the saved audit identity and keep unknowns visible. Clear review
 choices and stale requests on document/type/tail/key changes. No credentials,
 originals or review payloads enter persistent browser storage.
+
+
+## Selected definition subjects (#604)
+
+The `definition-subject-feedback-v16` correction policy derives at most six missing definition
+subjects from the original assertion and the supplied same-document/page excerpts.
+A subject is a literal sequence of two through six alphabetic words immediately
+followed by `is`, `are` or `means`; comparison collapses whitespace, case and the
+existing condition-view hyphens only. For each original copula occurrence, prefer
+the longest suffix also supplied immediately before a copula. Require that exact
+subject/copula boundary in an individually selected excerpt on its supplied page.
+Thus `Center of Gravity Arm is` cannot cover `Center of Gravity is`. A subject
+must occur with a copula within a single supplied excerpt to create an obligation;
+this does not infer unseen or cross-boundary definitions, synonyms, predicate truth,
+negation, dimensional correctness or table relationships.
+
+Only originally missing selected subjects create obligations. Keep their original
+subject, document, page and passage anchors throughout rejected-position numeric,
+applicability and citation repairs, including when a repair drops the definition
+or moves it into reason text. Preserve supported sibling claims and the existing
+three normal attempts, 18,000 source characters, indexed quotations, six shared
+1,200-character witness excerpts and existing citation bounds. Use supplied verbatim
+excerpts only. Ambiguous cross-manual assertions do not acquire guessed anchors.
+An explicit v15 policy preserves its exact old validation and repair prompts;
+the new default policy changes the generation identity and archives the complete
+old artifact before starting at zero. Source projections and numeric/quotation
+validation remain unchanged. Every fresh whole batch still needs original-image
+comparison before advancement. #603 source admission is independent of this guard.

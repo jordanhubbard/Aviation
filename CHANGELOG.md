@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Flight Planner tests: cap frontend workers at two to bound JSDOM/import contention during retained qualification (#605).
+
+- Aircraft library: require selected quotations to retain literal supplied definition subjects through bounded repairs (#604).
+
 - Aircraft library: reject optional-status wording, including option/options noun forms, without selected supplied quotation support, and allow removing unsupported status within the existing bounded correction cycle (#600).
 
 - Aircraft library: detect missing selected support for bounded supplied source phrases, preserve existing aliases and semantic repairs, and retain exact historical behavior under a fresh generation policy.
