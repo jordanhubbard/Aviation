@@ -48,7 +48,8 @@ PROCEDURE_V8_CORRECTION_POLICY = "procedure-source-feedback-v8"
 GLOSSARY_V9_CORRECTION_POLICY = "symbol-quote-feedback-v9"
 DEFINITION_V10_CORRECTION_POLICY = "definition-quote-feedback-v10"
 CHART_DATE_V11_CORRECTION_POLICY = "chart-date-feedback-v11"
-CORRECTION_POLICY = "flap-color-feedback-v12"
+FLAP_COLOR_V12_CORRECTION_POLICY = "flap-color-feedback-v12"
+CORRECTION_POLICY = "source-phrase-feedback-v13"
 
 
 def _correction_settings(policy):
@@ -64,7 +65,7 @@ def _correction_settings(policy):
         PROCEDURE_V8_CORRECTION_POLICY,
         GLOSSARY_V9_CORRECTION_POLICY,
         DEFINITION_V10_CORRECTION_POLICY,
-        CHART_DATE_V11_CORRECTION_POLICY, CORRECTION_POLICY,
+        CHART_DATE_V11_CORRECTION_POLICY, FLAP_COLOR_V12_CORRECTION_POLICY, CORRECTION_POLICY,
     ):
         raise ModelUnavailable("Unknown completion correction policy")
     return {"correction_policy": policy}
@@ -1583,9 +1584,130 @@ def _flap_color_feedback(text, cited_sources, evidence, supporting, previous):
             "source_passages": sorted({pid for r in requirements for pid in r["source_passages"]})}
 
 
+# Comparison-only tokens. Keep condition/negation/alternative words and numeric
+# barriers; the literal source and the numeric/identifier validator are untouched.
+_PHRASE_FUNCTION_WORDS = frozenset("a an the is are was were be been being of to from for on at by with as its it that which".split())
+_PHRASE_NEGATIONS = frozenset(("not", "no", "never", "without"))
+
+
+def _source_phrase_tokens(text):
+    import unicodedata
+
+    view = _condition_text(text)
+    for pattern in (*_AIRSPEED_GLOSSARY_CONCEPTS.values(), *_DEFINITION_QUOTE_CONCEPTS.values()):
+        view = re.sub(pattern, " # ", view)
+    tokens, word = [], ""
+    for char in view:
+        if char.isalpha() or word and (char == "'" or unicodedata.category(char).startswith("M")):
+            word += char
+            continue
+        if word:
+            tokens.append(word.strip("'"))
+            word = ""
+        if char.isnumeric() or char == "#":
+            tokens.append("#")  # A barrier, never a measured value or phrase token.
+    if word:
+        tokens.append(word.strip("'"))
+    return [token for token in tokens if token and token not in _PHRASE_FUNCTION_WORDS]
+
+
+def _source_phrase_occurs(words, phrase, negated):
+    size = len(phrase)
+    return any(words[i:i + size] == phrase
+               and bool(i and words[i - 1] in _PHRASE_NEGATIONS) == negated
+               for i in range(len(words) - size + 1))
+
+
+def _source_phrase_feedback(text, cited_sources, evidence, supporting, previous, bound_documents=()):
+    """Bounded supplied-word coverage, never semantic or table-row approval."""
+    requirements = copy.deepcopy(previous or [])
+    words = _source_phrase_tokens(text)
+    quoted = {}
+    for row, quote in zip(cited_sources, supporting):
+        quoted.setdefault((row["document_id"], row["page"]), []).append(quote)
+    selected = {key: _source_phrase_tokens(" ".join(parts)) for key, parts in quoted.items()}
+    documents = {row["document_id"] for row in cited_sources}
+    bound = {r["document_id"] for r in requirements} or set(bound_documents)
+    pages = {(row["document_id"], row["page"]) for row in cited_sources}
+    views = [(row, index, span, _source_phrase_tokens(span)) for row in evidence
+             if (row["document_id"], row["page"]) in pages and row["document_id"] in documents
+             and (not bound or row["document_id"] in bound)
+             for index, span in enumerate(source_excerpts(row))]
+    if not requirements:
+        triples = {}
+        for view_index, (_, _, _, tokens) in enumerate(views):
+            for pos in range(len(tokens) - 2):
+                triple = tuple(tokens[pos:pos + 3])
+                if all(token[0].isalpha() for token in triple):
+                    triples.setdefault(triple, []).append((view_index, pos))
+        candidates, location_cache = {}, {}
+        for pos in range(len(words) - 2):
+            for view_index, source_pos in triples.get(tuple(words[pos:pos + 3]), []):
+                row, _, _, tokens = views[view_index]
+                negated = bool(pos and words[pos - 1] in _PHRASE_NEGATIONS)
+                if bool(source_pos and tokens[source_pos - 1] in _PHRASE_NEGATIONS) != negated:
+                    continue
+                length = 3
+                while (length < 12 and pos + length < len(words) and source_pos + length < len(tokens)
+                       and words[pos + length][0].isalpha() and words[pos + length] == tokens[source_pos + length]):
+                    length += 1
+                phrase = words[pos:pos + length]
+                identity = (row["document_id"], tuple(phrase), negated)
+                if identity not in location_cache:
+                    locations = []
+                    for source, _, _, provided in views:
+                        if source["document_id"] == row["document_id"] and _source_phrase_occurs(provided, phrase, negated):
+                            location = {"page": source["page"], "passage_id": source["passage_id"]}
+                            if location not in locations:
+                                locations.append(location)
+                    missing = not any(_source_phrase_occurs(selected.get((row["document_id"], loc["page"]), []), phrase, negated)
+                                      for loc in locations)
+                    location_cache[identity] = (locations, missing)
+                locations, missing = location_cache[identity]
+                key = (row["document_id"], pos, tuple(phrase), negated)
+                candidates[key] = (missing, length, locations)
+        # Do not infer a single manual for an ambiguous compound assertion.
+        if len({key[0] for key in candidates}) == 1:
+            occupied, seen = set(), set()
+            ordered = sorted(candidates, key=lambda key: (not candidates[key][0], -candidates[key][1], key[1]))
+            for document, pos, phrase, negated in ordered:
+                span = set(range(pos, pos + len(phrase)))
+                identity = (document, phrase, negated)
+                if not candidates[(document, pos, phrase, negated)][0]:
+                    continue
+                if occupied & span or identity in seen:
+                    continue
+                seen.add(identity)
+                locations = candidates[(document, pos, phrase, negated)][2]
+                requirements.append({"document_id": document, "tokens": list(phrase), "negated": negated,
+                                     "locations": locations, "source_passages": sorted({loc["passage_id"] for loc in locations})})
+                occupied.update(span)
+                if len(requirements) == 6:
+                    break
+    missing, gaps, options = [], [], []
+    for required in requirements:
+        tag = "source_phrase:" + " ".join(required["tokens"])
+        if not _source_phrase_occurs(words, required["tokens"], required["negated"]):
+            missing.append(tag)
+        if not any(_source_phrase_occurs(selected.get((required["document_id"], loc["page"]), []),
+                                         required["tokens"], required["negated"]) for loc in required["locations"]):
+            gaps.append(tag)
+    for row in evidence:
+        relevant = [r for r in requirements if row["document_id"] == r["document_id"] and row["passage_id"] in r["source_passages"]]
+        for index, span in enumerate(source_excerpts(row)) if relevant else []:
+            tokens = _source_phrase_tokens(span)
+            tags = ["source_phrase:" + " ".join(r["tokens"]) for r in relevant
+                    if _source_phrase_occurs(tokens, r["tokens"], r["negated"])]
+            if tags and len(span) <= 1200 and len(options) < 6:
+                options.append({"passage_id": row["passage_id"], "excerpt_id": index,
+                                "requirements": sorted(set(tags)), "text": span})
+    return {"requirements": requirements, "missing": missing, "gaps": gaps, "options": options,
+            "source_passages": sorted({pid for r in requirements for pid in r["source_passages"]})}
+
+
 def _procedure_feedback(
     text, cited_sources, evidence, supporting, previous=None, *,
-    include_glossary=False, include_definitions=False, include_chart_dates=False, include_flap_colors=False,
+    include_glossary=False, include_definitions=False, include_chart_dates=False, include_flap_colors=False, include_source_phrases=False,
 ):
     """Reject bounded source-relationship gaps; this is not entailment approval."""
     concepts = {
@@ -1660,12 +1782,17 @@ def _procedure_feedback(
         _flap_color_feedback(text, cited_sources, evidence, supporting, (previous or {}).get("flap_colors"))
         if include_flap_colors else {}
     )
-    if not any(requirements.values()) and not claimed_fractions and not chart_dates.get("requirements") and not flap_colors.get("requirements"):
+    source_phrases = (
+        _source_phrase_feedback(text, cited_sources, evidence, supporting, (previous or {}).get("source_phrases"), frozen_documents)
+        if include_source_phrases else {}
+    )
+    if not any(requirements.values()) and not claimed_fractions and not chart_dates.get("requirements") and not flap_colors.get("requirements") and not source_phrases.get("requirements"):
         return {}
     context_ids = set((previous or {}).get("source_passages", []))
     context_ids.update(source["passage_id"] for source in sources)
     context_ids.update(chart_dates.get("source_passages", []))
     context_ids.update(flap_colors.get("source_passages", []))
+    context_ids.update(source_phrases.get("source_passages", []))
     documents = {by_id[pid]["document_id"] for pid in context_ids if pid in by_id}
     quotations = " ".join(
         quote
@@ -1673,8 +1800,8 @@ def _procedure_feedback(
         if source["document_id"] in documents
     )
     quote_view = _condition_text(quotations)
-    missing = list(chart_dates.get("missing", [])) + list(flap_colors.get("missing", []))
-    gaps = list(chart_dates.get("gaps", [])) + list(flap_colors.get("gaps", []))
+    missing = list(chart_dates.get("missing", [])) + list(flap_colors.get("missing", [])) + list(source_phrases.get("missing", []))
+    gaps = list(chart_dates.get("gaps", [])) + list(flap_colors.get("gaps", [])) + list(source_phrases.get("gaps", []))
     for topic in sorted(requirements["topics"]):
         if not re.search(_PROCEDURE_TOPICS[topic], normalized):
             missing.append(topic + "_operating_entry")
@@ -1734,12 +1861,14 @@ def _procedure_feedback(
             )
     options.extend(chart_dates.get("options", [])[:max(0, 6 - len(options))])
     options.extend(flap_colors.get("options", [])[:max(0, 6 - len(options))])
+    options.extend(source_phrases.get("options", [])[:max(0, 6 - len(options))])
     return {
         "procedure_requirements": {
             **{key: sorted(value) for key, value in requirements.items()},
             "source_passages": sorted(context_ids),
             **({"chart_dates": chart_dates["requirements"]} if chart_dates.get("requirements") else {}),
             **({"flap_colors": flap_colors["requirements"]} if flap_colors.get("requirements") else {}),
+            **({"source_phrases": source_phrases["requirements"]} if source_phrases.get("requirements") else {}),
         },
         "missing_procedure_conditions": sorted(set(missing)),
         "missing_procedure_citation_conditions": sorted(set(gaps)),
@@ -1836,12 +1965,12 @@ def validate_answer(
             PROCEDURE_V8_CORRECTION_POLICY,
             GLOSSARY_V9_CORRECTION_POLICY,
             DEFINITION_V10_CORRECTION_POLICY,
-            CHART_DATE_V11_CORRECTION_POLICY, CORRECTION_POLICY,
+            CHART_DATE_V11_CORRECTION_POLICY, FLAP_COLOR_V12_CORRECTION_POLICY, CORRECTION_POLICY,
         ):
             requirements = (applicability_requirements or {}).get(claim_number - 1)
             discovered = (
                 _scope_requirements(claim["text"], cited_sources, evidence)
-                if correction_policy in (SOURCE_SCOPE_V7_CORRECTION_POLICY, PROCEDURE_V8_CORRECTION_POLICY, GLOSSARY_V9_CORRECTION_POLICY, DEFINITION_V10_CORRECTION_POLICY, CHART_DATE_V11_CORRECTION_POLICY, CORRECTION_POLICY)
+                if correction_policy in (SOURCE_SCOPE_V7_CORRECTION_POLICY, PROCEDURE_V8_CORRECTION_POLICY, GLOSSARY_V9_CORRECTION_POLICY, DEFINITION_V10_CORRECTION_POLICY, CHART_DATE_V11_CORRECTION_POLICY, FLAP_COLOR_V12_CORRECTION_POLICY, CORRECTION_POLICY)
                 else _certification_requirements(
                     claim["text"], cited_sources, evidence, correction_policy=correction_policy
                 )
@@ -1855,7 +1984,7 @@ def validate_answer(
                 requirements = requirements or discovered
         scope_feedback = (
             _scope_feedback(claim["text"], requirements, cited_sources, evidence, supporting)
-            if correction_policy in (SOURCE_SCOPE_V7_CORRECTION_POLICY, PROCEDURE_V8_CORRECTION_POLICY, GLOSSARY_V9_CORRECTION_POLICY, DEFINITION_V10_CORRECTION_POLICY, CHART_DATE_V11_CORRECTION_POLICY, CORRECTION_POLICY)
+            if correction_policy in (SOURCE_SCOPE_V7_CORRECTION_POLICY, PROCEDURE_V8_CORRECTION_POLICY, GLOSSARY_V9_CORRECTION_POLICY, DEFINITION_V10_CORRECTION_POLICY, CHART_DATE_V11_CORRECTION_POLICY, FLAP_COLOR_V12_CORRECTION_POLICY, CORRECTION_POLICY)
             else {}
         )
         procedure_feedback = (
@@ -1865,12 +1994,13 @@ def validate_answer(
                 evidence,
                 supporting,
                 (procedure_requirements or {}).get(claim_number - 1),
-                include_glossary=correction_policy in (GLOSSARY_V9_CORRECTION_POLICY, DEFINITION_V10_CORRECTION_POLICY, CHART_DATE_V11_CORRECTION_POLICY, CORRECTION_POLICY),
-                include_definitions=correction_policy in (DEFINITION_V10_CORRECTION_POLICY, CHART_DATE_V11_CORRECTION_POLICY, CORRECTION_POLICY),
-                include_chart_dates=correction_policy in (CHART_DATE_V11_CORRECTION_POLICY, CORRECTION_POLICY),
-                include_flap_colors=correction_policy == CORRECTION_POLICY,
+                include_glossary=correction_policy in (GLOSSARY_V9_CORRECTION_POLICY, DEFINITION_V10_CORRECTION_POLICY, CHART_DATE_V11_CORRECTION_POLICY, FLAP_COLOR_V12_CORRECTION_POLICY, CORRECTION_POLICY),
+                include_definitions=correction_policy in (DEFINITION_V10_CORRECTION_POLICY, CHART_DATE_V11_CORRECTION_POLICY, FLAP_COLOR_V12_CORRECTION_POLICY, CORRECTION_POLICY),
+                include_chart_dates=correction_policy in (CHART_DATE_V11_CORRECTION_POLICY, FLAP_COLOR_V12_CORRECTION_POLICY, CORRECTION_POLICY),
+                include_flap_colors=correction_policy in (FLAP_COLOR_V12_CORRECTION_POLICY, CORRECTION_POLICY),
+                include_source_phrases=correction_policy == CORRECTION_POLICY,
             )
-            if correction_policy in (PROCEDURE_V8_CORRECTION_POLICY, GLOSSARY_V9_CORRECTION_POLICY, DEFINITION_V10_CORRECTION_POLICY, CHART_DATE_V11_CORRECTION_POLICY, CORRECTION_POLICY)
+            if correction_policy in (PROCEDURE_V8_CORRECTION_POLICY, GLOSSARY_V9_CORRECTION_POLICY, DEFINITION_V10_CORRECTION_POLICY, CHART_DATE_V11_CORRECTION_POLICY, FLAP_COLOR_V12_CORRECTION_POLICY, CORRECTION_POLICY)
             else {}
         )
         if procedure_feedback:
@@ -1900,7 +2030,7 @@ def validate_answer(
                     **procedure_feedback,
                 },
             )
-        if correction_policy in (SOURCE_SCOPE_V7_CORRECTION_POLICY, PROCEDURE_V8_CORRECTION_POLICY, GLOSSARY_V9_CORRECTION_POLICY, DEFINITION_V10_CORRECTION_POLICY, CHART_DATE_V11_CORRECTION_POLICY, CORRECTION_POLICY):
+        if correction_policy in (SOURCE_SCOPE_V7_CORRECTION_POLICY, PROCEDURE_V8_CORRECTION_POLICY, GLOSSARY_V9_CORRECTION_POLICY, DEFINITION_V10_CORRECTION_POLICY, CHART_DATE_V11_CORRECTION_POLICY, FLAP_COLOR_V12_CORRECTION_POLICY, CORRECTION_POLICY):
             if scope_feedback.get("missing_applicability_conditions") or scope_feedback.get("missing_applicability_citation_conditions"):
                 raise ModelUnavailable(
                     f"Model omitted source applicability conditions in claim {claim_number}; "
@@ -2163,7 +2293,7 @@ def _rejected_claims(
                     PROCEDURE_V8_CORRECTION_POLICY,
                     GLOSSARY_V9_CORRECTION_POLICY,
                     DEFINITION_V10_CORRECTION_POLICY,
-                    CHART_DATE_V11_CORRECTION_POLICY, CORRECTION_POLICY,
+                    CHART_DATE_V11_CORRECTION_POLICY, FLAP_COLOR_V12_CORRECTION_POLICY, CORRECTION_POLICY,
                 ):
                     signed = _signed_source_diagnostics(
                         feedback["unsupported_numeric_values"], claim, evidence,
@@ -2480,7 +2610,7 @@ def verified_completion(
                     PROCEDURE_V8_CORRECTION_POLICY,
                     GLOSSARY_V9_CORRECTION_POLICY,
                     DEFINITION_V10_CORRECTION_POLICY,
-                    CHART_DATE_V11_CORRECTION_POLICY, CORRECTION_POLICY,
+                    CHART_DATE_V11_CORRECTION_POLICY, FLAP_COLOR_V12_CORRECTION_POLICY, CORRECTION_POLICY,
                 ) and any(failure.get("signed_source_diagnostics") for failure in failures):
                     instruction += (
                         "Signed-source diagnostics identify different signed amounts in the cited spans, "
@@ -2500,7 +2630,7 @@ def verified_completion(
                         GLOSSARY_V9_CORRECTION_POLICY,
                         DEFINITION_V10_CORRECTION_POLICY,
                         CHART_DATE_V11_CORRECTION_POLICY,
-                        CORRECTION_POLICY,
+                        FLAP_COLOR_V12_CORRECTION_POLICY, CORRECTION_POLICY,
                     )
                     and applicability_requirements
                 ):
@@ -2512,7 +2642,7 @@ def verified_completion(
                         "Never turn an example into current-aircraft certification. "
                     )
                 if (
-                    correction_policy in (SOURCE_SCOPE_V7_CORRECTION_POLICY, PROCEDURE_V8_CORRECTION_POLICY, GLOSSARY_V9_CORRECTION_POLICY, DEFINITION_V10_CORRECTION_POLICY, CHART_DATE_V11_CORRECTION_POLICY, CORRECTION_POLICY)
+                    correction_policy in (SOURCE_SCOPE_V7_CORRECTION_POLICY, PROCEDURE_V8_CORRECTION_POLICY, GLOSSARY_V9_CORRECTION_POLICY, DEFINITION_V10_CORRECTION_POLICY, CHART_DATE_V11_CORRECTION_POLICY, FLAP_COLOR_V12_CORRECTION_POLICY, CORRECTION_POLICY)
                     and applicability_requirements
                 ):
                     instruction += (
@@ -2526,7 +2656,7 @@ def verified_completion(
                         "to support the complete assertion. Cite both the operating qualification and other "
                         "retained facts; a numeric match in a later excerpt does not support earlier equipment. "
                     )
-                if correction_policy in (PROCEDURE_V8_CORRECTION_POLICY, GLOSSARY_V9_CORRECTION_POLICY, DEFINITION_V10_CORRECTION_POLICY, CHART_DATE_V11_CORRECTION_POLICY, CORRECTION_POLICY) and procedure_requirements:
+                if correction_policy in (PROCEDURE_V8_CORRECTION_POLICY, GLOSSARY_V9_CORRECTION_POLICY, DEFINITION_V10_CORRECTION_POLICY, CHART_DATE_V11_CORRECTION_POLICY, FLAP_COLOR_V12_CORRECTION_POLICY, CORRECTION_POLICY) and procedure_requirements:
                     instruction += (
                         "Procedure requirements preserve the rejected source operating topic and its "
                         "supported action, phase, remediation relationship and literal fraction. "
@@ -2538,7 +2668,7 @@ def verified_completion(
                         "fraction. Procedure excerpt options repeat bounded untrusted source "
                         "already provided; cite their IDs only after reading their actual support. "
                     )
-                if correction_policy in (GLOSSARY_V9_CORRECTION_POLICY, DEFINITION_V10_CORRECTION_POLICY, CHART_DATE_V11_CORRECTION_POLICY, CORRECTION_POLICY) and any(
+                if correction_policy in (GLOSSARY_V9_CORRECTION_POLICY, DEFINITION_V10_CORRECTION_POLICY, CHART_DATE_V11_CORRECTION_POLICY, FLAP_COLOR_V12_CORRECTION_POLICY, CORRECTION_POLICY) and any(
                     any(name.startswith("airspeed_") for name in requirement.get("concepts", []))
                     for requirement in procedure_requirements.values()
                 ):
@@ -2552,7 +2682,7 @@ def verified_completion(
                         "reason text alone cannot repair its missing quoted support. These bounded "
                         "witnesses locate source, not general semantic approval. "
                     )
-                if correction_policy in (DEFINITION_V10_CORRECTION_POLICY, CHART_DATE_V11_CORRECTION_POLICY, CORRECTION_POLICY) and any(
+                if correction_policy in (DEFINITION_V10_CORRECTION_POLICY, CHART_DATE_V11_CORRECTION_POLICY, FLAP_COLOR_V12_CORRECTION_POLICY, CORRECTION_POLICY) and any(
                     any(name.startswith(("definition_", "conversion_"))
                         for name in requirement.get("concepts", []))
                     for requirement in procedure_requirements.values()
@@ -2569,7 +2699,7 @@ def verified_completion(
                         "Use only the existing shared bounded witnesses. Their word coverage is not "
                         "general semantic, mathematical, dimensional or chart-relationship approval. "
                     )
-                if correction_policy in (CHART_DATE_V11_CORRECTION_POLICY, CORRECTION_POLICY) and any(
+                if correction_policy in (CHART_DATE_V11_CORRECTION_POLICY, FLAP_COLOR_V12_CORRECTION_POLICY, CORRECTION_POLICY) and any(
                     requirement.get("chart_dates") for requirement in procedure_requirements.values()
                 ):
                     instruction += (
@@ -2582,7 +2712,7 @@ def verified_completion(
                         "Only the existing shared bounded witnesses are available; read and cite "
                         "their actual figure/sheet/date support. They do not approve chart values. "
                     )
-                if correction_policy == CORRECTION_POLICY and any(
+                if correction_policy in (FLAP_COLOR_V12_CORRECTION_POLICY, CORRECTION_POLICY) and any(
                     requirement.get("flap_colors") for requirement in procedure_requirements.values()
                 ):
                     instruction += (
@@ -2593,6 +2723,20 @@ def verified_completion(
                         "to reason, or using another page/manual cannot discharge these obligations. "
                         "Use only existing shared bounded literal witnesses; this is not table-row "
                         "association or general semantic approval. "
+                    )
+                if correction_policy == CORRECTION_POLICY and any(
+                    requirement.get("source_phrases") for requirement in procedure_requirements.values()
+                ):
+                    instruction += (
+                        "Supplied-source phrase requirements retain bounded original content-token "
+                        "sequences and their original provided manual/page alternatives. Select the "
+                        "excerpts supporting them. Keep those already-source-supported phrases in "
+                        "claim text while repairing unsupported numbers or other assertions. Dropping, "
+                        "immediately negating or moving them to reason, or citing another manual, "
+                        "does not repair missing selected support. The comparison view ignores only "
+                        "finite function words/case/whitespace/hyphens; literal quotations stay exact. "
+                        "Use only shared bounded supplied witnesses. Word coverage does not establish "
+                        "semantic truth, table relationships or operational applicability. "
                     )
                 feedback = {"validation_failure": str(error), "rejected_claims": failures}
             else:

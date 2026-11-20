@@ -67,7 +67,7 @@ def test_actual_relationship_missing_three_definitions_in_neighboring_excerpt():
         validate_answer(answer(text), [row])
     feedback = caught.value.feedback
     assert set(feedback['procedure_requirements']['concepts']) == {'airspeed_vne', 'airspeed_vs', 'airspeed_vso'}
-    assert set(feedback['missing_procedure_citation_conditions']) == {'airspeed_vne', 'airspeed_vs', 'airspeed_vso'}
+    assert {'airspeed_vne', 'airspeed_vs', 'airspeed_vso'} <= set(feedback['missing_procedure_citation_conditions'])
     witnesses = feedback['procedure_excerpt_options']
     assert 1 <= len(witnesses) <= 6
     assert all(w['passage_id'] == row['passage_id'] and w['text'] == citation_excerpts(row['text'])[w['excerpt_id']] and len(w['text']) <= 1200 for w in witnesses)
@@ -191,7 +191,7 @@ def test_current_policy_archives_v8_claims_and_receipt_verbatim_then_starts_at_z
         distill(store, provider, doc['id'])
     fresh = store.get(doc['id'])['artifacts']['distillation']
     assert fresh['completed_batches'] == 0 and fresh['sections'] == []
-    assert fresh['correction_policy'] == CORRECTION_POLICY == 'flap-color-feedback-v12'
+    assert fresh['correction_policy'] == CORRECTION_POLICY == 'source-phrase-feedback-v13'
     assert fresh['evidence_identity'] != fingerprint and 'recovery' not in fresh
     assert provider.calls == [[r['passage_id'] for r in roots[0]]]
     assert any(store.historical_distillation(doc['id'], r['revision_id'])['artifact'] == old for r in store.distillations(doc['id'])['items'])

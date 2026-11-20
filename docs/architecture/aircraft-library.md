@@ -1309,6 +1309,55 @@ Prospective controls, authored before implementation:
 | Recorded v11 wire and complete legitimate recovery receipt | Exact predecessor behavior; new policy starts zero |
 
 
+## Selected supplied-source phrases (#598)
+
+The next explicit policy extends negative quotation coverage beyond hand-picked
+aviation concepts. From the original claim and its actually supplied quotable
+cited-page manual context, recognize at most six disjoint initially unquoted source phrases, each
+three to twelve content tokens. Match through a finite, documented function-word,
+whitespace, case and hyphen comparison view only. Keep negation, alternatives,
+explicit if/when/only/except operators and numeric barriers; never normalize source text, measurements or
+identifiers. Already quoted phrases do not create new lexical obligations on otherwise valid
+semantic repairs. Existing recognized glossary/definition aliases are comparison
+barriers and keep their established validators; this check cannot require a
+symbol in addition to its valid expanded-name quotation. Do not invent phrases from metadata, restricted/absent source or an
+ambiguous compound cross-manual assertion.
+
+Retain each missing phrase's original provided manual and page alternatives per rejected
+position, including on an earlier numeric or applicability failure. Selected
+same-page quotations can collectively support its normalized token sequence.
+Repair retains these already-source-supported phrases in claim text and selects
+their original source. Dropping the phrase, immediately negating it, moving it to
+reason text or switching manuals does not discharge an existing obligation.
+These are bounded literal-coverage witnesses, not a semantic verifier: matching
+words do not prove clause relationships, table rows, applicability or correctness.
+Paraphrases without a recognized provided phrase remain outside this discovery.
+
+Offer only verbatim actually supplied excerpts, sharing the existing six-option
+and 1200-character witness limits with procedure, glossary, definition, chart-date
+and color feedback. Existing eight-citation, source, request, profile and repair
+budgets remain unchanged. Do not add a verifier provider call. Preserve recorded
+v1–v12 behavior explicitly; a new policy archives the entire old artifact and
+receipt and starts generation at zero. Every fresh final claim still requires
+whole-batch comparison with originals before further inference. No source edit,
+embedding/FAA retry or production corpus import follows from this change.
+
+Prospective controls, authored before implementation:
+
+| Case | Required result |
+| --- | --- |
+| Actual performance claim selects tail but omits supplied conditions sentence | Reject with the omitted original excerpt witness |
+| Same missing-quote pattern in unrelated source prose | Discover without adding domain-specific keywords |
+| All recognized phrases selected, including collective same-page excerpts | Pass this negative coverage check |
+| Function-word, case, whitespace and hyphen variations | Same comparison view; literal quotes remain unchanged |
+| Short/unprovided/restricted/metadata-only phrase or ambiguous manual context | No invented witness or approval |
+| Correct numeric citation repaired first; valid sibling claim exists | Preserve bound phrases and sibling while repairing only rejected positions |
+| Repair drops, immediately negates, moves phrase to reason or cites another manual/page | Original source obligations persist |
+| Source content/claim contains numbers, alternatives, negation or conditions | Numeric barriers and condition tokens remain; no sign/identifier rewriting |
+| Many matches and existing feedback families | Six disjoint phrases, twelve tokens each, shared six literal options |
+| Recorded v1–v12 wires and legitimate complete recovery receipt | Exact old behavior; new generation starts zero |
+
+
 ## Historical distillations
 
 Changing generation settings changes the evidence identity; an earlier summary
