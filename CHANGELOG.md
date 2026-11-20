@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Direct NMS worker SQLite temporary files to the private cache volume so full-snapshot publication can complete within the container limits (#503).
+
 - NOTAMs: activate owner-authorized working access with an archived AIXM initial-load bootstrap, coordinated deltas and source-aware downloads (#503).
 
 - Browser qualification: use regular Chromium and observed native orderly termination on macOS; reject nonzero process exits while preserving bounded owned recovery (#607).
