@@ -247,9 +247,9 @@
     "redis": "^5.12.1"
   },
   "devDependencies": {
-    "@types/node": "^25.6.0",
+    "@types/node": "^26.6.6",
     "typescript": "^6.0.2",
-    "vitest": "^4.1.12"
+    "vitest": "^5.1.0"
   },
   "module": "dist-esm/index.js",
   "typesVersions": {
