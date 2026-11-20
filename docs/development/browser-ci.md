@@ -26,3 +26,20 @@ Keep all test cases, assertions and default timeouts; do not mask contention wit
 retries or longer test deadlines. Run the full retained gate without another
 backend suite competing on the same worker, and preserve any failed run. Browser
 lifecycle cleanup and shutdown deadlines remain independently required.
+
+## Owned Chromium startup target (#607)
+
+An owned Chromium server must retain an isolated default-context `about:blank`
+target until server shutdown. Create it through the public browser CDP session
+during connection, before returning the client, then detach that session. Client
+contexts remain independent. This keeps the owner's last target alive when the
+client closes its contexts; native qualification must observe process exit code
+zero within the existing five-second shutdown bound.
+
+Target preparation is bounded by five seconds within the existing connection
+deadline. Missing target identity, session errors and preparation timeouts fail
+startup and clean up that owned launch. Other browser types skip this Chromium
+operation. Preserve concurrent-close sharing, signal cleanup, loopback ownership,
+and bounded owned-process recovery. Forced recovery remains a distinct outcome
+and never proves graceful shutdown. Qualify closed-page, open-page, concurrent
+close and injected-stall cases on the supported browser carriers.

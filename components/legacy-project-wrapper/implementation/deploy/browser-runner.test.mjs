@@ -116,3 +116,66 @@ test('client disconnect errors kill the owner and remain failures', async () => 
   await assert.rejects(browser.close(), /disconnect failed/);
   assert.ok(f.events.includes('kill'));
 });
+
+function chromiumFixture({ send, detach } = {}) {
+  const f = fixture();
+  f.type.connect = async () => ({
+    browserType: () => ({ name: () => 'chromium' }),
+    close: async () => f.events.push('disconnect'),
+    newBrowserCDPSession: async () => ({
+      send: send || (async (method, args) => {
+        assert.equal(method, 'Target.createTarget');
+        assert.deepEqual(args, { url: 'about:blank' });
+        f.events.push('target');
+        return { targetId: 'owned-target' };
+      }),
+      detach: detach || (async () => f.events.push('detach')),
+    }),
+  });
+  return f;
+}
+
+test('Chromium retains one default target before use and detaches its CDP session', async () => {
+  const f = chromiumFixture();
+  const browser = await launchOwnedBrowser(f.type, {}, f.options);
+  assert.deepEqual(f.events.filter(e => typeof e === 'string'), ['target', 'detach']);
+  await Promise.all([browser.close(), browser.close()]);
+  assert.deepEqual(f.events.filter(e => typeof e === 'string'), ['target', 'detach', 'disconnect', 'close']);
+});
+
+test('other browsers do not prepare a Chromium target', async () => {
+  const f = fixture();
+  f.type.connect = async () => ({
+    browserType: () => ({ name: () => 'firefox' }),
+    newBrowserCDPSession: () => { throw new Error('unexpected CDP'); },
+  });
+  await (await launchOwnedBrowser(f.type, {}, f.options)).close();
+  assert.ok(!f.events.includes('kill'));
+});
+
+test('target errors, invalid identity and stalled preparation fail startup and clean ownership', async () => {
+  for (const send of [
+    async () => { throw new Error('target failed'); },
+    async () => ({}), async () => ({ targetId: '' }), never,
+  ]) {
+    const before = process.listenerCount('SIGTERM');
+    const f = chromiumFixture({ send });
+    await assert.rejects(launchOwnedBrowser(f.type, {}, f.options), /target|shutdown.target/);
+    assert.ok(f.events.indexOf('disconnect') < f.events.indexOf('close'));
+    assert.ok(!f.events.some(e => e.phase === 'shutdown' && e.status === 'recovered'));
+    assert.equal(process.listenerCount('SIGTERM'), before);
+  }
+});
+
+test('CDP session creation or detach failures fail startup and close the owner', async () => {
+  for (const failCreation of [true, false]) {
+    const f = chromiumFixture({ detach: async () => { throw new Error('session failed'); } });
+    if (failCreation) {
+      const connect = f.type.connect;
+      f.type.connect = async () => ({ ...await connect(), newBrowserCDPSession: async () => { throw new Error('session failed'); } });
+    }
+    await assert.rejects(launchOwnedBrowser(f.type, {}, f.options), /session failed/);
+    assert.ok(f.events.includes('disconnect'));
+    assert.ok(f.events.includes('close'));
+  }
+});

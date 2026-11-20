@@ -58,8 +58,22 @@ export async function launchOwnedBrowser(browserType, options = {}, {
     }), 32_000);
     server = await launching;
     server.process?.()?.once('exit', (code, signal) => report({ phase: 'process.exit', status: 'completed', code, signal }));
-    const browser = await timed('connect', () => browserType.connect(server.wsEndpoint(), { timeout: 30_000 }), 32_000);
-    disconnectClient = typeof browser.close === 'function' ? browser.close.bind(browser) : undefined;
+    const browser = await timed('connect', async () => {
+      const client = await browserType.connect(server.wsEndpoint(), { timeout: 30_000 });
+      disconnectClient = typeof client.close === 'function' ? client.close.bind(client) : undefined;
+      if (client.browserType?.().name() === 'chromium') {
+        // Keep the owner's last default-context target alive after the client
+        // disconnects. Client-created contexts remain isolated from this target.
+        await timed('shutdown.target', async () => {
+          const session = await client.newBrowserCDPSession();
+          try {
+            const { targetId } = await session.send('Target.createTarget', { url: 'about:blank' });
+            if (typeof targetId !== 'string' || !targetId.trim()) throw new Error('Missing shutdown target identity');
+          } finally { await session.detach(); }
+        }, graceMs);
+      }
+      return client;
+    }, 32_000);
     browser.close = close;
     return browser;
   } catch (error) {
