@@ -257,7 +257,7 @@ class NMSCache:
                 kind, classification = "full", missing[0]
                 s["attempted"].append(classification)
                 since = None
-            elif set(s["completed"]) == set(CLASSES) and s["published"] != s["full_started"]:
+            elif set(s["completed"]) == set(CLASSES) and s["published"] != s["full_started"] and now >= s["next_delta"]:
                 kind, classification, since = "catchup", None, s.get("bootstrap_since", s["full_started"] - 60)
             elif (
                 s["watermark"] is not None

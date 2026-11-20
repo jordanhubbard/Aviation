@@ -110,3 +110,16 @@ def test_truncated_seed_keeps_original_and_reservation(tmp_path):
 @pytest.mark.parametrize('change', [b'numberReturned="2"', b'numberReturned="unknown"'])
 def test_declared_collection_count_is_enforced(change):
     with pytest.raises(NMSUnavailable):decode(document().replace(b'numberReturned="1"',change))
+
+
+def test_failed_initial_catchup_keeps_delta_reservation(tmp_path):
+    from app.services.nms_initial import seed
+    import hashlib
+    clock=[1795179600.0];c=NMSCache(tmp_path/'cache','staging',clock=lambda:clock[0])
+    raw=gzip.compress(document());p=tmp_path/'seed.gz';p.write_bytes(raw)
+    seed(c,p,retrieved_at=clock[0]-3600,expected_sha256=hashlib.sha256(raw).hexdigest())
+    ticket=c.reserve();assert ticket['kind']=='catchup';c.finish(ticket,error=NMSUnavailable('provider failed'))
+    clock[0]+=2
+    assert c.reserve() is None
+    clock[0]+=179
+    assert c.reserve()['kind']=='catchup'
