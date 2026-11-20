@@ -21,6 +21,11 @@ must never be displayed as production operational data. Actual November 16 probe
 using the supplied pair returned staging authentication/ping/data HTTP 200 and
 production authentication HTTP 401. This is environment-scoped acceptance only.
 
+The ingestion container directs SQLite temporary files to its private writable
+cache volume (`SQLITE_TMPDIR=/app/nms`). Publishing the complete snapshot rebuilds
+SQLite indexes and exceeds the separate 32 MiB `/tmp` allowance. Keep the read-only
+container root and bounded `/tmp`; never expose worker credentials to readers.
+
 ## Coordinated synchronization
 
 All suite consumers query one backend-owned durable cache. Do not call NMS for

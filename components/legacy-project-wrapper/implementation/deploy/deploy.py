@@ -271,6 +271,7 @@ def render_nms_worker(environment: str, revision: str) -> str:
         "--env-file", f"/etc/aviation/nms-{environment}.env",
         "--env", f"FAA_NMS_ENVIRONMENT={environment}",
         "--env", "FAA_NMS_CACHE_DIR=/app/nms",
+        "--env", "SQLITE_TMPDIR=/app/nms",
         "--mount", f"type=bind,src=/var/lib/aviation/flight-planner/nms/{environment},dst=/app/nms",
         "--entrypoint", "/opt/venv/bin/python",
         image_name({"name": "flight-planner"}, revision),

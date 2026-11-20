@@ -72,6 +72,8 @@ class VerifyTests(unittest.TestCase):
             self.assertEqual(args.count('--mount'), 1)
             self.assertIn('--read-only', args)
             self.assertIn('--tmpfs', args)
+            self.assertIn('SQLITE_TMPDIR=/app/nms', args)
+            self.assertIn('/tmp:rw,noexec,nosuid,size=32m', args)
             self.assertNotIn('-p', args)
             self.assertNotIn('--network', args)
             self.assertNotIn('FAA_NMS_CLIENT_ID=', unit)
