@@ -1122,7 +1122,7 @@ def test_procedure_failed_job_preserves_prefix_then_resumes_same_current_generat
         assert WING_PHASE_SOURCE not in failed["error"]
         partial = copy.deepcopy(store.get(identifier)["artifacts"]["distillation"])
         assert partial["completed_batches"] == 1 and partial["total_batches"] == 2
-        assert partial["correction_policy"] == CORRECTION_POLICY == "chart-date-feedback-v11"
+        assert partial["correction_policy"] == CORRECTION_POLICY == "flap-color-feedback-v12"
         assert len(provider.calls) == 4
         provider.calls.clear()
         provider.fail = False
@@ -1195,7 +1195,7 @@ def test_procedure_policy_archives_v7_verbatim_and_starts_current_at_zero(tmp_pa
         distill(store, provider, identifier)
     fresh = store.get(identifier)["artifacts"]["distillation"]
     assert fresh["completed_batches"] == 0 and fresh["sections"] == []
-    assert fresh["correction_policy"] == CORRECTION_POLICY == "chart-date-feedback-v11"
+    assert fresh["correction_policy"] == CORRECTION_POLICY == "flap-color-feedback-v12"
     assert fresh["evidence_identity"] != fingerprint and "recovery" not in fresh
     assert provider.calls == [[row["passage_id"] for row in roots[0]]]
     history = store.distillations(identifier)["items"]

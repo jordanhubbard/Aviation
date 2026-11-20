@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Aircraft library: require selected original-page support for asserted flap-indicator colors, retain those labels through bounded repairs, and preserve recorded v11 validation under a fresh generation policy.
+
 - Aircraft library: require selected source support for asserted chart-sheet/date associations, retain those associations through bounded repairs, and preserve recorded validation under a fresh generation policy.
 
 - Aircraft library: require selected BHP and weight-conversion unit support, preserve recognized source concepts through bounded repairs, and retain exact predecessor validation with a fresh versioned generation.

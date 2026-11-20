@@ -1269,6 +1269,46 @@ Prospective controls precede implementation:
 | New v11 actual generation | Start zero, archive prior output and receipts verbatim |
 
 
+## Quoted flap-indicator colors (#596)
+
+Under a new explicit correction policy, recognize only the bounded negative
+coverage case where a claim names a flap control indicator and asserts supplied
+literal dark-blue, light-blue or white color labels. A same-manual, same-page
+provided source containing that indicator heading establishes the context;
+restricted, absent or foreign evidence cannot supply a witness. Every asserted
+recognized color must occur in the selected quotations from that original page.
+Selected excerpts can support the claim collectively. This does not infer table
+rows, validate color-to-speed associations, or establish general entailment.
+
+Bind the original page, color labels and indicator topic per rejected position,
+including when numeric or applicability validation fails first. Repair must
+retain those assertions in claim text and quote their original page; dropping,
+negating, moving them to the reason, or switching manuals cannot discharge the
+obligation. Offer only verbatim actually supplied excerpts under the existing
+shared six-option / 1200-character bound and eight-citation limit. Never rewrite
+source, add a provider request budget, or relax numeric/quotation validation.
+
+Recorded policies through v11 retain their exact behavior. A new generation
+archives the complete prior output and receipts verbatim, starts at zero and
+requires fresh whole-batch original-image acceptance before further inference.
+No source changes, embedding retry or production database import follows from a
+validator change. HTTP/MCP/SDK/UI schemas remain unchanged.
+
+Prospective controls, authored before implementation:
+
+| Case | Required result |
+| --- | --- |
+| Actual selected quote ends at `(Light `; light-blue/white asserted | Reject with supplied remaining excerpt witness |
+| All asserted colors selected, including split same-page quotations | Pass this negative coverage check |
+| Only the supported dark-blue entry asserted | No invented light-blue/white obligation |
+| Color elsewhere on another page/manual | No borrowed support |
+| Unprovided/restricted source or no indicator/color assertion | No fabricated witness or approval |
+| Numeric failure occurs first, accepted sibling claim exists | Preserve original colors/topic and sibling through repair |
+| Repair drops topic/color, negates, moves to reason or switches manual | Reject; keep original page witness context |
+| Color and chart-date/procedure witnesses coexist | Shared six-option bound remains |
+| Recorded v11 wire and complete legitimate recovery receipt | Exact predecessor behavior; new policy starts zero |
+
+
 ## Historical distillations
 
 Changing generation settings changes the evidence identity; an earlier summary

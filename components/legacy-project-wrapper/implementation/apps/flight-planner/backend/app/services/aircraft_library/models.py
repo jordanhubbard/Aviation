@@ -47,7 +47,8 @@ SOURCE_SCOPE_V7_CORRECTION_POLICY = "source-scope-feedback-v7"
 PROCEDURE_V8_CORRECTION_POLICY = "procedure-source-feedback-v8"
 GLOSSARY_V9_CORRECTION_POLICY = "symbol-quote-feedback-v9"
 DEFINITION_V10_CORRECTION_POLICY = "definition-quote-feedback-v10"
-CORRECTION_POLICY = "chart-date-feedback-v11"
+CHART_DATE_V11_CORRECTION_POLICY = "chart-date-feedback-v11"
+CORRECTION_POLICY = "flap-color-feedback-v12"
 
 
 def _correction_settings(policy):
@@ -63,7 +64,7 @@ def _correction_settings(policy):
         PROCEDURE_V8_CORRECTION_POLICY,
         GLOSSARY_V9_CORRECTION_POLICY,
         DEFINITION_V10_CORRECTION_POLICY,
-        CORRECTION_POLICY,
+        CHART_DATE_V11_CORRECTION_POLICY, CORRECTION_POLICY,
     ):
         raise ModelUnavailable("Unknown completion correction policy")
     return {"correction_policy": policy}
@@ -1517,9 +1518,74 @@ def _chart_date_feedback(text, cited_sources, evidence, supporting, previous):
             "source_passages": sorted({pid for r in requirements for pid in r["source_passages"]})}
 
 
+_FLAP_INDICATOR = re.compile(r"\bflaps?\s+(?:control\s+)?indicator\b", re.I)
+_FLAP_COLORS = {"dark_blue": r"\bdark\s+blue\b", "light_blue": r"\blight\s+blue\b", "white": r"\bwhite\b"}
+
+
+def _asserted_flap_colors(text):
+    text = _condition_text(text)
+    return {name for name, pattern in _FLAP_COLORS.items()
+            if any(not re.search(r"\b(?:not|never|without|no)\s+(?:(?:a|the)\s+)?$", text[:m.start()])
+                   for m in re.finditer(pattern, text))}
+
+
+
+def _asserted_flap_indicator(text):
+    text = _condition_text(text)
+    return any(not re.search(r"\b(?:not|never|without|no)\s+(?:(?:a|the)\s+)?$", text[:m.start()])
+               for m in _FLAP_INDICATOR.finditer(text))
+
+
+def _flap_color_feedback(text, cited_sources, evidence, supporting, previous):
+    """Only selected literal label coverage, never table-row or entailment approval."""
+    requirements = copy.deepcopy(previous or [])
+    asserted = _asserted_flap_colors(text)
+    topic = _asserted_flap_indicator(text)
+    documents = {source["document_id"] for source in cited_sources}
+    bound = {r["document_id"] for r in requirements}
+    pages = {(source["document_id"], source["page"]) for source in cited_sources}
+    # An unrelated foreign citation cannot hide the uniquely supplied indicator
+    # context. Do not guess between two different manuals' indicator contexts.
+    documents &= {document for document, page in pages if _FLAP_INDICATOR.search(
+        _condition_text(" ".join(span for row in evidence
+            if (row["document_id"], row["page"]) == (document, page)
+            for span in source_excerpts(row))))}
+    if topic and len(documents) == 1 and (not bound or documents <= bound):
+        pages = {(document, page) for document, page in pages if document in documents}
+        for document, page in sorted(pages):
+            rows = [row for row in evidence if (row["document_id"], row["page"]) == (document, page)
+                    and source_excerpts(row)]
+            visible = " ".join(span for row in rows for span in source_excerpts(row))
+            if not _FLAP_INDICATOR.search(_condition_text(visible)):
+                continue
+            colors = sorted(asserted & _asserted_flap_colors(visible))
+            if colors and not any((r["document_id"], r["page"]) == (document, page) for r in requirements):
+                requirements.append({"document_id": document, "page": page, "colors": colors,
+                                     "source_passages": [row["passage_id"] for row in rows]})
+    missing, gaps, options = [], [], []
+    for required in requirements:
+        if not topic:
+            missing.append("flap_indicator_topic")
+        missing.extend("flap_color:" + color for color in required["colors"] if color not in asserted)
+        quotes = " ".join(quote for row, quote in zip(cited_sources, supporting)
+                          if (row["document_id"], row["page"]) == (required["document_id"], required["page"]))
+        selected = _asserted_flap_colors(quotes)
+        gaps.extend("flap_color:" + color for color in required["colors"] if color not in selected)
+        for row in evidence:
+            if row["document_id"] != required["document_id"] or row["passage_id"] not in required["source_passages"]:
+                continue
+            for index, span in enumerate(source_excerpts(row)):
+                colors = set(required["colors"]) & _asserted_flap_colors(span)
+                if colors and len(span) <= 1200 and len(options) < 6:
+                    options.append({"passage_id": row["passage_id"], "excerpt_id": index,
+                                    "requirements": ["flap_color:" + c for c in sorted(colors)], "text": span})
+    return {"requirements": requirements, "missing": missing, "gaps": gaps, "options": options,
+            "source_passages": sorted({pid for r in requirements for pid in r["source_passages"]})}
+
+
 def _procedure_feedback(
     text, cited_sources, evidence, supporting, previous=None, *,
-    include_glossary=False, include_definitions=False, include_chart_dates=False,
+    include_glossary=False, include_definitions=False, include_chart_dates=False, include_flap_colors=False,
 ):
     """Reject bounded source-relationship gaps; this is not entailment approval."""
     concepts = {
@@ -1590,11 +1656,16 @@ def _procedure_feedback(
         _chart_date_feedback(text, cited_sources, evidence, supporting, (previous or {}).get("chart_dates"))
         if include_chart_dates else {}
     )
-    if not any(requirements.values()) and not claimed_fractions and not chart_dates.get("requirements"):
+    flap_colors = (
+        _flap_color_feedback(text, cited_sources, evidence, supporting, (previous or {}).get("flap_colors"))
+        if include_flap_colors else {}
+    )
+    if not any(requirements.values()) and not claimed_fractions and not chart_dates.get("requirements") and not flap_colors.get("requirements"):
         return {}
     context_ids = set((previous or {}).get("source_passages", []))
     context_ids.update(source["passage_id"] for source in sources)
     context_ids.update(chart_dates.get("source_passages", []))
+    context_ids.update(flap_colors.get("source_passages", []))
     documents = {by_id[pid]["document_id"] for pid in context_ids if pid in by_id}
     quotations = " ".join(
         quote
@@ -1602,7 +1673,8 @@ def _procedure_feedback(
         if source["document_id"] in documents
     )
     quote_view = _condition_text(quotations)
-    missing, gaps = list(chart_dates.get("missing", [])), list(chart_dates.get("gaps", []))
+    missing = list(chart_dates.get("missing", [])) + list(flap_colors.get("missing", []))
+    gaps = list(chart_dates.get("gaps", [])) + list(flap_colors.get("gaps", []))
     for topic in sorted(requirements["topics"]):
         if not re.search(_PROCEDURE_TOPICS[topic], normalized):
             missing.append(topic + "_operating_entry")
@@ -1661,11 +1733,13 @@ def _procedure_feedback(
                 }
             )
     options.extend(chart_dates.get("options", [])[:max(0, 6 - len(options))])
+    options.extend(flap_colors.get("options", [])[:max(0, 6 - len(options))])
     return {
         "procedure_requirements": {
             **{key: sorted(value) for key, value in requirements.items()},
             "source_passages": sorted(context_ids),
             **({"chart_dates": chart_dates["requirements"]} if chart_dates.get("requirements") else {}),
+            **({"flap_colors": flap_colors["requirements"]} if flap_colors.get("requirements") else {}),
         },
         "missing_procedure_conditions": sorted(set(missing)),
         "missing_procedure_citation_conditions": sorted(set(gaps)),
@@ -1762,12 +1836,12 @@ def validate_answer(
             PROCEDURE_V8_CORRECTION_POLICY,
             GLOSSARY_V9_CORRECTION_POLICY,
             DEFINITION_V10_CORRECTION_POLICY,
-            CORRECTION_POLICY,
+            CHART_DATE_V11_CORRECTION_POLICY, CORRECTION_POLICY,
         ):
             requirements = (applicability_requirements or {}).get(claim_number - 1)
             discovered = (
                 _scope_requirements(claim["text"], cited_sources, evidence)
-                if correction_policy in (SOURCE_SCOPE_V7_CORRECTION_POLICY, PROCEDURE_V8_CORRECTION_POLICY, GLOSSARY_V9_CORRECTION_POLICY, DEFINITION_V10_CORRECTION_POLICY, CORRECTION_POLICY)
+                if correction_policy in (SOURCE_SCOPE_V7_CORRECTION_POLICY, PROCEDURE_V8_CORRECTION_POLICY, GLOSSARY_V9_CORRECTION_POLICY, DEFINITION_V10_CORRECTION_POLICY, CHART_DATE_V11_CORRECTION_POLICY, CORRECTION_POLICY)
                 else _certification_requirements(
                     claim["text"], cited_sources, evidence, correction_policy=correction_policy
                 )
@@ -1781,7 +1855,7 @@ def validate_answer(
                 requirements = requirements or discovered
         scope_feedback = (
             _scope_feedback(claim["text"], requirements, cited_sources, evidence, supporting)
-            if correction_policy in (SOURCE_SCOPE_V7_CORRECTION_POLICY, PROCEDURE_V8_CORRECTION_POLICY, GLOSSARY_V9_CORRECTION_POLICY, DEFINITION_V10_CORRECTION_POLICY, CORRECTION_POLICY)
+            if correction_policy in (SOURCE_SCOPE_V7_CORRECTION_POLICY, PROCEDURE_V8_CORRECTION_POLICY, GLOSSARY_V9_CORRECTION_POLICY, DEFINITION_V10_CORRECTION_POLICY, CHART_DATE_V11_CORRECTION_POLICY, CORRECTION_POLICY)
             else {}
         )
         procedure_feedback = (
@@ -1791,11 +1865,12 @@ def validate_answer(
                 evidence,
                 supporting,
                 (procedure_requirements or {}).get(claim_number - 1),
-                include_glossary=correction_policy in (GLOSSARY_V9_CORRECTION_POLICY, DEFINITION_V10_CORRECTION_POLICY, CORRECTION_POLICY),
-                include_definitions=correction_policy in (DEFINITION_V10_CORRECTION_POLICY, CORRECTION_POLICY),
-                include_chart_dates=correction_policy == CORRECTION_POLICY,
+                include_glossary=correction_policy in (GLOSSARY_V9_CORRECTION_POLICY, DEFINITION_V10_CORRECTION_POLICY, CHART_DATE_V11_CORRECTION_POLICY, CORRECTION_POLICY),
+                include_definitions=correction_policy in (DEFINITION_V10_CORRECTION_POLICY, CHART_DATE_V11_CORRECTION_POLICY, CORRECTION_POLICY),
+                include_chart_dates=correction_policy in (CHART_DATE_V11_CORRECTION_POLICY, CORRECTION_POLICY),
+                include_flap_colors=correction_policy == CORRECTION_POLICY,
             )
-            if correction_policy in (PROCEDURE_V8_CORRECTION_POLICY, GLOSSARY_V9_CORRECTION_POLICY, DEFINITION_V10_CORRECTION_POLICY, CORRECTION_POLICY)
+            if correction_policy in (PROCEDURE_V8_CORRECTION_POLICY, GLOSSARY_V9_CORRECTION_POLICY, DEFINITION_V10_CORRECTION_POLICY, CHART_DATE_V11_CORRECTION_POLICY, CORRECTION_POLICY)
             else {}
         )
         if procedure_feedback:
@@ -1825,7 +1900,7 @@ def validate_answer(
                     **procedure_feedback,
                 },
             )
-        if correction_policy in (SOURCE_SCOPE_V7_CORRECTION_POLICY, PROCEDURE_V8_CORRECTION_POLICY, GLOSSARY_V9_CORRECTION_POLICY, DEFINITION_V10_CORRECTION_POLICY, CORRECTION_POLICY):
+        if correction_policy in (SOURCE_SCOPE_V7_CORRECTION_POLICY, PROCEDURE_V8_CORRECTION_POLICY, GLOSSARY_V9_CORRECTION_POLICY, DEFINITION_V10_CORRECTION_POLICY, CHART_DATE_V11_CORRECTION_POLICY, CORRECTION_POLICY):
             if scope_feedback.get("missing_applicability_conditions") or scope_feedback.get("missing_applicability_citation_conditions"):
                 raise ModelUnavailable(
                     f"Model omitted source applicability conditions in claim {claim_number}; "
@@ -2088,7 +2163,7 @@ def _rejected_claims(
                     PROCEDURE_V8_CORRECTION_POLICY,
                     GLOSSARY_V9_CORRECTION_POLICY,
                     DEFINITION_V10_CORRECTION_POLICY,
-                    CORRECTION_POLICY,
+                    CHART_DATE_V11_CORRECTION_POLICY, CORRECTION_POLICY,
                 ):
                     signed = _signed_source_diagnostics(
                         feedback["unsupported_numeric_values"], claim, evidence,
@@ -2405,7 +2480,7 @@ def verified_completion(
                     PROCEDURE_V8_CORRECTION_POLICY,
                     GLOSSARY_V9_CORRECTION_POLICY,
                     DEFINITION_V10_CORRECTION_POLICY,
-                    CORRECTION_POLICY,
+                    CHART_DATE_V11_CORRECTION_POLICY, CORRECTION_POLICY,
                 ) and any(failure.get("signed_source_diagnostics") for failure in failures):
                     instruction += (
                         "Signed-source diagnostics identify different signed amounts in the cited spans, "
@@ -2424,6 +2499,7 @@ def verified_completion(
                         PROCEDURE_V8_CORRECTION_POLICY,
                         GLOSSARY_V9_CORRECTION_POLICY,
                         DEFINITION_V10_CORRECTION_POLICY,
+                        CHART_DATE_V11_CORRECTION_POLICY,
                         CORRECTION_POLICY,
                     )
                     and applicability_requirements
@@ -2436,7 +2512,7 @@ def verified_completion(
                         "Never turn an example into current-aircraft certification. "
                     )
                 if (
-                    correction_policy in (SOURCE_SCOPE_V7_CORRECTION_POLICY, PROCEDURE_V8_CORRECTION_POLICY, GLOSSARY_V9_CORRECTION_POLICY, DEFINITION_V10_CORRECTION_POLICY, CORRECTION_POLICY)
+                    correction_policy in (SOURCE_SCOPE_V7_CORRECTION_POLICY, PROCEDURE_V8_CORRECTION_POLICY, GLOSSARY_V9_CORRECTION_POLICY, DEFINITION_V10_CORRECTION_POLICY, CHART_DATE_V11_CORRECTION_POLICY, CORRECTION_POLICY)
                     and applicability_requirements
                 ):
                     instruction += (
@@ -2450,7 +2526,7 @@ def verified_completion(
                         "to support the complete assertion. Cite both the operating qualification and other "
                         "retained facts; a numeric match in a later excerpt does not support earlier equipment. "
                     )
-                if correction_policy in (PROCEDURE_V8_CORRECTION_POLICY, GLOSSARY_V9_CORRECTION_POLICY, DEFINITION_V10_CORRECTION_POLICY, CORRECTION_POLICY) and procedure_requirements:
+                if correction_policy in (PROCEDURE_V8_CORRECTION_POLICY, GLOSSARY_V9_CORRECTION_POLICY, DEFINITION_V10_CORRECTION_POLICY, CHART_DATE_V11_CORRECTION_POLICY, CORRECTION_POLICY) and procedure_requirements:
                     instruction += (
                         "Procedure requirements preserve the rejected source operating topic and its "
                         "supported action, phase, remediation relationship and literal fraction. "
@@ -2462,7 +2538,7 @@ def verified_completion(
                         "fraction. Procedure excerpt options repeat bounded untrusted source "
                         "already provided; cite their IDs only after reading their actual support. "
                     )
-                if correction_policy in (GLOSSARY_V9_CORRECTION_POLICY, DEFINITION_V10_CORRECTION_POLICY, CORRECTION_POLICY) and any(
+                if correction_policy in (GLOSSARY_V9_CORRECTION_POLICY, DEFINITION_V10_CORRECTION_POLICY, CHART_DATE_V11_CORRECTION_POLICY, CORRECTION_POLICY) and any(
                     any(name.startswith("airspeed_") for name in requirement.get("concepts", []))
                     for requirement in procedure_requirements.values()
                 ):
@@ -2476,7 +2552,7 @@ def verified_completion(
                         "reason text alone cannot repair its missing quoted support. These bounded "
                         "witnesses locate source, not general semantic approval. "
                     )
-                if correction_policy in (DEFINITION_V10_CORRECTION_POLICY, CORRECTION_POLICY) and any(
+                if correction_policy in (DEFINITION_V10_CORRECTION_POLICY, CHART_DATE_V11_CORRECTION_POLICY, CORRECTION_POLICY) and any(
                     any(name.startswith(("definition_", "conversion_"))
                         for name in requirement.get("concepts", []))
                     for requirement in procedure_requirements.values()
@@ -2493,7 +2569,7 @@ def verified_completion(
                         "Use only the existing shared bounded witnesses. Their word coverage is not "
                         "general semantic, mathematical, dimensional or chart-relationship approval. "
                     )
-                if correction_policy == CORRECTION_POLICY and any(
+                if correction_policy in (CHART_DATE_V11_CORRECTION_POLICY, CORRECTION_POLICY) and any(
                     requirement.get("chart_dates") for requirement in procedure_requirements.values()
                 ):
                     instruction += (
@@ -2505,6 +2581,18 @@ def verified_completion(
                         "single-sheet partial assertion does not require an unasserted sheet. "
                         "Only the existing shared bounded witnesses are available; read and cite "
                         "their actual figure/sheet/date support. They do not approve chart values. "
+                    )
+                if correction_policy == CORRECTION_POLICY and any(
+                    requirement.get("flap_colors") for requirement in procedure_requirements.values()
+                ):
+                    instruction += (
+                        "Flap-indicator color requirements retain the original indicator topic and "
+                        "asserted color labels in claim text. Select the supplied original-page "
+                        "excerpts supporting each label; a quote ending midway through a color "
+                        "does not supply unquoted labels. Dropping or negating labels, moving them "
+                        "to reason, or using another page/manual cannot discharge these obligations. "
+                        "Use only existing shared bounded literal witnesses; this is not table-row "
+                        "association or general semantic approval. "
                     )
                 feedback = {"validation_failure": str(error), "rejected_claims": failures}
             else:
