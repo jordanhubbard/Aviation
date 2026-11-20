@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Aircraft library: detect missing selected support for bounded supplied source phrases, preserve existing aliases and semantic repairs, and retain exact historical behavior under a fresh generation policy.
+
 - Aircraft library: require selected original-page support for asserted flap-indicator colors, retain those labels through bounded repairs, and preserve recorded v11 validation under a fresh generation policy.
 
 - Aircraft library: require selected source support for asserted chart-sheet/date associations, retain those associations through bounded repairs, and preserve recorded validation under a fresh generation policy.
