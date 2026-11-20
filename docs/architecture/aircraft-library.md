@@ -1412,6 +1412,17 @@ source, quotations and numeric comparison stay unchanged; explicit v1–v13
 policies retain their recorded behavior. A changed-policy generation archives
 the entire preceding artifact and recovery receipt and starts at zero.
 
+The `option-noun-feedback-v15` policy extends that same bounded word family to
+the nouns `option` and `options`, alongside `optional` and `optionally`. Calling
+an equipment configuration an "option" can introduce the same unsupported
+selection/applicability assertion. Separate configuration headings alone do not
+establish that status. Require selected supplied wording from this explicit
+family in the original bound manual; permit removing the unsupported noun
+designation while retaining the supported configuration details. Match whole
+words, never substrings such as `adoption`. Keep explicit v14 behavior unchanged
+for recorded histories and exact replay. This remains negative lexical coverage,
+with the same semantic limitations, budgets and original-image acceptance gate.
+
 ## Verified blank pages
 
 Empty extracted text remains unknown unless its blank state is verified. During
