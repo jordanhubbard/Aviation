@@ -52,7 +52,8 @@ FLAP_COLOR_V12_CORRECTION_POLICY = "flap-color-feedback-v12"
 SOURCE_PHRASE_V13_CORRECTION_POLICY = "source-phrase-feedback-v13"
 OPTIONAL_STATUS_V14_CORRECTION_POLICY = "optional-status-feedback-v14"
 OPTION_NOUN_V15_CORRECTION_POLICY = "option-noun-feedback-v15"
-CORRECTION_POLICY = "definition-subject-feedback-v16"
+DEFINITION_SUBJECT_V16_CORRECTION_POLICY = "definition-subject-feedback-v16"
+CORRECTION_POLICY = "restricted-layout-feedback-v17"
 
 
 def _correction_settings(policy):
@@ -68,7 +69,7 @@ def _correction_settings(policy):
         PROCEDURE_V8_CORRECTION_POLICY,
         GLOSSARY_V9_CORRECTION_POLICY,
         DEFINITION_V10_CORRECTION_POLICY,
-        CHART_DATE_V11_CORRECTION_POLICY, FLAP_COLOR_V12_CORRECTION_POLICY, SOURCE_PHRASE_V13_CORRECTION_POLICY, OPTIONAL_STATUS_V14_CORRECTION_POLICY, OPTION_NOUN_V15_CORRECTION_POLICY, CORRECTION_POLICY,
+        CHART_DATE_V11_CORRECTION_POLICY, FLAP_COLOR_V12_CORRECTION_POLICY, SOURCE_PHRASE_V13_CORRECTION_POLICY, OPTIONAL_STATUS_V14_CORRECTION_POLICY, OPTION_NOUN_V15_CORRECTION_POLICY, DEFINITION_SUBJECT_V16_CORRECTION_POLICY, CORRECTION_POLICY,
     ):
         raise ModelUnavailable("Unknown completion correction policy")
     return {"correction_policy": policy}
@@ -1977,6 +1978,31 @@ def _optional_status_feedback(text, cited_sources, supporting, previous=None, *,
     }
 
 
+def _tabular_layout_feedback(text, cited_sources, evidence, supporting, previous=None):
+    """Negative lexical coverage for verified original-image-only page scopes."""
+    pattern = r"\b(?:tables?|tabular)\b"
+    asserted = bool(re.search(pattern, text, re.IGNORECASE))
+    pages = {tuple(pair) for pair in (previous or {}).get("tabular_layout_pages", [])}
+    if asserted:
+        cited_pages = {(row["document_id"], row["page"]) for row in cited_sources}
+        pages.update(
+            (row["document_id"], row["page"])
+            for row in evidence
+            if (row["document_id"], row["page"]) in cited_pages and source_restricted(row)
+        )
+    if not pages:
+        return {}
+    selected_pages = {
+        (row["document_id"], row["page"])
+        for row, quote in zip(cited_sources, supporting)
+        if re.search(pattern, quote, re.IGNORECASE)
+    }
+    return {
+        "pages": [list(pair) for pair in sorted(pages)],
+        "unsupported": asserted and not pages <= selected_pages,
+    }
+
+
 def validate_answer(
     answer,
     evidence,
@@ -2066,12 +2092,12 @@ def validate_answer(
             PROCEDURE_V8_CORRECTION_POLICY,
             GLOSSARY_V9_CORRECTION_POLICY,
             DEFINITION_V10_CORRECTION_POLICY,
-            CHART_DATE_V11_CORRECTION_POLICY, FLAP_COLOR_V12_CORRECTION_POLICY, SOURCE_PHRASE_V13_CORRECTION_POLICY, OPTIONAL_STATUS_V14_CORRECTION_POLICY, OPTION_NOUN_V15_CORRECTION_POLICY, CORRECTION_POLICY,
+            CHART_DATE_V11_CORRECTION_POLICY, FLAP_COLOR_V12_CORRECTION_POLICY, SOURCE_PHRASE_V13_CORRECTION_POLICY, OPTIONAL_STATUS_V14_CORRECTION_POLICY, OPTION_NOUN_V15_CORRECTION_POLICY, DEFINITION_SUBJECT_V16_CORRECTION_POLICY, CORRECTION_POLICY,
         ):
             requirements = (applicability_requirements or {}).get(claim_number - 1)
             discovered = (
                 _scope_requirements(claim["text"], cited_sources, evidence)
-                if correction_policy in (SOURCE_SCOPE_V7_CORRECTION_POLICY, PROCEDURE_V8_CORRECTION_POLICY, GLOSSARY_V9_CORRECTION_POLICY, DEFINITION_V10_CORRECTION_POLICY, CHART_DATE_V11_CORRECTION_POLICY, FLAP_COLOR_V12_CORRECTION_POLICY, SOURCE_PHRASE_V13_CORRECTION_POLICY, OPTIONAL_STATUS_V14_CORRECTION_POLICY, OPTION_NOUN_V15_CORRECTION_POLICY, CORRECTION_POLICY)
+                if correction_policy in (SOURCE_SCOPE_V7_CORRECTION_POLICY, PROCEDURE_V8_CORRECTION_POLICY, GLOSSARY_V9_CORRECTION_POLICY, DEFINITION_V10_CORRECTION_POLICY, CHART_DATE_V11_CORRECTION_POLICY, FLAP_COLOR_V12_CORRECTION_POLICY, SOURCE_PHRASE_V13_CORRECTION_POLICY, OPTIONAL_STATUS_V14_CORRECTION_POLICY, OPTION_NOUN_V15_CORRECTION_POLICY, DEFINITION_SUBJECT_V16_CORRECTION_POLICY, CORRECTION_POLICY)
                 else _certification_requirements(
                     claim["text"], cited_sources, evidence, correction_policy=correction_policy
                 )
@@ -2085,7 +2111,7 @@ def validate_answer(
                 requirements = requirements or discovered
         scope_feedback = (
             _scope_feedback(claim["text"], requirements, cited_sources, evidence, supporting)
-            if correction_policy in (SOURCE_SCOPE_V7_CORRECTION_POLICY, PROCEDURE_V8_CORRECTION_POLICY, GLOSSARY_V9_CORRECTION_POLICY, DEFINITION_V10_CORRECTION_POLICY, CHART_DATE_V11_CORRECTION_POLICY, FLAP_COLOR_V12_CORRECTION_POLICY, SOURCE_PHRASE_V13_CORRECTION_POLICY, OPTIONAL_STATUS_V14_CORRECTION_POLICY, OPTION_NOUN_V15_CORRECTION_POLICY, CORRECTION_POLICY)
+            if correction_policy in (SOURCE_SCOPE_V7_CORRECTION_POLICY, PROCEDURE_V8_CORRECTION_POLICY, GLOSSARY_V9_CORRECTION_POLICY, DEFINITION_V10_CORRECTION_POLICY, CHART_DATE_V11_CORRECTION_POLICY, FLAP_COLOR_V12_CORRECTION_POLICY, SOURCE_PHRASE_V13_CORRECTION_POLICY, OPTIONAL_STATUS_V14_CORRECTION_POLICY, OPTION_NOUN_V15_CORRECTION_POLICY, DEFINITION_SUBJECT_V16_CORRECTION_POLICY, CORRECTION_POLICY)
             else {}
         )
         procedure_feedback = (
@@ -2095,22 +2121,22 @@ def validate_answer(
                 evidence,
                 supporting,
                 (procedure_requirements or {}).get(claim_number - 1),
-                include_glossary=correction_policy in (GLOSSARY_V9_CORRECTION_POLICY, DEFINITION_V10_CORRECTION_POLICY, CHART_DATE_V11_CORRECTION_POLICY, FLAP_COLOR_V12_CORRECTION_POLICY, SOURCE_PHRASE_V13_CORRECTION_POLICY, OPTIONAL_STATUS_V14_CORRECTION_POLICY, OPTION_NOUN_V15_CORRECTION_POLICY, CORRECTION_POLICY),
-                include_definitions=correction_policy in (DEFINITION_V10_CORRECTION_POLICY, CHART_DATE_V11_CORRECTION_POLICY, FLAP_COLOR_V12_CORRECTION_POLICY, SOURCE_PHRASE_V13_CORRECTION_POLICY, OPTIONAL_STATUS_V14_CORRECTION_POLICY, OPTION_NOUN_V15_CORRECTION_POLICY, CORRECTION_POLICY),
-                include_chart_dates=correction_policy in (CHART_DATE_V11_CORRECTION_POLICY, FLAP_COLOR_V12_CORRECTION_POLICY, SOURCE_PHRASE_V13_CORRECTION_POLICY, OPTIONAL_STATUS_V14_CORRECTION_POLICY, OPTION_NOUN_V15_CORRECTION_POLICY, CORRECTION_POLICY),
-                include_flap_colors=correction_policy in (FLAP_COLOR_V12_CORRECTION_POLICY, SOURCE_PHRASE_V13_CORRECTION_POLICY, OPTIONAL_STATUS_V14_CORRECTION_POLICY, OPTION_NOUN_V15_CORRECTION_POLICY, CORRECTION_POLICY),
-                include_source_phrases=correction_policy in (SOURCE_PHRASE_V13_CORRECTION_POLICY, OPTIONAL_STATUS_V14_CORRECTION_POLICY, OPTION_NOUN_V15_CORRECTION_POLICY, CORRECTION_POLICY),
-                include_source_definitions=correction_policy == CORRECTION_POLICY,
+                include_glossary=correction_policy in (GLOSSARY_V9_CORRECTION_POLICY, DEFINITION_V10_CORRECTION_POLICY, CHART_DATE_V11_CORRECTION_POLICY, FLAP_COLOR_V12_CORRECTION_POLICY, SOURCE_PHRASE_V13_CORRECTION_POLICY, OPTIONAL_STATUS_V14_CORRECTION_POLICY, OPTION_NOUN_V15_CORRECTION_POLICY, DEFINITION_SUBJECT_V16_CORRECTION_POLICY, CORRECTION_POLICY),
+                include_definitions=correction_policy in (DEFINITION_V10_CORRECTION_POLICY, CHART_DATE_V11_CORRECTION_POLICY, FLAP_COLOR_V12_CORRECTION_POLICY, SOURCE_PHRASE_V13_CORRECTION_POLICY, OPTIONAL_STATUS_V14_CORRECTION_POLICY, OPTION_NOUN_V15_CORRECTION_POLICY, DEFINITION_SUBJECT_V16_CORRECTION_POLICY, CORRECTION_POLICY),
+                include_chart_dates=correction_policy in (CHART_DATE_V11_CORRECTION_POLICY, FLAP_COLOR_V12_CORRECTION_POLICY, SOURCE_PHRASE_V13_CORRECTION_POLICY, OPTIONAL_STATUS_V14_CORRECTION_POLICY, OPTION_NOUN_V15_CORRECTION_POLICY, DEFINITION_SUBJECT_V16_CORRECTION_POLICY, CORRECTION_POLICY),
+                include_flap_colors=correction_policy in (FLAP_COLOR_V12_CORRECTION_POLICY, SOURCE_PHRASE_V13_CORRECTION_POLICY, OPTIONAL_STATUS_V14_CORRECTION_POLICY, OPTION_NOUN_V15_CORRECTION_POLICY, DEFINITION_SUBJECT_V16_CORRECTION_POLICY, CORRECTION_POLICY),
+                include_source_phrases=correction_policy in (SOURCE_PHRASE_V13_CORRECTION_POLICY, OPTIONAL_STATUS_V14_CORRECTION_POLICY, OPTION_NOUN_V15_CORRECTION_POLICY, DEFINITION_SUBJECT_V16_CORRECTION_POLICY, CORRECTION_POLICY),
+                include_source_definitions=correction_policy in (DEFINITION_SUBJECT_V16_CORRECTION_POLICY, CORRECTION_POLICY),
             )
-            if correction_policy in (PROCEDURE_V8_CORRECTION_POLICY, GLOSSARY_V9_CORRECTION_POLICY, DEFINITION_V10_CORRECTION_POLICY, CHART_DATE_V11_CORRECTION_POLICY, FLAP_COLOR_V12_CORRECTION_POLICY, SOURCE_PHRASE_V13_CORRECTION_POLICY, OPTIONAL_STATUS_V14_CORRECTION_POLICY, OPTION_NOUN_V15_CORRECTION_POLICY, CORRECTION_POLICY)
+            if correction_policy in (PROCEDURE_V8_CORRECTION_POLICY, GLOSSARY_V9_CORRECTION_POLICY, DEFINITION_V10_CORRECTION_POLICY, CHART_DATE_V11_CORRECTION_POLICY, FLAP_COLOR_V12_CORRECTION_POLICY, SOURCE_PHRASE_V13_CORRECTION_POLICY, OPTIONAL_STATUS_V14_CORRECTION_POLICY, OPTION_NOUN_V15_CORRECTION_POLICY, DEFINITION_SUBJECT_V16_CORRECTION_POLICY, CORRECTION_POLICY)
             else {}
         )
         optional_status = (
             _optional_status_feedback(
                 claim["text"], cited_sources, supporting,
                 (procedure_requirements or {}).get(claim_number - 1),
-                include_option_nouns=correction_policy in (OPTION_NOUN_V15_CORRECTION_POLICY, CORRECTION_POLICY),
-            ) if correction_policy in (OPTIONAL_STATUS_V14_CORRECTION_POLICY, OPTION_NOUN_V15_CORRECTION_POLICY, CORRECTION_POLICY) else {}
+                include_option_nouns=correction_policy in (OPTION_NOUN_V15_CORRECTION_POLICY, DEFINITION_SUBJECT_V16_CORRECTION_POLICY, CORRECTION_POLICY),
+            ) if correction_policy in (OPTIONAL_STATUS_V14_CORRECTION_POLICY, OPTION_NOUN_V15_CORRECTION_POLICY, DEFINITION_SUBJECT_V16_CORRECTION_POLICY, CORRECTION_POLICY) else {}
         )
         if optional_status:
             procedure_feedback.setdefault("procedure_requirements", {})[
@@ -2118,6 +2144,18 @@ def validate_answer(
             ] = optional_status["documents"]
             if optional_status["unsupported"]:
                 procedure_feedback["unsupported_source_qualifiers"] = ["optional"]
+        tabular_layout = (
+            _tabular_layout_feedback(
+                claim["text"], cited_sources, evidence, supporting,
+                (procedure_requirements or {}).get(claim_number - 1),
+            ) if correction_policy == CORRECTION_POLICY else {}
+        )
+        if tabular_layout:
+            procedure_feedback.setdefault("procedure_requirements", {})[
+                "tabular_layout_pages"
+            ] = tabular_layout["pages"]
+            if tabular_layout["unsupported"]:
+                procedure_feedback.setdefault("unsupported_source_qualifiers", []).append("tabular_layout")
         if procedure_feedback:
             remaining = max(0, 6 - len(scope_feedback.get("qualification_excerpt_options", [])))
             procedure_feedback["procedure_excerpt_options"] = procedure_feedback.get("procedure_excerpt_options", [])[:remaining]
@@ -2143,7 +2181,7 @@ def validate_answer(
                     **procedure_feedback,
                 },
             )
-        if correction_policy in (SOURCE_SCOPE_V7_CORRECTION_POLICY, PROCEDURE_V8_CORRECTION_POLICY, GLOSSARY_V9_CORRECTION_POLICY, DEFINITION_V10_CORRECTION_POLICY, CHART_DATE_V11_CORRECTION_POLICY, FLAP_COLOR_V12_CORRECTION_POLICY, SOURCE_PHRASE_V13_CORRECTION_POLICY, OPTIONAL_STATUS_V14_CORRECTION_POLICY, OPTION_NOUN_V15_CORRECTION_POLICY, CORRECTION_POLICY):
+        if correction_policy in (SOURCE_SCOPE_V7_CORRECTION_POLICY, PROCEDURE_V8_CORRECTION_POLICY, GLOSSARY_V9_CORRECTION_POLICY, DEFINITION_V10_CORRECTION_POLICY, CHART_DATE_V11_CORRECTION_POLICY, FLAP_COLOR_V12_CORRECTION_POLICY, SOURCE_PHRASE_V13_CORRECTION_POLICY, OPTIONAL_STATUS_V14_CORRECTION_POLICY, OPTION_NOUN_V15_CORRECTION_POLICY, DEFINITION_SUBJECT_V16_CORRECTION_POLICY, CORRECTION_POLICY):
             if scope_feedback.get("missing_applicability_conditions") or scope_feedback.get("missing_applicability_citation_conditions"):
                 raise ModelUnavailable(
                     f"Model omitted source applicability conditions in claim {claim_number}; "
@@ -2170,6 +2208,12 @@ def validate_answer(
             raise ModelUnavailable(
                 f"Model asserted optional status without selected quoted support in claim {claim_number}; "
                 "remove unsupported optional wording or cite explicit supplied support",
+                feedback={**scope_feedback, **procedure_feedback},
+            )
+        if tabular_layout.get("unsupported"):
+            raise ModelUnavailable(
+                f"Model asserted tabular layout without selected quoted support in claim {claim_number}; "
+                "remove unsupported layout wording or cite explicit supplied same-page support",
                 feedback={**scope_feedback, **procedure_feedback},
             )
         clean.append({"text": claim["text"], "citations": verified})
@@ -2412,7 +2456,7 @@ def _rejected_claims(
                     PROCEDURE_V8_CORRECTION_POLICY,
                     GLOSSARY_V9_CORRECTION_POLICY,
                     DEFINITION_V10_CORRECTION_POLICY,
-                    CHART_DATE_V11_CORRECTION_POLICY, FLAP_COLOR_V12_CORRECTION_POLICY, SOURCE_PHRASE_V13_CORRECTION_POLICY, OPTIONAL_STATUS_V14_CORRECTION_POLICY, OPTION_NOUN_V15_CORRECTION_POLICY, CORRECTION_POLICY,
+                    CHART_DATE_V11_CORRECTION_POLICY, FLAP_COLOR_V12_CORRECTION_POLICY, SOURCE_PHRASE_V13_CORRECTION_POLICY, OPTIONAL_STATUS_V14_CORRECTION_POLICY, OPTION_NOUN_V15_CORRECTION_POLICY, DEFINITION_SUBJECT_V16_CORRECTION_POLICY, CORRECTION_POLICY,
                 ):
                     signed = _signed_source_diagnostics(
                         feedback["unsupported_numeric_values"], claim, evidence,
@@ -2729,7 +2773,7 @@ def verified_completion(
                     PROCEDURE_V8_CORRECTION_POLICY,
                     GLOSSARY_V9_CORRECTION_POLICY,
                     DEFINITION_V10_CORRECTION_POLICY,
-                    CHART_DATE_V11_CORRECTION_POLICY, FLAP_COLOR_V12_CORRECTION_POLICY, SOURCE_PHRASE_V13_CORRECTION_POLICY, OPTIONAL_STATUS_V14_CORRECTION_POLICY, OPTION_NOUN_V15_CORRECTION_POLICY, CORRECTION_POLICY,
+                    CHART_DATE_V11_CORRECTION_POLICY, FLAP_COLOR_V12_CORRECTION_POLICY, SOURCE_PHRASE_V13_CORRECTION_POLICY, OPTIONAL_STATUS_V14_CORRECTION_POLICY, OPTION_NOUN_V15_CORRECTION_POLICY, DEFINITION_SUBJECT_V16_CORRECTION_POLICY, CORRECTION_POLICY,
                 ) and any(failure.get("signed_source_diagnostics") for failure in failures):
                     instruction += (
                         "Signed-source diagnostics identify different signed amounts in the cited spans, "
@@ -2749,7 +2793,7 @@ def verified_completion(
                         GLOSSARY_V9_CORRECTION_POLICY,
                         DEFINITION_V10_CORRECTION_POLICY,
                         CHART_DATE_V11_CORRECTION_POLICY,
-                        FLAP_COLOR_V12_CORRECTION_POLICY, SOURCE_PHRASE_V13_CORRECTION_POLICY, OPTIONAL_STATUS_V14_CORRECTION_POLICY, OPTION_NOUN_V15_CORRECTION_POLICY, CORRECTION_POLICY,
+                        FLAP_COLOR_V12_CORRECTION_POLICY, SOURCE_PHRASE_V13_CORRECTION_POLICY, OPTIONAL_STATUS_V14_CORRECTION_POLICY, OPTION_NOUN_V15_CORRECTION_POLICY, DEFINITION_SUBJECT_V16_CORRECTION_POLICY, CORRECTION_POLICY,
                     )
                     and applicability_requirements
                 ):
@@ -2761,7 +2805,7 @@ def verified_completion(
                         "Never turn an example into current-aircraft certification. "
                     )
                 if (
-                    correction_policy in (SOURCE_SCOPE_V7_CORRECTION_POLICY, PROCEDURE_V8_CORRECTION_POLICY, GLOSSARY_V9_CORRECTION_POLICY, DEFINITION_V10_CORRECTION_POLICY, CHART_DATE_V11_CORRECTION_POLICY, FLAP_COLOR_V12_CORRECTION_POLICY, SOURCE_PHRASE_V13_CORRECTION_POLICY, OPTIONAL_STATUS_V14_CORRECTION_POLICY, OPTION_NOUN_V15_CORRECTION_POLICY, CORRECTION_POLICY)
+                    correction_policy in (SOURCE_SCOPE_V7_CORRECTION_POLICY, PROCEDURE_V8_CORRECTION_POLICY, GLOSSARY_V9_CORRECTION_POLICY, DEFINITION_V10_CORRECTION_POLICY, CHART_DATE_V11_CORRECTION_POLICY, FLAP_COLOR_V12_CORRECTION_POLICY, SOURCE_PHRASE_V13_CORRECTION_POLICY, OPTIONAL_STATUS_V14_CORRECTION_POLICY, OPTION_NOUN_V15_CORRECTION_POLICY, DEFINITION_SUBJECT_V16_CORRECTION_POLICY, CORRECTION_POLICY)
                     and applicability_requirements
                 ):
                     instruction += (
@@ -2775,7 +2819,7 @@ def verified_completion(
                         "to support the complete assertion. Cite both the operating qualification and other "
                         "retained facts; a numeric match in a later excerpt does not support earlier equipment. "
                     )
-                if correction_policy in (PROCEDURE_V8_CORRECTION_POLICY, GLOSSARY_V9_CORRECTION_POLICY, DEFINITION_V10_CORRECTION_POLICY, CHART_DATE_V11_CORRECTION_POLICY, FLAP_COLOR_V12_CORRECTION_POLICY, SOURCE_PHRASE_V13_CORRECTION_POLICY, OPTIONAL_STATUS_V14_CORRECTION_POLICY, OPTION_NOUN_V15_CORRECTION_POLICY, CORRECTION_POLICY) and procedure_requirements:
+                if correction_policy in (PROCEDURE_V8_CORRECTION_POLICY, GLOSSARY_V9_CORRECTION_POLICY, DEFINITION_V10_CORRECTION_POLICY, CHART_DATE_V11_CORRECTION_POLICY, FLAP_COLOR_V12_CORRECTION_POLICY, SOURCE_PHRASE_V13_CORRECTION_POLICY, OPTIONAL_STATUS_V14_CORRECTION_POLICY, OPTION_NOUN_V15_CORRECTION_POLICY, DEFINITION_SUBJECT_V16_CORRECTION_POLICY, CORRECTION_POLICY) and procedure_requirements:
                     instruction += (
                         "Procedure requirements preserve the rejected source operating topic and its "
                         "supported action, phase, remediation relationship and literal fraction. "
@@ -2787,7 +2831,7 @@ def verified_completion(
                         "fraction. Procedure excerpt options repeat bounded untrusted source "
                         "already provided; cite their IDs only after reading their actual support. "
                     )
-                if correction_policy in (GLOSSARY_V9_CORRECTION_POLICY, DEFINITION_V10_CORRECTION_POLICY, CHART_DATE_V11_CORRECTION_POLICY, FLAP_COLOR_V12_CORRECTION_POLICY, SOURCE_PHRASE_V13_CORRECTION_POLICY, OPTIONAL_STATUS_V14_CORRECTION_POLICY, OPTION_NOUN_V15_CORRECTION_POLICY, CORRECTION_POLICY) and any(
+                if correction_policy in (GLOSSARY_V9_CORRECTION_POLICY, DEFINITION_V10_CORRECTION_POLICY, CHART_DATE_V11_CORRECTION_POLICY, FLAP_COLOR_V12_CORRECTION_POLICY, SOURCE_PHRASE_V13_CORRECTION_POLICY, OPTIONAL_STATUS_V14_CORRECTION_POLICY, OPTION_NOUN_V15_CORRECTION_POLICY, DEFINITION_SUBJECT_V16_CORRECTION_POLICY, CORRECTION_POLICY) and any(
                     any(name.startswith("airspeed_") for name in requirement.get("concepts", []))
                     for requirement in procedure_requirements.values()
                 ):
@@ -2801,7 +2845,7 @@ def verified_completion(
                         "reason text alone cannot repair its missing quoted support. These bounded "
                         "witnesses locate source, not general semantic approval. "
                     )
-                if correction_policy in (DEFINITION_V10_CORRECTION_POLICY, CHART_DATE_V11_CORRECTION_POLICY, FLAP_COLOR_V12_CORRECTION_POLICY, SOURCE_PHRASE_V13_CORRECTION_POLICY, OPTIONAL_STATUS_V14_CORRECTION_POLICY, OPTION_NOUN_V15_CORRECTION_POLICY, CORRECTION_POLICY) and any(
+                if correction_policy in (DEFINITION_V10_CORRECTION_POLICY, CHART_DATE_V11_CORRECTION_POLICY, FLAP_COLOR_V12_CORRECTION_POLICY, SOURCE_PHRASE_V13_CORRECTION_POLICY, OPTIONAL_STATUS_V14_CORRECTION_POLICY, OPTION_NOUN_V15_CORRECTION_POLICY, DEFINITION_SUBJECT_V16_CORRECTION_POLICY, CORRECTION_POLICY) and any(
                     any(name.startswith(("definition_", "conversion_"))
                         for name in requirement.get("concepts", []))
                     for requirement in procedure_requirements.values()
@@ -2818,7 +2862,7 @@ def verified_completion(
                         "Use only the existing shared bounded witnesses. Their word coverage is not "
                         "general semantic, mathematical, dimensional or chart-relationship approval. "
                     )
-                if correction_policy in (CHART_DATE_V11_CORRECTION_POLICY, FLAP_COLOR_V12_CORRECTION_POLICY, SOURCE_PHRASE_V13_CORRECTION_POLICY, OPTIONAL_STATUS_V14_CORRECTION_POLICY, OPTION_NOUN_V15_CORRECTION_POLICY, CORRECTION_POLICY) and any(
+                if correction_policy in (CHART_DATE_V11_CORRECTION_POLICY, FLAP_COLOR_V12_CORRECTION_POLICY, SOURCE_PHRASE_V13_CORRECTION_POLICY, OPTIONAL_STATUS_V14_CORRECTION_POLICY, OPTION_NOUN_V15_CORRECTION_POLICY, DEFINITION_SUBJECT_V16_CORRECTION_POLICY, CORRECTION_POLICY) and any(
                     requirement.get("chart_dates") for requirement in procedure_requirements.values()
                 ):
                     instruction += (
@@ -2831,7 +2875,7 @@ def verified_completion(
                         "Only the existing shared bounded witnesses are available; read and cite "
                         "their actual figure/sheet/date support. They do not approve chart values. "
                     )
-                if correction_policy in (FLAP_COLOR_V12_CORRECTION_POLICY, SOURCE_PHRASE_V13_CORRECTION_POLICY, OPTIONAL_STATUS_V14_CORRECTION_POLICY, OPTION_NOUN_V15_CORRECTION_POLICY, CORRECTION_POLICY) and any(
+                if correction_policy in (FLAP_COLOR_V12_CORRECTION_POLICY, SOURCE_PHRASE_V13_CORRECTION_POLICY, OPTIONAL_STATUS_V14_CORRECTION_POLICY, OPTION_NOUN_V15_CORRECTION_POLICY, DEFINITION_SUBJECT_V16_CORRECTION_POLICY, CORRECTION_POLICY) and any(
                     requirement.get("flap_colors") for requirement in procedure_requirements.values()
                 ):
                     instruction += (
@@ -2843,7 +2887,7 @@ def verified_completion(
                         "Use only existing shared bounded literal witnesses; this is not table-row "
                         "association or general semantic approval. "
                     )
-                if correction_policy in (SOURCE_PHRASE_V13_CORRECTION_POLICY, OPTIONAL_STATUS_V14_CORRECTION_POLICY, OPTION_NOUN_V15_CORRECTION_POLICY, CORRECTION_POLICY) and any(
+                if correction_policy in (SOURCE_PHRASE_V13_CORRECTION_POLICY, OPTIONAL_STATUS_V14_CORRECTION_POLICY, OPTION_NOUN_V15_CORRECTION_POLICY, DEFINITION_SUBJECT_V16_CORRECTION_POLICY, CORRECTION_POLICY) and any(
                     requirement.get("source_phrases") for requirement in procedure_requirements.values()
                 ):
                     instruction += (
@@ -2857,8 +2901,8 @@ def verified_completion(
                         "Use only shared bounded supplied witnesses. Word coverage does not establish "
                         "semantic truth, table relationships or operational applicability. "
                     )
-                if correction_policy in (OPTIONAL_STATUS_V14_CORRECTION_POLICY, OPTION_NOUN_V15_CORRECTION_POLICY, CORRECTION_POLICY) and any(
-                    failure.get("unsupported_source_qualifiers") for failure in failures
+                if correction_policy in (OPTIONAL_STATUS_V14_CORRECTION_POLICY, OPTION_NOUN_V15_CORRECTION_POLICY, DEFINITION_SUBJECT_V16_CORRECTION_POLICY, CORRECTION_POLICY) and any(
+                    "optional" in failure.get("unsupported_source_qualifiers", []) for failure in failures
                 ):
                     instruction += (
                         "Optional-status diagnostics identify an asserted qualifier with no selected "
@@ -2869,8 +2913,8 @@ def verified_completion(
                         "invent anchors or move the repair into reason text. Lexical coverage does "
                         "not establish equipment relationships or operational applicability. "
                     )
-                if correction_policy in (OPTION_NOUN_V15_CORRECTION_POLICY, CORRECTION_POLICY) and any(
-                    failure.get("unsupported_source_qualifiers") for failure in failures
+                if correction_policy in (OPTION_NOUN_V15_CORRECTION_POLICY, DEFINITION_SUBJECT_V16_CORRECTION_POLICY, CORRECTION_POLICY) and any(
+                    "optional" in failure.get("unsupported_source_qualifiers", []) for failure in failures
                 ):
                     instruction += (
                         "The same status family includes the whole words option and options as well "
@@ -2879,7 +2923,7 @@ def verified_completion(
                         "while retaining the supported configuration details, or cite explicit "
                         "supplied family wording from the originally bound manual. "
                     )
-                if correction_policy == CORRECTION_POLICY and any(
+                if correction_policy in (DEFINITION_SUBJECT_V16_CORRECTION_POLICY, CORRECTION_POLICY) and any(
                     requirement.get("source_definitions") for requirement in procedure_requirements.values()
                 ):
                     instruction += (
@@ -2891,6 +2935,21 @@ def verified_completion(
                         "discharge its original obligation. Use only shared bounded verbatim "
                         "witnesses; this lexical check does not prove predicate truth, negation, "
                         "dimensional correctness, table relations or operational applicability. "
+                    )
+                if correction_policy == CORRECTION_POLICY and any(
+                    "tabular_layout" in failure.get("unsupported_source_qualifiers", [])
+                    for failure in failures
+                ):
+                    instruction += (
+                        "Tabular-layout diagnostics identify table/tables/tabular wording without "
+                        "explicit selected support on an originally bound source-limited manual/page. "
+                        "Remove the unsupported layout designation while retaining supported subjects, "
+                        "formulas, source obligations and sibling claims, or cite explicit supplied "
+                        "wording from every bound page. Header/footer text or matching conversion "
+                        "factors alone do not establish a table. Metadata, restricted graphic text, "
+                        "another page/manual or reason text cannot supply support. Do not invent "
+                        "anchors, graph readings, tabular structure or relationships. This lexical "
+                        "check does not establish semantic truth or operational applicability. "
                     )
                 feedback = {"validation_failure": str(error), "rejected_claims": failures}
             else:
