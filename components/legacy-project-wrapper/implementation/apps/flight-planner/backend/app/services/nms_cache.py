@@ -195,6 +195,53 @@ class NMSCache:
     def _save(self, db, state):
         db.execute("INSERT OR REPLACE INTO state VALUES (1,?)", (json.dumps(state),))
 
+    def bootstrap_initial(self, features, raw, retrieved_at, *, coverage_since):
+        """Reserve and stage a retained all-class response; publication needs catch-up."""
+        now = self.clock()
+        digest = hashlib.sha256(raw).hexdigest()
+        if type(retrieved_at) not in (int, float) or not 0 <= now - retrieved_at < DAY - 1800:
+            raise NMSUnavailable("Retained initial-load retrieval time is not recent")
+        if not 0 <= now - coverage_since < DAY - 300 or coverage_since > retrieved_at:
+            raise NMSUnavailable("Initial-load generation time is outside catch-up coverage")
+        with self.connection() as db:
+            s = self._state(db)
+            if now < s["lease_until"]:
+                raise NMSUnavailable("NMS synchronization is already active")
+            replay = s["full_started"] == retrieved_at and not s["completed"] and s["last_error"]
+            if s["full_started"] is not None and not replay and now - s["full_started"] < DAY:
+                raise NMSUnavailable("An NMS full-load reservation already exists")
+            if replay and not db.execute("SELECT 1 FROM originals WHERE cycle=? AND classification='AIXM_ALL' AND sha256=?", (retrieved_at, digest)).fetchone():
+                raise NMSUnavailable("No matching retained initial-load receipt")
+            ticket = dict(owner=uuid.uuid4().hex, kind="full", classification="AIXM_ALL", started=retrieved_at, full_started=retrieved_at)
+            s.update(full_started=retrieved_at, attempted=list(CLASSES), completed=[], owner=ticket["owner"], lease_until=now + LEASE, last_attempt=now, bootstrap_since=coverage_since)
+            self._save(db, s)
+        try:
+            self.archive_for(ticket, raw)
+            with self.connection() as db:
+                s = self._state(db)
+                if s["owner"] != ticket["owner"] or self.clock() >= s["lease_until"]:
+                    raise NMSUnavailable("Initial-load ownership expired")
+                db.execute("DELETE FROM building")
+                count = 0
+                for feature in features:
+                    row = normalize(feature)
+                    encoded = json.dumps(row, allow_nan=False)
+                    if db.execute("SELECT 1 FROM building WHERE id=?", (row["id"],)).fetchone():
+                        raise NMSUnavailable("Duplicate initial-load identity")
+                    db.execute("INSERT INTO building VALUES (?,?,?)", (row["id"], row["last_updated"], encoded))
+                    count += 1
+                if not count:
+                    raise NMSUnavailable("Initial-load coverage is missing")
+                s.update(completed=list(CLASSES), owner=None, lease_until=0, last_error=None)
+                self._save(db, s)
+        except BaseException:
+            with self.connection() as db:
+                s = self._state(db)
+                if s["owner"] == ticket["owner"]:
+                    s.update(owner=None, lease_until=0, last_error="Retained initial-load staging failed")
+                    self._save(db, s)
+            raise
+
     def reserve(self):
         """Persist a lease/cadence reservation BEFORE performing any network request."""
         now = self.clock()
@@ -210,8 +257,8 @@ class NMSCache:
                 kind, classification = "full", missing[0]
                 s["attempted"].append(classification)
                 since = None
-            elif set(s["completed"]) == set(CLASSES) and s["published"] != s["full_started"]:
-                kind, classification, since = "catchup", None, s["full_started"] - 60
+            elif set(s["completed"]) == set(CLASSES) and s["published"] != s["full_started"] and now >= s["next_delta"]:
+                kind, classification, since = "catchup", None, s.get("bootstrap_since", s["full_started"] - 60)
             elif (
                 s["watermark"] is not None
                 and now >= s["next_delta"]
@@ -361,9 +408,17 @@ class NMSCache:
                         )
                         != json.dumps(row["feature"], sort_keys=True, allow_nan=False)
                     ):
-                        raise NMSUnavailable(
-                            "NMS cache conflicts with an overlapping record version"
-                        )
+                        old = json.loads(existing[1])
+                        def comparable(value):
+                            result = {k: v for k, v in value.items() if k != "feature"}
+                            if isinstance(result.get("text"), str):
+                                result["text"] = result["text"].strip(" \t\r\n")
+                            return result
+                        upgrade = old["feature"].get("source_format") == "AIXM" and row["feature"].get("source_format") is None
+                        if not upgrade or comparable(old) != comparable(row):
+                            raise NMSUnavailable(
+                                "NMS cache conflicts with an overlapping record version"
+                            )
                     if not existing or existing[0] <= row["last_updated"]:
                         db.execute(
                             f"INSERT OR REPLACE INTO {table} VALUES (?,?,?)",
@@ -376,6 +431,7 @@ class NMSCache:
                         db.execute("DELETE FROM current")
                         db.execute("INSERT INTO current SELECT * FROM building")
                         s["published"] = s["full_started"]
+                        s.pop("bootstrap_since", None)
                     s["watermark"] = ticket["started"]
                 s["last_error"] = None
             self._save(db, s)

@@ -239,3 +239,53 @@ it('labels an uninitialized production cache as unavailable, without calling it 
   expect(screen.getByText('Production NOTAM data is unavailable.')).toBeTruthy()
   expect(screen.queryByText('Non-production NOTAM data: may include test notices.')).toBeNull()
 })
+
+it('downloads retained AIXM as XML and keeps its original text', async () => {
+  const xml = '<AIXMBasicMessage>Source &amp; notice</AIXMBasicMessage>'
+  vi.stubGlobal(
+    'fetch',
+    vi.fn(
+      async (url: string) =>
+        new Response(
+          JSON.stringify(
+            String(url).includes('/detail?')
+              ? {
+                  status: 'partial',
+                  environment: 'staging',
+                  production_data: false,
+                  snapshot_id: 'a'.repeat(64),
+                  source: page().source,
+                  notice: notice(),
+                  warnings: [],
+                  source_feature: {
+                    type: 'Feature',
+                    properties: { coreNOTAMData: { notam: { id: 'NMS_TEST' } } },
+                    source_format: 'AIXM',
+                    source_aixm: xml,
+                  },
+                }
+              : page(),
+          ),
+        ),
+    ),
+  )
+  const blob = vi.fn((_value: Blob) => 'blob:source')
+  vi.stubGlobal('URL', Object.assign(URL, { createObjectURL: blob, revokeObjectURL: vi.fn() }))
+  const downloads: string[] = []
+  const click = vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(function (
+    this: HTMLAnchorElement,
+  ) {
+    downloads.push(this.download)
+  })
+  render(<NotamsPage />)
+  await read()
+  await act(async () => {
+    fireEvent.click(screen.getByRole('button', { name: 'Source details' }))
+  })
+  expect(screen.queryByRole('button', { name: 'Download original GeoJSON' })).toBeNull()
+  fireEvent.click(screen.getByRole('button', { name: 'Download source AIXM' }))
+  expect(blob).toHaveBeenCalledTimes(1)
+  expect(blob.mock.calls[0][0].type).toBe('application/xml')
+  expect(downloads).toEqual(['notam-NMS_TEST.xml'])
+  click.mockRestore()
+})

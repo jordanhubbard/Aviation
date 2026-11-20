@@ -110,11 +110,26 @@ export default function NotamsPage() {
   function download() {
     if (!detail) return
     const url = URL.createObjectURL(
-      new Blob([JSON.stringify(detail.source_feature, null, 2)], { type: 'application/geo+json' }),
+      new Blob(
+        [
+          typeof detail.source_feature.source_aixm === 'string'
+            ? detail.source_feature.source_aixm
+            : JSON.stringify(detail.source_feature, null, 2),
+        ],
+        {
+          type:
+            typeof detail.source_feature.source_aixm === 'string'
+              ? 'application/xml'
+              : 'application/geo+json',
+        },
+      ),
     )
     const link = document.createElement('a')
     link.href = url
-    link.download = 'notam-' + detail.notice.id.replace(/[^A-Za-z0-9_-]/g, '_') + '.json'
+    link.download =
+      'notam-' +
+      detail.notice.id.replace(/[^A-Za-z0-9_-]/g, '_') +
+      (typeof detail.source_feature.source_aixm === 'string' ? '.xml' : '.json')
     downloads.current.add(url)
     document.body.appendChild(link)
     link.click()
@@ -262,7 +277,11 @@ export default function NotamsPage() {
                 <Stack spacing={2}>
                   <Typography variant="h5">Full source notice</Typography>
                   {noticeContent(detail.notice, true)}
-                  <Button onClick={download}>Download original GeoJSON</Button>
+                  <Button onClick={download}>
+                    {typeof detail.source_feature.source_aixm === 'string'
+                      ? 'Download source AIXM'
+                      : 'Download original GeoJSON'}
+                  </Button>
                   <Button onClick={() => setDetail(null)}>Close source details</Button>
                 </Stack>
               </CardContent>

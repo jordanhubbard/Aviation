@@ -47,7 +47,8 @@ Content downloads follow only validated provider-relative /nmsapi/v1/content/
 paths on the same origin with the bearer header. Do not expose those temporary
 paths to browsers or follow arbitrary upstream redirects with authorization.
 Preserve source notice text up to 1 MiB per record and bounded bulk payloads
-(up to 128 MiB transferred/256 MiB inflated), without silent truncation. These
+(GeoJSON up to 128 MiB transferred/256 MiB inflated; retained AIXM bootstrap
+has the separate streaming bound below), without silent truncation. These
 bounds accommodate the observed international notices of nearly 200,000 characters.
 Validate decompression, response envelopes, provider errors and every record
 before admitting a new cache state. Missing source text, start time, type or expiry stays unknown
@@ -73,9 +74,11 @@ The supplied FAQ states there are no display/redistribution restrictions beyond
 usage expectations; preserve source attribution and coverage cautions. Credentials
 and tokens stay server-side and outside logs, issues, saved plans and public
 caches. Deterministic HTTP/lifecycle tests complement actual staging provider,
-HTTP/MCP and desktop/mobile evidence. Production acceptance requires actual
-production authentication/data evidence, reviewed merge, exact-head/main CI and
-hosted deployment verification. No mock or staging response proves production.
+HTTP/MCP and desktop/mobile evidence. Hosted activation may use the owner-authorized working environment after actual
+authentication/data evidence, reviewed merge, exact-head/main CI and hosted
+verification. Preserve its literal source environment and production_data=false
+for staging/FIT. A production-host authentication refusal does not block use of
+other authorized access and must not be described as missing owner authorization.
 
 ## Worker ownership
 
@@ -220,3 +223,34 @@ URL, untrusted HTML, upstream credential, automatic polling or model call is use
 Abort and clear stale notice/detail results on route, point, validity, inactive
 selection, location changes or disconnection. NOTAM controls must not submit an
 embedding application's booking form or change a pilot's decision.
+
+## Retained AIXM initial-load bootstrap (#503)
+
+The owner authorized hosted use of the supplied working access. Reuse a retained
+all-class compressed AIXM/SOAP initial load from that account/environment instead
+of requesting another full load within its daily reservation. The explicit seed
+operator verifies the original SHA256, environment, actual retrieval time, SOAP
+wrapper and every AIXM message. Stream at most512MiB inflated/128MiB transferred;
+reject declarations/entities, truncation, conflicting IDs, oversized messages or
+invalid required fields atomically. Preserve every original compressed byte.
+
+Adapt the event NOTAM and FAA FNSE metadata into the existing notice projection.
+UTC compact timestamps are decoded exactly; two-digit years require matching
+source-issued century context within one year; absent values remain unknown. Keep
+the complete serialized AIXM message and source format on the internal feature;
+geometry is null until source GeoJSON supplies it. Never invent spatial coverage.
+The UI downloads source AIXM for these records and original GeoJSON for native
+GeoJSON records. The original full-load archive remains the byte-level witness.
+
+Reserve the imported full-load cycle at its actual recorded retrieval time before
+parsing. Publish only after a normal overlapping GeoJSON catch-up succeeds; use a
+within-24hour catch-up window anchored to the validated source FeatureCollection
+timeStamp with a60second overlap; validate numberReturned against all messages and refuse an older seed. A failed
+seed keeps its full-load reservation and prior published cache. Only a registered
+identical failed seed can be replayed offline. Preserve all source data/history.
+When a same-version native GeoJSON update replaces an AIXM-adapted record, every
+normalized notice field must agree (ignore only boundary ASCII whitespace in text
+for this cross-format comparison; never rewrite stored/source text). Reject same-format differences and conflicting
+cross-format notice values; preserve the original AIXM archive when replacing the
+representation. Worker ownership, cadence, expiry and read-only web mounts remain
+unchanged. No provider credentials enter the web process.

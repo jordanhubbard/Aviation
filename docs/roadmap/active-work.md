@@ -6,6 +6,8 @@ index, not an independently maintained task list. Use `gh issue` and `gh pr`.
 
 ## Current work and requests
 
+- [#503 — Activate provided NMS access](https://github.com/jordanhubbard/Aviation/issues/503): use the owner-authorized staging source, preserve source environment and all existing data, seed from the retained all-class AIXM response, then admit live coordinated deltas, shared consumers and hosted desktop/mobile acceptance. Production-host authentication is not a prerequisite for this selected feed.
+
 - [#607 — Owned browser shutdown recurrence](https://github.com/jordanhubbard/Aviation/issues/607): [native macOS close contract](../development/browser-ci.md#macos-regular-chromium-termination-607-recurrence). PR#615deployment exposed two graceful-close timeouts and ownedSIGKILL recoveries despite successful startup targets. Preserve prior passing evidence and all new native controls. Qualify regular Chromium selection, owned native termination and observed-exit validation through all local, fresh-process, CI and deployment gates before closure.
 
 - [#614 — Copied catalog title support](https://github.com/jordanhubbard/Aviation/issues/614): [bounded title contract](../architecture/aircraft-library.md#copied-catalog-titles-and-selected-original-support-614). Preserve all59v19claims and seven actual requests; four whole batches/47claims accepted. Fifth whole-batch review rejects metadata title presented as an original manual fact. Version the bounded support guard through normal delivery before freshzero qualification. Full corpus and upstream dependencies stay open.
