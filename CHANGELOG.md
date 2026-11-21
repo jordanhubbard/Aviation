@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Weather: flag suspicious METARs with original nearby observations, exclusion reasons and explicit uncertainty across HTTP/MCP, SDK and shared application views (#621).
+- Weather classification: treat exactly 5 SM visibility or 3,000 ft ceiling as MVFR.
+
 - Direct NMS worker SQLite temporary files to the private cache volume so full-snapshot publication can complete within the container limits (#503).
 
 - NOTAMs: activate owner-authorized working access with an archived AIXM initial-load bootstrap, coordinated deltas and source-aware downloads (#503).

@@ -22,6 +22,12 @@ before(async () => {
     providerHeaders.push(req.headers);
     const url = new URL(req.url, 'http://provider'); const name = url.pathname.slice(1), code = url.searchParams.get('airport');
     if (code === 'KOAK' && name === 'taf') { res.writeHead(503); res.end(); return; }
+    if (name === 'metar-consistency') {
+      sendJson(res,200,{status:'suspicious',station_id:code,checked_at_utc:'2026-11-16T00:01:00Z',
+        target:{station_id:code,observed_at_epoch:1794787200,category:'VFR',original:{rawOb:report('metar',code).reports[0].rawOb}},
+        neighbors:[],flags:[{code:'maintenance_or_sensor_indicator',explanation:'Synthetic sensor remark requires investigation.'}],forecast_context:[],
+        qualifying_neighbors:0,ifr_neighbors:0,policy:{},source:{},errors:[],limitations:['Not a sensor diagnosis.'],truncated:false});return;
+    }
     const data = report(name, code);
     if ((code === 'KSJC' && name === 'taf') || (code === 'KSEA' && name === 'metar')) { data.status = 'no_reports'; data.reports = []; }
     if (code === 'KJFK') data.source = null;
@@ -49,7 +55,10 @@ test('real station/list handlers preserve complete weather payloads through HTTP
   assert.equal(http.station.taf.source.provider, 'Synthetic NOAA adapter');
   assert.ok(Number.isFinite(http.station.latitude));
   const list = await (await fetch(publicOrigin+'/api/v1/weather/stations?region=us-west')).json();
-  assert.deepEqual(list.stations.find(s=>s.code==='KSFO'), direct.station);
+  const {metar_consistency,metar_consistency_summary,recommendation,...summary}=direct.station;
+  const {recommendation:listRecommendation,...listed}=list.stations.find(s=>s.code==='KSFO');assert.deepEqual(listed, summary);
+  assert.match(recommendation,/Verify current conditions/);assert.match(listRecommendation,/VFR conditions/);
+  assert.equal(metar_consistency.status,'suspicious');assert.match(metar_consistency_summary,/Synthetic sensor remark/);
   const mcpList = await client.callTool({ name: 'v1.weather.request', arguments: { path: '/stations?region=us-west' } });
   assert.deepEqual(JSON.parse(mcpList.structuredContent.body), list);
   assert.ok(providerHeaders.every(h => !h.authorization && !h.cookie));
@@ -67,6 +76,7 @@ test('text briefing is unmodified through HTTP and MCP and contains both source 
   const proxied = await (await fetch(publicOrigin+'/api/v1/weather'+path)).text();
   const mcp = await client.callTool({ name: 'v1.weather.request', arguments: { path } });
   assert.equal(proxied,direct); assert.equal(mcp.structuredContent.body,direct);
+  assert.match(direct,/METAR consistency: suspicious/);assert.match(direct,/Synthetic sensor remark/);
   assert.match(direct,/METAR observation:/); assert.match(direct,/TAF forecast:/);
   assert.match(direct,/Valid 2026-11-16T00:00:00.000Z → 2026-11-17T00:00:00.000Z/);
   assert.match(direct,/does not extend published TAF validity/);

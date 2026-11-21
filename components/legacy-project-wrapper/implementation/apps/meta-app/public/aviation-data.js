@@ -47,6 +47,16 @@
         <div class="route"></div>
         <div class="point-controls" hidden><label>Weather review point<select name="point" aria-label="Weather review point"></select></label></div>
         <div class="environment"></div>
+        <div role="region" aria-label="METAR consistency review">
+          <h3>Suspicious METARs</h3>
+          <p class="hint">Compare a report with nearby contemporaneous observations. A flag is a reason to investigate; it does not prove a sensor is broken. No conflict does not validate a report.</p>
+          <form aria-label="METAR consistency check">
+            <label>METAR station<input name="consistency-airport" maxlength="4" pattern="[A-Za-z0-9]{3,4}" required autocomplete="off"></label>
+            <button type="submit">Check METAR consistency</button>
+          </form>
+          <p class="consistency-status" role="status">Select a station, then explicitly check its report.</p>
+          <div class="consistency-results"></div>
+        </div>
         <details class="references"><summary>openAIP reference lookup</summary>
           <p class="hint">Worldwide community reference data, licensed CC BY-NC 4.0. Country and search are explicit filters, independent of the route. Check the provider record and dates.</p>
           <form aria-label="Reference lookup">
@@ -72,6 +82,9 @@
       </section>`;
       this.q('input[name=airports]').value = this.getAttribute('airports') || '';
       this.q('input[name=notam-airport]').value = this.firstNotamLocation();
+      this.q('input[name=consistency-airport]').value = this.firstNotamLocation();
+      this.q('form[aria-label="METAR consistency check"]').addEventListener('submit', event => { event.preventDefault(); void this.loadConsistency(); });
+      this.q('input[name=consistency-airport]').addEventListener('input', () => this.clearConsistency());
       this.setTime();
       this.updateAssessmentLink();
       this.q('form[aria-label="Aviation route review"]').addEventListener('submit', event => { event.preventDefault(); void this.loadRoute(); });
@@ -87,7 +100,7 @@
       this.q('input[name=notam-inactive]').addEventListener('change', () => this.clearNotams());
       this.q('.source-load').addEventListener('click', () => void this.loadSources());
     }
-    disconnectedCallback() { this.routeRequest?.abort(); this.pointRequest?.abort(); this.referenceRequest?.abort(); this.sourceRequest?.abort(); this.clearNotams(); }
+    disconnectedCallback() { this.routeRequest?.abort(); this.pointRequest?.abort(); this.referenceRequest?.abort(); this.sourceRequest?.abort(); this.clearNotams(); this.clearConsistency(); }
     attributeChangedCallback(name, old, value) {
       if (!this.shadowRoot || old === value) return;
       if (name === 'airports') this.q('input[name=airports]').value = value || '';
@@ -107,6 +120,8 @@
       this.q('.assessment-link').href = url.href;
     }
     clearRoute() {
+      this.clearConsistency();
+      this.q('input[name=consistency-airport]').value = this.firstNotamLocation();
       this.updateAssessmentLink();
       this.clearNotams();
       this.q('input[name=notam-airport]').value = this.firstNotamLocation();
@@ -212,6 +227,45 @@
           if (title.includes('advisories')) content.prepend(el('p', 'All reported US center advisories; route intersection is not determined.', { class: 'hint' }));
         } catch (error) { if (!controller.signal.aborted) { summary.textContent = `${title} · ${point.name} · Unavailable`; content.replaceChildren(el('p', error.message + ' Check this source’s coverage and retry.', { class: 'error' })); } }
       }));
+    }
+    clearConsistency() {
+      this.consistencyRequest?.abort();
+      if (!this.shadowRoot) return;
+      this.q('.consistency-results').replaceChildren();
+      this.q('.consistency-status').textContent = 'Selection changed. Explicitly check this station.';
+      this.q('form[aria-label="METAR consistency check"] button').disabled = false;
+    }
+    async loadConsistency() {
+      this.clearConsistency();
+      const code = this.q('input[name=consistency-airport]').value.trim().toUpperCase();
+      const status = this.q('.consistency-status'), out = this.q('.consistency-results');
+      if (!/^[A-Z0-9]{3,4}$/.test(code)) { status.textContent = 'Enter one 3–4 character METAR station identifier.'; return; }
+      const controller = this.consistencyRequest = new AbortController();
+      const button = this.q('form[aria-label="METAR consistency check"] button'); button.disabled = true;
+      status.textContent = 'Comparing original observations…';
+      try {
+        const data = await this.request('/aviation-weather/metar-consistency?airport=' + encodeURIComponent(code), controller);
+        if (controller.signal.aborted || this.consistencyRequest !== controller) return;
+        const labels = { suspicious: 'Suspicious METAR — investigate conflicting evidence', no_conflict_detected: 'No conflict detected — this does not validate the report', insufficient_evidence: 'Insufficient evidence to assess this METAR', unavailable: 'METAR consistency evidence unavailable' };
+        if (!Object.hasOwn(labels, data.status) || data.station_id !== code || !Array.isArray(data.neighbors) || !Array.isArray(data.flags)) throw new Error('Invalid consistency response');
+        status.textContent = code + ' · ' + labels[data.status];
+        for (const flag of data.flags) out.append(el('p', flag.explanation, { class: 'warning' }));
+        out.append(el('p', `${data.qualifying_neighbors} qualifying nearby observations · ${data.ifr_neighbors} IFR/LIFR · Checked ${utc(data.checked_at_utc)}`));
+        if (data.target?.original?.rawOb) out.append(el('h4', 'Original target METAR'), el('p', 'Observed ' + utc(data.target.observed_at_epoch)), el('pre', data.target.original.rawOb));
+        const wrapper = el('div', null, { class: 'scroll' }), table = el('table');
+        const head = el('tr'); for (const title of ['Station', 'Category', 'Distance NM', 'Observed UTC', 'Ceiling ft AGL', 'Visibility SM', 'Comparison']) head.append(el('th', title)); table.append(head);
+        for (const item of data.neighbors) {
+          const row = el('tr');
+          for (const value of [item.station_id, item.category, Number.isFinite(item.distance_nm) ? item.distance_nm.toFixed(1) : null, utc(item.observed_at_epoch), item.ceiling_ft, item.visibility_sm, item.exclusion || 'Included']) row.append(el('td', show(value)));
+          table.append(row);
+          if (item.original?.rawOb) { const detail = el('details'); detail.append(el('summary', item.station_id + ' original observation'), el('pre', item.original.rawOb)); out.append(detail); }
+        }
+        wrapper.append(table); out.append(wrapper);
+        for (const context of data.forecast_context || []) { const detail = el('details'); detail.append(el('summary', 'Forecast context — not an observed vote'), el('pre', context.original_forecast), el('pre', JSON.stringify(context.period, null, 2))); out.append(detail); }
+        for (const warning of [...(data.errors || []), ...(data.limitations || [])]) out.append(el('p', warning, { class: 'hint' }));
+        this.source(out, {source:data.source?.metar, truncated:data.truncated});
+      } catch (error) { if (!controller.signal.aborted && this.consistencyRequest === controller) { status.textContent = 'Consistency check unavailable. The original METAR has not been validated.'; out.replaceChildren(el('p', error.message, { class: 'error' })); } }
+      finally { if (!controller.signal.aborted && this.consistencyRequest === controller) button.disabled = false; }
     }
     firstNotamLocation() {
       const first = this.q('input[name=airports]').value.trim().toUpperCase().split(/[\s,;→]+/)[0];

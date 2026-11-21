@@ -17,7 +17,7 @@ function aviationDataMethod(dest) {
   const path = dest.path.split('?')[0];
   if (path === '/api/aviation-weather/route' || path === '/api/route-assessment') return 'POST';
   if (['/api/notams', '/api/notams/capabilities', '/api/notams/detail'].includes(path)) return 'GET';
-  return /^\/api\/(aviation-weather\/(stations|winds-aloft|cwa)|aviation-data\/(sources|nws\/(alerts|forecast)|faa\/airport-events|openaip\/(airports|airspaces|navaids|reporting-points|hotspots|obstacles)))$/.test(path) ? 'GET' : null;
+  return /^\/api\/(aviation-weather\/(stations|winds-aloft|metar-consistency|cwa)|aviation-data\/(sources|nws\/(alerts|forecast)|faa\/airport-events|openaip\/(airports|airspaces|navaids|reporting-points|hotspots|obstacles)))$/.test(path) ? 'GET' : null;
 }
 
 const hop = new Set(['connection', 'keep-alive', 'proxy-authenticate', 'proxy-authorization', 'proxy-connection', 'te', 'trailer', 'transfer-encoding', 'upgrade', 'host']);

@@ -67,6 +67,18 @@ favorable defaults.
 - **WHEN** visibility or ceiling is absent
 - **THEN** classification returns `UNKNOWN`
 
+### Requirement: Flight-category boundaries match AWC categories
+
+VFR requires visibility greater than 5 statute miles and a ceiling greater than
+3,000 feet AGL. Exactly 5 SM or 3,000 feet belongs to MVFR; IFR boundaries remain
+below 3 SM or 1,000 feet and LIFR below 1 SM or 500 feet. These categories do not
+replace regulatory VFR minima. Missing required inputs remain `UNKNOWN`.
+
+#### Scenario: An observation is exactly on a VFR boundary
+
+- **WHEN** both category inputs are present and visibility is exactly 5 SM or the ceiling is exactly 3,000 feet AGL
+- **THEN** the category is MVFR unless another input establishes IFR or LIFR
+
 ### Requirement: Provider access is bounded and cacheable
 
 Provider adapters SHALL use bounded timeouts, normalize station identifiers, reject

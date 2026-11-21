@@ -6,7 +6,7 @@ from datetime import datetime
 from enum import IntEnum
 from typing import Annotated, Literal
 
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, HTTPException, Query, Response
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from app.config import settings
@@ -362,6 +362,7 @@ def source_catalog():
             [
                 "POST /api/aviation-weather/route",
                 "GET /api/aviation-weather/stations",
+                "GET /api/aviation-weather/metar-consistency",
                 "GET /api/aviation-weather/{product}",
             ],
             "https://aviationweather.gov/data/api/",
@@ -480,3 +481,27 @@ def source_catalog():
         "sources": [dict(zip(names, row)) for row in rows],
         "limitations": "Configuration readiness is not a live availability check. See OpenAPI for full operation schemas. Complete FAA NOTAM access requires separately approved credentials; no mock NOTAM fallback is used by these operations.",
     }
+
+
+class MetarConsistencyResponse(BaseModel):
+    status: Literal["suspicious", "no_conflict_detected", "insufficient_evidence", "unavailable"]
+    station_id: str | None
+    checked_at_utc: str
+    target: dict | None
+    neighbors: list[dict]
+    flags: list[dict]
+    forecast_context: list[dict]
+    qualifying_neighbors: int
+    ifr_neighbors: int
+    policy: dict
+    source: dict
+    errors: list[str]
+    truncated: bool
+    limitations: list[str]
+
+
+@router.get("/aviation-weather/metar-consistency", response_model=MetarConsistencyResponse, summary="Flag suspicious METARs using contemporaneous nearby observations")
+def metar_consistency(airport: AirportCode, response: Response, radius_nm: float = Query(100, ge=25, le=150), max_neighbors: int = Query(12, ge=3, le=20)):
+    from app.services.metar_consistency import assessment
+    response.headers["Cache-Control"] = "no-store"
+    return assessment(airport, radius_nm, max_neighbors)

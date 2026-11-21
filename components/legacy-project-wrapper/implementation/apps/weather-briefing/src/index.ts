@@ -412,6 +412,7 @@ async function main() {
                 details.append(node('p', 'Source: ' + (product?.source?.provider || 'Unknown') + ' · Retrieved ' + utc(product?.source?.retrieved_at_utc)));
                 card.append(details);
               }
+              if (station.metar_consistency_summary) card.append(node('p', station.metar_consistency_summary));
               if (station.partial) card.append(node('p', 'Partial weather: a provider is unavailable.'));
               card.append(node('p', 'Updated ' + utc(station.updatedAt)));
               return card;

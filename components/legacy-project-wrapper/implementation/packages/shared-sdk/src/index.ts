@@ -64,3 +64,5 @@ export {
   type SendMessageParams,
   type SendMessageResult,
 } from './openclaw/index.js';
+
+export { MetarConsistencyClient, type MetarConsistencyReport, type MetarConsistencyStatus, type MetarConsistencyObservation } from './aviation/metar-consistency.js';

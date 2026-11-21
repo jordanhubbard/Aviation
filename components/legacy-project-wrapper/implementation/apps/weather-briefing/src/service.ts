@@ -1,5 +1,7 @@
 import {
   parseMetar,
+  MetarConsistencyClient,
+  type MetarConsistencyReport,
   flightCategory,
   recommendationForCategory,
   warningsForConditions,
@@ -23,6 +25,8 @@ export interface WeatherReports {
 export interface WeatherStation {
   code: string; name: string; latitude: number | null; longitude: number | null;
   category: FlightCategory; metar: string | null;
+  metar_consistency?: MetarConsistencyReport | null;
+  metar_consistency_summary?: string;
   metar_reports: WeatherReports; taf: WeatherReports; partial: boolean;
   recommendation: string; warnings: string[]; updatedAt: string;
   wind_direction?: number; wind_speed_kt?: number; wind_gust_kt?: number;
@@ -34,6 +38,7 @@ export interface WeatherBriefingServiceConfig {
   notamClientOptions?: NotamClientOptions;
   notamClient?: Pick<NotamClient, 'fetchByIcao'> & Partial<Pick<NotamClient, 'fetchReportsByIcao'>>;
   reports?: (product: 'metar' | 'taf', station: string) => Promise<WeatherReports>;
+  consistency?: (station: string) => Promise<MetarConsistencyReport | null>;
 }
 const api = () => {
   const url = new URL(process.env.AVIATION_WEATHER_API_BASE_URL ||
@@ -85,6 +90,7 @@ export class WeatherBriefingService extends BackgroundService {
   private airportCache: Map<string, AirportConditions> = new Map();
   private notamClient: Pick<NotamClient, 'fetchByIcao'> & Partial<Pick<NotamClient, 'fetchReportsByIcao'>>;
   private reports: NonNullable<WeatherBriefingServiceConfig['reports']>;
+  private consistency: NonNullable<WeatherBriefingServiceConfig['consistency']>;
   private pending = new Map<string, Promise<void>>();
 
   constructor(config: WeatherBriefingServiceConfig = {}) {
@@ -95,6 +101,10 @@ export class WeatherBriefingService extends BackgroundService {
     });
     this.notamClient = config.notamClient ?? new NotamClient(config.notamClientOptions ?? {});
     this.reports = config.reports ?? fetchWeatherReports;
+    const consistencyClient = new MetarConsistencyClient({baseUrl:api() + '/metar-consistency'});
+    this.consistency = config.consistency ?? (config.reports ? async () => null :
+      async station => process.env.AVIATION_E2E_OFFLINE === 'true' ? null :
+        consistencyClient.assess(station, {signal:AbortSignal.timeout(5000)}).catch(() => null));
     api();
     loadBundledAirports();
   }
@@ -110,9 +120,7 @@ export class WeatherBriefingService extends BackgroundService {
 
   public async generateBriefing(station: string, forecastDays: number = 0): Promise<string> {
     station = normalizeStation(station);
-    await this.updateAirportWeather([station]);
-    const conditions = this.getAirportConditions(station);
-    if (!conditions) throw new Error('Missing station result');
+    const conditions = await this.getStationSnapshot(station);
 
     // Fetch NOTAMs — failures are non-fatal (network/key absent in dev)
     let notamLines: string[] = [];
@@ -134,6 +142,7 @@ export class WeatherBriefingService extends BackgroundService {
       ...reportLines('METAR', conditions.metar_reports),
       '',
       ...reportLines('TAF', conditions.taf),
+      ...this.consistencyLines(conditions.metar_consistency),
       ...(forecastDays ? [`Requested ${forecastDays}-day range does not extend published TAF validity.`] : []),
       `Recommendation: ${conditions.recommendation}`,
       ...(conditions.warnings.length ? [`Warnings: ${conditions.warnings.join('; ')}`] : []),
@@ -191,7 +200,23 @@ export class WeatherBriefingService extends BackgroundService {
   public async getStationSnapshot(code: string): Promise<WeatherStation> {
     code = normalizeStation(code);
     await this.updateAirportWeather([code]);
-    return this.snapshot(code);
+    let assessment: MetarConsistencyReport | null;
+    try { assessment = await this.consistency(code); } catch { assessment = null; }
+    const snapshot = this.snapshot(code);
+    return {...snapshot, metar_consistency:assessment,
+      metar_consistency_summary: assessment ? 'METAR consistency: ' + assessment.status.replace(/_/g, ' ') + (assessment.flags.length ? '. ' + assessment.flags.map(f => f.explanation).join(' ') : '. This does not validate the report.') : 'METAR consistency: unavailable. The original report has not been validated.',
+      ...(assessment?.status === 'suspicious' ? {recommendation:'METAR inconsistency flagged. Verify current conditions independently before relying on this report.'} : {})};
+  }
+  private consistencyLines(report?: MetarConsistencyReport | null): string[] {
+    if (!report) return ['METAR consistency: unavailable. The original report has not been validated.'];
+    return [
+      'METAR consistency: ' + report.status.replace(/_/g, ' ') + ' · Checked ' + report.checked_at_utc,
+      ...(report.target ? ['Assessment target observed ' + utc(report.target.observed_at_epoch), String(report.target.original?.rawOb ?? 'Target report text unavailable')] : []),
+      ...report.flags.map(flag => 'Investigate: ' + flag.explanation),
+      `${report.qualifying_neighbors} qualifying nearby observations; ${report.ifr_neighbors} IFR/LIFR.`,
+      ...report.neighbors.map(n => `${n.station_id}: ${n.category ?? 'Unknown'} · ${n.distance_nm?.toFixed(1) ?? 'Unknown'} NM · Observed ${utc(n.observed_at_epoch)} · ${n.exclusion ?? 'Included'}`),
+      ...report.errors, ...report.limitations,
+    ];
   }
   public async updateAirportWeather(icaoCodes: string[]): Promise<void> {
     const codes = [...new Set(icaoCodes.map(normalizeStation))];

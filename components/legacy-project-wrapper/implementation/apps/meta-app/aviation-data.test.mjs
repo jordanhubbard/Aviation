@@ -2,10 +2,11 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { chromium } from '@playwright/test';
+import {launchOwnedBrowser} from '../../deploy/browser-runner.mjs';
 import { asset, installAviationDataFixtures, exerciseAviationDataPanel } from '../../deploy/aviation-data-qualification.mjs';
 
 test('application aviation data browser acceptance', async t => {
-  const browser = await chromium.launch({ headless: true, ...(process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH ? { executablePath: process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH } : {}) }); t.after(() => browser.close());
+  const browser = await launchOwnedBrowser(chromium,{ headless: true, ...(process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH ? { executablePath: process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH } : {}) }); t.after(() => browser.close());
   async function setup(t, options = {}, viewport = { width: 1280, height: 900 }) {
     const page = await browser.newPage({ viewport }); t.after(() => page.close());
     const errors = []; page.on('pageerror', error => errors.push(error.message));

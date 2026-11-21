@@ -20,7 +20,7 @@ test('station/list/text preserve METARs and expose original TAFs, source times a
   assert.match(station.metar, /^KSFO/); assert.equal(station.taf.reports[0].rawTAF, product('taf').reports[0].rawTAF);
   assert.equal(station.metar_reports.source, source); assert.equal(station.category, 'VFR');
   assert.ok(Number.isFinite(station.latitude)); assert.ok(station.updatedAt);
-  assert.deepEqual(await service.getStationSummaries(['KSFO']), [station]);
+  const {metar_consistency, metar_consistency_summary, ...summary} = station; assert.deepEqual(await service.getStationSummaries(['KSFO']), [summary]);
   const text = await service.generateBriefing('KSFO', 7);
   for (const part of ['METAR observation:', 'Observed 2026-11-15T23:56:00.000Z', 'TAF forecast:', 'Valid 2026-', 'Retrieved 2026-', '\n FM160600', 'does not extend published TAF validity', 'NOTAMs: No matching supplied records']) assert.ok(text.includes(part), part);
 });
@@ -78,4 +78,21 @@ test('rich NMS reports preserve staging, partial source fields, permanence and o
   for(const value of ['NOTAMs: partial','NON-PRODUCTION','Environment: staging','Unknown → PERM',
     'Source fields missing: type, effective_start','DLY 0900-1200',text,'not authoritative for all non-US']) assert.ok(result.includes(value),value);
   assert.ok(!result.includes('None active'));
+});
+
+test('suspicious METAR evidence survives station and briefing views without replacing METAR or TAF', async () => {
+  const assessment={status:'suspicious',station_id:'KSFO',checked_at_utc:source.retrieved_at_utc,
+    target:null,neighbors:[{station_id:'KOAK',category:'IFR',distance_nm:8,observed_at_epoch:1794786960,exclusion:null}],
+    flags:[{code:'regional_disagreement',explanation:'VFR conflicts with nearby IFR observations.'}],qualifying_neighbors:3,ifr_neighbors:3,
+    forecast_context:[],policy:{},source:{},errors:[],truncated:false,limitations:['Disagreement is not proof of sensor failure.']};
+  const service=new WeatherBriefingService({autoStart:false,reports:async(name,code)=>product(name,code),consistency:async()=>assessment,
+    notamClient:{fetchByIcao:async()=>[]}});
+  const station=await service.getStationSnapshot('KSFO');
+  assert.equal(station.metar_consistency,assessment);assert.match(station.metar_consistency_summary,/suspicious/);assert.match(station.metar,/KSFO/);assert.match(station.taf.reports[0].rawTAF,/TAF KSFO/);
+  assert.match(station.recommendation,/Verify current conditions/);
+  const text=await service.generateBriefing('KSFO');assert.match(text,/METAR consistency: suspicious/);assert.match(text,/KOAK: IFR/);assert.match(text,/not proof/);
+});
+test('consistency failure preserves the original weather and cannot claim validation', async()=>{
+  const service=new WeatherBriefingService({autoStart:false,reports:async(name,code)=>product(name,code),consistency:async()=>{throw Error('synthetic unavailable');},notamClient:{fetchByIcao:async()=>[]}});
+  const text=await service.generateBriefing('KSFO');assert.match(text,/METAR observation:/);assert.match(text,/TAF forecast:/);assert.match(text,/consistency: unavailable/);
 });
