@@ -169,7 +169,8 @@ def test_expanded_date_is_supported_when_it_is_actually_quoted():
     assert validate_answer(answer('Figure 1-3 Sheet 1 is dated November 15, 2000.', 1), [row])
 
 
-def test_new_policy_archives_v10_claims_and_receipt_then_starts_zero(tmp_path):
+@pytest.mark.parametrize('old_policy', ['definition-quote-feedback-v10', 'catalog-title-feedback-v20'])
+def test_new_policy_archives_old_claims_and_receipt_then_starts_zero(tmp_path, old_policy):
     from app.services.aircraft_library.models import CORRECTION_POLICY, distillation_context, distill
     from app.services.aircraft_library.store import Store
     from .test_aircraft_library import manual
@@ -180,9 +181,9 @@ def test_new_policy_archives_v10_claims_and_receipt_then_starts_zero(tmp_path):
                  'Definitions supplied in the manual.')
     doc = store.ingest(raw, {'icao': 'C172'})
     provider = Provider()
-    _, roots, question, fingerprint = distillation_context(store, provider, doc['id'], correction_policy='definition-quote-feedback-v10')
-    section = dict(pages=sorted({r['page'] for r in roots[0]}), **validate_answer(provider.complete(roots[0], question), roots[0], correction_policy='definition-quote-feedback-v10'))
-    prior = dict(kind='llm_distillation', status='partial', correction_policy='definition-quote-feedback-v10', evidence_identity=fingerprint,
+    _, roots, question, fingerprint = distillation_context(store, provider, doc['id'], correction_policy=old_policy)
+    section = dict(pages=sorted({r['page'] for r in roots[0]}), **validate_answer(provider.complete(roots[0], question), roots[0], correction_policy=old_policy))
+    prior = dict(kind='llm_distillation', status='partial', correction_policy=old_policy, evidence_identity=fingerprint,
                  sections=[section], completed_batches=1, total_batches=len(roots), batch_plan=[[r['passage_id'] for r in b] for b in roots],
                  recovery={'kind': 'recorded-v10-control-receipt', 'request_scopes_unchanged': True})
     store.artifact(doc['id'], 'distillation', prior)
@@ -191,7 +192,7 @@ def test_new_policy_archives_v10_claims_and_receipt_then_starts_zero(tmp_path):
     with pytest.raises(ProcessKilled):
         distill(store, provider, doc['id'])
     fresh = store.get(doc['id'])['artifacts']['distillation']
-    assert CORRECTION_POLICY == fresh['correction_policy'] == 'catalog-title-feedback-v20'
+    assert CORRECTION_POLICY == fresh['correction_policy'] == 'coordinated-sheet-dates-v21'
     assert fresh['completed_batches'] == 0 and fresh['sections'] == [] and 'recovery' not in fresh
     assert fresh['evidence_identity'] != fingerprint
     assert any(store.historical_distillation(doc['id'],r['revision_id'])['artifact'] == prior for r in store.distillations(doc['id'])['items'])
@@ -224,3 +225,114 @@ def test_chart_dates_and_existing_families_share_six_witnesses():
     assert f['procedure_requirements']['chart_dates']
     assert {'definition_bhp', 'airspeed_vne'} <= set(f['procedure_requirements']['concepts'])
     assert len(f['procedure_excerpt_options']) == 6
+
+
+COORDINATED_DATES = (
+    'Figure 1-2 Weight Conversions Sheet 1 of 2 is dated Nov 15/00, '
+    'and Figure 1-2 Weight Conversions Sheet 2 of 2 is dated June 13/97.'
+)
+
+
+def paired_date_sources():
+    return [
+        source(71, 23, 'Figure 1-2. Weight Conversions (Sheet 1 of 2)\n1-14\nNov 15/00'),
+        source(72, 24, 'Figure 1-2. Weight Conversions (Sheet 2 of 2)\n1-15\nJune 13/97'),
+        source(73, 30, 'General material. Reported value 42.'),
+    ]
+
+
+@pytest.mark.parametrize('wording', [
+    COORDINATED_DATES,
+    COORDINATED_DATES.replace(', and ', ' and '),
+    COORDINATED_DATES.replace(', and ', ', '),
+    COORDINATED_DATES.replace(', and Figure', ', and the Figure'),
+    COORDINATED_DATES.replace(' is dated ', ' was dated '),
+    COORDINATED_DATES.replace('Figure', 'Fig.'),
+    COORDINATED_DATES.replace('Figure', 'FIGURE').replace(' is dated ', ' IS DATED '),
+])
+def test_coordinated_positive_dates_keep_both_original_bindings(wording):
+    from app.services.aircraft_library.models import _coordinated_chart_dates
+
+    bindings = _coordinated_chart_dates(wording)
+    assert bindings == [
+        {'figure': '1-2', 'sheets': [1], 'date': '2000-11-15'},
+        {'figure': '1-2', 'sheets': [2], 'date': '1997-06-13'},
+    ]
+    rows = paired_date_sources()
+    with pytest.raises(ModelUnavailable) as first:
+        validate_answer(answer(
+            COORDINATED_DATES.replace(', and ', ', while ') + ' These are conflicting dates.',
+            71, 72,
+        ), rows)
+    requirements = first.value.feedback['procedure_requirements']
+    assert len(requirements['chart_dates']) == 2
+    result = validate_answer(answer(wording, 71, 72), rows,
+                             procedure_requirements={0: requirements})
+    assert result['claims'][0]['text'] == wording
+
+
+@pytest.mark.parametrize('wording', [
+    'If ' + COORDINATED_DATES,
+    'It is not true that ' + COORDINATED_DATES,
+    'Neither ' + COORDINATED_DATES,
+    COORDINATED_DATES.replace(', and ', ' or '),
+    COORDINATED_DATES.replace(', and ', ', and perhaps '),
+    COORDINATED_DATES.replace(' is dated ', ' is not dated ', 1),
+    COORDINATED_DATES.replace(' is dated ', ' may be dated ', 1),
+    COORDINATED_DATES.replace('Nov 15/00,', 'Nov 15/00 or June 13/97,'),
+    COORDINATED_DATES.replace('Sheet 1 of 2', 'Sheet 1 or 2'),
+    COORDINATED_DATES.replace('and Figure 1-2 Weight Conversions Sheet 2', 'and Sheet 2'),
+    COORDINATED_DATES[:-1] + '?',
+    COORDINATED_DATES[:-1] + ' are not asserted as facts.',
+])
+def test_ambiguous_or_negative_coordination_does_not_fulfil_retained_dates(wording):
+    from app.services.aircraft_library.models import _coordinated_chart_dates
+
+    assert _coordinated_chart_dates(wording) == []
+
+
+@pytest.mark.parametrize('evasion', ['quote', 'page', 'foreign', 'swapped'])
+def test_coordinated_dates_still_require_original_page_and_text_bindings(evasion):
+    rows = paired_date_sources()
+    bad = COORDINATED_DATES.replace(', and ', ', while ') + ' These are conflicting dates.'
+    with pytest.raises(ModelUnavailable) as first:
+        validate_answer(answer(bad, 71, 72), rows)
+    text, ids = COORDINATED_DATES, (71, 72)
+    if evasion == 'quote':
+        rows.append(source(74, 30, rows[1]['text']))
+        ids = (71, 74)
+    elif evasion == 'page':
+        rows[1]['page'] = 90
+    elif evasion == 'foreign':
+        rows[1]['document_id'] = 'doc_foreign'
+    else:
+        text = text.replace('Nov 15/00', 'TEMP').replace('June 13/97', 'Nov 15/00').replace('TEMP', 'June 13/97')
+    with pytest.raises(ModelUnavailable, match='support|numeric|qualifications'):
+        validate_answer(answer(text, *ids), rows,
+                        procedure_requirements={0: first.value.feedback['procedure_requirements']})
+
+
+@pytest.mark.parametrize('historical', [False, True])
+def test_bounded_coordinated_repair_and_exact_v20_failure_are_separate(historical):
+    from app.services.aircraft_library.models import CORRECTION_POLICY, CATALOG_TITLE_V20_CORRECTION_POLICY
+
+    rows = paired_date_sources()
+    stable = answer('General material.', 73)['claims'][0]
+    calls = []
+
+    def provider(request):
+        calls.append(json.loads(request.content))
+        text = (COORDINATED_DATES.replace(', and ', ', while ') + ' These are conflicting dates.'
+                if len(calls) == 1 else COORDINATED_DATES)
+        return response(answer(text, 71, 72)['claims'] + ([stable] if len(calls) == 1 else []))
+
+    policy = CATALOG_TITLE_V20_CORRECTION_POLICY if historical else CORRECTION_POLICY
+    if historical:
+        with pytest.raises(ModelUnavailable, match='qualifications'):
+            verified_completion(model(provider), rows, 'Summarize', correction_policy=policy)
+        assert len(calls) == 3
+    else:
+        result = verified_completion(model(provider), rows, 'Summarize', correction_policy=policy)
+        assert len(calls) == 2 and result['claims'][0]['text'] == COORDINATED_DATES
+        assert result['claims'][1]['text'] == stable['text']
+        assert [c['page'] for c in result['claims'][0]['citations']] == [23, 24]

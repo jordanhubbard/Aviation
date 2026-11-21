@@ -10,6 +10,18 @@ Every page retains physical PDF page number, printed page label when available, 
 
 ## Retrieval, distillation and answers
 
+The `coordinated-sheet-dates-v21` validation policy recognizes separate positive
+figure/sheet/date facts coordinated in one sentence (#612). Each repeated figure
+mention must have one unambiguous date and an explicit positive `is/was/are/were
+dated` relation. Only ordinary comma/and coordination joins those facts; alternatives,
+conditional or negative framing, ambiguous dates and trailing qualifications do
+not establish new bindings through this recognizer. Source-page quotation and
+retained repair obligations still validate every individual association. Different
+dates on different sheets do not establish a conflict. Preserve all earlier policy
+behavior, including `catalog-title-feedback-v20`, for exact historical replay.
+The new policy has a fresh distillation identity: archive prior generated artifacts
+and start at zero; never graft prefixes or edit generated claims into acceptance.
+
 After successful extraction, an indexing job attempts each configured model stage
 independently ([#623](https://github.com/jordanhubbard/Aviation/issues/623)). An
 embedding-provider failure must not suppress distillation, and a distillation
