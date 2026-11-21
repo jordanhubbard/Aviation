@@ -16,9 +16,21 @@ function nativeFixture({ nativeExit = [0, null], sdkExit = [0, null], stall = fa
     child.exitCode = code;child.signalCode = signal;
     child.emit('exit', code, signal);server.emit('close', code, signal);
   };
-  child.kill = signal => { events.push(`native:${signal}`);if (!stall) queueMicrotask(() => finish(...nativeExit));return true; };
+  const signalProcess = (pid, signal) => {
+    assert.equal(pid, child.pid);
+    events.push(`native:${signal}`);
+    if (!stall) queueMicrotask(() => finish(...nativeExit));
+    return true;
+  };
+  child.killed = false;
+  child.kill = signal => { child.killed = true;return signalProcess(child.pid, signal); };
   server.close = async () => { events.push('sdk:close');finish(...sdkExit); };
-  server.kill = async () => { events.push('sdk:kill');finish(null, 'SIGKILL'); };
+  server.kill = async () => {
+    events.push('sdk:kill');
+    // Match the pinned SDK guard: signal delivery is enough to skip its kill.
+    if (child.killed) return new Promise(() => {});
+    finish(null, 'SIGKILL');
+  };
   let launchOptions;
   const type = {
     name: () => engine,
@@ -29,7 +41,7 @@ function nativeFixture({ nativeExit = [0, null], sdkExit = [0, null], stall = fa
       newBrowserCDPSession: async () => ({ send: async () => ({ targetId: 'owned-target' }), detach: async () => {} }),
     }),
   };
-  return { type, child, server, events, options: { platform: 'darwin', graceMs: 20, killMs: 20, report: e => events.push(e) }, launchOptions: () => launchOptions };
+  return { type, child, server, events, options: { platform: 'darwin', chromiumExecutable: '', signalProcess, graceMs: 20, killMs: 20, report: e => events.push(e) }, launchOptions: () => launchOptions };
 }
 
 test('macOS headless default uses pinned regular Chromium and one owned graceful request', async () => {
@@ -42,6 +54,7 @@ test('macOS headless default uses pinned regular Chromium and one owned graceful
   assert.ok(f.events.indexOf('native:SIGTERM') < f.events.indexOf('sdk:close'));
   assert.ok(!f.events.includes('sdk:kill'));
   assert.ok(!f.events.some(e => e.status === 'recovered'));
+  assert.equal(f.child.killed, false);
 });
 
 for (const options of [{ channel: 'chrome' }, { channel: 'chromium' }, { executablePath: '/explicit/browser' }, { headless: false }]) {
@@ -89,6 +102,7 @@ test('stalled native request preserves bounded owned recovery and concurrent sha
   await Promise.all([b.close(), b.close()]);
   assert.equal(f.events.filter(e => e === 'native:SIGTERM').length, 1);
   assert.equal(f.events.filter(e => e === 'sdk:kill').length, 1);
+  assert.equal(f.child.killed, false);
   assert.equal(f.events.at(-1).status, 'recovered');
 });
 
@@ -104,7 +118,7 @@ test('invalid native PID metadata cannot select a process signal path', async ()
 });
 
 test('native signal errors clean up only that owner and remain failures', async () => {
-  const f = nativeFixture();f.child.kill = () => { throw new Error('signal denied'); };
+  const f = nativeFixture();f.options.signalProcess = () => { throw new Error('signal denied'); };
   const b = await launchOwnedBrowser(f.type, {}, f.options);
   await assert.rejects(b.close(), /signal denied/);
   assert.ok(f.events.includes('sdk:kill'));assert.ok(!f.events.some(e => e.status === 'recovered'));
@@ -112,7 +126,7 @@ test('native signal errors clean up only that owner and remain failures', async 
 
 test('a request racing an already closing process accepts only its observed normal exit', async () => {
   const f = nativeFixture();const close = f.server.close;
-  f.child.kill = () => { queueMicrotask(() => close());return false; };
+  f.options.signalProcess = () => { queueMicrotask(() => close());return false; };
   const b = await launchOwnedBrowser(f.type, {}, f.options);await b.close();
   assert.ok(!f.events.includes('sdk:kill'));assert.ok(!f.events.some(e => e.status === 'recovered'));
 });
@@ -298,4 +312,61 @@ test('CDP session creation or detach failures fail startup and close the owner',
     assert.ok(f.events.includes('disconnect'));
     assert.ok(f.events.includes('close'));
   }
+});
+
+for (const platform of ['darwin', 'linux', 'win32']) {
+  test(`configured Chromium carrier applies consistently on ${platform}`, async () => {
+    const f = nativeFixture();
+    const b = await launchOwnedBrowser(f.type, { headless: true }, {
+      ...f.options, platform, chromiumExecutable: ' /configured/Chrome.app/Contents/MacOS/Chrome ',
+    });
+    assert.equal(f.launchOptions().executablePath, '/configured/Chrome.app/Contents/MacOS/Chrome');
+    assert.equal(f.launchOptions().channel, undefined);
+    await b.close();
+  });
+}
+
+for (const options of [{ channel: 'chromium' }, { executablePath: '/caller/browser' }]) {
+  test(`caller selection precedes configured carrier ${JSON.stringify(options)}`, async () => {
+    const f = nativeFixture();
+    const b = await launchOwnedBrowser(f.type, options, { ...f.options, chromiumExecutable: '/configured/browser' });
+    assert.equal(f.launchOptions().executablePath, options.executablePath);
+    assert.equal(f.launchOptions().channel, options.channel);
+    await b.close();
+  });
+}
+
+test('configured Chromium carrier does not affect other engines', async () => {
+  const f = nativeFixture({ engine: 'firefox' });
+  const b = await launchOwnedBrowser(f.type, {}, { ...f.options, chromiumExecutable: '/configured/chrome' });
+  assert.equal(f.launchOptions().executablePath, undefined);
+  await b.close();
+});
+
+for (const [code, signal] of [[0, null], [2, null], [null, 'SIGTERM']]) {
+  test(`missing PID races require observed normal exit ${code}/${signal}`, async () => {
+    const f = nativeFixture({ stall: true });
+    f.options.signalProcess = () => {
+      queueMicrotask(() => {
+        f.child.exitCode = code;f.child.signalCode = signal;
+        f.child.emit('exit', code, signal);f.server.emit('close');
+      });
+      throw Object.assign(new Error('process already ended'), { code: 'ESRCH' });
+    };
+    const browser = await launchOwnedBrowser(f.type, {}, f.options);
+    if (code === 0 && signal === null) await browser.close();
+    else await assert.rejects(browser.close(), /process exit/i);
+    assert.ok(f.events.some(e => e.phase === 'process.terminate' && e.sent === false));
+    assert.ok(!f.events.some(e => e.status === 'recovered'));
+  });
+}
+
+test('missing PID without an observed exit cannot approve graceful cleanup', async () => {
+  const f = nativeFixture({ stall: true });
+  f.options.signalProcess = () => { throw Object.assign(new Error('missing'), { code: 'ESRCH' }); };
+  const browser = await launchOwnedBrowser(f.type, {}, f.options);
+  await browser.close();
+  assert.ok(f.events.includes('sdk:kill'));
+  assert.equal(f.events.at(-1).status, 'recovered');
+  assert.ok(f.events.some(e => e.phase === 'process.exit' && e.signal === 'SIGKILL'));
 });

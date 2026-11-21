@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Keep owned Chromium recovery available after native SIGTERM and honor the explicit worker browser path consistently (#625).
+
 - Aircraft library: continue distillation after embedding-provider failures, retain independent model-stage outcomes, and preserve known failures across indexing-job recovery (#623).
 
 - Weather: flag suspicious METARs with original nearby observations, exclusion reasons and explicit uncertainty across HTTP/MCP, SDK and shared application views (#621).
