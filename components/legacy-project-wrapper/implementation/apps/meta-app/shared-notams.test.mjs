@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { chromium } from '@playwright/test';
+import {launchOwnedBrowser} from '../../deploy/browser-runner.mjs';
 import { asset, installAviationDataFixtures } from '../../deploy/aviation-data-qualification.mjs';
 
 const snapshot = 'a'.repeat(64);
@@ -18,7 +19,7 @@ const detail = id => ({ snapshot_id: snapshot, status: 'available', environment:
   source_feature: { type: 'Feature', properties: { replaces: 'previous-synthetic-notice', literal: '<script>not executable</script>' } }, warnings: ['Synthetic source warning.'] });
 
 test('shared NMS panel preserves status, snapshots, source detail and explicit ownership', async t => {
-  const browser = await chromium.launch({ headless: true }); t.after(() => browser.close());
+  const browser = await launchOwnedBrowser(chromium,{ headless: true }); t.after(() => browser.close());
   async function setup(t, respond = null, viewport = { width: 1280, height: 900 }) {
     const page = await browser.newPage({ viewport }); page.setDefaultTimeout(5000); t.after(() => page.close());
     const errors = [], calls = []; page.on('pageerror', e => errors.push(e.message)); t.after(() => assert.deepEqual(errors, []));

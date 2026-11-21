@@ -153,3 +153,17 @@ provider/network isolation and signed loopback HTTP lifecycle coverage SHALL rem
 - **WHEN** a transitive test dependency cannot be securely updated
 - **THEN** its owning runner is replaced with the supported common runner and all
   existing service/model/HTTP assertions pass without skipped suites
+
+
+### Requirement: Assess METAR consistency without replacing observations
+
+The retained weather service and shared review UI SHALL implement the
+[METAR consistency contract](../../docs/architecture/metar-consistency.md), preserving
+original METARs, TAF context, observation ages, excluded stations and uncertainty.
+
+#### Scenario: A VFR report conflicts with nearby contemporaneous IFR reports
+
+- **WHEN** the bounded regional evidence meets the declared thresholds
+- **THEN** HTTP/MCP, SDK and weather clients show a suspicious-report finding with
+  traceable evidence and preserve the original METAR
+- **AND** stale, missing or insufficient evidence never validates that report

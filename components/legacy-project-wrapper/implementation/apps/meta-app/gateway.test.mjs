@@ -517,3 +517,16 @@ test('reviewed literal presentation survives private HTTP and real MCP forwardin
     assert.equal(call.headers.authorization, 'Bearer child');
   }
 });
+
+
+test('METAR consistency is identical through public HTTP and real MCP with no-store preserved', async t => {
+  const payload={status:'suspicious',station_id:'KFST',target:{original:{rawOb:'SOURCE METAR'}},flags:[{code:'regional_disagreement'}]};
+  const origin=await listen(t,(_req,res)=>{res.setHeader('cache-control','no-store');sendJson(res,200,payload);});
+  const gateway=createGateway({bindings:{planning:{origin}}});t.after(()=>gateway.close());
+  const edge=await listen(t,(req,res)=>gateway.handle(req,res)),path='/api/aviation-weather/metar-consistency?airport=KFST';
+  const response=await fetch(edge+'/api/v1/planning'+path,{headers:{origin:'https://weather-briefing.jordanhubbard.net'}});
+  assert.equal(response.headers.get('cache-control'),'no-store');assert.equal(response.headers.get('access-control-allow-origin'),'https://weather-briefing.jordanhubbard.net');assert.deepEqual(await response.json(),payload);
+  const client=new Client({name:'metar-consistency-parity',version:'1'});await client.connect(new StreamableHTTPClientTransport(new URL(edge+'/mcp')));t.after(()=>client.close());
+  const result=await client.callTool({name:'v1.planning.request',arguments:{path}});
+  assert.equal(result.structuredContent.status,200);assert.deepEqual(JSON.parse(result.structuredContent.body),payload);assert.equal(result.structuredContent.headers['cache-control'],'no-store');
+});

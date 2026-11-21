@@ -28,9 +28,21 @@
   ],
   "categories": [
     {
-      "id": "vfr",
+      "id": "mvfr-visibility-boundary",
       "visibility_sm": 5,
+      "ceiling_ft": 5000,
+      "expected": "MVFR"
+    },
+    {
+      "id": "mvfr-ceiling-boundary",
+      "visibility_sm": 10,
       "ceiling_ft": 3000,
+      "expected": "MVFR"
+    },
+    {
+      "id": "vfr-above-boundaries",
+      "visibility_sm": 5.1,
+      "ceiling_ft": 3001,
       "expected": "VFR"
     },
     {

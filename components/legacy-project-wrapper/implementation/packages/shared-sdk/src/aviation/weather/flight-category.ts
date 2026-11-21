@@ -58,7 +58,7 @@ export function flightCategory(
   }
 
   // MVFR: Marginal VFR
-  if (vis < thresholds.vfr_visibility_sm || ceil < thresholds.vfr_ceiling_ft) {
+  if (vis <= thresholds.vfr_visibility_sm || ceil <= thresholds.vfr_ceiling_ft) {
     return 'MVFR';
   }
 

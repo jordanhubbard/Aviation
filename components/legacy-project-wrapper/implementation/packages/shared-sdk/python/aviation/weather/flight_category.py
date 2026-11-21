@@ -19,7 +19,7 @@ class FlightCategoryThresholds:
     Thresholds for determining flight categories.
     
     Defaults match FAA definitions:
-    - VFR: Ceiling >= 3000ft, Visibility >= 5 SM
+    - VFR: Ceiling > 3000ft, Visibility > 5 SM
     - MVFR: Ceiling >= 1000ft, Visibility >= 3 SM
     - IFR: Ceiling >= 500ft, Visibility >= 1 SM
     - LIFR: Below IFR minimums
@@ -73,7 +73,7 @@ def flight_category(
         return "IFR"
     
     # MVFR: Below VFR minimums
-    if vis < thresholds.vfr_visibility_sm or ceil < thresholds.vfr_ceiling_ft:
+    if vis <= thresholds.vfr_visibility_sm or ceil <= thresholds.vfr_ceiling_ft:
         return "MVFR"
     
     # VFR: Meets or exceeds VFR minimums

@@ -71,6 +71,7 @@ chart acquisition, original preservation, georeferenced display and current CIFP
 
 The [offline and cockpit contract](architecture/offline-cockpit.md) defines durable
 flight packages, disconnected operation and the local GDL90 receiver bridge.
+- [Suspicious METAR assessment](architecture/metar-consistency.md): bounded comparisons, original observations and explicit uncertainty.
 - [FAA NMS NOTAM integration](architecture/nms-notams.md): authorized provider contract, cadence, shared cache and consumer acceptance.
 
 The [browser CI runner guide](development/browser-ci.md) records the supported
