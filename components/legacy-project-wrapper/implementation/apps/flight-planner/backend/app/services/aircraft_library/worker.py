@@ -6,7 +6,18 @@ import threading
 import uuid
 
 from .discovery import discover, acquire_candidates
-from .models import distill, index_vectors
+from .models import ModelUnavailable, distill, index_vectors
+
+
+class IndexModelFailure(ModelUnavailable):
+    """An indexed original has useful work as well as terminal model failures."""
+
+    def __init__(self, result):
+        self.result = result
+        failed = ", ".join(
+            name for name, stage in result["model_stages"].items() if stage["state"] == "failed"
+        )
+        super().__init__(f"Document indexed; model stages failed: {failed}; originals retained")
 
 
 class Worker:
@@ -28,6 +39,51 @@ class Worker:
         self.stop.set()
         if self.thread:
             self.thread.join(timeout=1)
+
+    def index_models(self, job, document, checkpoint):
+        identifier = document["id"]
+        identity = checkpoint["index_identity"]
+        stages = dict(checkpoint.get("model_stages", {}))
+        result = {"document_id": identifier, "status": document["status"], "model_stages": stages}
+        configured = self.models.capabilities()
+
+        def save():
+            with self.store.connection() as connection:
+                connection.execute("BEGIN IMMEDIATE")
+                if self.store.index_identity(identifier, connection=connection) != identity:
+                    raise ValueError(
+                        "Document changed during indexing; model outcomes not published"
+                    )
+                checkpoint["model_stages"] = stages
+                self.store.checkpoint(job["id"], checkpoint, connection=connection)
+
+        for name in ("embeddings", "distillation"):
+            # A recovered parent must not retry a known provider failure. Explicit
+            # new index/embed/distill jobs have their own checkpoint and budget.
+            if stages.get(name, {}).get("state") == "failed":
+                continue
+            capability = "embeddings" if name == "embeddings" else "llm"
+            if not configured[capability]:
+                stages[name] = {"state": "unconfigured"}
+                save()
+                continue
+            if self.store.index_identity(identifier) != identity:
+                raise ValueError("Document changed during indexing; remaining model work stopped")
+            try:
+                if name == "embeddings":
+                    result["vectors"] = index_vectors(self.store, [identifier], self.models)
+                    checkpoint["embedding_identity"] = self.models.embedding_identity
+                else:
+                    result["distillation"] = distill(self.store, self.models, identifier)
+            except ModelUnavailable as error:
+                stages[name] = {"state": "failed", "error": str(error)[:2000]}
+            else:
+                stages[name] = {"state": "completed"}
+            save()
+
+        if any(stage["state"] == "failed" for stage in stages.values()):
+            raise IndexModelFailure(result)
+        return result
 
     def execute(self, job):
         request = job["request"]
@@ -108,15 +164,7 @@ class Worker:
                 self.store.distill_index(identifier)
             if document["status"] == "failed":
                 raise ValueError(document["error"])
-            result = {"document_id": document["id"], "status": document["status"]}
-            if self.models.capabilities()["embeddings"]:
-                # Vector indexing already resumes individual provider-identified passages.
-                result["vectors"] = index_vectors(self.store, [document["id"]], self.models)
-                checkpoint["embedding_identity"] = self.models.embedding_identity
-                self.store.checkpoint(job["id"], checkpoint)
-            if self.models.capabilities()["llm"]:
-                result["distillation"] = distill(self.store, self.models, document["id"])
-            return result
+            return self.index_models(job, document, checkpoint)
         if job["kind"] in {"discover", "acquire"}:
             if job["kind"] == "discover":
                 result = discover(self.store, request["metadata"], maximum=request["maximum"])
@@ -166,7 +214,12 @@ class Worker:
                 if isinstance(error, (AcquisitionError, ModelUnavailable, ValueError))
                 else "Library job failed; originals retained"
             )
-            self.store.finish_job(job["id"], error=message[:2000], owner=self.owner)
+            self.store.finish_job(
+                job["id"],
+                result=error.result if isinstance(error, IndexModelFailure) else None,
+                error=message[:2000],
+                owner=self.owner,
+            )
         finally:
             finished.set()
             keeper.join(timeout=1)

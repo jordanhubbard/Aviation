@@ -17,7 +17,7 @@ function job(id = 'job_fixture', state = 'running') {
     id,
     kind: 'index',
     state,
-    error: null,
+    error: null as string | null,
     updated_at: '2026-11-17T00:00:00Z',
     subject: { ...subject, title: id === 'job_fixture' ? subject.title : 'Manual ' + id },
     has_result: state === 'completed',
@@ -93,6 +93,41 @@ it('loads detailed completed results only when requested', async () => {
   expect(fetch.mock.calls.some(([url]) => String(url).endsWith('/jobs/job_fixture'))).toBe(true)
   fireEvent.click(screen.getByText('Acquisition / processing results'))
   expect(screen.getByText(/reviewed original pages/)).toBeTruthy()
+})
+
+it('shows successful processing results alongside a failed model-stage error', async () => {
+  const failed = {
+    ...job('job_fixture', 'failed'),
+    has_result: true,
+    error: 'Document indexed; model stages failed: embeddings; originals retained',
+  }
+  const fetch = vi.fn(async (input: RequestInfo | URL) => {
+    if (String(input).endsWith('/jobs/job_fixture'))
+      return response({
+        ...failed,
+        result: {
+          status: 'indexed',
+          model_stages: {
+            embeddings: { state: 'failed' },
+            distillation: { state: 'completed' },
+          },
+          distillation: { status: 'complete', reason: 'Source-backed summary retained' },
+        },
+      })
+    return defaults(input) ?? response(page([failed]))
+  })
+  vi.stubGlobal('fetch', fetch)
+  render(<AircraftLibraryPage />)
+  await open()
+  fireEvent.click(screen.getByText('Recent completed or failed jobs (1)'))
+  await act(async () => {
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Read processing result: Persisted manual' }),
+    )
+  })
+  fireEvent.click(screen.getByText('Acquisition / processing results'))
+  expect(screen.getAllByText(failed.error).length).toBeGreaterThan(0)
+  expect(screen.getByText(/Source-backed summary retained/)).toBeTruthy()
 })
 
 it('keeps ownership through body reads and fences a late result after locking', async () => {

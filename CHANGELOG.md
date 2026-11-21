@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Aircraft library: continue distillation after embedding-provider failures, retain independent model-stage outcomes, and preserve known failures across indexing-job recovery (#623).
+
 - Weather: flag suspicious METARs with original nearby observations, exclusion reasons and explicit uncertainty across HTTP/MCP, SDK and shared application views (#621).
 - Weather classification: treat exactly 5 SM visibility or 3,000 ft ceiling as MVFR.
 
