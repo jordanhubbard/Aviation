@@ -74,6 +74,158 @@ def expire(store, identifier):
         connection.execute("UPDATE jobs SET updated_at='2000-01-01' WHERE id=?", (identifier,))
 
 
+class StageProvider(Provider):
+    def __init__(self, *, embedding_fails=False, distillation_fails=False):
+        super().__init__()
+        self.embedding_fails = embedding_fails
+        self.distillation_fails = distillation_fails
+        self.embedding_attempts = self.completion_attempts = 0
+
+    def embed(self, texts):
+        self.embedding_attempts += 1
+        if self.embedding_fails:
+            raise ModelUnavailable("Synthetic embedding provider unavailable")
+        return super().embed(texts)
+
+    def complete(self, evidence, question):
+        self.completion_attempts += 1
+        if self.distillation_fails:
+            raise ModelUnavailable("Synthetic completion provider unavailable")
+        return super().complete(evidence, question)
+
+
+@pytest.mark.parametrize(
+    "embedding_fails,distillation_fails", [(True, False), (False, True), (True, True)]
+)
+def test_model_failures_keep_independent_indexing_outcomes(
+    source, embedding_fails, distillation_fails
+):
+    store, identifier = source
+    original = store.original(identifier).read_bytes()
+    provider = StageProvider(embedding_fails=embedding_fails, distillation_fails=distillation_fails)
+    job = store.create_job("index", {"document_id": identifier})
+    assert Worker(store, provider).run_one()
+    detail = Store(store.root).job(job["id"])
+    assert detail["state"] == "failed" and detail["has_result"]
+    assert detail["result"]["status"] == "indexed"
+    stages = detail["result"]["model_stages"]
+    assert stages["embeddings"]["state"] == ("failed" if embedding_fails else "completed")
+    assert stages["distillation"]["state"] == ("failed" if distillation_fails else "completed")
+    assert provider.embedding_attempts >= 1 and provider.completion_attempts >= 1
+    assert store.checkpoint(job["id"])["model_stages"] == stages
+    assert store.original(identifier).read_bytes() == original
+    if not distillation_fails:
+        assert detail["result"]["distillation"]["status"] == "complete"
+        assert store.get(identifier)["artifacts"]["distillation"]["status"] == "complete"
+    if not embedding_fails:
+        with store.connection() as connection:
+            assert connection.execute("SELECT count(*) FROM vectors").fetchone()[0] > 0
+
+
+def test_known_embedding_failure_survives_interruption_without_an_automatic_retry(source):
+    store, identifier = source
+    provider = StageProvider(embedding_fails=True)
+    provider.kill_at = 1
+    job = store.create_job("index", {"document_id": identifier})
+    with pytest.raises(ProcessKilled):
+        Worker(store, provider).run_one()
+    checkpoint = store.checkpoint(job["id"])
+    assert checkpoint["model_stages"]["embeddings"]["state"] == "failed"
+    attempts = provider.embedding_attempts
+    expire(store, job["id"])
+    provider.kill_at = None
+    provider.embedding_fails = False
+    reopened = Store(store.root)
+    assert Worker(reopened, provider).run_one()
+    detail = reopened.job(job["id"])
+    assert detail["state"] == "failed"
+    assert provider.embedding_attempts == attempts
+    assert detail["result"]["distillation"]["status"] == "complete"
+    assert (
+        detail["result"]["model_stages"]["embeddings"] == checkpoint["model_stages"]["embeddings"]
+    )
+    retry = reopened.create_job("embed", {"document_id": identifier})
+    assert Worker(reopened, provider).run_one()
+    assert reopened.job(retry["id"])["state"] == "completed"
+    assert provider.embedding_attempts > attempts
+    assert reopened.job(job["id"])["state"] == "failed"
+
+
+def test_source_change_after_embedding_failure_prevents_distillation_or_stale_checkpoint(source):
+    store, identifier = source
+
+    class ChangedSource(StageProvider):
+        def embed(self, texts):
+            changed = Store(store.root)
+            metadata = dict(changed.get(identifier)["metadata"], revision="changed during request")
+            changed.update_metadata(identifier, metadata)
+            return super().embed(texts)
+
+    provider = ChangedSource(embedding_fails=True)
+    job = store.create_job("index", {"document_id": identifier})
+    assert Worker(store, provider).run_one()
+    assert provider.completion_attempts == 0
+    assert "Document changed" in store.job(job["id"])["error"]
+    assert "model_stages" not in store.checkpoint(job["id"])
+
+
+def test_reclaimed_owner_cannot_continue_from_embedding_into_distillation(source):
+    store, identifier = source
+    job = store.create_job("index", {"document_id": identifier})
+
+    class Reclaimed(StageProvider):
+        def embed(self, texts):
+            successor = Store(store.root)
+            expire(successor, job["id"])
+            assert successor.claim_job("new-stage-owner")["id"] == job["id"]
+            return super().embed(texts)
+
+    provider = Reclaimed(embedding_fails=True)
+    assert Worker(store, provider).run_one()
+    assert provider.completion_attempts == 0
+    current = store.job(job["id"])
+    assert current["worker"] == "new-stage-owner" and current["state"] == "running"
+    assert current["result"] is None
+    assert "model_stages" not in store.checkpoint(job["id"])
+
+
+def test_provider_free_indexing_retains_explicit_unconfigured_stages(source):
+    from app.services.aircraft_library.models import Models
+
+    store, identifier = source
+    job = store.create_job("index", {"document_id": identifier})
+    assert Worker(store, Models({})).run_one()
+    detail = store.job(job["id"])
+    assert detail["state"] == "completed"
+    assert detail["result"]["model_stages"] == {
+        "embeddings": {"state": "unconfigured"},
+        "distillation": {"state": "unconfigured"},
+    }
+
+
+def test_private_http_preserves_successful_distillation_and_failed_embedding(source, monkeypatch):
+    from fastapi import FastAPI
+    from fastapi.testclient import TestClient
+    from app.routers.aircraft_library import install
+    from app.services.aircraft_library.models import Models
+
+    store, identifier = source
+    job = store.create_job("index", {"document_id": identifier})
+    assert Worker(store, StageProvider(embedding_fails=True)).run_one()
+    token = "synthetic-private-stage-fixture-key"
+    monkeypatch.setenv("AIRCRAFT_LIBRARY_TOKEN", token)
+    app = FastAPI()
+    install(app, store=store, models=Models({}), worker_enabled=False)
+    with TestClient(app) as client:
+        path = "/api/aircraft-library/jobs/" + job["id"]
+        assert client.get(path).status_code == 401
+        response = client.get(path, headers={"Authorization": "Bearer " + token})
+        assert response.status_code == 200 and "no-store" in response.headers["cache-control"]
+        detail = response.json()
+        assert detail["state"] == "failed" and detail["has_result"]
+        assert detail["error"] and detail["result"]["distillation"]["status"] == "complete"
+
+
 def test_index_job_process_death_resumes_without_extraction_embedding_or_prefix_loss(
     source, monkeypatch
 ):

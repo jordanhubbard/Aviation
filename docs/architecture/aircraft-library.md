@@ -10,6 +10,28 @@ Every page retains physical PDF page number, printed page label when available, 
 
 ## Retrieval, distillation and answers
 
+After successful extraction, an indexing job attempts each configured model stage
+independently ([#623](https://github.com/jordanhubbard/Aviation/issues/623)). An
+embedding-provider failure must not suppress distillation, and a distillation
+failure must not discard successfully indexed vectors. Preserve source identity,
+originals and every accepted partial summary. Keep the existing provider budgets
+and citation validation; do not retry a provider HTTP failure automatically.
+
+Record terminal model-stage outcomes in the extraction job's durable checkpoint.
+Recovery of that same job retains known failed stages without sending their
+requests again, while unfinished stages use normal source-bound recovery. A new,
+explicit indexing or individual model job may retry work. Source changes invalidate
+the extraction checkpoint as before; an owner that loses its lease cannot publish
+stage outcomes or continue into another provider stage.
+
+The job remains failed if any configured model stage failed, with both a bounded
+error and a result describing extraction and independent model-stage outcomes.
+Private job detail and the existing UI expose the error and successful work
+together; a completed model call is not a claim of complete document extraction
+or complete distillation. Unconfigured model stages remain explicit and do not
+make provider-free extraction fail. Stage checkpoints and results contain no
+provider response bodies or credentials.
+
 For [#520](https://github.com/jordanhubbard/Aviation/issues/520), operators may set
 `AIRCRAFT_LIBRARY_VALIDATION_TRACE_DIR` to an absolute protected server directory.
 Unset/empty disables diagnostics and performs no diagnostic storage I/O. On claim
