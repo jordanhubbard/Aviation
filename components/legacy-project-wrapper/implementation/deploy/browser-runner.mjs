@@ -2,6 +2,8 @@
 export async function launchOwnedBrowser(browserType, options = {}, {
   graceMs = 5_000, killMs = 5_000,
   platform = process.platform,
+  chromiumExecutable = process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH,
+  signalProcess = (pid, signal) => process.kill(pid, signal),
   report = event => console.error(JSON.stringify({ schema: 'aviation/browser-lifecycle@1', ...event })),
 } = {}) {
   const timed = async (phase, action, timeout) => {
@@ -46,7 +48,15 @@ export async function launchOwnedBrowser(browserType, options = {}, {
           && /\.app\/Contents\/MacOS\/[^/]+$/.test(browserProcess.spawnfile || '');
         if (nativeApp) {
           if (!processExit) {
-            const sent = browserProcess.kill('SIGTERM');
+            // ChildProcess.kill marks `killed` on delivery, before exit. The
+            // pinned SDK skips forced recovery when that flag is true.
+            let sent = false;
+            try { sent = signalProcess(browserProcess.pid, 'SIGTERM'); }
+            catch (error) {
+              // The child can exit before Node delivers its exit event. Await
+              // that observation below; ESRCH alone never proves normal exit.
+              if (error.code !== 'ESRCH') throw error;
+            }
             report({ phase: 'process.terminate', status: 'requested', signal: 'SIGTERM', pid: browserProcess.pid, sent });
           }
           await serverClosed;
@@ -83,8 +93,12 @@ export async function launchOwnedBrowser(browserType, options = {}, {
   try {
     isChromium = typeof browserType.name === 'function' && browserType.name() === 'chromium';
     const launchOptions = { ...options };
+    if (isChromium && options.channel === undefined && options.executablePath === undefined
+      && chromiumExecutable?.trim()) {
+      launchOptions.executablePath = chromiumExecutable.trim();
+    }
     if (platform === 'darwin' && isChromium && options.headless !== false
-      && options.channel === undefined && options.executablePath === undefined) {
+      && launchOptions.channel === undefined && launchOptions.executablePath === undefined) {
       launchOptions.channel = 'chromium';
     }
     launching = timed('launch', () => browserType.launchServer({

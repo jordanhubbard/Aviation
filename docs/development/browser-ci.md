@@ -81,3 +81,29 @@ The public [Chromium macOS shutdown change](https://chromium.googlesource.com/ch
 describes distinct session-signal and UI teardown paths and nonzero watchdog exit.
 This informs the adapter choice; it is not a fully symbolicated diagnosis of the
 underlying platform teardown stall.
+
+## Native recovery and explicit worker carrier (#625)
+
+An orderly native signal must not set `ChildProcess.killed`: that flag records
+signal delivery, not process exit. The pinned Playwright recovery implementation
+skips its force-kill operation when that flag is set. Signal only the positive PID
+from the launched public child handle through `process.kill`, retaining the child
+exit observer and all existing bounds. A still-running native process must remain
+eligible for owner-scoped SDK recovery. A missing-PID signal race still requires
+an observed normal exit; the signal error alone cannot approve cleanup. Recovery
+remains distinct from a normal
+zero/no-signal exit and never supplies graceful qualification.
+
+Honor `PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH` consistently for Chromium callers
+that supplied neither a channel nor an executable. Explicit call options take
+precedence; other engines ignore this Chromium setting. Without the setting,
+retain the existing pinned managed selection. Qualify the selected worker carrier
+with fresh real processes, including closed/open pages, concurrent close and
+expected failures. Do not treat an override as proof that another carrier works.
+
+On the current macOS worker, managed regular Chromium147 reproduces native
+shutdown stalls; keeping the display awake and direct CDP close do not resolve
+them. Installed system Chrome158 exits normally in the isolated control. Use the
+explicit setting for that worker's full qualification; preserve managed-carrier
+failures and verify bounded recovery separately. Linux CI retains its managed
+revision. This does not claim a fix inside Chromium147 or change the SDK lock.
