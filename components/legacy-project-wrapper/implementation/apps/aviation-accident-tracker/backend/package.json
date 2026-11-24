@@ -44,15 +44,15 @@
   "devDependencies": {
     "@types/cors": "^2.8.17",
     "@types/express": "^5.0.6",
-    "@types/node": "^25.5.2",
+    "@types/node": "^26.6.6",
     "@types/pdfkit": "^0.17.5",
-    "@types/supertest": "^7.2.0",
+    "@types/supertest": "^7.2.1",
     "@types/uuid": "^11.0.0",
     "nodemon": "^3.1.14",
-    "supertest": "^7.2.2",
-    "swagger-jsdoc": "^6.2.8",
-    "tsx": "^4.7.0",
+    "supertest": "^7.3.2",
+    "swagger-jsdoc": "^6.3.0",
+    "tsx": "^4.23.15",
     "typescript": "^6.0.2",
-    "vitest": "^4.1.12"
+    "vitest": "^5.1.1"
   }
 }
