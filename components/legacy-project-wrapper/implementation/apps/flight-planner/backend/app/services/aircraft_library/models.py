@@ -277,8 +277,15 @@ class Models:
                 response = client.post(self.base + path, headers=headers, json=payload)
                 response.raise_for_status()
                 if len(response.content) > 8 * 1024 * 1024:
-                    raise ValueError("Oversized model response")
-                return response.json()
+                    raise ModelUnavailable(
+                        "Aircraft library model response exceeded the byte limit"
+                    )
+                try:
+                    return response.json()
+                except ValueError as error:
+                    raise ModelUnavailable(
+                        "Aircraft library model provider returned invalid JSON"
+                    ) from error
         except httpx.HTTPStatusError as error:
             raise ModelUnavailable(
                 f"Aircraft library model provider failed (HTTP {error.response.status_code})"
@@ -288,7 +295,9 @@ class Models:
                 f"Aircraft library model provider timed out ({type(error).__name__}; "
                 f"configured read limit {self.read_timeout:g} seconds)"
             ) from error
-        except (httpx.HTTPError, ValueError) as error:
+        except httpx.HTTPError as error:
+            raise ModelUnavailable("Aircraft library model provider transport failed") from error
+        except ValueError as error:
             raise ModelUnavailable("Aircraft library model provider failed") from error
 
     def _completion_post(self, payload):
