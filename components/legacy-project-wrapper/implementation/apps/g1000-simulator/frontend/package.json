@@ -18,12 +18,12 @@
     "@types/react-dom": "^19.0.0",
     "@types/react-router-dom": "^5.3.3",
     "typescript": "^5.9.3",
-    "@vitejs/plugin-react": "^4.3.4",
-    "vite": "^6.4.5",
-    "vitest": "^4.1.12",
-    "@testing-library/react": "^16.3.2",
-    "@testing-library/jest-dom": "^6.1.5",
-    "jsdom": "^29.0.1"
+    "@vitejs/plugin-react": "^6.3.0",
+    "vite": "^8.3.8",
+    "vitest": "^5.1.1",
+    "@testing-library/react": "^16.3.3",
+    "@testing-library/jest-dom": "^8.0.0",
+    "jsdom": "^31.0.1"
   },
   "scripts": {
     "dev": "vite",
