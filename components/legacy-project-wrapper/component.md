@@ -167,3 +167,22 @@ original METARs, TAF context, observation ages, excluded stations and uncertaint
 - **THEN** HTTP/MCP, SDK and weather clients show a suspicious-report finding with
   traceable evidence and preserve the original METAR
 - **AND** stale, missing or insufficient evidence never validates that report
+
+
+### Requirement: Keep Aviation Chat conversation history scopes distinct
+
+Aviation Chat SHALL index its process-local history by the exact ordered tuple
+of user ID, application ID and conversation ID. Delimiter characters in one ID
+SHALL NOT alias a different tuple. Omitted, empty and literal `default`
+conversation IDs SHALL retain the existing default-conversation compatibility.
+The existing twenty-message per-conversation retention SHALL remain unchanged.
+This indexing rule does not authenticate caller-supplied identities, bound the
+number of conversations, or authorize context-file or gateway access.
+
+#### Scenario: Distinct IDs contain separator characters
+
+- **WHEN** two distinct user/application/conversation tuples have identical
+  colon-joined representations
+- **THEN** each tuple retains and returns only its own messages
+- **AND** the existing default conversation and per-conversation truncation
+  semantics remain unchanged

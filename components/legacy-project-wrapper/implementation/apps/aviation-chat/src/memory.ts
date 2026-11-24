@@ -1,6 +1,6 @@
 /**
  * In-memory conversation history for proxy-managed memory.
- * Key: `${userId}:${appId}:${conversationId ?? 'default'}`.
+ * Key: the exact JSON tuple of user, app and defaulted conversation identity.
  * Keeps last N turns (user + assistant pairs) to send as history to OpenClaw.
  */
 
@@ -14,7 +14,7 @@ interface Turn {
 const store = new Map<string, Turn[]>();
 
 function key(userId: string, appId: string, conversationId: string): string {
-  return `${userId}:${appId}:${conversationId || 'default'}`;
+  return JSON.stringify([userId, appId, conversationId || 'default']);
 }
 
 export function getHistory(userId: string, appId: string, conversationId?: string): Turn[] {

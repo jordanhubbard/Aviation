@@ -225,6 +225,22 @@ jobs:
       - name: Verify bounded browser process ownership and shutdown
         run: node --test deploy/browser-runner.test.mjs
 
+  test-aviation-chat:
+    name: Test Aviation Chat
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+      - uses: pnpm/action-setup@v6
+      - name: Install chat service and SDK dependencies
+        run: pnpm install --frozen-lockfile --filter @aviation/aviation-chat...
+      - name: Build chat service and SDK dependencies
+        run: pnpm --filter @aviation/aviation-chat... run build
+      - name: Test exact conversation memory scopes
+        run: pnpm --filter @aviation/aviation-chat run test --maxWorkers=1
+
   # Lint and format check
   lint:
     name: Lint & Format
