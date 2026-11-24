@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Aviation Chat: preserve exact user/app/conversation history tuples when IDs contain separators; retain default-conversation compatibility and twenty-message history (#442).
+
 - Aircraft library: distinguish redacted transport, invalid JSON and oversized model responses while preserving HTTP/timeout diagnostics, the response cap and no-retry behavior (#560).
 
 - Aircraft library: recognize independently paired figure/sheet dates in coordinated sentences under a new validation generation, retaining historical policies and source-bound repairs (#612).

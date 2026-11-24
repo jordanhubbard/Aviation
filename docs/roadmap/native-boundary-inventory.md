@@ -344,3 +344,43 @@ and airspace now have explicit boundaries. The project remains at the `retained`
 conversion stage;
 20 parent Component locks and the current receipt are evidence for the migrated boundaries,
 not authority to retire unclassified retained source.
+
+
+### Function-level audit: Aviation Chat
+
+The complete production TypeScript surface is inspected: `src/index.ts`
+(154 lines), `src/context.ts` (37), and `src/memory.ts` (39). The package manifest,
+TypeScript configuration, Makefile and Dockerfile establish its build and runtime
+entry points. This is source ownership evidence, not a deployed-service probe.
+
+| Source/functions | Ownership and public boundaries | Remaining evidence |
+| --- | --- | --- |
+| `index.ts`: `resolveBaseUrl`, `resolveApiKey`, request middleware, root/chat/health handlers and server lifetime callbacks | Application configuration precedence, chat orchestration and informational HTML. Health and signed-test verification delegate to shared SDK exports; OpenClaw request construction delegates to `createOpenClawClient`; explanation behavior delegates to the shared runtime. | Ordinary startup resolves environment/keystore configuration and listens on a port. No app import or service startup was used in this audit. Gateway, explanation and lifecycle qualification remain separate. |
+| `context.ts`: `getAppRoot`, `loadAppContext` | Application context selection: lowercase alphanumeric/hyphen app IDs, operator-controlled root, first readable CLAUDE/AI_CONTEXT file and empty result on read failure. | Reads are synchronous and have no explicit byte bound or canonical symlink-containment proof. Context-file contents and actual deployment roots were not read. |
+| `memory.ts`: `key`, `getHistory`, `appendTurn` | Process-local application conversation state; no common aviation calculation. The key must preserve an ordered user/app/conversation tuple and the existing default alias. History keeps twenty messages per tuple and disappears on restart. | Total tuple count and message sizes are not bounded here; getters retain the existing array-reference behavior. This indexing correction does not establish identity authentication or broader storage/security acceptance. |
+
+No app-owned flight-domain algorithm is found in these seven named functions or
+the inline routing/lifetime callbacks. The shared gateway client remains a retained
+SDK integration; this inspection does not promote it to a new native Component.
+This completes the Aviation Chat function-ownership inspection only. The broader
+application and shared-package duplication inventory remains open under #442.
+
+The audit exposes a reproducible memory identity defect: delimiter concatenation
+can alias different tuples. Two prospective regression cases fail against the
+original code; four compatibility controls pass. The corrected key uses a JSON
+array encoding, preserving exact Unicode, the existing omitted/empty/literal
+`default` alias and twenty-message retention. All six direct memory-module Vitest
+checks pass on Node24.21.0/Vitest4.1.12; TypeScript no-emit checking and the complete
+12-application/10-shared-package graph validator pass with their recorded source
+inputs unchanged. No HTTP app, secret loader, model/provider, browser or native
+target is executed by these checks.
+
+The package now declares the common Vitest test command and exact existing runner
+version, with a matching package-graph row and an Ubuntu CI job. The retained
+Makefile also includes this suite and fails on a missing runner or empty test
+collection. The isolated exact-version lockfile-only update succeeds with install
+scripts disabled; existing peer warnings and peer-resolution changes remain in
+the private record. The broader audit candidate remains separate. The local
+module results above do not establish full retained/root admission, independent
+review or deployed acceptance. Use the current verification receipt and forge
+checks for the delivery state; this inventory does not close #442.

@@ -70,7 +70,9 @@ By default the proxy looks for `apps/<appId>/CLAUDE.md` or `AI_CONTEXT.md` under
 
 ## Memory
 
-Conversation history is kept in memory per (userId, appId, conversationId). Last 10 user/assistant pairs are sent to OpenClaw as `history` so the model has prior context. No persistence across restarts.
+Conversation history is kept in memory per (userId, appId, conversationId). Last 10 user/assistant pairs are sent to OpenClaw as `history` so the model has prior context. No persistence across restarts. Tuple fields are encoded separately, so separator characters in an ID cannot select another tuple. Omitted, empty and literal `default` conversation IDs retain the same default conversation. Caller-supplied IDs are routing data, not authentication.
+
+From the workspace root, run the isolated memory controls with `pnpm --filter @aviation/aviation-chat run test --maxWorkers=1`. These tests do not start the HTTP service, read gateway credentials or call OpenClaw.
 
 ## CORS
 

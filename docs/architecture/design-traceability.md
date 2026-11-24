@@ -1,6 +1,6 @@
 # Design traceability
 
-<!-- literate-ai:authority-reviewed sha256:a5037f7daf8a686c1f44ebcb7966f85c15cada12dbd65f96202fb4554e1b16d8 -->
+<!-- literate-ai:authority-reviewed sha256:d8f658941bd408c34524e68f8b501f8b3b7990c5f9af1156bb37c4c6e1b0397a -->
 
 [Project guide](../README.md) → design traceability
 
@@ -106,3 +106,13 @@ restricted native excerpts cannot support model claims. Literal reviewed text is
 independent evidence; numeric presence alone never establishes a diagram
 relationship. Coverage and typed HTTP/MCP/SDK/browser views expose unresolved
 pages, and explicit unchanged-scope recovery stops before affected evidence.
+
+
+Aviation Chat owns process-local conversation memory. Its retained wrapper
+requirement keeps the ordered user/application/conversation tuple distinct even
+when IDs contain separators, preserving the existing default alias and twenty
+messages per tuple. `apps/aviation-chat/tests/memory.test.ts` supplies the direct
+collision, exact-Unicode, default-compatibility and retention controls. The
+application delegates health, signed-test policy and gateway request construction
+to shared adapters. Tuple encoding does not authenticate request identities or
+qualify HTTP/provider behavior; those remain separate runtime obligations.
