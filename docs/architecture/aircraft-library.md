@@ -78,6 +78,17 @@ its existing three-completion limit per batch. Both paths retain valid claims,
 revalidate every replacement, reject dropped claims, and fail explicitly when
 the correction budget is exhausted. Provider HTTP failures are not retried.
 
+Provider refusal diagnostics distinguish an HTTP failure/status, a timeout under
+the configured limit, a transport failure, an oversized response and invalid JSON
+(#560). Each category uses fixed text without response bodies, request contents,
+URLs, credentials or arbitrary exception messages. An oversized response is
+rejected before JSON parsing; the existing 8 MiB limit remains inclusive. Preserve
+the original HTTP status and timeout messages, request construction, configured
+budgets, single-request failure behavior and correction policy. These categories
+do not recover the unrecorded cause of an older generic failure, prove current
+provider availability, or authorize a retry.
+
+
 Answer metadata reports the retrieval strategy actually used. An incomplete
 document extraction adds a coverage warning without relabeling successful hybrid
 retrieval as full-text fallback. Embedding failures or absent matching vectors
